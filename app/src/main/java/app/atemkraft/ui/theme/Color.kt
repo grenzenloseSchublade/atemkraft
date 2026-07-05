@@ -1,0 +1,55 @@
+package app.atemkraft.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// 80er-Synthwave/Outrun-Palette, dunkel-zuerst: tiefes Indigo + Neon-Magenta/Cyan/Gelb.
+// Akzente bewusst dosiert (Atemübungen oft abends/mit geschlossenen Augen).
+val NeonMagenta = Color(0xFFF25CA2)
+val NeonMagentaDark = Color(0xFFB5247A)
+val NeonCyan = Color(0xFF34E0E8)
+val NeonYellow = Color(0xFFF9C80E)
+val OnNeon = Color(0xFF1E0A16)
+val OnCyan = Color(0xFF042A2C)
+
+val DarkBackground = Color(0xFF160F2E)
+val DarkSurface = Color(0xFF211640)
+val DarkSurfaceVariant = Color(0xFF2E2150)
+val DarkOnBackground = Color(0xFFF0E6FF)
+val DarkOnSurface = Color(0xFFF0E6FF)
+
+val LightBackground = Color(0xFFF6F2FF)
+val LightSurface = Color(0xFFFFFFFF)
+val LightOnBackground = Color(0xFF211640)
+val LightOnSurface = Color(0xFF211640)
+
+// Familien-Akzentfarben (wie in der Vorlage F3_Atmung): vagal/blau, sympathisch/amber,
+// balance/violett, funktionell/grün.
+val FamilyVagal = Color(0xFF60A5FA)
+val FamilySympathetic = Color(0xFFF59E0B)
+val FamilyBalance = Color(0xFFA78BFA)
+val FamilyFunctional = Color(0xFF34D399)
+
+// Semantische Tokens (zentral, statt mehrfach hardcodierter Hex in den Screens).
+val EvidenceBest = NeonCyan             // „am besten belegt" – Cyan
+val EvidenceCaution = Color(0xFFFF6B8B) // „nur stabile Phase" / Vorsicht – Neon-Pink/Rot
+val WarnAmber = NeonYellow              // Hinweis/Warnung – Synthwave-Gelb
+
+// Session-Atemkreis (synthwave): Magenta-Verlauf + Cyan-Ring, damit die helle Schrift
+// sowohl auf dem Kreis als auch auf dunklem Grund klar lesbar ist.
+// Satteres Magenta → Violett: lebendiger Verlauf. Schrift ist creme & groß → genug Kontrastreserve.
+val SynthCircleCenter = Color(0xFFCB3C9A)
+val SynthCircleEdge = Color(0xFF4A2080)
+val SynthTrack = NeonCyan
+val SynthText = Color(0xFFFFEAF7)
+val SynthGlow = Color(0xFF2A0A2E)
+
+// Session-Schrift: warmes, entsättigtes Pastellgold/Creme mit weichem Schimmer – ruhig statt grell,
+// passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen". Zusatzinfo dezenter.
+val SessionTextYellow = Color(0xFFEBDCB0)
+val SessionNoteAmber = Color(0xFFD7C7A0)
+val SessionTextGlow = Color(0xFF160B22)
+
+// Session-Buttons: entsättigtes, „cremiges" Cyan (kein Vollneon) – präsent, aber dezent,
+// damit der Atemkreis der Blickfang bleibt. Pink für „Beenden" im selben gedeckten Ton.
+val SessionButtonCyan = Color(0xFF6FB6BA)
+val SessionButtonPink = Color(0xFFFF8FB0)

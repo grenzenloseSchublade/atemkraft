@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Atemkraft</string>
+
+    <!-- Startbildschirm -->
+    <string name="home_title">Atemkraft</string>
+    <string name="home_subtitle">Wähle eine Atemübung</string>
+    <string name="home_empty">Noch keine Übungen hinterlegt</string>
+
+    <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen) -->
+    <string name="phase_inhale">Einatmen</string>
+    <string name="phase_exhale">Ausatmen</string>
+    <string name="phase_hold_full">Halten</string>
+    <string name="phase_hold_empty">Halten</string>
+    <string name="phase_inhale_top_up">Nachatmen</string>
+    <string name="phase_rest">Locker atmen</string>
+
+    <!-- Familien (Kategorien) -->
+    <string name="family_downregulate">A · Herunterregeln (vagal)</string>
+    <string name="family_upregulate">B · Hochregeln (sympathisch)</string>
+    <string name="family_balance">C · Balancieren / Programme</string>
+    <string name="family_functional">D · Funktionell</string>
+
+    <!-- Tags -->
+    <string name="tag_best">am besten belegt</string>
+    <string name="tag_caution">nur stabile Phase</string>
+    <string name="tag_info">Programm</string>
+
+    <!-- Detailseite -->
+    <string name="detail_instruction">Anleitung</string>
+    <string name="detail_effect">Wirkung</string>
+    <string name="detail_cautions">Hinweise &amp; Sicherheit</string>
+    <string name="detail_references">Quellen</string>
+    <string name="detail_info_only">Diese Technik ist ein Programm bzw. eine Gewohnheit – kein getakteter Ablauf in der App.</string>
+    <string name="detail_safety_appetizer">Intensiv – bitte zuerst die Sicherheitshinweise lesen.</string>
+    <string name="detail_meta_rounds">%1$d Runden</string>
+    <string name="detail_meta_minutes">~%1$d min</string>
+    <string name="detail_intense">intensiv</string>
+    <string name="detail_calm">ruhig</string>
+    <string name="detail_sources_count">%1$d Quellen</string>
+
+    <!-- Tabs -->
+    <string name="tab_breathe">Atmen</string>
+    <string name="tab_exercises">Atmungen</string>
+    <string name="tab_situations">Situationen</string>
+    <string name="tab_session">Session</string>
+    <string name="tab_logbook">Logbuch</string>
+
+    <!-- Situationen -->
+    <string name="situations_subtitle">Welche Atmung passt gerade?</string>
+
+    <!-- Mini-Player / Overlay -->
+    <string name="action_minimize">Minimieren</string>
+    <string name="mini_open">Session öffnen</string>
+    <string name="session_paused">Pausiert</string>
+
+    <!-- Startscreen -->
+    <string name="home_programs">Programme &amp; Wissen</string>
+
+    <!-- Erweiterte Einstellungen -->
+    <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
+    <string name="settings_safety_hint">Wird vor Wim Hof und Feueratmung gezeigt. Beim ersten Mal immer.</string>
+    <string name="settings_glossary">Begriffe erklärt</string>
+    <string name="glossary_title">Begriffe erklärt</string>
+    <string name="settings_about_entry">Über Atemkraft</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_body">16 evidenzbasierte Atemtechniken mit Quellen, Logbuch und konfigurierbaren Tönen. Läuft komplett offline – ohne Konto, ohne Werbung, ohne Tracking.</string>
+    <string name="about_disclaimer">Evidenzbasiert, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe im Glossar. Bei Erkrankungen vorher ärztlich abklären.</string>
+    <string name="settings_next_phase">Nächste Phase anzeigen</string>
+    <string name="settings_next_phase_hint">Blendet während der Session dezent die kommende Phase ein – hilfreich für den Anfang.</string>
+    <string name="settings_about">Atemkraft · evidenzbasiert, keine ärztliche Empfehlung. Quellen stehen je Übung im Detail.</string>
+
+    <!-- Sicherheits-Dialog -->
+    <string name="safety_title">Intensive Übung</string>
+    <string name="safety_confirm">Verstanden, starten</string>
+    <string name="safety_dismiss">Abbrechen</string>
+
+    <!-- Anpassung -->
+    <string name="adjust_rounds">Runden</string>
+    <string name="adjust_minutes">Dauer (Minuten)</string>
+    <string name="adjust_decrease">Verringern</string>
+    <string name="adjust_increase">Erhöhen</string>
+    <string name="adjust_intervals">Intervalle anpassen</string>
+    <string name="adjust_inhale">Einatmen (s)</string>
+    <string name="adjust_hold">Halten (s)</string>
+    <string name="adjust_exhale">Ausatmen (s)</string>
+
+    <!-- Logbuch-Statistik -->
+    <plurals name="log_streak">
+        <item quantity="one">%d Tag in Folge</item>
+        <item quantity="other">%d Tage in Folge</item>
+    </plurals>
+    <string name="log_streak_none">Noch keine Serie</string>
+
+    <!-- Session -->
+    <string name="session_round">Runde %1$d von %2$d</string>
+    <string name="session_tap_to_continue">Tippen, wenn du weiteratmen willst</string>
+    <string name="session_done_title">Geschafft</string>
+    <string name="session_done_body">Übung abgeschlossen</string>
+    <string name="session_done_question">Wie fühlst du dich?</string>
+    <string name="session_empty_title">Keine aktive Session</string>
+    <string name="session_empty_body">Wähle im Tab Atmungen eine Übung und starte sie.</string>
+    <string name="action_to_selection">Zur Auswahl</string>
+    <string name="session_get_ready">Gleich geht\'s los</string>
+    <string name="session_next">Als Nächstes</string>
+    <string name="action_restart">Von vorne</string>
+    <string name="action_again">Nochmal</string>
+    <string name="action_end">Ende</string>
+
+    <!-- Logbuch -->
+    <string name="log_empty">Noch keine abgeschlossenen Sessions.</string>
+    <plurals name="log_sessions">
+        <item quantity="one">%d Sitzung</item>
+        <item quantity="other">%d Sitzungen</item>
+    </plurals>
+    <string name="log_minutes_total">%1$d min gesamt</string>
+    <plurals name="log_rounds">
+        <item quantity="one">%d Runde</item>
+        <item quantity="other">%d Runden</item>
+    </plurals>
+    <string name="log_clear">Logbuch leeren</string>
+
+    <!-- Steuerung -->
+    <string name="action_start">Starten</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Weiter</string>
+    <string name="action_stop">Beenden</string>
+    <string name="action_back">Zurück</string>
+
+    <!-- Einstellungen / Cues -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_sound">Ton bei Phasenwechsel</string>
+    <string name="settings_sound_title">Ton</string>
+    <string name="sound_mode_off">Aus</string>
+    <string name="sound_mode_cues">Wechseltöne</string>
+    <string name="sound_mode_continuous">Durchgehend</string>
+    <string name="settings_sound_appetizer">Durchgehend: ein leiser Ton führt deinen Atem – höher beim Einatmen, tiefer beim Ausatmen.</string>
+    <string name="settings_sound_more">Wie funktioniert das?</string>
+    <string name="settings_sound_hint">Der Ton steigt beim Einatmen und fällt beim Ausatmen, mit einer kurzen Zäsur am Wechsel. Dieses Prinzip nutzen auch klinische Atemtrainer (z. B. RESPeRATE); langsames, gleichmäßiges Atmen erhöht nachweislich die HRV und den Vagustonus. Keine esoterischen Heilfrequenzen.</string>
+    <string name="settings_sources">Quellen</string>
+    <string name="emphasis_title">Wechsel-Betonung</string>
+    <string name="emphasis_soft">Sanft</string>
+    <string name="emphasis_medium">Mittel</string>
+    <string name="emphasis_strong">Stärker</string>
+    <string name="emphasis_hint">Je vertrauter du mit dem Ton bist, desto weniger Betonung brauchst du – am Anfang eher Stärker, mit Übung Sanft.</string>
+    <string name="volume_title">Lautstärke</string>
+    <string name="volume_quiet">Leise</string>
+    <string name="volume_medium">Mittel</string>
+    <string name="volume_loud">Laut</string>
+    <string name="volume_hint">Relativ zur Medien-Lautstärke deines Geräts.</string>
+    <string name="settings_haptics">Vibration bei Phasenwechsel</string>
+
+    <!-- Barrierefreiheit -->
+    <string name="cd_breathing_circle">Atemkreis</string>
+</resources>

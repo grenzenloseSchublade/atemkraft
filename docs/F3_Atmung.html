@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F3 · Kontrolliertes Atmen — evidenzbasierte Anleitung</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.30.0/tabler-icons.min.css" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1410;--card:#161d18;--elev:#1c2620;--border:rgba(255,255,255,.08);
+    --text:#e3ece6;--muted:#7d9488;--dim:#4a5a51;--accent:#34d399;
+    --vagal:#60a5fa;--sympath:#f59e0b;--balance:#a78bfa;--func:#34d399;--warn:#f87171;
+    --serif:'IBM Plex Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--r:12px;
+  }
+  [data-theme="light"]{
+    --bg:#f3f7f4;--card:#fff;--elev:#eaf0ec;--border:rgba(0,0,0,.08);
+    --text:#15201a;--muted:#45574d;--dim:#9aaaa1;--accent:#059669;--vagal:#2563eb;--sympath:#b45309;--balance:#7c3aed;--func:#059669;--warn:#dc2626;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px}
+  header{border-bottom:1px solid var(--border);padding:40px 0 28px;background:linear-gradient(135deg,#0e1410,#0f1812 55%,#0d1c15);position:relative;overflow:hidden}
+  [data-theme="light"] header{background:linear-gradient(135deg,#d1fae5,#ecfdf5 55%,#f0fdf9)}
+  header::before{content:'';position:absolute;top:-80px;right:-60px;width:260px;height:260px;background:radial-gradient(circle,rgba(52,211,153,.10),transparent 70%);border-radius:50%}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;position:relative}
+  .eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+  header h1{font-family:var(--serif);font-size:clamp(22px,4vw,30px);font-weight:600;position:relative}
+  header p{color:var(--muted);font-size:14px;margin-top:8px;max-width:660px;position:relative}
+  .theme-btn{position:fixed;top:14px;right:14px;z-index:100;background:var(--elev);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 13px;font-size:12px;font-family:var(--mono);cursor:pointer}
+  .theme-btn:hover{color:var(--accent);border-color:var(--accent)}
+  section{margin-top:30px}
+  .h{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  p{margin-bottom:10px}
+  sup a{color:var(--accent);text-decoration:none;font-size:11px;font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}
+  @media(max-width:620px){.two{grid-template-columns:1fr}}
+  .dir{border-radius:var(--r);padding:13px 16px;border:1px solid var(--border);border-top:3px solid var(--c)}
+  .dir.v{--c:var(--vagal)} .dir.s{--c:var(--sympath)}
+  .dir .dt{font-weight:600;color:var(--c);font-size:14px;margin-bottom:3px}
+  .dir .dd{font-size:13px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0}
+  th{text-align:left;padding:7px 9px;color:var(--dim);font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;border-bottom:1px solid var(--border)}
+  td{padding:8px 9px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td b{color:var(--text);font-weight:600}
+  .box{border-radius:var(--r);padding:14px 17px;font-size:13.5px;line-height:1.6;margin:10px 0}
+  .box.warn{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25)}
+  .box.warn .bl{color:var(--warn)}
+  .box.key{background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.22)}
+  .box.key .bl{color:var(--vagal)}
+  .box.go{background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.22)}
+  .box.go .bl{color:var(--accent)}
+  .bl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;display:block;margin-bottom:5px}
+  .box b{color:var(--text)}
+  /* family + technique blocks */
+  .fam{margin-top:20px}
+  .fam-h{font-family:var(--serif);font-size:17px;font-weight:600;display:flex;align-items:center;gap:9px;padding-bottom:7px;border-bottom:2px solid var(--c);color:var(--c)}
+  .fam.a{--c:var(--vagal)} .fam.b{--c:var(--sympath)} .fam.c{--c:var(--balance)} .fam.d{--c:var(--func)}
+  .fam-sub{font-size:12.5px;color:var(--muted);margin:6px 0 2px}
+  .tech{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--c);border-radius:0 var(--r) var(--r) 0;padding:14px 17px;margin:11px 0}
+  .tech.a{--c:var(--vagal)} .tech.b{--c:var(--sympath)} .tech.c{--c:var(--balance)} .tech.d{--c:var(--func)}
+  .tn{font-family:var(--serif);font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .tag{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:5px;background:var(--elev);color:var(--muted)}
+  .tag.best{background:rgba(52,211,153,.14);color:var(--accent)}
+  .tag.caut{background:rgba(248,113,113,.13);color:var(--warn)}
+  .desc{font-size:13.5px;color:var(--muted);margin-bottom:9px;line-height:1.6}
+  .desc b{color:var(--text);font-weight:500}
+  .proto{font-family:var(--mono);font-size:12px;color:var(--text);background:var(--elev);border-radius:7px;padding:8px 11px;margin-bottom:8px}
+  .proto .pl{color:var(--accent);text-transform:uppercase;font-size:9px;letter-spacing:.06em;display:block;margin-bottom:3px}
+  .erg{font-size:13px;color:var(--muted);margin:0}
+  .erg b{color:var(--text);font-weight:500}
+  details.note{border:1px solid var(--border);border-radius:8px;margin-top:10px;overflow:hidden;background:var(--elev)}
+  details.note summary{cursor:pointer;padding:9px 13px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);list-style:none;display:flex;align-items:center;gap:7px;user-select:none}
+  details.note summary::-webkit-details-marker{display:none}
+  details.note summary:hover{color:var(--text)}
+  .chev{transition:transform .2s;font-size:15px}
+  details.note[open] .chev{transform:rotate(90deg)}
+  .nb{padding:2px 15px 13px}
+  .nb ul{margin:0;padding-left:17px}
+  .nb li{margin-bottom:6px;font-size:13px;color:var(--muted);line-height:1.55}
+  .nb li b{color:var(--text);font-weight:500}
+  .refs{margin-top:8px}
+  .ref{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--muted)}
+  .ref .rn{font-family:var(--mono);color:var(--accent);flex-shrink:0;font-size:11px}
+  .ref b{color:var(--text);font-weight:500}
+  .ref code{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  footer{padding:30px 0 50px;color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<button class="theme-btn" onclick="document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark'">◐ Theme</button>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">F · Fundament · Atempraxis</div>
+    <h1>Kontrolliertes Atmen — welche Technik wann</h1>
+    <p>Evidenzbasierte Anleitung. Atmung ist der einzige autonome Prozess, den man bewusst steuert — ein direkter Zugang zu HRV, Vagustonus und Stressachse. Jede Technik mit klarer Beschreibung, Anleitung und ausklappbaren Detail-Hinweisen.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <div class="h"><i class="ti ti-arrows-split-2"></i> Vier Familien, zwei Grundrichtungen</div>
+    <div class="two">
+      <div class="dir v">
+        <div class="dt"><i class="ti ti-wave-sine"></i> Herunterregeln (vagal)</div>
+        <div class="dd">Parasympathisch: HRV ↑, Herzfrequenz &amp; Blutdruck ↓, Beruhigung. <strong style="color:var(--text)">Dein Alltags- und Crash-Werkzeug.</strong></div>
+      </div>
+      <div class="dir s">
+        <div class="dt"><i class="ti ti-flame"></i> Hochregeln (sympathisch)</div>
+        <div class="dd">Kontrollierter Stress: Adrenalin ↑, Wachheit, akut antientzündlich. <strong style="color:var(--text)">Nur in stabiler Phase.</strong></div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">Dazu zwei weitere Familien: <strong style="color:var(--balance)">Balancieren / Programme</strong> (ausgleichend, strukturiert) und <strong style="color:var(--func)">Funktionell</strong> (Atemmuster &amp; CO₂-Toleranz). Alle vier unten — je Technik ausklappbar.</p>
+    <div class="box key"><span class="bl">Der Brücken-Mechanismus</span>Langsames Atmen aktiviert über den Vagus den <b>cholinergen Antientzündungsweg</b> (Vagus → α7-nAChR → weniger TNF-α/IL-6) — dieselben Zytokine wie im Schwungrad aus dem Hauptbericht. Direkte Long-COVID-Belege dafür sind noch begrenzt; gesichert ist die akute Vagus-/HRV-Wirkung.</div>
+  </section>
+
+  <section>
+    <div class="h"><i class="ti ti-map-2"></i> Situations-Matrix — welche Atmung wann</div>
+    <table>
+      <thead><tr><th>Situation</th><th>Empfehlung</th><th>Warum</th></tr></thead>
+      <tbody>
+        <tr><td><b>Akutstress / Panikmoment</b></td><td>Physiological Sigh (1–3×), dann Cyclic Sighing</td><td>schnellster Akut-Effekt, in Sekunden<sup><a href="#r3">3</a></sup></td></tr>
+        <tr><td><b>Täglich / Grundregulation</b></td><td>Resonanz-Atmung ~6/min, 5–20 min</td><td>höchste HRV; baut Trait-Vagustonus über Wochen<sup><a href="#r5">5</a></sup><sup><a href="#r6">6</a></sup></td></tr>
+        <tr><td><b>Vor dem Schlaf</b></td><td>4-7-8 oder Resonanz (langer Ausatem)</td><td>herunterfahren, Einschlafhilfe<sup><a href="#r8">8</a></sup></td></tr>
+        <tr><td><b>Fokus / vor einer Aufgabe</b></td><td>Box Breathing 4-4-4-4</td><td>ruhig + wach, senkt Angst<sup><a href="#r3">3</a></sup></td></tr>
+        <tr><td style="color:var(--sympath)"><b>Hochphase (stabil, gut)</b></td><td>Wim Hof / Feueratmung als Hormesis</td><td>Resilienz + akut antientzündlich — <b>hier passt WHM</b><sup><a href="#r1">1</a></sup></td></tr>
+        <tr><td style="color:var(--warn)"><b>Schub / Crash / PEM</b></td><td>NUR vagal (Resonanz, Cyclic Sighing)</td><td>kein Sympathikus-Stress; WHM/Feueratmung meiden</td></tr>
+        <tr><td><b>Akuter Infekt</b></td><td>vagal + Ruhe; WHM nicht erzwingen</td><td>WHM-Evidenz ist Prävention/Resilienz, nicht akute Behandlung<sup><a href="#r13">13</a></sup></td></tr>
+        <tr><td><b>Atemnot / dysfunktionale Atmung</b></td><td>Buteyko · Lippenbremse · Nasenatmung</td><td>Atemmuster normalisieren, CO₂-Toleranz<sup><a href="#r9">9</a></sup><sup><a href="#r12">12</a></sup></td></tr>
+        <tr><td><b>Stimmung / leichte Depression</b></td><td>Cyclic Sighing täglich; ggf. SKY-Programm</td><td>RCT-Evidenz für Stimmung bzw. Depression<sup><a href="#r3">3</a></sup><sup><a href="#r10">10</a></sup></td></tr>
+      </tbody>
+    </table>
+    <div class="box go"><span class="bl">Deine Hochphase-Frage — direkt beantwortet</span>Ja: WHM ist ein <b>hormetischer Stressor</b> und gehört in eine stabile, gute Phase, in der der Körper adaptieren kann — dann bekommst du Resilienz <em>und</em> den akuten antientzündlichen Effekt. „Effektiver" ist aber zielabhängig: für Hormesis/Entzündung in der Hochphase ja; für tägliche Beruhigung bleibt das vagale Atmen das Mittel der Wahl. Im Crash, Schub oder akuten Infekt ist WHM kontraproduktiv.</div>
+  </section>
+
+  <section>
+    <div class="h"><i class="ti ti-list-details"></i> Die Techniken — vier Familien, je ausklappbar</div>
+
+    <!-- FAMILY A -->
+    <div class="fam a">
+      <div class="fam-h"><i class="ti ti-wave-sine"></i> A · Herunterregeln (vagal / parasympathisch)</div>
+      <div class="fam-sub">Senken Erregung, erhöhen HRV. Dein Alltags-, Schlaf- und Crash-Werkzeug — risikoarm.</div>
+
+      <div class="tech a">
+        <div class="tn"><i class="ti ti-wind"></i> Resonanz-Atmung (~6/min) <span class="tag best">am besten belegt</span></div>
+        <div class="desc">Der Goldstandard für die HRV. Bei etwa sechs Atemzügen pro Minute geraten Herzschlag und Blutdruck in <b>Resonanz</b> — sie schwingen genau gegenphasig, wodurch die Herzraten-Schwankung (RSA) und die Baroreflex-Stimulation maximal werden. Der Ausatem ist länger als der Einatem. Es ist die einzige Technik, die mit regelmäßigem Üben den <b>Ruhe-Vagustonus dauerhaft anhebt</b> — also nicht nur akut beruhigt, sondern trainiert.</div>
+        <div class="proto"><span class="pl">Anleitung</span>~4 s einatmen (Nase) · ~6–8 s ausatmen · ohne Pressen · Ziel ≈ 5,5–6 Atemzüge/min · 5–20 min · optional mit visuellem Taktgeber</div>
+        <p class="erg"><b>Ergebnis:</b> höchste HRV unter den langsamen Techniken; über Wochen steigen Baroreflex-Gain und Trait-Vagustonus, Angst/Stress/Depression sinken.<sup><a href="#r5">5</a></sup><sup><a href="#r6">6</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Finde deine persönliche Resonanz:</b> teste 4,5 / 5 / 5,5 / 6 / 6,5 / 7 Atemzüge pro Minute und bleib bei der Rate, bei der sich der Atem am rundesten und tiefsten anfühlt. Häufig liegt sie bei 5,5/min.</li>
+          <li><b>Nicht den Ausatem auspressen:</b> die letzte Restluft nicht herausdrücken — das aktiviert wieder den Sympathikus. Locker auslaufen lassen.</li>
+          <li><b>Der Effekt liegt in der Wiederholung,</b> nicht in der einzelnen Sitzung. Die bleibende Anhebung des Vagustonus kommt erst über Wochen täglicher Praxis.</li>
+          <li><b>Leichter Schwindel = Überatmung.</b> Dann flacher und langsamer atmen, nicht tiefer.</li>
+          <li>Eine Pacer-App oder ein Atemkreis-Video hilft am Anfang, die Rate zu halten.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech a">
+        <div class="tn"><i class="ti ti-lungs"></i> Cyclic Sighing <span class="tag best">stärkste neue RCT</span></div>
+        <div class="desc">Ausatembetont. Ein <b>Doppel-Einatmer</b> füllt die Lunge vollständig und öffnet kollabierte Lungenbläschen wieder; der anschließende lange Ausatem gibt CO₂ ab und löst die parasympathische „Bremse" aus. In der bisher besten kontrollierten Studie war diese Technik anderen Atemübungen und der Meditation bei der Stimmung überlegen.</div>
+        <div class="proto"><span class="pl">Anleitung</span>1× tief einatmen (Nase) → 2. kurzer „Nachschluck" Luft → langsam ganz ausatmen (Mund) · 5 min · Betonung auf dem langen Ausatem</div>
+        <p class="erg"><b>Ergebnis:</b> Stanford-RCT (108 Personen, 5 min/Tag, 28 Tage) — bessere Stimmung und niedrigere Atemfrequenz als Achtsamkeitsmeditation; Effekt wuchs über den Monat.<sup><a href="#r3">3</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Der zweite Atemzug ist klein</b> — nur ein kurzer „Top-up", der die oberen Lungenanteile füllt. Nicht zwei volle Einatmer.</li>
+          <li><b>Ausatem etwa doppelt so lang</b> wie der Einatem — das ist der wirksame Teil.</li>
+          <li><b>Idealer täglicher Anker:</b> 5 min morgens oder nach der Arbeit. Schon 2–3 min helfen, wenn die Zeit knapp ist.</li>
+          <li>Im Sitzen und entspannt — nicht „leisten" wollen, eher seufzen lassen.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech a">
+        <div class="tn"><i class="ti ti-urgent"></i> Physiological Sigh (einzeln) <span class="tag best">schnellster Akut-Löser</span></div>
+        <div class="desc">Die Sofort-Variante des Cyclic Sighing — als <b>Notbremse</b> im Stressmoment. Ein bis drei Seufzer (Doppel-Einatmer + langer Ausatem) senken akute Anspannung schneller als Box Breathing oder Meditation. Wirkt in Sekunden, weil der Doppel-Einatmer kollabierte Lungenbläschen re-inflatiert und der lange Ausatem CO₂ abbläst.</div>
+        <div class="proto"><span class="pl">Anleitung</span>2× einatmen (Nase) → ein langer Ausatem (Mund) · 1–3 Wiederholungen — sofort bei Stress/Anspannung</div>
+        <p class="erg"><b>Ergebnis:</b> vom Huberman-Lab als schnellster akuter Stresslöser identifiziert.<sup><a href="#r3">3</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Reaktiv einsetzen,</b> nicht als tägliche Übung — das ist ein Reset, kein Trainingsprogramm.</li>
+          <li><b>Unauffällig:</b> funktioniert überall (Meeting, Stau, vor einem Gespräch), niemand merkt es.</li>
+          <li>Bei akuter Anspannung 2–3× hintereinander; danach normal weiteratmen.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech a">
+        <div class="tn"><i class="ti ti-moon"></i> 4-7-8</div>
+        <div class="desc">Eine Entspannungs- und Einschlaftechnik mit langem Ausatem und Atempause. Beliebt und brauchbar zum Herunterfahren — aber das siebensekündige Halten erhöht das CO₂, und der HRV-Gewinn ist schwächer als beim echten 6/min-Atmen. Also gut für Schlaf, nicht das Optimum für die HRV.</div>
+        <div class="proto"><span class="pl">Anleitung</span>4 s einatmen (Nase) · 7 s halten · 8 s ausatmen (Mund) · 3–4 Zyklen</div>
+        <p class="erg"><b>Ergebnis:</b> Übersichtsarbeit: senkt Stress/Angst, verbessert HRV/BP akut. Direktvergleich: 6/min hebt die HRV stärker.<sup><a href="#r8">8</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Vor allem zum Einschlafen / Herunterfahren</b> — nicht zur HRV-Optimierung.</li>
+          <li><b>Fühlt sich das 7-s-Halten stressig an, verkürze es</b> — Ziel ist Ruhe, nicht Atemhalte-Kapazität.</li>
+          <li>Wenige Zyklen genügen; zu viele hintereinander können durch den CO₂-Anstieg unangenehm werden.</li>
+          <li>Nicht im Stehen üben.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech a">
+        <div class="tn"><i class="ti ti-music"></i> Bhramari (Summen)</div>
+        <div class="desc">Ein langer, summender Ausatem („Bienenatem"). Das Summen erzeugt eine Vibration und steigert das <b>Stickstoffmonoxid in der Nase</b> deutlich; gleichzeitig wirkt der lange, tonisierte Ausatem stark vagal und senkt Blutdruck und Herzfrequenz.</div>
+        <div class="proto"><span class="pl">Anleitung</span>durch die Nase einatmen → mit geschlossenem Mund lang summend ausatmen · 5–10 Runden</div>
+        <p class="erg"><b>Ergebnis:</b> unmittelbare Senkung von Blutdruck und Herzfrequenz; Summen erhöht nasales Stickstoffmonoxid.<sup><a href="#r11">11</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Nasales Stickstoffmonoxid</b> wirkt gefäßerweiternd und antimikrobiell — für deine Schleimhäute/Nebenhöhlen ein netter Zusatznutzen.</li>
+          <li>Die Vibration selbst ist Teil des Effekts — tiefer, gleichmäßiger Ton.</li>
+          <li>Angenehm vor dem Schlaf oder als kurzer Reset; nur dort, wo Summen sozial okay ist.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech a">
+        <div class="tn"><i class="ti ti-lungs"></i> Zwerchfellatmung</div>
+        <div class="desc">Die Grundlagentechnik: langsames Atmen <b>in den Bauch</b> (Zwerchfell) statt in die Brust. Senkt Anspannung und Cortisol und ist die Basis, auf der alle anderen Techniken aufbauen — viele Menschen verlernen sie unter chronischem Stress.</div>
+        <div class="proto"><span class="pl">Anleitung</span>Hand auf den Bauch · langsam einatmen, sodass sich der Bauch hebt (nicht die Brust) · langsam ausatmen · einige Minuten</div>
+        <p class="erg"><b>Ergebnis:</b> senkt Anspannung; Grundlage für die psychophysiologischen Effekte des langsamen Atmens.<sup><a href="#r7">7</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Heben sich Brust/Schultern, atmest du in die Brust</b> — bewusst zum Bauch zurückkehren.</li>
+          <li>Im Liegen spürt man die Bauchbewegung leichter — ideal zum Erlernen.</li>
+          <li>Beherrscht man das, funktionieren alle anderen Techniken besser.</li>
+        </ul></div></details>
+      </div>
+    </div>
+
+    <!-- FAMILY B -->
+    <div class="fam b">
+      <div class="fam-h"><i class="ti ti-flame"></i> B · Hochregeln (sympathisch / energetisierend)</div>
+      <div class="fam-sub">Kontrollierter Stress, Adrenalin, Wachheit. Nur in stabiler Phase — nie im Crash/Infekt.</div>
+
+      <div class="tech b">
+        <div class="tn"><i class="ti ti-flame"></i> Wim Hof <span class="tag caut">nur stabile Phase</span></div>
+        <div class="desc">Kontrollierte Hyperventilation plus Atemanhalten. Treibt das Adrenalin hoch und erzeugt eine <b>kontrollierte Stressreaktion, die die angeborene Entzündungsantwort akut dämpft</b>. Ein hormetischer Stressor — er gehört in eine gute Phase, in der der Körper adaptieren kann, nicht in einen Crash.</div>
+        <div class="proto"><span class="pl">Anleitung</span>30–40 tiefe Atemzüge (voll ein, locker aus) → ausatmen &amp; Atem anhalten (so lange angenehm) → tief einatmen, 15 s halten · 3 Runden · nur im Sitzen/Liegen</div>
+        <p class="erg"><b>Ergebnis:</b> bei experimenteller Endotoxin-Gabe −53 % TNF-α, −57 % IL-6, −51 % IL-8, +194 % IL-10 und weniger Grippe-Symptome; die Atmung ist der antientzündliche Treiber.<sup><a href="#r1">1</a></sup><sup><a href="#r2">2</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps (wichtig)</summary><div class="nb"><ul>
+          <li><b>Niemals im oder am Wasser, beim Fahren oder im Stehen</b> — die Hyperventilation kann zu Ohnmacht führen.</li>
+          <li><b>Kribbeln und Schwindel sind normal</b> (Hypokapnie); bei zu viel sofort aufhören und normal atmen.</li>
+          <li><b>Für dich:</b> nur in klar stabilen, guten Phasen — nie im Schub, Crash oder akuten Infekt. Die sympathische Spitze wäre dann kontraproduktiv.</li>
+          <li><b>Klein anfangen:</b> weniger Atemzüge, kürzere Haltephasen; langsam steigern.</li>
+          <li>Bei Epilepsie, Herz-Kreislauf-Erkrankung oder Schwangerschaft vorher ärztlich abklären.</li>
+          <li>Der antientzündliche Effekt ist <b>akut</b> nachgewiesen — ein chronischer „Heileffekt" ist nicht belegt.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech b">
+        <div class="tn"><i class="ti ti-air-balloon"></i> Kapalabhati / Bhastrika (Feueratmung) <span class="tag caut">Vorsicht</span></div>
+        <div class="desc">Schnelle, kräftige Ausatemstöße aus dem Bauch (yogischer „Blasebalg"). Energetisierend und sympathisch aktivierend — eine sanftere Verwandte der Wim-Hof-Atmung. Für Wachheit am Morgen, nicht zur Beruhigung.</div>
+        <div class="proto"><span class="pl">Anleitung</span>schnelle, kräftige Ausatemstöße durch die Nase, passiver Einatem · 20–30 Stöße, dann Pause · einige Runden</div>
+        <p class="erg"><b>Ergebnis:</b> energetisierend, steigert Wachheit; gehört zu den aktivierenden Pranayama-Techniken.<sup><a href="#r7">7</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Gleiche Hyperventilations-Vorsicht wie bei WHM</b> (etwas milder): bei Schwindel aufhören.</li>
+          <li><b>Morgens / in guter Phase</b> — nicht vor dem Schlaf und nicht im Crash.</li>
+          <li>Nicht bei unkontrolliertem Bluthochdruck oder in der Schwangerschaft.</li>
+        </ul></div></details>
+      </div>
+    </div>
+
+    <!-- FAMILY C -->
+    <div class="fam c">
+      <div class="fam-h"><i class="ti ti-yin-yang"></i> C · Balancieren / strukturierte Programme</div>
+      <div class="fam-sub">Ausgleichend, fokussierend oder als angeleitetes Programm.</div>
+
+      <div class="tech c">
+        <div class="tn"><i class="ti ti-square"></i> Box Breathing (4-4-4-4)</div>
+        <div class="desc">Gleich lange Phasen aus Einatem, Halten, Ausatem, Halten. Balanciert das Nervensystem auf <b>ruhig, aber wach</b> — daher das „taktische" Atmen (u. a. beim Militär). Die kurzen Atempausen heben das CO₂ leicht an, was zusätzlich beruhigt.</div>
+        <div class="proto"><span class="pl">Anleitung</span>4 s einatmen · 4 s halten · 4 s ausatmen · 4 s halten · ~2–5 min</div>
+        <p class="erg"><b>Ergebnis:</b> senkt akut die Zustandsangst zuverlässig; rund 2 min reichen für messbare HF-/Cortisol-Senkung.<sup><a href="#r3">3</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Ideal vor einer Aufgabe / Stresssituation</b> — kombiniert Fokus und Ruhe.</li>
+          <li><b>Fühlen sich 4 s Halten zu lang an, nimm 3-3-3-3.</b></li>
+          <li>Für die reine HRV ist 6/min besser; Box punktet bei Fassung unter Druck.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech c">
+        <div class="tn"><i class="ti ti-arrows-left-right"></i> Nadi Shodhana (Wechselatmung)</div>
+        <div class="desc">Abwechselndes Atmen durch je ein Nasenloch, gesteuert mit dem Daumen/Finger. Wirkt ausgleichend und zentrierend; kleinere Studien zeigen günstige Effekte auf Blutdruck und HRV.</div>
+        <div class="proto"><span class="pl">Anleitung</span>rechtes Nasenloch zu, links einatmen → links zu, rechts aus → rechts ein → links aus · langsam · ~5 min</div>
+        <p class="erg"><b>Ergebnis:</b> ausgleichend; günstige BP-/HRV-Effekte in kleineren Studien.<sup><a href="#r11">11</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Langsam und sanft</b> — kein Pressen, kein Kraftakt.</li>
+          <li><b>Bei verstopfter Nase schwer umsetzbar</b> (z. B. im Infekt/MCAS-Schub) — dann auslassen.</li>
+          <li>Evidenz kleiner als bei Resonanz/Cyclic Sighing — schöne Ergänzung, kein primäres HRV-Tool.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech c">
+        <div class="tn"><i class="ti ti-school"></i> Sudarshan Kriya (SKY)</div>
+        <div class="desc">Ein <b>strukturiertes, angeleitetes Atemprogramm</b> aus einer Abfolge getakteter Atemmuster. Hat — anders als die meisten Einzeltechniken — randomisierte Studienevidenz bei Depression und Angst, inklusive eines klassischen Vergleichs mit Elektrokrampftherapie und Imipramin.</div>
+        <p class="erg"><b>Ergebnis:</b> antidepressive Wirksamkeit bei Melancholie in einer RCT (vs. EKT/Imipramin); Evidenz für das vollständige Programm.<sup><a href="#r10">10</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Braucht Anleitung</b> (Kurs/App) — die Evidenz gilt für das standardisierte Protokoll, nicht für improvisiertes Atmen.</li>
+          <li><b>Sinnvoll, wenn Stimmung/Angst ein größeres Thema ist</b> — verbindlicher als die simplen Tagestechniken.</li>
+          <li>Mehr Zeit- und Lernaufwand; dafür die stärkste „Programm"-Evidenz.</li>
+        </ul></div></details>
+      </div>
+    </div>
+
+    <!-- FAMILY D -->
+    <div class="fam d">
+      <div class="fam-h"><i class="ti ti-lungs"></i> D · Funktionell — Atemmuster &amp; CO₂-Toleranz</div>
+      <div class="fam-sub">Korrigieren das tägliche Atemmuster — relevant bei Atemnot/dysfunktionaler Atmung.</div>
+
+      <div class="tech d">
+        <div class="tn"><i class="ti ti-lungs-filled"></i> Buteyko</div>
+        <div class="desc">Ein <b>Atemmuster-Training</b> hin zu reduzierter, ruhiger, nasaler Atmung, um die CO₂-Toleranz zu erhöhen und chronisches Überatmen zu korrigieren. Beste Evidenz bei Asthma (weniger Symptome und Bedarfsmedikation); relevant bei dysfunktionaler Atmung und Atemnot — ein bekanntes Long-COVID-Thema.</div>
+        <div class="proto"><span class="pl">Anleitung</span>bewusst weniger und ruhiger durch die Nase atmen · sanfte „Lufthunger"-Phasen · als Trainingsprogramm über Wochen</div>
+        <p class="erg"><b>Ergebnis:</b> senkt Asthma-Symptome &amp; β2-Bedarfsmedikation (Cochrane), ohne die Lungenfunktion selbst zu ändern.<sup><a href="#r9">9</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Es ist ein Retraining, kein Akut-Trick:</b> Ziel ist, im Alltag weniger zu überatmen — nicht, in der Übung hart zu atmen.</li>
+          <li><b>„Lufthunger" soll mild sein</b>, nicht beängstigend.</li>
+          <li><b>Sinnvoll, wenn du Atemnot, häufiges Seufzen oder Mundatmung bemerkst.</b></li>
+          <li>Ändert Symptome/Muster, nicht die gemessene Lungenfunktion.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech d">
+        <div class="tn"><i class="ti ti-wind"></i> Lippenbremse (Pursed-Lip)</div>
+        <div class="desc">Ausatmen gegen leicht geschlossene („gespitzte") Lippen verlangsamt den Ausatem und hält die Atemwege offen. Ein Sofort-Werkzeug bei Atemnot oder hektischem Atmen; senkt akut Blutdruck und Herzfrequenz.</div>
+        <div class="proto"><span class="pl">Anleitung</span>~2 s durch die Nase einatmen → ~4 s langsam gegen gespitzte Lippen ausatmen</div>
+        <p class="erg"><b>Ergebnis:</b> senkt in einer RCT akut Blutdruck und Herzfrequenz; etabliert bei COPD/Atemnot.<sup><a href="#r12">12</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Sofort einsetzbar</b>, wenn der Atem flach/hektisch wird oder bei Belastungs-Atemnot.</li>
+          <li>Der verlangsamte Ausatem ist der Wirkstoff — sehr sicher, kaum Risiken.</li>
+        </ul></div></details>
+      </div>
+
+      <div class="tech d">
+        <div class="tn"><i class="ti ti-nose"></i> Nasenatmung (Basis)</div>
+        <div class="desc">Konsequentes Atmen durch die Nase — Tag und Nacht. Erzeugt Stickstoffmonoxid (gefäßerweiternd, antimikrobiell), befeuchtet und filtert die Luft und verbessert die CO₂/O₂-Balance. Das Fundament, auf dem alle anderen Techniken stehen.</div>
+        <div class="proto"><span class="pl">Anleitung</span>konsequent durch die Nase atmen, auch bei leichter Belastung und idealerweise im Schlaf</div>
+        <p class="erg"><b>Ergebnis:</b> Nasenatmung ist der Mundatmung für nahezu alles überlegen; Basis der funktionellen Atemarbeit.<sup><a href="#r9">9</a></sup></p>
+        <details class="note"><summary><i class="ti ti-chevron-right chev"></i> Zu beachten &amp; Tipps</summary><div class="nb"><ul>
+          <li><b>Mund-Taping nachts</b> ist eine beliebte (umstrittene) Erweiterung — nur, wenn angenehm und die Nase frei ist.</li>
+          <li><b>Nasenatmung bei leichtem Sport</b> baut CO₂-Toleranz auf.</li>
+          <li><b>Bei chronisch verstopfter Nase die Ursache angehen</b> (Allergie/MCAS) — für dich besonders relevant.</li>
+        </ul></div></details>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="h"><i class="ti ti-clock"></i> Ab wann ist etwas spürbar?</div>
+    <table>
+      <thead><tr><th>Zeitfenster</th><th>Was sich ändert</th></tr></thead>
+      <tbody>
+        <tr><td><b>Sofort (1 Sitzung, Minuten)</b></td><td>HRV/Vagustonus ↑, Herz- &amp; Atemfrequenz ↓, Stimmung hebt sich — bei Slow/Cyclic-Sighing schon in ~5 min, beim Physiological Sigh in Sekunden<sup><a href="#r3">3</a></sup><sup><a href="#r7">7</a></sup></td></tr>
+        <tr><td><b>Tage–Wochen (5 min/Tag)</b></td><td>Kumulativ weniger Stress/Angst, bessere Stimmung; in der RCT wuchs der Effekt über 28 Tage. Meta-Analyse: kleine–mittlere Effekte<sup><a href="#r3">3</a></sup><sup><a href="#r4">4</a></sup></td></tr>
+        <tr><td><b>Wochen (2–10+, Resonanz-Biofeedback)</b></td><td>Trait-Vagustonus &amp; Baroreflex-Gain steigen — die bleibende Anpassung<sup><a href="#r6">6</a></sup></td></tr>
+        <tr><td><b>WHM antientzündlich</b></td><td>Akut nachweisbar nach ~10 Tagen Training; chronischer Effekt unbelegt<sup><a href="#r1">1</a></sup><sup><a href="#r13">13</a></sup></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="h"><i class="ti ti-shield-check"></i> Zuschnitt auf dich — kurz</div>
+    <div class="box key">
+      <span class="bl">Empfehlung für dein Profil</span>
+      Tägliche Basis: <b>Cyclic Sighing</b> (5 min) und <b>Resonanz-Atmung</b> (10–20 min) — vagal, kein PEM-Trigger. <b>Physiological Sigh</b> als Akut-Notbremse. <b>Nasenatmung</b> als Dauer-Fundament. WHM/Feueratmung nur in klar guten Phasen, dosiert, im Sitzen. Im Crash/Infekt strikt bei den vagalen Familien bleiben. Details je Technik oben ausklappbar.
+    </div>
+  </section>
+
+  <section>
+    <div class="h"><i class="ti ti-books"></i> Quellen zum Nachschlagen</div>
+    <div class="refs">
+      <div class="ref" id="r1"><span class="rn">[1]</span><div>Kox M. et al. (2014). <b>Voluntary activation of the sympathetic nervous system and attenuation of the innate immune response in humans.</b> PNAS 111(20):7379–84. <code>doi:10.1073/pnas.1322174111 · PMID 24799686</code></div></div>
+      <div class="ref" id="r2"><span class="rn">[2]</span><div>Zwaag J. et al. (2022). <b>Cold exposure training and a breathing exercise on the inflammatory response.</b> Psychosomatic Medicine. <code>PMID 35213875</code> — die Atmung ist der antientzündliche Treiber.</div></div>
+      <div class="ref" id="r3"><span class="rn">[3]</span><div>Balban M. Y. et al. (2023). <b>Brief structured respiration practices enhance mood and reduce physiological arousal.</b> Cell Reports Medicine 4(1):100895. <code>doi:10.1016/j.xcrm.2022.100895 · PMID 36630953</code> (Cyclic Sighing &gt; Box &gt; Meditation; Physiological Sigh).</div></div>
+      <div class="ref" id="r4"><span class="rn">[4]</span><div>Fincham G. W. et al. (2023). <b>Effect of breathwork on stress and mental health: meta-analysis of RCTs.</b> Scientific Reports 13:432. <code>doi:10.1038/s41598-022-27247-y</code></div></div>
+      <div class="ref" id="r5"><span class="rn">[5]</span><div>Lehrer P. et al. (2020). <b>Resonance frequency assessment for HRV biofeedback</b> (~0,1 Hz / 6/min). Frontiers in Neuroscience 14:570400. <code>doi:10.3389/fnins.2020.570400</code></div></div>
+      <div class="ref" id="r6"><span class="rn">[6]</span><div>Goessl V. C. et al. (2017). <b>HRV biofeedback training on stress and anxiety: meta-analysis.</b> Psychological Medicine 47(15):2578–86.</div></div>
+      <div class="ref" id="r7"><span class="rn">[7]</span><div>Zaccaro A. et al. (2018). <b>How breath-control can change your life: systematic review on psycho-physiological correlates of slow breathing.</b> Frontiers in Human Neuroscience 12:353. <code>doi:10.3389/fnhum.2018.00353</code> · Dosis-Wirkung RMSSD: <code>PMC8656666</code></div></div>
+      <div class="ref" id="r8"><span class="rn">[8]</span><div>4-7-8: Vierra J. et al. (2022). Physiological Reports 10:e15389. <code>PMC9277512</code> (akut HRV/BP ↑). Vergleich: 6/min steigert HRV stärker als 4-7-8/Box. <code>PMID 39864026</code></div></div>
+      <div class="ref" id="r9"><span class="rn">[9]</span><div>Buteyko: Prem V. et al. (2013). Clin Rehabil 27(2):133–41 (Asthma-QoL ↑). Cochrane-Review: Atemübungen senken β2-Bedarf. <code>PMID 12885982 · PMC2104698</code></div></div>
+      <div class="ref" id="r10"><span class="rn">[10]</span><div>Sudarshan Kriya (SKY): Janakiramaiah N. et al. (2000). <b>Antidepressant efficacy of SKY in melancholia (RCT vs. ECT/Imipramin).</b> J Affect Disord 57:255–9. + Brown &amp; Gerbarg, neurophysiologisches Modell.</div></div>
+      <div class="ref" id="r11"><span class="rn">[11]</span><div>Bhramari/Wechselatmung: Pramanik T. et al. (2010). <b>Immediate effect of Bhramari pranayama on BP and HR.</b> Nepal Med Coll J 12(3):154–7.</div></div>
+      <div class="ref" id="r12"><span class="rn">[12]</span><div>Lippenbremse: Mitsungnern T. et al. (2021). <b>Pursed-lip breathing on BP/HR in hypertensive urgency (RCT).</b> J Clin Hypertens 23(3):672–9.</div></div>
+      <div class="ref" id="r13"><span class="rn">[13]</span><div>Systematische Übersicht zur Wim-Hof-Methode (Nutzen &amp; offene Fragen). PLOS ONE (2023). <code>doi:10.1371/journal.pone.0286933 · PMC10936795</code></div></div>
+    </div>
+  </section>
+
+  <footer>F3 · Atempraxis — Teil der Fundament-Schicht. Evidenzbasiert, keine ärztliche Empfehlung. Akute HRV-/Stimmungseffekte sind gut belegt; chronische und Long-COVID-spezifische Wirkungen noch begrenzt untersucht.</footer>
+</div>
+</body>
+</html>
