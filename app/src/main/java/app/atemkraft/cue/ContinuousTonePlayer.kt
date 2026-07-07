@@ -70,6 +70,9 @@ class ContinuousTonePlayer {
         }
     }
 
+    /** True, solange der Audio-Thread läuft (auch stummgeschaltet). */
+    val isRunning: Boolean get() = running
+
     fun start() {
         if (running) return
         running = true
@@ -101,6 +104,10 @@ class ContinuousTonePlayer {
     }
 
     private fun runLoop() {
+        // Identitäts-Check gegen stop()/start() in schneller Folge: sieht ein alter Thread
+        // das (geteilte) running-Flag wieder auf true, gehört es bereits dem Nachfolger –
+        // ohne diesen Check spielte er als Waise weiter (doppelter Ton).
+        val self = Thread.currentThread()
         val track = buildTrack()
         track.play()
         val buffer = ShortArray(BUFFER_SAMPLES)
@@ -114,7 +121,7 @@ class ContinuousTonePlayer {
         var articStage = 2 // 0 = absenken, 1 = anschwellen, 2 = ruhend
         var articPos = 0
         try {
-            while (running) {
+            while (running && thread === self) {
                 if (pendingArticulation) {
                     pendingArticulation = false
                     curLow = articLow

@@ -11,6 +11,7 @@ import app.atemkraft.AtemkraftApplication
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.toCueEvent
 import app.atemkraft.data.ExerciseRepository
+import app.atemkraft.data.LogbookRepository
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -76,6 +78,8 @@ data class SessionUiState(
  */
 class SessionViewModel(
     private val repository: ExerciseRepository = ExerciseRepository(),
+    private val audio: SessionAudioCoordinator? = null,
+    private val logbook: LogbookRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionUiState())
@@ -94,12 +98,20 @@ class SessionViewModel(
     )
     val phaseAudio: SharedFlow<PhaseAudio> = _phaseAudio.asSharedFlow()
 
-    /** Wird bei vollständig abgeschlossener Session emittiert (fürs Logbuch). */
-    private val _completions = MutableSharedFlow<SessionLogEntry>(
-        extraBufferCapacity = 4,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
-    val completions: SharedFlow<SessionLogEntry> = _completions.asSharedFlow()
+    init {
+        // Audio folgt dem Session-Zustand im viewModelScope statt der UI – läuft damit
+        // auch hinter dem Sperrbildschirm weiter und räumt am Session-Ende zuverlässig auf.
+        audio?.bind(
+            scope = viewModelScope,
+            status = _state.map { it.status },
+            cues = cues,
+            phaseAudio = phaseAudio,
+        )
+    }
+
+    override fun onCleared() {
+        audio?.release()
+    }
 
     private var timeline: List<RuntimePhase> = emptyList()
     private var index = 0
@@ -290,17 +302,18 @@ class SessionViewModel(
     private fun finish() {
         accrueActiveTime()
         _cues.tryEmit(CueEvent.FINISH)
+        // Logbuch direkt im viewModelScope schreiben (kein UI-Collector nötig) – der
+        // Eintrag geht damit auch bei gesperrtem Bildschirm oder Recreation nicht verloren.
         currentExercise?.let { exercise ->
-            _completions.tryEmit(
-                SessionLogEntry(
-                    exerciseId = exercise.id,
-                    exerciseName = exercise.name,
-                    family = exercise.family,
-                    startedAtEpochMs = startedAtEpochMs,
-                    durationMs = activeElapsedMs,
-                    roundsCompleted = exercise.rounds,
-                ),
+            val entry = SessionLogEntry(
+                exerciseId = exercise.id,
+                exerciseName = exercise.name,
+                family = exercise.family,
+                startedAtEpochMs = startedAtEpochMs,
+                durationMs = activeElapsedMs,
+                roundsCompleted = exercise.rounds,
             )
+            logbook?.let { viewModelScope.launch { it.append(entry) } }
         }
         _state.update {
             it.copy(
@@ -313,11 +326,15 @@ class SessionViewModel(
     }
 
     companion object {
-        /** DI: zieht die ExerciseRepository aus dem AppContainer. */
+        /** DI: zieht Repositories und Audio-Koordinator aus dem AppContainer/der Application. */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as AtemkraftApplication
-                SessionViewModel(app.container.exerciseRepository)
+                SessionViewModel(
+                    repository = app.container.exerciseRepository,
+                    audio = SessionAudioCoordinator(app, app.container.settingsRepository.cueSettings),
+                    logbook = app.container.logbookRepository,
+                )
             }
         }
 

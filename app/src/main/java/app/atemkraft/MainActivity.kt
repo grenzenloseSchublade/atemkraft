@@ -27,12 +27,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -52,15 +50,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import app.atemkraft.cue.AudioFocusController
-import app.atemkraft.cue.ContinuousTonePlayer
-import app.atemkraft.cue.ToneCuePlayer
-import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.EvidenceTag
-import app.atemkraft.domain.SoundMode
 import app.atemkraft.ui.AboutRoute
 import app.atemkraft.ui.AtmenRoute
 import app.atemkraft.ui.DetailRoute
@@ -118,53 +111,6 @@ private fun AtemkraftApp() {
     val sessionActive = sessionState.status != SessionStatus.IDLE
     var sessionExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // Ton + Audio-Fokus auf App-Ebene (laufen über Tab-Wechsel hinweg weiter).
-    val tonePlayer = remember { ToneCuePlayer() }
-    DisposableEffect(Unit) { onDispose { tonePlayer.release() } }
-    val continuousPlayer = remember { ContinuousTonePlayer() }
-    DisposableEffect(Unit) { onDispose { continuousPlayer.stop() } }
-    val audioFocus = remember { AudioFocusController(context) }
-    val hapticPlayer = remember { HapticPlayer(context) }
-    val currentCueSettings by rememberUpdatedState(cueSettings)
-
-    LaunchedEffect(sessionViewModel) {
-        sessionViewModel.cues.collect { event ->
-            if (currentCueSettings.soundMode == SoundMode.CUES) tonePlayer.play(event)
-            if (currentCueSettings.haptics) hapticPlayer.play(event)
-        }
-    }
-    // Durchgehender Ton: Player nur bei CONTINUOUS + aktiver Session laufen lassen, je Phase füttern,
-    // bei Nicht-Laufen (Pause/Countdown/Ende) ausblenden.
-    LaunchedEffect(sessionViewModel) {
-        sessionViewModel.phaseAudio.collect { pa ->
-            if (currentCueSettings.soundMode == SoundMode.CONTINUOUS) {
-                continuousPlayer.onPhase(pa.type, pa.durationMs, pa.open)
-            }
-        }
-    }
-    DisposableEffect(cueSettings.soundMode, sessionActive) {
-        if (cueSettings.soundMode == SoundMode.CONTINUOUS && sessionActive) continuousPlayer.start()
-        else continuousPlayer.stop()
-        onDispose { continuousPlayer.stop() }
-    }
-    LaunchedEffect(cueSettings.transition) { continuousPlayer.setEmphasis(cueSettings.transition) }
-    LaunchedEffect(cueSettings.volume) {
-        continuousPlayer.setVolume(cueSettings.volume)
-        tonePlayer.setVolume(cueSettings.volume)
-    }
-    LaunchedEffect(sessionState.status, cueSettings.soundMode) {
-        val running = sessionState.status == SessionStatus.RUNNING ||
-            sessionState.status == SessionStatus.WAITING_FOR_USER
-        if (cueSettings.soundMode == SoundMode.CONTINUOUS && !running) continuousPlayer.mute()
-    }
-    LaunchedEffect(sessionViewModel) {
-        sessionViewModel.completions.collect { entry -> container.logbookRepository.append(entry) }
-    }
-    DisposableEffect(sessionActive, cueSettings.soundMode) {
-        if (sessionActive && cueSettings.soundMode != SoundMode.OFF) audioFocus.request()
-        else audioFocus.abandon()
-        onDispose { audioFocus.abandon() }
-    }
     KeepScreenOn(
         enabled = sessionState.status == SessionStatus.RUNNING ||
             sessionState.status == SessionStatus.WAITING_FOR_USER,

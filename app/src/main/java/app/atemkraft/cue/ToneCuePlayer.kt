@@ -7,6 +7,7 @@ import android.media.AudioTrack
 import app.atemkraft.domain.ToneVolume
 import java.util.concurrent.Executors
 import kotlin.math.PI
+import kotlin.math.exp
 import kotlin.math.sin
 
 /**
@@ -39,14 +40,51 @@ class ToneCuePlayer {
 
     fun play(event: CueEvent) {
         if (released) return
-        val frequencyHz = when (event) {
-            CueEvent.INHALE -> 528.0
-            CueEvent.EXHALE -> 396.0
-            CueEvent.HOLD -> 440.0
-            CueEvent.FINISH -> 660.0
+        executor.execute {
+            when (event) {
+                CueEvent.INHALE -> synthesizeAndPlay(528.0, durationMs = 180)
+                CueEvent.EXHALE -> synthesizeAndPlay(396.0, durationMs = 180)
+                CueEvent.HOLD -> synthesizeAndPlay(440.0, durationMs = 180)
+                CueEvent.FINISH -> synthesizeAndPlayGong()
+            }
         }
-        val durationMs = if (event == CueEvent.FINISH) 420 else 180
-        executor.execute { synthesizeAndPlay(frequencyHz, durationMs) }
+    }
+
+    /**
+     * Abschluss-Gong: klangschalenartig statt Piep – weicher Anschlag, Grundton mit
+     * feiner Verstimmung (typisches Schweben) plus inharmonische Obertöne, die schneller
+     * abklingen als der Grundton. Amplituden normiert (Summe 1) → kein Clipping.
+     */
+    private fun synthesizeAndPlayGong() {
+        if (released) return
+        val sampleCount = SAMPLE_RATE * GONG_DURATION_MS / 1000
+        val samples = ShortArray(sampleCount)
+        // Teilton: Frequenz (Hz), Amplitude, Abkling-Zeitkonstante tau (s).
+        val partials = listOf(
+            Triple(330.0, 0.50, 1.1),
+            Triple(331.6, 0.20, 1.1),
+            Triple(894.0, 0.20, 0.45),
+            Triple(1698.0, 0.10, 0.20),
+        )
+        val attackSamples = (SAMPLE_RATE * 0.008).toInt()
+        val releaseSamples = (SAMPLE_RATE * 0.15).toInt() // Resttail knackfrei auf 0 ziehen
+
+        for (i in 0 until sampleCount) {
+            val t = i.toDouble() / SAMPLE_RATE
+            var v = 0.0
+            for ((freq, amp, tau) in partials) {
+                v += amp * sin(2.0 * PI * freq * t) * exp(-t / tau)
+            }
+            val envelope = when {
+                i < attackSamples -> i.toDouble() / attackSamples
+                i > sampleCount - releaseSamples ->
+                    (sampleCount - i).toDouble() / releaseSamples
+                else -> 1.0
+            }
+            samples[i] = (v * envelope * AMPLITUDE * volumeScale).toInt()
+                .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+        }
+        playSamples(samples, GONG_DURATION_MS)
     }
 
     private fun synthesizeAndPlay(frequencyHz: Double, durationMs: Int) {
@@ -67,7 +105,11 @@ class ToneCuePlayer {
             }
             samples[i] = (sin(angle) * envelope * AMPLITUDE * volumeScale).toInt().toShort()
         }
+        playSamples(samples, durationMs)
+    }
 
+    /** Spielt fertige Samples blockierend über einen MODE_STATIC-Track ab. */
+    private fun playSamples(samples: ShortArray, durationMs: Int) {
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -106,5 +148,8 @@ class ToneCuePlayer {
     private companion object {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
+
+        /** Länge des Abschluss-Gongs inkl. Ausklingen. */
+        const val GONG_DURATION_MS = 2200
     }
 }
