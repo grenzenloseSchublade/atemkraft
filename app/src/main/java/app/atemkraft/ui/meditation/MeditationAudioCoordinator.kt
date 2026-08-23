@@ -46,6 +46,14 @@ class MeditationAudioCoordinator(
     /** Installierte neuronale Stimmen (id + Anzeigename). */
     val voices: StateFlow<List<VoiceOption>> = piper.voices
 
+    /** Transienter In-Session-Stummschalter (übersteuert Gong/Sprache, ohne die Einstellung zu ändern). */
+    @Volatile private var muted = false
+
+    fun setMuted(value: Boolean) {
+        muted = value
+        if (value) stopSpeech() // laufende Ansage sofort verstummen
+    }
+
     private fun activePiper(): Boolean = piperReady.value
 
     /** Beide Engines vorbereiten (System sofort, Piper baut die aktive Stimme, falls installiert). */
@@ -81,10 +89,15 @@ class MeditationAudioCoordinator(
 
     fun abandonFocus() = audioFocus.abandon()
 
-    /** Weicher Klangschalen-Gong (Start, Intervall, Ende). */
-    fun gong() = tonePlayer.play(CueEvent.FINISH)
+    /** Weicher Klangschalen-Gong (Start, Intervall, Ende) – außer stummgeschaltet. */
+    fun gong() {
+        if (!muted) tonePlayer.play(CueEvent.FINISH)
+    }
 
-    fun speak(text: String) = if (activePiper()) piper.speak(text) else system.speak(text)
+    fun speak(text: String) {
+        if (muted) return
+        if (activePiper()) piper.speak(text) else system.speak(text)
+    }
 
     /** Laufende Ansage abbrechen – beide Engines, damit nichts hängen bleibt. */
     fun stopSpeech() {

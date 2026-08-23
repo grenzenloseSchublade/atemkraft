@@ -40,6 +40,8 @@ data class MeditationUiState(
     val elapsedMs: Long = 0L,
     /** Verbleibende Sekunden im Start-Countdown (nur bei [MeditationStatus.PREPARING]). */
     val countdown: Int = 0,
+    /** Transienter In-Session-Stummschalter (übersteuert Gong/Sprache, ohne die Einstellung zu ändern). */
+    val muted: Boolean = false,
 )
 
 /**
@@ -123,9 +125,22 @@ class MeditationController(
     /** Dieselbe Sitzung noch einmal starten (vom „Nochmal" auf dem Abschluss-Screen). */
     fun restart() = start(currentConfig)
 
+    /** Transienter In-Session-Stummschalter (ohne die Einstellung zu ändern). */
+    fun toggleMute() {
+        val newMuted = !_state.value.muted
+        audio.setMuted(newMuted)
+        _state.update { it.copy(muted = newMuted) }
+    }
+
+    /** Erzeugt die Sitzung überhaupt Ton? (sonst keinen Audio-Fokus anfordern, fremde Medien nicht ducken). */
+    private fun producesAudio(): Boolean =
+        currentConfig.startEndGong || currentConfig.gongEveryMin != null ||
+            (currentConfig.speech && speechAvailable.value)
+
     fun start(config: MeditationConfig) {
         runnerJob?.cancel()
         finishing = false
+        audio.setMuted(false) // neue Sitzung startet unstumm
         currentConfig = config
         totalMs = if (config.mode == MeditationMode.TIMED) config.minutes * 60_000L else 0L
         gongIntervalMs = (config.gongEveryMin ?: 0) * 60_000L
@@ -215,7 +230,7 @@ class MeditationController(
 
     private fun launchActive(fromResume: Boolean) {
         runnerJob = scope.launch {
-            audio.requestFocus()
+            if (producesAudio()) audio.requestFocus()
             if (!fromResume) {
                 runCountdown()
                 if (currentConfig.startEndGong) audio.gong() // Start-Gong nach dem Countdown
@@ -333,7 +348,8 @@ class MeditationController(
         // (sonst würde die gesamte Pausendauer als Meditationszeit mitgezählt).
         if (_state.value.status != MeditationStatus.PAUSED) accrueActiveTime()
         audio.stopSpeech() // eine ggf. noch laufende Ansage nicht über den End-Gong sprechen lassen
-        audio.requestFocus() // aus der Pause wurde der Fokus abgegeben – für den End-Gong erneut anfordern
+        // Nur für einen tatsächlich hörbaren End-Gong den Fokus (erneut) anfordern.
+        if (currentConfig.startEndGong && !_state.value.muted) audio.requestFocus()
         if (currentConfig.startEndGong) audio.gong()
         // Nur nennenswerte Sitzungen protokollieren (verhindert Ein-Sekunden-Einträge).
         if (activeElapsedMs >= MIN_LOG_MS) {

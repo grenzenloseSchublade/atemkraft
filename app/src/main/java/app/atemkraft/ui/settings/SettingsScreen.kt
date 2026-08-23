@@ -101,7 +101,10 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(16.dp))
 
-            SoundCard(soundMode, transition, volume, onSoundMode, onTransition, onVolume, gongLong, onGongLong)
+            TonCard(volume, onVolume, gongLong, onGongLong)
+
+            Spacer(Modifier.height(16.dp))
+            AtmenCard(soundMode, transition, onSoundMode, onTransition)
 
             Spacer(Modifier.height(16.dp))
             SessionCard(haptics, showSafetyWarning, showNextPhase, onToggleHaptics, onToggleSafety, onToggleNextPhase)
@@ -129,16 +132,69 @@ fun SettingsScreen(
     }
 }
 
+/** Allgemeine Ton-Karte: gilt app-weit (Atem-Cues, Sitzungs- und Meditations-Gong). */
 @Composable
-private fun SoundCard(
-    soundMode: SoundMode,
-    transition: TransitionEmphasis,
+private fun TonCard(
     volume: ToneVolume,
-    onSoundMode: (SoundMode) -> Unit,
-    onTransition: (TransitionEmphasis) -> Unit,
     onVolume: (ToneVolume) -> Unit,
     gongLong: Boolean,
     onGongLong: (Boolean) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            CardTitle(stringResource(R.string.settings_tone_title))
+            Spacer(Modifier.height(10.dp))
+            SubLabel(stringResource(R.string.volume_title))
+            Spacer(Modifier.height(6.dp))
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                val vols = ToneVolume.entries
+                vols.forEachIndexed { index, v ->
+                    SegmentedButton(
+                        selected = v == volume,
+                        onClick = { onVolume(v) },
+                        shape = SegmentedButtonDefaults.itemShape(index, vols.size),
+                    ) {
+                        Text(
+                            when (v) {
+                                ToneVolume.QUIET -> stringResource(R.string.volume_quiet)
+                                ToneVolume.MEDIUM -> stringResource(R.string.volume_medium)
+                                ToneVolume.LOUD -> stringResource(R.string.volume_loud)
+                            },
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Hint(stringResource(R.string.volume_hint))
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            SubLabel(stringResource(R.string.settings_gong_length))
+            Spacer(Modifier.height(6.dp))
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = !gongLong,
+                    onClick = { onGongLong(false) },
+                    shape = SegmentedButtonDefaults.itemShape(0, 2),
+                ) { Text(stringResource(R.string.gong_length_short)) }
+                SegmentedButton(
+                    selected = gongLong,
+                    onClick = { onGongLong(true) },
+                    shape = SegmentedButtonDefaults.itemShape(1, 2),
+                ) { Text(stringResource(R.string.gong_length_long)) }
+            }
+            Spacer(Modifier.height(4.dp))
+            Hint(stringResource(R.string.settings_gong_length_hint))
+        }
+    }
+}
+
+/** Atem-spezifische Klang-Einstellungen (nur für Atem-Sessions). */
+@Composable
+private fun AtmenCard(
+    soundMode: SoundMode,
+    transition: TransitionEmphasis,
+    onSoundMode: (SoundMode) -> Unit,
+    onTransition: (TransitionEmphasis) -> Unit,
 ) {
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -211,51 +267,6 @@ private fun SoundCard(
                 Spacer(Modifier.height(4.dp))
                 Hint(stringResource(R.string.emphasis_hint))
             }
-            if (soundMode != SoundMode.OFF) {
-                Spacer(Modifier.height(10.dp))
-                SubLabel(stringResource(R.string.volume_title))
-                Spacer(Modifier.height(6.dp))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    val vols = ToneVolume.entries
-                    vols.forEachIndexed { index, v ->
-                        SegmentedButton(
-                            selected = v == volume,
-                            onClick = { onVolume(v) },
-                            shape = SegmentedButtonDefaults.itemShape(index, vols.size),
-                        ) {
-                            Text(
-                                when (v) {
-                                    ToneVolume.QUIET -> stringResource(R.string.volume_quiet)
-                                    ToneVolume.MEDIUM -> stringResource(R.string.volume_medium)
-                                    ToneVolume.LOUD -> stringResource(R.string.volume_loud)
-                                },
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(4.dp))
-                Hint(stringResource(R.string.volume_hint))
-            }
-
-            // Gong-Ausklang: app-weit (Sitzungs-Abschluss- UND Meditations-Gong), daher hier in der
-            // allgemeinen Ton-Karte – nicht meditationsspezifisch. Immer sichtbar.
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-            SubLabel(stringResource(R.string.settings_gong_length))
-            Spacer(Modifier.height(6.dp))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    selected = !gongLong,
-                    onClick = { onGongLong(false) },
-                    shape = SegmentedButtonDefaults.itemShape(0, 2),
-                ) { Text(stringResource(R.string.gong_length_short)) }
-                SegmentedButton(
-                    selected = gongLong,
-                    onClick = { onGongLong(true) },
-                    shape = SegmentedButtonDefaults.itemShape(1, 2),
-                ) { Text(stringResource(R.string.gong_length_long)) }
-            }
-            Spacer(Modifier.height(4.dp))
-            Hint(stringResource(R.string.settings_gong_length_hint))
         }
     }
 }

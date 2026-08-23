@@ -79,8 +79,10 @@ import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MeditationStatus
+import app.atemkraft.ui.meditation.MiniMeditationBar
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
@@ -150,14 +152,15 @@ private fun AtemkraftApp() {
     val sessionActive = sessionState.status != SessionStatus.IDLE
     var sessionExpanded by rememberSaveable { mutableStateOf(false) }
 
-    val meditationRunning = meditationState.status == MeditationStatus.RUNNING ||
-        meditationState.status == MeditationStatus.PREPARING ||
-        meditationState.status == MeditationStatus.PAUSED
+    // „aktiv" (inkl. FINISHED) steuert Overlay + Mini-Leiste; die Wach-Halten-Logik nur bei RUNNING/PREPARING.
+    val meditationActive = meditationState.status != MeditationStatus.IDLE
+    var meditationExpanded by rememberSaveable { mutableStateOf(false) }
 
     KeepScreenOn(
         enabled = sessionState.status == SessionStatus.RUNNING ||
             sessionState.status == SessionStatus.WAITING_FOR_USER ||
-            meditationRunning,
+            meditationState.status == MeditationStatus.RUNNING ||
+            meditationState.status == MeditationStatus.PREPARING,
     )
 
     val guidedByFamily = remember {
@@ -183,16 +186,16 @@ private fun AtemkraftApp() {
     LaunchedEffect(currentTopTab) { if (currentTopTab != null) selectedTab = currentTopTab }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Während einer laufenden Meditation ist der Screen immersiv (wie die Atem-Session):
-        // Tab-Leiste ausgeblendet und System-Zurück gesperrt – beendet wird bewusst über den
-        // „Beenden"-Button (verhindert die frühere „Zurück strandet"-Sackgasse).
-        BackHandler(enabled = meditationRunning) { /* bewusst gesperrt – Beenden per Button */ }
+        // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
+        // minimiert erscheinen sie als „Now-Playing"-Mini-Leiste über der Tab-Leiste.
         Scaffold(
             bottomBar = {
-                if (meditationRunning) return@Scaffold
                 Column {
                     if (sessionActive && !sessionExpanded) {
                         MiniSessionBar(state = sessionState, onClick = { sessionExpanded = true })
+                    }
+                    if (meditationActive && !meditationExpanded) {
+                        MiniMeditationBar(state = meditationState, onClick = { meditationExpanded = true })
                     }
                     HorizontalDivider(thickness = 1.dp, color = NeonMagenta.copy(alpha = 0.22f))
                     val navColors = NavigationBarItemDefaults.colors(
@@ -288,23 +291,14 @@ private fun AtemkraftApp() {
                     // TTS-Engine erst hier vorbereiten (nicht beim App-Start), idempotent.
                     LaunchedEffect(Unit) { meditationController.prepareSpeech() }
                     MeditationScreen(
-                        state = meditationState,
                         initialConfig = meditationConfig,
                         speechAvailable = meditationSpeechAvailable,
                         gongIntervalMin = gongIntervalMin,
                         onStart = { config ->
                             scope.launch { container.settingsRepository.setMeditationConfig(config) }
                             meditationController.start(config)
+                            meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
                         },
-                        onTogglePause = {
-                            if (meditationState.status == MeditationStatus.PAUSED) {
-                                meditationController.resume()
-                            } else {
-                                meditationController.pause()
-                            }
-                        },
-                        onRestart = meditationController::restart,
-                        onEnd = meditationController::end,
                     )
                 }
                 composable<DetailRoute>(
@@ -408,6 +402,25 @@ private fun AtemkraftApp() {
             // System-Zurück minimiert zur Mini-Leiste (Session läuft weiter, App bleibt offen) –
             // konsistent mit dem Minimieren-Chevron.
             BackHandler { sessionExpanded = false }
+        }
+
+        // Vollbild-Meditation über allem (gespiegelt von der Session): minimierbar zur Mini-Leiste.
+        if (meditationActive && meditationExpanded) {
+            MeditationOverlay(
+                state = meditationState,
+                onMinimize = { meditationExpanded = false },
+                onToggleMute = meditationController::toggleMute,
+                onTogglePause = {
+                    if (meditationState.status == MeditationStatus.PAUSED) meditationController.resume()
+                    else meditationController.pause()
+                },
+                onRestart = meditationController::restart,
+                onEnd = {
+                    meditationController.end()
+                    meditationExpanded = false
+                },
+            )
+            BackHandler { meditationExpanded = false }
         }
     }
 }

@@ -7,6 +7,7 @@ import android.media.AudioTrack
 import app.atemkraft.domain.ToneVolume
 import java.util.concurrent.Executors
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.sin
 
@@ -84,7 +85,9 @@ class ToneCuePlayer {
             Triple(1698.0, 0.10, 0.20),
         )
         val attackSamples = (SAMPLE_RATE * 0.008).toInt()
-        val releaseSamples = (SAMPLE_RATE * 0.15).toInt()
+        // Weiche Ausblende (Raised-Cosine) statt linear: kommt mit Steigung 0 auf exakt 0 an →
+        // kein hörbarer Knick/Übergang. Greift erst am ohnehin sehr leisen Ende (~-60 dB).
+        val releaseSamples = (SAMPLE_RATE * 0.4).toInt()
 
         for (i in 0 until toneCount) {
             val t = i.toDouble() / SAMPLE_RATE
@@ -94,8 +97,11 @@ class ToneCuePlayer {
             }
             val envelope = when {
                 i < attackSamples -> i.toDouble() / attackSamples
-                i > toneCount - releaseSamples ->
-                    (toneCount - i).toDouble() / releaseSamples
+                i > toneCount - releaseSamples -> {
+                    // progress 0→1 über die Ausblende; Raised-Cosine 1→0 (Steigung 0 an beiden Enden).
+                    val progress = (i - (toneCount - releaseSamples)).toDouble() / releaseSamples
+                    0.5 * (1.0 + cos(PI * progress))
+                }
                 else -> 1.0
             }
             samples[i] = (v * envelope * AMPLITUDE * volumeScale).toInt()
@@ -168,11 +174,11 @@ class ToneCuePlayer {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
 
-        /** Ton-Fenster „voller Ausklang": Grundton tau 1,1 s → -60 dB bei ~6,8 s → 7,0 s. */
-        const val GONG_TONE_LONG_MS = 7000
+        /** Ton-Fenster „voller Ausklang": Grundton tau 1,1 s → bei 8,0 s ≈ -63 dB (weit unter hörbar). */
+        const val GONG_TONE_LONG_MS = 8000
 
-        /** Ton-Fenster „kurz": Grundton tau 0,85 s → -60 dB bei ~5,9 s; 5,0 s ≈ -51 dB (unhörbar). */
-        const val GONG_TONE_SHORT_MS = 5000
+        /** Ton-Fenster „kurz": Grundton tau 0,85 s → bei 6,0 s ≈ -61 dB (weit unter hörbar). */
+        const val GONG_TONE_SHORT_MS = 6000
 
         /** Großzügige echte Stille NACH dem verklungenen Ton – garantiert kein Abschneiden. */
         const val GONG_TAIL_SILENCE_MS = 1500

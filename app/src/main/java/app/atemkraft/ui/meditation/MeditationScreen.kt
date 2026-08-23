@@ -15,10 +15,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -36,8 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +54,7 @@ import androidx.compose.ui.zIndex
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.components.Stepper
@@ -69,23 +78,78 @@ private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60, 90)
  */
 @Composable
 fun MeditationScreen(
-    state: MeditationUiState,
     initialConfig: MeditationConfig,
     speechAvailable: Boolean,
     gongIntervalMin: Int,
     onStart: (MeditationConfig) -> Unit,
+) {
+    // Der Tab zeigt nur die Auswahl; die laufende/abgeschlossene Sitzung liegt als Vollbild-Overlay
+    // darüber ([MeditationOverlay]) – so ist sie (wie die Atem-Session) minimierbar und über die
+    // Mini-Leiste erreichbar.
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onStart)
+    }
+}
+
+/** „Now-Playing"-Leiste der Meditation (Titel + Zeit/Status); tippen öffnet das Vollbild-Overlay. */
+@Composable
+fun MiniMeditationBar(state: MeditationUiState, onClick: () -> Unit) {
+    val title = stringResource(R.string.meditation_title)
+    val statusText = when (state.status) {
+        MeditationStatus.FINISHED -> stringResource(R.string.meditation_done_title)
+        MeditationStatus.PAUSED -> stringResource(R.string.session_paused)
+        else -> if (state.mode == MeditationMode.TIMED) formatTime(state.remainingMs)
+        else formatTime(state.elapsedMs)
+    }
+    MiniNowPlayingBar(title = title, statusText = statusText, onClick = onClick)
+}
+
+/**
+ * Vollbild-Overlay der laufenden/abgeschlossenen Meditation (spiegelt [app.atemkraft.ui.session.SessionOverlay]):
+ * oben Minimieren (˅) + In-Session-Stummschalter; darunter die bestehende [RunningContent]/[FinishedContent].
+ */
+@Composable
+fun MeditationOverlay(
+    state: MeditationUiState,
+    onMinimize: () -> Unit,
+    onToggleMute: () -> Unit,
     onTogglePause: () -> Unit,
     onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when (state.status) {
-            MeditationStatus.IDLE ->
-                SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onStart)
-            MeditationStatus.FINISHED ->
-                FinishedContent(onAgain = onRestart, onExit = onEnd)
-            else ->
-                RunningContent(state = state, onTogglePause = onTogglePause, onEnd = onEnd)
+        Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                IconButton(onClick = onMinimize) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = stringResource(R.string.action_minimize),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+                // Schneller In-Session-Ton-Schalter (Einstellung bleibt unberührt) – wie in der Atem-Session.
+                IconButton(onClick = onToggleMute) {
+                    Icon(
+                        painter = painterResource(
+                            if (state.muted) R.drawable.ic_sound_off else R.drawable.ic_sound_on,
+                        ),
+                        contentDescription = stringResource(
+                            if (state.muted) R.string.action_sound_off else R.string.action_sound_on,
+                        ),
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (state.muted) 0.5f else 1f),
+                    )
+                }
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                if (state.status == MeditationStatus.FINISHED) {
+                    FinishedContent(onAgain = onRestart, onExit = onEnd)
+                } else {
+                    RunningContent(state = state, onTogglePause = onTogglePause, onRestart = onRestart, onEnd = onEnd)
+                }
+            }
         }
     }
 }
@@ -239,11 +303,18 @@ private fun SelectionContent(
 private fun RunningContent(
     state: MeditationUiState,
     onTogglePause: () -> Unit,
+    onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
     val preparing = state.status == MeditationStatus.PREPARING
     val paused = state.status == MeditationStatus.PAUSED
     val ringDescription = stringResource(R.string.cd_meditation_ring)
+    // TalkBack-Ansage der Zustandswechsel (wie die Atem-Session ihren Phasennamen ansagt).
+    val stateAnnounce = when {
+        preparing -> stringResource(R.string.session_get_ready)
+        paused -> stringResource(R.string.session_paused)
+        else -> stringResource(R.string.meditation_title)
+    }
 
     // Ruhiger, VOLL gefüllter Kreis (kein Wachstum); der Fortschritt steht in der Zahl.
     val timeText = when {
@@ -284,7 +355,14 @@ private fun RunningContent(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             // zIndex wie in der Atem-Session: Titel bleibt über dem Kreis, falls sie sich je berühren.
-            modifier = Modifier.align(Alignment.TopCenter).zIndex(1f),
+            // liveRegion: TalkBack sagt Zustandswechsel (Vorbereitung/läuft/pausiert) an.
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(1f)
+                .semantics {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription = stateAnnounce
+                },
         )
         Box(modifier = Modifier.align(Alignment.Center), contentAlignment = Alignment.Center) {
             BreathingCircle(
@@ -309,7 +387,7 @@ private fun RunningContent(
                     if (preparing) {
                         GlowTime(
                             text = stringResource(R.string.session_get_ready),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.headlineMedium,
                         )
                         Spacer(Modifier.height(6.dp))
                     }
@@ -346,6 +424,15 @@ private fun RunningContent(
                     )
                 }
                 OutlinedButton(
+                    onClick = onRestart,
+                    modifier = Modifier.weight(1f),
+                    enabled = !preparing,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonCyan),
+                    border = BorderStroke(1.dp, SessionButtonCyan),
+                ) {
+                    Text(stringResource(R.string.action_restart))
+                }
+                OutlinedButton(
                     onClick = onEnd,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonPink),
@@ -366,10 +453,11 @@ private fun FinishedContent(onAgain: () -> Unit, onExit: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        // Eyebrow „✓ Geschafft" wie die Atem-Session (Häkchen im Text, nicht als nackter Glyph).
         Text(
-            text = "✓",
+            text = "✓ " + stringResource(R.string.session_done_title),
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
         Spacer(Modifier.height(10.dp))
         Text(
