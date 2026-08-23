@@ -94,5 +94,6 @@ Credits im Über-Screen.
 
 ## Ideen / Backlog
 
-Eigene Übungen per Editor, Zufalls-Atemmuster-Generator, Voice-Cloning (OmniVoice),
-Wear OS, Widgets.
+Eigene Übungen per Editor, Zufalls-Atemmuster-Generator, Wear OS, Widgets.
+**Voice-Cloning** (eigene Stimme für die Meditations-Anleitung): Schritt-für-Schritt-Anleitung
+in [docs/VOICE_CLONING.md](docs/VOICE_CLONING.md).
