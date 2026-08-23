@@ -288,7 +288,18 @@ private fun AtemkraftApp() {
                 popExitTransition = { fadeOut(tween(180)) },
             ) {
                 composable<AtmenRoute> {
+                    var dailyPattern by remember {
+                        mutableStateOf(container.exerciseRepository.daily())
+                    }
                     HomeScreen(
+                        daily = dailyPattern,
+                        onRegenerateDaily = {
+                            dailyPattern = container.exerciseRepository.regenerateDaily()
+                        },
+                        onSaveDaily = {
+                            val toSave = dailyPattern
+                            scope.launch { container.savedPatternsRepository.save(toSave) }
+                        },
                         exercisesByFamily = guidedByFamily,
                         programs = programs,
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
@@ -296,10 +307,16 @@ private fun AtemkraftApp() {
                     )
                 }
                 composable<SituationenRoute> {
+                    val savedPatterns by container.savedPatternsRepository.patterns
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
                     SituationsScreen(
                         recommendations = Situations.all,
+                        savedPatterns = savedPatterns,
                         resolve = { id -> container.exerciseRepository.byId(id) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
+                        onDeleteSaved = { id ->
+                            scope.launch { container.savedPatternsRepository.delete(id) }
+                        },
                     )
                 }
                 composable<LogbuchRoute> {

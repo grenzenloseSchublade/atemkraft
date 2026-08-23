@@ -29,14 +29,29 @@ sherpa-onnx-Release auf GitHub) — danach läuft auch die Sprachausgabe offline
   (Aus / Start & Ende / alle X min), natürlicher Klangschalen-Ausklang (Kurz/Lang);
   optionale gesprochene Anleitung mit **neuronalen deutschen Stimmen** (Piper via
   sherpa-onnx, Katalog mit Vorhören vor dem Download); Foreground-Service + Wakelock.
+- **Muster des Tages:** ein **generiertes Atemmuster**, deterministisch aus dem Datum
+  (gleicher Tag ⇒ gleiches Muster), dazu „Neu generieren" und „Speichern". 5 Stile
+  (4 ruhige + 1 sanft aktivierender, ~75/25), gewürfelt wird **nur die Zeitstruktur** –
+  immer innerhalb physiologischer Leitplanken (ruhig: Zyklus 8,5–13 s ≈ 4,6–7 Atemzüge/min,
+  Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: 6–9 s, Halten ≤ 2 s – nie Hyperventilation;
+  Quellen: Russo 2017, Zaccaro 2018). **Atemort (Bauchatmung):** bewusst *nicht* randomisiert –
+  ruhige Muster **empfehlen** konstant die Zwerchfell-/Bauchatmung, als Einladung statt
+  Anweisung („Wenn du magst, atme dabei in den Bauch …" in Session-ⓘ-Anleitung und
+  Beschreibung – ein Angebot, kein Muss); Brustatmung wäre als Anweisung fachlich
+  fragwürdig, sanft aktivierende Muster bleiben neutral. Gespeicherte Muster erscheinen
+  unter **„Meine Muster" im Situationen-Tab** (der Atmen-Tab bleibt schlank). Ehrlich
+  positioniert: spielerische Abwechslung ohne Wirkversprechen – für regelmäßiges Üben
+  verweist die App auf konstante Muster (Resonanz-Atmung).
 - **Logbuch:** abgeschlossene Sitzungen mit Statistik (Serie, Minuten).
-- **Situationen:** Einstiege nach Anlass („Was passt gerade?").
+- **Situationen:** Einstiege nach Anlass („Was passt gerade?") + „Meine Muster".
 
 ## Architektur
 
 ```
 domain/   Reines Modell: Phase, PhaseType, PhaseDuration, Segment, Exercise + buildTimeline()
-data/     ExerciseRepository · SettingsRepository (DataStore) · LogbookRepository (Room) · AppContainer
+          RandomPatternGenerator (Muster des Tages: PatternSpec → Exercise, 365-Tage-getestet)
+data/     ExerciseRepository · SavedPatternsRepository (Room) · SettingsRepository (DataStore)
+          LogbookRepository (Room) · AppContainer
 cue/      ToneCuePlayer (Gong/Cues) · ContinuousTonePlayer · SpeechGuide (System-TTS-Fallback)
           PiperSpeechGuide (sherpa-onnx) · tts/ (VoiceCatalog, VoiceModelManager, Samples)
 ui/       theme/ · components/ (geteilt) · home/ · situations/ · session/ · meditation/
@@ -94,6 +109,6 @@ Credits im Über-Screen.
 
 ## Ideen / Backlog
 
-Eigene Übungen per Editor, Zufalls-Atemmuster-Generator, Wear OS, Widgets.
+Eigene Übungen per Editor, Wear OS, Widgets.
 **Voice-Cloning** (eigene Stimme für die Meditations-Anleitung): Schritt-für-Schritt-Anleitung
 in [docs/VOICE_CLONING.md](docs/VOICE_CLONING.md).

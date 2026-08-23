@@ -20,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,17 +29,25 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.TagChip
+import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.WarnAmber
 
 /** Atmen-Tab: startbare Übungen nach Familien + Abschnitt „Programme & Wissen". */
 @Composable
 fun HomeScreen(
     exercisesByFamily: List<Pair<BreathingFamily, List<Exercise>>>,
     programs: List<Exercise>,
+    daily: DailyPattern,
+    onRegenerateDaily: () -> Unit,
+    onSaveDaily: () -> Unit,
     onSelect: (String) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
@@ -79,6 +88,14 @@ fun HomeScreen(
                         )
                     }
                 }
+            }
+
+            item(key = "daily-pattern") {
+                SectionHeader(
+                    title = stringResource(R.string.home_daily_pattern),
+                    color = NeonCyan,
+                )
+                DailyPatternCard(daily = daily, onClick = { onSelect(daily.exercise.id) }, onRegenerate = onRegenerateDaily, onSave = onSaveDaily)
             }
 
             exercisesByFamily.forEach { (family, exercises) ->
@@ -138,5 +155,69 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
             )
         }
+    }
+}
+
+/** Karte für das generierte „Muster des Tages": Name, Charakter-Chip, Muster + Dauer. */
+@Composable
+private fun DailyPatternCard(daily: DailyPattern, onClick: () -> Unit, onRegenerate: () -> Unit, onSave: () -> Unit) {
+    val exercise = daily.exercise
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = exercise.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                CharacterChip(activating = daily.activating)
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = RandomPatternGenerator.hintFor(daily.spec) + " · " +
+                    stringResource(R.string.duration_approx, exercise.defaultMinutes()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+            )
+            // Bewusst schlichte Text-Buttons (keine Symbole). Gespeicherte Muster erscheinen
+            // im Situationen-Tab unter „Meine Muster" – der Atmen-Tab bleibt schlank.
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onSave) {
+                    Text(stringResource(R.string.daily_pattern_save))
+                }
+                TextButton(onClick = onRegenerate) {
+                    Text(stringResource(R.string.daily_pattern_regenerate))
+                }
+            }
+        }
+    }
+}
+
+/** Kleiner Charakter-Chip: „ruhig" (cyan) bzw. „sanft aktivierend" (amber). */
+@Composable
+private fun CharacterChip(activating: Boolean) {
+    val color = if (activating) WarnAmber else NeonCyan
+    Surface(
+        color = color.copy(alpha = 0.14f),
+        contentColor = color,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Text(
+            text = stringResource(
+                if (activating) R.string.daily_pattern_gentle_up else R.string.daily_pattern_calm,
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        )
     }
 }

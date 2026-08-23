@@ -79,7 +79,7 @@ data class SessionUiState(
  * sich kein Drift aufsummiert.
  */
 class SessionViewModel(
-    private val repository: ExerciseRepository = ExerciseRepository(),
+    private val repository: ExerciseRepository,
     private val audio: SessionAudioCoordinator? = null,
     private val logbook: LogbookRepository? = null,
 ) : ViewModel() {

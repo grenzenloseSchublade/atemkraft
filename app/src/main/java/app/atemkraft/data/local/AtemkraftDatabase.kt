@@ -7,10 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [LogEntryEntity::class], version = 2, exportSchema = false)
+@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 3, exportSchema = false)
 abstract class AtemkraftDatabase : RoomDatabase() {
 
     abstract fun logbookDao(): LogbookDao
+
+    abstract fun savedPatternDao(): SavedPatternDao
 
     companion object {
         /**
@@ -47,11 +49,31 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
+        /** v2 → v3: Tabelle für gespeicherte generierte Atemmuster. */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE saved_patterns (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        inhale REAL NOT NULL,
+                        holdFull REAL,
+                        exhale REAL NOT NULL,
+                        holdEmpty REAL,
+                        activating INTEGER NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
+
         fun build(context: Context): AtemkraftDatabase =
             Room.databaseBuilder(
                 context.applicationContext,
                 AtemkraftDatabase::class.java,
                 "atemkraft.db",
-            ).addMigrations(MIGRATION_1_2).build()
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
     }
 }

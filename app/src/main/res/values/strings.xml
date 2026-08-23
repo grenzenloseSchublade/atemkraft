@@ -64,6 +64,13 @@
 
     <!-- Startscreen -->
     <string name="home_programs">Programme &amp; Wissen</string>
+    <string name="home_daily_pattern">Muster des Tages</string>
+    <string name="daily_pattern_calm">ruhig</string>
+    <string name="daily_pattern_gentle_up">sanft aktivierend</string>
+    <string name="daily_pattern_regenerate">Neu generieren</string>
+    <string name="daily_pattern_save">Speichern</string>
+    <string name="situations_my_patterns">Meine Muster</string>
+    <string name="cd_pattern_delete">Muster löschen</string>
 
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>

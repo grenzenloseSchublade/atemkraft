@@ -16,7 +16,9 @@ class AppContainer(context: Context) {
 
     private val database = AtemkraftDatabase.build(context)
 
-    val exerciseRepository: ExerciseRepository = ExerciseRepository()
+    val savedPatternsRepository: SavedPatternsRepository =
+        SavedPatternsRepository(database.savedPatternDao())
+    val exerciseRepository: ExerciseRepository = ExerciseRepository(savedPatternsRepository)
     val settingsRepository: SettingsRepository = SettingsRepository(context)
     val logbookRepository: LogbookRepository = LogbookRepository(database.logbookDao())
 
