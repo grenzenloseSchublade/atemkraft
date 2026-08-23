@@ -48,6 +48,7 @@ class SessionAudioCoordinator(
         scope.launch {
             current.collect { cfg ->
                 tonePlayer.setVolume(cfg.volume)
+                tonePlayer.setGongLong(cfg.gongLong)
                 continuousPlayer.setVolume(cfg.volume)
                 continuousPlayer.setEmphasis(cfg.transition)
             }

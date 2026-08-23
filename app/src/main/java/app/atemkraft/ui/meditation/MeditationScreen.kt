@@ -60,7 +60,7 @@ import app.atemkraft.ui.theme.SessionButtonPink
 import kotlinx.coroutines.delay
 
 /** Auswählbare Dauer-Vorgaben (Minuten) und Intervall-Gong-Optionen (Minuten). */
-private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60)
+private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60, 90)
 
 /**
  * Meditations-Tab: Auswahl (Modus Timer/Frei, Dauer, Intervall-Gong, Sprach-Anleitung) und

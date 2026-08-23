@@ -19,7 +19,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -68,6 +67,9 @@ class MeditationController(
     /** Wählbare deutsche Stimmen (für die Auswahl im UI). */
     val voices = audio.voices
 
+    /** Ist die hochwertige Piper-Stimme tatsächlich einsatzbereit? (fürs UI/Preview-Routing) */
+    val piperReady = audio.piperReady
+
     private var currentConfig = MeditationConfig()
     private var totalMs = 0L
     private var runnerJob: Job? = null
@@ -90,35 +92,32 @@ class MeditationController(
         scope.launch {
             settingsRepository.cueSettings.collect { audio.updateVolume(it.volume) }
         }
-        // Persistierte Stimmen-Vorwahl anwenden (wirkt, sobald TTS bereit ist).
+        // Persistierte neuronale Stimmen-Wahl anwenden (lädt sie, sobald installiert).
         scope.launch {
-            settingsRepository.ttsVoiceId.collect { audio.selectVoice(it) }
+            settingsRepository.neuralVoiceId.collect { audio.setActiveVoice(it) }
         }
-        // Verweist die Vorwahl nach dem Init auf eine nicht (mehr) installierte Stimme,
-        // auf „Automatisch" zurücksetzen – sonst zeigt die Auswahl nichts markiert an.
+        // Gong-Ausklang (lang/kurz) übernehmen.
         scope.launch {
-            combine(settingsRepository.ttsVoiceId, audio.voices) { id, list -> id to list }
-                .collect { (id, list) ->
-                    if (id != null && list.isNotEmpty() && list.none { it.id == id }) {
-                        settingsRepository.setTtsVoiceId(null)
-                    }
-                }
+            settingsRepository.gongLong.collect { audio.setGongLong(it) }
         }
     }
 
     /** TTS-Engine lazy vorbereiten – erst beim Betreten des Meditations-Tabs, nicht beim App-Start. */
     fun prepareSpeech() = audio.prepareSpeech()
 
-    /** Bevorzugte Stimme wählen (null = automatisch beste) und persistieren. */
-    fun selectVoice(voiceId: String?) {
-        audio.selectVoice(voiceId)
-        scope.launch { settingsRepository.setTtsVoiceId(voiceId) }
+    /** Aktive neuronale Stimme wählen (null = keine) und persistieren. */
+    fun selectNeuralVoice(voiceId: String?) {
+        audio.setActiveVoice(voiceId)
+        scope.launch { settingsRepository.setNeuralVoiceId(voiceId) }
     }
 
-    /** Probe der aktuell gewählten Stimme mit einer ruhigen Beispiel-Zeile abspielen. */
-    fun previewVoice() {
-        audio.prepareSpeech()
-        audio.previewVoice(PREVIEW_SAMPLE)
+    /**
+     * Stimme entfernen. War sie aktiv, zuerst abwählen (persistiert null, basierend auf dem echten
+     * Engine-Zustand – nicht auf einem evtl. verzögerten UI-Wert), dann Engine freigeben + löschen.
+     */
+    fun deleteNeuralVoice(voiceId: String) {
+        if (audio.isActiveVoice(voiceId)) selectNeuralVoice(null)
+        audio.deleteVoice(voiceId)
     }
 
     /** Dieselbe Sitzung noch einmal starten (vom „Nochmal" auf dem Abschluss-Screen). */
@@ -353,7 +352,7 @@ class MeditationController(
         _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L) }
         // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
         // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
-        if (currentConfig.startEndGong) delay(FINISH_ABANDON_MS)
+        if (currentConfig.startEndGong) delay(audio.gongTotalMs().toLong() + FINISH_ABANDON_MARGIN_MS)
         audio.abandonFocus()
         stopService()
     }
@@ -372,9 +371,6 @@ class MeditationController(
         private const val MEDITATION_ID = "meditation"
         private const val MEDITATION_NAME = "Meditation"
 
-        /** Fester Beispiel-Satz für die Stimmen-Probe (identischer Text für den Vergleich). */
-        private const val PREVIEW_SAMPLE = "Atme ruhig ein … und wieder aus."
-
         /** Mindest-Dauer, ab der eine Sitzung ins Logbuch kommt. */
         private const val MIN_LOG_MS = 10_000L
 
@@ -391,9 +387,9 @@ class MeditationController(
         private const val GAP_MAX_MS = 120_000L
 
         /**
-         * Ausklingzeit des End-Gongs, bevor der Audio-Fokus abgegeben und der Service beendet wird.
-         * Muss länger sein als die Gong-Wiedergabe (≈5,86 s), sonst würde das Ende abgeschnitten.
+         * Reserve über die Gong-Gesamtdauer hinaus, bevor Fokus/Service enden – damit der End-Gong
+         * (Ton + Stille-Puffer, je nach Profil) sicher komplett ausklingt.
          */
-        private const val FINISH_ABANDON_MS = 6000L
+        private const val FINISH_ABANDON_MARGIN_MS = 500L
     }
 }

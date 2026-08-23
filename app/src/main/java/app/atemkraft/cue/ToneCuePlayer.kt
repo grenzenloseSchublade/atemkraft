@@ -29,6 +29,15 @@ class ToneCuePlayer {
     @Volatile
     private var volumeScale = 1f
 
+    /** true = voller, langer Ausklang (~7 s); false = kürzerer Ausklang (~4,5 s). In Einstellungen wählbar. */
+    @Volatile
+    private var gongLong = true
+
+    fun setGongLong(long: Boolean) { gongLong = long }
+
+    /** Gesamt-Wiedergabedauer des Gongs (Ton + Stille) fürs aktuelle Profil – für Warte-/Fokus-Timing. */
+    fun gongTotalMs(): Int = (if (gongLong) GONG_TONE_LONG_MS else GONG_TONE_SHORT_MS) + GONG_TAIL_SILENCE_MS
+
     fun setVolume(volume: ToneVolume) {
         // Cue-Töne haben höheren Grundpegel (0.5) – Anhebung mit Reserve gegen Clipping.
         volumeScale = when (volume) {
@@ -57,23 +66,27 @@ class ToneCuePlayer {
      */
     private fun synthesizeAndPlayGong() {
         if (released) return
-        val sampleCount = SAMPLE_RATE * GONG_DURATION_MS / 1000
-        val samples = ShortArray(sampleCount)
+        // Grundton-Abklingzeit + Fenster je nach gewähltem Profil. Fenster ist so bemessen, dass der
+        // Ton NATÜRLICH exponentiell bis ~-60 dB (praktisch Stille) ausschwingt – nicht abgeschnitten,
+        // nicht künstlich gefadet (nur 150 ms Anti-Klick am Ende). t(-60dB) = tau·ln(1000).
+        val fundTau = if (gongLong) 1.1 else 0.85
+        val toneMs = if (gongLong) GONG_TONE_LONG_MS else GONG_TONE_SHORT_MS
+        val toneCount = SAMPLE_RATE * toneMs / 1000
+        // … plus großzügige echte Stille am Ende, damit die Audioausgabe (HAL/Bluetooth-Latenz)
+        // das Ende garantiert nicht abschneidet.
+        val silenceCount = SAMPLE_RATE * GONG_TAIL_SILENCE_MS / 1000
+        val samples = ShortArray(toneCount + silenceCount) // ab toneCount bleiben die Werte 0 (Stille)
         // Teilton: Frequenz (Hz), Amplitude, Abkling-Zeitkonstante tau (s).
-        // Grundton + Schwebungspartner klingen bewusst langsam aus (großes tau) → langer,
-        // weicher Nachhall; die hohen Obertöne bleiben kurz (nur der Anschlags-Schimmer).
         val partials = listOf(
-            Triple(330.0, 0.50, 1.7),
-            Triple(331.6, 0.20, 1.7),
+            Triple(330.0, 0.50, fundTau),
+            Triple(331.6, 0.20, fundTau),
             Triple(894.0, 0.20, 0.45),
             Triple(1698.0, 0.10, 0.20),
         )
         val attackSamples = (SAMPLE_RATE * 0.008).toInt()
-        // Langer, weicher Ausklang: Das Fenster ist so bemessen, dass der Grundton bis zum Ende
-        // fast verklungen ist (~3 %), damit der Gong natürlich austönt statt abgeschnitten zu wirken.
-        val releaseSamples = (SAMPLE_RATE * 0.9).toInt()
+        val releaseSamples = (SAMPLE_RATE * 0.15).toInt()
 
-        for (i in 0 until sampleCount) {
+        for (i in 0 until toneCount) {
             val t = i.toDouble() / SAMPLE_RATE
             var v = 0.0
             for ((freq, amp, tau) in partials) {
@@ -81,14 +94,14 @@ class ToneCuePlayer {
             }
             val envelope = when {
                 i < attackSamples -> i.toDouble() / attackSamples
-                i > sampleCount - releaseSamples ->
-                    (sampleCount - i).toDouble() / releaseSamples
+                i > toneCount - releaseSamples ->
+                    (toneCount - i).toDouble() / releaseSamples
                 else -> 1.0
             }
             samples[i] = (v * envelope * AMPLITUDE * volumeScale).toInt()
                 .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
         }
-        playSamples(samples, GONG_DURATION_MS)
+        playSamples(samples, toneMs + GONG_TAIL_SILENCE_MS)
     }
 
     private fun synthesizeAndPlay(frequencyHz: Double, durationMs: Int) {
@@ -134,7 +147,9 @@ class ToneCuePlayer {
         try {
             track.write(samples, 0, samples.size)
             track.play()
-            Thread.sleep((durationMs + 60).toLong())
+            // Großzügige Reserve über die Puffer-Dauer hinaus: stop() darf nie in noch klingendes
+            // Audio fallen (HAL-/Bluetooth-Latenz). Das Pufferende ist ohnehin Stille.
+            Thread.sleep((durationMs + 300).toLong())
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         } finally {
@@ -153,7 +168,13 @@ class ToneCuePlayer {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
 
-        /** Länge des Gongs inkl. langem, natürlichem Ausklingen (Grundton verklingt ~vollständig). */
-        const val GONG_DURATION_MS = 5800
+        /** Ton-Fenster „voller Ausklang": Grundton tau 1,1 s → -60 dB bei ~6,8 s → 7,0 s. */
+        const val GONG_TONE_LONG_MS = 7000
+
+        /** Ton-Fenster „kurz": Grundton tau 0,85 s → -60 dB bei ~5,9 s; 5,0 s ≈ -51 dB (unhörbar). */
+        const val GONG_TONE_SHORT_MS = 5000
+
+        /** Großzügige echte Stille NACH dem verklungenen Ton – garantiert kein Abschneiden. */
+        const val GONG_TAIL_SILENCE_MS = 1500
     }
 }

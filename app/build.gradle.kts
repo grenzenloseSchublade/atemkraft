@@ -14,9 +14,15 @@ android {
         applicationId = "app.atemkraft"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.0.1"
+        versionCode = 8
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Nur echte Geräte-ABIs mitliefern (sherpa-onnx-AAR enthält auch x86/x86_64 für Emulatoren).
+        // Spart ~2/3 der Native-Libs-Größe; arm64 deckt fast alle modernen Geräte, arm32 die alten.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
     }
 
     signingConfigs {
@@ -59,6 +65,12 @@ android {
 }
 
 dependencies {
+    // Neuronale Offline-TTS-Engine (Piper/VITS „Thorsten") – AAR bringt Native-Libs + Kotlin-API.
+    // Bewusst als gebündeltes AAR (offline, reproduzierbar) statt Maven/JitPack.
+    implementation(files("libs/sherpa-onnx-1.13.6.aar"))
+    // Zum Entpacken des heruntergeladenen Stimmmodells (.tar.bz2): reines Java, keine Native-Libs.
+    implementation(libs.commons.compress)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

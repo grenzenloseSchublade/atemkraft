@@ -4,8 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,9 +14,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -40,7 +41,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.cue.VoiceOption
+import app.atemkraft.cue.tts.VoiceCatalog
+import app.atemkraft.cue.tts.VoiceDownloadState
+import app.atemkraft.cue.tts.VoiceGender
+import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.Refs
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
@@ -48,7 +52,6 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
-import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.theme.SECONDARY
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
@@ -68,10 +71,15 @@ fun SettingsScreen(
     onToggleNextPhase: (Boolean) -> Unit,
     gongIntervalMin: Int,
     onGongInterval: (Int) -> Unit,
-    voices: List<VoiceOption>,
-    selectedVoiceId: String?,
+    gongLong: Boolean,
+    onGongLong: (Boolean) -> Unit,
+    voiceStates: Map<String, VoiceDownloadState>,
+    activeVoiceId: String?,
+    piperEngineReady: Boolean,
+    onSampleVoice: (VoiceSpec) -> Unit,
+    onDownloadVoice: (String) -> Unit,
     onSelectVoice: (String?) -> Unit,
-    onPreviewVoice: () -> Unit,
+    onDeleteVoice: (String) -> Unit,
     onOpenGlossary: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
@@ -93,14 +101,16 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(16.dp))
 
-            SoundCard(soundMode, transition, volume, onSoundMode, onTransition, onVolume)
+            SoundCard(soundMode, transition, volume, onSoundMode, onTransition, onVolume, gongLong, onGongLong)
 
             Spacer(Modifier.height(16.dp))
             SessionCard(haptics, showSafetyWarning, showNextPhase, onToggleHaptics, onToggleSafety, onToggleNextPhase)
 
             Spacer(Modifier.height(16.dp))
             MeditationCard(
-                gongIntervalMin, onGongInterval, voices, selectedVoiceId, onSelectVoice, onPreviewVoice,
+                gongIntervalMin, onGongInterval,
+                voiceStates, activeVoiceId, piperEngineReady,
+                onSampleVoice, onDownloadVoice, onSelectVoice, onDeleteVoice,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -127,6 +137,8 @@ private fun SoundCard(
     onSoundMode: (SoundMode) -> Unit,
     onTransition: (TransitionEmphasis) -> Unit,
     onVolume: (ToneVolume) -> Unit,
+    gongLong: Boolean,
+    onGongLong: (Boolean) -> Unit,
 ) {
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -224,6 +236,26 @@ private fun SoundCard(
                 Spacer(Modifier.height(4.dp))
                 Hint(stringResource(R.string.volume_hint))
             }
+
+            // Gong-Ausklang: app-weit (Sitzungs-Abschluss- UND Meditations-Gong), daher hier in der
+            // allgemeinen Ton-Karte – nicht meditationsspezifisch. Immer sichtbar.
+            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            SubLabel(stringResource(R.string.settings_gong_length))
+            Spacer(Modifier.height(6.dp))
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = !gongLong,
+                    onClick = { onGongLong(false) },
+                    shape = SegmentedButtonDefaults.itemShape(0, 2),
+                ) { Text(stringResource(R.string.gong_length_short)) }
+                SegmentedButton(
+                    selected = gongLong,
+                    onClick = { onGongLong(true) },
+                    shape = SegmentedButtonDefaults.itemShape(1, 2),
+                ) { Text(stringResource(R.string.gong_length_long)) }
+            }
+            Spacer(Modifier.height(4.dp))
+            Hint(stringResource(R.string.settings_gong_length_hint))
         }
     }
 }
@@ -254,15 +286,17 @@ private fun SessionCard(
 
 private val GONG_INTERVALS = listOf(3, 5, 10, 15)
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MeditationCard(
     gongIntervalMin: Int,
     onGongInterval: (Int) -> Unit,
-    voices: List<VoiceOption>,
-    selectedVoiceId: String?,
+    voiceStates: Map<String, VoiceDownloadState>,
+    activeVoiceId: String?,
+    piperEngineReady: Boolean,
+    onSampleVoice: (VoiceSpec) -> Unit,
+    onDownloadVoice: (String) -> Unit,
     onSelectVoice: (String?) -> Unit,
-    onPreviewVoice: () -> Unit,
+    onDeleteVoice: (String) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -287,33 +321,116 @@ private fun MeditationCard(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
             SubLabel(stringResource(R.string.settings_voice))
-            Spacer(Modifier.height(6.dp))
-            if (voices.isEmpty()) {
-                Hint(stringResource(R.string.settings_voice_none))
-            } else {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectChip(
-                        label = stringResource(R.string.meditation_voice_auto),
-                        selected = selectedVoiceId == null,
-                        onClick = { onSelectVoice(null) },
-                    )
-                    voices.forEach { v ->
-                        SelectChip(label = v.label, selected = selectedVoiceId == v.id, onClick = { onSelectVoice(v.id) })
-                    }
-                }
-                val cd = stringResource(R.string.cd_voice_preview)
-                TextButton(
-                    onClick = onPreviewVoice,
-                    modifier = Modifier.semantics { contentDescription = cd },
-                ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.size(6.dp))
-                    Text(stringResource(R.string.settings_voice_preview))
-                }
-                Hint(stringResource(R.string.settings_voice_hint))
+            Hint(stringResource(R.string.settings_voice_catalog_hint))
+            Spacer(Modifier.height(4.dp))
+
+            // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
+            VoiceCatalog.all.forEachIndexed { index, spec ->
+                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
+                VoiceRow(
+                    spec = spec,
+                    state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
+                    active = spec.id == activeVoiceId,
+                    engineReady = piperEngineReady,
+                    onSample = { onSampleVoice(spec) },
+                    onDownload = { onDownloadVoice(spec.id) },
+                    onSelect = { onSelectVoice(spec.id) },
+                    onDelete = { onDeleteVoice(spec.id) },
+                )
             }
         }
     }
+}
+
+/** Eine Zeile im Stimmen-Katalog: Name/Info + Vorhören + Zustands-Aktion + Löschen. */
+@Composable
+private fun VoiceRow(
+    spec: VoiceSpec,
+    state: VoiceDownloadState,
+    active: Boolean,
+    engineReady: Boolean,
+    onSample: () -> Unit,
+    onDownload: () -> Unit,
+    onSelect: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = spec.displayName,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (active && engineReady) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
+            )
+            Hint(voiceSubtitle(spec, state, active, engineReady))
+        }
+
+        // Vorhören (funktioniert immer, auch vor dem Download).
+        val cdSample = stringResource(R.string.cd_voice_preview)
+        IconButton(onClick = onSample, modifier = Modifier.semantics { contentDescription = cdSample }) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+        }
+
+        when (state) {
+            is VoiceDownloadState.Downloading ->
+                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+            is VoiceDownloadState.Downloaded -> {
+                when {
+                    // Aktiv-Label erst zeigen, wenn die Engine wirklich bereit ist (gleiche Quelle
+                    // wie Highlight/Untertitel → keine widersprüchlichen Signale beim Umschalten).
+                    active && engineReady -> Text(
+                        text = stringResource(R.string.settings_voice_active),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    active && !engineReady ->
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    else ->
+                        TextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
+                }
+                val cdDelete = stringResource(R.string.cd_voice_delete)
+                IconButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = cdDelete }) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                    )
+                }
+            }
+            else -> // NotDownloaded / Failed
+                TextButton(onClick = onDownload) { Text(stringResource(R.string.settings_voice_download)) }
+        }
+    }
+}
+
+/** Untertitel einer Katalog-Zeile: Geschlecht · Qualität (+ Zustand). */
+@Composable
+private fun voiceSubtitle(
+    spec: VoiceSpec,
+    state: VoiceDownloadState,
+    active: Boolean,
+    engineReady: Boolean,
+): String {
+    val gender = when (spec.gender) {
+        VoiceGender.MALE -> stringResource(R.string.voice_gender_male)
+        VoiceGender.FEMALE -> stringResource(R.string.voice_gender_female)
+        VoiceGender.SPECIAL -> stringResource(R.string.voice_gender_special)
+    }
+    val base = "$gender · ${spec.qualityLabel}"
+    val extra = when (state) {
+        is VoiceDownloadState.NotDownloaded -> stringResource(R.string.voice_size_mb, spec.approxMb)
+        is VoiceDownloadState.Downloading ->
+            if (state.extracting) stringResource(R.string.settings_speech_pack_extracting)
+            else if (state.indeterminate) stringResource(R.string.voice_loading)
+            else stringResource(R.string.settings_speech_pack_downloading, (state.fraction * 100).toInt())
+        is VoiceDownloadState.Failed -> stringResource(R.string.voice_failed_short)
+        is VoiceDownloadState.Downloaded ->
+            if (active && !engineReady) stringResource(R.string.settings_speech_pack_preparing) else null
+    }
+    return if (extra != null) "$base · $extra" else base
 }
 
 /** Karten-Titel (einheitlich titleLarge, app-weit). */

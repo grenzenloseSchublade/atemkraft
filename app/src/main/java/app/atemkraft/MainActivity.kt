@@ -138,11 +138,14 @@ private fun AtemkraftApp() {
         .collectAsStateWithLifecycle(initialValue = MeditationConfig())
     val meditationSpeechAvailable by meditationController.speechAvailable
         .collectAsStateWithLifecycle()
-    val meditationVoices by meditationController.voices.collectAsStateWithLifecycle()
-    val meditationVoiceId by container.settingsRepository.ttsVoiceId
-        .collectAsStateWithLifecycle(initialValue = null)
     val gongIntervalMin by container.settingsRepository.gongIntervalMin
         .collectAsStateWithLifecycle(initialValue = 5)
+    val gongLong by container.settingsRepository.gongLong
+        .collectAsStateWithLifecycle(initialValue = true)
+    val voiceStates by container.voiceModelManager.states.collectAsStateWithLifecycle()
+    val activeVoiceId by container.settingsRepository.neuralVoiceId
+        .collectAsStateWithLifecycle(initialValue = null)
+    val piperEngineReady by meditationController.piperReady.collectAsStateWithLifecycle()
 
     val sessionActive = sessionState.status != SessionStatus.IDLE
     var sessionExpanded by rememberSaveable { mutableStateOf(false) }
@@ -180,12 +183,13 @@ private fun AtemkraftApp() {
     LaunchedEffect(currentTopTab) { if (currentTopTab != null) selectedTab = currentTopTab }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Tab-Leiste dauerhaft sichtbar (jederzeit Sektion wechseln, Steuerung immer erreichbar).
-        // Die Vollbild-Session liegt bei Bedarf als Overlay darüber. Bewusst NICHT bei laufender
-        // Meditation ausgeblendet: sonst strandet System-Zurück den Nutzer auf einer Seite ohne
-        // Leiste und ohne Meditations-Steuerung (Sackgasse).
+        // Während einer laufenden Meditation ist der Screen immersiv (wie die Atem-Session):
+        // Tab-Leiste ausgeblendet und System-Zurück gesperrt – beendet wird bewusst über den
+        // „Beenden"-Button (verhindert die frühere „Zurück strandet"-Sackgasse).
+        BackHandler(enabled = meditationRunning) { /* bewusst gesperrt – Beenden per Button */ }
         Scaffold(
             bottomBar = {
+                if (meditationRunning) return@Scaffold
                 Column {
                     if (sessionActive && !sessionExpanded) {
                         MiniSessionBar(state = sessionState, onClick = { sessionExpanded = true })
@@ -350,10 +354,15 @@ private fun AtemkraftApp() {
                         onToggleNextPhase = { scope.launch { container.settingsRepository.setShowNextPhase(it) } },
                         gongIntervalMin = gongIntervalMin,
                         onGongInterval = { scope.launch { container.settingsRepository.setGongIntervalMin(it) } },
-                        voices = meditationVoices,
-                        selectedVoiceId = meditationVoiceId,
-                        onSelectVoice = meditationController::selectVoice,
-                        onPreviewVoice = meditationController::previewVoice,
+                        gongLong = gongLong,
+                        onGongLong = { scope.launch { container.settingsRepository.setGongLong(it) } },
+                        voiceStates = voiceStates,
+                        activeVoiceId = activeVoiceId,
+                        piperEngineReady = piperEngineReady,
+                        onSampleVoice = { spec -> container.voiceSamplePlayer.play(spec.sampleAsset) },
+                        onDownloadVoice = { container.voiceModelManager.download(it) },
+                        onSelectVoice = meditationController::selectNeuralVoice,
+                        onDeleteVoice = { id -> meditationController.deleteNeuralVoice(id) },
                         onOpenGlossary = { navController.navigate(GlossaryRoute) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },

@@ -164,9 +164,42 @@
     <string name="cd_voice_preview">Stimme anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
     <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min" gewählt ist.</string>
+    <string name="settings_gong_length">Gong-Ausklang</string>
+    <string name="gong_length_short">Kurz</string>
+    <string name="gong_length_long">Lang</string>
+    <string name="settings_gong_length_hint">Gilt für Sitzungs- und Meditations-Gong. Beide klingen natürlich bis zur Stille aus – „Lang" hallt voller nach.</string>
     <string name="settings_voice">Sprach-Stimme</string>
     <string name="settings_voice_hint">Für die gesprochene Anleitung. „Automatisch" wählt die beste installierte deutsche Stimme.</string>
     <string name="settings_voice_none">Keine deutsche Sprachausgabe installiert. In den System-Einstellungen nachinstallierbar.</string>
+    <string name="settings_voice_system">Alternativ: System-Stimme</string>
+
+    <!-- Hochwertiges Sprachpaket (Piper „Thorsten", nachgeladen) -->
+    <string name="settings_speech_pack_offer">Natürliche deutsche Studio-Stimme „Thorsten". Einmaliger Download (~%1$d MB), danach vollständig offline.</string>
+    <string name="settings_speech_pack_download">Stimme herunterladen</string>
+    <string name="settings_speech_pack_downloading">Lädt … %1$d %%</string>
+    <string name="settings_speech_pack_extracting">Wird entpackt …</string>
+    <string name="settings_speech_pack_ready">Thorsten · Studio aktiv ✓</string>
+    <string name="settings_speech_pack_preparing">Geladen – wird vorbereitet …</string>
+    <string name="settings_speech_pack_remove">Entfernen</string>
+    <string name="settings_speech_pack_failed">Download fehlgeschlagen: %1$s</string>
+    <string name="settings_speech_pack_retry">Erneut versuchen</string>
+
+    <!-- Stimmen-Katalog -->
+    <string name="settings_voice_catalog_hint">Erst anhören, dann laden. Mehrere Stimmen möglich; die gewählte wird in der Anleitung gesprochen.</string>
+    <string name="settings_voice_active">Aktiv ✓</string>
+    <string name="settings_voice_choose">Wählen</string>
+    <string name="settings_voice_download">Laden</string>
+    <string name="cd_voice_delete">Stimme löschen</string>
+    <string name="voice_gender_male">männlich</string>
+    <string name="voice_gender_female">weiblich</string>
+    <string name="voice_gender_special">Spezial</string>
+    <string name="voice_size_mb">~%1$d MB</string>
+    <string name="voice_loading">lädt …</string>
+    <string name="voice_failed_short">Fehler – erneut versuchen</string>
+
+    <!-- Credits / Open-Source-Danksagung (Über-Screen) -->
+    <string name="about_credits_title">Open-Source-Komponenten</string>
+    <string name="about_credits_body">Die hochwertige Sprachausgabe steht dank dieser freien Projekte zur Verfügung:\n\n• sherpa-onnx (k2-fsa) — Apache-2.0\ngithub.com/k2-fsa/sherpa-onnx\n\n• Piper (rhasspy) — MIT\ngithub.com/rhasspy/piper\n\n• ONNX Runtime (Microsoft) — MIT\ngithub.com/microsoft/onnxruntime\n\n• Stimme „Thorsten" (Thorsten Müller) — CC0 / gemeinfrei\ngithub.com/thorstenMueller/Thorsten-Voice\n\n• Apache Commons Compress — Apache-2.0\n\nDas Stimmmodell wird nur auf ausdrücklichen Wunsch von GitHub geladen — die einzige Netznutzung der App.</string>
 
     <!-- Barrierefreiheit -->
     <string name="cd_breathing_circle">Atemkreis</string>

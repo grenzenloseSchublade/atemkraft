@@ -22,6 +22,8 @@ data class CueSettings(
     val haptics: Boolean = true,
     val transition: TransitionEmphasis = TransitionEmphasis.MEDIUM,
     val volume: ToneVolume = ToneVolume.LOUD,
+    /** Gong-Ausklang lang/kurz (app-weit, auch für den Sitzungs-Abschlussgong). */
+    val gongLong: Boolean = true,
 )
 
 /** Sicherheits-Einstellungen. [acknowledged] = wurde der Hinweis schon einmal bestätigt. */
@@ -50,6 +52,15 @@ class SettingsRepository(private val context: Context) {
         val MED_GONG_INTERVAL = intPreferencesKey("med_gong_interval") // Einstellung: X Minuten
         val MED_SPEECH = booleanPreferencesKey("med_speech")
         val MED_TTS_VOICE = stringPreferencesKey("med_tts_voice") // Voice.getName; leer = auto
+        val MED_NEURAL_VOICE = stringPreferencesKey("med_neural_voice") // VoiceCatalog.id; leer = keine
+        val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
+    }
+
+    /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */
+    val gongLong: Flow<Boolean> = context.dataStore.data.map { it[Keys.MED_GONG_LONG] ?: true }
+
+    suspend fun setGongLong(long: Boolean) {
+        context.dataStore.edit { it[Keys.MED_GONG_LONG] = long }
     }
 
     /** Bevorzugte TTS-Stimme (Voice-Name); null = automatisch beste. In Einstellungen wählbar. */
@@ -58,6 +69,15 @@ class SettingsRepository(private val context: Context) {
     suspend fun setTtsVoiceId(voiceId: String?) {
         context.dataStore.edit { prefs ->
             if (voiceId == null) prefs.remove(Keys.MED_TTS_VOICE) else prefs[Keys.MED_TTS_VOICE] = voiceId
+        }
+    }
+
+    /** Aktive neuronale Stimme ([app.atemkraft.cue.tts.VoiceCatalog]-Id); null = keine gewählt. */
+    val neuralVoiceId: Flow<String?> = context.dataStore.data.map { it[Keys.MED_NEURAL_VOICE] }
+
+    suspend fun setNeuralVoiceId(voiceId: String?) {
+        context.dataStore.edit { prefs ->
+            if (voiceId == null) prefs.remove(Keys.MED_NEURAL_VOICE) else prefs[Keys.MED_NEURAL_VOICE] = voiceId
         }
     }
 
@@ -86,6 +106,7 @@ class SettingsRepository(private val context: Context) {
                 ?: TransitionEmphasis.MEDIUM,
             volume = prefs[Keys.VOLUME]?.let { ToneVolume.entries.getOrNull(it) }
                 ?: ToneVolume.LOUD,
+            gongLong = prefs[Keys.MED_GONG_LONG] ?: true,
         )
     }
 
