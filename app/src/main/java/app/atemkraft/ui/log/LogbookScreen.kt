@@ -1,6 +1,7 @@
 package app.atemkraft.ui.log
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,8 +36,10 @@ import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.theme.NeonCyan
+import app.atemkraft.ui.theme.SynthTrack
 import app.atemkraft.ui.theme.SECONDARY
 import java.text.SimpleDateFormat
+import java.time.format.TextStyle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -48,6 +53,10 @@ fun LogbookScreen(
     onClear: () -> Unit,
 ) {
     val activeDays = remember(entries) { entries.map { it.startedAtEpochMs.toEpochDay() }.toSet() }
+    val minutesPerDay = remember(entries) {
+        entries.groupBy { it.startedAtEpochMs.toEpochDay() }
+            .mapValues { (_, list) -> list.sumOf { it.durationMs } / 60_000L }
+    }
     val streak = remember(activeDays) { currentStreak(activeDays) }
 
     Surface(
@@ -68,7 +77,7 @@ fun LogbookScreen(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Spacer(Modifier.height(8.dp))
-                StatsCard(entries = entries, streak = streak, activeDays = activeDays, onClear = onClear)
+                StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, onClear = onClear)
                 Spacer(Modifier.height(4.dp))
             }
 
@@ -92,7 +101,7 @@ fun LogbookScreen(
 private fun StatsCard(
     entries: List<SessionLogEntry>,
     streak: Int,
-    activeDays: Set<Long>,
+    minutesPerDay: Map<Long, Long>,
     onClear: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -104,7 +113,7 @@ private fun StatsCard(
                 color = if (streak > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(12.dp))
-            WeekRow(activeDays = activeDays)
+            WeekRow(minutesPerDay = minutesPerDay)
             if (entries.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 Row(
@@ -126,8 +135,13 @@ private fun StatsCard(
     }
 }
 
+/**
+ * Ruhige 7-Tage-Übersicht: pro Tag ein Punkt, dessen Intensität mit den geübten Minuten
+ * wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine Wertung). Bewusst ohne Zahlen und
+ * ohne Druck; heute bekommt nur einen sanften Ring. Details stehen für TalkBack bereit.
+ */
 @Composable
-private fun WeekRow(activeDays: Set<Long>) {
+private fun WeekRow(minutesPerDay: Map<Long, Long>) {
     val today = LocalDate.now()
     val labels = listOf("M", "D", "M", "D", "F", "S", "S")
     Row(
@@ -136,15 +150,34 @@ private fun WeekRow(activeDays: Set<Long>) {
     ) {
         for (offset in 6 downTo 0) {
             val day = today.minusDays(offset.toLong())
-            val active = day.toEpochDay() in activeDays
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            val minutes = minutesPerDay[day.toEpochDay()] ?: 0L
+            // Sequenzielle Rampe (eine Hue): leer → leise → präsent → voll.
+            val fill = when {
+                minutes <= 0L -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                minutes < 10L -> MaterialTheme.colorScheme.primary.copy(alpha = 0.40f)
+                minutes < 25L -> MaterialTheme.colorScheme.primary.copy(alpha = 0.70f)
+                else -> MaterialTheme.colorScheme.primary
+            }
+            val isToday = offset == 0
+            val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.GERMAN)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.semantics {
+                    contentDescription = if (minutes > 0) "$dayName: $minutes Minuten geübt"
+                    else "$dayName: keine Übung"
+                },
+            ) {
                 Box(
                     modifier = Modifier
                         .size(18.dp)
                         .clip(CircleShape)
-                        .background(
-                            if (active) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        .background(fill)
+                        .then(
+                            if (isToday) {
+                                Modifier.border(1.dp, SynthTrack.copy(alpha = 0.55f), CircleShape)
+                            } else {
+                                Modifier
+                            },
                         ),
                 )
                 Spacer(Modifier.height(4.dp))

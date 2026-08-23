@@ -20,7 +20,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -44,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -271,7 +275,13 @@ private fun AtemkraftApp() {
             NavHost(
                 navController = navController,
                 startDestination = AtmenRoute,
-                modifier = Modifier.padding(innerPadding),
+                // Tablets/Foldables: Inhalte auf lesbare Breite begrenzen und mittig setzen;
+                // die Seitenränder zeigen den (identischen) Fensterhintergrund.
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+                    .widthIn(max = 600.dp),
                 enterTransition = { fadeIn(tween(180)) },
                 exitTransition = { fadeOut(tween(180)) },
                 popEnterTransition = { fadeIn(tween(180)) },

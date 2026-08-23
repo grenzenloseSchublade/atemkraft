@@ -29,6 +29,14 @@ class HapticPlayer(context: Context) {
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
         .build()
 
+    /** Sanftes UI-Tick (Kreis-Tap): kurz und leise – Bestätigung, kein Cue. */
+    fun tick() {
+        val v = vibrator ?: return
+        if (!v.hasVibrator()) return
+        @Suppress("DEPRECATION")
+        v.vibrate(VibrationEffect.createOneShot(25, 130), attributes)
+    }
+
     fun play(event: CueEvent) {
         val v = vibrator ?: return
         if (!v.hasVibrator()) return

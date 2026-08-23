@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +46,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -54,8 +56,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.zIndex
 import app.atemkraft.R
+import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.FinishedPanel
@@ -65,6 +69,7 @@ import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.rememberTapFlash
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
 import app.atemkraft.ui.theme.SessionButtonPink
@@ -127,7 +132,12 @@ private fun ActiveContent(
 
     // Tap-Flash (geteilt mit der Meditation): großes Pause/Play-Symbol beim Antippen.
     val tapFlash = rememberTapFlash()
+    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap – über den Vibrator (USAGE_ALARM), damit es
+    // nicht am System-Schalter „Tipp-Vibration" hängt (Samsung verwirft das sonst still).
+    val context = LocalContext.current
+    val haptics = remember { HapticPlayer(context) }
     fun flashToggle() {
+        haptics.tick()
         tapFlash.flash(isPause = state.status == SessionStatus.RUNNING) // läuft → wird pausiert
         onTogglePause()
     }
@@ -135,11 +145,13 @@ private fun ActiveContent(
     // Box statt SpaceBetween-Column: Kopfzeile, Kreis und Buttons sind fest verankert
     // (oben/Mitte/unten). Die ausgeklappte Anleitung verschiebt den Kreis dadurch NICHT –
     // bei wenig Platz legt sie sich über den Kreisrand (zIndex), statt ihn zu drücken.
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(Dimens.SessionPadding),
     ) {
+        // Landscape/Tablet-fest: Kreis nach der knapperen Dimension bemessen (statt nur Breite).
+        val circleSide = min(maxWidth * 0.9f, maxHeight * 0.62f)
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -212,8 +224,7 @@ private fun ActiveContent(
         BreathingCircle(
             fraction = fraction,
             modifier = Modifier
-                .fillMaxWidth(0.90f)
-                .aspectRatio(1f)
+                .size(circleSide)
                 .semantics { contentDescription = circleDescription }
                 .then(
                     when (state.status) {

@@ -1,8 +1,11 @@
 package app.atemkraft.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 
 /**
  * Bewusst NUR Dark: Die Synthwave-Palette ist für abendliche Nutzung entworfen; ein helles
@@ -35,11 +38,24 @@ private val AtemkraftColors = darkColorScheme(
     outlineVariant = OutlineVariantIndigo,
 )
 
+/**
+ * Weiche, moderne Formsprache: großzügige Rundungen (ruhig, freundlich – passend zur
+ * Yoga-/Abend-Stimmung). Bewusst KEINE geschnittenen Ecken – die wirkten altbacken.
+ */
+private val AtemkraftShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+)
+
 @Composable
 fun AtemkraftTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = AtemkraftColors,
         typography = AtemkraftTypography,
+        shapes = AtemkraftShapes,
         content = content,
     )
 }

@@ -41,7 +41,7 @@ fun InfoChip() {
 fun Chip(text: String, color: Color) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(color.copy(alpha = 0.16f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
