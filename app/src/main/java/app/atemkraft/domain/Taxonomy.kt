@@ -21,6 +21,9 @@ enum class BreathingFamily {
     FUNCTIONAL,
 }
 
+/** Art eines Logbuch-Eintrags: getaktete Atemübung oder stille Meditation. */
+enum class SessionKind { BREATHING, MEDITATION }
+
 /** Optionaler Evidenz-/Sicherheits-Hinweis als Badge an der Übung. */
 enum class EvidenceTag {
     /** Besonders gut belegt. */

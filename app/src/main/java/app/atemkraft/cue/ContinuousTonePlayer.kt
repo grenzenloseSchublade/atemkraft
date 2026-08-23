@@ -80,14 +80,18 @@ class ContinuousTonePlayer {
         thread = Thread { runLoop() }.apply { isDaemon = true; start() }
     }
 
-    /** Neue Phase: setzt den Frequenz-Glide und blendet den Ton ein. */
-    fun onPhase(type: PhaseType, durationMs: Long, open: Boolean) {
+    /**
+     * Neue Phase: setzt den Frequenz-Glide und blendet den Ton ein. [raiseGain] = false hält
+     * den Ton stumm (z. B. In-Session-Mute), aktualisiert aber die Tonhöhe weiter, damit nach
+     * dem Aufheben der Stummschaltung sofort die richtige Phase klingt.
+     */
+    fun onPhase(type: PhaseType, durationMs: Long, open: Boolean, raiseGain: Boolean = true) {
         val (f0, f1) = freqsFor(type)
         startFreq = f0
         endFreq = f1
         rampTotalSamples = if (open || durationMs <= 0L) 0L else durationMs * SAMPLE_RATE / 1000L
         rampPos = 0L
-        targetGain = 1f
+        if (raiseGain) targetGain = 1f
         // Kurze Lautstärke-Zäsur markiert den Phasenwechsel hörbar (ohne harten Beep).
         pendingArticulation = true
     }
@@ -95,6 +99,11 @@ class ContinuousTonePlayer {
     /** Blendet den Ton aus (Pause/Ende), Thread läuft weiter. */
     fun mute() {
         targetGain = 0f
+    }
+
+    /** Blendet den Ton wieder ein (z. B. nach In-Session-Stummschalten); Glide läuft weiter. */
+    fun unmute() {
+        targetGain = 1f
     }
 
     fun stop() {

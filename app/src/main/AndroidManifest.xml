@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Minimal: kein Internet, kein Foreground-Service – alles läuft offline.
-         Einzige Permission: VIBRATE (normal-level, harmlos) für fühlbare Phasenwechsel,
-         die auch bei ausgeschalteter System-Tipp-Haptik funktionieren. -->
+    <!-- Kein Internet – alles läuft offline. VIBRATE (normal-level) für fühlbare
+         Phasenwechsel. Ein Foreground-Service (mediaPlayback) hält den Meditations-Timer
+         bei ausgeschaltetem Bildschirm zuverlässig am Laufen (Gong/Sprache trotz Doze). -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Sichtbarkeit der geräteeigenen Text-to-Speech-Engine (Package-Visibility ab Android 11),
+         für die optionale gesprochene Meditations-Anleitung. Läuft lokal/offline. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 
     <application
         android:name=".AtemkraftApplication"
@@ -25,5 +36,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".ui.meditation.MeditationService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>

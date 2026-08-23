@@ -13,6 +13,9 @@ object SituationenRoute
 object LogbuchRoute
 
 @Serializable
+object MeditationRoute
+
+@Serializable
 object SettingsRoute
 
 @Serializable

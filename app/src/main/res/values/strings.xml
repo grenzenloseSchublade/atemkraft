@@ -38,6 +38,10 @@
     <string name="detail_intense">intensiv</string>
     <string name="detail_calm">ruhig</string>
     <string name="detail_sources_count">%1$d Quellen</string>
+    <string name="duration_approx">ca. %1$d min</string>
+    <string name="duration_approx_from">ab ca. %1$d min</string>
+    <!-- „Starten · ca. 10 min" – Gesamtdauer direkt am Start. -->
+    <string name="action_start_duration">%1$s · %2$s</string>
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
@@ -51,6 +55,8 @@
 
     <!-- Mini-Player / Overlay -->
     <string name="action_minimize">Minimieren</string>
+    <string name="action_sound_on">Ton an</string>
+    <string name="action_sound_off">Ton aus</string>
     <string name="mini_open">Session öffnen</string>
     <string name="session_paused">Pausiert</string>
 
@@ -150,6 +156,39 @@
     <string name="volume_hint">Relativ zur Medien-Lautstärke deines Geräts.</string>
     <string name="settings_haptics">Vibration bei Phasenwechsel</string>
 
+    <!-- Einstellungen · Meditation -->
+    <string name="settings_meditation_title">Meditation</string>
+    <string name="settings_gong_interval">Gong-Intervall</string>
+    <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min" gewählt ist.</string>
+    <string name="settings_voice">Sprach-Stimme</string>
+    <string name="settings_voice_hint">Für die gesprochene Anleitung. „Automatisch" wählt die beste installierte deutsche Stimme.</string>
+    <string name="settings_voice_none">Keine deutsche Sprachausgabe installiert. In den System-Einstellungen nachinstallierbar.</string>
+
     <!-- Barrierefreiheit -->
     <string name="cd_breathing_circle">Atemkreis</string>
+
+    <!-- Meditation -->
+    <string name="tab_meditation">Meditation</string>
+    <string name="meditation_title">Meditation</string>
+    <string name="meditation_subtitle">Stille Sitzung mit Gong</string>
+    <string name="meditation_mode_timed">Timer</string>
+    <string name="meditation_mode_free">Frei</string>
+    <string name="meditation_duration">Dauer</string>
+    <string name="meditation_free_hint">Offene Sitzung – die Stoppuhr läuft, bis du beendest.</string>
+    <string name="meditation_gong_label">Gong</string>
+    <string name="meditation_gong_startstop">Start &amp; Ende</string>
+    <string name="meditation_interval_minutes">alle %1$d min</string>
+    <string name="meditation_off">Aus</string>
+    <string name="meditation_speech_label">Sprach-Anleitung</string>
+    <string name="meditation_speech_on">An</string>
+    <string name="meditation_speech_hint">Spricht in unregelmäßigen Abständen kurze Hinweise.</string>
+    <string name="meditation_speech_unavailable">Keine deutsche Sprachausgabe auf dem Gerät verfügbar.</string>
+    <string name="meditation_voice_label">Stimme</string>
+    <string name="meditation_voice_auto">Automatisch</string>
+    <string name="meditation_minutes">%1$d min</string>
+    <string name="meditation_done_title">Sitzung beendet</string>
+    <string name="cd_meditation_ring">Meditations-Ring</string>
+    <string name="meditation_notification_channel">Meditation</string>
+    <string name="meditation_notification_title">Meditation läuft</string>
+    <string name="meditation_notification_remaining">%1$s verbleibend</string>
 </resources>

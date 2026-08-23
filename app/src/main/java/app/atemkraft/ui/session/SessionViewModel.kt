@@ -68,6 +68,8 @@ data class SessionUiState(
     val nextPhaseType: PhaseType? = null,
     /** Kurze Muster-Anleitung (für die Übersicht im Start-Countdown). */
     val patternHint: String? = null,
+    /** Transienter In-Session-Stummschalter (übersteuert den Ton, nicht die Einstellung). */
+    val muted: Boolean = false,
 )
 
 /**
@@ -106,6 +108,7 @@ class SessionViewModel(
             status = _state.map { it.status },
             cues = cues,
             phaseAudio = phaseAudio,
+            muted = _state.map { it.muted },
         )
     }
 
@@ -191,6 +194,11 @@ class SessionViewModel(
     /** Beendet eine offene Phase ([PhaseDuration.OpenEnded]/[PhaseDuration.UntilUrge]). */
     fun continueFromUserPaced() {
         continueSignal?.complete(Unit)
+    }
+
+    /** Schaltet den Ton der laufenden Session schnell stumm/wieder an (nur transient). */
+    fun toggleMute() {
+        _state.update { it.copy(muted = !it.muted) }
     }
 
     fun stop() {

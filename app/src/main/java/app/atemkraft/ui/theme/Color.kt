@@ -53,3 +53,6 @@ val SessionTextGlow = Color(0xFF160B22)
 // damit der Atemkreis der Blickfang bleibt. Pink für „Beenden" im selben gedeckten Ton.
 val SessionButtonCyan = Color(0xFF6FB6BA)
 val SessionButtonPink = Color(0xFFFF8FB0)
+
+/** Einheitliche Deckkraft für Sekundärtext (dezente Unter-/Beschriftungen) – app-weit. */
+const val SECONDARY = 0.7f

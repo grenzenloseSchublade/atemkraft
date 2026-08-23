@@ -6,7 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -40,6 +43,32 @@ class SettingsRepository(private val context: Context) {
         val SHOW_SAFETY = booleanPreferencesKey("show_safety_warning")
         val SAFETY_ACK = booleanPreferencesKey("safety_acknowledged")
         val SHOW_NEXT = booleanPreferencesKey("show_next_phase")
+        val MED_MODE = intPreferencesKey("med_mode")
+        val MED_MINUTES = intPreferencesKey("med_minutes")
+        val MED_START_END_GONG = booleanPreferencesKey("med_start_end_gong")
+        val MED_INTERVAL_ON = booleanPreferencesKey("med_interval_on") // Tab-Wahl: Intervall an
+        val MED_GONG_INTERVAL = intPreferencesKey("med_gong_interval") // Einstellung: X Minuten
+        val MED_SPEECH = booleanPreferencesKey("med_speech")
+        val MED_TTS_VOICE = stringPreferencesKey("med_tts_voice") // Voice.getName; leer = auto
+    }
+
+    /** Bevorzugte TTS-Stimme (Voice-Name); null = automatisch beste. In Einstellungen wählbar. */
+    val ttsVoiceId: Flow<String?> = context.dataStore.data.map { it[Keys.MED_TTS_VOICE] }
+
+    suspend fun setTtsVoiceId(voiceId: String?) {
+        context.dataStore.edit { prefs ->
+            if (voiceId == null) prefs.remove(Keys.MED_TTS_VOICE) else prefs[Keys.MED_TTS_VOICE] = voiceId
+        }
+    }
+
+    /** Länge des Intervall-Gongs (Minuten) – in Einstellungen wählbar; Standard 5.
+     *  Alt-Werte < 3 (frühere „kein Intervall = 0"-Semantik) fallen auf den Standard zurück. */
+    val gongIntervalMin: Flow<Int> = context.dataStore.data.map {
+        it[Keys.MED_GONG_INTERVAL]?.takeIf { m -> m >= 3 }?.coerceAtMost(60) ?: 5
+    }
+
+    suspend fun setGongIntervalMin(minutes: Int) {
+        context.dataStore.edit { it[Keys.MED_GONG_INTERVAL] = minutes.coerceIn(3, 60) }
     }
 
     val showNextPhase: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -92,5 +121,31 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setShowNextPhase(enabled: Boolean) {
         context.dataStore.edit { it[Keys.SHOW_NEXT] = enabled }
+    }
+
+    /** Zuletzt gewählte Meditations-Einstellung (Modus, Dauer, Intervall-Gong, Sprache). */
+    val meditationSettings: Flow<MeditationConfig> = context.dataStore.data.map { prefs ->
+        // Intervall an/aus ist die Tab-Wahl; die Länge X kommt aus der Einstellung.
+        val intervalOn = prefs[Keys.MED_INTERVAL_ON] ?: false
+        val intervalMin = prefs[Keys.MED_GONG_INTERVAL]?.takeIf { it >= 3 }?.coerceAtMost(60) ?: 5
+        MeditationConfig(
+            mode = prefs[Keys.MED_MODE]?.let { MeditationMode.entries.getOrNull(it) }
+                ?: MeditationMode.TIMED,
+            minutes = (prefs[Keys.MED_MINUTES] ?: 10).coerceIn(1, 180),
+            startEndGong = prefs[Keys.MED_START_END_GONG] ?: true,
+            gongEveryMin = intervalMin.takeIf { intervalOn },
+            speech = prefs[Keys.MED_SPEECH] ?: false,
+        )
+    }
+
+    /** Speichert die Tab-Wahl (nicht die globale Intervall-Länge – die bleibt eine Einstellung). */
+    suspend fun setMeditationConfig(config: MeditationConfig) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.MED_MODE] = config.mode.ordinal
+            prefs[Keys.MED_MINUTES] = config.minutes
+            prefs[Keys.MED_START_END_GONG] = config.startEndGong
+            prefs[Keys.MED_INTERVAL_ON] = config.gongEveryMin != null
+            prefs[Keys.MED_SPEECH] = config.speech
+        }
     }
 }

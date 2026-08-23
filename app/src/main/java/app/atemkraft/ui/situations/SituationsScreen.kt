@@ -19,6 +19,7 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.home.SectionHeader
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
 
 /**
@@ -39,7 +40,7 @@ fun SituationsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
                 Spacer(Modifier.height(20.dp))
@@ -51,7 +52,7 @@ fun SituationsScreen(
                 Text(
                     text = stringResource(R.string.situations_subtitle),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
             }
 
@@ -62,7 +63,7 @@ fun SituationsScreen(
                     Text(
                         text = rec.rationale,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                         modifier = Modifier.padding(bottom = 4.dp),
                     )
                 }

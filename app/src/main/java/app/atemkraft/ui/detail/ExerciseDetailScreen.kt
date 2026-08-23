@@ -10,12 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,10 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceTag
@@ -43,11 +39,15 @@ import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SessionConfig
+import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.domain.estimatedTotalSeconds
+import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
@@ -105,6 +105,12 @@ fun ExerciseDetailScreen(
         } else {
             base
         }
+    }
+
+    // Grobe Gesamtdauer der aktuell eingestellten Session (Runden/Minuten + Intervalle) –
+    // live neu berechnet, wenn sich einer der Anpassungswerte ändert.
+    val estimatedSeconds = remember(value, intervalsTouched, inhaleSec, exhaleSec, holdSec) {
+        exercise.adjusted(currentConfig()).estimatedTotalSeconds()
     }
 
     fun launch() {
@@ -208,15 +214,20 @@ fun ExerciseDetailScreen(
                 if (exercise.guided) {
                     Spacer(Modifier.height(16.dp))
                     Card(modifier = Modifier.fillMaxWidth()) {
-                        Column {
+                        Column(modifier = Modifier.padding(vertical = 6.dp)) {
                             Stepper(
                                 label = if (roundBased) stringResource(R.string.adjust_rounds)
                                 else stringResource(R.string.adjust_minutes),
                                 value = value,
                                 range = range,
+                                vertical = 10.dp,
                                 onChange = { value = it },
                             )
                             if (hasInhale || hasExhale || hasHold) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                )
                                 TextButton(
                                     onClick = { intervalsExpanded = !intervalsExpanded },
                                     modifier = Modifier.padding(start = 8.dp),
@@ -229,20 +240,21 @@ fun ExerciseDetailScreen(
                                 }
                                 if (intervalsExpanded) {
                                     if (hasInhale) {
-                                        Stepper(stringResource(R.string.adjust_inhale), inhaleSec, 2..12) {
+                                        Stepper(stringResource(R.string.adjust_inhale), inhaleSec, 2..12, vertical = 6.dp) {
                                             inhaleSec = it; intervalsTouched = true
                                         }
                                     }
                                     if (hasHold) {
-                                        Stepper(stringResource(R.string.adjust_hold), holdSec, 1..20) {
+                                        Stepper(stringResource(R.string.adjust_hold), holdSec, 1..20, vertical = 6.dp) {
                                             holdSec = it; intervalsTouched = true
                                         }
                                     }
                                     if (hasExhale) {
-                                        Stepper(stringResource(R.string.adjust_exhale), exhaleSec, 2..15) {
+                                        Stepper(stringResource(R.string.adjust_exhale), exhaleSec, 2..15, vertical = 6.dp) {
                                             exhaleSec = it; intervalsTouched = true
                                         }
                                     }
+                                    Spacer(Modifier.height(6.dp))
                                 }
                             }
                         }
@@ -266,8 +278,21 @@ fun ExerciseDetailScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                     ) {
+                        // Gesamtdauer direkt am Start: „Starten · ca. 10 min".
+                        val start = stringResource(R.string.action_start)
+                        val startLabel = when {
+                            estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
+                            exercise.hasOpenPhases -> stringResource(
+                                R.string.action_start_duration, start,
+                                stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
+                            )
+                            else -> stringResource(
+                                R.string.action_start_duration, start,
+                                stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
+                            )
+                        }
                         Button(onClick = { launch() }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.action_start))
+                            Text(startLabel)
                         }
                     }
                 }
@@ -285,48 +310,6 @@ fun ExerciseDetailScreen(
             },
             onDismiss = { showSafety = false },
         )
-    }
-}
-
-@Composable
-private fun Stepper(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalIconButton(
-                onClick = { onChange((value - 1).coerceIn(range)) },
-                enabled = value > range.first,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = "$label, verringern" },
-            ) {
-                Text("−", style = MaterialTheme.typography.headlineSmall)
-            }
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .width(48.dp)
-                    .clearAndSetSemantics { contentDescription = "$label: $value" },
-            )
-            FilledTonalIconButton(
-                onClick = { onChange((value + 1).coerceIn(range)) },
-                enabled = value < range.last,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = "$label, erhöhen" },
-            ) {
-                Text("+", style = MaterialTheme.typography.headlineSmall)
-            }
-        }
     }
 }
 

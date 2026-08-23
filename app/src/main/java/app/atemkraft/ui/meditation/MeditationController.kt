@@ -1,0 +1,352 @@
+package app.atemkraft.ui.meditation
+
+import android.content.Context
+import android.os.SystemClock
+import androidx.core.content.ContextCompat
+import app.atemkraft.data.LogbookRepository
+import app.atemkraft.data.MeditationCues
+import app.atemkraft.data.SettingsRepository
+import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.SessionKind
+import app.atemkraft.domain.SessionLogEntry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlin.math.min
+import kotlin.random.Random
+
+enum class MeditationStatus { IDLE, PREPARING, RUNNING, PAUSED, FINISHED }
+
+/**
+ * Sichtbarer Zustand einer Meditations-Sitzung. Im [MeditationMode.TIMED] zählt
+ * [remainingMs] herunter (von [totalMs]); im [MeditationMode.FREE] zählt [elapsedMs] hoch.
+ */
+data class MeditationUiState(
+    val mode: MeditationMode = MeditationMode.TIMED,
+    val status: MeditationStatus = MeditationStatus.IDLE,
+    val remainingMs: Long = 0L,
+    val totalMs: Long = 0L,
+    val elapsedMs: Long = 0L,
+    /** Verbleibende Sekunden im Start-Countdown (nur bei [MeditationStatus.PREPARING]). */
+    val countdown: Int = 0,
+)
+
+/**
+ * App-weiter Ablauf einer Meditation. Bewusst **nicht** an ein ViewModel/den UI-Lifecycle
+ * gebunden, sondern an einen eigenen [scope] – zusammen mit dem [MeditationService]
+ * (Foreground) läuft der Timer damit zuverlässig weiter, auch wenn der Bildschirm aus ist
+ * oder die Activity im Hintergrund pausiert. An die Monotonuhr verankert (kein Drift).
+ * Gongs/Sprache laufen über den [MeditationAudioCoordinator].
+ */
+class MeditationController(
+    context: Context,
+    private val settingsRepository: SettingsRepository,
+    private val logbook: LogbookRepository,
+    private val audio: MeditationAudioCoordinator,
+) {
+    private val appContext = context.applicationContext
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    private val _state = MutableStateFlow(MeditationUiState())
+    val state: StateFlow<MeditationUiState> = _state.asStateFlow()
+
+    /** Verfügbarkeit einer deutschen TTS-Stimme (steuert den Sprach-Schalter im UI). */
+    val speechAvailable: StateFlow<Boolean> = audio.speechAvailable
+
+    /** Wählbare deutsche Stimmen (für die Auswahl im UI). */
+    val voices = audio.voices
+
+    private var currentConfig = MeditationConfig()
+    private var totalMs = 0L
+    private var runnerJob: Job? = null
+
+    private var resumeRemainingMs: Long? = null
+    private var resumeElapsedMs: Long? = null
+
+    private var startedAtEpochMs = 0L
+    private var activeElapsedMs = 0L
+    private var lastTickRealtime = 0L
+
+    /** Verhindert doppeltes finish() (schneller Doppel-Tipp / Notification + Screen). */
+    private var finishing = false
+
+    init {
+        scope.launch {
+            settingsRepository.cueSettings.collect { audio.updateVolume(it.volume) }
+        }
+        // Persistierte Stimmen-Vorwahl anwenden (wirkt, sobald TTS bereit ist).
+        scope.launch {
+            settingsRepository.ttsVoiceId.collect { audio.selectVoice(it) }
+        }
+    }
+
+    /** TTS-Engine lazy vorbereiten – erst beim Betreten des Meditations-Tabs, nicht beim App-Start. */
+    fun prepareSpeech() = audio.prepareSpeech()
+
+    /** Bevorzugte Stimme wählen (null = automatisch beste) und persistieren. */
+    fun selectVoice(voiceId: String?) {
+        audio.selectVoice(voiceId)
+        scope.launch { settingsRepository.setTtsVoiceId(voiceId) }
+    }
+
+    fun start(config: MeditationConfig) {
+        runnerJob?.cancel()
+        finishing = false
+        currentConfig = config
+        totalMs = if (config.mode == MeditationMode.TIMED) config.minutes * 60_000L else 0L
+        resumeRemainingMs = null
+        resumeElapsedMs = null
+        startedAtEpochMs = System.currentTimeMillis()
+        activeElapsedMs = 0L
+        _state.value = MeditationUiState(
+            mode = config.mode,
+            status = MeditationStatus.PREPARING,
+            countdown = COUNTDOWN_SECONDS,
+            totalMs = totalMs,
+        )
+        // Foreground-Service startet die Dauer-Notification und hält den Prozess wach.
+        ContextCompat.startForegroundService(appContext, MeditationService.startIntent(appContext))
+        launchActive(fromResume = false)
+    }
+
+    fun pause() {
+        if (_state.value.status != MeditationStatus.RUNNING) return
+        runnerJob?.cancel()
+        accrueActiveTime() // aktive Zeit bis zum Pausenzeitpunkt banken, bevor die Uhr einfriert
+        if (currentConfig.mode == MeditationMode.TIMED) {
+            resumeRemainingMs = _state.value.remainingMs
+        } else {
+            resumeElapsedMs = _state.value.elapsedMs
+        }
+        audio.stopSpeech()
+        // Fokus während der Pause abgeben, damit fremde Medien nicht dauerhaft gedämpft bleiben;
+        // resume() fordert ihn über launchActive() wieder an.
+        audio.abandonFocus()
+        _state.update { it.copy(status = MeditationStatus.PAUSED) }
+    }
+
+    fun resume() {
+        if (_state.value.status != MeditationStatus.PAUSED) return
+        _state.update { it.copy(status = MeditationStatus.RUNNING) }
+        launchActive(fromResume = true)
+    }
+
+    /**
+     * „Beenden"/Verwerfen: RUNNING/PAUSED im FREE-Modus → regulärer Abschluss (End-Gong,
+     * Logbuch); ansonsten (TIMED, Countdown, bereits beendeter/leerer Zustand) → Abbruch bzw.
+     * Rückkehr in die Auswahl. Ein bereits FINISHED-Zustand wird nur verworfen (kein
+     * erneutes finish() → keine Doppel-Einträge/-Gongs).
+     */
+    fun end() {
+        val status = _state.value.status
+        when {
+            status == MeditationStatus.RUNNING || status == MeditationStatus.PAUSED ->
+                if (currentConfig.mode == MeditationMode.FREE) finishNow() else abort()
+            else -> abort() // IDLE, PREPARING, FINISHED → nur verwerfen/zurücksetzen
+        }
+    }
+
+    /** Vollständiger Abbruch ohne Abschluss (zurück in den Auswahlzustand). */
+    fun stop() = abort()
+
+    private fun abort() {
+        runnerJob?.cancel()
+        finishing = false
+        audio.stopSpeech()
+        audio.abandonFocus()
+        stopService()
+        resumeRemainingMs = null
+        resumeElapsedMs = null
+        _state.value = MeditationUiState()
+    }
+
+    private fun finishNow() {
+        if (finishing) return
+        finishing = true
+        runnerJob?.cancel()
+        runnerJob = scope.launch { finish() }
+    }
+
+    private fun stopService() {
+        appContext.stopService(MeditationService.startIntent(appContext))
+    }
+
+    private fun launchActive(fromResume: Boolean) {
+        runnerJob = scope.launch {
+            audio.requestFocus()
+            if (!fromResume) {
+                runCountdown()
+                if (currentConfig.startEndGong) audio.gong() // Start-Gong nach dem Countdown
+            }
+            val cfg = currentConfig
+            lastTickRealtime = SystemClock.elapsedRealtime()
+            coroutineScope {
+                val loops = mutableListOf<Job>()
+                if (cfg.gongEveryMin != null) loops += launch { intervalLoop(cfg) }
+                if (cfg.speech && speechAvailable.value) loops += launch { speechLoop(fromResume) }
+                if (cfg.mode == MeditationMode.TIMED) {
+                    runTimed()
+                    loops.forEach { it.cancel() }
+                } else {
+                    runFree() // läuft bis zum Abbruch/Beenden (Job-Cancel)
+                }
+            }
+            // Nur der TIMED-Modus endet von selbst; FREE endet über finishNow().
+            if (cfg.mode == MeditationMode.TIMED) finish()
+        }
+    }
+
+    private suspend fun runCountdown() {
+        for (n in COUNTDOWN_SECONDS downTo 1) {
+            _state.update { it.copy(status = MeditationStatus.PREPARING, countdown = n) }
+            delay(1000L)
+        }
+    }
+
+    private suspend fun runTimed() {
+        val remaining = resumeRemainingMs ?: totalMs
+        resumeRemainingMs = null
+        val deadline = SystemClock.elapsedRealtime() + remaining
+        while (true) {
+            val left = deadline - SystemClock.elapsedRealtime()
+            if (left <= 0L) break
+            accrueActiveTime()
+            _state.update {
+                it.copy(
+                    status = MeditationStatus.RUNNING,
+                    totalMs = totalMs,
+                    remainingMs = left,
+                    elapsedMs = totalMs - left,
+                )
+            }
+            delay(min(left, FRAME_MS))
+        }
+        _state.update { it.copy(remainingMs = 0L, elapsedMs = totalMs) }
+    }
+
+    private suspend fun runFree() {
+        val startElapsed = resumeElapsedMs ?: 0L
+        resumeElapsedMs = null
+        val base = SystemClock.elapsedRealtime() - startElapsed
+        while (true) {
+            accrueActiveTime()
+            _state.update {
+                it.copy(
+                    status = MeditationStatus.RUNNING,
+                    elapsedMs = SystemClock.elapsedRealtime() - base,
+                )
+            }
+            delay(TICK_MS)
+        }
+    }
+
+    /** Intervall-Gong: im TIMED-Modus nur die Marken strikt vor dem Ende, im FREE-Modus offen. */
+    private suspend fun intervalLoop(cfg: MeditationConfig) {
+        val intervalMs = cfg.gongEveryMin!! * 60_000L
+        if (cfg.mode == MeditationMode.TIMED) {
+            val count = ((totalMs - 1) / intervalMs).toInt().coerceAtLeast(0)
+            repeat(count) {
+                delay(intervalMs)
+                audio.gong()
+            }
+        } else {
+            while (true) {
+                delay(intervalMs)
+                audio.gong()
+            }
+        }
+    }
+
+    /** Sprach-Anleitung in unregelmäßigen Abständen; ein Satz früh, dann spärlicher. */
+    private suspend fun speechLoop(fromResume: Boolean) {
+        var last = -1
+        delay(
+            if (fromResume) Random.nextLong(GAP_MIN_MS, GAP_MAX_MS)
+            else Random.nextLong(FIRST_MIN_MS, FIRST_MAX_MS),
+        )
+        while (true) {
+            val idx = nextCueIndex(last)
+            last = idx
+            audio.speak(MeditationCues.de[idx])
+            delay(Random.nextLong(GAP_MIN_MS, GAP_MAX_MS))
+        }
+    }
+
+    private fun nextCueIndex(last: Int): Int {
+        val size = MeditationCues.de.size
+        if (size <= 1) return 0
+        var idx = Random.nextInt(size)
+        if (idx == last) idx = (idx + 1) % size
+        return idx
+    }
+
+    private suspend fun finish() {
+        // Aus der Pause beendet: pause() hat die aktive Zeit bereits gebankt – nicht erneut
+        // (sonst würde die gesamte Pausendauer als Meditationszeit mitgezählt).
+        if (_state.value.status != MeditationStatus.PAUSED) accrueActiveTime()
+        audio.stopSpeech() // eine ggf. noch laufende Ansage nicht über den End-Gong sprechen lassen
+        if (currentConfig.startEndGong) audio.gong()
+        // Nur nennenswerte Sitzungen protokollieren (verhindert Ein-Sekunden-Einträge).
+        if (activeElapsedMs >= MIN_LOG_MS) {
+            logbook.append(
+                SessionLogEntry(
+                    exerciseId = MEDITATION_ID,
+                    exerciseName = MEDITATION_NAME,
+                    family = null,
+                    startedAtEpochMs = startedAtEpochMs,
+                    durationMs = activeElapsedMs,
+                    roundsCompleted = 0,
+                    kind = SessionKind.MEDITATION,
+                ),
+            )
+        }
+        _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L) }
+        // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
+        // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
+        if (currentConfig.startEndGong) delay(FINISH_ABANDON_MS)
+        audio.abandonFocus()
+        stopService()
+    }
+
+    /** Verstrichene aktive Zeit fortschreiben (Pausen zählen nicht, da beim Fortsetzen neu gesetzt). */
+    private fun accrueActiveTime() {
+        val now = SystemClock.elapsedRealtime()
+        activeElapsedMs += now - lastTickRealtime
+        lastTickRealtime = now
+    }
+
+    companion object {
+        private const val COUNTDOWN_SECONDS = 3
+
+        /** Kennung/Name der Meditation im Logbuch (App ist deutschsprachig). */
+        private const val MEDITATION_ID = "meditation"
+        private const val MEDITATION_NAME = "Meditation"
+
+        /** Mindest-Dauer, ab der eine Sitzung ins Logbuch kommt. */
+        private const val MIN_LOG_MS = 10_000L
+
+        /** ~30 fps für den Countdown-Ring; schonend für den Akku. */
+        private const val FRAME_MS = 33L
+
+        /** Stoppuhr-Tick im FREE-Modus (5 fps genügt für Sekundenanzeige). */
+        private const val TICK_MS = 200L
+
+        /** Erst-Ansage früh (Ankommen), dann größere Abstände. */
+        private const val FIRST_MIN_MS = 20_000L
+        private const val FIRST_MAX_MS = 40_000L
+        private const val GAP_MIN_MS = 45_000L
+        private const val GAP_MAX_MS = 120_000L
+
+        /** Ausklingzeit des End-Gongs, bevor der Audio-Fokus abgegeben wird. */
+        private const val FINISH_ABANDON_MS = 2400L
+    }
+}

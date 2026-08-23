@@ -40,8 +40,11 @@ class SessionAudioCoordinator(
         status: Flow<SessionStatus>,
         cues: Flow<CueEvent>,
         phaseAudio: Flow<PhaseAudio>,
+        muted: Flow<Boolean>,
     ) {
         val current = settings.stateIn(scope, SharingStarted.Eagerly, CueSettings())
+        // In-Session-Stummschalter: übersteuert transient den Ton (nicht die Einstellung).
+        val mutedState = muted.stateIn(scope, SharingStarted.Eagerly, false)
         scope.launch {
             current.collect { cfg ->
                 tonePlayer.setVolume(cfg.volume)
@@ -59,20 +62,24 @@ class SessionAudioCoordinator(
                 } else {
                     cfg.soundMode == SoundMode.CUES
                 }
-                if (toneWanted) tonePlayer.play(event)
+                // Stummschalter betrifft nur den Ton – Haptik folgt weiter der Einstellung.
+                if (toneWanted && !mutedState.value) tonePlayer.play(event)
                 if (cfg.haptics) hapticPlayer.play(event)
             }
         }
         scope.launch {
             phaseAudio.collect { pa ->
                 if (current.value.soundMode == SoundMode.CONTINUOUS) {
-                    continuousPlayer.onPhase(pa.type, pa.durationMs, pa.open)
+                    // Beim Stummschalten die Tonhöhe weiter mitführen (nur ohne Pegel), damit
+                    // das Aufheben der Stummschaltung nicht auf einer alten Phase hängen bleibt.
+                    continuousPlayer.onPhase(pa.type, pa.durationMs, pa.open, raiseGain = !mutedState.value)
                 }
             }
         }
         scope.launch {
-            combine(status.distinctUntilChanged(), current) { st, cfg -> applyStatus(st, cfg) }
-                .collect()
+            combine(status.distinctUntilChanged(), current, mutedState) { st, cfg, m ->
+                applyStatus(st, cfg, m)
+            }.collect()
         }
     }
 
@@ -81,13 +88,14 @@ class SessionAudioCoordinator(
      * bei FINISHED/IDLE wird ausgeblendet, der Thread beendet und der Audio-Fokus
      * abgegeben – unabhängig davon, ob die Abschluss-Abfrage schon bestätigt wurde.
      */
-    private suspend fun applyStatus(status: SessionStatus, cfg: CueSettings) {
+    private suspend fun applyStatus(status: SessionStatus, cfg: CueSettings, muted: Boolean) {
         val inSession = status != SessionStatus.IDLE && status != SessionStatus.FINISHED
-        val audible = status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER
+        val audible = (status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER) &&
+            !muted
 
         if (cfg.soundMode == SoundMode.CONTINUOUS && inSession) {
             continuousPlayer.start()
-            if (!audible) continuousPlayer.mute()
+            if (audible) continuousPlayer.unmute() else continuousPlayer.mute()
         } else if (continuousPlayer.isRunning) {
             // Erst ausblenden, dann Thread beenden – kein harter Schnitt am Session-Ende.
             continuousPlayer.mute()
@@ -96,10 +104,13 @@ class SessionAudioCoordinator(
         }
 
         when {
-            inSession && cfg.soundMode != SoundMode.OFF -> audioFocus.request()
-            // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde
-            // Medien wieder auf volle Lautstärke gehen.
-            status == SessionStatus.FINISHED && cfg.soundMode != SoundMode.OFF -> {
+            // In der Pause den Fokus abgeben, damit fremde Medien nicht unnötig gedämpft bleiben,
+            // solange die Session still ruht (resume() fordert ihn wieder an).
+            inSession && status != SessionStatus.PAUSED && cfg.soundMode != SoundMode.OFF ->
+                audioFocus.request()
+            // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde Medien
+            // wieder auf volle Lautstärke gehen – aber nicht, wenn stumm (dann kommt kein Gong).
+            status == SessionStatus.FINISHED && cfg.soundMode != SoundMode.OFF && !muted -> {
                 delay(FINISH_CUE_MS)
                 audioFocus.abandon()
             }

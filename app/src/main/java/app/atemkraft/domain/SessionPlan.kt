@@ -49,6 +49,23 @@ fun Exercise.buildTimeline(): List<RuntimePhase> {
 /** Rundenbasiert = mehr als eine Runde; sonst kontinuierlich (über Minuten anpassbar). */
 val Exercise.isRoundBased: Boolean get() = rounds > 1
 
+/**
+ * Grobe Gesamtdauer der Übung in Sekunden: Summe aller festen Phasen-Dauern über die
+ * ausmultiplizierte Timeline. Offene Phasen ([PhaseDuration.OpenEnded]/[UntilUrge], z. B.
+ * Wim-Hof-Retention) haben keine feste Dauer und fließen nicht ein – die Rückgabe ist
+ * daher ein Näherungswert (Untergrenze), erkennbar an [hasOpenPhases].
+ */
+fun Exercise.estimatedTotalSeconds(): Int {
+    val millis = buildTimeline().sumOf { phase ->
+        (phase.duration as? PhaseDuration.Fixed)?.millis ?: 0L
+    }
+    return (millis / 1000L).toInt()
+}
+
+/** true, wenn die Übung offene Phasen enthält (Gesamtdauer dann nur Näherung/Untergrenze). */
+val Exercise.hasOpenPhases: Boolean
+    get() = segments.any { seg -> seg.phases.any { it.duration !is PhaseDuration.Fixed } }
+
 /** Dauer eines Zyklus (eine Segment-Wiederholung) in Sekunden, aus festen Phasen. */
 fun Exercise.cycleSeconds(): Int {
     val segment = segments.firstOrNull() ?: return 1

@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 
@@ -24,6 +25,7 @@ fun SessionOverlay(
     state: SessionUiState,
     showNextPhase: Boolean,
     onMinimize: () -> Unit,
+    onToggleMute: () -> Unit,
     onTogglePause: () -> Unit,
     onContinue: () -> Unit,
     onRestart: () -> Unit,
@@ -34,12 +36,29 @@ fun SessionOverlay(
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 IconButton(onClick = onMinimize) {
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowDown,
                         contentDescription = stringResource(R.string.action_minimize),
                         tint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+                // Schneller Ton-Schalter für die laufende Session (Einstellung bleibt unberührt).
+                IconButton(onClick = onToggleMute) {
+                    Icon(
+                        painter = painterResource(
+                            if (state.muted) R.drawable.ic_sound_off else R.drawable.ic_sound_on,
+                        ),
+                        contentDescription = stringResource(
+                            if (state.muted) R.string.action_sound_off else R.string.action_sound_on,
+                        ),
+                        tint = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = if (state.muted) 0.5f else 1f,
+                        ),
                     )
                 }
             }

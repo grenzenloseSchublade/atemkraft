@@ -29,8 +29,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.home.color
+import app.atemkraft.ui.theme.NeonCyan
+import app.atemkraft.ui.theme.SECONDARY
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -74,7 +77,7 @@ fun LogbookScreen(
                     Text(
                         text = stringResource(R.string.log_empty),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     )
                 }
             }
@@ -115,7 +118,7 @@ private fun StatsCard(
                         text = pluralStringResource(R.plurals.log_sessions, entries.size, entries.size) +
                             " · " + stringResource(R.string.log_minutes_total, totalMinutes),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                     )
                     TextButton(onClick = onClear) { Text(stringResource(R.string.log_clear)) }
                 }
@@ -170,12 +173,13 @@ private fun LogEntryCard(entry: SessionLogEntry) {
                 modifier = Modifier
                     .size(10.dp)
                     .clip(CircleShape)
-                    .background(entry.family.color()),
+                    // Meditation hat keine Familie – eigener, ruhiger Cyan-Ton.
+                    .background(entry.family?.color() ?: NeonCyan),
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = entry.exerciseName,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
@@ -190,11 +194,18 @@ private fun LogEntryCard(entry: SessionLogEntry) {
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Text(
-                    text = pluralStringResource(R.plurals.log_rounds, entry.roundsCompleted, entry.roundsCompleted),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                )
+                // „Runden" nur für Atemübungen; Meditationen zeigen nur die Dauer.
+                if (entry.kind == SessionKind.BREATHING) {
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.log_rounds,
+                            entry.roundsCompleted,
+                            entry.roundsCompleted,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
             }
         }
     }

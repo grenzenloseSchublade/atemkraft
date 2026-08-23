@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -32,7 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import app.atemkraft.R
+import app.atemkraft.cue.VoiceOption
 import app.atemkraft.data.Refs
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
@@ -54,6 +58,11 @@ fun SettingsScreen(
     onToggleHaptics: (Boolean) -> Unit,
     onToggleSafety: (Boolean) -> Unit,
     onToggleNextPhase: (Boolean) -> Unit,
+    gongIntervalMin: Int,
+    onGongInterval: (Int) -> Unit,
+    voices: List<VoiceOption>,
+    selectedVoiceId: String?,
+    onSelectVoice: (String?) -> Unit,
     onOpenGlossary: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
@@ -236,6 +245,15 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+            MeditationCard(
+                gongIntervalMin = gongIntervalMin,
+                onGongInterval = onGongInterval,
+                voices = voices,
+                selectedVoiceId = selectedVoiceId,
+                onSelectVoice = onSelectVoice,
+            )
+
+            Spacer(Modifier.height(16.dp))
             NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
             Spacer(Modifier.height(10.dp))
             NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
@@ -247,6 +265,89 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             )
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+private val GONG_INTERVALS = listOf(3, 5, 10, 15)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MeditationCard(
+    gongIntervalMin: Int,
+    onGongInterval: (Int) -> Unit,
+    voices: List<VoiceOption>,
+    selectedVoiceId: String?,
+    onSelectVoice: (String?) -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.settings_meditation_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.settings_gong_interval),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(6.dp))
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                GONG_INTERVALS.forEachIndexed { index, m ->
+                    SegmentedButton(
+                        selected = m == gongIntervalMin,
+                        onClick = { onGongInterval(m) },
+                        shape = SegmentedButtonDefaults.itemShape(index, GONG_INTERVALS.size),
+                    ) {
+                        Text(stringResource(R.string.meditation_minutes, m))
+                    }
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.settings_gong_interval_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            Text(
+                text = stringResource(R.string.settings_voice),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(6.dp))
+            if (voices.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.settings_voice_none),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            } else {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = selectedVoiceId == null,
+                        onClick = { onSelectVoice(null) },
+                        label = { Text(stringResource(R.string.meditation_voice_auto)) },
+                    )
+                    voices.forEach { v ->
+                        FilterChip(
+                            selected = selectedVoiceId == v.id,
+                            onClick = { onSelectVoice(v.id) },
+                            label = { Text(v.label) },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.settings_voice_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
         }
     }
 }

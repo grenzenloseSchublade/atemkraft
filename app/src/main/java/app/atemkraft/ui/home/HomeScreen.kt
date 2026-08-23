@@ -30,13 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.TagChip
+import app.atemkraft.ui.theme.SECONDARY
 
 /** Atmen-Tab: startbare Übungen nach Familien + Abschnitt „Programme & Wissen". */
 @Composable
@@ -54,7 +54,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
                 Spacer(Modifier.height(20.dp))
@@ -115,20 +115,19 @@ fun HomeScreen(
 @Composable
 fun SectionHeader(title: String, color: Color) {
     Row(
-        modifier = Modifier.padding(top = 18.dp, bottom = 2.dp),
+        modifier = Modifier.padding(top = 28.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(width = 3.dp, height = 16.dp)
+                .size(width = 4.dp, height = 24.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(color),
         )
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.headlineSmall,
             color = color,
         )
     }
@@ -167,6 +166,3 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
         }
     }
 }
-
-// Einheitliche Sekundärtext-Deckkraft (siehe ui/theme Alpha-Konvention).
-internal const val SECONDARY = 0.7f
