@@ -18,7 +18,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,7 +36,6 @@ import app.atemkraft.domain.EvidenceTag
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.defaultMinutes
@@ -46,9 +44,12 @@ import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.Chip
+import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.TagChip
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
 import app.atemkraft.ui.session.SafetyDialog
@@ -228,16 +229,12 @@ fun ExerciseDetailScreen(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                                 )
-                                TextButton(
-                                    onClick = { intervalsExpanded = !intervalsExpanded },
+                                DisclosureToggle(
+                                    text = stringResource(R.string.adjust_intervals),
+                                    expanded = intervalsExpanded,
+                                    onToggle = { intervalsExpanded = !intervalsExpanded },
                                     modifier = Modifier.padding(start = 8.dp),
-                                ) {
-                                    Text(
-                                        text = (if (intervalsExpanded) "▴ " else "▾ ") +
-                                            stringResource(R.string.adjust_intervals),
-                                        style = MaterialTheme.typography.labelLarge,
-                                    )
-                                }
+                                )
                                 if (intervalsExpanded) {
                                     if (hasInhale) {
                                         Stepper(stringResource(R.string.adjust_inhale), inhaleSec, 2..12, vertical = 6.dp) {
@@ -264,7 +261,7 @@ fun ExerciseDetailScreen(
                     Text(
                         text = stringResource(R.string.detail_info_only),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     )
                 }
                 Spacer(Modifier.height(24.dp))
@@ -325,7 +322,7 @@ private fun Body(text: String) {
 @Composable
 private fun Bullet(text: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+        Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
@@ -334,20 +331,3 @@ private fun Bullet(text: String) {
     }
 }
 
-@Composable
-private fun ReferenceItem(reference: Reference) {
-    Column {
-        Text(
-            text = reference.citation,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
-        )
-        reference.identifier?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-            )
-        }
-    }
-}

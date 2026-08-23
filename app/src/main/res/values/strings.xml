@@ -156,8 +156,12 @@
     <string name="volume_hint">Relativ zur Medien-Lautstärke deines Geräts.</string>
     <string name="settings_haptics">Vibration bei Phasenwechsel</string>
 
-    <!-- Einstellungen · Meditation -->
+    <!-- Einstellungen · Abschnitts-Titel -->
+    <string name="settings_breathing_title">Atmen · Ton</string>
+    <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
     <string name="settings_meditation_title">Meditation</string>
+    <string name="settings_voice_preview">Probe anhören</string>
+    <string name="cd_voice_preview">Stimme anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
     <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min" gewählt ist.</string>
     <string name="settings_voice">Sprach-Stimme</string>
@@ -180,10 +184,8 @@
     <string name="meditation_interval_minutes">alle %1$d min</string>
     <string name="meditation_off">Aus</string>
     <string name="meditation_speech_label">Sprach-Anleitung</string>
-    <string name="meditation_speech_on">An</string>
     <string name="meditation_speech_hint">Spricht in unregelmäßigen Abständen kurze Hinweise.</string>
     <string name="meditation_speech_unavailable">Keine deutsche Sprachausgabe auf dem Gerät verfügbar.</string>
-    <string name="meditation_voice_label">Stimme</string>
     <string name="meditation_voice_auto">Automatisch</string>
     <string name="meditation_minutes">%1$d min</string>
     <string name="meditation_done_title">Sitzung beendet</string>

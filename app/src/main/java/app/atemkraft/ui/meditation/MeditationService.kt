@@ -40,15 +40,18 @@ class MeditationService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannel()
-        // Notification bei jeder Sekundenänderung aktualisieren. Das Beenden steuert der
-        // Controller (stopService) – erst nach dem Ausklingen des End-Gongs, damit dieser
-        // auch bei gesperrtem Bildschirm nicht abgeschnitten wird.
+        // Notification bei jeder Sekundenänderung aktualisieren – aber NICHT in Endzuständen
+        // (IDLE/FINISHED), sonst würde beim Beenden noch „0:00" nachgepostet und bliebe hängen.
+        // Das eigentliche Beenden steuert der Controller (stopService); onDestroy räumt die
+        // Notification sicher weg.
         scope.launch {
             controller.state
-                .map { notificationBody(it) }
+                .map { it.status to notificationBody(it) }
                 .distinctUntilChanged()
-                .collect { body ->
-                    notificationManager().notify(NOTIF_ID, buildNotification(body))
+                .collect { (status, body) ->
+                    if (status != MeditationStatus.IDLE && status != MeditationStatus.FINISHED) {
+                        notificationManager().notify(NOTIF_ID, buildNotification(body))
+                    }
                 }
         }
     }
@@ -56,6 +59,8 @@ class MeditationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             controller.end()
+            // Auch eine bereits verwaiste Notification sicher entfernen und den Service beenden.
+            removeNotificationAndStop()
             return START_NOT_STICKY
         }
         // Muss innerhalb weniger Sekunden nach startForegroundService geschehen.
@@ -69,8 +74,18 @@ class MeditationService : Service() {
     }
 
     override fun onDestroy() {
+        // Foreground-Bindung lösen UND die per notify() aktualisierte Notification explizit
+        // löschen – sonst bleibt sie (v. a. auf Samsung) als Waise hängen.
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        notificationManager().cancel(NOTIF_ID)
         scope.cancel()
         super.onDestroy()
+    }
+
+    private fun removeNotificationAndStop() {
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        notificationManager().cancel(NOTIF_ID)
+        stopSelf()
     }
 
     private fun notificationBody(state: MeditationUiState): String {

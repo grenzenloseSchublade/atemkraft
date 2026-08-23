@@ -56,3 +56,9 @@ val SessionButtonPink = Color(0xFFFF8FB0)
 
 /** Einheitliche Deckkraft für Sekundärtext (dezente Unter-/Beschriftungen) – app-weit. */
 const val SECONDARY = 0.7f
+
+/** Noch dezentere Ebene (z. B. Quellen-Kennungen, Zeitstempel) – app-weit. */
+const val TERTIARY = 0.5f
+
+/** Creme-Ton des Pause-/Play-Symbols (PauseFlash) – zentral statt Inline-Hex. */
+val PauseGlyphCreme = Color(0xFFFFF3D6)

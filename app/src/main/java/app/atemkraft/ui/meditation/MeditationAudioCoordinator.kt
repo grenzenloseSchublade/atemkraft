@@ -34,6 +34,9 @@ class MeditationAudioCoordinator(context: Context) {
     /** Bevorzugte Stimme setzen (null = automatisch beste). */
     fun selectVoice(voiceId: String?) = speech.selectVoice(voiceId)
 
+    /** Probe der aktuell gewählten Stimme abspielen. */
+    fun previewVoice(text: String) = speech.preview(text)
+
     fun updateVolume(volume: ToneVolume) = tonePlayer.setVolume(volume)
 
     fun requestFocus() = audioFocus.request()

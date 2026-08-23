@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -76,6 +77,10 @@ class MeditationController(
     private var activeElapsedMs = 0L
     private var lastTickRealtime = 0L
 
+    // Intervall-Gong an der AKTIVEN Zeit verankert (pausenbereinigt), damit Pausen nicht driften.
+    private var gongIntervalMs = 0L
+    private var nextGongAtMs = Long.MAX_VALUE
+
     /** Verhindert doppeltes finish() (schneller Doppel-Tipp / Notification + Screen). */
     private var finishing = false
 
@@ -86,6 +91,16 @@ class MeditationController(
         // Persistierte Stimmen-Vorwahl anwenden (wirkt, sobald TTS bereit ist).
         scope.launch {
             settingsRepository.ttsVoiceId.collect { audio.selectVoice(it) }
+        }
+        // Verweist die Vorwahl nach dem Init auf eine nicht (mehr) installierte Stimme,
+        // auf „Automatisch" zurücksetzen – sonst zeigt die Auswahl nichts markiert an.
+        scope.launch {
+            combine(settingsRepository.ttsVoiceId, audio.voices) { id, list -> id to list }
+                .collect { (id, list) ->
+                    if (id != null && list.isNotEmpty() && list.none { it.id == id }) {
+                        settingsRepository.setTtsVoiceId(null)
+                    }
+                }
         }
     }
 
@@ -98,11 +113,22 @@ class MeditationController(
         scope.launch { settingsRepository.setTtsVoiceId(voiceId) }
     }
 
+    /** Probe der aktuell gewählten Stimme mit einer ruhigen Beispiel-Zeile abspielen. */
+    fun previewVoice() {
+        audio.prepareSpeech()
+        audio.previewVoice(PREVIEW_SAMPLE)
+    }
+
+    /** Dieselbe Sitzung noch einmal starten (vom „Nochmal" auf dem Abschluss-Screen). */
+    fun restart() = start(currentConfig)
+
     fun start(config: MeditationConfig) {
         runnerJob?.cancel()
         finishing = false
         currentConfig = config
         totalMs = if (config.mode == MeditationMode.TIMED) config.minutes * 60_000L else 0L
+        gongIntervalMs = (config.gongEveryMin ?: 0) * 60_000L
+        nextGongAtMs = if (gongIntervalMs > 0L) gongIntervalMs else Long.MAX_VALUE
         resumeRemainingMs = null
         resumeElapsedMs = null
         startedAtEpochMs = System.currentTimeMillis()
@@ -190,12 +216,16 @@ class MeditationController(
             val cfg = currentConfig
             lastTickRealtime = SystemClock.elapsedRealtime()
             coroutineScope {
-                val loops = mutableListOf<Job>()
-                if (cfg.gongEveryMin != null) loops += launch { intervalLoop(cfg) }
-                if (cfg.speech && speechAvailable.value) loops += launch { speechLoop(fromResume) }
+                // Intervall-Gongs laufen in der Haupt-Tick-Schleife (maybeGong), nicht als
+                // eigener Loop – so bleiben sie an der aktiven Zeit verankert und driften nicht.
+                val speechJob = if (cfg.speech && speechAvailable.value) {
+                    launch { speechLoop(fromResume) }
+                } else {
+                    null
+                }
                 if (cfg.mode == MeditationMode.TIMED) {
                     runTimed()
-                    loops.forEach { it.cancel() }
+                    speechJob?.cancel()
                 } else {
                     runFree() // läuft bis zum Abbruch/Beenden (Job-Cancel)
                 }
@@ -220,6 +250,7 @@ class MeditationController(
             val left = deadline - SystemClock.elapsedRealtime()
             if (left <= 0L) break
             accrueActiveTime()
+            maybeGong()
             _state.update {
                 it.copy(
                     status = MeditationStatus.RUNNING,
@@ -239,6 +270,7 @@ class MeditationController(
         val base = SystemClock.elapsedRealtime() - startElapsed
         while (true) {
             accrueActiveTime()
+            maybeGong()
             _state.update {
                 it.copy(
                     status = MeditationStatus.RUNNING,
@@ -249,20 +281,20 @@ class MeditationController(
         }
     }
 
-    /** Intervall-Gong: im TIMED-Modus nur die Marken strikt vor dem Ende, im FREE-Modus offen. */
-    private suspend fun intervalLoop(cfg: MeditationConfig) {
-        val intervalMs = cfg.gongEveryMin!! * 60_000L
-        if (cfg.mode == MeditationMode.TIMED) {
-            val count = ((totalMs - 1) / intervalMs).toInt().coerceAtLeast(0)
-            repeat(count) {
-                delay(intervalMs)
-                audio.gong()
+    /**
+     * Intervall-Gong an der aktiven (pausenbereinigten) Zeit: feuert, sobald [activeElapsedMs]
+     * die nächste n·[gongIntervalMs]-Marke erreicht. Im TIMED-Modus nicht am/hinter dem Ende
+     * (dort übernimmt der End-Gong). Pausen driften dadurch nicht mehr.
+     */
+    private fun maybeGong() {
+        if (gongIntervalMs <= 0L) return
+        while (activeElapsedMs >= nextGongAtMs) {
+            if (currentConfig.mode == MeditationMode.TIMED && nextGongAtMs >= totalMs) {
+                nextGongAtMs = Long.MAX_VALUE
+                break
             }
-        } else {
-            while (true) {
-                delay(intervalMs)
-                audio.gong()
-            }
+            audio.gong()
+            nextGongAtMs += gongIntervalMs
         }
     }
 
@@ -294,6 +326,7 @@ class MeditationController(
         // (sonst würde die gesamte Pausendauer als Meditationszeit mitgezählt).
         if (_state.value.status != MeditationStatus.PAUSED) accrueActiveTime()
         audio.stopSpeech() // eine ggf. noch laufende Ansage nicht über den End-Gong sprechen lassen
+        audio.requestFocus() // aus der Pause wurde der Fokus abgegeben – für den End-Gong erneut anfordern
         if (currentConfig.startEndGong) audio.gong()
         // Nur nennenswerte Sitzungen protokollieren (verhindert Ein-Sekunden-Einträge).
         if (activeElapsedMs >= MIN_LOG_MS) {
@@ -330,6 +363,9 @@ class MeditationController(
         /** Kennung/Name der Meditation im Logbuch (App ist deutschsprachig). */
         private const val MEDITATION_ID = "meditation"
         private const val MEDITATION_NAME = "Meditation"
+
+        /** Fester Beispiel-Satz für die Stimmen-Probe (identischer Text für den Vergleich). */
+        private const val PREVIEW_SAMPLE = "Atme ruhig ein … und wieder aus."
 
         /** Mindest-Dauer, ab der eine Sitzung ins Logbuch kommt. */
         private const val MIN_LOG_MS = 10_000L

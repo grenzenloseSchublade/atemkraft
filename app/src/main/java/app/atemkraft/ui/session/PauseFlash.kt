@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.PauseGlyphCreme
 
 /**
  * Großes Pause-/Play-Symbol, das beim Antippen des Kreises kurz aufblinkt (alpha von außen
@@ -23,7 +24,7 @@ fun PauseFlash(alpha: Float, isPause: Boolean) {
         val h = size.height
         // Dunkler Scrim-Kreis als Kontrastfläche.
         drawCircle(color = Color.Black.copy(alpha = alpha * 0.42f), radius = w * 0.5f)
-        val symbol = Color(0xFFFFF3D6).copy(alpha = alpha) // cremeweiß
+        val symbol = PauseGlyphCreme.copy(alpha = alpha) // cremeweiß
         if (isPause) {
             val barW = w * 0.15f
             val barH = h * 0.42f

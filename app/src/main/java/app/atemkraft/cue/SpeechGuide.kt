@@ -38,13 +38,16 @@ class SpeechGuide(context: Context) {
     val voices: StateFlow<List<VoiceOption>> = _voices.asStateFlow()
 
     @Volatile private var ready = false
+    @Volatile private var pending = false
     @Volatile private var tts: TextToSpeech? = null
     @Volatile private var preferredVoiceId: String? = null
     private var utteranceCounter = 0
 
     /** Startet die TTS-Initialisierung (idempotent). Ergebnis landet in [available]. */
     fun ensureInit() {
-        if (tts != null) return
+        // Guard über ready/pending statt `tts != null`: ein Fehl-Init blockiert so keinen Retry.
+        if (ready || pending) return
+        pending = true
         tts = TextToSpeech(appContext) { status ->
             val engine = tts
             if (status != TextToSpeech.SUCCESS || engine == null) {
@@ -67,6 +70,7 @@ class SpeechGuide(context: Context) {
             engine.setSpeechRate(0.85f)
             engine.setPitch(0.9f)
             applyVoiceSelection(engine)
+            pending = false
             ready = true
             _available.value = true
         }
@@ -128,8 +132,20 @@ class SpeechGuide(context: Context) {
     private fun failInit() {
         _available.value = false
         ready = false
+        pending = false
         tts?.shutdown()
         tts = null
+    }
+
+    /**
+     * Probe-Ansage für die Stimmen-Auswahl: unterbricht eine laufende Ausgabe (QUEUE_FLUSH) und
+     * spielt [text] mit der aktuell gesetzten Stimme. Anders als [speak] ignoriert es die
+     * „Medien-Lautstärke 0"-Regel – ein bewusster Tap soll Rückmeldung geben.
+     */
+    fun preview(text: String) {
+        val engine = tts ?: return
+        if (!ready) return
+        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "med-preview-${utteranceCounter++}")
     }
 
     /** Bricht laufende Ausgabe ab (z. B. Pause/Stopp), Engine bleibt bestehen. */
@@ -143,5 +159,6 @@ class SpeechGuide(context: Context) {
         tts?.shutdown()
         tts = null
         ready = false
+        pending = false
     }
 }

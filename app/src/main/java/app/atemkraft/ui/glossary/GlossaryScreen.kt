@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.components.BackButton
@@ -90,8 +89,7 @@ fun GlossaryScreen(onBack: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = term.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(Modifier.height(4.dp))

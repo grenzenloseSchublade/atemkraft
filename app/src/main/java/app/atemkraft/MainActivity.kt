@@ -299,6 +299,7 @@ private fun AtemkraftApp() {
                                 meditationController.pause()
                             }
                         },
+                        onRestart = meditationController::restart,
                         onEnd = meditationController::end,
                     )
                 }
@@ -352,6 +353,7 @@ private fun AtemkraftApp() {
                         voices = meditationVoices,
                         selectedVoiceId = meditationVoiceId,
                         onSelectVoice = meditationController::selectVoice,
+                        onPreviewVoice = meditationController::previewVoice,
                         onOpenGlossary = { navController.navigate(GlossaryRoute) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },

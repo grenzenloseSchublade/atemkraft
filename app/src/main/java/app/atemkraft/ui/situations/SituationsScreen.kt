@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SituationRecommendation
+import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.home.ExerciseCard
-import app.atemkraft.ui.home.SectionHeader
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
 

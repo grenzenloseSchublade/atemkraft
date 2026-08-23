@@ -19,8 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -47,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.session.BreathingCircle
 import app.atemkraft.ui.session.PauseFlash
@@ -74,6 +74,7 @@ fun MeditationScreen(
     gongIntervalMin: Int,
     onStart: (MeditationConfig) -> Unit,
     onTogglePause: () -> Unit,
+    onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -81,7 +82,7 @@ fun MeditationScreen(
             MeditationStatus.IDLE ->
                 SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onStart)
             MeditationStatus.FINISHED ->
-                FinishedContent(onDismiss = onEnd)
+                FinishedContent(onAgain = onRestart, onExit = onEnd)
             else ->
                 RunningContent(state = state, onTogglePause = onTogglePause, onEnd = onEnd)
         }
@@ -117,19 +118,19 @@ private fun SelectionContent(
             )
             Text(
                 text = stringResource(R.string.meditation_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             )
 
             Spacer(Modifier.height(20.dp))
             // Modus: Timer / Frei
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Choice(
+                SelectChip(
                     label = stringResource(R.string.meditation_mode_timed),
                     selected = mode == MeditationMode.TIMED,
                     onClick = { mode = MeditationMode.TIMED },
                 )
-                Choice(
+                SelectChip(
                     label = stringResource(R.string.meditation_mode_free),
                     selected = mode == MeditationMode.FREE,
                     onClick = { mode = MeditationMode.FREE },
@@ -137,11 +138,10 @@ private fun SelectionContent(
             }
 
             if (mode == MeditationMode.TIMED) {
-                Spacer(Modifier.height(24.dp))
-                SectionLabel(stringResource(R.string.meditation_duration))
+                SectionHeader(stringResource(R.string.meditation_duration), NeonCyan)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DURATION_PRESETS.forEach { m ->
-                        Choice(
+                        SelectChip(
                             label = stringResource(R.string.meditation_minutes, m),
                             selected = minutes == m,
                             onClick = { minutes = m },
@@ -164,42 +164,39 @@ private fun SelectionContent(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
-            SectionLabel(stringResource(R.string.meditation_gong_label))
+            SectionHeader(stringResource(R.string.meditation_gong_label), NeonCyan)
             // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Choice(
+                SelectChip(
                     label = stringResource(R.string.meditation_off),
                     selected = !startEndGong && !intervalOn,
                     onClick = { startEndGong = false; intervalOn = false },
                 )
-                Choice(
+                SelectChip(
                     label = stringResource(R.string.meditation_gong_startstop),
                     selected = startEndGong && !intervalOn,
                     onClick = { startEndGong = true; intervalOn = false },
                 )
-                Choice(
+                SelectChip(
                     label = stringResource(R.string.meditation_interval_minutes, gongIntervalMin),
                     selected = intervalOn,
                     onClick = { startEndGong = true; intervalOn = true },
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            SectionHeader(stringResource(R.string.meditation_speech_label), NeonCyan)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    SectionLabel(stringResource(R.string.meditation_speech_label))
-                    Text(
-                        text = if (speechAvailable) stringResource(R.string.meditation_speech_hint)
-                        else stringResource(R.string.meditation_speech_unavailable),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    )
-                }
+                Text(
+                    text = if (speechAvailable) stringResource(R.string.meditation_speech_hint)
+                    else stringResource(R.string.meditation_speech_unavailable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                    modifier = Modifier.weight(1f),
+                )
                 Switch(
                     checked = speech && speechAvailable,
                     onCheckedChange = { speech = it },
@@ -284,7 +281,7 @@ private fun RunningContent(
             BreathingCircle(
                 fraction = 1f,
                 modifier = Modifier
-                    .fillMaxWidth(0.86f)
+                    .fillMaxWidth(0.90f)
                     .aspectRatio(1f)
                     .semantics { contentDescription = ringDescription }
                     // Wie in der Atem-Session: Tippen auf den Kreis pausiert/setzt fort.
@@ -328,8 +325,9 @@ private fun RunningContent(
                     enabled = !preparing,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SessionButtonCyan,
-                        contentColor = MaterialTheme.colorScheme.onBackground,
+                        contentColor = SessionTextGlow,
                         disabledContainerColor = SessionButtonCyan.copy(alpha = 0.25f),
+                        disabledContentColor = SessionTextGlow.copy(alpha = 0.5f),
                     ),
                 ) {
                     Text(
@@ -352,44 +350,50 @@ private fun RunningContent(
 }
 
 @Composable
-private fun FinishedContent(onDismiss: () -> Unit) {
+private fun FinishedContent(onAgain: () -> Unit, onExit: () -> Unit) {
+    // Aufbau + Farb-Tokens wie die Atem-Session (SessionScreen.FinishedContent).
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "✓ " + stringResource(R.string.meditation_done_title),
+            text = "✓",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(R.string.meditation_done_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(28.dp))
-        Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(0.6f)) {
-            Text(stringResource(R.string.action_end))
+        Spacer(Modifier.height(32.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Button(
+                onClick = onAgain,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SessionButtonCyan,
+                    contentColor = SessionTextGlow,
+                ),
+            ) {
+                Text(stringResource(R.string.action_again))
+            }
+            OutlinedButton(
+                onClick = onExit,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonCyan),
+                border = BorderStroke(1.dp, SessionButtonCyan),
+            ) {
+                Text(stringResource(R.string.action_end))
+            }
         }
     }
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    // Akzentfarbe wie die Abschnitts-Header der Atem-Tabs (Meditation = Cyan, s. Logbuch).
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleLarge,
-        color = NeonCyan,
-        modifier = Modifier.padding(bottom = 8.dp),
-    )
-}
-
-@Composable
-private fun Choice(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label) },
-        colors = FilterChipDefaults.filterChipColors(),
-    )
 }
 
 /** Timer-Schrift im Kreis: exakt das Gold + der Schimmer der Atem-Session (konsistent). */

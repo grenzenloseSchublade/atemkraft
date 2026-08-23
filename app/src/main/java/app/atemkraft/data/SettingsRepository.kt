@@ -61,11 +61,12 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    /** Länge des Intervall-Gongs (Minuten) – in Einstellungen wählbar; Standard 5.
+    /** Länge des Intervall-Gongs (Minuten): in Einstellungen wählbar; Standard 5.
      *  Alt-Werte < 3 (frühere „kein Intervall = 0"-Semantik) fallen auf den Standard zurück. */
-    val gongIntervalMin: Flow<Int> = context.dataStore.data.map {
-        it[Keys.MED_GONG_INTERVAL]?.takeIf { m -> m >= 3 }?.coerceAtMost(60) ?: 5
-    }
+    private fun gongIntervalOf(prefs: Preferences): Int =
+        prefs[Keys.MED_GONG_INTERVAL]?.takeIf { it >= 3 }?.coerceAtMost(60) ?: 5
+
+    val gongIntervalMin: Flow<Int> = context.dataStore.data.map { gongIntervalOf(it) }
 
     suspend fun setGongIntervalMin(minutes: Int) {
         context.dataStore.edit { it[Keys.MED_GONG_INTERVAL] = minutes.coerceIn(3, 60) }
@@ -127,7 +128,7 @@ class SettingsRepository(private val context: Context) {
     val meditationSettings: Flow<MeditationConfig> = context.dataStore.data.map { prefs ->
         // Intervall an/aus ist die Tab-Wahl; die Länge X kommt aus der Einstellung.
         val intervalOn = prefs[Keys.MED_INTERVAL_ON] ?: false
-        val intervalMin = prefs[Keys.MED_GONG_INTERVAL]?.takeIf { it >= 3 }?.coerceAtMost(60) ?: 5
+        val intervalMin = gongIntervalOf(prefs)
         MeditationConfig(
             mode = prefs[Keys.MED_MODE]?.let { MeditationMode.entries.getOrNull(it) }
                 ?: MeditationMode.TIMED,

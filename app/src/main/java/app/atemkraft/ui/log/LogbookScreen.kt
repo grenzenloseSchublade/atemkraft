@@ -58,7 +58,7 @@ fun LogbookScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
                 Spacer(Modifier.height(20.dp))
@@ -185,7 +185,7 @@ private fun LogEntryCard(entry: SessionLogEntry) {
                 Text(
                     text = formatDateTime(entry.startedAtEpochMs),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -203,7 +203,7 @@ private fun LogEntryCard(entry: SessionLogEntry) {
                             entry.roundsCompleted,
                         ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                     )
                 }
             }
