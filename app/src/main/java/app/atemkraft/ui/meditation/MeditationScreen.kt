@@ -52,14 +52,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.ui.components.FinishedPanel
+import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.MiniNowPlayingBar
+import app.atemkraft.ui.components.OverlayChrome
+import app.atemkraft.ui.components.SessionPrimaryButton
+import app.atemkraft.ui.components.SessionSecondaryButton
+import app.atemkraft.ui.components.SessionStopButton
+import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.components.Stepper
-import app.atemkraft.ui.session.BreathingCircle
-import app.atemkraft.ui.session.PauseFlash
+import app.atemkraft.ui.components.BreathingCircle
+import app.atemkraft.ui.components.PauseFlash
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionTextGlow
@@ -73,8 +81,8 @@ private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60, 90)
 
 /**
  * Meditations-Tab: Auswahl (Modus Timer/Frei, Dauer, Intervall-Gong, Sprach-Anleitung) und
- * laufende Sitzung (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf liegt im
- * [MeditationViewModel].
+ * laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
+ * liegt im [MeditationController].
  */
 @Composable
 fun MeditationScreen(
@@ -98,15 +106,15 @@ fun MiniMeditationBar(state: MeditationUiState, onClick: () -> Unit) {
     val statusText = when (state.status) {
         MeditationStatus.FINISHED -> stringResource(R.string.meditation_done_title)
         MeditationStatus.PAUSED -> stringResource(R.string.session_paused)
-        else -> if (state.mode == MeditationMode.TIMED) formatTime(state.remainingMs)
-        else formatTime(state.elapsedMs)
+        else -> if (state.mode == MeditationMode.TIMED) formatMeditationTime(state.remainingMs)
+        else formatMeditationTime(state.elapsedMs)
     }
     MiniNowPlayingBar(title = title, statusText = statusText, onClick = onClick)
 }
 
 /**
- * Vollbild-Overlay der laufenden/abgeschlossenen Meditation (spiegelt [app.atemkraft.ui.session.SessionOverlay]):
- * oben Minimieren (˅) + In-Session-Stummschalter; darunter die bestehende [RunningContent]/[FinishedContent].
+ * Vollbild-Overlay der laufenden/abgeschlossenen Meditation – identischer Rahmen wie die
+ * Atem-Session ([app.atemkraft.ui.session.SessionOverlay]) über das geteilte [OverlayChrome].
  */
 @Composable
 fun MeditationOverlay(
@@ -117,39 +125,15 @@ fun MeditationOverlay(
     onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                IconButton(onClick = onMinimize) {
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.action_minimize),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
-                // Schneller In-Session-Ton-Schalter (Einstellung bleibt unberührt) – wie in der Atem-Session.
-                IconButton(onClick = onToggleMute) {
-                    Icon(
-                        painter = painterResource(
-                            if (state.muted) R.drawable.ic_sound_off else R.drawable.ic_sound_on,
-                        ),
-                        contentDescription = stringResource(
-                            if (state.muted) R.string.action_sound_off else R.string.action_sound_on,
-                        ),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (state.muted) 0.5f else 1f),
-                    )
-                }
-            }
-            Box(modifier = Modifier.weight(1f)) {
-                if (state.status == MeditationStatus.FINISHED) {
-                    FinishedContent(onAgain = onRestart, onExit = onEnd)
-                } else {
-                    RunningContent(state = state, onTogglePause = onTogglePause, onRestart = onRestart, onEnd = onEnd)
-                }
-            }
+    OverlayChrome(muted = state.muted, onMinimize = onMinimize, onToggleMute = onToggleMute) {
+        if (state.status == MeditationStatus.FINISHED) {
+            FinishedPanel(
+                title = stringResource(R.string.meditation_done_title),
+                onAgain = onRestart,
+                onExit = onEnd,
+            )
+        } else {
+            RunningContent(state = state, onTogglePause = onTogglePause, onRestart = onRestart, onEnd = onEnd)
         }
     }
 }
@@ -173,7 +157,7 @@ private fun SelectionContent(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
         ) {
             Spacer(Modifier.height(20.dp))
             Text(
@@ -276,7 +260,7 @@ private fun SelectionContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.ListGap),
             ) {
                 Button(
                     onClick = {
@@ -319,36 +303,19 @@ private fun RunningContent(
     // Ruhiger, VOLL gefüllter Kreis (kein Wachstum); der Fortschritt steht in der Zahl.
     val timeText = when {
         preparing -> state.countdown.toString()
-        state.mode == MeditationMode.TIMED -> formatTime(state.remainingMs)
-        else -> formatTime(state.elapsedMs)
+        state.mode == MeditationMode.TIMED -> formatMeditationTime(state.remainingMs)
+        else -> formatMeditationTime(state.elapsedMs)
     }
     val circleInteraction = remember { MutableInteractionSource() }
 
-    // Tap-Flash wie in der Atem-Session: großes Pause/Play-Symbol kurz aufblinken. Alpha per
-    // delay-Schleife animiert (nicht animateTo), damit es auch bei abgeschalteter System-Animation
-    // sichtbar ist.
-    var flashAlpha by remember { mutableFloatStateOf(0f) }
-    var flashIsPause by remember { mutableStateOf(true) }
-    var flashTrigger by remember { mutableIntStateOf(0) }
-    LaunchedEffect(flashTrigger) {
-        if (flashTrigger > 0) {
-            flashAlpha = 1f
-            delay(220)
-            val steps = 16
-            for (i in 1..steps) {
-                delay(34)
-                flashAlpha = (1f - i.toFloat() / steps).coerceAtLeast(0f)
-            }
-            flashAlpha = 0f
-        }
-    }
+    // Tap-Flash (geteilt mit der Atem-Session).
+    val tapFlash = rememberTapFlash()
     fun flashToggle() {
-        flashIsPause = state.status == MeditationStatus.RUNNING // läuft → wird pausiert
-        flashTrigger++
+        tapFlash.flash(isPause = state.status == MeditationStatus.RUNNING) // läuft → wird pausiert
         onTogglePause()
     }
 
-    Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+    Box(modifier = Modifier.fillMaxSize().padding(Dimens.SessionPadding)) {
         // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
         Text(
             text = stringResource(R.string.meditation_title),
@@ -385,17 +352,17 @@ private fun RunningContent(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (preparing) {
-                        GlowTime(
+                        GlowText(
                             text = stringResource(R.string.session_get_ready),
                             style = MaterialTheme.typography.headlineMedium,
                         )
                         Spacer(Modifier.height(6.dp))
                     }
-                    GlowTime(text = timeText, style = MaterialTheme.typography.displaySmall)
+                    GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
                 }
             }
             // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
-            PauseFlash(alpha = flashAlpha, isPause = flashIsPause)
+            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
         }
 
         Column(
@@ -404,110 +371,28 @@ private fun RunningContent(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
             ) {
-                Button(
+                SessionPrimaryButton(
+                    text = stringResource(if (paused) R.string.action_resume else R.string.action_pause),
                     onClick = onTogglePause,
                     modifier = Modifier.weight(1f),
                     enabled = !preparing,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SessionButtonCyan,
-                        contentColor = SessionTextGlow,
-                        disabledContainerColor = SessionButtonCyan.copy(alpha = 0.25f),
-                        disabledContentColor = SessionTextGlow.copy(alpha = 0.5f),
-                    ),
-                ) {
-                    Text(
-                        stringResource(
-                            if (paused) R.string.action_resume else R.string.action_pause,
-                        ),
-                    )
-                }
-                OutlinedButton(
+                )
+                SessionSecondaryButton(
+                    text = stringResource(R.string.action_restart),
                     onClick = onRestart,
                     modifier = Modifier.weight(1f),
                     enabled = !preparing,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonCyan),
-                    border = BorderStroke(1.dp, SessionButtonCyan),
-                ) {
-                    Text(stringResource(R.string.action_restart))
-                }
-                OutlinedButton(
+                )
+                SessionStopButton(
+                    text = stringResource(R.string.action_stop),
                     onClick = onEnd,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonPink),
-                    border = BorderStroke(1.dp, SessionButtonPink),
-                ) {
-                    Text(stringResource(R.string.action_stop))
-                }
+                )
             }
         }
     }
 }
 
-@Composable
-private fun FinishedContent(onAgain: () -> Unit, onExit: () -> Unit) {
-    // Aufbau + Farb-Tokens wie die Atem-Session (SessionScreen.FinishedContent).
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        // Eyebrow „✓ Geschafft" wie die Atem-Session (Häkchen im Text, nicht als nackter Glyph).
-        Text(
-            text = "✓ " + stringResource(R.string.session_done_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-        )
-        Spacer(Modifier.height(10.dp))
-        Text(
-            text = stringResource(R.string.meditation_done_title),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(32.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Button(
-                onClick = onAgain,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SessionButtonCyan,
-                    contentColor = SessionTextGlow,
-                ),
-            ) {
-                Text(stringResource(R.string.action_again))
-            }
-            OutlinedButton(
-                onClick = onExit,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonCyan),
-                border = BorderStroke(1.dp, SessionButtonCyan),
-            ) {
-                Text(stringResource(R.string.action_end))
-            }
-        }
-    }
-}
 
-/** Timer-Schrift im Kreis: exakt das Gold + der Schimmer der Atem-Session (konsistent). */
-@Composable
-private fun GlowTime(text: String, style: TextStyle) {
-    Text(
-        text = text,
-        style = style.merge(
-            TextStyle(
-                color = SessionTextYellow,
-                shadow = Shadow(color = SessionTextGlow, offset = Offset.Zero, blurRadius = 18f),
-            ),
-        ),
-    )
-}
-
-private fun formatTime(ms: Long): String {
-    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
-    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
-}

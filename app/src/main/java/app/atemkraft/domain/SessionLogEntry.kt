@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class SessionLogEntry(
+    /** Datenbank-Id (stabiler Listen-Key); 0 vor dem ersten Persistieren. */
+    val id: Long = 0,
     val exerciseId: String,
     val exerciseName: String,
     val family: BreathingFamily?,

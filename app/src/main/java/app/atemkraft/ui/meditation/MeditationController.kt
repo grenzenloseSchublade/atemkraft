@@ -30,13 +30,12 @@ enum class MeditationStatus { IDLE, PREPARING, RUNNING, PAUSED, FINISHED }
 
 /**
  * Sichtbarer Zustand einer Meditations-Sitzung. Im [MeditationMode.TIMED] zählt
- * [remainingMs] herunter (von [totalMs]); im [MeditationMode.FREE] zählt [elapsedMs] hoch.
+ * [remainingMs] herunter; im [MeditationMode.FREE] zählt [elapsedMs] hoch.
  */
 data class MeditationUiState(
     val mode: MeditationMode = MeditationMode.TIMED,
     val status: MeditationStatus = MeditationStatus.IDLE,
     val remainingMs: Long = 0L,
-    val totalMs: Long = 0L,
     val elapsedMs: Long = 0L,
     /** Verbleibende Sekunden im Start-Countdown (nur bei [MeditationStatus.PREPARING]). */
     val countdown: Int = 0,
@@ -65,9 +64,6 @@ class MeditationController(
 
     /** Verfügbarkeit einer deutschen TTS-Stimme (steuert den Sprach-Schalter im UI). */
     val speechAvailable: StateFlow<Boolean> = audio.speechAvailable
-
-    /** Wählbare deutsche Stimmen (für die Auswahl im UI). */
-    val voices = audio.voices
 
     /** Ist die hochwertige Piper-Stimme tatsächlich einsatzbereit? (fürs UI/Preview-Routing) */
     val piperReady = audio.piperReady
@@ -153,7 +149,6 @@ class MeditationController(
             mode = config.mode,
             status = MeditationStatus.PREPARING,
             countdown = COUNTDOWN_SECONDS,
-            totalMs = totalMs,
         )
         // Foreground-Service startet die Dauer-Notification und hält den Prozess wach.
         ContextCompat.startForegroundService(appContext, MeditationService.startIntent(appContext))
@@ -161,6 +156,10 @@ class MeditationController(
     }
 
     fun pause() {
+        // Läuft bereits der Abschluss (Timer natürlich ausgelaufen), Pause ignorieren – sonst
+        // würde der finish()-Job mitten in Gong/Logbuch abgebrochen („0:00 · Pausiert"-Hänger,
+        // bei Resume Doppel-Gong/-Eintrag).
+        if (finishing) return
         if (_state.value.status != MeditationStatus.RUNNING) return
         runnerJob?.cancel()
         accrueActiveTime() // aktive Zeit bis zum Pausenzeitpunkt banken, bevor die Uhr einfriert
@@ -253,7 +252,12 @@ class MeditationController(
                 }
             }
             // Nur der TIMED-Modus endet von selbst; FREE endet über finishNow().
-            if (cfg.mode == MeditationMode.TIMED) finish()
+            // finishing SOFORT setzen (nicht erst in finish()): sperrt pause() gegen den Race
+            // „Pause-Tipp im Moment des natürlichen Endes".
+            if (cfg.mode == MeditationMode.TIMED) {
+                finishing = true
+                finish()
+            }
         }
     }
 
@@ -276,7 +280,6 @@ class MeditationController(
             _state.update {
                 it.copy(
                     status = MeditationStatus.RUNNING,
-                    totalMs = totalMs,
                     remainingMs = left,
                     elapsedMs = totalMs - left,
                 )
@@ -408,4 +411,10 @@ class MeditationController(
          */
         private const val FINISH_ABANDON_MARGIN_MS = 500L
     }
+}
+
+/** m:ss-Format der Meditations-Zeiten (geteilt von Screen, Mini-Leiste und Service). */
+internal fun formatMeditationTime(ms: Long): String {
+    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
 }

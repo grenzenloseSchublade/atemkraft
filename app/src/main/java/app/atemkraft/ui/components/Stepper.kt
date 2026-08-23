@@ -11,11 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.atemkraft.R
 
 /**
  * Einheitlicher Zahl-Stepper (−  wert  +) mit Label. Wird von der Übungs-Anpassung und dem
@@ -32,6 +34,8 @@ fun Stepper(
     vertical: Dp = 16.dp,
     onChange: (Int) -> Unit,
 ) {
+    val decreaseLabel = stringResource(R.string.adjust_decrease)
+    val increaseLabel = stringResource(R.string.adjust_increase)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -48,7 +52,7 @@ fun Stepper(
             FilledTonalIconButton(
                 onClick = { onChange((value - 1).coerceIn(range)) },
                 enabled = value > range.first,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = "$label, verringern" },
+                modifier = Modifier.clearAndSetSemantics { contentDescription = "$label, $decreaseLabel" },
             ) {
                 Text("−", style = MaterialTheme.typography.headlineSmall)
             }
@@ -66,7 +70,7 @@ fun Stepper(
             FilledTonalIconButton(
                 onClick = { onChange((value + 1).coerceIn(range)) },
                 enabled = value < range.last,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = "$label, erhöhen" },
+                modifier = Modifier.clearAndSetSemantics { contentDescription = "$label, $increaseLabel" },
             ) {
                 Text("+", style = MaterialTheme.typography.headlineSmall)
             }

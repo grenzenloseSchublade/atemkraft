@@ -23,6 +23,7 @@ data class LogEntryEntity(
 )
 
 fun LogEntryEntity.toDomain(): SessionLogEntry = SessionLogEntry(
+    id = id,
     exerciseId = exerciseId,
     exerciseName = exerciseName,
     // Unbekannte Familie (z. B. nach künftiger Enum-Umbenennung) darf nicht den ganzen

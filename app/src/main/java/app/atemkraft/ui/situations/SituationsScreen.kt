@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.ui.components.SectionHeader
@@ -39,8 +40,8 @@ fun SituationsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
                 Spacer(Modifier.height(20.dp))

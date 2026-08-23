@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+: gleiche Regel für Cloud-Backup und Gerät-zu-Gerät-Übertragung – TTS-Modelle
+     (files/tts) nicht mitnehmen (Größe; teilübertragene Modelle würden zudem fälschlich als
+     „heruntergeladen" erkannt). -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="tts" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="tts" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-Backup (API < 31): Einstellungen (DataStore) + Logbuch (Room) sichern, aber die
+     großen nachgeladenen TTS-Stimmmodelle (files/tts, bis ~130 MB) ausschließen – sie sprengen
+     die Backup-Quote und lassen sich jederzeit erneut herunterladen. -->
+<full-backup-content>
+    <exclude domain="file" path="tts" />
+</full-backup-content>

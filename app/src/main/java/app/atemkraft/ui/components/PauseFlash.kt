@@ -1,4 +1,4 @@
-package app.atemkraft.ui.session
+package app.atemkraft.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
@@ -14,8 +14,8 @@ import app.atemkraft.ui.theme.SessionButtonCyan
 
 /**
  * Großes Pause-/Play-Symbol, das beim Antippen des Kreises kurz aufblinkt (alpha von außen
- * gesteuert). Ohne dunkle Platte – nur das Symbol in der Session-Glow-Farbe (wie der Pause-Button)
- * mit weichem Halo, damit es zum Glow-Design passt und ohne harte Umrandung aufpoppt. Per Canvas.
+ * gesteuert). Ohne dunkle Platte und ohne Halo – nur das klare Symbol in der Pause-Button-Farbe,
+ * damit es zum Glow-Design passt und ohne harte Umrandung aufpoppt. Per Canvas gezeichnet.
  */
 @Composable
 fun PauseFlash(alpha: Float, isPause: Boolean) {
@@ -24,12 +24,12 @@ fun PauseFlash(alpha: Float, isPause: Boolean) {
         val w = size.width
         val h = size.height
 
-        fun drawSymbol(color: Color, scale: Float) {
+        fun drawSymbol(color: Color) {
             if (isPause) {
-                val barW = w * 0.15f * scale
-                val barH = h * 0.42f * scale
+                val barW = w * 0.15f
+                val barH = h * 0.42f
                 val top = (h - barH) / 2f
-                val gap = w * 0.12f * scale
+                val gap = w * 0.12f
                 val leftX = w / 2f - gap / 2f - barW
                 val rightX = w / 2f + gap / 2f
                 val radius = CornerRadius(barW * 0.4f)
@@ -39,8 +39,8 @@ fun PauseFlash(alpha: Float, isPause: Boolean) {
                 // Play-Dreieck, um die Mitte skaliert (optisch leicht nach rechts versetzt).
                 val cx = w * 0.53f
                 val cy = h * 0.5f
-                val tw = w * 0.30f * scale
-                val th = h * 0.40f * scale
+                val tw = w * 0.30f
+                val th = h * 0.40f
                 val path = Path().apply {
                     moveTo(cx - tw * 0.5f, cy - th * 0.5f)
                     lineTo(cx - tw * 0.5f, cy + th * 0.5f)
@@ -52,6 +52,6 @@ fun PauseFlash(alpha: Float, isPause: Boolean) {
         }
 
         // Klares Symbol im Session-Cyan (Pause-Button-Farbe), ohne Halo.
-        drawSymbol(SessionButtonCyan.copy(alpha = alpha), scale = 1.0f)
+        drawSymbol(SessionButtonCyan.copy(alpha = alpha))
     }
 }

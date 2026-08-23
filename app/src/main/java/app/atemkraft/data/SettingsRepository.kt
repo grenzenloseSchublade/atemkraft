@@ -51,7 +51,6 @@ class SettingsRepository(private val context: Context) {
         val MED_INTERVAL_ON = booleanPreferencesKey("med_interval_on") // Tab-Wahl: Intervall an
         val MED_GONG_INTERVAL = intPreferencesKey("med_gong_interval") // Einstellung: X Minuten
         val MED_SPEECH = booleanPreferencesKey("med_speech")
-        val MED_TTS_VOICE = stringPreferencesKey("med_tts_voice") // Voice.getName; leer = auto
         val MED_NEURAL_VOICE = stringPreferencesKey("med_neural_voice") // VoiceCatalog.id; leer = keine
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
     }
@@ -61,15 +60,6 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setGongLong(long: Boolean) {
         context.dataStore.edit { it[Keys.MED_GONG_LONG] = long }
-    }
-
-    /** Bevorzugte TTS-Stimme (Voice-Name); null = automatisch beste. In Einstellungen wählbar. */
-    val ttsVoiceId: Flow<String?> = context.dataStore.data.map { it[Keys.MED_TTS_VOICE] }
-
-    suspend fun setTtsVoiceId(voiceId: String?) {
-        context.dataStore.edit { prefs ->
-            if (voiceId == null) prefs.remove(Keys.MED_TTS_VOICE) else prefs[Keys.MED_TTS_VOICE] = voiceId
-        }
     }
 
     /** Aktive neuronale Stimme ([app.atemkraft.cue.tts.VoiceCatalog]-Id); null = keine gewählt. */

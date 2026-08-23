@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import app.atemkraft.AtemkraftApplication
@@ -35,6 +36,29 @@ class MeditationService : Service() {
     private val controller get() =
         (application as AtemkraftApplication).container.meditationController
 
+    /**
+     * Partial-Wakelock: hält NUR die CPU wach (Bildschirm darf aus), solange die Sitzung aktiv
+     * läuft. Ohne ihn pausiert der delay()-Timer-Loop in tiefem Doze und End-/Intervall-Gongs
+     * kämen erheblich zu spät – gerade beim Kern-Use-Case „stille Sitzung, Bildschirm aus".
+     * Bei Pause wird er freigegeben (Timer steht ohnehin), bei Resume neu gehalten.
+     */
+    private var wakeLock: PowerManager.WakeLock? = null
+
+    private fun updateWakeLock(status: MeditationStatus) {
+        val shouldHold = status == MeditationStatus.RUNNING || status == MeditationStatus.PREPARING
+        val held = wakeLock?.isHeld == true
+        if (shouldHold && !held) {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "atemkraft:meditation").apply {
+                setReferenceCounted(false)
+                acquire(WAKELOCK_TIMEOUT_MS)
+            }
+        } else if (!shouldHold && held) {
+            wakeLock?.release()
+            wakeLock = null
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -49,6 +73,7 @@ class MeditationService : Service() {
                 .map { it.status to notificationBody(it) }
                 .distinctUntilChanged()
                 .collect { (status, body) ->
+                    updateWakeLock(status)
                     if (status != MeditationStatus.IDLE && status != MeditationStatus.FINISHED) {
                         notificationManager().notify(NOTIF_ID, buildNotification(body))
                     }
@@ -58,12 +83,21 @@ class MeditationService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
+            val statusBefore = controller.state.value.status
             controller.end()
-            // Auch eine bereits verwaiste Notification sicher entfernen und den Service beenden.
-            removeNotificationAndStop()
+            // Bei aktiver Sitzung übernimmt der CONTROLLER den Teardown (bei FREE erst NACH dem
+            // End-Gong + Logbuch-Schreiben – sofortiges stopSelf() würde den FGS-Schutz hinter dem
+            // Sperrbildschirm mitten im Gong entziehen). Nur eine bereits verwaiste Notification
+            // (IDLE/FINISHED) räumen wir hier direkt weg.
+            if (statusBefore == MeditationStatus.IDLE || statusBefore == MeditationStatus.FINISHED) {
+                removeNotificationAndStop()
+            }
             return START_NOT_STICKY
         }
         // Muss innerhalb weniger Sekunden nach startForegroundService geschehen.
+        // FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK ist ein inlined const (API 29+-Wert);
+        // ServiceCompat ignoriert den Typ auf API < 29 – der Lint-Hinweis ist gegenstandslos.
+        @Suppress("InlinedApi")
         ServiceCompat.startForeground(
             this,
             NOTIF_ID,
@@ -78,6 +112,8 @@ class MeditationService : Service() {
         // löschen – sonst bleibt sie (v. a. auf Samsung) als Waise hängen.
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         notificationManager().cancel(NOTIF_ID)
+        wakeLock?.let { if (it.isHeld) it.release() }
+        wakeLock = null
         scope.cancel()
         super.onDestroy()
     }
@@ -93,8 +129,8 @@ class MeditationService : Service() {
         val base = when {
             state.status == MeditationStatus.PREPARING -> getString(R.string.session_get_ready)
             state.mode == MeditationMode.TIMED ->
-                getString(R.string.meditation_notification_remaining, formatTime(state.remainingMs))
-            else -> formatTime(state.elapsedMs)
+                getString(R.string.meditation_notification_remaining, formatMeditationTime(state.remainingMs))
+            else -> formatMeditationTime(state.elapsedMs)
         }
         return if (paused) "$base · ${getString(R.string.session_paused)}" else base
     }
@@ -147,12 +183,11 @@ class MeditationService : Service() {
         internal const val NOTIF_ID = 42
         private const val ACTION_STOP = "app.atemkraft.action.MEDITATION_STOP"
 
+        /** Sicherheits-Timeout des Wakelocks (längste Sitzung 90 min + Reserve). */
+        private const val WAKELOCK_TIMEOUT_MS = 3 * 60 * 60 * 1000L
+
         fun startIntent(context: Context): Intent =
             Intent(context, MeditationService::class.java)
     }
 }
 
-private fun formatTime(ms: Long): String {
-    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
-    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
-}

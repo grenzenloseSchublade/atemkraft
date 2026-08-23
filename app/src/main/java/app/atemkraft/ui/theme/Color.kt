@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Color
 // 80er-Synthwave/Outrun-Palette, dunkel-zuerst: tiefes Indigo + Neon-Magenta/Cyan/Gelb.
 // Akzente bewusst dosiert (Atemübungen oft abends/mit geschlossenen Augen).
 val NeonMagenta = Color(0xFFF25CA2)
-val NeonMagentaDark = Color(0xFFB5247A)
 val NeonCyan = Color(0xFF34E0E8)
 val NeonYellow = Color(0xFFF9C80E)
 val OnNeon = Color(0xFF1E0A16)
@@ -17,10 +16,15 @@ val DarkSurfaceVariant = Color(0xFF2E2150)
 val DarkOnBackground = Color(0xFFF0E6FF)
 val DarkOnSurface = Color(0xFFF0E6FF)
 
-val LightBackground = Color(0xFFF6F2FF)
-val LightSurface = Color(0xFFFFFFFF)
-val LightOnBackground = Color(0xFF211640)
-val LightOnSurface = Color(0xFF211640)
+// M3-Container-Leiter + Sekundär-Rollen, alle aus dem Indigo abgeleitet (Theme.kt).
+val SurfaceContainerLowest = Color(0xFF120C26)
+val SurfaceContainerLow = Color(0xFF1B1236)
+val SurfaceContainerHigh = Color(0xFF281B48)
+val SecondaryContainer = Color(0xFF3A2C60)
+val OutlineVariantIndigo = Color(0xFF453763)
+
+/** Gedämpfter Sekundärtext (M3 onSurfaceVariant) – Lavendel statt Voll-Weiß. */
+val DarkOnSurfaceVariant = Color(0xFFC3B8DD)
 
 // Familien-Akzentfarben (wie in der Vorlage F3_Atmung): vagal/blau, sympathisch/amber,
 // balance/violett, funktionell/grün.
@@ -46,7 +50,8 @@ val SynthGlow = Color(0xFF2A0A2E)
 // Session-Schrift: warmes, entsättigtes Pastellgold/Creme mit weichem Schimmer – ruhig statt grell,
 // passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen". Zusatzinfo dezenter.
 val SessionTextYellow = Color(0xFFEBDCB0)
-val SessionNoteAmber = Color(0xFFD7C7A0)
+// Aufgehellt (war #D7C7A0 ≈ 2,7:1 auf dem Magenta-Kreiszentrum – AA-Fail auch für großen Text).
+val SessionNoteAmber = Color(0xFFF0E4C0)
 val SessionTextGlow = Color(0xFF160B22)
 
 // Session-Buttons: entsättigtes, „cremiges" Cyan (kein Vollneon) – präsent, aber dezent,

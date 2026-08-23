@@ -26,9 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.home.color
@@ -57,8 +57,8 @@ fun LogbookScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
                 Spacer(Modifier.height(20.dp))
@@ -82,7 +82,7 @@ fun LogbookScreen(
                 }
             }
 
-            items(entries, key = { it.startedAtEpochMs }) { entry -> LogEntryCard(entry) }
+            items(entries, key = { it.id }) { entry -> LogEntryCard(entry) }
             item { Spacer(Modifier.height(20.dp)) }
         }
     }
@@ -96,12 +96,11 @@ private fun StatsCard(
     onClear: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             Text(
                 text = if (streak > 0) pluralStringResource(R.plurals.log_streak, streak, streak)
                 else stringResource(R.string.log_streak_none),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
                 color = if (streak > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(12.dp))
@@ -167,7 +166,7 @@ private fun LogEntryCard(entry: SessionLogEntry) {
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             Box(
                 modifier = Modifier

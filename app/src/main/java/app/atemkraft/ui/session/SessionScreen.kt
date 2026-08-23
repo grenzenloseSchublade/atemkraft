@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -56,6 +57,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.atemkraft.R
 import app.atemkraft.domain.PhaseType
+import app.atemkraft.ui.components.BreathingCircle
+import app.atemkraft.ui.components.FinishedPanel
+import app.atemkraft.ui.components.GlowText
+import app.atemkraft.ui.components.PauseFlash
+import app.atemkraft.ui.components.SessionPrimaryButton
+import app.atemkraft.ui.components.SessionSecondaryButton
+import app.atemkraft.ui.components.SessionStopButton
+import app.atemkraft.ui.components.rememberTapFlash
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
 import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionNoteAmber
@@ -82,7 +92,7 @@ fun SessionScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         if (state.status == SessionStatus.FINISHED) {
-            FinishedContent(onRestart = onRestart, onExit = onStop)
+            FinishedPanel(title = stringResource(R.string.session_done_question), onAgain = onRestart, onExit = onStop)
         } else {
             ActiveContent(
                 state = state,
@@ -115,29 +125,10 @@ private fun ActiveContent(
     val note = if (preparing) null else state.phaseNote
     val circleInteraction = remember { MutableInteractionSource() }
 
-    // Tap-Flash: großes Pause/Play-Symbol direkt beim Antippen kurz aufblinken lassen.
-    // Wichtig: Alpha per delay-Schleife (Snapshot-Writes) animieren, NICHT per Animatable.animateTo.
-    // Grund: animateTo respektiert animator_duration_scale; ist die System-Animation aus
-    // (Entwickleroptionen/Energiesparen, scale=0), springt es sofort auf den Zielwert und der Flash
-    // bleibt unsichtbar. delay() läuft auf dem Dispatcher und ist davon unabhängig.
-    var flashAlpha by remember { mutableFloatStateOf(0f) }
-    var flashIsPause by remember { mutableStateOf(true) }
-    var flashTrigger by remember { mutableIntStateOf(0) }
-    LaunchedEffect(flashTrigger) {
-        if (flashTrigger > 0) {
-            flashAlpha = 1f
-            delay(220) // kurzer Halt
-            val steps = 16
-            for (i in 1..steps) {
-                delay(34)
-                flashAlpha = (1f - i.toFloat() / steps).coerceAtLeast(0f)
-            }
-            flashAlpha = 0f
-        }
-    }
+    // Tap-Flash (geteilt mit der Meditation): großes Pause/Play-Symbol beim Antippen.
+    val tapFlash = rememberTapFlash()
     fun flashToggle() {
-        flashIsPause = state.status == SessionStatus.RUNNING // läuft → wird pausiert
-        flashTrigger++
+        tapFlash.flash(isPause = state.status == SessionStatus.RUNNING) // läuft → wird pausiert
         onTogglePause()
     }
 
@@ -162,7 +153,7 @@ private fun ActiveContent(
                     state.exerciseName
                 },
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             )
             // Anleitung auf Abruf: dezente „ⓘ Anleitung"-Zeile unter dem Titel, die den
             // Pattern-Hint ein-/ausklappt – jederzeit, nicht nur im Countdown.
@@ -178,6 +169,8 @@ private fun ActiveContent(
                         .semantics {
                             stateDescription = if (hintVisible) "Erweitert" else "Eingeklappt"
                         }
+                        // 48-dp-Mindest-Touch-Target (Bedienung mitten in der Session).
+                        .heightIn(min = 48.dp)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -203,7 +196,7 @@ private fun ActiveContent(
                         text = hint,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                         modifier = Modifier.padding(top = 2.dp),
                     )
                 }
@@ -238,7 +231,7 @@ private fun ActiveContent(
                 // LiveRegion sagt Phasenname + Notiz an (der Kreis selbst hat nur eine
                 // statische Beschreibung, sonst liest TalkBack den Phasennamen doppelt).
                 val liveText = note?.let { "$label, $it" } ?: label
-                GlowLabel(
+                GlowText(
                     text = label,
                     style = MaterialTheme.typography.headlineMedium,
                     fill = SessionTextYellow,
@@ -248,7 +241,7 @@ private fun ActiveContent(
                     },
                 )
                 note?.let {
-                    GlowLabel(
+                    GlowText(
                         text = it,
                         style = MaterialTheme.typography.bodyLarge,
                         fill = SessionNoteAmber,
@@ -256,7 +249,7 @@ private fun ActiveContent(
                 }
                 if (secondsText.isNotEmpty()) {
                     Spacer(Modifier.height(6.dp))
-                    GlowLabel(
+                    GlowText(
                         text = secondsText,
                         style = MaterialTheme.typography.displaySmall,
                         fill = SessionTextYellow,
@@ -265,13 +258,13 @@ private fun ActiveContent(
             }
         }
             // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content) → sicher sichtbar.
-            PauseFlash(alpha = flashAlpha, isPause = flashIsPause)
+            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
         }
             // Dezent direkt unter dem Kreis: die kommende Phase (abschaltbar).
             // Feste Höhe reservieren, damit der Kreis NICHT springt, wenn die Zeile
             // erscheint/verschwindet oder der Text (kurz/lang) wechselt.
             if (showNextPhase) {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
                 Box(modifier = Modifier.height(20.dp), contentAlignment = Alignment.Center) {
                     if (!preparing && state.nextPhaseType != null) {
                         val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
@@ -318,7 +311,7 @@ private fun ActiveContent(
                     text = stringResource(R.string.session_tap_to_continue),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
                 Spacer(Modifier.height(16.dp))
             }
@@ -329,118 +322,31 @@ private fun ActiveContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Button(
+                SessionPrimaryButton(
+                    text = stringResource(
+                        if (state.status == SessionStatus.PAUSED) R.string.action_resume
+                        else R.string.action_pause,
+                    ),
                     onClick = onTogglePause,
                     modifier = Modifier.weight(1f),
                     enabled = !preparing && !waiting,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SessionButtonCyan,
-                        contentColor = SessionTextGlow,
-                        disabledContainerColor = SessionButtonCyan.copy(alpha = 0.25f),
-                        disabledContentColor = SessionTextGlow.copy(alpha = 0.5f),
-                    ),
-                ) {
-                    Text(
-                        stringResource(
-                            if (state.status == SessionStatus.PAUSED) R.string.action_resume
-                            else R.string.action_pause,
-                        ),
-                    )
-                }
-                OutlinedButton(
+                )
+                SessionSecondaryButton(
+                    text = stringResource(R.string.action_restart),
                     onClick = onRestart,
                     modifier = Modifier.weight(1f),
                     enabled = !preparing,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = SessionButtonCyan,
-                        disabledContentColor = SessionButtonCyan.copy(alpha = 0.4f),
-                    ),
-                    border = BorderStroke(
-                        1.dp,
-                        SessionButtonCyan.copy(alpha = if (preparing) 0.4f else 1f),
-                    ),
-                ) {
-                    Text(stringResource(R.string.action_restart))
-                }
-                OutlinedButton(
+                )
+                SessionStopButton(
+                    text = stringResource(R.string.action_stop),
                     onClick = onStop,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonPink),
-                    border = BorderStroke(1.dp, SessionButtonPink),
-                ) {
-                    Text(stringResource(R.string.action_stop))
-                }
+                )
             }
         }
     }
 }
 
-@Composable
-private fun FinishedContent(onRestart: () -> Unit, onExit: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = "✓ " + stringResource(R.string.session_done_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-        )
-        Spacer(Modifier.height(10.dp))
-        Text(
-            text = stringResource(R.string.session_done_question),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.height(32.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Button(
-                onClick = onRestart,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SessionButtonCyan,
-                    contentColor = SessionTextGlow,
-                ),
-            ) {
-                Text(stringResource(R.string.action_again))
-            }
-            OutlinedButton(
-                onClick = onExit,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonCyan),
-                border = BorderStroke(1.dp, SessionButtonCyan),
-            ) {
-                Text(stringResource(R.string.action_end))
-            }
-        }
-    }
-}
-
-/** Schrift mit weichem dunklen Schimmer (kein harter Rand) – ruhig und lesbar auf Magenta & Dunkel. */
-@Composable
-private fun GlowLabel(
-    text: String,
-    style: TextStyle,
-    fill: Color,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = text,
-        style = style.merge(
-            TextStyle(
-                color = fill,
-                shadow = Shadow(color = SessionTextGlow, offset = Offset.Zero, blurRadius = 18f),
-            ),
-        ),
-        modifier = modifier,
-    )
-}
 
 /** Anzeigeskala des Kreises: 0f ausgeatmet … 1f eingeatmet. Stetig über Phasengrenzen. */
 private fun breathingFraction(state: SessionUiState): Float {

@@ -1,4 +1,4 @@
-package app.atemkraft.ui.session
+package app.atemkraft.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box

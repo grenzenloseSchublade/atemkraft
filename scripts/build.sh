@@ -41,7 +41,7 @@ JDK_HOME="$(find_jdk)" || {
 }
 
 # 2) Gradle-Cache wiederverwenden, falls vorhanden (spart den Gradle-Download).
-GRADLE_HOME_CACHE="${HOME}/Entwicklung/audiotomy/.gradle-home"
+GRADLE_HOME_CACHE="${HOME}/Entwicklung/atemkraft/.gradle-home"
 GRADLE_USER_HOME_ARG=()
 if [[ -d "${GRADLE_HOME_CACHE}/wrapper/dists" ]]; then
   GRADLE_USER_HOME_ARG=(GRADLE_USER_HOME="${GRADLE_HOME_CACHE}")

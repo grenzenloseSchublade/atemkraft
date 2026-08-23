@@ -1,6 +1,5 @@
 package app.atemkraft.ui.detail
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,7 +70,6 @@ fun ExerciseDetailScreen(
     onStart: (SessionConfig) -> Unit,
     onBack: () -> Unit,
 ) {
-    BackHandler { onBack() }
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
     val range = if (roundBased) 1..15 else 1..30
@@ -153,7 +152,7 @@ fun ExerciseDetailScreen(
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Chip(
-                        text = if (roundBased) stringResource(R.string.detail_meta_rounds, exercise.rounds)
+                        text = if (roundBased) pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
                         else stringResource(R.string.detail_meta_minutes, exercise.defaultMinutes()),
                         color = accent,
                     )
@@ -203,7 +202,7 @@ fun ExerciseDetailScreen(
                 if (exercise.references.isNotEmpty()) {
                     ExpanderSection(
                         title = stringResource(R.string.detail_references),
-                        appetizer = stringResource(R.string.detail_sources_count, exercise.references.size),
+                        appetizer = pluralStringResource(R.plurals.detail_sources_count, exercise.references.size, exercise.references.size),
                         accent = accent,
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

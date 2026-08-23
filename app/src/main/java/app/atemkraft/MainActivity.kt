@@ -185,6 +185,17 @@ private fun AtemkraftApp() {
     var selectedTab by rememberSaveable { mutableStateOf(TopTab.ATMEN) }
     LaunchedEffect(currentTopTab) { if (currentTopTab != null) selectedTab = currentTopTab }
 
+    // System-Zurück auf einem Top-Level-Tab bei minimierter Session/Meditation: App nur in den
+    // Hintergrund schieben statt die Activity zu beenden – sonst stirbt die Atem-Session (ihr
+    // ViewModel hängt an der Activity), obwohl die Mini-Leiste „läuft weiter" signalisiert.
+    // Auf Push-Seiten (currentTopTab == null) und in Overlays greifen deren eigene Back-Handler.
+    BackHandler(
+        enabled = (sessionActive || meditationActive) && currentTopTab != null &&
+            !sessionExpanded && !meditationExpanded,
+    ) {
+        (context as? Activity)?.moveTaskToBack(false)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
         // minimiert erscheinen sie als „Now-Playing"-Mini-Leiste über der Tab-Leiste.

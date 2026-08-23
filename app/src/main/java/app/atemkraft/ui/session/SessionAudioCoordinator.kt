@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
@@ -78,9 +78,11 @@ class SessionAudioCoordinator(
             }
         }
         scope.launch {
+            // collectLatest: Ein Statuswechsel bricht einen laufenden Ausklang-Delay ab, statt
+            // dahinter zu warten – ein schneller Neustart bekommt Fokus/Ton sofort.
             combine(status.distinctUntilChanged(), current, mutedState) { st, cfg, m ->
-                applyStatus(st, cfg, m)
-            }.collect()
+                Triple(st, cfg, m)
+            }.collectLatest { (st, cfg, m) -> applyStatus(st, cfg, m) }
         }
     }
 
@@ -111,8 +113,9 @@ class SessionAudioCoordinator(
                 audioFocus.request()
             // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde Medien
             // wieder auf volle Lautstärke gehen – aber nicht, wenn stumm (dann kommt kein Gong).
+            // Dauer dynamisch vom Player (Kurz/Lang-Profil), wie in der Meditation.
             status == SessionStatus.FINISHED && cfg.soundMode != SoundMode.OFF && !muted -> {
-                delay(FINISH_CUE_MS)
+                delay(tonePlayer.gongTotalMs().toLong() + FINISH_MARGIN_MS)
                 audioFocus.abandon()
             }
             else -> audioFocus.abandon()
@@ -130,7 +133,7 @@ class SessionAudioCoordinator(
         /** Deckt die ~15-ms-Ausblende des Players plus Puffer-Latenz ab. */
         const val FADE_OUT_MS = 120L
 
-        /** Dauer des Abschluss-Gongs (2,2 s) mit etwas Reserve. */
-        const val FINISH_CUE_MS = 2400L
+        /** Reserve über die Gong-Gesamtdauer hinaus, bevor der Fokus abgegeben wird. */
+        const val FINISH_MARGIN_MS = 300L
     }
 }

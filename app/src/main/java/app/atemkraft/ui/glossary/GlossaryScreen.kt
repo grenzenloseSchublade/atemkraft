@@ -1,6 +1,5 @@
 package app.atemkraft.ui.glossary
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.components.BackButton
 
 private data class Term(val name: String, val definition: String)
@@ -68,13 +68,12 @@ private val terms = listOf(
 /** Glossar: erklärt Abkürzungen und Fachbegriffe aus den Übungsbeschreibungen. */
 @Composable
 fun GlossaryScreen(onBack: () -> Unit) {
-    BackHandler { onBack() }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
         ) {
             Spacer(Modifier.height(12.dp))
             BackButton(onClick = onBack)
@@ -85,8 +84,8 @@ fun GlossaryScreen(onBack: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             terms.forEach { term ->
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                    Column(modifier = Modifier.padding(Dimens.CardPadding)) {
                         Text(
                             text = term.name,
                             style = MaterialTheme.typography.titleLarge,

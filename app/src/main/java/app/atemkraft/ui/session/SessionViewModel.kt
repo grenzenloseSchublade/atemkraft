@@ -225,6 +225,10 @@ class SessionViewModel(
 
     private suspend fun runPhaseLoop() {
         lastTickRealtime = SystemClock.elapsedRealtime()
+        // Fortlaufender Zeit-Anker über feste Phasen hinweg: Jede Phase startet dort, wo die
+        // vorherige rechnerisch endete – sonst erbt jede Phase bis zu FRAME_MS Überschuss und
+        // lange Abläufe (~190 Phasen bei Feueratmung) laufen Sekunden zu lang.
+        var nextAnchorMs = SystemClock.elapsedRealtime()
         while (index < timeline.size) {
             val phase = timeline[index]
             // Durchgehender Ton: Phasenbeginn (auch beim Fortsetzen, damit der Ton wieder anläuft).
@@ -235,10 +239,22 @@ class SessionViewModel(
                 _cues.tryEmit(phase.type.toCueEvent())
             }
             when (val duration = phase.duration) {
-                is PhaseDuration.Fixed ->
-                    runFixedPhase(phase, resumeRemainingMs ?: duration.millis, duration.millis)
-                PhaseDuration.OpenEnded, PhaseDuration.UntilUrge ->
+                is PhaseDuration.Fixed -> {
+                    val deadline = if (resumeRemainingMs != null) {
+                        SystemClock.elapsedRealtime() + resumeRemainingMs!!
+                    } else {
+                        // Kleiner Catch-up-Deckel: Nach einer längeren Stall-Phase (Prozess
+                        // eingefroren) nicht alle verpassten Phasen im Zeitraffer nachholen.
+                        maxOf(nextAnchorMs, SystemClock.elapsedRealtime() - CATCHUP_SLACK_MS) +
+                            duration.millis
+                    }
+                    runFixedPhase(phase, deadline, duration.millis)
+                    nextAnchorMs = deadline
+                }
+                PhaseDuration.OpenEnded, PhaseDuration.UntilUrge -> {
                     runUserPacedPhase(phase)
+                    nextAnchorMs = SystemClock.elapsedRealtime() // menschlich getaktet → neu ankern
+                }
             }
             resumeRemainingMs = null
             index++
@@ -249,8 +265,7 @@ class SessionViewModel(
     /** Typ der nächsten Phase im Ablauf (für die „Als Nächstes"-Anzeige). */
     private fun nextPhaseType(): PhaseType? = timeline.getOrNull(index + 1)?.type
 
-    private suspend fun runFixedPhase(phase: RuntimePhase, remainingMs: Long, totalMs: Long) {
-        val deadline = SystemClock.elapsedRealtime() + remainingMs
+    private suspend fun runFixedPhase(phase: RuntimePhase, deadline: Long, totalMs: Long) {
         while (true) {
             val left = deadline - SystemClock.elapsedRealtime()
             if (left <= 0L) break
@@ -348,6 +363,9 @@ class SessionViewModel(
 
         /** ~30 fps Tick – flüssig genug für Kreis + Countdown, schonend für den Akku. */
         private const val FRAME_MS = 33L
+
+        /** Max. Aufhol-Spielraum des Phasen-Ankers nach einem Stall (kein Zeitraffer-Nachholen). */
+        private const val CATCHUP_SLACK_MS = 250L
 
         /** Länge des Start-Countdowns in Sekunden. */
         private const val COUNTDOWN_SECONDS = 3

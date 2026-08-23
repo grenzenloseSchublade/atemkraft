@@ -1,6 +1,5 @@
 package app.atemkraft.ui.about
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,18 +18,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.components.BackButton
 
 /** Über-Seite: App-Name, Version, Kurzbeschreibung und ehrlicher Haftungshinweis. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
-    BackHandler { onBack() }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
         ) {
             Spacer(Modifier.height(12.dp))
             BackButton(onClick = onBack)
@@ -56,13 +55,13 @@ fun AboutScreen(onBack: () -> Unit) {
                     text = stringResource(R.string.about_disclaimer),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(Dimens.CardPadding),
                 )
             }
 
             Spacer(Modifier.height(16.dp))
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(Dimens.CardPadding)) {
                     Text(
                         text = stringResource(R.string.about_credits_title),
                         style = MaterialTheme.typography.titleLarge,

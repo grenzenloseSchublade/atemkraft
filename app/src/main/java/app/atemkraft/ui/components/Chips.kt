@@ -43,7 +43,7 @@ fun Chip(text: String, color: Color) {
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
             .background(color.copy(alpha = 0.16f))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelSmall, color = color)
     }

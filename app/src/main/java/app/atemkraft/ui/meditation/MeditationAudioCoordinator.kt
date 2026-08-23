@@ -4,9 +4,9 @@ import android.content.Context
 import app.atemkraft.cue.AudioFocusController
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.PiperSpeechGuide
+import app.atemkraft.cue.SpeechEngine
 import app.atemkraft.cue.SpeechGuide
 import app.atemkraft.cue.ToneCuePlayer
-import app.atemkraft.cue.VoiceOption
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.domain.ToneVolume
 import kotlinx.coroutines.CoroutineScope
@@ -43,9 +43,6 @@ class MeditationAudioCoordinator(
         combine(piper.available, system.available) { p, s -> p || s }
             .stateIn(scope, SharingStarted.Eagerly, false)
 
-    /** Installierte neuronale Stimmen (id + Anzeigename). */
-    val voices: StateFlow<List<VoiceOption>> = piper.voices
-
     /** Transienter In-Session-Stummschalter (übersteuert Gong/Sprache, ohne die Einstellung zu ändern). */
     @Volatile private var muted = false
 
@@ -54,7 +51,8 @@ class MeditationAudioCoordinator(
         if (value) stopSpeech() // laufende Ansage sofort verstummen
     }
 
-    private fun activePiper(): Boolean = piperReady.value
+    /** Aktive Engine: Piper, sobald einsatzbereit; sonst System-TTS-Fallback. */
+    private fun engine(): SpeechEngine = if (piperReady.value) piper else system
 
     /** Beide Engines vorbereiten (System sofort, Piper baut die aktive Stimme, falls installiert). */
     fun prepareSpeech() {
@@ -75,8 +73,6 @@ class MeditationAudioCoordinator(
      */
     fun deleteVoice(voiceId: String) = piper.releaseVoiceThen(voiceId) { voiceModelManager.delete(voiceId) }
 
-    fun previewVoice(text: String) = if (activePiper()) piper.preview(text) else system.preview(text)
-
     fun updateVolume(volume: ToneVolume) = tonePlayer.setVolume(volume)
 
     /** Gong-Ausklang lang/kurz setzen. */
@@ -96,7 +92,7 @@ class MeditationAudioCoordinator(
 
     fun speak(text: String) {
         if (muted) return
-        if (activePiper()) piper.speak(text) else system.speak(text)
+        engine().speak(text)
     }
 
     /** Laufende Ansage abbrechen – beide Engines, damit nichts hängen bleibt. */

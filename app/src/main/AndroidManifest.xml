@@ -7,6 +7,10 @@
          hält den Meditations-Timer bei ausgeschaltetem Bildschirm zuverlässig am Laufen. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Hält die CPU während einer laufenden Meditation wach: In tiefem Doze pausiert sonst der
+         Timer-Loop und End-/Intervall-Gongs kämen (Minuten) zu spät. Nur aktiv, solange die
+         Sitzung läuft; bei Pause/Ende sofort freigegeben. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -22,6 +26,9 @@
     <application
         android:name=".AtemkraftApplication"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
@@ -31,7 +38,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.Atemkraft">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -24,11 +24,14 @@ class ContinuousTonePlayer {
     @Volatile private var thread: Thread? = null
     @Volatile private var running = false
 
-    // Vom Aufrufer gesetzt, vom Audio-Thread gelesen.
-    @Volatile private var startFreq = LOW
-    @Volatile private var endFreq = LOW
-    @Volatile private var rampTotalSamples = 0L
-    @Volatile private var rampPos = 0L
+    /**
+     * Frequenz-Glide einer Phase als EIN unveränderliches Objekt publiziert – der Audio-Thread
+     * liest es atomar (kein Tearing über mehrere Volatiles: ein Puffer konnte sonst neue
+     * Frequenzen mit alter Ramp-Position mischen → kurzer Pitch-Sprung am Phasenwechsel).
+     */
+    private class Ramp(val startFreq: Double, val endFreq: Double, val totalSamples: Long)
+
+    @Volatile private var ramp = Ramp(LOW, LOW, 0L)
     @Volatile private var targetGain = 0f
     @Volatile private var pendingArticulation = false
 
@@ -87,10 +90,8 @@ class ContinuousTonePlayer {
      */
     fun onPhase(type: PhaseType, durationMs: Long, open: Boolean, raiseGain: Boolean = true) {
         val (f0, f1) = freqsFor(type)
-        startFreq = f0
-        endFreq = f1
-        rampTotalSamples = if (open || durationMs <= 0L) 0L else durationMs * SAMPLE_RATE / 1000L
-        rampPos = 0L
+        val total = if (open || durationMs <= 0L) 0L else durationMs * SAMPLE_RATE / 1000L
+        ramp = Ramp(f0, f1, total) // neue Identität → Audio-Thread setzt seine Position auf 0
         if (raiseGain) targetGain = 1f
         // Kurze Lautstärke-Zäsur markiert den Phasenwechsel hörbar (ohne harten Beep).
         pendingArticulation = true
@@ -129,8 +130,14 @@ class ContinuousTonePlayer {
         var curUp = articUpSamples
         var articStage = 2 // 0 = absenken, 1 = anschwellen, 2 = ruhend
         var articPos = 0
+        // Lokale Ramp-Sicht des Audio-Threads: Position gehört dem Thread, Parameter kommen
+        // atomar über die ramp-Referenz; neue Identität = Position zurück auf 0.
+        var curRamp = ramp
+        var rampPos = 0L
         try {
             while (running && thread === self) {
+                val r = ramp
+                if (r !== curRamp) { curRamp = r; rampPos = 0L }
                 if (pendingArticulation) {
                     pendingArticulation = false
                     curLow = articLow
@@ -139,13 +146,13 @@ class ContinuousTonePlayer {
                     if (curLow < 1f) { articStage = 0; articPos = 0 } else articStage = 2
                 }
                 for (i in 0 until BUFFER_SAMPLES) {
-                    val freq = if (rampTotalSamples <= 0L) {
-                        endFreq
+                    val freq = if (curRamp.totalSamples <= 0L) {
+                        curRamp.endFreq
                     } else {
-                        val t = rampPos.coerceAtMost(rampTotalSamples).toDouble() / rampTotalSamples
-                        startFreq * (endFreq / startFreq).pow(t)
+                        val t = rampPos.coerceAtMost(curRamp.totalSamples).toDouble() / curRamp.totalSamples
+                        curRamp.startFreq * (curRamp.endFreq / curRamp.startFreq).pow(t)
                     }
-                    if (rampPos < rampTotalSamples) rampPos++
+                    if (rampPos < curRamp.totalSamples) rampPos++
                     angle += 2.0 * PI * freq / SAMPLE_RATE
                     if (angle > 2.0 * PI) angle -= 2.0 * PI
                     gain = (gain + if (gain < targetGain) fadeStep else -fadeStep).coerceIn(0f, 1f)

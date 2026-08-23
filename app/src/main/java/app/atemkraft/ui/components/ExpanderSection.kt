@@ -69,11 +69,9 @@ fun ExpanderSection(
                 )
                 Text(
                     text = appetizer,
-                    style = if (expanded) {
-                        MaterialTheme.typography.bodyMedium
-                    } else {
-                        MaterialTheme.typography.bodySmall
-                    },
+                    // Eine Rolle für beide Zustände: Der Rollen-Wechsel beim Aufklappen ließ den
+                    // ganzen Absatz reflowen; Betonung kommt allein über Deckkraft + maxLines.
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground
                         .copy(alpha = if (expanded) 0.8f else 0.6f),
                     maxLines = if (expanded) Int.MAX_VALUE else 2,

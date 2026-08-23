@@ -1,6 +1,5 @@
 package app.atemkraft.ui.settings
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
@@ -22,9 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -41,6 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceGender
@@ -52,6 +50,7 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
+import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.theme.SECONDARY
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
@@ -84,13 +83,12 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
 ) {
-    BackHandler { onBack() }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
         ) {
             Spacer(Modifier.height(12.dp))
             BackButton(onClick = onBack)
@@ -141,27 +139,16 @@ private fun TonCard(
     onGongLong: (Boolean) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_tone_title))
             Spacer(Modifier.height(10.dp))
             SubLabel(stringResource(R.string.volume_title))
             Spacer(Modifier.height(6.dp))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                val vols = ToneVolume.entries
-                vols.forEachIndexed { index, v ->
-                    SegmentedButton(
-                        selected = v == volume,
-                        onClick = { onVolume(v) },
-                        shape = SegmentedButtonDefaults.itemShape(index, vols.size),
-                    ) {
-                        Text(
-                            when (v) {
-                                ToneVolume.QUIET -> stringResource(R.string.volume_quiet)
-                                ToneVolume.MEDIUM -> stringResource(R.string.volume_medium)
-                                ToneVolume.LOUD -> stringResource(R.string.volume_loud)
-                            },
-                        )
-                    }
+            SegmentedChoiceRow(ToneVolume.entries, volume, onVolume) { v ->
+                when (v) {
+                    ToneVolume.QUIET -> stringResource(R.string.volume_quiet)
+                    ToneVolume.MEDIUM -> stringResource(R.string.volume_medium)
+                    ToneVolume.LOUD -> stringResource(R.string.volume_loud)
                 }
             }
             Spacer(Modifier.height(4.dp))
@@ -170,17 +157,8 @@ private fun TonCard(
             HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
             SubLabel(stringResource(R.string.settings_gong_length))
             Spacer(Modifier.height(6.dp))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    selected = !gongLong,
-                    onClick = { onGongLong(false) },
-                    shape = SegmentedButtonDefaults.itemShape(0, 2),
-                ) { Text(stringResource(R.string.gong_length_short)) }
-                SegmentedButton(
-                    selected = gongLong,
-                    onClick = { onGongLong(true) },
-                    shape = SegmentedButtonDefaults.itemShape(1, 2),
-                ) { Text(stringResource(R.string.gong_length_long)) }
+            SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong) { long ->
+                stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
             }
             Spacer(Modifier.height(4.dp))
             Hint(stringResource(R.string.settings_gong_length_hint))
@@ -198,27 +176,16 @@ private fun AtmenCard(
 ) {
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_breathing_title))
             Spacer(Modifier.height(10.dp))
             SubLabel(stringResource(R.string.settings_sound_title))
             Spacer(Modifier.height(8.dp))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                val modes = SoundMode.entries
-                modes.forEachIndexed { index, mode ->
-                    SegmentedButton(
-                        selected = mode == soundMode,
-                        onClick = { onSoundMode(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(index, modes.size),
-                    ) {
-                        Text(
-                            when (mode) {
-                                SoundMode.OFF -> stringResource(R.string.sound_mode_off)
-                                SoundMode.CUES -> stringResource(R.string.sound_mode_cues)
-                                SoundMode.CONTINUOUS -> stringResource(R.string.sound_mode_continuous)
-                            },
-                        )
-                    }
+            SegmentedChoiceRow(SoundMode.entries, soundMode, onSoundMode) { mode ->
+                when (mode) {
+                    SoundMode.OFF -> stringResource(R.string.sound_mode_off)
+                    SoundMode.CUES -> stringResource(R.string.sound_mode_cues)
+                    SoundMode.CONTINUOUS -> stringResource(R.string.sound_mode_continuous)
                 }
             }
             Spacer(Modifier.height(6.dp))
@@ -246,22 +213,11 @@ private fun AtmenCard(
                 Spacer(Modifier.height(10.dp))
                 SubLabel(stringResource(R.string.emphasis_title))
                 Spacer(Modifier.height(6.dp))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    val items = TransitionEmphasis.entries
-                    items.forEachIndexed { index, emphasis ->
-                        SegmentedButton(
-                            selected = emphasis == transition,
-                            onClick = { onTransition(emphasis) },
-                            shape = SegmentedButtonDefaults.itemShape(index, items.size),
-                        ) {
-                            Text(
-                                when (emphasis) {
-                                    TransitionEmphasis.SOFT -> stringResource(R.string.emphasis_soft)
-                                    TransitionEmphasis.MEDIUM -> stringResource(R.string.emphasis_medium)
-                                    TransitionEmphasis.STRONG -> stringResource(R.string.emphasis_strong)
-                                },
-                            )
-                        }
+                SegmentedChoiceRow(TransitionEmphasis.entries, transition, onTransition) { emphasis ->
+                    when (emphasis) {
+                        TransitionEmphasis.SOFT -> stringResource(R.string.emphasis_soft)
+                        TransitionEmphasis.MEDIUM -> stringResource(R.string.emphasis_medium)
+                        TransitionEmphasis.STRONG -> stringResource(R.string.emphasis_strong)
                     }
                 }
                 Spacer(Modifier.height(4.dp))
@@ -281,7 +237,7 @@ private fun SessionCard(
     onToggleNextPhase: (Boolean) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_session_title))
             Spacer(Modifier.height(4.dp))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
@@ -310,22 +266,14 @@ private fun MeditationCard(
     onDeleteVoice: (String) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_meditation_title))
 
             Spacer(Modifier.height(12.dp))
             SubLabel(stringResource(R.string.settings_gong_interval))
             Spacer(Modifier.height(6.dp))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                GONG_INTERVALS.forEachIndexed { index, m ->
-                    SegmentedButton(
-                        selected = m == gongIntervalMin,
-                        onClick = { onGongInterval(m) },
-                        shape = SegmentedButtonDefaults.itemShape(index, GONG_INTERVALS.size),
-                    ) {
-                        Text(stringResource(R.string.meditation_minutes, m))
-                    }
-                }
+            SegmentedChoiceRow(GONG_INTERVALS, gongIntervalMin, onGongInterval) { m ->
+                stringResource(R.string.meditation_minutes, m)
             }
             Spacer(Modifier.height(4.dp))
             Hint(stringResource(R.string.settings_gong_interval_hint))
@@ -386,8 +334,18 @@ private fun VoiceRow(
         }
 
         when (state) {
-            is VoiceDownloadState.Downloading ->
+            is VoiceDownloadState.Downloading -> {
                 CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                // Abbrechen: delete() bricht den laufenden Download-Job ab und räumt Reste weg.
+                val cdCancel = stringResource(R.string.cd_voice_cancel)
+                IconButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = cdCancel }) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                    )
+                }
+            }
             is VoiceDownloadState.Downloaded -> {
                 when {
                     // Aktiv-Label erst zeigen, wenn die Engine wirklich bereit ist (gleiche Quelle

@@ -5,7 +5,6 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
-import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceModelManager
 import com.k2fsa.sherpa.onnx.OfflineTts
@@ -33,7 +32,7 @@ import kotlinx.coroutines.launch
 class PiperSpeechGuide(
     context: Context,
     private val modelManager: VoiceModelManager,
-) {
+) : SpeechEngine {
     private val appContext = context.applicationContext
     private val audioManager =
         appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -43,11 +42,7 @@ class PiperSpeechGuide(
 
     private val _available = MutableStateFlow(false)
     /** true, sobald die AKTIVE Stimme geladen und einsatzbereit ist. */
-    val available: StateFlow<Boolean> = _available.asStateFlow()
-
-    private val _voices = MutableStateFlow<List<VoiceOption>>(emptyList())
-    /** Installierte neuronale Stimmen (id + Anzeigename). */
-    val voices: StateFlow<List<VoiceOption>> = _voices.asStateFlow()
+    override val available: StateFlow<Boolean> = _available.asStateFlow()
 
     @Volatile private var tts: OfflineTts? = null
     @Volatile private var sampleRate: Int = 22050
@@ -56,16 +51,13 @@ class PiperSpeechGuide(
     /** Erhöht bei jedem (Neu-)Aufbau/Teardown: veraltete Build-Ergebnisse werden verworfen. */
     @Volatile private var initEpoch = 0
 
-    /** „Generation" der Wiedergabe: stop()/preview() erhöhen ihn und brechen ältere Ausgaben ab. */
+    /** „Generation" der Wiedergabe: stop() erhöht ihn und bricht ältere Ausgaben ab. */
     @Volatile private var epoch = 0
     @Volatile private var currentTrack: AudioTrack? = null
 
     init {
         scope.launch {
             modelManager.states.collect { states ->
-                _voices.value = VoiceCatalog.all
-                    .filter { states[it.id] is VoiceDownloadState.Downloaded }
-                    .map { VoiceOption(it.id, it.displayName) }
                 // Aktive Stimme neu laden, wenn sie gerade fertig wurde; abbauen, wenn entfernt.
                 val target = desiredVoiceId
                 if (target != null) {
@@ -88,7 +80,7 @@ class PiperSpeechGuide(
     fun isDesired(voiceId: String): Boolean = desiredVoiceId == voiceId
 
     /** Sicherstellen, dass die aktive Stimme (falls installiert) geladen ist. */
-    fun ensureInit() {
+    override fun ensureInit() {
         if (loadedVoiceId != desiredVoiceId) rebuild()
     }
 
@@ -152,16 +144,9 @@ class PiperSpeechGuide(
      * Spricht [text], sofern bereit und die Medien-Lautstärke nicht 0 ist (bewusste Stille
      * respektieren). Reiht sich hinter laufende Ansagen ein. Nicht-blockierend.
      */
-    fun speak(text: String) {
+    override fun speak(text: String) {
         if (tts == null) return
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) return
-        enqueue(text)
-    }
-
-    /** Probe-Ansage über die AKTIVE Engine (unterbricht Laufendes, ignoriert Lautstärke-0-Regel). */
-    fun preview(text: String) {
-        if (tts == null) return
-        flush()
         enqueue(text)
     }
 
@@ -232,7 +217,7 @@ class PiperSpeechGuide(
     }
 
     /** Laufende Ausgabe abbrechen (Engine bleibt bestehen). */
-    fun stop() = flush()
+    override fun stop() = flush()
 
     private fun flush() {
         epoch++
@@ -240,7 +225,7 @@ class PiperSpeechGuide(
     }
 
     /** Alles freigeben. */
-    fun release() {
+    override fun release() {
         initEpoch++
         flush()
         executor.execute {

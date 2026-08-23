@@ -3,9 +3,7 @@
     <string name="app_name">Atemkraft</string>
 
     <!-- Startbildschirm -->
-    <string name="home_title">Atemkraft</string>
     <string name="home_subtitle">Wähle eine Atemübung</string>
-    <string name="home_empty">Noch keine Übungen hinterlegt</string>
 
     <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen) -->
     <string name="phase_inhale">Einatmen</string>
@@ -33,11 +31,17 @@
     <string name="detail_references">Quellen</string>
     <string name="detail_info_only">Diese Technik ist ein Programm bzw. eine Gewohnheit – kein getakteter Ablauf in der App.</string>
     <string name="detail_safety_appetizer">Intensiv – bitte zuerst die Sicherheitshinweise lesen.</string>
-    <string name="detail_meta_rounds">%1$d Runden</string>
+    <plurals name="detail_meta_rounds">
+        <item quantity="one">%1$d Runde</item>
+        <item quantity="other">%1$d Runden</item>
+    </plurals>
     <string name="detail_meta_minutes">~%1$d min</string>
     <string name="detail_intense">intensiv</string>
     <string name="detail_calm">ruhig</string>
-    <string name="detail_sources_count">%1$d Quellen</string>
+    <plurals name="detail_sources_count">
+        <item quantity="one">%1$d Quelle</item>
+        <item quantity="other">%1$d Quellen</item>
+    </plurals>
     <string name="duration_approx">ca. %1$d min</string>
     <string name="duration_approx_from">ab ca. %1$d min</string>
     <!-- „Starten · ca. 10 min" – Gesamtdauer direkt am Start. -->
@@ -45,9 +49,7 @@
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
-    <string name="tab_exercises">Atmungen</string>
     <string name="tab_situations">Situationen</string>
-    <string name="tab_session">Session</string>
     <string name="tab_logbook">Logbuch</string>
 
     <!-- Situationen -->
@@ -102,11 +104,7 @@
     <string name="session_round">Runde %1$d von %2$d</string>
     <string name="session_tap_to_continue">Tippen, wenn du weiteratmen willst</string>
     <string name="session_done_title">Geschafft</string>
-    <string name="session_done_body">Übung abgeschlossen</string>
     <string name="session_done_question">Wie fühlst du dich?</string>
-    <string name="session_empty_title">Keine aktive Session</string>
-    <string name="session_empty_body">Wähle im Tab Atmungen eine Übung und starte sie.</string>
-    <string name="action_to_selection">Zur Auswahl</string>
     <string name="session_get_ready">Gleich geht\'s los</string>
     <string name="session_next">Als Nächstes</string>
     <string name="action_restart">Von vorne</string>
@@ -135,7 +133,6 @@
 
     <!-- Einstellungen / Cues -->
     <string name="settings_title">Einstellungen</string>
-    <string name="settings_sound">Ton bei Phasenwechsel</string>
     <string name="settings_sound_title">Ton</string>
     <string name="sound_mode_off">Aus</string>
     <string name="sound_mode_cues">Wechseltöne</string>
@@ -161,7 +158,6 @@
     <string name="settings_breathing_title">Atmen</string>
     <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
     <string name="settings_meditation_title">Meditation</string>
-    <string name="settings_voice_preview">Probe anhören</string>
     <string name="cd_voice_preview">Stimme anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
     <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min" gewählt ist.</string>
@@ -182,6 +178,7 @@
     <string name="settings_voice_choose">Wählen</string>
     <string name="settings_voice_download">Laden</string>
     <string name="cd_voice_delete">Stimme löschen</string>
+    <string name="cd_voice_cancel">Download abbrechen</string>
     <string name="voice_gender_male">männlich</string>
     <string name="voice_gender_female">weiblich</string>
     <string name="voice_gender_special">Spezial</string>

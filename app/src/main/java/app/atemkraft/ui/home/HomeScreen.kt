@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
 import app.atemkraft.ui.components.InfoChip
@@ -48,8 +49,8 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = Dimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
                 Spacer(Modifier.height(20.dp))
@@ -115,7 +116,7 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         border = BorderStroke(1.dp, accent.copy(alpha = 0.35f)),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

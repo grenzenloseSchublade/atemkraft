@@ -1,12 +1,15 @@
 package app.atemkraft.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColors = darkColorScheme(
+/**
+ * Bewusst NUR Dark: Die Synthwave-Palette ist für abendliche Nutzung entworfen; ein helles
+ * Schema mit Neon-Akzenten fiele beim Kontrast (AA) durch. Material You/dynamicColor ist
+ * ebenso bewusst ausgelassen – die Marke lebt von der festen Palette.
+ */
+private val AtemkraftColors = darkColorScheme(
     primary = NeonMagenta,
     onPrimary = OnNeon,
     secondary = NeonCyan,
@@ -14,30 +17,28 @@ private val DarkColors = darkColorScheme(
     tertiary = NeonYellow,
     onTertiary = OnNeon,
     background = DarkBackground,
-    surface = DarkSurface,
-    surfaceVariant = DarkSurfaceVariant,
     onBackground = DarkOnBackground,
+    surface = DarkSurface,
     onSurface = DarkOnSurface,
-    onSurfaceVariant = DarkOnBackground,
-)
-
-private val LightColors = lightColorScheme(
-    primary = NeonMagentaDark,
-    onPrimary = LightSurface,
-    secondary = NeonMagentaDark,
-    background = LightBackground,
-    surface = LightSurface,
-    onBackground = LightOnBackground,
-    onSurface = LightOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    // M3-Semantik: „variant" = leiser – gedämpftes Lavendel statt Voll-Weiß.
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    // M3-Container-Leiter aus der Indigo-Palette: Card() & Co. rendern sonst im neutralen
+    // Baseline-Grau statt im Marken-Indigo.
+    surfaceContainerLowest = SurfaceContainerLowest,
+    surfaceContainerLow = SurfaceContainerLow,
+    surfaceContainer = DarkSurface,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaceVariant,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = DarkOnBackground,
+    outlineVariant = OutlineVariantIndigo,
 )
 
 @Composable
-fun AtemkraftTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit,
-) {
+fun AtemkraftTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = AtemkraftColors,
         typography = AtemkraftTypography,
         content = content,
     )
