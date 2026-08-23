@@ -1,8 +1,10 @@
 package app.atemkraft.ui.meditation
 
+import android.app.NotificationManager
 import android.content.Context
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationCues
 import app.atemkraft.data.SettingsRepository
@@ -189,10 +191,12 @@ class MeditationController(
         finishing = false
         audio.stopSpeech()
         audio.abandonFocus()
-        stopService()
         resumeRemainingMs = null
         resumeElapsedMs = null
+        // Zuerst IDLE setzen, dann Service/Notification entfernen: So kann der Notification-
+        // Collector im Service (er überspringt IDLE) nach unserem cancel() nichts mehr nachposten.
         _state.value = MeditationUiState()
+        stopService()
     }
 
     private fun finishNow() {
@@ -204,6 +208,10 @@ class MeditationController(
 
     private fun stopService() {
         appContext.stopService(MeditationService.startIntent(appContext))
+        // Backstop: Die Notification app-seitig direkt entfernen. Der Service räumt sie in
+        // onDestroy zwar selbst weg, aber dessen Teardown-Timing ist herstellerabhängig
+        // (v. a. Samsung) – dieser Aufruf stellt sicher, dass keine Waise zurückbleibt.
+        appContext.getSystemService<NotificationManager>()?.cancel(MeditationService.NOTIF_ID)
     }
 
     private fun launchActive(fromResume: Boolean) {
@@ -382,7 +390,10 @@ class MeditationController(
         private const val GAP_MIN_MS = 45_000L
         private const val GAP_MAX_MS = 120_000L
 
-        /** Ausklingzeit des End-Gongs, bevor der Audio-Fokus abgegeben wird. */
-        private const val FINISH_ABANDON_MS = 2400L
+        /**
+         * Ausklingzeit des End-Gongs, bevor der Audio-Fokus abgegeben und der Service beendet wird.
+         * Muss länger sein als die Gong-Wiedergabe (≈5,86 s), sonst würde das Ende abgeschnitten.
+         */
+        private const val FINISH_ABANDON_MS = 6000L
     }
 }

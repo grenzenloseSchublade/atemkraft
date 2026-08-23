@@ -214,17 +214,17 @@ private fun AtemkraftApp() {
                             colors = navColors,
                         )
                         TabItem(
-                            selected = selectedTab == TopTab.LOGBUCH,
-                            onClick = { navController.switchTab(LogbuchRoute) },
-                            icon = Icons.Filled.DateRange,
-                            label = stringResource(R.string.tab_logbook),
-                            colors = navColors,
-                        )
-                        TabItem(
                             selected = selectedTab == TopTab.MEDITATION,
                             onClick = { navController.switchTab(MeditationRoute) },
                             painter = painterResource(R.drawable.ic_meditation),
                             label = stringResource(R.string.tab_meditation),
+                            colors = navColors,
+                        )
+                        TabItem(
+                            selected = selectedTab == TopTab.LOGBUCH,
+                            onClick = { navController.switchTab(LogbuchRoute) },
+                            icon = Icons.Filled.DateRange,
+                            label = stringResource(R.string.tab_logbook),
                             colors = navColors,
                         )
                     }

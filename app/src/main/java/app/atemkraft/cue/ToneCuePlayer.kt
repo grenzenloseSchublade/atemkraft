@@ -60,14 +60,18 @@ class ToneCuePlayer {
         val sampleCount = SAMPLE_RATE * GONG_DURATION_MS / 1000
         val samples = ShortArray(sampleCount)
         // Teilton: Frequenz (Hz), Amplitude, Abkling-Zeitkonstante tau (s).
+        // Grundton + Schwebungspartner klingen bewusst langsam aus (großes tau) → langer,
+        // weicher Nachhall; die hohen Obertöne bleiben kurz (nur der Anschlags-Schimmer).
         val partials = listOf(
-            Triple(330.0, 0.50, 1.1),
-            Triple(331.6, 0.20, 1.1),
+            Triple(330.0, 0.50, 1.7),
+            Triple(331.6, 0.20, 1.7),
             Triple(894.0, 0.20, 0.45),
             Triple(1698.0, 0.10, 0.20),
         )
         val attackSamples = (SAMPLE_RATE * 0.008).toInt()
-        val releaseSamples = (SAMPLE_RATE * 0.15).toInt() // Resttail knackfrei auf 0 ziehen
+        // Langer, weicher Ausklang: Das Fenster ist so bemessen, dass der Grundton bis zum Ende
+        // fast verklungen ist (~3 %), damit der Gong natürlich austönt statt abgeschnitten zu wirken.
+        val releaseSamples = (SAMPLE_RATE * 0.9).toInt()
 
         for (i in 0 until sampleCount) {
             val t = i.toDouble() / SAMPLE_RATE
@@ -149,7 +153,7 @@ class ToneCuePlayer {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
 
-        /** Länge des Abschluss-Gongs inkl. Ausklingen. */
-        const val GONG_DURATION_MS = 2200
+        /** Länge des Gongs inkl. langem, natürlichem Ausklingen (Grundton verklingt ~vollständig). */
+        const val GONG_DURATION_MS = 5800
     }
 }

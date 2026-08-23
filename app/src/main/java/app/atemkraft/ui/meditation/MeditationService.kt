@@ -144,7 +144,7 @@ class MeditationService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "meditation"
-        private const val NOTIF_ID = 42
+        internal const val NOTIF_ID = 42
         private const val ACTION_STOP = "app.atemkraft.action.MEDITATION_STOP"
 
         fun startIntent(context: Context): Intent =

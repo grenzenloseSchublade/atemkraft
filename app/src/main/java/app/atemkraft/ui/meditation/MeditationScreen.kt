@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
@@ -277,6 +278,14 @@ private fun RunningContent(
     }
 
     Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+        // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
+        Text(
+            text = stringResource(R.string.meditation_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+            // zIndex wie in der Atem-Session: Titel bleibt über dem Kreis, falls sie sich je berühren.
+            modifier = Modifier.align(Alignment.TopCenter).zIndex(1f),
+        )
         Box(modifier = Modifier.align(Alignment.Center), contentAlignment = Alignment.Center) {
             BreathingCircle(
                 fraction = 1f,
