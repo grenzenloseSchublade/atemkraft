@@ -107,6 +107,12 @@ IzzyOnDroid oder Direkt-APK sind passende Kanäle. Alle Komponenten sind FOSS
 (sherpa-onnx Apache-2.0, Piper MIT, ONNX Runtime MIT, Stimme „Thorsten" CC0) —
 Credits im Über-Screen.
 
+## Lizenz
+
+**MIT** ([LICENSE](LICENSE)) — frei wiederverwendbar, auch kommerziell, solange der
+Copyright-Hinweis genannt bleibt. Eingebundene Komponenten: sherpa-onnx (Apache-2.0),
+Piper (MIT), ONNX Runtime (MIT), Stimme „Thorsten" (CC0) — Credits im Über-Screen.
+
 ## Ideen / Backlog
 
 Eigene Übungen per Editor, Wear OS, Widgets.
