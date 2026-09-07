@@ -12,3 +12,7 @@
 *.apk
 *.ap_
 *.aab
+
+# Release-Signatur: Keystore + Passwörter bleiben lokal
+/keystore.properties
+/app/atemkraft-release.keystore

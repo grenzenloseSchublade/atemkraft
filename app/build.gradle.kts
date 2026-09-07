@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -25,6 +27,13 @@ android {
         }
     }
 
+    // Release-Keystore + Passwörter liegen bewusst außerhalb des Repos (gitignored):
+    // keystore.properties im Projekt-Root, Keystore unter app/. Fehlt beides (z. B. CI,
+    // fremder Checkout), fällt Release auf den Debug-Key zurück und bleibt baubar.
+    val keystoreProps = rootProject.file("keystore.properties")
+        .takeIf { it.exists() }
+        ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
+
     signingConfigs {
         // Fester Debug-Keystore im Projekt -> stabile Signatur über alle (Container-)Builds.
         getByName("debug") {
@@ -32,6 +41,14 @@ android {
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+        }
+        if (keystoreProps != null) {
+            create("release") {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
         }
     }
 
@@ -43,9 +60,10 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Vorerst mit Debug-Keystore signiert, damit die minifizierte APK testbar ist.
-            // (Echte Release-Signatur folgt; F-Droid signiert ohnehin selbst.)
-            signingConfig = signingConfigs.getByName("debug")
+            // Echter Release-Key, sobald keystore.properties vorhanden; sonst Debug-Key,
+            // damit die minifizierte APK überall testbar bleibt. (F-Droid signiert selbst.)
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
