@@ -1,6 +1,7 @@
 package app.atemkraft.data
 
 import android.content.Context
+import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.data.local.AtemkraftDatabase
@@ -27,6 +28,9 @@ class AppContainer(context: Context) {
 
     /** Spielt die kurzen Vorhör-Clips der Stimmen (vor dem Download). */
     val voiceSamplePlayer: VoiceSamplePlayer = VoiceSamplePlayer(context)
+
+    /** Vorhören des Gongs in den Einstellungen (eigene Instanz, unabhängig von laufenden Sessions). */
+    val gongPreviewPlayer: ToneCuePlayer = ToneCuePlayer()
 
     /** App-weiter Meditations-Ablauf (überlebt Tab-Wechsel und läuft mit dem Foreground-Service). */
     val meditationController: MeditationController = MeditationController(

@@ -72,6 +72,7 @@ fun SettingsScreen(
     onGongInterval: (Int) -> Unit,
     gongLong: Boolean,
     onGongLong: (Boolean) -> Unit,
+    onPreviewGong: () -> Unit,
     voiceStates: Map<String, VoiceDownloadState>,
     activeVoiceId: String?,
     piperEngineReady: Boolean,
@@ -99,7 +100,7 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(16.dp))
 
-            TonCard(volume, onVolume, gongLong, onGongLong)
+            TonCard(volume, onVolume, gongLong, onGongLong, onPreviewGong)
 
             Spacer(Modifier.height(16.dp))
             AtmenCard(soundMode, transition, onSoundMode, onTransition)
@@ -137,6 +138,7 @@ private fun TonCard(
     onVolume: (ToneVolume) -> Unit,
     gongLong: Boolean,
     onGongLong: (Boolean) -> Unit,
+    onPreviewGong: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
@@ -155,8 +157,15 @@ private fun TonCard(
             Hint(stringResource(R.string.volume_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-            SubLabel(stringResource(R.string.settings_gong_length))
-            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SubLabel(stringResource(R.string.settings_gong_length))
+                Spacer(Modifier.weight(1f))
+                // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut tippen).
+                val cdGong = stringResource(R.string.cd_gong_preview)
+                IconButton(onClick = onPreviewGong, modifier = Modifier.semantics { contentDescription = cdGong }) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                }
+            }
             SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong) { long ->
                 stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
             }

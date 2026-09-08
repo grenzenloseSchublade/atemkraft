@@ -166,6 +166,7 @@
     <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
     <string name="settings_meditation_title">Meditation</string>
     <string name="cd_voice_preview">Stimme anhören</string>
+    <string name="cd_gong_preview">Gong anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
     <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min" gewählt ist.</string>
     <string name="settings_gong_length">Gong-Ausklang</string>

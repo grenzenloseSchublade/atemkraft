@@ -30,11 +30,30 @@ class ToneCuePlayer {
     @Volatile
     private var volumeScale = 1f
 
-    /** true = voller, langer Ausklang (~7 s); false = kürzerer Ausklang (~4,5 s). In Einstellungen wählbar. */
+    /** true = voller, langer Ausklang (~11,5 s); false = kürzerer Ausklang (~6 s). In Einstellungen wählbar. */
     @Volatile
     private var gongLong = true
 
     fun setGongLong(long: Boolean) { gongLong = long }
+
+    private val gongBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /**
+     * Vorhören in den Einstellungen: spielt den Gong im gewünschten Profil genau einmal;
+     * weitere Taps während der laufenden Wiedergabe werden ignoriert (kein Aufstauen).
+     */
+    fun previewGong(long: Boolean) {
+        if (released) return
+        if (!gongBusy.compareAndSet(false, true)) return
+        gongLong = long
+        executor.execute {
+            try {
+                synthesizeAndPlayGong()
+            } finally {
+                gongBusy.set(false)
+            }
+        }
+    }
 
     /** Gesamt-Wiedergabedauer des Gongs (Ton + Stille) fürs aktuelle Profil – für Warte-/Fokus-Timing. */
     fun gongTotalMs(): Int = (if (gongLong) GONG_TONE_LONG_MS else GONG_TONE_SHORT_MS) + GONG_TAIL_SILENCE_MS
@@ -70,7 +89,7 @@ class ToneCuePlayer {
         // Grundton-Abklingzeit + Fenster je nach gewähltem Profil. Fenster ist so bemessen, dass der
         // Ton NATÜRLICH exponentiell bis ~-60 dB (praktisch Stille) ausschwingt – nicht abgeschnitten,
         // nicht künstlich gefadet (nur 150 ms Anti-Klick am Ende). t(-60dB) = tau·ln(1000).
-        val fundTau = if (gongLong) 1.1 else 0.85
+        val fundTau = if (gongLong) 1.6 else 0.85
         val toneMs = if (gongLong) GONG_TONE_LONG_MS else GONG_TONE_SHORT_MS
         val toneCount = SAMPLE_RATE * toneMs / 1000
         // … plus großzügige echte Stille am Ende, damit die Audioausgabe (HAL/Bluetooth-Latenz)
@@ -174,8 +193,8 @@ class ToneCuePlayer {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
 
-        /** Ton-Fenster „voller Ausklang": Grundton tau 1,1 s → bei 8,0 s ≈ -63 dB (weit unter hörbar). */
-        const val GONG_TONE_LONG_MS = 8000
+        /** Ton-Fenster „voller Ausklang": Grundton tau 1,6 s → bei 11,5 s ≈ -62 dB (weit unter hörbar). */
+        const val GONG_TONE_LONG_MS = 11500
 
         /** Ton-Fenster „kurz": Grundton tau 0,85 s → bei 6,0 s ≈ -61 dB (weit unter hörbar). */
         const val GONG_TONE_SHORT_MS = 6000

@@ -388,6 +388,10 @@ private fun AtemkraftApp() {
                         onGongInterval = { scope.launch { container.settingsRepository.setGongIntervalMin(it) } },
                         gongLong = gongLong,
                         onGongLong = { scope.launch { container.settingsRepository.setGongLong(it) } },
+                        onPreviewGong = {
+                            container.gongPreviewPlayer.setVolume(cueSettings.volume)
+                            container.gongPreviewPlayer.previewGong(gongLong)
+                        },
                         voiceStates = voiceStates,
                         activeVoiceId = activeVoiceId,
                         piperEngineReady = piperEngineReady,
