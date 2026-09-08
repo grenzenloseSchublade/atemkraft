@@ -15,6 +15,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
@@ -83,8 +89,22 @@ fun AboutScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
+            // Klickbarer Repo-Link: LinkAnnotation öffnet den Browser ohne eigenen Intent-Code.
             Text(
-                text = stringResource(R.string.about_source),
+                text = buildAnnotatedString {
+                    append(stringResource(R.string.about_source_prefix))
+                    withLink(
+                        LinkAnnotation.Url(
+                            url = "https://github.com/grenzenloseSchublade/atemkraft",
+                            styles = TextLinkStyles(
+                                style = SpanStyle(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textDecoration = TextDecoration.Underline,
+                                ),
+                            ),
+                        ),
+                    ) { append("github.com/grenzenloseSchublade/atemkraft") }
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
