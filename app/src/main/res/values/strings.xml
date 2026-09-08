@@ -195,6 +195,8 @@
     <string name="voice_failed_short">Fehler – erneut versuchen</string>
 
     <!-- Credits / Open-Source-Danksagung (Über-Screen) -->
+    <string name="about_author">von grenzenloseSchublade · MIT-Lizenz</string>
+    <string name="about_source">Quellcode: github.com/grenzenloseSchublade/atemkraft</string>
     <string name="about_credits_title">Open-Source-Komponenten</string>
     <string name="about_credits_body">Die hochwertige Sprachausgabe steht dank dieser freien Projekte zur Verfügung:\n\n• sherpa-onnx (k2-fsa) — Apache-2.0\ngithub.com/k2-fsa/sherpa-onnx\n\n• Piper (rhasspy) — MIT\ngithub.com/rhasspy/piper\n\n• ONNX Runtime (Microsoft) — MIT\ngithub.com/microsoft/onnxruntime\n\n• Stimme „Thorsten" (Thorsten Müller) — CC0 / gemeinfrei\ngithub.com/thorstenMueller/Thorsten-Voice\n\n• Apache Commons Compress — Apache-2.0\n\nDas Stimmmodell wird nur auf ausdrücklichen Wunsch von GitHub geladen — die einzige Netznutzung der App.</string>
 

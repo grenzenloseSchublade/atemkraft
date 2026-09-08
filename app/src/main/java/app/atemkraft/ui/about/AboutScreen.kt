@@ -75,6 +75,19 @@ fun AboutScreen(onBack: () -> Unit) {
                     )
                 }
             }
+            Spacer(Modifier.height(16.dp))
+            // Autor + Lizenz + offizielle Quelle: gerade bei manuell geteilten APKs die einzige
+            // Stelle, an der Empfänger Herkunft und Original-Repo der App sehen.
+            Text(
+                text = stringResource(R.string.about_author),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            )
+            Text(
+                text = stringResource(R.string.about_source),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            )
             Spacer(Modifier.height(24.dp))
         }
     }
