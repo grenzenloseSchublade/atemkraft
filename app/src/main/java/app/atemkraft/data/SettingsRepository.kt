@@ -32,6 +32,15 @@ data class SafetySettings(
     val acknowledged: Boolean = false,
 )
 
+/** Vom Nutzer angepasste Session-Werte einer Übung: Dauer (Minuten bzw. Runden) und
+ *  Phasenlängen in Sekunden; null = nicht angepasst bzw. Phase nicht vorhanden. */
+data class IntervalOverrides(
+    val duration: Int? = null,
+    val inhale: Int? = null,
+    val hold: Int? = null,
+    val exhale: Int? = null,
+)
+
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 class SettingsRepository(private val context: Context) {
@@ -133,6 +142,43 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setShowNextPhase(enabled: Boolean) {
         context.dataStore.edit { it[Keys.SHOW_NEXT] = enabled }
+    }
+
+    // Angepasste Phasenlängen je Übung (dynamische Keys pro Übungs-Id). Das Muster des Tages
+    // wird bewusst nicht persistiert (konstante Id, Inhalt wechselt täglich) – das entscheidet
+    // aber der Aufrufer, hier landen nur stabile Übungs-Ids.
+    private fun ivKey(exerciseId: String, part: String) = intPreferencesKey("iv_${exerciseId}_$part")
+
+    /** Gespeicherte Session-Anpassung der Übung; null = nie angepasst. */
+    fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> =
+        context.dataStore.data.map { prefs ->
+            val duration = prefs[ivKey(exerciseId, "dur")]
+            val inhale = prefs[ivKey(exerciseId, "in")]
+            val hold = prefs[ivKey(exerciseId, "hold")]
+            val exhale = prefs[ivKey(exerciseId, "ex")]
+            if (duration == null && inhale == null && hold == null && exhale == null) null
+            else IntervalOverrides(duration = duration, inhale = inhale, hold = hold, exhale = exhale)
+        }
+
+    suspend fun setExerciseIntervals(exerciseId: String, duration: Int?, inhale: Int?, hold: Int?, exhale: Int?) {
+        context.dataStore.edit { prefs ->
+            fun put(part: String, value: Int?) {
+                if (value != null) prefs[ivKey(exerciseId, part)] = value else prefs.remove(ivKey(exerciseId, part))
+            }
+            put("dur", duration)
+            put("in", inhale)
+            put("hold", hold)
+            put("ex", exhale)
+        }
+    }
+
+    suspend fun clearExerciseIntervals(exerciseId: String) {
+        context.dataStore.edit { prefs ->
+            prefs.remove(ivKey(exerciseId, "dur"))
+            prefs.remove(ivKey(exerciseId, "in"))
+            prefs.remove(ivKey(exerciseId, "hold"))
+            prefs.remove(ivKey(exerciseId, "ex"))
+        }
     }
 
     /** Zuletzt gewählte Meditations-Einstellung (Modus, Dauer, Intervall-Gong, Sprache). */

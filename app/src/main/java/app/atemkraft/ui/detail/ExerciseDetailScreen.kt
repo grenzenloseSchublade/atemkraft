@@ -1,23 +1,33 @@
 package app.atemkraft.ui.detail
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -27,11 +37,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.domain.EvidenceTag
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
@@ -44,10 +56,10 @@ import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.Chip
-import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.ReferenceItem
-import app.atemkraft.ui.components.Stepper
+import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.home.color
@@ -66,6 +78,9 @@ import kotlin.math.roundToInt
 fun ExerciseDetailScreen(
     exercise: Exercise,
     requireSafetyConfirm: Boolean,
+    savedIntervals: IntervalOverrides?,
+    onIntervalsChange: (duration: Int, inhale: Int?, hold: Int?, exhale: Int?) -> Unit,
+    onIntervalsReset: () -> Unit,
     onConfirmedSafety: () -> Unit,
     onStart: (SessionConfig) -> Unit,
     onBack: () -> Unit,
@@ -74,9 +89,8 @@ fun ExerciseDetailScreen(
     val roundBased = exercise.isRoundBased
     val range = if (roundBased) 1..15 else 1..30
     val isIntense = exercise.tag == EvidenceTag.CAUTION
-    var value by rememberSaveable(exercise.id) {
-        mutableIntStateOf(if (roundBased) exercise.rounds else exercise.defaultMinutes())
-    }
+    val valueDefault = if (roundBased) exercise.rounds else exercise.defaultMinutes()
+    var value by rememberSaveable(exercise.id) { mutableIntStateOf(valueDefault) }
     var showSafety by remember { mutableStateOf(false) }
 
     // Optionale Feineinstellung der Phasenlängen (dezent hinter „Intervalle anpassen").
@@ -86,17 +100,56 @@ fun ExerciseDetailScreen(
             ?.duration as? PhaseDuration.Fixed)?.let { (it.millis / 1000.0).roundToInt() }
     val hasInhale = cyclePhases.any { it.type == PhaseType.INHALE }
     val hasExhale = cyclePhases.any { it.type == PhaseType.EXHALE }
-    val holdDefault = defaultSec(PhaseType.HOLD_FULL) ?: defaultSec(PhaseType.HOLD_EMPTY)
-    val hasHold = holdDefault != null
-    var inhaleSec by rememberSaveable(exercise.id) { mutableIntStateOf(defaultSec(PhaseType.INHALE) ?: 4) }
-    var exhaleSec by rememberSaveable(exercise.id) { mutableIntStateOf(defaultSec(PhaseType.EXHALE) ?: 6) }
-    var holdSec by rememberSaveable(exercise.id) { mutableIntStateOf(holdDefault ?: 4) }
+    val inhaleDefault = defaultSec(PhaseType.INHALE) ?: 4
+    val exhaleDefault = defaultSec(PhaseType.EXHALE) ?: 6
+    val holdDefault = defaultSec(PhaseType.HOLD_FULL) ?: defaultSec(PhaseType.HOLD_EMPTY) ?: 4
+    val hasHold = defaultSec(PhaseType.HOLD_FULL) != null || defaultSec(PhaseType.HOLD_EMPTY) != null
+    var inhaleSec by rememberSaveable(exercise.id) { mutableIntStateOf(inhaleDefault) }
+    var exhaleSec by rememberSaveable(exercise.id) { mutableIntStateOf(exhaleDefault) }
+    var holdSec by rememberSaveable(exercise.id) { mutableIntStateOf(holdDefault) }
     var intervalsExpanded by rememberSaveable(exercise.id) { mutableStateOf(false) }
-    var intervalsTouched by rememberSaveable(exercise.id) { mutableStateOf(false) }
+
+    // „Angepasst" ist kein Merker, sondern der Wertvergleich mit den Übungs-Defaults: wer
+    // manuell auf die Defaults zurücksteppt, gilt wieder als unangepasst (Override wird gelöscht).
+    fun intervalsModifiedNow(): Boolean =
+        (hasInhale && inhaleSec != inhaleDefault) ||
+            (hasHold && holdSec != holdDefault) ||
+            (hasExhale && exhaleSec != exhaleDefault)
+
+    fun modifiedNow(): Boolean = value != valueDefault || intervalsModifiedNow()
+
+    fun persistAdjustments() {
+        if (modifiedNow()) {
+            onIntervalsChange(
+                value,
+                inhaleSec.takeIf { hasInhale },
+                holdSec.takeIf { hasHold },
+                exhaleSec.takeIf { hasExhale },
+            )
+        } else {
+            onIntervalsReset()
+        }
+    }
+
+    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore); danach
+    // hat der lokale State Vorrang, damit Write-throughs nicht zurückschwappen.
+    var storedApplied by rememberSaveable(exercise.id) { mutableStateOf(false) }
+    LaunchedEffect(savedIntervals) {
+        val stored = savedIntervals ?: return@LaunchedEffect
+        if (storedApplied || modifiedNow()) {
+            storedApplied = true
+            return@LaunchedEffect
+        }
+        storedApplied = true
+        stored.duration?.let { value = it.coerceIn(range) }
+        if (hasInhale) stored.inhale?.let { inhaleSec = it }
+        if (hasHold) stored.hold?.let { holdSec = it }
+        if (hasExhale) stored.exhale?.let { exhaleSec = it }
+    }
 
     fun currentConfig(): SessionConfig {
         val base = if (roundBased) SessionConfig(rounds = value) else SessionConfig(minutes = value)
-        return if (intervalsTouched) {
+        return if (intervalsModifiedNow()) {
             base.copy(
                 inhaleSeconds = if (hasInhale) inhaleSec.toDouble() else null,
                 exhaleSeconds = if (hasExhale) exhaleSec.toDouble() else null,
@@ -109,7 +162,7 @@ fun ExerciseDetailScreen(
 
     // Grobe Gesamtdauer der aktuell eingestellten Session (Runden/Minuten + Intervalle) –
     // live neu berechnet, wenn sich einer der Anpassungswerte ändert.
-    val estimatedSeconds = remember(value, intervalsTouched, inhaleSec, exhaleSec, holdSec) {
+    val estimatedSeconds = remember(value, inhaleSec, exhaleSec, holdSec) {
         exercise.adjusted(currentConfig()).estimatedTotalSeconds()
     }
 
@@ -213,48 +266,31 @@ fun ExerciseDetailScreen(
 
                 if (exercise.guided) {
                     Spacer(Modifier.height(16.dp))
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                            Stepper(
-                                label = if (roundBased) stringResource(R.string.adjust_rounds)
-                                else stringResource(R.string.adjust_minutes),
-                                value = value,
-                                range = range,
-                                vertical = 10.dp,
-                                onChange = { value = it },
-                            )
-                            if (hasInhale || hasExhale || hasHold) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
-                                )
-                                DisclosureToggle(
-                                    text = stringResource(R.string.adjust_intervals),
-                                    expanded = intervalsExpanded,
-                                    onToggle = { intervalsExpanded = !intervalsExpanded },
-                                    modifier = Modifier.padding(start = 8.dp),
-                                )
-                                if (intervalsExpanded) {
-                                    if (hasInhale) {
-                                        Stepper(stringResource(R.string.adjust_inhale), inhaleSec, 2..12, vertical = 6.dp) {
-                                            inhaleSec = it; intervalsTouched = true
-                                        }
-                                    }
-                                    if (hasHold) {
-                                        Stepper(stringResource(R.string.adjust_hold), holdSec, 1..20, vertical = 6.dp) {
-                                            holdSec = it; intervalsTouched = true
-                                        }
-                                    }
-                                    if (hasExhale) {
-                                        Stepper(stringResource(R.string.adjust_exhale), exhaleSec, 2..15, vertical = 6.dp) {
-                                            exhaleSec = it; intervalsTouched = true
-                                        }
-                                    }
-                                    Spacer(Modifier.height(6.dp))
-                                }
+                    SessionAdjustCard(
+                        durationLabel = if (roundBased) stringResource(R.string.adjust_rounds)
+                        else stringResource(R.string.adjust_minutes),
+                        duration = value,
+                        durationDefault = valueDefault,
+                        durationRange = range,
+                        onDuration = { value = it; persistAdjustments() },
+                        inhale = if (hasInhale) {
+                            PhaseAdjust(inhaleSec, inhaleDefault, 2..12) {
+                                inhaleSec = it; persistAdjustments()
                             }
-                        }
-                    }
+                        } else null,
+                        hold = if (hasHold) {
+                            PhaseAdjust(holdSec, holdDefault, 1..20) {
+                                holdSec = it; persistAdjustments()
+                            }
+                        } else null,
+                        exhale = if (hasExhale) {
+                            PhaseAdjust(exhaleSec, exhaleDefault, 2..15) {
+                                exhaleSec = it; persistAdjustments()
+                            }
+                        } else null,
+                        intervalsExpanded = intervalsExpanded,
+                        onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
+                    )
                 } else {
                     Spacer(Modifier.height(16.dp))
                     Text(
@@ -287,8 +323,41 @@ fun ExerciseDetailScreen(
                                 stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
                             )
                         }
-                        Button(onClick = { launch() }, modifier = Modifier.fillMaxWidth()) {
-                            Text(startLabel)
+                        // Bei Abweichung vom Standard wird der Start zum Split-Button: links
+                        // weiterhin Starten (volle Restbreite), rechts gleitet der Kreispfeil
+                        // zum Zurücksetzen herein.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Button(onClick = { launch() }, modifier = Modifier.weight(1f)) {
+                                Text(startLabel)
+                            }
+                            AnimatedVisibility(
+                                visible = modifiedNow(),
+                                enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+                                exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
+                            ) {
+                                FilledTonalButton(
+                                    onClick = {
+                                        value = valueDefault
+                                        inhaleSec = inhaleDefault
+                                        exhaleSec = exhaleDefault
+                                        holdSec = holdDefault
+                                        onIntervalsReset()
+                                    },
+                                    modifier = Modifier.fillMaxHeight(),
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_reset),
+                                        contentDescription = stringResource(R.string.adjust_reset),
+                                        modifier = Modifier.size(22.dp),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

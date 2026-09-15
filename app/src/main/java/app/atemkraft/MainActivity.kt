@@ -70,6 +70,7 @@ import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.EvidenceTag
+import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.AboutRoute
 import app.atemkraft.ui.AtmenRoute
 import app.atemkraft.ui.DetailRoute
@@ -291,8 +292,16 @@ private fun AtemkraftApp() {
                     var dailyPattern by remember {
                         mutableStateOf(container.exerciseRepository.daily())
                     }
+                    // „✓ Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
+                    // selben Tag und Namensgleichheit mit einem früher gespeicherten Muster ab.
+                    val savedPatterns by container.savedPatternsRepository.patterns
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
+                    val dailySaved = savedPatterns.any {
+                        it.exercise.name == container.savedPatternsRepository.savedName(dailyPattern)
+                    }
                     HomeScreen(
                         daily = dailyPattern,
+                        dailySaved = dailySaved,
                         onRegenerateDaily = {
                             dailyPattern = container.exerciseRepository.regenerateDaily()
                         },
@@ -349,9 +358,29 @@ private fun AtemkraftApp() {
                     val exercise = container.exerciseRepository.byId(id) ?: return@composable
                     val requireSafety = exercise.tag == EvidenceTag.CAUTION &&
                         (!safetySettings.acknowledged || safetySettings.showWarning)
+                    // Intervall-Anpassungen pro Übung merken – außer beim Muster des Tages: dessen
+                    // Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten
+                    // sonst morgen für ein anderes Muster.
+                    val persistIntervals = id != RandomPatternGenerator.ID
+                    val savedIntervals by remember(id) {
+                        container.settingsRepository.exerciseIntervals(id)
+                    }.collectAsStateWithLifecycle(initialValue = null)
                     ExerciseDetailScreen(
                         exercise = exercise,
                         requireSafetyConfirm = requireSafety,
+                        savedIntervals = if (persistIntervals) savedIntervals else null,
+                        onIntervalsChange = { duration, inhale, hold, exhale ->
+                            if (persistIntervals) {
+                                scope.launch {
+                                    container.settingsRepository.setExerciseIntervals(id, duration, inhale, hold, exhale)
+                                }
+                            }
+                        },
+                        onIntervalsReset = {
+                            if (persistIntervals) {
+                                scope.launch { container.settingsRepository.clearExerciseIntervals(id) }
+                            }
+                        },
                         onConfirmedSafety = {
                             scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
                         },

@@ -38,9 +38,12 @@ class SavedPatternsRepository(private val dao: SavedPatternDao) {
         scope.launch { patterns.collect { cached = it } }
     }
 
+    /** Anzeigename, unter dem dieses Tagesmuster gespeichert wird/wurde. */
+    fun savedName(daily: DailyPattern): String = daily.exercise.name.replace("Tagesmuster", "Muster")
+
     /** Speichert das Muster; identischer Name wird nicht doppelt angelegt. */
     suspend fun save(daily: DailyPattern) {
-        val name = daily.exercise.name.replace("Tagesmuster", "Muster")
+        val name = savedName(daily)
         if (cached.any { it.exercise.name == name }) return
         val spec = daily.spec
         dao.insert(

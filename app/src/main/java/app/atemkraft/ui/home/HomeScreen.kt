@@ -46,6 +46,7 @@ fun HomeScreen(
     exercisesByFamily: List<Pair<BreathingFamily, List<Exercise>>>,
     programs: List<Exercise>,
     daily: DailyPattern,
+    dailySaved: Boolean,
     onRegenerateDaily: () -> Unit,
     onSaveDaily: () -> Unit,
     onSelect: (String) -> Unit,
@@ -95,7 +96,13 @@ fun HomeScreen(
                     title = stringResource(R.string.home_daily_pattern),
                     color = NeonCyan,
                 )
-                DailyPatternCard(daily = daily, onClick = { onSelect(daily.exercise.id) }, onRegenerate = onRegenerateDaily, onSave = onSaveDaily)
+                DailyPatternCard(
+                    daily = daily,
+                    saved = dailySaved,
+                    onClick = { onSelect(daily.exercise.id) },
+                    onRegenerate = onRegenerateDaily,
+                    onSave = onSaveDaily,
+                )
             }
 
             exercisesByFamily.forEach { (family, exercises) ->
@@ -160,7 +167,13 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
 
 /** Karte für das generierte „Muster des Tages": Name, Charakter-Chip, Muster + Dauer. */
 @Composable
-private fun DailyPatternCard(daily: DailyPattern, onClick: () -> Unit, onRegenerate: () -> Unit, onSave: () -> Unit) {
+private fun DailyPatternCard(
+    daily: DailyPattern,
+    saved: Boolean,
+    onClick: () -> Unit,
+    onRegenerate: () -> Unit,
+    onSave: () -> Unit,
+) {
     val exercise = daily.exercise
     Card(
         modifier = Modifier
@@ -192,8 +205,12 @@ private fun DailyPatternCard(daily: DailyPattern, onClick: () -> Unit, onRegener
             // Bewusst schlichte Text-Buttons (keine Symbole). Gespeicherte Muster erscheinen
             // im Situationen-Tab unter „Meine Muster" – der Atmen-Tab bleibt schlank.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onSave) {
-                    Text(stringResource(R.string.daily_pattern_save))
+                TextButton(onClick = onSave, enabled = !saved) {
+                    Text(
+                        stringResource(
+                            if (saved) R.string.daily_pattern_saved else R.string.daily_pattern_save,
+                        ),
+                    )
                 }
                 TextButton(onClick = onRegenerate) {
                     Text(stringResource(R.string.daily_pattern_regenerate))

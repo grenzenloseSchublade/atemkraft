@@ -69,6 +69,7 @@
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="daily_pattern_regenerate">Neu generieren</string>
     <string name="daily_pattern_save">Speichern</string>
+    <string name="daily_pattern_saved">✓ Gespeichert</string>
     <string name="situations_my_patterns">Meine Muster</string>
     <string name="cd_pattern_delete">Muster löschen</string>
 
@@ -99,6 +100,8 @@
     <string name="adjust_inhale">Einatmen (s)</string>
     <string name="adjust_hold">Halten (s)</string>
     <string name="adjust_exhale">Ausatmen (s)</string>
+    <string name="adjust_reset">Zurücksetzen</string>
+    <string name="adjust_modified">angepasst</string>
 
     <!-- Logbuch-Statistik -->
     <plurals name="log_streak">
