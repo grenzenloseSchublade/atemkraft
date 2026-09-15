@@ -1,28 +1,16 @@
 package app.atemkraft.ui.detail
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +47,7 @@ import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
+import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.home.color
@@ -323,42 +311,18 @@ fun ExerciseDetailScreen(
                                 stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
                             )
                         }
-                        // Bei Abweichung vom Standard wird der Start zum Split-Button: links
-                        // weiterhin Starten (volle Restbreite), rechts gleitet der Kreispfeil
-                        // zum Zurücksetzen herein.
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Button(onClick = { launch() }, modifier = Modifier.weight(1f)) {
-                                Text(startLabel)
-                            }
-                            AnimatedVisibility(
-                                visible = modifiedNow(),
-                                enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
-                                exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
-                            ) {
-                                FilledTonalButton(
-                                    onClick = {
-                                        value = valueDefault
-                                        inhaleSec = inhaleDefault
-                                        exhaleSec = exhaleDefault
-                                        holdSec = holdDefault
-                                        onIntervalsReset()
-                                    },
-                                    modifier = Modifier.fillMaxHeight(),
-                                    contentPadding = PaddingValues(horizontal = 16.dp),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_reset),
-                                        contentDescription = stringResource(R.string.adjust_reset),
-                                        modifier = Modifier.size(22.dp),
-                                    )
-                                }
-                            }
-                        }
+                        StartSplitButton(
+                            label = startLabel,
+                            resetVisible = modifiedNow(),
+                            onStart = { launch() },
+                            onReset = {
+                                value = valueDefault
+                                inhaleSec = inhaleDefault
+                                exhaleSec = exhaleDefault
+                                holdSec = holdDefault
+                                onIntervalsReset()
+                            },
+                        )
                     }
                 }
             }

@@ -74,6 +74,7 @@ import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SelectChip
+import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.PauseFlash
@@ -265,15 +266,21 @@ private fun SelectionContent(
             Spacer(Modifier.height(20.dp))
         }
 
-        // Gepinnter Start über der Tab-Leiste (wie auf der Detailseite).
+        // Gepinnter Start über der Tab-Leiste (wie auf der Detailseite) – als Split-Button:
+        // weicht die Auswahl von den App-Standards ab, gleitet rechts der Kreispfeil herein.
         Surface(tonalElevation = 3.dp, color = MaterialTheme.colorScheme.surface) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.ListGap),
             ) {
-                Button(
-                    onClick = {
+                val defaults = MeditationConfig()
+                StartSplitButton(
+                    label = stringResource(R.string.action_start),
+                    resetVisible = mode != defaults.mode || minutes != defaults.minutes ||
+                        startEndGong != defaults.startEndGong ||
+                        intervalOn != (defaults.gongEveryMin != null) || speech != defaults.speech,
+                    onStart = {
                         onStart(
                             MeditationConfig(
                                 mode = mode,
@@ -284,10 +291,14 @@ private fun SelectionContent(
                             ),
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.action_start))
-                }
+                    onReset = {
+                        mode = defaults.mode
+                        minutes = defaults.minutes
+                        startEndGong = defaults.startEndGong
+                        intervalOn = defaults.gongEveryMin != null
+                        speech = defaults.speech
+                    },
+                )
             }
         }
     }
