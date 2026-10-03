@@ -171,7 +171,7 @@ object BuiltInExercises {
         family = BreathingFamily.DOWNREGULATE,
         shortDescription = "Ein langer, summender Ausatem („Bienenatem“). Die Vibration und der " +
             "lange tonisierte Ausatem wirken stark vagal und steigern das nasale Stickstoffmonoxid.",
-        effect = "Der summende Ausatem senkt unmittelbar Blutdruck und Herzfrequenz.",
+        effect = "In kleinen Studien sanken Blutdruck und Puls direkt nach dem summenden Ausatem.",
         effectDetail = "Hinter der unmittelbaren Beruhigung wirken zwei Dinge zusammen: der " +
             "lange, gegen Widerstand summende Ausatem " +
             "beruhigt über den Vagus (mehr HF-Anteil, langsamerer Puls), und die Vibration im " +
@@ -532,18 +532,24 @@ object BuiltInExercises {
         shortDescription = "Ein Atemmuster-Training hin zu reduzierter, ruhiger, nasaler Atmung, " +
             "um die CO₂-Toleranz zu erhöhen und chronisches Überatmen zu korrigieren. Ein " +
             "Wochen-Programm, kein Akut-Trick.",
-        effect = "Lindert bei Asthma die Symptome und senkt den Bedarf an Notfallspray.",
+        effect = "In Studien hatten Menschen mit Asthma weniger Beschwerden und brauchten " +
+            "seltener Notfallspray.",
         effectDetail = "Buteyko trainiert bewusst reduziertes, ruhiges Nasenatmen samt kurzer " +
             "Atempausen („Control Pause“) mit dem Ziel, die CO₂-Toleranz zu erhöhen. Die " +
-            "Cochrane-Übersicht (2020) zeigt: Symptome, Lebensqualität und Bedarf an " +
-            "Notfallspray bessern sich, die objektive Lungenfunktion (FEV1) jedoch nicht. Die " +
-            "angenommene CO₂-Korrektur ließ sich in Studien nicht bestätigen (Bowler 1998) – der " +
-            "Nutzen kommt eher aus ruhigerem Atmen und weniger Atem-Aufwand. Relevant ist das " +
-            "Training vor allem bei Asthma und dysfunktionaler Atmung/Atemnot. Wichtig: ein " +
-            "ergänzendes Wochen-Training, kein Akut-Trick – und Cortison-Sprays niemals " +
-            "eigenmächtig reduzieren.",
+            "Cochrane-Übersicht (2020) fand: Symptome, Lebensqualität und Bedarf an " +
+            "Notfallspray bessern sich, die objektive Lungenfunktion (FEV1) jedoch nicht; die " +
+            "Evidenz ist moderat bis sehr niedrig. Die angenommene CO₂-Korrektur ließ sich in " +
+            "Studien nicht bestätigen (Bowler 1998) – der Nutzen kommt eher aus ruhigerem Atmen " +
+            "und weniger Atem-Aufwand. Relevant ist das Training vor allem bei Asthma und dysfunktionaler " +
+            "Atmung/Atemnot. Wichtig: ein ergänzendes Wochen-Training neben der ärztlichen " +
+            "Behandlung, kein Akut-Trick und kein Ersatz für Asthma-Medikamente.",
         instructionHint = "Bewusst weniger und ruhiger durch die Nase atmen, sanfte „Lufthunger“-" +
             "Phasen, über Wochen. Messbarer Anker: die Control Pause (Atemhalte-Zeit).",
+        cautions = listOf(
+            "Ersetzt keine Asthma-Medikamente – Kortison-Sprays nie ohne Rücksprache mit " +
+                "Ärzt:in reduzieren oder absetzen.",
+            "Bei einem akuten Asthma-Anfall gilt dein Notfallplan, nicht diese Übung.",
+        ),
         references = listOf(Refs.buteykoPrem2013, Refs.buteykoCochrane2020),
     )
 

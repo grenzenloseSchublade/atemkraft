@@ -44,7 +44,7 @@
     </plurals>
     <string name="duration_approx">ca. %1$d min</string>
     <string name="duration_approx_from">ab ca. %1$d min</string>
-    <!-- „Starten · ca. 10 min" – Gesamtdauer direkt am Start. -->
+    <!-- „Starten · ca. 10 min“ – Gesamtdauer direkt am Start. -->
     <string name="action_start_duration">%1$s · %2$s</string>
 
     <!-- Tabs -->
@@ -171,11 +171,11 @@
     <string name="cd_voice_preview">Stimme anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
-    <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min" gewählt ist.</string>
+    <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min“ gewählt ist.</string>
     <string name="settings_gong_length">Gong-Ausklang</string>
     <string name="gong_length_short">Kurz</string>
     <string name="gong_length_long">Lang</string>
-    <string name="settings_gong_length_hint">Gilt für Sitzungs- und Meditations-Gong. Beide klingen natürlich bis zur Stille aus – „Lang" hallt voller nach.</string>
+    <string name="settings_gong_length_hint">Gilt für Sitzungs- und Meditations-Gong. Beide klingen natürlich bis zur Stille aus – „Lang“ hallt voller nach.</string>
     <string name="settings_voice">Sprach-Stimme</string>
 
     <!-- Zustände beim Nachladen einer Katalog-Stimme -->
@@ -201,7 +201,7 @@
     <string name="about_author">von grenzenloseSchublade · MIT-Lizenz</string>
     <string name="about_source_prefix">Quellcode: </string>
     <string name="about_credits_title">Open-Source-Komponenten</string>
-    <string name="about_credits_body">Die hochwertige Sprachausgabe steht dank dieser freien Projekte zur Verfügung:\n\n• sherpa-onnx (k2-fsa) — Apache-2.0\ngithub.com/k2-fsa/sherpa-onnx\n\n• Piper (rhasspy) — MIT\ngithub.com/rhasspy/piper\n\n• ONNX Runtime (Microsoft) — MIT\ngithub.com/microsoft/onnxruntime\n\n• Stimme „Thorsten" (Thorsten Müller) — CC0 / gemeinfrei\ngithub.com/thorstenMueller/Thorsten-Voice\n\n• Apache Commons Compress — Apache-2.0\n\nDas Stimmmodell wird nur auf ausdrücklichen Wunsch von GitHub geladen — die einzige Netznutzung der App.</string>
+    <string name="about_credits_body">Die hochwertige Sprachausgabe steht dank dieser freien Projekte zur Verfügung:\n\n• sherpa-onnx (k2-fsa) — Apache-2.0\ngithub.com/k2-fsa/sherpa-onnx\n\n• Piper (rhasspy) — MIT\ngithub.com/rhasspy/piper\n\n• ONNX Runtime (Microsoft) — MIT\ngithub.com/microsoft/onnxruntime\n\n• Stimme „Thorsten“ (Thorsten Müller) — CC0 / gemeinfrei\ngithub.com/thorstenMueller/Thorsten-Voice\n\n• Apache Commons Compress — Apache-2.0\n\nDas Stimmmodell wird nur auf ausdrücklichen Wunsch von GitHub geladen — die einzige Netznutzung der App.</string>
 
     <!-- Barrierefreiheit -->
     <string name="cd_breathing_circle">Atemkreis</string>
