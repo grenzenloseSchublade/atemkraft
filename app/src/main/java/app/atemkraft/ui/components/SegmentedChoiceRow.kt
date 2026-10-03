@@ -36,9 +36,10 @@ fun <T> SegmentedChoiceRow(
     items: List<T>,
     selected: T,
     onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
     label: @Composable (T) -> String,
 ) {
-    SubcomposeLayout(Modifier.fillMaxWidth()) { constraints ->
+    SubcomposeLayout(modifier.fillMaxWidth()) { constraints ->
         // Jede Beschriftung einzeln als ausgewähltes Segment messen (breiteste Variante).
         val needed = subcompose("probe") {
             items.forEachIndexed { index, item ->

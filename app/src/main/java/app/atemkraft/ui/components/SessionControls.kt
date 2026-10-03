@@ -39,11 +39,9 @@ import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
 import kotlinx.coroutines.delay
 
-/**
- * Geteilte Bausteine der Vollbild-Sitzungen (Atem-Session UND Meditation): Glow-Schrift,
- * die Session-Buttons in den festen Farb-Tokens, der Abschluss-Screen und der Tap-Flash.
- * Zentral, damit beide Abläufe garantiert identisch aussehen und sich gemeinsam ändern.
- */
+// Geteilte Bausteine der Vollbild-Sitzungen (Atem-Session UND Meditation): Glow-Schrift,
+// die Session-Buttons in den festen Farb-Tokens, der Abschluss-Screen und der Tap-Flash.
+// Zentral, damit beide Abläufe garantiert identisch aussehen und sich gemeinsam ändern.
 
 /** Schrift mit weichem dunklen Schimmer (kein harter Rand) – ruhig und lesbar auf Magenta & Dunkel. */
 @Composable

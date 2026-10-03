@@ -22,10 +22,10 @@ import kotlin.math.min
  */
 @Composable
 fun SessionRunningLayout(
-    modifier: Modifier = Modifier,
-    centerExtra: Dp = 0.dp,
     top: @Composable () -> Unit,
     bottom: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    centerExtra: Dp = 0.dp,
     center: @Composable (circleSide: Dp) -> Unit,
 ) {
     // Kleinste je gemessene Kopfhöhe = eingeklappter Zustand; pro Fenstergröße neu.

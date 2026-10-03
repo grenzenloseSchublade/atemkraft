@@ -172,11 +172,11 @@ Quelle [Type.kt](../app/src/main/java/app/atemkraft/ui/theme/Type.kt): M3 `Typog
 | `OverlayChrome` | Rahmen jedes Vollbild-Overlays | Push-Screens | Ton als `Role.Switch` + `stateDescription`, `paneTitle` |
 | `ReferenceItem` | eine Quelle (Zitat, DOI/PMID) | – | Kennung ≥ 4,5:1 |
 | `SectionHeader` | Abschnittskopf mit Akzentbalken | Kartentitel | `heading()` |
-| `SegmentedChoiceRow` | Einzelwahl, 2–4 kurze Optionen; passt eine Beschriftung nicht ins Segment, Radioliste | > 4 Optionen | Gruppenlabel verknüpft; Radioliste mit `selectableGroup()`, `Role.RadioButton` |
+| `SegmentedChoiceRow` | Einzelwahl, 2–4 kurze Optionen (`modifier`); passt eine Beschriftung nicht ins Segment, Radioliste | > 4 Optionen | Gruppenlabel verknüpft; Radioliste mit `selectableGroup()`, `Role.RadioButton` |
 | `SelectChip` | Einzelwahl aus vielen Presets | Info | Häkchen, `Role.RadioButton`, `selectableGroup()` |
 | `SessionAdjustCard` | Dauer und Intervalle vor dem Start | – | „· angepasst“ im Toggle-Zustand |
 | `Stepper` | ganzzahliger Wert in festem Bereich | Freitext | Buttons behalten Rolle und Disabled; Wert als Live-Region; Einheit ausgeschrieben |
-| `WholeWordText` | Titel, Namen, Beschriftungen, die nie im Wort brechen dürfen; verkleinert schrittweise (`minScale`, `sharedScale`) | Fließtext (→ umformulieren) | wie `Text` |
+| `WholeWordText` | Titel, Namen, Beschriftungen, die nie im Wort brechen dürfen; verkleinert schrittweise (`minScale`; gemeinsame Größe über `sharedScale` + `onSharedScaleTooBig`) | Fließtext (→ umformulieren) | wie `Text` |
 | `SessionRunningLayout` | Gerüst laufender Sessions: Kopf, Kreis im freien Platz, Steuerung | andere Screens | Kopf liegt über dem Kreis, nicht davor |
 | `AppNavigationBar` | Haupt-Tabs unten | Push-Ziele | eine Beschriftungsgröße für alle Tabs |
 | `TitleWithChips` | Titel mit nachgestellten Chips (Karten, Detail-Kopf); Chips rutschen bei Platzmangel unter den Titel | Abschnittsköpfe (→ `SectionHeader`) | Titel-Rolle und Farbe vom Aufrufer; keine Chips → `null`, kein leerer Slot |
@@ -298,21 +298,21 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | CODE-07 | SOLL | Unit-Tests für Domain- und Timing-Logik, Namen als deutscher Satz in Backticks; ViewModels mit `kotlinx-coroutines-test`. | Ist: kein VM-Test. | auto: `testDebugUnitTest` |
 | CODE-08 | MUSS | Commit-Betreff `vX.Y.Z: <Zusammenfassung>` für Releases, sonst `build:`/`docs:`/`fix:` + Zusammenfassung, deutsch mit echten Umlauten. | Ist-Stil. | auto: `commit-msg` |
 
-## <a id="automatische-pruefung"></a>13 Automatische Prüfung (Soll-Setup)
+## <a id="automatische-pruefung"></a>13 Automatische Prüfung
 
-Noch nichts eingerichtet (Block A). Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über Baselines eingefroren. Die Sicherheitsschritte definiert [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung); hier steht nur ihre Stelle im Ablauf.
+Eingerichtet; offen sind nur die Sicherheitsschritte (warten auf die Veröffentlichung von SECURITY.md, A-13) und Referenzbilder (A-12). Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über Baselines eingefroren. Die Sicherheitsschritte definiert [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung); hier steht nur ihre Stelle im Ablauf.
 
 ### 13.1 Ablauf
 
 | Werkzeug | Datei | Aufgabe |
 |---|---|---|
-| `scripts/check.sh` | – | **einziger Einstieg**, lokal und im CI: `check-style.sh` → `check-security.sh` (SECURITY, inkl. `sha256sum -c`) → `scripts/build.sh ktlintCheck testDebugUnitTest lintDebug`. `--fast` ohne `lintDebug`. Nie `./gradlew` direkt. Optional `.githooks/pre-push` → `check.sh --fast`. |
-| `scripts/check-style.sh` | `config/style-baseline.txt`, `config/style-fixtures/<check>.{pos,neg}` | Checks aus §13.3. `grep -P` zeilenweise, (ml) über ganze Dateien (`perl -0777`), `LC_ALL=C.UTF-8`. Ignoriert Kommentarzeilen (außer bei `todo-unlinked`) und Zeilen mit Marker `// Abweichung <ID>:` / `// dekorativ:`. `--self-test` prüft jedes Muster gegen seine Fixtures, `--update-baseline` senkt. |
-| ktlint 1.8.0 + compose-rules 0.6.7 | `.editorconfig`, Plugin `org.jlleitschuh.gradle.ktlint` 14.2.0 | Format, Compose-Regeln; in `*Screen.kt` ist `modifier-missing-check` aus. |
-| Android Lint | `lint {}`: `abortOnError`, `warningsAsErrors` (aus: `GradleDependency`, `AndroidGradlePluginVersion`, `NewerVersionAvailable`, `ChromeOsAbiSupport`) | Manifest, Ressourcen, Compose-Lint. |
-| JUnit-Regeltests | `ContentRulesTest`, `ThemeContrastTest`, `FractionContinuityTest`, `ToneEnvelopeTest`; `config/health-claims.{txt,allow}`, `config/content-baseline.txt`, `config/contrast-baseline.txt` | Inhalte, Kontrast, Pacer, Hüllkurven (§13.3). |
+| `scripts/check.sh` | – | **einziger Einstieg**, lokal und im CI: Stil-Checks (`--self-test`, dann Prüfung) → `check-security.sh`, sobald vorhanden (A-13) → `scripts/build.sh ktlintCheck testDebugUnitTest lintDebug`. `--fast` ohne `lintDebug`. Nie `./gradlew` direkt. Optional `.githooks/pre-push` → `check.sh --fast`. |
+| `scripts/check-style.sh` | `scripts/check_style.py`, `config/style-baseline.txt`, `config/style-fixtures/<check>.{pos,neg}` | Checks aus §13.3 in Python 3 (im Skript teils in Unter-Checks aufgeteilt, z. B. `color-source-res`, `typo-chars-strings`). Zeilenweise, (ml) über die ganze Datei; `ui-literal` über die ganze Anweisung, damit Umformatieren keinen Fund „behebt“. Ignoriert Kommentarzeilen (außer bei `todo-unlinked`) und Zeilen mit Marker `// Abweichung <ID>:` / `// dekorativ:`. `--self-test` prüft jedes Muster gegen seine Fixtures, `--update-baseline` schreibt den Ist-Stand (meldet Anstiege), `--ci-range A..B` prüft nur `guide-sync` und `commit-msg`. |
+| ktlint 1.8.0 + compose-rules 0.5.8 | `.editorconfig`, Plugin `org.jlleitschuh.gradle.ktlint` 14.2.0, `config/ktlint-baseline.xml`, `.git-blame-ignore-revs` | Format, Compose-Regeln; in `*Screen.kt` ist `modifier-missing-check` aus. compose-rules 0.6.x ist gegen eine neuere Kotlin-Laufzeit gebaut und bricht im ktlint-Worker ab (`NoSuchMethodError`); Update erst mit neuerem Gradle. Bekannte Compose-Funde in der Baseline (S-32). |
+| Android Lint | `lint {}`: `abortOnError`, `warningsAsErrors` (aus: `GradleDependency`, `AndroidGradlePluginVersion`, `NewerVersionAvailable`, `ChromeOsAbiSupport`); `app/lint.xml` (`ObsoleteSdkInt` nur für `mipmap-anydpi-v26`, ohne Qualifier findet aapt die adaptiven Icons nicht) | Manifest, Ressourcen, Compose-Lint. |
+| JUnit-Regeltests | `ContentRulesTest`, `ThemeContrastTest`, `FractionContinuityTest`, `ToneEnvelopeTest`, `TypographyTest`; `config/health-claims.{txt,allow}`, `config/content-baseline.txt`, `config/contrast-baseline.txt` | Inhalte, Kontrast, Pacer, Hüllkurven, Umbruch-Stile (§13.3). `config/` ist Eingabe der Test-Tasks: Eine reine Baseline-Änderung löst die Tests neu aus. |
 | Screenshot-Test | `ScreenshotTest` (Robolectric + Roborazzi), `scripts/screenshot-sheet.py` | Alle Screens, Session und Meditation in Gerätehöhe, Navigationsleiste; 360 / 384 (Galaxy A54) / 412 dp × fontScale 1,0 / 1,1 / 1,3 / 2,0 über die echte Plattform-Skalierung (nichtlinear ab Android 14, am A54 auf 1 dp genau nachgemessen); Detailseiten aller Übungen auf A54 1,1 und 360 dp ab 1,3. Läuft in `testDebugUnitTest` (≈ 70 s) und **schlägt bei jedem Befund fehl** (`WORTBRUCH`, `GETRENNT`, `ABGESCHNITTEN`, Regel `badBreakAt`). Bilder: `./gradlew recordRoborazziDebug` → `app/build/outputs/roborazzi/<gerät>/fs<n>/`, je Bild eine `.tsv`. Endlos-Animationen eingefroren (`InfiniteAnimationPolicy`). |
-| CI | `.github/workflows/ci.yml` | Push auf `main` und PR, `permissions: contents: read`, Actions per SHA gepinnt: `wrapper-validation` → `setup-java` 17 → `check.sh` → Sicherheitsschritte laut SECURITY (`assembleRelease -PallowDebugSignedRelease=true`, `verify-apk.sh --allow-debug-cert`, `dependency-submission`). Eigene Jobs `guide-sync`, `commit-msg`. `release-verify.yml` und `dependabot.yml`: SECURITY. |
+| CI | `.github/workflows/ci.yml`, `.github/dependabot.yml` | Push auf `main` und PR, `permissions: contents: read`, Actions per SHA gepinnt, `persist-credentials: false`. Job `check`: `wrapper-validation` → `setup-java` 17 → `setup-gradle` → `check.sh` (bei Fehler die Screenshot-Befunde als Artefakt). Job `conventions`: `check-style.sh --ci-range` über alle Commits des Pushes/PRs. Sicherheitsschritte laut SECURITY folgen mit A-13. Dependabot monatlich, gruppiert, `gradle` und `github-actions`. |
 
 ### 13.2 Baselines
 
@@ -320,44 +320,44 @@ Noch nichts eingerichtet (Block A). Grundsatz: wenige, wartungsarme Werkzeuge; A
 
 ### 13.3 Checks
 
-Muster vereinfacht, `\|` = Alternation. Ein Check ohne Ist-Treffer muss sein Positiv-Fixture treffen.
+Muster vereinfacht, `\|` = Alternation. Ein Check ohne Ist-Treffer muss sein Positiv-Fixture treffen. Bekannte Treffer stehen nur in den Baselines (§13.2), nicht hier.
 
-| Check | Muster / Mechanismus | Scope | Regel | Bekannter Treffer |
-|---|---|---|---|---|
-| `color-source` | `src/` ohne `ui/theme/`: `Color\(0x`, `\b(NeonMagenta\|NeonCyan\|DarkSurface\|DarkBackground\|OnNeon)\b` (ohne Importe); `res/` ohne `values*/colors.xml`, `drawable/ic_launcher_*`: `#[0-9A-Fa-f]{6,8}`, in `drawable/ic_*.xml` nur `#FF000000`/`#FFFFFFFF` | `src/`, `res/` | FARBE-01 | `MainActivity.kt:223` (15 Rollen-Tokens) |
-| `alpha-literal` | `alpha\s*=\s*(?:if\s*\([^)]*\)[^,)\n]*?)?\d*\.\d+f?` | `src/ui/`, `MainActivity.kt` ohne `ui/theme/` | FARBE-02 | 39, u. a. `ExpanderSection.kt:76` |
-| `theme-tokens` | `Theme.kt` enthält `outline\s*=`, `error\s*=`, `onError\s*=`, `primaryContainer\s*=`; jedes `val`/`const val` aus `Color.kt`, `Dimens.kt`, `Sizes`, `Motion` ist außerhalb seiner Datei referenziert oder in `Theme.kt` zugewiesen | `src/` | FARBE-06 | 4 Rollen fehlen; `SynthText`, `SynthGlow`, `PauseGlyphCreme`, `GapSmall`, `GapTiny` |
-| `type-literal` | `\b\d+(\.\d+)?f?\.sp\b\|FontWeight\.\|(fontSize\|letterSpacing\|lineHeight)\s*=` | `src/` ohne `ui/theme/`, Importe | TYPO-01 | `AppNavigationBar.kt` (Gewichtswechsel bei Auswahl) |
-| `layout-literal` | `\b([1-9]\d*\|\d*\.\d+)f?\.dp\b`; `(RoundedCorner\|CutCorner)Shape\(` | `src/` ohne `ui/theme/` | LAYOUT-01, ICON-01 | 160 `.dp` in 151 Zeilen; `Chips.kt:44`, `SectionHeader.kt:33` |
-| `weight-nofill` | `weight\([^)]*fill\s*=\s*false` | `src/ui/` | LAYOUT-03 | – |
-| `platform-override` | `screenOrientation\|requestedOrientation`; `LocalMinimumInteractiveComponentSize\s+provides` | Manifest, `src/` | LAYOUT-03, A11Y-05 | – |
-| `dark-only` | `Theme\.Material\.Light\|DayNight\|lightColorScheme\|dynamic(Dark\|Light)ColorScheme\|enableEdgeToEdge\(\s*\)`; Existenz `res/values-night/` | `src/`, `res/` | PRIN-01 | `values-night/colors.xml` |
-| `neon-fill` | Datei mit > 1 `(?<![A-Za-z])Button\(` oder `containerColor\s*=\s*(…colorScheme\.(primary\|secondary\|tertiary)\|Neon\w+)` | `src/ui/` ohne `components/`, `MainActivity.kt` | PRIN-02 | – |
-| `no-fab-toast` | `FloatingActionButton\|Toast\.\|Snackbar` | `src/` | PRIN-03, MUSTER-02 | – |
-| `card-style` (ml) | `Card\((?:(?!\)\s*\{)[\s\S])*?\.clickable`; `HorizontalDivider\((?:[^()]\|\([^()]*\))*?color\s*=` | `src/ui/`, `MainActivity.kt` | KOMP-02, -03 | `HomeScreen.kt:137, 178`; `SituationsScreen.kt:128`; `SettingsScreen.kt:438`; Divider `ExpanderSection.kt:92`, `SessionAdjustCard.kt:55` |
-| `exception-message-ui` (SOLL) | `\b(e\|it\|t\|ex\|err\|error\|throwable)\.message\b` | `src/ui/`, `src/cue/tts/` | MUSTER-04 | `VoiceModelManager.kt:170` |
-| `icon-source` | `material-icons-extended` (in `*.kts`, `gradle/*.toml`); `Icons\.(Outlined\|Rounded\|Sharp\|TwoTone)\.`; (ml) `Text\(\s*(text\s*=\s*)?"\s*[−+›→‹←]\s*"` | Build, `src/` | ICON-01 | `SessionScreen.kt:190`; `Stepper.kt:57, 75`; `SettingsScreen.kt:449` |
-| `cd-style` | `IconButton\([^)]*semantics\s*\{\s*contentDescription`; `contentDescription\s*=\s*null(?!.*//\s*dekorativ:)` | `src/` | ICON-02 | `SituationsScreen.kt:155` (5); 11× `null` |
-| `motion-literal` (SOLL) | `tween\(\s*(durationMillis\s*=\s*)?\d`; `val\s+\w*(dur\|Duration\|Ms\|Millis)\w*\s*=\s*\d`; in `components/` `delay\(\s*\d` | `src/ui/`, `MainActivity.kt` ohne `ui/theme/` | MOTION-04 | `MainActivity.kt:266, 293`; `BreathingCircle.kt:46`; `SessionControls.kt:193` |
-| `player-in-composable` | `remember\s*\{\s*(Haptic\|ToneCue\|Continuous)\w*Player\(` | `src/ui/` | AUDIO-04 | `SessionScreen.kt:138` |
-| `semantics-required` | `\.clickable\s*(\((?![^)]*role\s*=)\|\{)` in `src/ui/`; `heading()` fehlt in `SectionHeader.kt` (künftig `ScreenHeader`, `PushHeader`, `CardTitle`) | `src/ui/` | A11Y-01 | 9 `clickable`, u. a. `ExpanderSection.kt:56`; `SectionHeader.kt` |
-| `a11y-ratchet` (Review) | `clearAndSetSemantics` (ohne Importe); `indication\s*=\s*null` | `src/ui/` | A11Y-02, -07 | `Stepper.kt:55, 68, 73`; `SessionScreen.kt:179, 234, 236`; `MeditationScreen.kt:373` |
-| `switch-unlabeled` (ml) | `\bSwitch\((?:[^()]\|\([^()]*\))*?onCheckedChange\s*=\s*(?!null)` | `src/ui/` | A11Y-03 | `SettingsScreen.kt:473`, `MeditationScreen.kt` |
-| `ui-literal` (perl) | in Zeilen mit `Text(`, `contentDescription =`, `stateDescription =`, `onClickLabel =`, `listOf(`: String-Literal mit `\p{L}` nach Entfernen von `$name`/`${…}` | `src/ui/` | TEXT-01 | `LogbookScreen.kt:146, 166`; `DisclosureToggle.kt:36`; `ExpanderSection.kt:59`; `SessionScreen.kt:182` |
-| `locale` | `Locale\.(getDefault\|GERMAN\|GERMANY)\b\|SimpleDateFormat` in `src/ui/`; `build.gradle.kts` ohne `localeFilters` mit `"de"`; Manifest ohne `android:localeConfig` | `src/ui/`, Build, Manifest | TEXT-03 | `LogbookScreen.kt:162, 263`; Config fehlt |
-| `typo-chars` | `„[^“<]*"` und `\\'` in `strings.xml`; `\\"` in `src/`; `”` in `src/`, `res/`; `—` in `strings.xml`, `src/data/`, `src/domain/` | `res/values*/`, `src/` | TEXT-10 | `strings.xml:118` (`\'`), `:204` (`—`); `RandomPatternGenerator.kt:151` |
-| `layer-import` | `import app\.atemkraft\.(ui\|data)` in `domain/`; `import app\.atemkraft\.ui` in `data/`; `^import app\.atemkraft\.ui\.(?!theme\|components)` in `ui/components/` | `src/domain/`, `src/data/`, `src/ui/components/` | CODE-01 | `AppContainer.kt:8`; `Chips.kt:17` |
-| `ordinal-persist` | `\.ordinal\b` | `src/data/` | CODE-05 | `SettingsRepository.kt:120` |
-| `todo-unlinked` | `//\s*TODO(?!\((S\|A)-\d+\))`, läuft ohne Kommentarfilter | `src/` | CODE-06 | – |
-| `guide-sync` (CI) | Diff ändert `^\s*(const\s+)?val\s` in `src/ui/theme/**` oder öffentliche `^\s*fun\s` in `src/ui/components/**`, ohne `docs/STYLEGUIDE.md` und ohne Trailer `Guide: n/a` | Push-Bereich | META-01 | – |
-| `baseline-stale` | Baseline-Eintrag ohne Treffer (alle Baselines, §13.2) | `config/*-baseline.txt` | META-01 | – |
-| `commit-msg` (CI) | `^(v\d+\.\d+\.\d+\|build\|docs\|fix): \S` | Push-Bereich | CODE-08 | – |
-| `ContentRulesTest` | Fälle `teaser`, `first-caution`, `detail-length` (SOLL), `health-claims`, `jargon`, `formal-address`, `decimal-comma` (`\d\.\d` außerhalb Kennungen), `quotes`, `ref-format`, `ref-unused`, `phase-min-duration`, `phase-labels-distinct`, `store-lengths` | `BuiltInExercises`, `Situations`, `Refs`, `RandomPatternGenerator.forSeed(0..6)`, `strings.xml`; `store-lengths`: `fastlane/**` (README, Store-Texte, Release-Notes und PRIVACY auf Heilversprechen: `sec-health-claims`) | TEXT-02, -04 … -06, -09 … -12, MUSTER-03, MOTION-02 | S-08, S-21, S-22, S-23 |
-| `TypographyTest` | jede `headline*`/`title*`-Rolle: `LineBreak.Heading`, `Hyphens.Auto`, `LocaleList("de")` | Theme | TYPO-03 | – (eingerichtet) |
-| `ThemeContrastTest` | WCAG-Kontrast aller Token-Paare (Vordergrund, Alpha, Hintergrund-Kette, Mindestwert); ΔE76 ≥ 25 semantischer Paare | Theme | FARBE-03, -04 | S-03, S-15, S-18 |
-| `FractionContinuityTest` | Skala Phasenende = nächster Phasenanfang inkl. Vorbereitung, alle Built-ins und `forSeed(0..6)`; Allowlist mit S-ID | Session | MOTION-03 | S-11 |
-| `ToneEnvelopeTest` | Attack ≥ 8 ms, Release ≥ 60 ms, Spitze ≤ 0,95 FS je Stufe für Wechselton, Gong, Dauerton | `src/cue/` | AUDIO-01 | – |
-| ktlint / Lint / Tests | `ktlintCheck` (+ compose-rules), `lintDebug`, `testDebugUnitTest` | Gradle | TEXT-01, CODE-02 … -04, -06, -07 | ≈ 16 Compose-Funde (Baseline) |
+| Check | Muster / Mechanismus | Scope | Regel |
+|---|---|---|---|
+| `color-source` | `src/` ohne `ui/theme/`: `Color\(0x`, `\b(NeonMagenta\|NeonCyan\|DarkSurface\|DarkBackground\|OnNeon)\b` (ohne Importe); `res/` ohne `values*/colors.xml`, `drawable/ic_launcher_*`: `#[0-9A-Fa-f]{6,8}`, in `drawable/ic_*.xml` nur `#FF000000`/`#FFFFFFFF` | `src/`, `res/` | FARBE-01 |
+| `alpha-literal` | `alpha\s*=\s*(?:if\s*\([^)]*\)[^,)\n]*?)?\d*\.\d+f?` | `src/ui/`, `MainActivity.kt` ohne `ui/theme/` | FARBE-02 |
+| `theme-tokens` | `Theme.kt` enthält `outline\s*=`, `error\s*=`, `onError\s*=`, `primaryContainer\s*=`; jedes `val`/`const val` aus `Color.kt`, `Dimens.kt`, `Sizes`, `Motion` ist außerhalb seiner Datei referenziert oder in `Theme.kt` zugewiesen | `src/` | FARBE-06 |
+| `type-literal` | `\b\d+(\.\d+)?f?\.sp\b\|FontWeight\.\|(fontSize\|letterSpacing\|lineHeight)\s*=` | `src/` ohne `ui/theme/`, Importe | TYPO-01 |
+| `layout-literal` | `\b([1-9]\d*\|\d*\.\d+)f?\.dp\b`; `(RoundedCorner\|CutCorner)Shape\(` | `src/` ohne `ui/theme/` | LAYOUT-01, ICON-01 |
+| `weight-nofill` | `weight\([^)]*fill\s*=\s*false` | `src/ui/` | LAYOUT-03 |
+| `platform-override` | `screenOrientation\|requestedOrientation`; `LocalMinimumInteractiveComponentSize\s+provides` | Manifest, `src/` | LAYOUT-03, A11Y-05 |
+| `dark-only` | `Theme\.Material\.Light\|DayNight\|lightColorScheme\|dynamic(Dark\|Light)ColorScheme\|enableEdgeToEdge\(\s*\)`; Existenz `res/values-night/` | `src/`, `res/` | PRIN-01 |
+| `neon-fill` | Datei mit > 1 `(?<![A-Za-z])Button\(` oder `containerColor\s*=\s*(…colorScheme\.(primary\|secondary\|tertiary)\|Neon\w+)` | `src/ui/` ohne `components/`, `MainActivity.kt` | PRIN-02 |
+| `no-fab-toast` | `FloatingActionButton\|Toast\.\|Snackbar` | `src/` | PRIN-03, MUSTER-02 |
+| `card-style` (ml) | `Card\((?:(?!\)\s*\{)[\s\S])*?\.clickable`; `HorizontalDivider\((?:[^()]\|\([^()]*\))*?color\s*=` | `src/ui/`, `MainActivity.kt` | KOMP-02, -03 |
+| `exception-message-ui` (SOLL) | `\b(e\|it\|t\|ex\|err\|error\|throwable)\.message\b` | `src/ui/`, `src/cue/tts/` | MUSTER-04 |
+| `icon-source` | `material-icons-extended` (in `*.kts`, `gradle/*.toml`); `Icons\.(Outlined\|Rounded\|Sharp\|TwoTone)\.`; (ml) `Text\(\s*(text\s*=\s*)?"\s*[−+›→‹←]\s*"` | Build, `src/` | ICON-01 |
+| `cd-style` | `IconButton\([^)]*semantics\s*\{\s*contentDescription`; `contentDescription\s*=\s*null(?!.*//\s*dekorativ:)` | `src/` | ICON-02 |
+| `motion-literal` (SOLL) | `tween\(\s*(durationMillis\s*=\s*)?\d`; `val\s+\w*(dur\|Duration\|Ms\|Millis)\w*\s*=\s*\d`; in `components/` `delay\(\s*\d` | `src/ui/`, `MainActivity.kt` ohne `ui/theme/` | MOTION-04 |
+| `player-in-composable` | `remember\s*\{\s*(Haptic\|ToneCue\|Continuous)\w*Player\(` | `src/ui/` | AUDIO-04 |
+| `semantics-required` | `\.clickable\s*(\((?![^)]*role\s*=)\|\{)` in `src/ui/`; `heading()` fehlt in `SectionHeader.kt` (künftig `ScreenHeader`, `PushHeader`, `CardTitle`) | `src/ui/` | A11Y-01 |
+| `a11y-ratchet` (Review) | `clearAndSetSemantics` (ohne Importe); `indication\s*=\s*null` | `src/ui/` | A11Y-02, -07 |
+| `switch-unlabeled` (ml) | `\bSwitch\((?:[^()]\|\([^()]*\))*?onCheckedChange\s*=\s*(?!null)` | `src/ui/` | A11Y-03 |
+| `ui-literal` (perl) | in Zeilen mit `Text(`, `contentDescription =`, `stateDescription =`, `onClickLabel =`, `listOf(`: String-Literal mit `\p{L}` nach Entfernen von `$name`/`${…}` | `src/ui/` | TEXT-01 |
+| `locale` | `Locale\.(getDefault\|GERMAN\|GERMANY)\b\|SimpleDateFormat` in `src/ui/`; `build.gradle.kts` ohne `localeFilters` mit `"de"`; Manifest ohne `android:localeConfig` | `src/ui/`, Build, Manifest | TEXT-03 |
+| `typo-chars` | `„[^“<]*"` und `\\'` in `strings.xml`; `\\"` in `src/`; `”` in `src/`, `res/`; `—` in `strings.xml`, `src/data/`, `src/domain/` | `res/values*/`, `src/` | TEXT-10 |
+| `layer-import` | `import app\.atemkraft\.(ui\|data)` in `domain/`; `import app\.atemkraft\.ui` in `data/`; `^import app\.atemkraft\.ui\.(?!theme\|components)` in `ui/components/` | `src/domain/`, `src/data/`, `src/ui/components/` | CODE-01 |
+| `ordinal-persist` | `\.ordinal\b` | `src/data/` | CODE-05 |
+| `todo-unlinked` | `//\s*TODO(?!\((S\|A)-\d+\))`, läuft ohne Kommentarfilter | `src/` | CODE-06 |
+| `guide-sync` (CI) | Diff ändert `^\s*(const\s+)?val\s` in `src/ui/theme/**` oder öffentliche `^\s*fun\s` in `src/ui/components/**`, ohne `docs/STYLEGUIDE.md` und ohne Trailer `Guide: n/a` | Push-Bereich | META-01 |
+| `baseline-stale` | Baseline-Eintrag ohne Treffer (alle Baselines, §13.2) | `config/*-baseline.txt` | META-01 |
+| `commit-msg` (CI) | `^(v\d+\.\d+\.\d+\|build\|docs\|fix): \S` | Push-Bereich | CODE-08 |
+| `ContentRulesTest` | Fälle `teaser`, `first-caution`, `detail-length` (SOLL, nur Ausgabe), `health-claims` (nur Ausgabe bis S-08 behoben, dann scharf ohne Baseline), `jargon`, `formal-address`, `decimal-comma` (`\d\.\d` außerhalb Kennungen), `quotes`, `ref-format`, `ref-unused`, `phase-min-duration`, `phase-labels-distinct`, `store-lengths` (ab `fastlane/`); Baseline `config/content-baseline.txt`. Finites Verb und Evidenzhinweis im Teaser prüft nur R-TEXT | `BuiltInExercises`, `Situations`, `Refs`, `RandomPatternGenerator.forSeed(0..6)`, `strings.xml`; `store-lengths`: `fastlane/**` (README, Store-Texte, Release-Notes und PRIVACY auf Heilversprechen: `sec-health-claims`) | TEXT-02, -04 … -06, -09 … -12, MUSTER-03, MOTION-02 |
+| `TypographyTest` | jede `headline*`/`title*`-Rolle: `LineBreak.Heading`, `Hyphens.None`; keine Rolle mit `Hyphens.Auto` | Theme | TYPO-03 |
+| `ThemeContrastTest` | WCAG-Kontrast aller Token-Paare (Vordergrund, Alpha, Hintergrund-Kette inkl. Leiste mit Tonal-Elevation 3 dp, Mindestwert); ΔE76 ≥ 25 der Semantikfarben und Pinktöne; Baseline `config/contrast-baseline.txt` | Theme | FARBE-03, -04 |
+| `FractionContinuityTest` | Skala Phasenende = nächster Phasenanfang inkl. Vorbereitung, alle Built-ins und `forSeed(0..6)` (`circleFraction` in `ui/session/BreathingFraction.kt`); bekannte Sprünge in `knownJumps` mit S-ID | Session | MOTION-03 |
+| `ToneEnvelopeTest` | Attack ≥ 8 ms, Release ≥ 60 ms, Spitze ≤ 0,95 FS je Stufe für Wechselton, Gong (erzeugte PCM-Daten, Pegel über 3,5 ms, bis zum 90-%-Punkt), Dauerton (über seine Konstanten) | `src/cue/` | AUDIO-01 |
+| ktlint / Lint / Tests | `ktlintCheck` (+ compose-rules), `lintDebug`, `testDebugUnitTest` | Gradle | TEXT-01, CODE-02 … -04, -06, -07 |
 
 ### 13.4 Manuelle Checklisten
 
@@ -379,15 +379,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 
 | ID | Aufgabe | Aufwand |
 |---|---|---|
-| A-01 | `scripts/check-style.sh` + `style-baseline.txt` + Fixtures + `--self-test`; jeder Check trifft seine bekannten Treffer aus §13.3; danach Spalte „Bekannter Treffer“ streichen (Quelle ist die Baseline) | M |
-| A-02 | `ContentRulesTest` + `content-baseline.txt`; `config/health-claims.{txt,allow}` gemeinsam mit SECURITY. `health-claims` erst scharf, wenn S-08 behoben ist (keine Baseline); `store-lengths` ab `fastlane/` | M |
-| A-03 | `.editorconfig` + ktlint; `ktlintFormat` als eigener Commit in `.git-blame-ignore-revs`; Compose-Funde in Baseline | M |
-| A-04 | `lint {}`-Block; Restwarnungen beheben (`UnusedAttribute` Manifest:31, `ObsoleteSdkInt` `mipmap-anydpi-v26`, `PluralsCandidate` `strings.xml:114`) | S |
-| A-05 | `ThemeContrastTest` + `contrast-baseline.txt` | M |
-| A-06 | `scripts/check.sh` nach §13.1 inkl. der SECURITY-Schritte; optional `.githooks/pre-push` | S |
-| A-07 | `.github/workflows/ci.yml` nach §13.1 (inkl. `guide-sync`, `commit-msg`, SECURITY-Schritte) | S |
-| A-08 | `.github/dependabot.yml` (Umfang: SECURITY, Lieferkette) | S |
-| A-09 | `FractionContinuityTest` (`breathingFraction`, `SessionScreen.kt:363`, testbar auslagern) und `ToneEnvelopeTest` über die Generator-Konstanten | S |
+| A-13 | Sicherheitsschritte nach SECURITY: `check-security.sh`, `verify-apk.sh`, `check-github.sh`, CI-Schritte und `release-verify.yml`; erst mit Veröffentlichung von SECURITY.md (sonst zeigt ein öffentlicher CI-Lauf offene Befunde) | M |
 | A-12 | Referenzbilder (Viewport-Höhe, klein) im Repo und `verifyRoborazziDebug` in CI, damit auch rein optische Änderungen auffallen; Querformat und Tablet in die Matrix. Textprüfung steht bereits (§13.1). | S |
 | A-10 | später: Compose-UI-Semantiktests (`isHeading`, `hasClickAction`, `enableAccessibilityChecks()`) | L |
 
@@ -401,10 +393,11 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 | S-05 | MUSTER-05 | Logbuch leeren, Muster löschen, Stimme löschen ohne zweistufige Bestätigung; „Leeren“ als `TextButton` in eigener Zeile (`LogbookScreen.kt:107`) | S |
 | S-06 | A11Y-02, -07, MUSTER-07 | Atemkreis: cd verdeckt Zeit-Texte, kein `onClickLabel`, „Weiter“ nur per Kreis, kein sichtbarer Fokus (`SessionScreen.kt:177-236`, `MeditationScreen.kt:367-374`) | M |
 | S-07 | LAYOUT-03 | Nur noch ungeprüft: Querformat und Tablet (nicht in der Matrix, A-12). Bei fontScale 2,0 auf 360 dp stehen im Logbuch Dauer und Runden unter dem Namen mit Einzug (FlowRow + `Alignment.End`) – unschön, nicht falsch | S |
-| S-08 | TEXT-09, -07 | Overclaims in Inhalten und `strings.xml` abbauen; Fundstellen: `ContentRulesTest health-claims` (A-02), bis dahin Liste beim Maintainer | M |
+| S-08 | TEXT-09, -07 | Overclaims abbauen; `ContentRulesTest health-claims` findet: `physiological-sigh.shortDescription` „in Sekunden“, „Notbremse“; `Situations` ACUTE_STRESS „in Sekunden“; `strings:settings_sound_hint` „nachweislich“. Danach `health-claims` scharf schalten | M |
 | S-09 | TEXT-08 | Sicherheitsrelevantes nur im Detail (Box, Zwerchfell, Resonanz; `BuiltInExercises.kt:44, 213, 382`) | S |
 | S-10 | TEXT-07 | `BEST_EVIDENCE` beim physiologischen Seufzer trotz „nur indirekt belegt“; Lippenbremse (Meta-Analyse) ohne Tag | S |
-| S-11 | MOTION-03 | Skalensprünge: `INHALE` → `INHALE_TOP_UP`, Vorbereitung → erste Phase, Feueratmung `INHALE` → `REST` | S |
+| S-11 | MOTION-03 | Skalensprünge (`FractionContinuityTest`): Vorbereitung → Einatmen bzw. → Ausatmen (Feueratmung); `INHALE` → `INHALE_TOP_UP` (Seufzer); Feueratmung `INHALE` → `REST` und `REST` → `EXHALE`; Wim Hof Ausatmen → Ausatmen „ganz“ und Halten voll → Einatmen (neue Runde) | S |
+| S-36 | AUDIO-01 | Dauerton blendet bei Pause, Stumm und Ende in 15 ms aus, nötig ≥ 60 ms (`ContinuousTonePlayer.GAIN_FADE_SECONDS` gilt fürs Ein- und Ausblenden; `ToneEnvelopeTest` meldet die Behebung) | S |
 | S-12 | AUDIO-02 | Fokus trotz Stumm; kein Fokus-Listener; Reserve 300 vs. 500 ms; Cue-Thread blockiert 480 ms; Gong-Vorhören ohne Fokus | M |
 | S-13 | AUDIO-04 | Atem-Session ohne Foreground-Service; Android 17 stummt Hintergrund-Audio | L |
 | S-14 | CODE-05 | Enums per `ordinal` persistiert (`SettingsRepository.kt:120-202`), Migration auf `name` | M |
@@ -413,15 +406,15 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 
 | ID | Regel | Befund (Ort) | Aufwand |
 |---|---|---|---|
-| S-15 | FARBE-03, -05 | Text < 4,5:1: Chips (Card 4,17, InfoChip 3,69), `TERTIARY` 4,14, Wochentage (Fix `ALPHA_CHIP`, InfoChip α 0,65, `TERTIARY` 0,55). WeekRow-Stufen 1,32–1,85, Heute-Ring nicht in der Semantik; Familie nur über Randfarbe/Log-Punkt | S |
+| S-15 | FARBE-03, -05 | Text < 4,5:1 auf Card (`ThemeContrastTest`): `TERTIARY` 4,16, Caution-TagChip 4,15, InfoChip 3,23, Wochentage 4,16; WeekRow-Punkte α 0,12 / 0,4 nur 1,40 / 1,85. Heute-Ring nicht in der Semantik; Familie nur über Randfarbe/Log-Punkt | S |
 | S-16 | A11Y-01, -03, -04, -07 | `SelectChip` ohne Häkchen (Rolle Checkbox), `SegmentedChoiceRow`-Label nicht verknüpft; Mute ohne `Role.Switch`, kein `paneTitle`; Ende, Pause, Download-Status nicht angesagt; Fokusverlust bei Reset/Löschen | M |
 | S-17 | MUSTER-01, -02, -06 | „✓ Gespeichert“ disabled (3,00:1) ohne Live-Region; „· angepasst“ als loses Geschwister (`SessionAdjustCard.kt:66`); Reset mit fester Höhe 40 dp (`StartSplitButton.kt:56`); `SafetyDialog` ohne `verticalScroll` | S |
-| S-18 | FARBE-04, -06, KOMP-01 | `CharacterChip`: „aktivierend“ in `WarnAmber`, „ruhig“ in `EvidenceBest`, eigener Nachbau; drei Pinktöne ΔE < 25 (Entscheidung: `SessionButtonPink` aus `error` oder `EvidenceCaution` Richtung Koralle); `outline`/`error`/`onError`/`primaryContainer` fehlen; `SecondaryContainer` 1,18 auf Card (Option #5A4890) | S |
+| S-18 | FARBE-04, -06, KOMP-01 | `CharacterChip`: „aktivierend“ in `WarnAmber` (ΔE 23,9 zu `FamilySympathetic`, steht neben Familie B), „ruhig“ in `EvidenceBest`, eigener Nachbau; drei Pinktöne ΔE < 25 (primary↔EvidenceCaution 19,9, primary↔SessionButtonPink 23,0, EvidenceCaution↔SessionButtonPink 18,1; Entscheidung: `SessionButtonPink` aus `error` oder `EvidenceCaution` Richtung Koralle); `outline`/`error`/`onError`/`primaryContainer` fehlen; `SecondaryContainer` 1,18 auf Card (Option #5A4890) | S |
 | S-19 | AUDIO-01, -04, -05, MOTION-01, -02 | 528/396 Hz sind Solfeggio-Frequenzen; Tap-Tick ignoriert „Vibration“ und nutzt `USAGE_ALARM`; veralteter Vibrations-Overload; `HapticPlayer` in der Composable; Dauerton-Glide startet nach Fortsetzen bei f0; Tap-Flash fadet bei Animator-Skala 0 | M |
 | S-20 | TEXT-01, -05 | Hartkodierte TalkBack-Strings (`DisclosureToggle.kt:36`, `ExpanderSection.kt:59`, `SessionScreen.kt:182`, `LogbookScreen.kt:146`); Glossar im UI-File → `src/data/Glossary.kt`, Pflichtbegriffe ergänzen (RCT, Meta-Analyse, Hyperventilation, COPD …); `settings_safety_hint` nennt Übungen fest | S |
-| S-21 | TEXT-06, -07 | Teaser: `RandomPatternGenerator.kt:153` (102 Z.), erste caution `BuiltInExercises.kt:292` (97), `:549` (109); ohne finites Verb `:34, 445, 468`; ohne Evidenzhinweis `:106, 139, 374, 498`; Detail > 700 `:71, 108, 206, 278` | M |
+| S-21 | TEXT-06, -07 | Teaser `muster-des-tages.effect` 102 Z. (> 95); erste caution Wim Hof 97, Buteyko 109; ohne finites Verb `BuiltInExercises.kt:34, 445, 468`; ohne Evidenzhinweis `:106, 139, 374, 498`; Detail > 700: Cyclic Sighing 752, Physiological Sigh 709, Zwerchfell 748, Wim Hof 840 | M |
 | S-22 | TEXT-02, -05, -10 | Jargon in Situationen und Familien-Labels (`BuiltInExercises.kt:275-295`, `strings.xml:17-24`); `phase_hold_full` = `phase_hold_empty`; Wording („Session“, Lädt/lädt, „Aktiv ✓“, `action_end`/`action_stop`, „~“/„ca.“, Apostroph `strings.xml:118`) | S |
-| S-23 | TEXT-12 | „Bowler 1998“ fehlt; `shetty2019`, `compare2025`, `nadiShodhana2024`, `nadiBhramari2023` unvollständig; `fincham2023` ungenutzt; 8 deutsche Titel-Paraphrasen | M |
+| S-23 | TEXT-12 | „(Bowler 1998)“ und „(Vergleichsstudie 2025)“ in `4-7-8.effectDetail` ohne Quelle; `shetty2019`, `compare2025`, `nadiShodhana2024`, `nadiBhramari2023` unvollständig; `respeRate` (Patent, kein Studienzitat) und `fincham2023` ungenutzt; 8 deutsche Titel-Paraphrasen | M |
 | S-24 | CODE-03, -05 | `remember` statt `rememberSaveable` (`MeditationScreen.kt:160`, `ExerciseDetailScreen.kt:82`); unauflösbare `exerciseId` → leerer Screen (`MainActivity.kt:365`); Logik hängt an „Tagesmuster“ (`SavedPatternsRepository.kt:42`) | S |
 | S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1); Stepper außerhalb der Karte eingerückt (`MeditationScreen.kt:212`); About-Titel `headlineLarge` in primary | M |
 | S-26 | KOMP-02, A11Y-01 | `Card(Modifier.clickable)` 4×, `clickable` ohne Rolle 9×; `DailyPatternCard` mit zwei beschrifteten `TextButton`s (Entscheidung offen: Speichern als trailing Icon mit Morph) | S |

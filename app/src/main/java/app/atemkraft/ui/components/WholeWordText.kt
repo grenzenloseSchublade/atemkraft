@@ -3,7 +3,6 @@ package app.atemkraft.ui.components
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -24,8 +23,9 @@ import androidx.compose.ui.unit.isSpecified
  * (lange Komposita bei großer Systemschrift auf schmalen Geräten), wird die Schrift in kleinen
  * Schritten verkleinert, bis jedes Wort ganz in eine Zeile passt – höchstens bis [minScale]
  * (Standard 0,7; nur sehr schmale Plätze wie Tab-Beschriftungen gehen tiefer).
- * Bis dahin wird nicht gezeichnet, es flackert also nichts. Mit [sharedScale] teilen sich
- * gleichrangige Texte (z. B. Tab-Beschriftungen) eine Größe: Die kleinste nötige gilt für alle.
+ * Bis dahin wird nicht gezeichnet, es flackert also nichts. Gleichrangige Texte (z. B.
+ * Tab-Beschriftungen) teilen sich eine Größe: Der Aufrufer reicht [sharedScale] herein und
+ * übernimmt per [onSharedScaleTooBig] den kleineren Wert – die kleinste nötige gilt für alle.
  *
  * Für Titel, Namen und Beschriftungen; Fließtext wird stattdessen so formuliert, dass kein
  * Wort die Zeile sprengt.
@@ -38,12 +38,13 @@ fun WholeWordText(
     color: Color = Color.Unspecified,
     textAlign: TextAlign? = null,
     minScale: Float = MIN_SCALE,
-    sharedScale: MutableFloatState? = null,
+    sharedScale: Float? = null,
+    onSharedScaleTooBig: (Float) -> Unit = {},
 ) {
     // Neu messen, wenn sich Text, Stil, Schriftgröße oder Bildschirmbreite ändern.
     val config = LocalConfiguration.current
-    val ownScale = remember(text, style, config.fontScale, config.screenWidthDp) { mutableFloatStateOf(1f) }
-    var scale by (sharedScale ?: ownScale)
+    var ownScale by remember(text, style, config.fontScale, config.screenWidthDp) { mutableFloatStateOf(1f) }
+    val scale = sharedScale ?: ownScale
     var ready by remember(text, style, config.fontScale, config.screenWidthDp) { mutableStateOf(false) }
 
     Text(
@@ -61,7 +62,8 @@ fun WholeWordText(
         textAlign = textAlign ?: TextAlign.Unspecified,
         onTextLayout = { layout ->
             if (breaksInsideWord(layout) && scale > minScale) {
-                scale = (scale - STEP).coerceAtLeast(minScale)
+                val smaller = (scale - STEP).coerceAtLeast(minScale)
+                if (sharedScale != null) onSharedScaleTooBig(smaller) else ownScale = smaller
             } else {
                 ready = true
             }

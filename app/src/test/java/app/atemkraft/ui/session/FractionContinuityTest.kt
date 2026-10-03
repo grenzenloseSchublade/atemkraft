@@ -17,13 +17,13 @@ import kotlin.math.abs
  * beginnt mit `remainingMs = phaseTotalMs` und endet mit `remainingMs = 0`, offene Phase hat
  * `phaseTotalMs = 0`.
  *
- * Bekannte Sprünge stehen mit Backlog-ID in [KNOWN_JUMPS]. Der Test schlägt fehl bei einem
+ * Bekannte Sprünge stehen mit Backlog-ID in [knownJumps]. Der Test schlägt fehl bei einem
  * neuen Sprung und bei einem Eintrag, der nicht mehr auftritt (dann Backlog und Liste kürzen).
  */
 class FractionContinuityTest {
 
     /** Übergang `von → nach` (Phasentypen; `PREPARE` = Start-Countdown) → Backlog-ID. */
-    private val KNOWN_JUMPS = mapOf(
+    private val knownJumps = mapOf(
         "PREPARE → INHALE" to "S-11", // Countdown 0,5 → Einatmen beginnt bei 0
         "PREPARE → EXHALE" to "S-11", // Feueratmung beginnt mit Ausatmen (1)
         "INHALE → INHALE_TOP_UP" to "S-11", // Seufzer: zweiter Atemzug beginnt wieder bei 0
@@ -74,7 +74,7 @@ class FractionContinuityTest {
 
     @Test
     fun `keine neuen Skalensprünge an Phasengrenzen`() {
-        val unknown = findJumps().filterKeys { it !in KNOWN_JUMPS }
+        val unknown = findJumps().filterKeys { it !in knownJumps }
         assertTrue(
             "Neue Skalensprünge (MOTION-03): " +
                 unknown.entries.joinToString("; ") { (k, v) -> "$k in ${v.joinToString()}" },
@@ -84,9 +84,9 @@ class FractionContinuityTest {
 
     @Test
     fun `jeder bekannte Sprung tritt noch auf`() {
-        val stale = KNOWN_JUMPS.keys - findJumps().keys
+        val stale = knownJumps.keys - findJumps().keys
         assertTrue(
-            "Behoben – aus KNOWN_JUMPS und Backlog streichen: ${stale.joinToString()}",
+            "Behoben – aus knownJumps und Backlog streichen: ${stale.joinToString()}",
             stale.isEmpty(),
         )
     }

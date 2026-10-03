@@ -6,8 +6,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import app.atemkraft.ui.theme.DarkSurface
@@ -38,7 +40,7 @@ fun AppNavigationBar(items: List<AppNavItem>) {
     )
     // Eine Größe für alle Beschriftungen, damit die Leiste ruhig wirkt.
     val config = LocalConfiguration.current
-    val labelScale = remember(items.map { it.label }, config.fontScale, config.screenWidthDp) { mutableFloatStateOf(1f) }
+    var labelScale by remember(items.map { it.label }, config.fontScale, config.screenWidthDp) { mutableFloatStateOf(1f) }
     NavigationBar(containerColor = DarkSurface) {
         items.forEach { item ->
             NavigationBarItem(
@@ -55,6 +57,7 @@ fun AppNavigationBar(items: List<AppNavItem>) {
                         // braucht dann etwa 60 %. Das Icon bleibt groß und trägt die Erkennung.
                         minScale = 0.5f,
                         sharedScale = labelScale,
+                        onSharedScaleTooBig = { labelScale = minOf(labelScale, it) },
                     )
                 },
                 colors = colors,

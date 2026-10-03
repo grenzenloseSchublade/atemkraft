@@ -12,7 +12,7 @@ Aufrufe:
   scripts/check-style.sh                     # prüfen
   scripts/check-style.sh --self-test         # jedes Muster gegen config/style-fixtures/<check>.{pos,neg}
   scripts/check-style.sh --update-baseline   # Baseline auf den Ist-Stand setzen (nur zum Senken!)
-  scripts/check-style.sh --ci-range A..B     # zusätzlich guide-sync und commit-msg über A..B
+  scripts/check-style.sh --ci-range A..B     # nur guide-sync und commit-msg über A..B (CI-Job conventions)
 """
 from __future__ import annotations
 
@@ -156,23 +156,43 @@ UI_LITERAL_LINE = re.compile(r"Text\(|contentDescription\s*=|stateDescription\s*
 STRING_LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
 
 
-def ui_literal_line(line: str) -> bool:
-    """TEXT-01: sichtbarer oder vorgelesener Text als Literal statt aus strings.xml."""
-    if not UI_LITERAL_LINE.search(line):
-        return False
-    for m in STRING_LITERAL.finditer(line):
+def has_letter_literal(text: str) -> bool:
+    for m in STRING_LITERAL.finditer(text):
         content = re.sub(r"\$\{[^}]*\}|\$\w+", "", m.group(1))
         if re.search(r"[^\W\d_]", content):
             return True
     return False
 
 
+def ui_literal_line(line: str) -> bool:
+    """TEXT-01: sichtbarer oder vorgelesener Text als Literal statt aus strings.xml."""
+    return bool(UI_LITERAL_LINE.search(line)) and has_letter_literal(line)
+
+
+def ui_literal_hits(lines: list[str]) -> list[int]:
+    """Wie ui_literal_line, aber über die ganze Anweisung: Ein `contentDescription = if (…) {`
+    mit den Literalen in den Folgezeilen zählt genauso (sonst „behebt“ Umformatieren den Fund)."""
+    hits = []
+    for i, line in enumerate(lines):
+        if not UI_LITERAL_LINE.search(line):
+            continue
+        statement, depth = line, line.count("(") + line.count("{") - line.count(")") - line.count("}")
+        j = i + 1
+        while depth > 0 and j < len(lines) and j - i <= 8:
+            statement += "\n" + lines[j]
+            depth += lines[j].count("(") + lines[j].count("{") - lines[j].count(")") - lines[j].count("}")
+            j += 1
+        if has_letter_literal(statement):
+            hits.append(i + 1)
+    return hits
+
+
 def ui_literal(check: Check) -> dict[str, list[int]]:
     hits: dict[str, list[int]] = {}
     for f in files_for(check.include, check.exclude):
-        for i, line in enumerate(prepared_lines((ROOT / f).read_text(encoding="utf-8"), check), 1):
-            if ui_literal_line(line):
-                hits.setdefault(f, []).append(i)
+        found = ui_literal_hits(prepared_lines((ROOT / f).read_text(encoding="utf-8"), check))
+        if found:
+            hits[f] = found
     return hits
 
 
@@ -316,7 +336,7 @@ def self_test() -> int:
                 continue
             text = fixture.read_text(encoding="utf-8")
             if check.name == "ui-literal":
-                n = sum(ui_literal_line(line) for line in prepared_lines(text, check))
+                n = len(ui_literal_hits(prepared_lines(text, check)))
             else:
                 n = len(count_text(text, Check(**{**check.__dict__, "per_file": False})))
             ok = n > 0 if kind == "pos" else n == 0
@@ -361,10 +381,9 @@ def main() -> int:
         return self_test()
     if a.update_baseline:
         return update_baseline()
-    rc = check_all()
     if a.ci_range:
-        rc |= ci_range(a.ci_range)
-    return rc
+        return ci_range(a.ci_range)
+    return check_all()
 
 
 if __name__ == "__main__":
