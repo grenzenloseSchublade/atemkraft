@@ -1,0 +1,18 @@
+# Abhängigkeits-Updates (docs/SECURITY.md, Lieferkette): monatlich, gruppiert, damit
+# wenige, gut prüfbare PRs entstehen. Jeder PR läuft durch scripts/check.sh.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      gradle:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]

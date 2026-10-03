@@ -1,0 +1,5 @@
+# Reine Formatierungs-Commits, die git blame überspringen soll:
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# ktlintFormat (A-03)
+1cf5daf8538c1432811d8088a70766f9ccc5020d

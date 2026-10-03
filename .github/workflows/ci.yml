@@ -1,0 +1,57 @@
+# Prüfungen bei jedem Push auf main und jedem Pull Request (docs/STYLEGUIDE.md §13.1).
+# Einziger Prüf-Einstieg ist scripts/check.sh – lokal und hier identisch.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: scripts/check.sh
+        run: scripts/check.sh
+      - name: Screenshots bei Fehler sichern
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: screenshot-befunde
+          path: app/build/outputs/roborazzi/**/*.tsv
+          if-no-files-found: ignore
+
+  conventions:
+    # guide-sync (META-01) und commit-msg (CODE-08) über alle Commits des Pushes bzw. PRs.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: guide-sync und commit-msg
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Neuer Branch: kein Vorgänger, dann nur den letzten Commit prüfen.
+          if [[ -z "${BASE}" || "${BASE}" =~ ^0+$ ]]; then BASE="${HEAD}~1"; fi
+          scripts/check-style.sh --ci-range "${BASE}..${HEAD}"
