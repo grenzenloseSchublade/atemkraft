@@ -88,20 +88,22 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 
 Quelle [Type.kt](../app/src/main/java/app/atemkraft/ui/theme/Type.kt): M3 `Typography()`, Roboto, fünf Rollen überschrieben.
 
+Größen in sp (Schrift/Zeile), **effektiv nach `TEXT_SCALE` = 0,7** in `Type.kt`: Ein Faktor skaliert alle Rollen zentral (Nutzerentscheidung 2026-10-03, vorher 1,0 – der Maintainer empfand die Schrift als zu groß). Die Systemschriftgröße wirkt zusätzlich. Fließtext liegt damit unter 12 sp: Lesbarkeit der kleinsten Rollen (`labelSmall`, `bodySmall`) bei jeder Änderung am Gerät prüfen (R-VISUAL).
+
 | Rolle | sp | Gewicht | Zweck (normativ) |
 |---|---|---|---|
-| `headlineLarge` | 34/40 | Bold | Titel von Tab-Screens |
-| `headlineMedium` | 28/36 | Bold | Titel von Push-Screens, Abschluss-Titel, Phasenname im Kreis |
-| `headlineSmall` | 24/32 | SemiBold | `SectionHeader` |
-| `titleLarge` | 22/28 | SemiBold | Karten- und Expander-Titel, Stepper-Wert |
-| `titleMedium` | 16/24 | SemiBold | Stepper-Label, Overlay-Titel, Mini-Bar-Status, Kennzahlen |
-| `bodyLarge` | 16/24 | M3 | Screen-Untertitel, Kurzbeschreibung, Zeilen-Labels, Phasen-Notiz |
-| `bodyMedium` | 14/20 | M3 | Fließtext, Kartentext, Teaser, Dialogtext |
-| `bodySmall` | 12/16 | M3 | Hinweise unter Kontrollen, Zitat, Datum, Footer |
-| `labelLarge` | 14/20 | M3 | Eyebrow, Buttons |
-| `labelMedium` | 12/16 | M3 | Status-Suffix „· angepasst“, Mini-Bar-Titel, Nav-Label |
-| `labelSmall` | 11/16 | M3 | Chips, DOI/PMID, Wochentage |
-| `displaySmall` | 36/44 | M3 | Countdown, Meditationszeit (`GlowText`) |
+| `headlineLarge` | 23,8/28 | Bold | Titel von Tab-Screens |
+| `headlineMedium` | 19,6/25,2 | Bold | Titel von Push-Screens, Abschluss-Titel, Phasenname im Kreis |
+| `headlineSmall` | 16,8/22,4 | SemiBold | `SectionHeader` |
+| `titleLarge` | 15,4/19,6 | SemiBold | Karten- und Expander-Titel, Stepper-Wert |
+| `titleMedium` | 11,2/16,8 | SemiBold | Stepper-Label, Overlay-Titel, Mini-Bar-Status, Kennzahlen |
+| `bodyLarge` | 11,2/16,8 | M3 | Screen-Untertitel, Kurzbeschreibung, Zeilen-Labels, Phasen-Notiz |
+| `bodyMedium` | 9,8/14 | M3 | Fließtext, Kartentext, Teaser, Dialogtext |
+| `bodySmall` | 8,4/11,2 | M3 | Hinweise unter Kontrollen, Zitat, Datum, Footer |
+| `labelLarge` | 9,8/14 | M3 | Eyebrow, Buttons |
+| `labelMedium` | 8,4/11,2 | M3 | Status-Suffix „· angepasst“, Mini-Bar-Titel, Nav-Label |
+| `labelSmall` | 7,7/11,2 | M3 | Chips, DOI/PMID, Wochentage |
+| `displaySmall` | 25,2/30,8 | M3 | Countdown, Meditationszeit (`GlowText`) |
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|

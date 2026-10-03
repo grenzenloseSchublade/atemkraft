@@ -20,6 +20,37 @@ private fun TextStyle.asHeading() = copy(
     hyphens = Hyphens.None,
 )
 
+/**
+ * Zentraler Größenfaktor für ALLE Schriftrollen (Größe, Zeilenhöhe, Laufweite). Eine Stelle,
+ * an der sich die Schrift der ganzen App größer oder kleiner stellen lässt; die
+ * Systemschriftgröße des Geräts wirkt zusätzlich darauf.
+ */
+const val TEXT_SCALE = 0.7f
+
+private fun TextStyle.scaled(): TextStyle = copy(
+    fontSize = fontSize * TEXT_SCALE,
+    lineHeight = lineHeight * TEXT_SCALE,
+    letterSpacing = letterSpacing * TEXT_SCALE,
+)
+
+private fun Typography.scaled(): Typography = Typography(
+    displayLarge = displayLarge.scaled(),
+    displayMedium = displayMedium.scaled(),
+    displaySmall = displaySmall.scaled(),
+    headlineLarge = headlineLarge.scaled(),
+    headlineMedium = headlineMedium.scaled(),
+    headlineSmall = headlineSmall.scaled(),
+    titleLarge = titleLarge.scaled(),
+    titleMedium = titleMedium.scaled(),
+    titleSmall = titleSmall.scaled(),
+    bodyLarge = bodyLarge.scaled(),
+    bodyMedium = bodyMedium.scaled(),
+    bodySmall = bodySmall.scaled(),
+    labelLarge = labelLarge.scaled(),
+    labelMedium = labelMedium.scaled(),
+    labelSmall = labelSmall.scaled(),
+)
+
 val AtemkraftTypography = base.copy(
     // Screen-Titel der Tabs (Atmen/Situationen/Logbuch): groß & kräftig.
     headlineLarge = base.headlineLarge.copy(
@@ -37,4 +68,4 @@ val AtemkraftTypography = base.copy(
     titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold).asHeading(),
     // Derzeit ungenutzt; trennt trotzdem wie alle Titel, falls es später verwendet wird.
     titleSmall = base.titleSmall.asHeading(),
-)
+).scaled()
