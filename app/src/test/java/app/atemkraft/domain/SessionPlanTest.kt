@@ -23,8 +23,7 @@ class SessionPlanTest {
         perRound = perRound,
     )
 
-    private fun fixed(type: PhaseType, seconds: Double) =
-        Phase(type, PhaseDuration.Fixed((seconds * 1000).toLong()))
+    private fun fixed(type: PhaseType, seconds: Double) = Phase(type, PhaseDuration.Fixed((seconds * 1000).toLong()))
 
     @Test
     fun `timeline multipliziert Runden mal Segmente mal Wiederholungen mal Phasen aus`() {

@@ -43,7 +43,9 @@ class HapticPlayer(context: Context) {
         val effect = when (event) {
             // Volle Amplitude + längere Impulse → deutlich spürbar (auch ohne Amplituden-Steuerung).
             CueEvent.INHALE, CueEvent.EXHALE -> VibrationEffect.createOneShot(110, 255)
+
             CueEvent.HOLD -> VibrationEffect.createOneShot(70, 255)
+
             CueEvent.FINISH -> VibrationEffect.createWaveform(longArrayOf(0, 200, 120, 280), intArrayOf(0, 255, 0, 255), -1)
         }
         @Suppress("DEPRECATION")

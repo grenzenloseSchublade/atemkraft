@@ -1,10 +1,5 @@
 package app.atemkraft.cue.tts
 
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
-import java.security.MessageDigest
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.archivers.tar.TarConstants
@@ -17,6 +12,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
+import java.security.MessageDigest
 
 /** Download-Prüfung (Größe + SHA-256) und sicheres Entpacken der Stimm-Archive. */
 class VoiceIntegrityTest {
@@ -27,8 +27,7 @@ class VoiceIntegrityTest {
     private val payload = ByteArray(200_000) { (it % 251).toByte() }
     private val payloadSha = sha256(payload)
 
-    private fun sha256(bytes: ByteArray) =
-        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+    private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     private fun copy(bytes: ByteArray, size: Long, sha: String): ByteArray {
         val out = ByteArrayOutputStream()

@@ -115,9 +115,8 @@ object RandomPatternGenerator {
     }
 
     /** Muster-Kurzform, z. B. „4·2·6" – auch für Namen gespeicherter Muster. */
-    fun numbersOf(spec: PatternSpec): String =
-        listOfNotNull(spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty)
-            .joinToString("·") { it.fmt() }
+    fun numbersOf(spec: PatternSpec): String = listOfNotNull(spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty)
+        .joinToString("·") { it.fmt() }
 
     /** Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s". */
     fun hintFor(spec: PatternSpec): String = buildList {
@@ -175,14 +174,12 @@ object RandomPatternGenerator {
         return nextInt(lo, hi + 1) / 2.0
     }
 
-    private fun Random.ratio(min: Double, max: Double): Double =
-        min + nextDouble() * (max - min)
+    private fun Random.ratio(min: Double, max: Double): Double = min + nextDouble() * (max - min)
 
     private fun Double.toHalfSteps(): Double = (this * 2).roundToInt() / 2.0
 
     /** „4" bzw. „4,5" (deutsches Komma, ohne unnötige Null). */
-    private fun Double.fmt(): String =
-        if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
+    private fun Double.fmt(): String = if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
 
     /**
      * Bauchatmungs-EMPFEHLUNG der ruhigen Muster (kein Zufall beim Atemort) – bewusst als

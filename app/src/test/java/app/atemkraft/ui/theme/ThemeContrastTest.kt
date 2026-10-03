@@ -1,13 +1,13 @@
 package app.atemkraft.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import org.junit.Assert.fail
+import org.junit.Test
 import java.io.File
 import kotlin.math.cbrt
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
-import org.junit.Assert.fail
-import org.junit.Test
 
 /**
  * FARBE-03 / FARBE-04: Kontrast (WCAG 2.x) und Farbabstand (ΔE76) der Theme-Tokens, gemessen
@@ -51,10 +51,13 @@ class ThemeContrastTest {
     // Chip.kt: Fläche color.copy(alpha = 0.16f), InfoChip-Text onSurface 0.5f.
     private val chipFill = 0.16f
     private val infoChipText = 0.5f
+
     // HomeScreen.CharacterChip: Fläche color.copy(alpha = 0.14f).
     private val characterChipFill = 0.14f
+
     // AppNavigationBar: unselektierte Icons/Labels onSurface 0.55f.
     private val navUnselected = 0.55f
+
     // LogbookScreen.WeekRow: Punkt-Stufen und Wochentags-Buchstaben.
     private val weekLevels = listOf(0.12f to DarkOnSurface, 0.40f to NeonMagenta, 0.70f to NeonMagenta)
     private val weekdayText = 0.5f

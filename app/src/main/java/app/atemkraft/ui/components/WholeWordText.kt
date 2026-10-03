@@ -49,10 +49,14 @@ fun WholeWordText(
     Text(
         text = text,
         modifier = modifier.drawWithContent { if (ready) drawContent() },
-        style = if (scale < 1f) style.copy(
-            fontSize = style.fontSize.scaled(scale), // Abweichung TYPO-01: skaliert die übergebene Rolle
-            lineHeight = style.lineHeight.scaled(scale), // Abweichung TYPO-01: skaliert die übergebene Rolle
-        ) else style,
+        style = if (scale < 1f) {
+            style.copy(
+                fontSize = style.fontSize.scaled(scale), // Abweichung TYPO-01: skaliert die übergebene Rolle
+                lineHeight = style.lineHeight.scaled(scale), // Abweichung TYPO-01: skaliert die übergebene Rolle
+            )
+        } else {
+            style
+        },
         color = color,
         textAlign = textAlign ?: TextAlign.Unspecified,
         onTextLayout = { layout ->
@@ -76,8 +80,7 @@ private fun TextUnit.scaled(factor: Float): TextUnit = if (isSpecified) this * f
  * („Resonanz|-Atmung“, „Sigh|)“). Ein Umbruch nach Leerzeichen oder nach einem Bindestrich
  * („Resonanz-|Atmung“) ist erlaubt. Gemeinsame Regel für [WholeWordText] und ScreenshotTest.
  */
-fun breaksInsideWord(layout: TextLayoutResult): Boolean =
-    (0 until layout.lineCount - 1).any { badBreakAt(layout.layoutInput.text.text, layout.getLineEnd(it)) }
+fun breaksInsideWord(layout: TextLayoutResult): Boolean = (0 until layout.lineCount - 1).any { badBreakAt(layout.layoutInput.text.text, layout.getLineEnd(it)) }
 
 /** Siehe [breaksInsideWord]; [end] ist der erste Index der neuen Zeile. */
 fun badBreakAt(text: String, end: Int): Boolean {

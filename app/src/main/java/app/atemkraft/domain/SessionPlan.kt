@@ -89,25 +89,29 @@ fun Exercise.adjusted(config: SessionConfig): Exercise {
     // 1) Optionale Phasenlängen überschreiben (nur feste Dauern).
     val hasOverrides = config.inhaleSeconds != null ||
         config.exhaleSeconds != null || config.holdSeconds != null
-    val base = if (!hasOverrides) this else copy(
-        segments = segments.map { segment ->
-            segment.copy(
-                phases = segment.phases.map { phase ->
-                    val secs = when (phase.type) {
-                        PhaseType.INHALE -> config.inhaleSeconds
-                        PhaseType.EXHALE -> config.exhaleSeconds
-                        PhaseType.HOLD_FULL, PhaseType.HOLD_EMPTY -> config.holdSeconds
-                        else -> null
-                    }
-                    if (secs != null && phase.duration is PhaseDuration.Fixed) {
-                        phase.copy(duration = PhaseDuration.Fixed((secs * 1000).toLong()))
-                    } else {
-                        phase
-                    }
-                },
-            )
-        },
-    )
+    val base = if (!hasOverrides) {
+        this
+    } else {
+        copy(
+            segments = segments.map { segment ->
+                segment.copy(
+                    phases = segment.phases.map { phase ->
+                        val secs = when (phase.type) {
+                            PhaseType.INHALE -> config.inhaleSeconds
+                            PhaseType.EXHALE -> config.exhaleSeconds
+                            PhaseType.HOLD_FULL, PhaseType.HOLD_EMPTY -> config.holdSeconds
+                            else -> null
+                        }
+                        if (secs != null && phase.duration is PhaseDuration.Fixed) {
+                            phase.copy(duration = PhaseDuration.Fixed((secs * 1000).toLong()))
+                        } else {
+                            phase
+                        }
+                    },
+                )
+            },
+        )
+    }
 
     // 2) Runden (rundenbasiert) bzw. Minuten → Wiederholungen aus dem neuen Zyklus.
     if (base.isRoundBased) {

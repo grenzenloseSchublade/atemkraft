@@ -18,9 +18,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -38,7 +38,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceGender
@@ -52,6 +51,7 @@ import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
@@ -331,8 +331,11 @@ private fun VoiceRow(
             WholeWordText(
                 text = spec.displayName,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (active && engineReady) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurface,
+                color = if (active && engineReady) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
             )
             Hint(voiceSubtitle(spec, state, active, engineReady))
         }
@@ -356,6 +359,7 @@ private fun VoiceRow(
                     )
                 }
             }
+
             is VoiceDownloadState.Downloaded -> {
                 when {
                     // Aktiv-Label erst zeigen, wenn die Engine wirklich bereit ist (gleiche Quelle
@@ -365,8 +369,10 @@ private fun VoiceRow(
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
+
                     active && !engineReady ->
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+
                     else ->
                         TextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
                 }
@@ -379,6 +385,7 @@ private fun VoiceRow(
                     )
                 }
             }
+
             else -> // NotDownloaded / Failed
                 TextButton(onClick = onDownload) { Text(stringResource(R.string.settings_voice_download)) }
         }
@@ -401,11 +408,18 @@ private fun voiceSubtitle(
     val base = "$gender · ${spec.qualityLabel}"
     val extra = when (state) {
         is VoiceDownloadState.NotDownloaded -> stringResource(R.string.voice_size_mb, spec.approxMb)
+
         is VoiceDownloadState.Downloading ->
-            if (state.extracting) stringResource(R.string.settings_speech_pack_extracting)
-            else if (state.indeterminate) stringResource(R.string.voice_loading)
-            else stringResource(R.string.settings_speech_pack_downloading, (state.fraction * 100).toInt())
+            if (state.extracting) {
+                stringResource(R.string.settings_speech_pack_extracting)
+            } else if (state.indeterminate) {
+                stringResource(R.string.voice_loading)
+            } else {
+                stringResource(R.string.settings_speech_pack_downloading, (state.fraction * 100).toInt())
+            }
+
         is VoiceDownloadState.Failed -> stringResource(R.string.voice_failed_short)
+
         is VoiceDownloadState.Downloaded ->
             if (active && !engineReady) stringResource(R.string.settings_speech_pack_preparing) else null
     }

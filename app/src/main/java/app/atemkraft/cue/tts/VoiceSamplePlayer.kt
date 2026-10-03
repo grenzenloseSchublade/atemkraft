@@ -28,8 +28,15 @@ class VoiceSamplePlayer(context: Context) {
                     .build(),
             )
             mp.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-            mp.setOnCompletionListener { it.release(); if (player === it) player = null }
-            mp.setOnErrorListener { p, _, _ -> p.release(); if (player === p) player = null; true }
+            mp.setOnCompletionListener {
+                it.release()
+                if (player === it) player = null
+            }
+            mp.setOnErrorListener { p, _, _ ->
+                p.release()
+                if (player === p) player = null
+                true
+            }
             mp.prepare()
             player = mp
             mp.start()
@@ -42,7 +49,10 @@ class VoiceSamplePlayer(context: Context) {
     }
 
     fun stop() {
-        player?.let { runCatching { it.stop() }; runCatching { it.release() } }
+        player?.let {
+            runCatching { it.stop() }
+            runCatching { it.release() }
+        }
         player = null
     }
 

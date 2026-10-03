@@ -93,7 +93,10 @@ fun <T> SegmentedChoiceRow(
 
         layout(constraints.maxWidth, placeables.sumOf { it.height }) {
             var y = 0
-            placeables.forEach { it.placeRelative(0, y); y += it.height }
+            placeables.forEach {
+                it.placeRelative(0, y)
+                y += it.height
+            }
         }
     }
 }

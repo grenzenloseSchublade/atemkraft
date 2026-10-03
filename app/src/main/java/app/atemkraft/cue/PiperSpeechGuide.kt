@@ -11,7 +11,6 @@ import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 
 /**
  * Neuronale Sprachanleitung über sherpa-onnx (Piper). Kann zwischen **mehreren installierten**
@@ -41,18 +41,24 @@ class PiperSpeechGuide(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val _available = MutableStateFlow(false)
+
     /** true, sobald die AKTIVE Stimme geladen und einsatzbereit ist. */
     override val available: StateFlow<Boolean> = _available.asStateFlow()
 
     @Volatile private var tts: OfflineTts? = null
+
     @Volatile private var sampleRate: Int = 22050
+
     @Volatile private var desiredVoiceId: String? = null
+
     @Volatile private var loadedVoiceId: String? = null
+
     /** Erhöht bei jedem (Neu-)Aufbau/Teardown: veraltete Build-Ergebnisse werden verworfen. */
     @Volatile private var initEpoch = 0
 
     /** „Generation" der Wiedergabe: stop() erhöht ihn und bricht ältere Ausgaben ab. */
     @Volatile private var epoch = 0
+
     @Volatile private var currentTrack: AudioTrack? = null
 
     init {
@@ -62,8 +68,11 @@ class PiperSpeechGuide(
                 val target = desiredVoiceId
                 if (target != null) {
                     val installed = states[target] is VoiceDownloadState.Downloaded
-                    if (installed && loadedVoiceId != target) rebuild()
-                    else if (!installed && loadedVoiceId == target) rebuild()
+                    if (installed && loadedVoiceId != target) {
+                        rebuild()
+                    } else if (!installed && loadedVoiceId == target) {
+                        rebuild()
+                    }
                 }
             }
         }
@@ -165,7 +174,9 @@ class PiperSpeechGuide(
     private fun play(samples: FloatArray, sr: Int, myEpoch: Int) {
         if (samples.isEmpty()) return
         val minBuf = AudioTrack.getMinBufferSize(
-            sr, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_FLOAT,
+            sr,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_FLOAT,
         ).coerceAtLeast(4096)
         val track = AudioTrack.Builder()
             .setAudioAttributes(
@@ -202,14 +213,20 @@ class PiperSpeechGuide(
                 val maxWaitMs = totalFrames * 1000L / sr + 500L
                 var waited = 0L
                 while (myEpoch == epoch && track.playbackHeadPosition < totalFrames && waited < maxWaitMs) {
-                    Thread.sleep(20); waited += 20
+                    Thread.sleep(20)
+                    waited += 20
                 }
                 Thread.sleep(60)
             }
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         } finally {
-            if (myEpoch != epoch) runCatching { track.pause(); track.flush() }
+            if (myEpoch != epoch) {
+                runCatching {
+                    track.pause()
+                    track.flush()
+                }
+            }
             runCatching { track.stop() }
             track.release()
             if (currentTrack === track) currentTrack = null
@@ -221,7 +238,12 @@ class PiperSpeechGuide(
 
     private fun flush() {
         epoch++
-        currentTrack?.let { runCatching { it.pause(); it.flush() } }
+        currentTrack?.let {
+            runCatching {
+                it.pause()
+                it.flush()
+            }
+        }
     }
 
     /** Alles freigeben. */

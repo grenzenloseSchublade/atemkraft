@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,22 +41,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
@@ -68,11 +68,11 @@ import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.PauseFlash
 import app.atemkraft.ui.components.SessionPrimaryButton
+import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
-import app.atemkraft.ui.components.rememberTapFlash
-import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
@@ -80,8 +80,8 @@ import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionNoteAmber
 import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
-import kotlin.math.ceil
 import kotlinx.coroutines.delay
+import kotlin.math.ceil
 
 /**
  * Zeigt die laufende Session: Start-Countdown, Atemkreis, Phasenname (+ optionale Zusatzinfo),
@@ -127,8 +127,11 @@ private fun ActiveContent(
     val preparing = state.status == SessionStatus.PREPARING
     val waiting = state.status == SessionStatus.WAITING_FOR_USER
 
-    val label = if (preparing) stringResource(R.string.session_get_ready)
-    else phaseDisplayLabel(state.phaseType, state.phaseLabel)
+    val label = if (preparing) {
+        stringResource(R.string.session_get_ready)
+    } else {
+        phaseDisplayLabel(state.phaseType, state.phaseLabel)
+    }
     val fraction = circleFraction(state)
     val secondsText = if (preparing) state.countdown.toString() else secondsText(state)
     val note = if (preparing) null else state.phaseNote
@@ -242,8 +245,11 @@ private fun ActiveContent(
                 AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
                     SessionPrimaryButton(
                         text = stringResource(
-                            if (state.status == SessionStatus.PAUSED) R.string.action_resume
-                            else R.string.action_pause,
+                            if (state.status == SessionStatus.PAUSED) {
+                                R.string.action_resume
+                            } else {
+                                R.string.action_pause
+                            },
                         ),
                         onClick = onTogglePause,
                         enabled = !preparing && !waiting,
@@ -275,8 +281,10 @@ private fun ActiveContent(
                                 // offener Hold = weiter.
                                 SessionStatus.RUNNING, SessionStatus.PAUSED ->
                                     Modifier.clickable(interactionSource = circleInteraction, indication = null) { flashToggle() }
+
                                 SessionStatus.WAITING_FOR_USER ->
                                     Modifier.clickable(interactionSource = circleInteraction, indication = null) { onContinue() }
+
                                 else -> Modifier
                             },
                         ),

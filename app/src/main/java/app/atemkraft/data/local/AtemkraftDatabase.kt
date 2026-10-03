@@ -69,11 +69,10 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
-        fun build(context: Context): AtemkraftDatabase =
-            Room.databaseBuilder(
-                context.applicationContext,
-                AtemkraftDatabase::class.java,
-                "atemkraft.db",
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+        fun build(context: Context): AtemkraftDatabase = Room.databaseBuilder(
+            context.applicationContext,
+            AtemkraftDatabase::class.java,
+            "atemkraft.db",
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
     }
 }

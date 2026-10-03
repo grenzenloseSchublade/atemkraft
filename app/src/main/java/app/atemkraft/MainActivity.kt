@@ -29,9 +29,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.ui.res.painterResource
-import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -48,8 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -65,6 +65,7 @@ import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.EvidenceTag
+import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.AboutRoute
 import app.atemkraft.ui.AtmenRoute
@@ -85,7 +86,6 @@ import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MeditationStatus
 import app.atemkraft.ui.meditation.MiniMeditationBar
-import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionStatus
@@ -447,8 +447,11 @@ private fun AtemkraftApp() {
                 onMinimize = { sessionExpanded = false },
                 onToggleMute = sessionViewModel::toggleMute,
                 onTogglePause = {
-                    if (sessionState.status == SessionStatus.PAUSED) sessionViewModel.resume()
-                    else sessionViewModel.pause()
+                    if (sessionState.status == SessionStatus.PAUSED) {
+                        sessionViewModel.resume()
+                    } else {
+                        sessionViewModel.pause()
+                    }
                 },
                 onContinue = sessionViewModel::continueFromUserPaced,
                 onRestart = sessionViewModel::restart,
@@ -469,8 +472,11 @@ private fun AtemkraftApp() {
                 onMinimize = { meditationExpanded = false },
                 onToggleMute = meditationController::toggleMute,
                 onTogglePause = {
-                    if (meditationState.status == MeditationStatus.PAUSED) meditationController.resume()
-                    else meditationController.pause()
+                    if (meditationState.status == MeditationStatus.PAUSED) {
+                        meditationController.resume()
+                    } else {
+                        meditationController.pause()
+                    }
                 },
                 onRestart = meditationController::restart,
                 onEnd = {
@@ -487,8 +493,7 @@ private fun AtemkraftApp() {
 private enum class TopTab { ATMEN, SITUATIONEN, LOGBUCH, MEDITATION }
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
-private fun androidx.navigation.NavDestination?.isOn(route: Any): Boolean =
-    this?.hierarchy?.any { it.hasRoute(route::class) } == true
+private fun androidx.navigation.NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true
 
 /** Tab-Wechsel mit erhaltenen Back-Stacks (NiA-Muster). */
 private fun androidx.navigation.NavController.switchTab(route: Any) {

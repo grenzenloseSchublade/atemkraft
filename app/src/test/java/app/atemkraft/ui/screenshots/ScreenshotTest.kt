@@ -60,10 +60,6 @@ import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
-import java.io.File
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 import kotlinx.coroutines.awaitCancellation
 import org.junit.After
 import org.junit.Assert.fail
@@ -76,6 +72,10 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.io.File
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
  * Screenshots aller Screens auf typischen Gerätebreiten und Schriftgrößen (A-12, LAYOUT-03).
@@ -113,8 +113,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}_fs{1}")
-        fun params(): List<Array<Any>> =
-            DEVICES.flatMap { d -> FONT_SCALES.map { arrayOf<Any>(d, it) } }
+        fun params(): List<Array<Any>> = DEVICES.flatMap { d -> FONT_SCALES.map { arrayOf<Any>(d, it) } }
 
         private const val SHOT = "screenshot"
 
@@ -449,4 +448,3 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 }
-

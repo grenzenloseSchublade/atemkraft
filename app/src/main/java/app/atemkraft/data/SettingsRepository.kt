@@ -82,8 +82,7 @@ class SettingsRepository(private val context: Context) {
 
     /** Länge des Intervall-Gongs (Minuten): in Einstellungen wählbar; Standard 5.
      *  Alt-Werte < 3 (frühere „kein Intervall = 0"-Semantik) fallen auf den Standard zurück. */
-    private fun gongIntervalOf(prefs: Preferences): Int =
-        prefs[Keys.MED_GONG_INTERVAL]?.takeIf { it >= 3 }?.coerceAtMost(60) ?: 5
+    private fun gongIntervalOf(prefs: Preferences): Int = prefs[Keys.MED_GONG_INTERVAL]?.takeIf { it >= 3 }?.coerceAtMost(60) ?: 5
 
     val gongIntervalMin: Flow<Int> = context.dataStore.data.map { gongIntervalOf(it) }
 
@@ -150,15 +149,17 @@ class SettingsRepository(private val context: Context) {
     private fun ivKey(exerciseId: String, part: String) = intPreferencesKey("iv_${exerciseId}_$part")
 
     /** Gespeicherte Session-Anpassung der Übung; null = nie angepasst. */
-    fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> =
-        context.dataStore.data.map { prefs ->
-            val duration = prefs[ivKey(exerciseId, "dur")]
-            val inhale = prefs[ivKey(exerciseId, "in")]
-            val hold = prefs[ivKey(exerciseId, "hold")]
-            val exhale = prefs[ivKey(exerciseId, "ex")]
-            if (duration == null && inhale == null && hold == null && exhale == null) null
-            else IntervalOverrides(duration = duration, inhale = inhale, hold = hold, exhale = exhale)
+    fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> = context.dataStore.data.map { prefs ->
+        val duration = prefs[ivKey(exerciseId, "dur")]
+        val inhale = prefs[ivKey(exerciseId, "in")]
+        val hold = prefs[ivKey(exerciseId, "hold")]
+        val exhale = prefs[ivKey(exerciseId, "ex")]
+        if (duration == null && inhale == null && hold == null && exhale == null) {
+            null
+        } else {
+            IntervalOverrides(duration = duration, inhale = inhale, hold = hold, exhale = exhale)
         }
+    }
 
     suspend fun setExerciseIntervals(exerciseId: String, duration: Int?, inhale: Int?, hold: Int?, exhale: Int?) {
         context.dataStore.edit { prefs ->

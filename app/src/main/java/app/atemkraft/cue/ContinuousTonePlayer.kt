@@ -22,6 +22,7 @@ import kotlin.math.sin
 class ContinuousTonePlayer {
 
     @Volatile private var thread: Thread? = null
+
     @Volatile private var running = false
 
     /**
@@ -32,12 +33,16 @@ class ContinuousTonePlayer {
     private class Ramp(val startFreq: Double, val endFreq: Double, val totalSamples: Long)
 
     @Volatile private var ramp = Ramp(LOW, LOW, 0L)
+
     @Volatile private var targetGain = 0f
+
     @Volatile private var pendingArticulation = false
 
     // Wechsel-Zäsur (einstellbar): Tiefpunkt + Längen.
     @Volatile private var articLow = 0.35f
+
     @Volatile private var articDownSamples = (0.05f * SAMPLE_RATE).toInt()
+
     @Volatile private var articUpSamples = (0.30f * SAMPLE_RATE).toInt()
 
     // Lautstärke-Skalierung (Leise/Mittel/Laut) relativ zum Grundpegel.
@@ -54,11 +59,13 @@ class ContinuousTonePlayer {
                 articDownSamples = (0.04f * SAMPLE_RATE).toInt()
                 articUpSamples = (0.20f * SAMPLE_RATE).toInt()
             }
+
             TransitionEmphasis.MEDIUM -> {
                 articLow = 0.45f
                 articDownSamples = (0.05f * SAMPLE_RATE).toInt()
                 articUpSamples = (0.28f * SAMPLE_RATE).toInt()
             }
+
             TransitionEmphasis.STRONG -> {
                 // Nahe Stille + länger → klar hörbares „kurz weg, blüht wieder auf".
                 articLow = 0.02f
@@ -75,7 +82,10 @@ class ContinuousTonePlayer {
         if (running) return
         running = true
         targetGain = 0f
-        thread = Thread { runLoop() }.apply { isDaemon = true; start() }
+        thread = Thread { runLoop() }.apply {
+            isDaemon = true
+            start()
+        }
     }
 
     /**
@@ -132,13 +142,21 @@ class ContinuousTonePlayer {
         try {
             while (running && thread === self) {
                 val r = ramp
-                if (r !== curRamp) { curRamp = r; rampPos = 0L }
+                if (r !== curRamp) {
+                    curRamp = r
+                    rampPos = 0L
+                }
                 if (pendingArticulation) {
                     pendingArticulation = false
                     curLow = articLow
                     curDown = articDownSamples
                     curUp = articUpSamples
-                    if (curLow < 1f) { articStage = 0; articPos = 0 } else articStage = 2
+                    if (curLow < 1f) {
+                        articStage = 0
+                        articPos = 0
+                    } else {
+                        articStage = 2
+                    }
                 }
                 for (i in 0 until BUFFER_SAMPLES) {
                     val freq = if (curRamp.totalSamples <= 0L) {
@@ -154,14 +172,19 @@ class ContinuousTonePlayer {
                     val articulation = when (articStage) {
                         0 -> {
                             val a = 1f - (1f - curLow) * (articPos.toFloat() / curDown)
-                            if (++articPos >= curDown) { articStage = 1; articPos = 0 }
+                            if (++articPos >= curDown) {
+                                articStage = 1
+                                articPos = 0
+                            }
                             a
                         }
+
                         1 -> {
                             val a = curLow + (1f - curLow) * (articPos.toFloat() / curUp)
                             if (++articPos >= curUp) articStage = 2
                             a
                         }
+
                         else -> 1f
                     }
                     buffer[i] = (sin(angle) * gain * articulation * AMPLITUDE * volumeScale)
@@ -210,8 +233,8 @@ class ContinuousTonePlayer {
     internal companion object {
         const val SAMPLE_RATE = 44100
         const val BUFFER_SAMPLES = 512
-        const val LOW = 196.0    // G3
-        const val HIGH = 294.0   // D4 (reine Quinte über G3 – deutlichere Richtung)
+        const val LOW = 196.0 // G3
+        const val HIGH = 294.0 // D4 (reine Quinte über G3 – deutlichere Richtung)
         const val AMPLITUDE = 0.25 * Short.MAX_VALUE
 
         /** Ein-/Ausblende des Pegels bei Start, Pause, Stumm und Ende (ToneEnvelopeTest: AUDIO-01). */

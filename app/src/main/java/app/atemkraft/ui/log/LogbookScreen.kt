@@ -6,11 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,25 +27,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
-import app.atemkraft.ui.theme.SynthTrack
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.SynthTrack
 import java.text.SimpleDateFormat
-import java.time.format.TextStyle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.TextStyle
 import java.util.Date
 import java.util.Locale
 
@@ -111,8 +111,11 @@ private fun StatsCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             Text(
-                text = if (streak > 0) pluralStringResource(R.plurals.log_streak, streak, streak)
-                else stringResource(R.string.log_streak_none),
+                text = if (streak > 0) {
+                    pluralStringResource(R.plurals.log_streak, streak, streak)
+                } else {
+                    stringResource(R.string.log_streak_none)
+                },
                 style = MaterialTheme.typography.titleMedium,
                 color = if (streak > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             )
@@ -169,8 +172,11 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.semantics {
-                    contentDescription = if (minutes > 0) "$dayName: $minutes Minuten geübt"
-                    else "$dayName: keine Übung"
+                    contentDescription = if (minutes > 0) {
+                        "$dayName: $minutes Minuten geübt"
+                    } else {
+                        "$dayName: keine Übung"
+                    }
                 },
             ) {
                 Box(
@@ -261,8 +267,7 @@ private fun LogEntryCard(entry: SessionLogEntry) {
     }
 }
 
-private fun Long.toEpochDay(): Long =
-    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
+private fun Long.toEpochDay(): Long = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
 
 /** Aufeinanderfolgende Tage mit ≥1 Session, von heute (oder gestern) rückwärts. */
 private fun currentStreak(activeDays: Set<Long>): Int {
@@ -277,8 +282,7 @@ private fun currentStreak(activeDays: Set<Long>): Int {
     return streak
 }
 
-private fun formatDateTime(epochMs: Long): String =
-    SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.getDefault()).format(Date(epochMs))
+private fun formatDateTime(epochMs: Long): String = SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.getDefault()).format(Date(epochMs))
 
 private fun formatDuration(durationMs: Long): String {
     val totalSeconds = durationMs / 1000L

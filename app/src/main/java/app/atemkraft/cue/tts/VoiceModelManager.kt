@@ -18,8 +18,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import java.io.BufferedInputStream
 import java.io.File
-import java.io.InputStream
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -65,6 +65,7 @@ class VoiceModelManager(context: Context) {
             spec.id to if (isComplete(spec)) VoiceDownloadState.Downloaded else VoiceDownloadState.NotDownloaded
         },
     )
+
     /** Zustand je Stimmen-Id. */
     val states: StateFlow<Map<String, VoiceDownloadState>> = _states.asStateFlow()
 
@@ -72,6 +73,7 @@ class VoiceModelManager(context: Context) {
     private fun onnxOf(spec: VoiceSpec) = File(dirOf(spec), spec.onnxName)
     private fun tokensOf(spec: VoiceSpec) = File(dirOf(spec), "tokens.txt")
     private fun dataDirOf(spec: VoiceSpec) = File(dirOf(spec), "espeak-ng-data")
+
     /** Entpack-Ziel vor dem Umbenennen; liegt in [baseDir], damit das Rename atomar bleibt. */
     private fun stagingOf(spec: VoiceSpec) = File(baseDir, ".${spec.dirName}.staging")
 
@@ -83,8 +85,7 @@ class VoiceModelManager(context: Context) {
             File(dir, "tokens.txt").isFile && File(dir, "espeak-ng-data").isDirectory
     }
 
-    fun isDownloaded(voiceId: String): Boolean =
-        VoiceCatalog.byId(voiceId)?.let { isComplete(it) } == true
+    fun isDownloaded(voiceId: String): Boolean = VoiceCatalog.byId(voiceId)?.let { isComplete(it) } == true
 
     /** Lade-Pfade einer Stimme – oder null, solange nicht vollständig. */
     fun paths(voiceId: String): VoiceModelPaths? {
@@ -196,7 +197,10 @@ class VoiceModelManager(context: Context) {
                 conn.inputStream.use { input ->
                     target.outputStream().use { out ->
                         copyVerified(
-                            input, out, spec.sizeBytes, spec.sha256,
+                            input,
+                            out,
+                            spec.sizeBytes,
+                            spec.sha256,
                             checkActive = { ctx.ensureActive() },
                             onBytes = { read ->
                                 onProgress((read.toFloat() / spec.sizeBytes).coerceIn(0f, 0.99f))

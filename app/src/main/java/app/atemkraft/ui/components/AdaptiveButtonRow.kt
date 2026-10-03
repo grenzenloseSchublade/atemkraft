@@ -71,10 +71,12 @@ private fun rowWidths(natural: List<Int>, available: Int): List<Int>? {
     val n = natural.size
     return when {
         natural.max() * n <= available -> List(n) { i -> available / n + if (i < available % n) 1 else 0 }
+
         natural.sum() <= available -> {
             val extra = available - natural.sum()
             natural.mapIndexed { i, w -> w + extra / n + if (i < extra % n) 1 else 0 }
         }
+
         else -> null
     }
 }

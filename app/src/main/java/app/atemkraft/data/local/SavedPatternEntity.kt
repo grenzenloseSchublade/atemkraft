@@ -21,8 +21,7 @@ data class SavedPatternEntity(
     val createdAtEpochMs: Long,
 )
 
-fun SavedPatternEntity.toSpec(): PatternSpec =
-    PatternSpec(inhale, holdFull, exhale, holdEmpty, activating)
+fun SavedPatternEntity.toSpec(): PatternSpec = PatternSpec(inhale, holdFull, exhale, holdEmpty, activating)
 
 @Dao
 interface SavedPatternDao {

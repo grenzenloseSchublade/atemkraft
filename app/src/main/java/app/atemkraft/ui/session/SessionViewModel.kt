@@ -22,8 +22,8 @@ import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.buildTimeline
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -251,6 +251,7 @@ class SessionViewModel(
                     runFixedPhase(phase, deadline, duration.millis)
                     nextAnchorMs = deadline
                 }
+
                 PhaseDuration.OpenEnded, PhaseDuration.UntilUrge -> {
                     runUserPacedPhase(phase)
                     nextAnchorMs = SystemClock.elapsedRealtime() // menschlich getaktet → neu ankern

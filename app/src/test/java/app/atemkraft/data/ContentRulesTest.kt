@@ -5,10 +5,10 @@ import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
-import java.io.File
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -12), MUSTER-03 und MOTION-02,
@@ -118,8 +118,7 @@ class ContentRulesTest {
      * Die Muster des Tages teilen sich ihre Texte; ein Fund, der in jedem Seed gleich auftritt,
      * zählt einmal als `muster-des-tages.<Feld>`.
      */
-    private fun List<Finding>.collapseSeeds(): List<Finding> =
-        map { it.copy(dataset = it.dataset.replace(Regex("#seed\\d+"), "")) }.distinctBy { it.dataset to it.why }
+    private fun List<Finding>.collapseSeeds(): List<Finding> = map { it.copy(dataset = it.dataset.replace(Regex("#seed\\d+"), "")) }.distinctBy { it.dataset to it.why }
 
     /** MUSS-Fall: neue Funde und veraltete Baseline-Einträge lassen den Test scheitern. */
     private fun assertAgainstBaseline(case: String, allFindings: List<Finding>) {
@@ -375,9 +374,7 @@ class ContentRulesTest {
     // ---- Pfade --------------------------------------------------------------------------
 
     /** Unit-Tests laufen im Modulverzeichnis `app/`; `config/` liegt im Repo-Root. */
-    private fun repoFile(path: String): File =
-        listOf(File("../$path"), File(path)).firstOrNull { it.exists() } ?: File("../$path")
+    private fun repoFile(path: String): File = listOf(File("../$path"), File(path)).firstOrNull { it.exists() } ?: File("../$path")
 
-    private fun moduleFile(path: String): File =
-        listOf(File(path), File("app/$path")).first { it.exists() }
+    private fun moduleFile(path: String): File = listOf(File(path), File("app/$path")).first { it.exists() }
 }

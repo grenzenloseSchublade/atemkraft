@@ -34,7 +34,9 @@ class ToneCuePlayer {
     @Volatile
     private var gongLong = true
 
-    fun setGongLong(long: Boolean) { gongLong = long }
+    fun setGongLong(long: Boolean) {
+        gongLong = long
+    }
 
     private val gongBusy = java.util.concurrent.atomic.AtomicBoolean(false)
 
@@ -155,8 +157,7 @@ internal fun cueVolumeScale(volume: ToneVolume): Float = when (volume) {
 }
 
 /** Gesamtdauer des Gongs (Ton + Stille) in ms für das Profil [long]. */
-internal fun gongTotalMsFor(long: Boolean): Int =
-    (if (long) ToneCuePlayer.GONG_TONE_LONG_MS else ToneCuePlayer.GONG_TONE_SHORT_MS) + ToneCuePlayer.GONG_TAIL_SILENCE_MS
+internal fun gongTotalMsFor(long: Boolean): Int = (if (long) ToneCuePlayer.GONG_TONE_LONG_MS else ToneCuePlayer.GONG_TONE_SHORT_MS) + ToneCuePlayer.GONG_TAIL_SILENCE_MS
 
 /**
  * Abschluss-Gong: klangschalenartig statt Piep – weicher Anschlag, Grundton mit
@@ -194,11 +195,13 @@ internal fun synthesizeGong(long: Boolean, volumeScale: Float): ShortArray {
         }
         val envelope = when {
             i < attackSamples -> i.toDouble() / attackSamples
+
             i > toneCount - releaseSamples -> {
                 // progress 0→1 über die Ausblende; Raised-Cosine 1→0 (Steigung 0 an beiden Enden).
                 val progress = (i - (toneCount - releaseSamples)).toDouble() / releaseSamples
                 0.5 * (1.0 + cos(PI * progress))
             }
+
             else -> 1.0
         }
         samples[i] = (v * envelope * ToneCuePlayer.AMPLITUDE * volumeScale).toInt()
@@ -211,16 +214,18 @@ internal fun synthesizeGong(long: Boolean, volumeScale: Float): ShortArray {
 internal fun synthesizeCue(frequencyHz: Double, durationMs: Int, volumeScale: Float): ShortArray {
     val sampleCount = ToneCuePlayer.SAMPLE_RATE * durationMs / 1000
     val samples = ShortArray(sampleCount)
-    val attackSamples = (ToneCuePlayer.SAMPLE_RATE * 0.012).toInt()        // 12 ms Einblende
-    val releaseSamples = (ToneCuePlayer.SAMPLE_RATE * 0.06).toInt()        // 60 ms Ausblende
+    val attackSamples = (ToneCuePlayer.SAMPLE_RATE * 0.012).toInt() // 12 ms Einblende
+    val releaseSamples = (ToneCuePlayer.SAMPLE_RATE * 0.06).toInt() // 60 ms Ausblende
 
     for (i in 0 until sampleCount) {
         val angle = 2.0 * PI * i * frequencyHz / ToneCuePlayer.SAMPLE_RATE
         // Linearer Hüllkurven-Verlauf gegen Knackgeräusche.
         val envelope = when {
             i < attackSamples -> i.toDouble() / attackSamples
+
             i > sampleCount - releaseSamples ->
                 (sampleCount - i).toDouble() / releaseSamples
+
             else -> 1.0
         }
         samples[i] = (sin(angle) * envelope * ToneCuePlayer.AMPLITUDE * volumeScale).toInt().toShort()

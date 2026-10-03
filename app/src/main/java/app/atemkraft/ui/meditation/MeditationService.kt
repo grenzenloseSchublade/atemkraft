@@ -128,8 +128,10 @@ class MeditationService : Service() {
         val paused = state.status == MeditationStatus.PAUSED
         val base = when {
             state.status == MeditationStatus.PREPARING -> getString(R.string.session_get_ready)
+
             state.mode == MeditationMode.TIMED ->
                 getString(R.string.meditation_notification_remaining, formatMeditationTime(state.remainingMs))
+
             else -> formatMeditationTime(state.elapsedMs)
         }
         return if (paused) "$base · ${getString(R.string.session_paused)}" else base
@@ -175,8 +177,7 @@ class MeditationService : Service() {
         notificationManager().createNotificationChannel(channel)
     }
 
-    private fun notificationManager() =
-        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private fun notificationManager() = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     companion object {
         private const val CHANNEL_ID = "meditation"
@@ -186,8 +187,6 @@ class MeditationService : Service() {
         /** Sicherheits-Timeout des Wakelocks (längste Sitzung 90 min + Reserve). */
         private const val WAKELOCK_TIMEOUT_MS = 3 * 60 * 60 * 1000L
 
-        fun startIntent(context: Context): Intent =
-            Intent(context, MeditationService::class.java)
+        fun startIntent(context: Context): Intent = Intent(context, MeditationService::class.java)
     }
 }
-

@@ -24,8 +24,8 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
-import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.components.BackButton
+import app.atemkraft.ui.theme.Dimens
 
 /** Über-Seite: App-Name, Version, Kurzbeschreibung und ehrlicher Haftungshinweis. */
 @Composable

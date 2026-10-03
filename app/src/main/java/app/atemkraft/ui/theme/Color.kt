@@ -34,9 +34,9 @@ val FamilyBalance = Color(0xFFA78BFA)
 val FamilyFunctional = Color(0xFF34D399)
 
 // Semantische Tokens (zentral, statt mehrfach hardcodierter Hex in den Screens).
-val EvidenceBest = NeonCyan             // „am besten belegt" – Cyan
+val EvidenceBest = NeonCyan // „am besten belegt" – Cyan
 val EvidenceCaution = Color(0xFFFF6B8B) // „nur stabile Phase" / Vorsicht – Neon-Pink/Rot
-val WarnAmber = NeonYellow              // Hinweis/Warnung – Synthwave-Gelb
+val WarnAmber = NeonYellow // Hinweis/Warnung – Synthwave-Gelb
 
 // Session-Atemkreis (synthwave): Magenta-Verlauf + Cyan-Ring, damit die helle Schrift
 // sowohl auf dem Kreis als auch auf dunklem Grund klar lesbar ist.
@@ -50,6 +50,7 @@ val SynthGlow = Color(0xFF2A0A2E)
 // Session-Schrift: warmes, entsättigtes Pastellgold/Creme mit weichem Schimmer – ruhig statt grell,
 // passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen". Zusatzinfo dezenter.
 val SessionTextYellow = Color(0xFFEBDCB0)
+
 // Aufgehellt (war #D7C7A0 ≈ 2,7:1 auf dem Magenta-Kreiszentrum – AA-Fail auch für großen Text).
 val SessionNoteAmber = Color(0xFFF0E4C0)
 val SessionTextGlow = Color(0xFF160B22)

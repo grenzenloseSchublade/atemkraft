@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.theme.Dimens
 
 private data class Term(val name: String, val definition: String)
 

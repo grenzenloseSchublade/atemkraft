@@ -111,6 +111,7 @@ class SessionAudioCoordinator(
             // solange die Session still ruht (resume() fordert ihn wieder an).
             inSession && status != SessionStatus.PAUSED && cfg.soundMode != SoundMode.OFF ->
                 audioFocus.request()
+
             // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde Medien
             // wieder auf volle Lautstärke gehen – aber nicht, wenn stumm (dann kommt kein Gong).
             // Dauer dynamisch vom Player (Kurz/Lang-Profil), wie in der Meditation.
@@ -118,6 +119,7 @@ class SessionAudioCoordinator(
                 delay(tonePlayer.gongTotalMs().toLong() + FINISH_MARGIN_MS)
                 audioFocus.abandon()
             }
+
             else -> audioFocus.abandon()
         }
     }

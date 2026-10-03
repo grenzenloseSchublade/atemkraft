@@ -4,11 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -52,11 +52,11 @@ import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.components.TitleWithChips
-import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
 import app.atemkraft.ui.session.SafetyDialog
 import app.atemkraft.ui.theme.NeonCyan
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
 import kotlin.math.roundToInt
 
@@ -87,9 +87,10 @@ fun ExerciseDetailScreen(
 
     // Optionale Feineinstellung der Phasenlängen (dezent hinter „Intervalle anpassen").
     val cyclePhases = remember(exercise.id) { exercise.segments.flatMap { it.phases } }
-    fun defaultSec(type: PhaseType): Int? =
-        (cyclePhases.firstOrNull { it.type == type && it.duration is PhaseDuration.Fixed }
-            ?.duration as? PhaseDuration.Fixed)?.let { (it.millis / 1000.0).roundToInt() }
+    fun defaultSec(type: PhaseType): Int? = (
+        cyclePhases.firstOrNull { it.type == type && it.duration is PhaseDuration.Fixed }
+            ?.duration as? PhaseDuration.Fixed
+        )?.let { (it.millis / 1000.0).roundToInt() }
     val hasInhale = cyclePhases.any { it.type == PhaseType.INHALE }
     val hasExhale = cyclePhases.any { it.type == PhaseType.EXHALE }
     val inhaleDefault = defaultSec(PhaseType.INHALE) ?: 4
@@ -103,10 +104,9 @@ fun ExerciseDetailScreen(
 
     // „Angepasst" ist kein Merker, sondern der Wertvergleich mit den Übungs-Defaults: wer
     // manuell auf die Defaults zurücksteppt, gilt wieder als unangepasst (Override wird gelöscht).
-    fun intervalsModifiedNow(): Boolean =
-        (hasInhale && inhaleSec != inhaleDefault) ||
-            (hasHold && holdSec != holdDefault) ||
-            (hasExhale && exhaleSec != exhaleDefault)
+    fun intervalsModifiedNow(): Boolean = (hasInhale && inhaleSec != inhaleDefault) ||
+        (hasHold && holdSec != holdDefault) ||
+        (hasExhale && exhaleSec != exhaleDefault)
 
     fun modifiedNow(): Boolean = value != valueDefault || intervalsModifiedNow()
 
@@ -197,8 +197,11 @@ fun ExerciseDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Chip(
-                        text = if (roundBased) pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
-                        else stringResource(R.string.detail_meta_minutes, exercise.defaultMinutes()),
+                        text = if (roundBased) {
+                            pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
+                        } else {
+                            stringResource(R.string.detail_meta_minutes, exercise.defaultMinutes())
+                        },
                         color = accent,
                     )
                     Chip(
@@ -259,27 +262,42 @@ fun ExerciseDetailScreen(
                 if (exercise.guided) {
                     Spacer(Modifier.height(16.dp))
                     SessionAdjustCard(
-                        durationLabel = if (roundBased) stringResource(R.string.adjust_rounds)
-                        else stringResource(R.string.adjust_minutes),
+                        durationLabel = if (roundBased) {
+                            stringResource(R.string.adjust_rounds)
+                        } else {
+                            stringResource(R.string.adjust_minutes)
+                        },
                         duration = value,
                         durationDefault = valueDefault,
                         durationRange = range,
-                        onDuration = { value = it; persistAdjustments() },
+                        onDuration = {
+                            value = it
+                            persistAdjustments()
+                        },
                         inhale = if (hasInhale) {
                             PhaseAdjust(inhaleSec, inhaleDefault, 2..12) {
-                                inhaleSec = it; persistAdjustments()
+                                inhaleSec = it
+                                persistAdjustments()
                             }
-                        } else null,
+                        } else {
+                            null
+                        },
                         hold = if (hasHold) {
                             PhaseAdjust(holdSec, holdDefault, 1..20) {
-                                holdSec = it; persistAdjustments()
+                                holdSec = it
+                                persistAdjustments()
                             }
-                        } else null,
+                        } else {
+                            null
+                        },
                         exhale = if (hasExhale) {
                             PhaseAdjust(exhaleSec, exhaleDefault, 2..15) {
-                                exhaleSec = it; persistAdjustments()
+                                exhaleSec = it
+                                persistAdjustments()
                             }
-                        } else null,
+                        } else {
+                            null
+                        },
                         intervalsExpanded = intervalsExpanded,
                         onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
                     )
@@ -306,12 +324,16 @@ fun ExerciseDetailScreen(
                         val start = stringResource(R.string.action_start)
                         val startLabel = when {
                             estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
+
                             exercise.hasOpenPhases -> stringResource(
-                                R.string.action_start_duration, start,
+                                R.string.action_start_duration,
+                                start,
                                 stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
                             )
+
                             else -> stringResource(
-                                R.string.action_start_duration, start,
+                                R.string.action_start_duration,
+                                start,
                                 stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
                             )
                         }
@@ -366,4 +388,3 @@ private fun Bullet(text: String) {
         )
     }
 }
-

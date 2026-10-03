@@ -129,9 +129,8 @@ class MeditationController(
     }
 
     /** Erzeugt die Sitzung überhaupt Ton? (sonst keinen Audio-Fokus anfordern, fremde Medien nicht ducken). */
-    private fun producesAudio(): Boolean =
-        currentConfig.startEndGong || currentConfig.gongEveryMin != null ||
-            (currentConfig.speech && speechAvailable.value)
+    private fun producesAudio(): Boolean = currentConfig.startEndGong || currentConfig.gongEveryMin != null ||
+        (currentConfig.speech && speechAvailable.value)
 
     fun start(config: MeditationConfig) {
         runnerJob?.cancel()
@@ -192,6 +191,7 @@ class MeditationController(
         when {
             status == MeditationStatus.RUNNING || status == MeditationStatus.PAUSED ->
                 if (currentConfig.mode == MeditationMode.FREE) finishNow() else abort()
+
             else -> abort() // IDLE, PREPARING, FINISHED → nur verwerfen/zurücksetzen
         }
     }
@@ -327,8 +327,11 @@ class MeditationController(
     private suspend fun speechLoop(fromResume: Boolean) {
         var last = -1
         delay(
-            if (fromResume) Random.nextLong(GAP_MIN_MS, GAP_MAX_MS)
-            else Random.nextLong(FIRST_MIN_MS, FIRST_MAX_MS),
+            if (fromResume) {
+                Random.nextLong(GAP_MIN_MS, GAP_MAX_MS)
+            } else {
+                Random.nextLong(FIRST_MIN_MS, FIRST_MAX_MS)
+            },
         )
         while (true) {
             val idx = nextCueIndex(last)

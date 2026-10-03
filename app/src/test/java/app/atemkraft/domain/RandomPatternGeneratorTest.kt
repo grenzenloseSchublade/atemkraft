@@ -1,9 +1,9 @@
 package app.atemkraft.domain
 
-import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 /**
  * Invarianten des Tagesmuster-Generators über ein ganzes Jahr Seeds: Determinismus,
@@ -14,10 +14,9 @@ class RandomPatternGeneratorTest {
     private val year: List<LocalDate> =
         (0L until 365L).map { LocalDate.of(2026, 1, 1).plusDays(it) }
 
-    private fun phaseSeconds(exercise: Exercise): Map<PhaseType, Double> =
-        exercise.segments.single().phases.associate { phase ->
-            phase.type to (phase.duration as PhaseDuration.Fixed).millis / 1000.0
-        }
+    private fun phaseSeconds(exercise: Exercise): Map<PhaseType, Double> = exercise.segments.single().phases.associate { phase ->
+        phase.type to (phase.duration as PhaseDuration.Fixed).millis / 1000.0
+    }
 
     @Test
     fun `gleiches Datum ergibt identisches Muster`() {

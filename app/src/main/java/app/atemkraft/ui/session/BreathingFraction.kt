@@ -9,8 +9,7 @@ internal const val PREPARE_FRACTION = 0.5f
  * Was der Atemkreis zeigt: im Countdown [PREPARE_FRACTION], sonst [breathingFraction].
  * Eigene Datei, damit FractionContinuityTest die Übergänge ohne UI prüfen kann (MOTION-03).
  */
-internal fun circleFraction(state: SessionUiState): Float =
-    if (state.status == SessionStatus.PREPARING) PREPARE_FRACTION else breathingFraction(state)
+internal fun circleFraction(state: SessionUiState): Float = if (state.status == SessionStatus.PREPARING) PREPARE_FRACTION else breathingFraction(state)
 
 /** Anzeigeskala des Kreises: 0f ausgeatmet … 1f eingeatmet. Soll stetig über Phasengrenzen sein (MOTION-03, bekannte Sprünge: S-11). */
 internal fun breathingFraction(state: SessionUiState): Float {

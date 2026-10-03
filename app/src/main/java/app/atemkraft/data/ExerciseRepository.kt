@@ -42,8 +42,7 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
     }
 
     /** Übungen nach Familie gruppiert, in fester Reihenfolge A → D. */
-    fun byFamily(): List<Pair<BreathingFamily, List<Exercise>>> =
-        BreathingFamily.entries.map { family ->
-            family to BuiltInExercises.all.filter { it.family == family }
-        }.filter { (_, list) -> list.isNotEmpty() }
+    fun byFamily(): List<Pair<BreathingFamily, List<Exercise>>> = BreathingFamily.entries.map { family ->
+        family to BuiltInExercises.all.filter { it.family == family }
+    }.filter { (_, list) -> list.isNotEmpty() }
 }

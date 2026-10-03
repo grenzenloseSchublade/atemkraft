@@ -5,10 +5,10 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
-import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 
 /**
  * Dünner Wrapper um die geräteeigene [TextToSpeech]-Engine für die gesprochene
@@ -27,11 +27,14 @@ class SpeechGuide(context: Context) : SpeechEngine {
         appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     private val _available = MutableStateFlow(false)
+
     /** true, sobald eine nutzbare deutsche Stimme bereitsteht. */
     override val available: StateFlow<Boolean> = _available.asStateFlow()
 
     @Volatile private var ready = false
+
     @Volatile private var pending = false
+
     @Volatile private var tts: TextToSpeech? = null
     private var utteranceCounter = 0
 
