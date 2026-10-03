@@ -97,10 +97,12 @@ Voraussetzungen: JDK 21, Android SDK (Plattform 36) unter `~/Android/Sdk`
 scripts/build.sh installDebug
 ```
 
-Release-Builds werden mit einem lokalen Release-Keystore signiert (`keystore.properties`
-im Projekt-Root + `app/atemkraft-release.keystore`, beides bewusst gitignored). Fehlen
-diese Dateien, fällt der Build auf `app/debug.keystore` zurück und bleibt überall baubar
-(F-Droid signiert ohnehin selbst). Toolchain: Gradle 8.11.1, AGP 8.9.1, Kotlin 2.1.0,
+Release-Builds werden mit einem lokalen Release-Keystore signiert (Properties-Datei über
+`ATEMKRAFT_KEYSTORE_PROPERTIES` oder `keystore.properties` im Projekt-Root, beides bewusst
+außerhalb von Git). Fehlt der Keystore, entsteht eine **unsignierte** Release-APK mit Warnung
+(so erwartet es F-Droid, das selbst signiert); Debug-Signatur nur explizit per
+`-PallowDebugSignedRelease=true`. Echtheit offizieller APKs: Zertifikats-Fingerprint in
+[docs/SECURITY.md](docs/SECURITY.md). Toolchain: Gradle 8.11.1, AGP 8.9.1, Kotlin 2.1.0,
 Compose (BOM 2025.01.00), Material 3, compileSdk/targetSdk 36, minSdk 26.
 
 **Hinweis Verteilung:** Wegen der vorkompilierten sherpa-onnx-Native-Libs (`app/libs/*.aar`)

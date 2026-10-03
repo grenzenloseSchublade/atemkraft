@@ -8,6 +8,30 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Release-Keystore + Passwörter liegen bewusst außerhalb des Repos (gitignored).
+// Suchreihenfolge: Pfad aus ATEMKRAFT_KEYSTORE_PROPERTIES (CI, anderer Rechner),
+// sonst keystore.properties im Projekt-Root (lokaler Maintainer-Checkout).
+// Ist die Variable gesetzt, die Datei aber nicht da, bricht der Build ab: Wer explizit
+// einen Keystore verlangt, soll nicht stillschweigend etwas anderes bekommen.
+val keystoreEnvPath = providers.environmentVariable("ATEMKRAFT_KEYSTORE_PROPERTIES").orNull
+    ?.takeIf { it.isNotBlank() }
+val keystorePropsFile = if (keystoreEnvPath != null) {
+    File(keystoreEnvPath).also {
+        if (!it.isFile) {
+            throw GradleException(
+                "ATEMKRAFT_KEYSTORE_PROPERTIES zeigt auf '$keystoreEnvPath', die Datei existiert nicht.",
+            )
+        }
+    }
+} else {
+    rootProject.file("keystore.properties").takeIf { it.isFile }
+}
+val keystoreProps = keystorePropsFile
+    ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
+// Nur für lokale Tests minifizierter Builds ohne Release-Key: -PallowDebugSignedRelease=true.
+// Bewusst Opt-in, damit eine debug-signierte APK nie versehentlich als Release rausgeht.
+val allowDebugSignedRelease = providers.gradleProperty("allowDebugSignedRelease").orNull == "true"
+
 android {
     namespace = "app.atemkraft"
     compileSdk = 36
@@ -27,13 +51,6 @@ android {
         }
     }
 
-    // Release-Keystore + Passwörter liegen bewusst außerhalb des Repos (gitignored):
-    // keystore.properties im Projekt-Root, Keystore unter app/. Fehlt beides (z. B. CI,
-    // fremder Checkout), fällt Release auf den Debug-Key zurück und bleibt baubar.
-    val keystoreProps = rootProject.file("keystore.properties")
-        .takeIf { it.exists() }
-        ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
-
     signingConfigs {
         // Fester Debug-Keystore im Projekt -> stabile Signatur über alle (Container-)Builds.
         getByName("debug") {
@@ -42,12 +59,21 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
-        if (keystoreProps != null) {
+        if (keystoreProps != null && keystorePropsFile != null) {
+            fun prop(key: String): String = keystoreProps.getProperty(key)?.takeIf { it.isNotBlank() }
+                ?: throw GradleException("'$key' fehlt in ${keystorePropsFile.path}.")
             create("release") {
-                storeFile = file(keystoreProps.getProperty("storeFile"))
-                storePassword = keystoreProps.getProperty("storePassword")
-                keyAlias = keystoreProps.getProperty("keyAlias")
-                keyPassword = keystoreProps.getProperty("keyPassword")
+                // Relativer storeFile: bei keystore.properties im Root wie bisher relativ zu app/,
+                // bei ATEMKRAFT_KEYSTORE_PROPERTIES relativ zur Properties-Datei (liegt dort meist daneben).
+                val storePath = prop("storeFile")
+                storeFile = if (keystoreEnvPath != null && !File(storePath).isAbsolute) {
+                    File(keystorePropsFile.absoluteFile.parentFile, storePath)
+                } else {
+                    file(storePath)
+                }
+                storePassword = prop("storePassword")
+                keyAlias = prop("keyAlias")
+                keyPassword = prop("keyPassword")
             }
         }
     }
@@ -60,10 +86,14 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Echter Release-Key, sobald keystore.properties vorhanden; sonst Debug-Key,
-            // damit die minifizierte APK überall testbar bleibt. (F-Droid signiert selbst.)
-            signingConfig = signingConfigs.findByName("release")
-                ?: signingConfigs.getByName("debug")
+            // Echter Release-Key, wenn gefunden. Sonst UNSIGNIERT (app-release-unsigned.apk):
+            // Genau das erwartet F-Droid, das selbst signiert. Ein stiller Debug-Key-Fallback
+            // würde Release-Artefakte mit öffentlich bekanntem Schlüssel erzeugen.
+            signingConfig = when {
+                signingConfigs.findByName("release") != null -> signingConfigs.getByName("release")
+                allowDebugSignedRelease -> signingConfigs.getByName("debug")
+                else -> null
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -83,6 +113,22 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+// Deutliche Warnung beim Paketieren statt beim Konfigurieren: So erscheint sie nur bei
+// Release-Builds (nicht bei jedem assembleDebug) und auch bei Configuration-Cache-Treffern.
+if (keystoreProps == null) {
+    val releaseSigningWarning = if (allowDebugSignedRelease) {
+        "WARNUNG: Release wird mit dem DEBUG-Key signiert (-PallowDebugSignedRelease=true). " +
+            "Nur für lokale Tests, nicht verteilen."
+    } else {
+        "WARNUNG: Kein Release-Keystore gefunden (ATEMKRAFT_KEYSTORE_PROPERTIES / keystore.properties). " +
+            "Release wird UNSIGNIERT gebaut (app-release-unsigned.apk) – passend für F-Droid, " +
+            "nicht installierbar. Für einen debug-signierten Test-Build: -PallowDebugSignedRelease=true."
+    }
+    tasks.matching { it.name == "packageRelease" || it.name == "bundleRelease" }.configureEach {
+        doFirst { logger.warn(releaseSigningWarning) }
     }
 }
 

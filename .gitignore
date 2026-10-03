@@ -16,3 +16,6 @@
 # Release-Signatur: Keystore + Passwörter bleiben lokal
 /keystore.properties
 /app/atemkraft-release.keystore
+
+# Private Sicherheitsnotizen (offene Befunde) – nie committen
+/docs/private/
