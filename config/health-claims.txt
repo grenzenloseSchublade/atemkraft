@@ -1,0 +1,34 @@
+# Heil-, Therapie- und Präventionsversprechen (TEXT-09, SEC-LEGAL-01).
+# Eine Zeile pro Muster: regulärer Ausdruck, ohne Groß-/Kleinschreibung, an Wortgrenzen.
+# Leerzeilen und Zeilen mit # werden ignoriert. Ausnahmen (Disclaimer, belegte
+# Verneinungen) stehen zeilengenau in health-claims.allow.
+# Genutzt von ContentRulesTest (Inhalte, strings.xml) und sec-health-claims (README, Store,
+# Release-Notes, PRIVACY).
+
+# Heilen und behandeln
+heil(t|en|ung|effekt|wirkung|sam)?
+kuriert
+lindert
+lindern
+behandelt
+behebt
+therapie
+therapeutisch
+# Vorbeugen
+beugt .{0,40}vor
+vorbeug(en|end|t)
+prävention
+präventiv
+schützt vor
+# Überhöhte Wirkbehauptungen
+nachweislich
+garantiert
+wissenschaftlich bewiesen
+in sekunden
+sofort(ig)? wirk(sam|t)
+notbremse
+wundermittel
+# Krankheitsbezogene Versprechen
+gegen (angst|depression|bluthochdruck|asthma|schlafstörungen|panik)
+senkt (den )?blutdruck
+stärkt (das|dein) immunsystem

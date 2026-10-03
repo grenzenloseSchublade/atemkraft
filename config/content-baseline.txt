@@ -1,0 +1,24 @@
+# Bekannte Verstöße gegen die Inhaltsregeln (STYLEGUIDE §13.2): Testfall | Datensatz | S-nn
+# Ein behobener Verstoß fällt im selben Commit hier weg (META-01); neue Verstöße kommen nicht
+# hierher, sondern werden behoben. health-claims hat keine Baseline (TEXT-09).
+
+teaser | muster-des-tages.effect | S-21
+first-caution | wim-hof.cautions[0] | S-21
+first-caution | buteyko.cautions[0] | S-21
+
+jargon | strings:family_downregulate | S-22
+jargon | strings:family_upregulate | S-22
+jargon | strings:tag_caution | S-22
+quotes | strings:session_get_ready | S-22
+phase-labels-distinct | strings:phase_*:Halten | S-22
+
+ref-format | refs.shetty2019 | S-23
+ref-format | refs.compare2025 | S-23
+ref-format | refs.nadiShodhana2024 | S-23
+ref-format | refs.nadiBhramari2023 | S-23
+ref-format | refs.respeRate | S-23
+ref-format | refs.respeRate.identifier | S-23
+ref-format | 4-7-8.effectDetail:Vergleichsstudie 2025 | S-23
+ref-format | buteyko.effectDetail:Bowler 1998 | S-23
+ref-unused | refs.fincham2023 | S-23
+ref-unused | refs.respeRate | S-23
