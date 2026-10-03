@@ -44,12 +44,7 @@ class ContinuousTonePlayer {
     @Volatile private var volumeScale = 1f
 
     fun setVolume(volume: ToneVolume) {
-        // Nochmals angehoben, damit „Laut" deutlich trägt (Peak ~0.8 → kein Clipping).
-        volumeScale = when (volume) {
-            ToneVolume.QUIET -> 1.2f
-            ToneVolume.MEDIUM -> 2.0f
-            ToneVolume.LOUD -> 3.2f
-        }
+        volumeScale = volumeScaleFor(volume)
     }
 
     fun setEmphasis(emphasis: TransitionEmphasis) {
@@ -123,7 +118,7 @@ class ContinuousTonePlayer {
         val buffer = ShortArray(BUFFER_SAMPLES)
         var angle = 0.0
         var gain = 0f
-        val fadeStep = 1f / (0.015f * SAMPLE_RATE) // ~15 ms Ein-/Ausblende
+        val fadeStep = 1f / (GAIN_FADE_SECONDS * SAMPLE_RATE) // Ein-/Ausblende
         // Phasenwechsel-Zäsur (einstellbar): kurz absenken und wieder anschwellen.
         var curLow = articLow
         var curDown = articDownSamples
@@ -212,11 +207,21 @@ class ContinuousTonePlayer {
         PhaseType.HOLD_EMPTY, PhaseType.REST -> LOW to LOW
     }
 
-    private companion object {
+    internal companion object {
         const val SAMPLE_RATE = 44100
         const val BUFFER_SAMPLES = 512
         const val LOW = 196.0    // G3
         const val HIGH = 294.0   // D4 (reine Quinte über G3 – deutlichere Richtung)
         const val AMPLITUDE = 0.25 * Short.MAX_VALUE
+
+        /** Ein-/Ausblende des Pegels bei Start, Pause, Stumm und Ende (ToneEnvelopeTest: AUDIO-01). */
+        const val GAIN_FADE_SECONDS = 0.015f
+
+        /** Pegel-Faktor je Stufe; „Laut" trägt deutlich, Spitze 0,25 × 3,2 = 0,8 FS (kein Clipping). */
+        fun volumeScaleFor(volume: ToneVolume): Float = when (volume) {
+            ToneVolume.QUIET -> 1.2f
+            ToneVolume.MEDIUM -> 2.0f
+            ToneVolume.LOUD -> 3.2f
+        }
     }
 }

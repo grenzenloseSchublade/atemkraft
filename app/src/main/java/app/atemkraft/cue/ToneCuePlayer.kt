@@ -56,15 +56,10 @@ class ToneCuePlayer {
     }
 
     /** Gesamt-Wiedergabedauer des Gongs (Ton + Stille) fürs aktuelle Profil – für Warte-/Fokus-Timing. */
-    fun gongTotalMs(): Int = (if (gongLong) GONG_TONE_LONG_MS else GONG_TONE_SHORT_MS) + GONG_TAIL_SILENCE_MS
+    fun gongTotalMs(): Int = gongTotalMsFor(gongLong)
 
     fun setVolume(volume: ToneVolume) {
-        // Cue-Töne haben höheren Grundpegel (0.5) – Anhebung mit Reserve gegen Clipping.
-        volumeScale = when (volume) {
-            ToneVolume.QUIET -> 0.9f
-            ToneVolume.MEDIUM -> 1.4f
-            ToneVolume.LOUD -> 1.85f
-        }
+        volumeScale = cueVolumeScale(volume)
     }
 
     fun play(event: CueEvent) {
@@ -79,75 +74,17 @@ class ToneCuePlayer {
         }
     }
 
-    /**
-     * Abschluss-Gong: klangschalenartig statt Piep – weicher Anschlag, Grundton mit
-     * feiner Verstimmung (typisches Schweben) plus inharmonische Obertöne, die schneller
-     * abklingen als der Grundton. Amplituden normiert (Summe 1) → kein Clipping.
-     */
+    /** Abschluss-Gong im gewählten Profil (Synthese: [synthesizeGong]). */
     private fun synthesizeAndPlayGong() {
         if (released) return
-        // Grundton-Abklingzeit + Fenster je nach gewähltem Profil. Fenster ist so bemessen, dass der
-        // Ton NATÜRLICH exponentiell bis ~-60 dB (praktisch Stille) ausschwingt – nicht abgeschnitten,
-        // nicht künstlich gefadet (nur 150 ms Anti-Klick am Ende). t(-60dB) = tau·ln(1000).
-        val fundTau = if (gongLong) 1.6 else 0.85
-        val toneMs = if (gongLong) GONG_TONE_LONG_MS else GONG_TONE_SHORT_MS
-        val toneCount = SAMPLE_RATE * toneMs / 1000
-        // … plus großzügige echte Stille am Ende, damit die Audioausgabe (HAL/Bluetooth-Latenz)
-        // das Ende garantiert nicht abschneidet.
-        val silenceCount = SAMPLE_RATE * GONG_TAIL_SILENCE_MS / 1000
-        val samples = ShortArray(toneCount + silenceCount) // ab toneCount bleiben die Werte 0 (Stille)
-        // Teilton: Frequenz (Hz), Amplitude, Abkling-Zeitkonstante tau (s).
-        val partials = listOf(
-            Triple(330.0, 0.50, fundTau),
-            Triple(331.6, 0.20, fundTau),
-            Triple(894.0, 0.20, 0.45),
-            Triple(1698.0, 0.10, 0.20),
-        )
-        val attackSamples = (SAMPLE_RATE * 0.008).toInt()
-        // Weiche Ausblende (Raised-Cosine) statt linear: kommt mit Steigung 0 auf exakt 0 an →
-        // kein hörbarer Knick/Übergang. Greift erst am ohnehin sehr leisen Ende (~-60 dB).
-        val releaseSamples = (SAMPLE_RATE * 0.4).toInt()
-
-        for (i in 0 until toneCount) {
-            val t = i.toDouble() / SAMPLE_RATE
-            var v = 0.0
-            for ((freq, amp, tau) in partials) {
-                v += amp * sin(2.0 * PI * freq * t) * exp(-t / tau)
-            }
-            val envelope = when {
-                i < attackSamples -> i.toDouble() / attackSamples
-                i > toneCount - releaseSamples -> {
-                    // progress 0→1 über die Ausblende; Raised-Cosine 1→0 (Steigung 0 an beiden Enden).
-                    val progress = (i - (toneCount - releaseSamples)).toDouble() / releaseSamples
-                    0.5 * (1.0 + cos(PI * progress))
-                }
-                else -> 1.0
-            }
-            samples[i] = (v * envelope * AMPLITUDE * volumeScale).toInt()
-                .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-        }
-        playSamples(samples, toneMs + GONG_TAIL_SILENCE_MS)
+        val long = gongLong
+        playSamples(synthesizeGong(long, volumeScale), gongTotalMsFor(long))
     }
 
+    /** Kurzer Wechselton (Synthese: [synthesizeCue]). */
     private fun synthesizeAndPlay(frequencyHz: Double, durationMs: Int) {
         if (released) return
-        val sampleCount = SAMPLE_RATE * durationMs / 1000
-        val samples = ShortArray(sampleCount)
-        val attackSamples = (SAMPLE_RATE * 0.012).toInt()        // 12 ms Einblende
-        val releaseSamples = (SAMPLE_RATE * 0.06).toInt()        // 60 ms Ausblende
-
-        for (i in 0 until sampleCount) {
-            val angle = 2.0 * PI * i * frequencyHz / SAMPLE_RATE
-            // Linearer Hüllkurven-Verlauf gegen Knackgeräusche.
-            val envelope = when {
-                i < attackSamples -> i.toDouble() / attackSamples
-                i > sampleCount - releaseSamples ->
-                    (sampleCount - i).toDouble() / releaseSamples
-                else -> 1.0
-            }
-            samples[i] = (sin(angle) * envelope * AMPLITUDE * volumeScale).toInt().toShort()
-        }
-        playSamples(samples, durationMs)
+        playSamples(synthesizeCue(frequencyHz, durationMs, volumeScale), durationMs)
     }
 
     /** Spielt fertige Samples blockierend über einen MODE_STATIC-Track ab. */
@@ -189,7 +126,7 @@ class ToneCuePlayer {
         executor.shutdown()
     }
 
-    private companion object {
+    internal companion object {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
 
@@ -202,4 +139,91 @@ class ToneCuePlayer {
         /** Großzügige echte Stille NACH dem verklungenen Ton – garantiert kein Abschneiden. */
         const val GONG_TAIL_SILENCE_MS = 1500
     }
+}
+
+/*
+ * Reine Synthese-Funktionen (ohne AudioTrack): Die Wiedergabe oben ruft sie auf, und
+ * ToneEnvelopeTest prüft die erzeugten PCM-Daten auf Attack, Release und Spitzenpegel
+ * (AUDIO-01) – ohne Gerät.
+ */
+
+/** Pegel-Faktor der Cue-Töne je Stufe; Grundpegel 0,5 FS, Anhebung mit Reserve gegen Clipping. */
+internal fun cueVolumeScale(volume: ToneVolume): Float = when (volume) {
+    ToneVolume.QUIET -> 0.9f
+    ToneVolume.MEDIUM -> 1.4f
+    ToneVolume.LOUD -> 1.85f
+}
+
+/** Gesamtdauer des Gongs (Ton + Stille) in ms für das Profil [long]. */
+internal fun gongTotalMsFor(long: Boolean): Int =
+    (if (long) ToneCuePlayer.GONG_TONE_LONG_MS else ToneCuePlayer.GONG_TONE_SHORT_MS) + ToneCuePlayer.GONG_TAIL_SILENCE_MS
+
+/**
+ * Abschluss-Gong: klangschalenartig statt Piep – weicher Anschlag, Grundton mit
+ * feiner Verstimmung (typisches Schweben) plus inharmonische Obertöne, die schneller
+ * abklingen als der Grundton. Amplituden normiert (Summe 1) → kein Clipping.
+ */
+internal fun synthesizeGong(long: Boolean, volumeScale: Float): ShortArray {
+    // Grundton-Abklingzeit + Fenster je nach gewähltem Profil. Fenster ist so bemessen, dass der
+    // Ton NATÜRLICH exponentiell bis ~-60 dB (praktisch Stille) ausschwingt – nicht abgeschnitten,
+    // nicht künstlich gefadet (nur 150 ms Anti-Klick am Ende). t(-60dB) = tau·ln(1000).
+    val fundTau = if (long) 1.6 else 0.85
+    val toneMs = if (long) ToneCuePlayer.GONG_TONE_LONG_MS else ToneCuePlayer.GONG_TONE_SHORT_MS
+    val toneCount = ToneCuePlayer.SAMPLE_RATE * toneMs / 1000
+    // … plus großzügige echte Stille am Ende, damit die Audioausgabe (HAL/Bluetooth-Latenz)
+    // das Ende garantiert nicht abschneidet.
+    val silenceCount = ToneCuePlayer.SAMPLE_RATE * ToneCuePlayer.GONG_TAIL_SILENCE_MS / 1000
+    val samples = ShortArray(toneCount + silenceCount) // ab toneCount bleiben die Werte 0 (Stille)
+    // Teilton: Frequenz (Hz), Amplitude, Abkling-Zeitkonstante tau (s).
+    val partials = listOf(
+        Triple(330.0, 0.50, fundTau),
+        Triple(331.6, 0.20, fundTau),
+        Triple(894.0, 0.20, 0.45),
+        Triple(1698.0, 0.10, 0.20),
+    )
+    val attackSamples = (ToneCuePlayer.SAMPLE_RATE * 0.008).toInt()
+    // Weiche Ausblende (Raised-Cosine) statt linear: kommt mit Steigung 0 auf exakt 0 an →
+    // kein hörbarer Knick/Übergang. Greift erst am ohnehin sehr leisen Ende (~-60 dB).
+    val releaseSamples = (ToneCuePlayer.SAMPLE_RATE * 0.4).toInt()
+
+    for (i in 0 until toneCount) {
+        val t = i.toDouble() / ToneCuePlayer.SAMPLE_RATE
+        var v = 0.0
+        for ((freq, amp, tau) in partials) {
+            v += amp * sin(2.0 * PI * freq * t) * exp(-t / tau)
+        }
+        val envelope = when {
+            i < attackSamples -> i.toDouble() / attackSamples
+            i > toneCount - releaseSamples -> {
+                // progress 0→1 über die Ausblende; Raised-Cosine 1→0 (Steigung 0 an beiden Enden).
+                val progress = (i - (toneCount - releaseSamples)).toDouble() / releaseSamples
+                0.5 * (1.0 + cos(PI * progress))
+            }
+            else -> 1.0
+        }
+        samples[i] = (v * envelope * ToneCuePlayer.AMPLITUDE * volumeScale).toInt()
+            .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+    }
+    return samples
+}
+
+/** Kurzer Sinus-Wechselton mit linearer Ein-/Ausblende (12 / 60 ms) gegen Knackgeräusche. */
+internal fun synthesizeCue(frequencyHz: Double, durationMs: Int, volumeScale: Float): ShortArray {
+    val sampleCount = ToneCuePlayer.SAMPLE_RATE * durationMs / 1000
+    val samples = ShortArray(sampleCount)
+    val attackSamples = (ToneCuePlayer.SAMPLE_RATE * 0.012).toInt()        // 12 ms Einblende
+    val releaseSamples = (ToneCuePlayer.SAMPLE_RATE * 0.06).toInt()        // 60 ms Ausblende
+
+    for (i in 0 until sampleCount) {
+        val angle = 2.0 * PI * i * frequencyHz / ToneCuePlayer.SAMPLE_RATE
+        // Linearer Hüllkurven-Verlauf gegen Knackgeräusche.
+        val envelope = when {
+            i < attackSamples -> i.toDouble() / attackSamples
+            i > sampleCount - releaseSamples ->
+                (sampleCount - i).toDouble() / releaseSamples
+            else -> 1.0
+        }
+        samples[i] = (sin(angle) * envelope * ToneCuePlayer.AMPLITUDE * volumeScale).toInt().toShort()
+    }
+    return samples
 }

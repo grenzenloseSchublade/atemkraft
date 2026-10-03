@@ -129,7 +129,7 @@ private fun ActiveContent(
 
     val label = if (preparing) stringResource(R.string.session_get_ready)
     else phaseDisplayLabel(state.phaseType, state.phaseLabel)
-    val fraction = if (preparing) 0.5f else breathingFraction(state)
+    val fraction = circleFraction(state)
     val secondsText = if (preparing) state.countdown.toString() else secondsText(state)
     val note = if (preparing) null else state.phaseNote
     val circleInteraction = remember { MutableInteractionSource() }
@@ -378,23 +378,6 @@ private fun ActiveContent(
                 }
             }
         }
-    }
-}
-
-/** Anzeigeskala des Kreises: 0f ausgeatmet … 1f eingeatmet. Stetig über Phasengrenzen. */
-private fun breathingFraction(state: SessionUiState): Float {
-    val progress = if (state.phaseTotalMs > 0L) {
-        ((state.phaseTotalMs - state.remainingMs).toFloat() / state.phaseTotalMs).coerceIn(0f, 1f)
-    } else {
-        0f
-    }
-    return when (state.phaseType) {
-        PhaseType.INHALE, PhaseType.INHALE_TOP_UP -> progress
-        PhaseType.EXHALE -> 1f - progress
-        PhaseType.HOLD_FULL -> 1f
-        PhaseType.HOLD_EMPTY -> 0f
-        PhaseType.REST -> 0.5f
-        null -> 0.5f
     }
 }
 
