@@ -178,6 +178,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         // Befunde neben dem Bild ablegen (überschreibt den letzten Lauf); Übersicht per
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)
+        // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
+        File(dir).mkdirs()
         File("$dir/$name.tsv").writeText(findings.joinToString("") { "$it\n" })
         wordBreaks += findings
         current = null
