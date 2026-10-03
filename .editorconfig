@@ -1,0 +1,29 @@
+# Formatierung für ktlint (docs/STYLEGUIDE.md CODE-06) und die IDE.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+ktlint_code_style = intellij_idea
+# Kein Zeilenlimit: Lange deutsche Texte und Regex-Muster sind lesbarer am Stück.
+max_line_length = off
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+ktlint_standard_no-wildcard-imports = enabled
+# Composables heißen groß (Compose-Konvention).
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Screens sind Wurzeln, kein wiederverwendbares Layout-Element: kein modifier-Parameter nötig.
+[**/*Screen.kt]
+ktlint_compose_modifier-missing-check = disabled
+
+[*.{yml,yaml,xml,md}]
+indent_size = 2
+
+[*.md]
+indent_size = unset

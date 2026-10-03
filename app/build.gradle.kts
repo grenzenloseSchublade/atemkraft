@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.roborazzi)
+    alias(libs.plugins.ktlint)
 }
 
 // Release-Keystore + Passwörter liegen bewusst außerhalb des Repos (gitignored).
@@ -132,6 +133,13 @@ android {
     }
 }
 
+// ktlint mit Compose-Regeln (docs/STYLEGUIDE.md CODE-04, CODE-06); Regeln in .editorconfig,
+// bekannte Compose-Funde in der Baseline (dürfen nur weniger werden).
+ktlint {
+    version.set(libs.versions.ktlint)
+    baseline.set(rootProject.file("config/ktlint-baseline.xml"))
+}
+
 // Regeltests lesen Baselines und Wortlisten aus config/: als Test-Eingabe registrieren, sonst
 // hält Gradle die Tests nach einer reinen Baseline-Änderung für aktuell und überspringt sie.
 tasks.withType<Test>().configureEach {
@@ -182,6 +190,8 @@ dependencies {
     implementation(libs.compose.material.icons.core)
 
     debugImplementation(libs.compose.ui.tooling)
+    ktlintRuleset(libs.compose.rules.ktlint)
+
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)

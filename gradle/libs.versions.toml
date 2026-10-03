@@ -14,6 +14,9 @@ junit = "4.13.2"
 commonsCompress = "1.27.1"
 robolectric = "4.17"
 roborazzi = "1.60.0"
+ktlintGradle = "14.2.0"
+ktlint = "1.8.0"
+composeRules = "0.5.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -39,6 +42,7 @@ roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", versi
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+compose-rules-ktlint = { group = "io.nlopez.compose.rules", name = "ktlint", version.ref = "composeRules" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress" }
 
 [plugins]
@@ -48,3 +52,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
