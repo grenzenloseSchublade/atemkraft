@@ -3,10 +3,12 @@ package app.atemkraft.ui.detail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -49,6 +51,7 @@ import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.TagChip
+import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
@@ -62,6 +65,7 @@ import kotlin.math.roundToInt
  * Meta, ggf. Sicherheits-Appetizer), darunter aus-/einklappbare Abschnitte; der Starten-Button
  * ist unten **gepinnt** und ohne Scrollen erreichbar.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExerciseDetailScreen(
     exercise: Exercise,
@@ -174,15 +178,12 @@ fun ExerciseDetailScreen(
                     color = accent,
                 )
                 Spacer(Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = exercise.name,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    exercise.tag?.let { TagChip(it) }
-                }
+                TitleWithChips(
+                    title = exercise.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    chips = exercise.tag?.let { tag -> { TagChip(tag) } },
+                )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = exercise.shortDescription,
@@ -191,7 +192,10 @@ fun ExerciseDetailScreen(
                 )
 
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     Chip(
                         text = if (roundBased) pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
                         else stringResource(R.string.detail_meta_minutes, exercise.defaultMinutes()),

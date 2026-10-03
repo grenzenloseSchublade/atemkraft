@@ -3,7 +3,7 @@ package app.atemkraft.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,7 +53,8 @@ fun GlowText(
     fill: Color = SessionTextYellow,
     modifier: Modifier = Modifier,
 ) {
-    Text(
+    // Zentriert und ohne Wortbruch: Session-Texte stehen mittig über dem Kreis (LAYOUT-03).
+    WholeWordText(
         text = text,
         style = style.merge(
             TextStyle(
@@ -61,9 +62,14 @@ fun GlowText(
                 shadow = Shadow(color = SessionTextGlow, offset = Offset.Zero, blurRadius = 18f),
             ),
         ),
+        textAlign = TextAlign.Center,
         modifier = modifier,
     )
 }
+
+// Schmaler als der M3-Standard (24 dp): Drei Buttons passen so auch bei fontScale 1,3 auf
+// 360 dp in eine Zeile. Die Höhe (≥ 48 dp Touch-Ziel) bleibt unverändert.
+private val SessionButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
 
 /** Gefüllter Primär-Button (Pause/Weiter, Nochmal) im Session-Cyan. */
 @Composable
@@ -77,6 +83,7 @@ fun SessionPrimaryButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
+        contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.buttonColors(
             containerColor = SessionButtonCyan,
             contentColor = SessionTextGlow,
@@ -98,6 +105,7 @@ fun SessionSecondaryButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
+        contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = SessionButtonCyan,
             disabledContentColor = SessionButtonCyan.copy(alpha = 0.4f),
@@ -116,6 +124,7 @@ fun SessionStopButton(
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
+        contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonPink),
         border = BorderStroke(1.dp, SessionButtonPink),
     ) { Text(text) }
@@ -144,19 +153,14 @@ fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(32.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+        AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
             SessionPrimaryButton(
                 text = stringResource(R.string.action_again),
                 onClick = onAgain,
-                modifier = Modifier.weight(1f),
             )
             SessionSecondaryButton(
                 text = stringResource(R.string.action_end),
                 onClick = onExit,
-                modifier = Modifier.weight(1f),
             )
         }
     }

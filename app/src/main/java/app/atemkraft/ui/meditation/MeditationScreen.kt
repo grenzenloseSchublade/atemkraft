@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -57,13 +56,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
-import androidx.compose.ui.zIndex
 import app.atemkraft.R
 import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.MiniNowPlayingBar
@@ -78,6 +76,7 @@ import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.PauseFlash
+import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionTextGlow
@@ -341,101 +340,97 @@ private fun RunningContent(
         onTogglePause()
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(Dimens.SessionPadding)) {
-        // Landscape/Tablet-fest: Kreis nach der knapperen Dimension bemessen (statt nur Breite).
-        val circleSide = min(maxWidth * 0.9f, maxHeight * 0.62f)
-        // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
-        Text(
-            text = stringResource(R.string.meditation_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-            // zIndex wie in der Atem-Session: Titel bleibt über dem Kreis, falls sie sich je berühren.
-            // liveRegion: TalkBack sagt Zustandswechsel (Vorbereitung/läuft/pausiert) an.
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .zIndex(1f)
-                .semantics {
-                    liveRegion = LiveRegionMode.Polite
-                    contentDescription = stateAnnounce
-                },
-        )
-        Box(modifier = Modifier.align(Alignment.Center), contentAlignment = Alignment.Center) {
-            BreathingCircle(
-                fraction = 1f,
+    // Gleiches Gerüst wie die Atem-Session (SessionRunningLayout): Titel oben, Kreis im freien
+    // Platz, Steuerung unten – nichts überlappt, auch bei großer Schrift.
+    SessionRunningLayout(
+        modifier = Modifier.fillMaxSize().padding(Dimens.SessionPadding),
+        top = {
+            // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
+            Text(
+                text = stringResource(R.string.meditation_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                // liveRegion: TalkBack sagt Zustandswechsel (Vorbereitung/läuft/pausiert) an.
                 modifier = Modifier
-                    .size(circleSide)
-                    .semantics { contentDescription = ringDescription }
-                    // Wie in der Atem-Session: Tippen auf den Kreis pausiert/setzt fort.
-                    .then(
-                        if (!preparing) {
-                            Modifier.clickable(
-                                interactionSource = circleInteraction,
-                                indication = null,
-                            ) { flashToggle() }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .semantics {
+                        liveRegion = LiveRegionMode.Polite
+                        contentDescription = stateAnnounce
+                    },
+            )
+        },
+        bottom = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (preparing) {
-                        GlowText(
-                            text = stringResource(R.string.session_get_ready),
-                            style = MaterialTheme.typography.headlineMedium,
-                        )
-                        Spacer(Modifier.height(6.dp))
-                    }
-                    GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
-                }
-            }
-            // Dezenter Fortschritts-Ring (nur Timer): dünner Bogen entlang der Bahn.
-            if (state.mode == MeditationMode.TIMED && !preparing) {
-                val total = (state.elapsedMs + state.remainingMs).coerceAtLeast(1L)
-                val progress = (state.elapsedMs.toFloat() / total).coerceIn(0f, 1f)
-                Canvas(modifier = Modifier.size(circleSide)) {
-                    val stroke = 2.5.dp.toPx()
-                    drawArc(
-                        color = SynthTrack.copy(alpha = 0.35f),
-                        startAngle = -90f,
-                        sweepAngle = progress * 360f,
-                        useCenter = false,
-                        topLeft = Offset(stroke / 2f, stroke / 2f),
-                        size = Size(size.width - stroke, size.height - stroke),
-                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.ListGap) {
+                    SessionPrimaryButton(
+                        text = stringResource(if (paused) R.string.action_resume else R.string.action_pause),
+                        onClick = onTogglePause,
+                        enabled = !preparing,
+                    )
+                    SessionSecondaryButton(
+                        text = stringResource(R.string.action_restart),
+                        onClick = onRestart,
+                        enabled = !preparing,
+                    )
+                    SessionStopButton(
+                        text = stringResource(R.string.action_stop),
+                        onClick = onEnd,
                     )
                 }
             }
-            // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
-            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
-        }
-
-        Column(
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-            ) {
-                SessionPrimaryButton(
-                    text = stringResource(if (paused) R.string.action_resume else R.string.action_pause),
-                    onClick = onTogglePause,
-                    modifier = Modifier.weight(1f),
-                    enabled = !preparing,
-                )
-                SessionSecondaryButton(
-                    text = stringResource(R.string.action_restart),
-                    onClick = onRestart,
-                    modifier = Modifier.weight(1f),
-                    enabled = !preparing,
-                )
-                SessionStopButton(
-                    text = stringResource(R.string.action_stop),
-                    onClick = onEnd,
-                    modifier = Modifier.weight(1f),
-                )
+        },
+    ) { side ->
+            Box(contentAlignment = Alignment.Center) {
+                BreathingCircle(
+                    fraction = 1f,
+                    modifier = Modifier
+                        .size(side)
+                        .semantics { contentDescription = ringDescription }
+                        // Wie in der Atem-Session: Tippen auf den Kreis pausiert/setzt fort.
+                        .then(
+                            if (!preparing) {
+                                Modifier.clickable(
+                                    interactionSource = circleInteraction,
+                                    indication = null,
+                                ) { flashToggle() }
+                            } else {
+                                Modifier
+                            },
+                        ),
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (preparing) {
+                            GlowText(
+                                text = stringResource(R.string.session_get_ready),
+                                style = MaterialTheme.typography.headlineMedium,
+                            )
+                            Spacer(Modifier.height(6.dp))
+                        }
+                        GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
+                    }
+                }
+                // Dezenter Fortschritts-Ring (nur Timer): dünner Bogen entlang der Bahn.
+                if (state.mode == MeditationMode.TIMED && !preparing) {
+                    val total = (state.elapsedMs + state.remainingMs).coerceAtLeast(1L)
+                    val progress = (state.elapsedMs.toFloat() / total).coerceIn(0f, 1f)
+                    Canvas(modifier = Modifier.size(side)) {
+                        val stroke = 2.5.dp.toPx()
+                        drawArc(
+                            color = SynthTrack.copy(alpha = 0.35f),
+                            startAngle = -90f,
+                            sweepAngle = progress * 360f,
+                            useCenter = false,
+                            topLeft = Offset(stroke / 2f, stroke / 2f),
+                            size = Size(size.width - stroke, size.height - stroke),
+                            style = Stroke(width = stroke, cap = StrokeCap.Round),
+                        )
+                    }
+                }
+                // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
+                PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
             }
-        }
     }
 }
 

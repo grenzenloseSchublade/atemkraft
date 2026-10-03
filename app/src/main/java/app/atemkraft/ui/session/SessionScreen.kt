@@ -41,26 +41,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
-import androidx.compose.ui.zIndex
 import app.atemkraft.R
 import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.domain.PhaseType
+import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
@@ -69,6 +71,8 @@ import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.rememberTapFlash
+import app.atemkraft.ui.components.SessionRunningLayout
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
@@ -142,222 +146,240 @@ private fun ActiveContent(
         onTogglePause()
     }
 
-    // Box statt SpaceBetween-Column: Kopfzeile, Kreis und Buttons sind fest verankert
-    // (oben/Mitte/unten). Die ausgeklappte Anleitung verschiebt den Kreis dadurch NICHT –
-    // bei wenig Platz legt sie sich über den Kreisrand (zIndex), statt ihn zu drücken.
-    BoxWithConstraints(
+    // Gerüst teilt sich die Atem-Session mit der Meditation: Kopf oben, Kreis im freien Platz
+    // dazwischen, Steuerung unten (SessionRunningLayout). Die ausgeklappte Anleitung legt sich
+    // über den Kreisrand, statt ihn zu verschieben.
+    // Höhe der „Als Nächstes“-Zeile aus der Zeilenhöhe ihres Stils (wächst mit der Systemschrift);
+    // fest reserviert, damit der Kreis nicht springt, wenn die Zeile erscheint (LAYOUT-03).
+    val nextRowHeight = with(LocalDensity.current) { MaterialTheme.typography.labelMedium.lineHeight.toDp() }
+    SessionRunningLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(Dimens.SessionPadding),
-    ) {
-        // Landscape/Tablet-fest: Kreis nach der knapperen Dimension bemessen (statt nur Breite).
-        val circleSide = min(maxWidth * 0.9f, maxHeight * 0.62f)
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .zIndex(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = if (!preparing && state.roundCount > 1) {
-                    stringResource(R.string.session_round, state.roundIndex + 1, state.roundCount)
-                } else {
-                    state.exerciseName
-                },
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-            )
-            // Anleitung auf Abruf: dezente „ⓘ Anleitung"-Zeile unter dem Titel, die den
-            // Pattern-Hint ein-/ausklappt – jederzeit, nicht nur im Countdown.
-            state.patternHint?.let { hint ->
-                var hintVisible by rememberSaveable { mutableStateOf(false) }
-                val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
-                Row(
-                    modifier = Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { hintVisible = !hintVisible }
-                        .semantics {
-                            stateDescription = if (hintVisible) "Erweitert" else "Eingeklappt"
-                        }
-                        // 48-dp-Mindest-Touch-Target (Bedienung mitten in der Session).
-                        .heightIn(min = 48.dp)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = null,
-                        tint = hintColor,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.detail_instruction),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = hintColor,
-                    )
-                }
-                AnimatedVisibility(
-                    visible = hintVisible,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically(),
-                ) {
-                    Text(
-                        text = hint,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-            }
-        }
-
-        val circleDescription = stringResource(R.string.cd_breathing_circle)
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-        Box(contentAlignment = Alignment.Center) {
-        BreathingCircle(
-            fraction = fraction,
-            modifier = Modifier
-                .size(circleSide)
-                .semantics { contentDescription = circleDescription }
-                .then(
-                    when (state.status) {
-                        // Kreis antippen (ohne Ripple-Kästchen): laufend/pausiert = Pause/Weiter,
-                        // offener Hold = weiter.
-                        SessionStatus.RUNNING, SessionStatus.PAUSED ->
-                            Modifier.clickable(interactionSource = circleInteraction, indication = null) { flashToggle() }
-                        SessionStatus.WAITING_FOR_USER ->
-                            Modifier.clickable(interactionSource = circleInteraction, indication = null) { onContinue() }
-                        else -> Modifier
+        // „Als Nächstes“-Zeile unter dem Kreis: 12 dp Abstand + eine Zeile.
+        centerExtra = if (showNextPhase) 12.dp + nextRowHeight else 0.dp,
+        top = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = if (!preparing && state.roundCount > 1) {
+                        stringResource(R.string.session_round, state.roundIndex + 1, state.roundCount)
+                    } else {
+                        state.exerciseName
                     },
-                ),
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // LiveRegion sagt Phasenname + Notiz an (der Kreis selbst hat nur eine
-                // statische Beschreibung, sonst liest TalkBack den Phasennamen doppelt).
-                val liveText = note?.let { "$label, $it" } ?: label
-                GlowText(
-                    text = label,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fill = SessionTextYellow,
-                    modifier = Modifier.semantics {
-                        liveRegion = LiveRegionMode.Polite
-                        contentDescription = liveText
-                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
-                note?.let {
-                    GlowText(
-                        text = it,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fill = SessionNoteAmber,
-                    )
+                // Anleitung auf Abruf: dezente „ⓘ Anleitung"-Zeile unter dem Titel, die den
+                // Pattern-Hint ein-/ausklappt – jederzeit, nicht nur im Countdown.
+                state.patternHint?.let { hint ->
+                    var hintVisible by rememberSaveable { mutableStateOf(false) }
+                    val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                    Row(
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { hintVisible = !hintVisible }
+                            .semantics {
+                                stateDescription = if (hintVisible) "Erweitert" else "Eingeklappt"
+                            }
+                            // 48-dp-Mindest-Touch-Target (Bedienung mitten in der Session).
+                            .heightIn(min = 48.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = hintColor,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.detail_instruction),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = hintColor,
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = hintVisible,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically(),
+                    ) {
+                        Text(
+                            text = hint,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
                 }
-                if (secondsText.isNotEmpty()) {
-                    Spacer(Modifier.height(6.dp))
-                    GlowText(
-                        text = secondsText,
-                        style = MaterialTheme.typography.displaySmall,
-                        fill = SessionTextYellow,
+            }
+        },
+        bottom = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // Immer gemessen, nur im offenen Hold sichtbar: So bleibt die Höhe der Steuerung
+                // konstant und der Kreis springt nicht, wenn der Hinweis erscheint.
+                Text(
+                    text = stringResource(R.string.session_tap_to_continue),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                    modifier = Modifier
+                        .alpha(if (waiting) 1f else 0f)
+                        .then(if (waiting) Modifier else Modifier.clearAndSetSemantics {}),
+                )
+                Spacer(Modifier.height(16.dp))
+
+                // Immer alle drei Buttons rendern (im Countdown deaktiviert statt abwesend) –
+                // so springt das Layout beim Übergang Countdown → Übung nicht.
+                AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    SessionPrimaryButton(
+                        text = stringResource(
+                            if (state.status == SessionStatus.PAUSED) R.string.action_resume
+                            else R.string.action_pause,
+                        ),
+                        onClick = onTogglePause,
+                        enabled = !preparing && !waiting,
+                    )
+                    SessionSecondaryButton(
+                        text = stringResource(R.string.action_restart),
+                        onClick = onRestart,
+                        enabled = !preparing,
+                    )
+                    SessionStopButton(
+                        text = stringResource(R.string.action_stop),
+                        onClick = onStop,
                     )
                 }
             }
-        }
-            // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content) → sicher sichtbar.
-            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
-        }
+        },
+    ) { side ->
+        val circleDescription = stringResource(R.string.cd_breathing_circle)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(contentAlignment = Alignment.Center) {
+                BreathingCircle(
+                    fraction = fraction,
+                    modifier = Modifier
+                        .size(side)
+                        .semantics { contentDescription = circleDescription }
+                        .then(
+                            when (state.status) {
+                                // Kreis antippen (ohne Ripple-Kästchen): laufend/pausiert = Pause/Weiter,
+                                // offener Hold = weiter.
+                                SessionStatus.RUNNING, SessionStatus.PAUSED ->
+                                    Modifier.clickable(interactionSource = circleInteraction, indication = null) { flashToggle() }
+                                SessionStatus.WAITING_FOR_USER ->
+                                    Modifier.clickable(interactionSource = circleInteraction, indication = null) { onContinue() }
+                                else -> Modifier
+                            },
+                        ),
+                )
+                // Texte als Geschwister ÜBER dem Kreis statt in ihm: Sie bekommen die volle Breite
+                // und brechen nie im Wort, auch wenn der Kreis bei großer Schrift klein wird.
+                // Antippen erreicht weiterhin den Kreis (Text hat keinen eigenen Klick).
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // LiveRegion sagt Phasenname + Notiz an (der Kreis selbst hat nur eine
+                    // statische Beschreibung, sonst liest TalkBack den Phasennamen doppelt).
+                    val liveText = note?.let { "$label, $it" } ?: label
+                    GlowText(
+                        text = label,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fill = SessionTextYellow,
+                        modifier = Modifier.semantics {
+                            liveRegion = LiveRegionMode.Polite
+                            contentDescription = liveText
+                        },
+                    )
+                    note?.let {
+                        GlowText(
+                            text = it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fill = SessionNoteAmber,
+                        )
+                    }
+                    if (secondsText.isNotEmpty()) {
+                        Spacer(Modifier.height(6.dp))
+                        GlowText(
+                            text = secondsText,
+                            style = MaterialTheme.typography.displaySmall,
+                            fill = SessionTextYellow,
+                        )
+                    }
+                }
+                // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content) → sicher sichtbar.
+                PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
+            }
             // Dezent direkt unter dem Kreis: die kommende Phase (abschaltbar).
             // Feste Höhe reservieren, damit der Kreis NICHT springt, wenn die Zeile
             // erscheint/verschwindet oder der Text (kurz/lang) wechselt.
             if (showNextPhase) {
                 Spacer(Modifier.height(12.dp))
-                Box(modifier = Modifier.height(20.dp), contentAlignment = Alignment.Center) {
+                val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                val hintStyle = MaterialTheme.typography.labelMedium
+                val nextLabel = stringResource(R.string.session_next)
+                // Alle möglichen Phasennamen: Die Entscheidung unten gilt für die ganze Session,
+                // die Zeile wechselt also nicht zwischen den Phasen ihr Layout.
+                val phaseLabels = PhaseType.entries.map { phaseDisplayLabel(it, null) }
+                val measurer = rememberTextMeasurer()
+                BoxWithConstraints(
+                    modifier = Modifier.heightIn(min = nextRowHeight),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val half = with(LocalDensity.current) {
+                        (maxWidth.toPx() - measurer.measure(" · ", hintStyle).size.width) / 2f
+                    }
+                    val splitFits = measurer.measure(nextLabel, hintStyle).size.width <= half &&
+                        phaseLabels.all { measurer.measure(it, hintStyle).size.width <= half }
                     if (!preparing && state.nextPhaseType != null) {
-                        val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                        val hintStyle = MaterialTheme.typography.labelMedium
-                        // „Als Nächstes" rechtsbündig bis zur Mitte, Phasenname linksbündig ab Mitte
-                        // → der Trennpunkt liegt fest in der Bildmitte, nichts springt bei Längenwechsel.
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.session_next),
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.End,
+                        val phase = phaseDisplayLabel(state.nextPhaseType, null)
+                        if (splitFits) {
+                            // „Als Nächstes" rechtsbündig bis zur Mitte, Phasenname linksbündig ab Mitte
+                            // → der Trennpunkt liegt fest in der Bildmitte, nichts springt bei Längenwechsel.
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = nextLabel,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.End,
+                                    style = hintStyle,
+                                    color = hintColor,
+                                    maxLines = 1,
+                                )
+                                Text(text = " · ", style = hintStyle, color = hintColor)
+                                Text(
+                                    text = phase,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Start,
+                                    style = hintStyle,
+                                    color = hintColor,
+                                    maxLines = 1,
+                                )
+                            }
+                        } else {
+                            // Sehr große Schrift auf schmalem Gerät: eine Hälfte reicht nicht –
+                            // dann als ein zentrierter Text, ganz statt abgeschnitten (LAYOUT-03).
+                            WholeWordText(
+                                text = "$nextLabel · $phase",
                                 style = hintStyle,
                                 color = hintColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(text = " · ", style = hintStyle, color = hintColor)
-                            Text(
-                                text = phaseDisplayLabel(state.nextPhaseType, null),
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Start,
-                                style = hintStyle,
-                                color = hintColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
                 }
             }
         }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (waiting) {
-                Text(
-                    text = stringResource(R.string.session_tap_to_continue),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
-                Spacer(Modifier.height(16.dp))
-            }
-
-            // Immer alle drei Buttons rendern (im Countdown deaktiviert statt abwesend) –
-            // so springt das Layout beim Übergang Countdown → Übung nicht.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                SessionPrimaryButton(
-                    text = stringResource(
-                        if (state.status == SessionStatus.PAUSED) R.string.action_resume
-                        else R.string.action_pause,
-                    ),
-                    onClick = onTogglePause,
-                    modifier = Modifier.weight(1f),
-                    enabled = !preparing && !waiting,
-                )
-                SessionSecondaryButton(
-                    text = stringResource(R.string.action_restart),
-                    onClick = onRestart,
-                    modifier = Modifier.weight(1f),
-                    enabled = !preparing,
-                )
-                SessionStopButton(
-                    text = stringResource(R.string.action_stop),
-                    onClick = onStop,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
     }
 }
-
 
 /** Anzeigeskala des Kreises: 0f ausgeatmet … 1f eingeatmet. Stetig über Phasengrenzen. */
 private fun breathingFraction(state: SessionUiState): Float {

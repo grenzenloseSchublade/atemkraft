@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.roborazzi)
 }
 
 // Release-Keystore + Passwörter liegen bewusst außerhalb des Repos (gitignored).
@@ -114,6 +115,13 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Screenshot-Tests (Robolectric + Roborazzi) brauchen echte Ressourcen statt Stubs.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        // Hohe Screenshots (bis 8000 dp bei fontScale 2,0) brauchen mehr als den Standard-Heap.
+        unitTests.all { it.maxHeapSize = "4g" }
+    }
 }
 
 // Deutliche Warnung beim Paketieren statt beim Konfigurieren: So erscheint sie nur bei
@@ -159,4 +167,10 @@ dependencies {
 
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

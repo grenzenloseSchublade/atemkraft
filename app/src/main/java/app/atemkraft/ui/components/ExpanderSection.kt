@@ -27,15 +27,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
- * Wiederverwendbarer Inline-Expander (Progressive Disclosure): Titel + 1–2-Zeilen-Appetizer,
- * tippbar zum Ausklappen. Der Appetizer bleibt aufgeklappt stehen (voll ausgeschrieben, als
- * erster Absatz gestylt); [content] erscheint darunter und vertieft ihn. Ohne [content]
- * entklemmt das Aufklappen nur den Appetizer. Caret dreht sich, sanftes Größen-Animieren,
- * TalkBack bekommt Überschrift + Erweitert/Eingeklappt.
+ * Wiederverwendbarer Inline-Expander (Progressive Disclosure): Titel + Appetizer, tippbar zum
+ * Ausklappen. Der Appetizer steht **immer ganz** da – nie per Ellipse gekürzt, denn er trägt
+ * Wirkung und Sicherheit als geschlossenen Satz (TEXT-06, -08, LAYOUT-03). [content] erscheint
+ * aufgeklappt darunter und vertieft ihn. Ohne [content] gibt es nichts aufzuklappen: dann
+ * ein schlichter Abschnitt ohne Caret und ohne Klick. Caret dreht sich, sanftes
+ * Größen-Animieren, TalkBack bekommt Überschrift + Erweitert/Eingeklappt.
  */
 @Composable
 fun ExpanderSection(
@@ -46,6 +46,7 @@ fun ExpanderSection(
     initiallyExpanded: Boolean = false,
     content: (@Composable () -> Unit)? = null,
 ) {
+    val expandable = content != null
     var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
     val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "caret")
 
@@ -53,37 +54,37 @@ fun ExpanderSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { expanded = !expanded }
+                .then(if (expandable) Modifier.clickable { expanded = !expanded } else Modifier)
                 .semantics {
                     heading()
-                    stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
+                    if (expandable) stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
                 }
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
+                WholeWordText(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
                     color = accent,
                 )
                 Text(
                     text = appetizer,
-                    // Eine Rolle für beide Zustände: Der Rollen-Wechsel beim Aufklappen ließ den
-                    // ganzen Absatz reflowen; Betonung kommt allein über Deckkraft + maxLines.
+                    // Eine Rolle für beide Zustände (kein Reflow beim Aufklappen); Betonung nur
+                    // über die Deckkraft.
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground
-                        .copy(alpha = if (expanded) 0.8f else 0.6f),
-                    maxLines = if (expanded) Int.MAX_VALUE else 2,
-                    overflow = TextOverflow.Ellipsis,
+                        .copy(alpha = if (expanded || !expandable) 0.8f else 0.6f),
                 )
             }
-            Icon(
-                imageVector = Icons.Filled.KeyboardArrowDown,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.rotate(rotation),
-            )
+            if (expandable) {
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
         }
         if (expanded && content != null) {
             content()

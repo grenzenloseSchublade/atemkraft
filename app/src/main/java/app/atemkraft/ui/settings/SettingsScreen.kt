@@ -51,6 +51,7 @@ import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.SECONDARY
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
@@ -327,7 +328,7 @@ private fun VoiceRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
+            WholeWordText(
                 text = spec.displayName,
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (active && engineReady) MaterialTheme.colorScheme.primary
@@ -426,7 +427,7 @@ private fun SubLabel(text: String) {
 /** Dezenter Hinweis-/Beschriftungstext (einheitliche Sekundär-Deckkraft). */
 @Composable
 private fun Hint(text: String) {
-    Text(
+    WholeWordText(
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
@@ -464,7 +465,7 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
+        WholeWordText(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,

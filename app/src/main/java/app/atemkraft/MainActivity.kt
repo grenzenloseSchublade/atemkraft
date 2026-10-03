@@ -20,7 +20,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,10 +33,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemColors
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,9 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,6 +75,8 @@ import app.atemkraft.ui.MeditationRoute
 import app.atemkraft.ui.SettingsRoute
 import app.atemkraft.ui.SituationenRoute
 import app.atemkraft.ui.about.AboutScreen
+import app.atemkraft.ui.components.AppNavItem
+import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
@@ -98,9 +93,7 @@ import app.atemkraft.ui.session.SessionViewModel
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
-import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.NeonMagenta
-import app.atemkraft.ui.theme.OnNeon
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -221,43 +214,30 @@ private fun AtemkraftApp() {
                         MiniMeditationBar(state = meditationState, onClick = { meditationExpanded = true })
                     }
                     HorizontalDivider(thickness = 1.dp, color = NeonMagenta.copy(alpha = 0.22f))
-                    val navColors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = OnNeon,
-                        selectedTextColor = NeonMagenta,
-                        indicatorColor = NeonMagenta,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    AppNavigationBar(
+                        listOf(
+                            AppNavItem(
+                                label = stringResource(R.string.tab_breathe),
+                                selected = selectedTab == TopTab.ATMEN,
+                                onClick = { navController.switchTab(AtmenRoute) },
+                            ) { Icon(Icons.Filled.Home, contentDescription = null) },
+                            AppNavItem(
+                                label = stringResource(R.string.tab_situations),
+                                selected = selectedTab == TopTab.SITUATIONEN,
+                                onClick = { navController.switchTab(SituationenRoute) },
+                            ) { Icon(Icons.Filled.Search, contentDescription = null) },
+                            AppNavItem(
+                                label = stringResource(R.string.tab_meditation),
+                                selected = selectedTab == TopTab.MEDITATION,
+                                onClick = { navController.switchTab(MeditationRoute) },
+                            ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) },
+                            AppNavItem(
+                                label = stringResource(R.string.tab_logbook),
+                                selected = selectedTab == TopTab.LOGBUCH,
+                                onClick = { navController.switchTab(LogbuchRoute) },
+                            ) { Icon(Icons.Filled.DateRange, contentDescription = null) },
+                        ),
                     )
-                    NavigationBar(containerColor = DarkSurface) {
-                        TabItem(
-                            selected = selectedTab == TopTab.ATMEN,
-                            onClick = { navController.switchTab(AtmenRoute) },
-                            icon = Icons.Filled.Home,
-                            label = stringResource(R.string.tab_breathe),
-                            colors = navColors,
-                        )
-                        TabItem(
-                            selected = selectedTab == TopTab.SITUATIONEN,
-                            onClick = { navController.switchTab(SituationenRoute) },
-                            icon = Icons.Filled.Search,
-                            label = stringResource(R.string.tab_situations),
-                            colors = navColors,
-                        )
-                        TabItem(
-                            selected = selectedTab == TopTab.MEDITATION,
-                            onClick = { navController.switchTab(MeditationRoute) },
-                            painter = painterResource(R.drawable.ic_meditation),
-                            label = stringResource(R.string.tab_meditation),
-                            colors = navColors,
-                        )
-                        TabItem(
-                            selected = selectedTab == TopTab.LOGBUCH,
-                            onClick = { navController.switchTab(LogbuchRoute) },
-                            icon = Icons.Filled.DateRange,
-                            label = stringResource(R.string.tab_logbook),
-                            colors = navColors,
-                        )
-                    }
                 }
             },
         ) { innerPadding ->
@@ -501,52 +481,6 @@ private fun AtemkraftApp() {
             BackHandler { meditationExpanded = false }
         }
     }
-}
-
-/** Tab mit hervorgehobenem aktiven Zustand: gefüllte Magenta-Pille + dunkles Icon + fettes Label. */
-@Composable
-private fun RowScope.TabItem(
-    selected: Boolean,
-    onClick: () -> Unit,
-    icon: ImageVector,
-    label: String,
-    colors: NavigationBarItemColors,
-) {
-    NavigationBarItem(
-        selected = selected,
-        onClick = onClick,
-        icon = { Icon(icon, contentDescription = null) },
-        label = {
-            Text(
-                text = label,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            )
-        },
-        colors = colors,
-    )
-}
-
-/** Wie [TabItem], aber mit einem Painter-Icon (für eigene Vektor-Drawables ohne Core-Icon). */
-@Composable
-private fun RowScope.TabItem(
-    selected: Boolean,
-    onClick: () -> Unit,
-    painter: androidx.compose.ui.graphics.painter.Painter,
-    label: String,
-    colors: NavigationBarItemColors,
-) {
-    NavigationBarItem(
-        selected = selected,
-        onClick = onClick,
-        icon = { Icon(painter = painter, contentDescription = null) },
-        label = {
-            Text(
-                text = label,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            )
-        },
-        colors = colors,
-    )
 }
 
 /** Die vier Top-Level-Tabs (für die Markierung der Leiste, auch auf Push-Zielen). */

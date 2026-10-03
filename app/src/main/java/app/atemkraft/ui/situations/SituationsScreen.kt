@@ -35,6 +35,7 @@ import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.theme.SECONDARY
@@ -138,7 +139,7 @@ private fun SavedPatternCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
+                WholeWordText(
                     text = exercise.name,
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,

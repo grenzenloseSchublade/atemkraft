@@ -4,10 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,6 +38,7 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.TagChip
+import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
@@ -141,20 +144,17 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
         border = BorderStroke(1.dp, accent.copy(alpha = 0.35f)),
     ) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = exercise.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                exercise.tag?.let { TagChip(it) }
-                if (!exercise.guided) InfoChip()
-            }
+            TitleWithChips(
+                title = exercise.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                chips = if (exercise.tag == null && exercise.guided) null else {
+                    {
+                        exercise.tag?.let { TagChip(it) }
+                        if (!exercise.guided) InfoChip()
+                    }
+                },
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = exercise.shortDescription,
@@ -166,6 +166,7 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
 }
 
 /** Karte für das generierte „Muster des Tages": Name, Charakter-Chip, Muster + Dauer. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DailyPatternCard(
     daily: DailyPattern,
@@ -182,17 +183,11 @@ private fun DailyPatternCard(
         border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            TitleWithChips(
+                title = exercise.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
             ) {
-                Text(
-                    text = exercise.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
                 CharacterChip(activating = daily.activating)
             }
             Spacer(Modifier.height(4.dp))
@@ -204,7 +199,8 @@ private fun DailyPatternCard(
             )
             // Bewusst schlichte Text-Buttons (keine Symbole). Gespeicherte Muster erscheinen
             // im Situationen-Tab unter „Meine Muster" – der Atmen-Tab bleibt schlank.
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            // FlowRow: bei großer Schrift rutscht „Neu generieren“ unter „Speichern“ (LAYOUT-03).
+            FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onSave, enabled = !saved) {
                     Text(
                         stringResource(

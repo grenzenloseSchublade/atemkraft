@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.components.BackButton
+import app.atemkraft.ui.components.WholeWordText
 
 private data class Term(val name: String, val definition: String)
 
@@ -60,7 +61,7 @@ private val terms = listOf(
     ),
     Term(
         "PEM – Post-Exertional Malaise",
-        "Zustandsverschlechterung nach Anstrengung (z. B. bei ME/CFS oder Long COVID). Dann nur " +
+        "Verschlechterung des Zustands nach Anstrengung (z. B. bei ME/CFS oder Long COVID). Dann nur " +
             "sanfte, vagale Übungen.",
     ),
 )
@@ -86,7 +87,7 @@ fun GlossaryScreen(onBack: () -> Unit) {
             terms.forEach { term ->
                 Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                     Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-                        Text(
+                        WholeWordText(
                             text = term.name,
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.primary,

@@ -5,10 +5,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,6 +36,7 @@ import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SynthTrack
@@ -97,6 +100,7 @@ fun LogbookScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StatsCard(
     entries: List<SessionLogEntry>,
@@ -116,9 +120,10 @@ private fun StatsCard(
             WeekRow(minutesPerDay = minutesPerDay)
             if (entries.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
-                Row(
+                // FlowRow: Reicht der Platz nicht (große Schrift), rutscht „Logbuch leeren“ in die
+                // nächste Zeile, statt Buchstabe für Buchstabe umzubrechen (LAYOUT-03).
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     val totalMinutes = entries.sumOf { it.durationMs } / 60000L
@@ -127,6 +132,7 @@ private fun StatsCard(
                             " · " + stringResource(R.string.log_minutes_total, totalMinutes),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                        modifier = Modifier.align(Alignment.CenterVertically),
                     )
                     TextButton(onClick = onClear) { Text(stringResource(R.string.log_clear)) }
                 }
@@ -191,6 +197,7 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LogEntryCard(entry: SessionLogEntry) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -208,35 +215,46 @@ private fun LogEntryCard(entry: SessionLogEntry) {
                     // Meditation hat keine Familie – eigener, ruhiger Cyan-Ton.
                     .background(entry.family?.color() ?: NeonCyan),
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = entry.exerciseName,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = formatDateTime(entry.startedAtEpochMs),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = formatDuration(entry.durationMs),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                // „Runden" nur für Atemübungen; Meditationen zeigen nur die Dauer.
-                if (entry.kind == SessionKind.BREATHING) {
+            // FlowRow: Passt die Dauer nicht mehr neben den Namen (große Schrift), rutscht sie
+            // darunter – der Name behält die volle Breite und bricht nicht im Wort (LAYOUT-03).
+            FlowRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                    WholeWordText(
+                        text = entry.exerciseName,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                     Text(
-                        text = pluralStringResource(
-                            R.plurals.log_rounds,
-                            entry.roundsCompleted,
-                            entry.roundsCompleted,
-                        ),
+                        text = formatDateTime(entry.startedAtEpochMs),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                     )
+                }
+                Column(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.End,
+                ) {
+                    Text(
+                        text = formatDuration(entry.durationMs),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    // „Runden" nur für Atemübungen; Meditationen zeigen nur die Dauer.
+                    if (entry.kind == SessionKind.BREATHING) {
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.log_rounds,
+                                entry.roundsCompleted,
+                                entry.roundsCompleted,
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                        )
+                    }
                 }
             }
         }
