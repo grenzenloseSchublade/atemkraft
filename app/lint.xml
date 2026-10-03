@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Gezielte Lint-Ausnahmen (docs/STYLEGUIDE.md §13.1); alles andere ist ein Fehler. -->
+<lint>
+    <!-- Adaptive Icons: aapt findet sie ohne -v26-Qualifier nicht, obwohl minSdk 26 ist. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

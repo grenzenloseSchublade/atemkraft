@@ -1,0 +1,3 @@
+implementation("androidx.compose.material:material-icons-extended")
+Icon(Icons.Outlined.Info, null)
+Text("›")

@@ -88,4 +88,4 @@ fun badBreakAt(text: String, end: Int): Boolean {
     return (before.isLetterOrDigit() && after.isLetterOrDigit()) || after in NO_LINE_START
 }
 
-private const val NO_LINE_START = "-‐‑–—)]}.,;:!?…“”\"'»«/·%"
+private const val NO_LINE_START = "-‐‑–—)]}.,;:!?…“”\"'»«/·%" // Abweichung TEXT-10: Zeichenliste, kein UI-Text

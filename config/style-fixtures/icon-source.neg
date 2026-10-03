@@ -1,0 +1,2 @@
+Icon(Icons.Filled.Info, null)
+Text(stringResource(R.string.more))

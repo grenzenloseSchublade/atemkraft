@@ -7,7 +7,7 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Reihe gleichrangiger Buttons, deren Beschriftung nie umbricht (LAYOUT-03). Gemessen wird die
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AdaptiveButtonRow(
     modifier: Modifier = Modifier,
-    spacing: Dp = 12.dp,
+    spacing: Dp = Dimens.ListGap,
     content: @Composable () -> Unit,
 ) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->

@@ -1,0 +1,2 @@
+color.copy(alpha = SECONDARY)
+color.copy(alpha = 0.6f) // Abweichung FARBE-02: Begründung

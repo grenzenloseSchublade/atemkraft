@@ -1,0 +1,2 @@
+color.copy(alpha = 0.6f)
+color.copy(alpha = if (on) 0.8f else 1f)

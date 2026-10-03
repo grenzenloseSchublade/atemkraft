@@ -1,0 +1,4 @@
+Card(onClick = { open() }) {
+    Text("x")
+}
+HorizontalDivider()

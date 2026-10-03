@@ -1,0 +1,1 @@
+Toast.makeText(ctx, msg, Toast.LENGTH_SHORT)

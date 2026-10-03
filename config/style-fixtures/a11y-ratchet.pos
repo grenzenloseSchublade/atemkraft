@@ -1,0 +1,2 @@
+Modifier.clearAndSetSemantics { }
+Modifier.clickable(interactionSource = s, indication = null) {}

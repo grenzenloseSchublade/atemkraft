@@ -1,0 +1,3 @@
+Text(color = MaterialTheme.colorScheme.primary)
+import app.atemkraft.ui.theme.NeonCyan
+// NeonCyan im Kommentar

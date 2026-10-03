@@ -1,0 +1,1 @@
+val f = DateTimeFormatter.ofPattern("dd.MM.")

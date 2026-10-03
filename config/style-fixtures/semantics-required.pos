@@ -1,0 +1,2 @@
+Modifier.clickable { open() }
+Modifier.clickable(onClick = open)

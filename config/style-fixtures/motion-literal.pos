@@ -1,0 +1,2 @@
+animationSpec = tween(300)
+val fadeDurationMs = 180

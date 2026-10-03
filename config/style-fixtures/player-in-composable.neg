@@ -1,0 +1,1 @@
+val haptics = LocalHaptics.current

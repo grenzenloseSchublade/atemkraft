@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Atemkraft</string>
 
     <!-- Startbildschirm -->
@@ -111,7 +111,8 @@
     <string name="log_streak_none">Noch keine Serie</string>
 
     <!-- Session -->
-    <string name="session_round">Runde %1$d von %2$d</string>
+    <!-- „Runde 3 von 8“ ist eine Ordnungsangabe, kein Mengenwort: kein plurals nötig. -->
+    <string name="session_round" tools:ignore="PluralsCandidate">Runde %1$d von %2$d</string>
     <string name="session_tap_to_continue">Tippen, wenn du weiteratmen willst</string>
     <string name="session_done_title">Geschafft</string>
     <string name="session_done_question">Wie fühlst du dich?</string>

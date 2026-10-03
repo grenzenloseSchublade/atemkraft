@@ -1,0 +1,2 @@
+Button(onClick = a) {}
+Button(onClick = b) {}

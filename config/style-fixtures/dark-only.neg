@@ -1,0 +1,1 @@
+enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))

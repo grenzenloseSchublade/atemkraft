@@ -1,0 +1,2 @@
+IconButton(onClick = x) { Icon(icon, contentDescription = cd) }
+Icon(icon, contentDescription = null) // dekorativ: Text daneben

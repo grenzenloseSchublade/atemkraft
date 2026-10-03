@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Titel mit nachgestellten Chips (Evidenz-Tag, Charakter, Info). Als FlowRow: passt ein Chip
@@ -29,8 +29,8 @@ fun TitleWithChips(
 ) {
     FlowRow(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+        verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny),
     ) {
         WholeWordText(
             text = title,
@@ -44,7 +44,7 @@ fun TitleWithChips(
         // (FlowRow kennt in foundation 1.7 noch kein itemVerticalAlignment).
         Row(
             modifier = Modifier.align(Alignment.CenterVertically),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
             verticalAlignment = Alignment.CenterVertically,
             content = chips,
         )

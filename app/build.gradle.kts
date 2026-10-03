@@ -116,12 +116,28 @@ android {
         buildConfig = true
     }
 
+    // Android Lint als Gate (docs/STYLEGUIDE.md §13.1): jede Warnung ist ein Fehler. Aus sind
+    // nur Versions-Hinweise (Updates laufen über Dependabot) und ChromeOS-ABIs (bewusst nur ARM).
+    lint {
+        abortOnError = true
+        warningsAsErrors = true
+        disable += setOf("GradleDependency", "AndroidGradlePluginVersion", "NewerVersionAvailable", "ChromeOsAbiSupport")
+    }
+
     // Screenshot-Tests (Robolectric + Roborazzi) brauchen echte Ressourcen statt Stubs.
     testOptions {
         unitTests.isIncludeAndroidResources = true
         // Hohe Screenshots (bis 8000 dp bei fontScale 2,0) brauchen mehr als den Standard-Heap.
         unitTests.all { it.maxHeapSize = "4g" }
     }
+}
+
+// Regeltests lesen Baselines und Wortlisten aus config/: als Test-Eingabe registrieren, sonst
+// hält Gradle die Tests nach einer reinen Baseline-Änderung für aktuell und überspringt sie.
+tasks.withType<Test>().configureEach {
+    inputs.dir(rootProject.file("config"))
+        .withPropertyName("regelConfig")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 // Deutliche Warnung beim Paketieren statt beim Konfigurieren: So erscheint sie nur bei

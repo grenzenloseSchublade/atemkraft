@@ -1,0 +1,2 @@
+style = MaterialTheme.typography.bodyMedium
+import androidx.compose.ui.text.font.FontWeight

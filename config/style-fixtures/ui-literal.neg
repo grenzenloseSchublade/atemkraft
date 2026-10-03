@@ -1,0 +1,3 @@
+Text("$minutes:$seconds")
+Text(stringResource(R.string.expanded))
+Text(" · ")
