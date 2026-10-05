@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -24,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -48,7 +51,11 @@ import app.atemkraft.ui.theme.SECONDARY
  * Teaser ist die Tippfläche (≥ 48 dp, Rolle Button, Ausgeklappt/Eingeklappt), den Inhalt
  * zeigt der Aufrufer darunter. So bleibt ein langer Tab eine kurze Übersicht, ohne neue
  * Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt: nicht aufklappbar.
+ *
+ * [status] steht als kleines Suffix direkt hinter dem Titel („Meine Muster · 5“, Stil wie
+ * „· angepasst“, MUSTER-02); [statusDescription] ist sein Wortlaut für TalkBack.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SectionHeader(
     title: String,
@@ -57,6 +64,8 @@ fun SectionHeader(
     teaser: String? = null,
     expanded: Boolean? = null,
     onExpandedChange: (Boolean) -> Unit = {},
+    status: String? = null,
+    statusDescription: String? = null,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val toggle = if (expanded == null) {
@@ -95,12 +104,26 @@ fun SectionHeader(
                         .clip(RoundedCornerShape(2.dp))
                         .background(color),
                 )
-                WholeWordText(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = color,
-                    modifier = Modifier.weight(1f).semantics { heading() },
-                )
+                // FlowRow (LAYOUT-03): Das Suffix steht direkt hinter dem Titel und rutscht in die
+                // nächste Zeile, statt ihn zu kürzen, wenn der Platz nicht reicht.
+                FlowRow(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+                    WholeWordText(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = color,
+                        modifier = Modifier.alignByBaseline().semantics { heading() },
+                    )
+                    if (status != null) {
+                        Text(
+                            text = status,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                            modifier = Modifier.alignByBaseline().semantics {
+                                if (statusDescription != null) contentDescription = statusDescription
+                            },
+                        )
+                    }
+                }
                 if (expanded != null) ExpandCaret(expanded = expanded, tint = color)
             }
             if (teaser != null) {
@@ -138,6 +161,7 @@ private fun SectionHeaderExpandablePreview() {
             color = MaterialTheme.colorScheme.primary,
             teaser = stringResource(R.string.situations_subtitle),
             expanded = false,
+            status = stringResource(R.string.situations_my_patterns_count, 5),
         )
     }
 }

@@ -133,10 +133,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         // Feste Werte statt „heute“, damit die Bilder reproduzierbar sind.
         private val DAY = LocalDate.of(2026, 10, 3)
         private val daily = RandomPatternGenerator.forDate(DAY)
-        private val saved = listOf(
-            RandomPatternGenerator.forSeed(11),
-            RandomPatternGenerator.forSeed(42),
-        ).mapIndexed { i, p -> SavedPattern(id = i + 1L, exercise = p.exercise, spec = p.spec) }
+        private val saved = listOf(11L, 42L, 7L).map(RandomPatternGenerator::forSeed)
+            .mapIndexed { i, p -> SavedPattern(id = i + 1L, exercise = p.exercise, spec = p.spec) }
     }
 
     private val tallDp get() = (TALL_DP * fontScale).toInt()
@@ -283,9 +281,21 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
-    /** Befindens-Übersicht: alle Situationen zu (Standard), nur „Meine Muster“ offen. */
+    /** Befindens-Übersicht: alle Situationen zu (Standard); zwei Muster stehen offen, ohne Caret. */
     @Test
     fun situations() = snap("02_situationen") { SituationsContent() }
+
+    /** Drei Muster: „Meine Muster · 3“ einklappbar, Standard zu. */
+    @Test
+    fun situationsPatternsCollapsed() = snap("02_situationen_muster_zu", heightDp = device.heightDp) {
+        SituationsContent(patterns = 3)
+    }
+
+    /** Drei Muster, vom Nutzer aufgeklappt: Caret nach oben, Karten darunter. */
+    @Test
+    fun situationsPatternsExpanded() = snap("02_situationen_muster_auf", heightDp = device.heightDp) {
+        SituationsContent(patterns = 3, patternsExpanded = true)
+    }
 
     /** Eine Situation aufgeklappt – die mit den meisten Übungen, Caret zeigt nach oben. */
     @Test
@@ -319,10 +329,12 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     @Composable
-    private fun SituationsContent() {
+    private fun SituationsContent(patterns: Int = 2, patternsExpanded: Boolean = false) {
         SituationsScreen(
             recommendations = Situations.all,
-            savedPatterns = saved,
+            savedPatterns = saved.take(patterns),
+            savedPatternsExpanded = patternsExpanded,
+            onSavedPatternsExpandedChange = {},
             resolve = { id ->
                 BuiltInExercises.all.firstOrNull { it.id == id }
                     ?: saved.firstOrNull { it.exercise.id == id }?.exercise

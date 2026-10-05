@@ -86,6 +86,12 @@
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
     <string name="situations_my_patterns">Meine Muster</string>
+    <!-- Anzahl als Status-Suffix am Kopf (ab 3 Mustern, dann einklappbar); TalkBack liest die zweite Form. -->
+    <string name="situations_my_patterns_count">· %1$d</string>
+    <plurals name="cd_situations_my_patterns_count">
+        <item quantity="one">%1$d gespeichert</item>
+        <item quantity="other">%1$d gespeichert</item>
+    </plurals>
     <string name="cd_pattern_delete">Muster löschen</string>
 
     <!-- Erweiterte Einstellungen -->

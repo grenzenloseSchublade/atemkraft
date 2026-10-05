@@ -99,7 +99,104 @@ class SituationSearchTest {
         listOf(
             "Asthma", "COPD", "Depression", "Angststörung", "Panikstörung", "Bluthochdruck", "Brustschmerz",
             "Brustschmerzen", "Atemnot", "Schlafstörung", "Herzrasen", "Long Covid", "Burnout",
+            "Panikattacke", "Schwindel", "Herzklopfen", "Engegefühl", "Kribbeln",
         ).forEach { assertEquals(it, emptyList<Situation>(), find(it)) }
+    }
+
+    @Test
+    fun `Diagnose-Wortteile verlängern keinen Begriff`() {
+        // „Angst“, „Schlaf“, „Stress“ und „Erschöpfung“ sind Begriffe – ihre Diagnose-Komposita nicht.
+        listOf("Angststörung", "Angstattacke", "Schlafapnoe", "Schlafstörungen", "Stressasthma", "Erschöpfungssyndrom")
+            .forEach { assertEquals(it, emptyList<Situation>(), find(it)) }
+    }
+
+    @Test
+    fun `Puls, Medikamente, Verletzungen und Zustände verlängern keinen Begriff`() {
+        // „Ruhe“, „Schlaf“, „Sport“, „Arbeit“ und „Angst“ sind Begriffe – diese Komposita
+        // gehören zu Ärztin oder Apotheke, nicht zu einer Atemübung.
+        listOf(
+            "Ruhepuls",
+            "Schlaftabletten",
+            "Schlafmittel",
+            "Sportverletzung",
+            "Sportunfall",
+            "Arbeitsunfall",
+            "Angstzustände",
+            "Erschöpfungszustand",
+        ).forEach { assertEquals(it, emptyList<Situation>(), find(it)) }
+    }
+
+    @Test
+    fun `gebeugte und zusammengesetzte Wörter treffen den Begriff, mit dem sie beginnen`() {
+        mapOf(
+            "Ruhe" to Situation.SLEEP,
+            "Entspannung" to Situation.SLEEP,
+            "Prüfungen" to Situation.FOCUS,
+            "Prüfungsstress" to Situation.FOCUS,
+            "gestresste" to Situation.ACUTE_STRESS,
+            "Flugangst" to Situation.ACUTE_STRESS,
+            "Flugzeug" to Situation.ACUTE_STRESS,
+            "Nachtschicht" to Situation.CRASH,
+            "Bühnenangst" to Situation.BREATHLESSNESS,
+            "Müdigkeit" to Situation.CRASH,
+            "Ängste" to Situation.ACUTE_STRESS,
+            "ängstlich" to Situation.ACUTE_STRESS,
+            "Anspannung" to Situation.ACUTE_STRESS,
+            "Überforderung" to Situation.ACUTE_STRESS,
+            "Nervosität" to Situation.BREATHLESSNESS,
+            "ruhelos" to Situation.BREATHLESSNESS,
+            "Gedankenkreisen" to Situation.SLEEP,
+            "Schichtarbeit" to Situation.CRASH,
+        ).forEach { (q, s) -> assertEquals(q, listOf(s), find(q)) }
+    }
+
+    @Test
+    fun `Titel und Begründungssätze werden nicht verlängert, kurze Begriffe auch nicht`() {
+        // „Ruhig“ steht in mehreren Begründungssätzen, „Fokus“ im Titel, „Uni“ ist ein Begriff
+        // mit nur drei Buchstaben.
+        assertEquals(emptyList<Situation>(), find("ruhiges"))
+        assertEquals(emptyList<Situation>(), find("Fokusgruppe"))
+        assertEquals(emptyList<Situation>(), find("Unikat"))
+    }
+
+    @Test
+    fun `der genaueste Begriff gewinnt, wenn einer den anderen anfängt`() {
+        // „nachts“ (Einschlafen) ist der Anfang von „Nachtschicht“ (Erschöpft): Jeder Begriff
+        // landet trotzdem allein bei seiner Situation.
+        assertEquals(listOf(Situation.SLEEP), find("nachts"))
+        assertEquals(listOf(Situation.CRASH), find("Nachtschicht"))
+        assertEquals(listOf(Situation.CRASH), find("Nachtschichten"))
+        // Beide sind nur Wortanfang: Beide Situationen erscheinen, in Datenreihenfolge.
+        assertEquals(listOf(Situation.SLEEP, Situation.CRASH), find("Nacht"))
+        // „Ruhe“ (Einschlafen) fängt „ruhelos“ (Kurzatmig oder aufgeregt) an: Unruhe ist kein
+        // Wunsch nach Schlaf.
+        assertEquals(listOf(Situation.SLEEP), find("Ruhe"))
+        assertEquals(listOf(Situation.BREATHLESSNESS), find("ruhelos"))
+    }
+
+    @Test
+    fun `jeder Begriff führt als erster Treffer zu seiner eigenen Situation`() {
+        val wrong = Situations.all.flatMap { s -> s.keywords.map { it to s.situation } }
+            .filter { (k, s) -> find(k)?.firstOrNull() != s }
+            .map { (k, s) -> "$k → ${find(k)} statt $s" }
+        assertEquals(emptyList<String>(), wrong)
+    }
+
+    @Test
+    fun `kein Begriff fängt einen Begriff einer anderen Situation an, außer den belegten Ausnahmen`() {
+        // Ausnahmen löst „der genaueste Begriff gewinnt“; jede steht im Test darüber.
+        val exceptions = setOf("nachts" to "nachtschicht", "ruhe" to "ruhelos")
+        val all = Situations.all.flatMap { s -> s.keywords.map { SituationSearch.normalize(it) to s.situation } }
+        val conflicts = all.flatMap { (a, sa) ->
+            all.filter { (b, sb) -> sa != sb && b.startsWith(a) }.map { (b, _) -> a to b }
+        }.filter { it !in exceptions }
+        assertEquals(emptyList<Pair<String, String>>(), conflicts)
+    }
+
+    @Test
+    fun `die Warn-Situation erscheint nie über einen Begriff`() {
+        val hits = Situations.all.flatMap { it.keywords }.filter { k -> warn.any { it.situation in find(k)!! } }
+        assertEquals(emptyList<String>(), hits)
     }
 
     @Test

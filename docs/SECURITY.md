@@ -53,7 +53,7 @@ Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, kein
 |---|---|---|---|---|
 | Room `log_entries` | Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | ja (ab Android 12) / nein | „Logbuch leeren“, App-Speicher löschen |
 | Room `saved_patterns` | Name und Phasenlängen eigener Muster | niedrig | ja (ab Android 12) / ja (mit Anpassung) | einzeln löschen |
-| DataStore `settings` | Einstellungen, Anpassungen pro Übung | niedrig | ja (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
+| DataStore `settings` | Einstellungen, Anpassungen pro Übung, Aufklapp-Zustand „Meine Muster“ (`saved_patterns_expanded`) | niedrig | ja (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
 | `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB) | keine | nein / nein | „Stimme löschen“ |
 | `cache/` | Teil-Download | keine | nein / nein | beim nächsten Download-Versuch; Android leert `cache/` bei Speichermangel |
 | Activity-Zustand (flüchtig, `rememberSaveable`) | Suchtext der Befindens-Suche (SEC-PRIV-06) | gesundheitsnah | nein / nein | Suche schließen (X, Zurück, „Alle zeigen“), App beenden |

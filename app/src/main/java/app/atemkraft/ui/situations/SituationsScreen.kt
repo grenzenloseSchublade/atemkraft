@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -62,8 +63,11 @@ import app.atemkraft.ui.theme.WarnAmber
 /**
  * Situationen-Tab: „welche Atmung wann“ als Befindens-Übersicht. Gleiche Optik wie der Atmen-Tab
  * (Abschnitts-Header + Übungs-Karten), nur nach Lage gruppiert – mit Begründungssatz als
- * Entscheidungshilfe. Die Situationen sind aufklappbar und starten zu; „Meine Muster“ steht
- * offen darüber, weil man sie selbst angelegt hat und direkt wiederfinden will.
+ * Entscheidungshilfe. Die Situationen sind aufklappbar und starten zu. „Meine Muster“ steht
+ * darüber: bis zwei Muster immer offen (man hat sie selbst angelegt und will sie direkt
+ * wiederfinden), ab [SAVED_PATTERNS_FOLD_FROM] einklappbar mit Anzahl im Kopf, damit sie die
+ * Befinden nicht nach unten schieben. Diesen Zustand hält die App dauerhaft
+ * ([savedPatternsExpanded] aus DataStore, Standard zu; [savedPatternsShownExpanded]).
  *
  * Befindens-Suche (MUSTER-09): Die Lupe im Kopf ersetzt den Untertitel durch ein Suchfeld.
  * Sobald die Eingabe ein Suchwort enthält ([SituationSearch]), stehen nur die passenden
@@ -75,6 +79,8 @@ import app.atemkraft.ui.theme.WarnAmber
 fun SituationsScreen(
     recommendations: List<SituationRecommendation>,
     savedPatterns: List<SavedPattern>,
+    savedPatternsExpanded: Boolean,
+    onSavedPatternsExpandedChange: (Boolean) -> Unit,
     resolve: (String) -> Exercise?,
     onSelect: (String) -> Unit,
     onDeleteSaved: (Long) -> Unit,
@@ -159,17 +165,13 @@ fun SituationsScreen(
             } else {
                 // Vom Nutzer gespeicherte generierte Muster – bewusst hier (nicht im Atmen-Tab).
                 if (savedPatterns.isNotEmpty()) {
-                    item(key = "my-patterns-header") {
-                        SectionHeader(
-                            title = stringResource(R.string.situations_my_patterns),
-                            color = NeonCyan,
-                        )
-                    }
-                    items(savedPatterns, key = { "saved-" + it.id }) { pattern ->
-                        SavedPatternCard(
-                            pattern = pattern,
-                            onClick = { onSelect(pattern.exercise.id) },
-                            onDelete = { onDeleteSaved(pattern.id) },
+                    item(key = "my-patterns") {
+                        SavedPatternsSection(
+                            patterns = savedPatterns,
+                            expanded = savedPatternsShownExpanded(savedPatterns.size, savedPatternsExpanded),
+                            onExpandedChange = onSavedPatternsExpandedChange,
+                            onSelect = onSelect,
+                            onDelete = onDeleteSaved,
                         )
                     }
                 }
@@ -182,6 +184,54 @@ fun SituationsScreen(
             }
 
             item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+        }
+    }
+}
+
+/** Ab so vielen gespeicherten Mustern ist „Meine Muster“ einklappbar. */
+const val SAVED_PATTERNS_FOLD_FROM = 3
+
+/**
+ * Wie „Meine Muster“ bei [count] Mustern erscheint: `null` = nicht einklappbar (immer offen,
+ * ohne Caret), sonst offen bzw. zu nach der gespeicherten Wahl [stored]. Fällt die Zahl unter
+ * [SAVED_PATTERNS_FOLD_FROM], bleibt [stored] unangetastet und gilt wieder, sobald es mehr werden.
+ */
+fun savedPatternsShownExpanded(count: Int, stored: Boolean): Boolean? = if (count < SAVED_PATTERNS_FOLD_FROM) null else stored
+
+/**
+ * „Meine Muster“: Kopf und Karten in einer Spalte, damit das Ein- und Ausklappen die Höhe
+ * animiert wie bei den Situationen. [expanded] siehe [savedPatternsShownExpanded].
+ */
+@Composable
+private fun SavedPatternsSection(
+    patterns: List<SavedPattern>,
+    expanded: Boolean?,
+    onExpandedChange: (Boolean) -> Unit,
+    onSelect: (String) -> Unit,
+    onDelete: (Long) -> Unit,
+) {
+    Column(
+        modifier = Modifier.animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+    ) {
+        SectionHeader(
+            title = stringResource(R.string.situations_my_patterns),
+            color = NeonCyan,
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
+            status = expanded?.let { stringResource(R.string.situations_my_patterns_count, patterns.size) },
+            statusDescription = expanded?.let { pluralStringResource(R.plurals.cd_situations_my_patterns_count, patterns.size, patterns.size) },
+        )
+        if (expanded != false) {
+            patterns.forEach { pattern ->
+                key(pattern.id) {
+                    SavedPatternCard(
+                        pattern = pattern,
+                        onClick = { onSelect(pattern.exercise.id) },
+                        onDelete = { onDelete(pattern.id) },
+                    )
+                }
+            }
         }
     }
 }

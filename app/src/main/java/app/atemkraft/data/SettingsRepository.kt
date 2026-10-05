@@ -62,6 +62,17 @@ class SettingsRepository(private val context: Context) {
         val MED_SPEECH = booleanPreferencesKey("med_speech")
         val MED_NEURAL_VOICE = stringPreferencesKey("med_neural_voice") // VoiceCatalog.id; leer = keine
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
+        val SAVED_PATTERNS_EXPANDED = booleanPreferencesKey("saved_patterns_expanded") // „Meine Muster“ offen
+    }
+
+    /**
+     * Zuletzt gewählter Aufklapp-Zustand von „Meine Muster“ im Situationen-Tab. Gilt erst ab
+     * drei gespeicherten Mustern; nicht gesetzt = zu.
+     */
+    val savedPatternsExpanded: Flow<Boolean> = context.dataStore.data.map { it[Keys.SAVED_PATTERNS_EXPANDED] ?: false }
+
+    suspend fun setSavedPatternsExpanded(expanded: Boolean) {
+        context.dataStore.edit { it[Keys.SAVED_PATTERNS_EXPANDED] = expanded }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

@@ -140,6 +140,10 @@ private fun AtemkraftApp() {
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val showNextPhase by container.settingsRepository.showNextPhase
         .collectAsStateWithLifecycle(initialValue = true)
+    // Hier oben gesammelt (nicht erst im Tab), damit der gespeicherte Zustand beim ersten
+    // Öffnen der Situationen schon da ist und „Meine Muster“ nicht sichtbar umspringt.
+    val savedPatternsExpanded by container.settingsRepository.savedPatternsExpanded
+        .collectAsStateWithLifecycle(initialValue = false)
 
     val meditationController = container.meditationController
     val meditationState by meditationController.state.collectAsStateWithLifecycle()
@@ -317,6 +321,10 @@ private fun AtemkraftApp() {
                     SituationsScreen(
                         recommendations = Situations.all,
                         savedPatterns = savedPatterns,
+                        savedPatternsExpanded = savedPatternsExpanded,
+                        onSavedPatternsExpandedChange = { expanded ->
+                            scope.launch { container.settingsRepository.setSavedPatternsExpanded(expanded) }
+                        },
                         resolve = { id -> container.exerciseRepository.byId(id) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
                         onDeleteSaved = { id ->
