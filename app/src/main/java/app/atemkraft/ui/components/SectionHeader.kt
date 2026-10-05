@@ -52,8 +52,9 @@ import app.atemkraft.ui.theme.SECONDARY
  * zeigt der Aufrufer darunter. So bleibt ein langer Tab eine kurze Übersicht, ohne neue
  * Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt: nicht aufklappbar.
  *
- * [status] steht als kleines Suffix direkt hinter dem Titel („Meine Muster · 5“, Stil wie
- * „· angepasst“, MUSTER-02); [statusDescription] ist sein Wortlaut für TalkBack.
+ * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Meine Muster · 5“):
+ * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
+ * TalkBack.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -116,7 +117,7 @@ fun SectionHeader(
                     if (status != null) {
                         Text(
                             text = status,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                             modifier = Modifier.alignByBaseline().semantics {
                                 if (statusDescription != null) contentDescription = statusDescription
