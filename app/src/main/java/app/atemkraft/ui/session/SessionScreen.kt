@@ -50,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -72,6 +73,7 @@ import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -180,14 +182,16 @@ private fun ActiveContent(
                 state.patternHint?.let { hint ->
                     var hintVisible by rememberSaveable { mutableStateOf(false) }
                     val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                    val hintState = expandedStateText(hintVisible)
                     Row(
                         modifier = Modifier
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
+                                role = Role.Button,
                             ) { hintVisible = !hintVisible }
                             .semantics {
-                                stateDescription = if (hintVisible) "Erweitert" else "Eingeklappt"
+                                stateDescription = hintState
                             }
                             // 48-dp-Mindest-Touch-Target (Bedienung mitten in der Session).
                             .heightIn(min = Dimens.MinTouchTarget)

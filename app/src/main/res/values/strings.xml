@@ -72,6 +72,8 @@
     <string name="cd_pattern_save">Muster speichern</string>
     <string name="state_saved">Gespeichert</string>
     <string name="state_not_saved">Nicht gespeichert</string>
+    <string name="state_expanded">Ausgeklappt</string>
+    <string name="state_collapsed">Eingeklappt</string>
     <string name="situations_my_patterns">Meine Muster</string>
     <string name="cd_pattern_delete">Muster löschen</string>
 

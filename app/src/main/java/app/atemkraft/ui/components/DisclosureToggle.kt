@@ -1,21 +1,15 @@
 package app.atemkraft.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.ui.theme.Dimens
@@ -32,19 +26,15 @@ fun DisclosureToggle(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "caret")
+    val state = expandedStateText(expanded)
     TextButton(
         onClick = onToggle,
         modifier = modifier.heightIn(min = Sizes.ButtonHeight).semantics {
-            stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
+            stateDescription = state
         },
         contentPadding = PaddingValues(vertical = Dimens.GapTiny),
     ) {
-        Icon(
-            imageVector = Icons.Filled.KeyboardArrowDown,
-            contentDescription = null,
-            modifier = Modifier.rotate(rotation).size(Sizes.IconInButton),
-        )
+        ExpandCaret(expanded = expanded, tint = LocalContentColor.current, size = Sizes.IconInButton)
         Spacer(Modifier.width(Dimens.GapTiny))
         Text(text, style = MaterialTheme.typography.labelLarge)
     }

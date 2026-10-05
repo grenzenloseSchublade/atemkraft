@@ -1,7 +1,6 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,11 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,13 +19,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.Sizes
 
 /**
  * Wiederverwendbarer Inline-Expander (Progressive Disclosure): Titel + Appetizer, tippbar zum
@@ -38,7 +32,7 @@ import app.atemkraft.ui.theme.Sizes
  * Wirkung und Sicherheit als geschlossenen Satz (TEXT-06, -08, LAYOUT-03). [content] erscheint
  * aufgeklappt darunter und vertieft ihn. Ohne [content] gibt es nichts aufzuklappen: dann
  * ein schlichter Abschnitt ohne Caret und ohne Klick. Caret dreht sich, sanftes
- * Größen-Animieren, TalkBack bekommt Überschrift + Erweitert/Eingeklappt.
+ * Größen-Animieren, TalkBack bekommt Überschrift, Rolle Button und Ausgeklappt/Eingeklappt.
  */
 @Composable
 fun ExpanderSection(
@@ -51,7 +45,7 @@ fun ExpanderSection(
 ) {
     val expandable = content != null
     var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
-    val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "caret")
+    val state = expandedStateText(expanded)
 
     Column(modifier = modifier.fillMaxWidth().animateContentSize()) {
         Row(
@@ -60,14 +54,14 @@ fun ExpanderSection(
                 // Eigene Klickfläche: Mindesthöhe unabhängig vom (kompakten) Padding.
                 .then(
                     if (expandable) {
-                        Modifier.heightIn(min = Dimens.MinTouchTarget).clickable { expanded = !expanded }
+                        Modifier.heightIn(min = Dimens.MinTouchTarget).clickable(role = Role.Button) { expanded = !expanded }
                     } else {
                         Modifier
                     },
                 )
                 .semantics {
                     heading()
-                    if (expandable) stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
+                    if (expandable) stateDescription = state
                 }
                 .padding(vertical = Dimens.ListGap),
             verticalAlignment = Alignment.CenterVertically,
@@ -88,12 +82,7 @@ fun ExpanderSection(
                 )
             }
             if (expandable) {
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.rotate(rotation).size(Sizes.IconDefault),
-                )
+                ExpandCaret(expanded = expanded, tint = accent)
             }
         }
         if (expanded && content != null) {

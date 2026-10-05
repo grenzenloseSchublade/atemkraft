@@ -280,8 +280,21 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
+    /** Befindens-Übersicht: alle Situationen zu (Standard), nur „Meine Muster“ offen. */
     @Test
-    fun situations() = snap("02_situationen") {
+    fun situations() = snap("02_situationen") { SituationsContent() }
+
+    /** Eine Situation aufgeklappt – die mit den meisten Übungen, Caret zeigt nach oben. */
+    @Test
+    fun situationsExpanded() {
+        val widest = Situations.all.maxBy { it.exerciseIds.size }
+        snap("02_situationen_aufgeklappt", prepare = {
+            compose.onNodeWithText(widest.title).performClick()
+        }) { SituationsContent() }
+    }
+
+    @Composable
+    private fun SituationsContent() {
         SituationsScreen(
             recommendations = Situations.all,
             savedPatterns = saved,

@@ -1,5 +1,6 @@
 package app.atemkraft.ui.situations
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -42,8 +47,10 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
 
 /**
- * Situationen-Tab: „welche Atmung wann". Gleiche Optik wie der Atmen-Tab (Abschnitts-Header +
- * Übungs-Karten), nur nach Lage gruppiert – mit Begründungssatz als Entscheidungshilfe.
+ * Situationen-Tab: „welche Atmung wann“ als Befindens-Übersicht. Gleiche Optik wie der Atmen-Tab
+ * (Abschnitts-Header + Übungs-Karten), nur nach Lage gruppiert – mit Begründungssatz als
+ * Entscheidungshilfe. Die Situationen sind aufklappbar und starten zu; „Meine Muster“ steht
+ * offen darüber, weil man sie selbst angelegt hat und direkt wiederfinden will.
  */
 @Composable
 fun SituationsScreen(
@@ -87,22 +94,29 @@ fun SituationsScreen(
                 }
             }
 
-            recommendations.forEach { rec ->
-                item(key = "h-${rec.situation.name}") {
-                    val accent = if (rec.warn) WarnAmber else MaterialTheme.colorScheme.primary
-                    SectionHeader(title = rec.title, color = accent)
-                    Text(
-                        text = rec.rationale,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                        modifier = Modifier.padding(bottom = Dimens.GapTiny),
+            // Jede Situation ist eine aufklappbare Zeile (Titel + Begründung); die Übungen stehen
+            // erst nach dem Antippen da. Standard: alle zu – so liest sich der Tab als kurze
+            // Befindens-Übersicht statt als langes Scrollen. rememberSaveable im Lazy-Item hält
+            // den Zustand über Scrollen, Tab-Wechsel und Drehen.
+            items(recommendations, key = { "s-${it.situation.name}" }) { rec ->
+                var expanded by rememberSaveable { mutableStateOf(false) }
+                val accent = if (rec.warn) WarnAmber else MaterialTheme.colorScheme.primary
+                Column(
+                    modifier = Modifier.animateContentSize(),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+                ) {
+                    SectionHeader(
+                        title = rec.title,
+                        color = accent,
+                        teaser = rec.rationale,
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it },
                     )
-                }
-                items(
-                    items = rec.exerciseIds.mapNotNull(resolve),
-                    key = { "${rec.situation.name}-${it.id}" },
-                ) { exercise ->
-                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) })
+                    if (expanded) {
+                        rec.exerciseIds.mapNotNull(resolve).forEach { exercise ->
+                            ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) })
+                        }
+                    }
                 }
             }
 
