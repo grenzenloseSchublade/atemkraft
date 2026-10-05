@@ -22,12 +22,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,14 +55,18 @@ import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.AdaptiveButtonRow
+import app.atemkraft.ui.components.AppIconButton
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 import kotlinx.coroutines.flow.first
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
@@ -204,7 +205,7 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, status: DataSta
 /** Button der Daten-Karte; das Label wechselt zum Ergebnis und wird angesagt. */
 @Composable
 private fun DataButton(label: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+    AppTextButton(onClick = onClick, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
         Text(label)
     }
 }
@@ -239,9 +240,8 @@ private fun TonCard(
                 SubLabel(stringResource(R.string.settings_gong_length))
                 Spacer(Modifier.weight(1f))
                 // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut tippen).
-                val cdGong = stringResource(R.string.cd_gong_preview)
-                IconButton(onClick = onPreviewGong, modifier = Modifier.semantics { contentDescription = cdGong }) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                AppIconButton(onClick = onPreviewGong) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_gong_preview))
                 }
             }
             SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong) { long ->
@@ -329,11 +329,19 @@ private fun SessionCard(
             Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny))
-            ToggleRow(stringResource(R.string.settings_safety), showSafetyWarning, onToggleSafety)
-            Hint(stringResource(R.string.settings_safety_hint))
+            ToggleRow(
+                label = stringResource(R.string.settings_safety),
+                checked = showSafetyWarning,
+                onCheckedChange = onToggleSafety,
+                hint = stringResource(R.string.settings_safety_hint),
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny))
-            ToggleRow(stringResource(R.string.settings_next_phase), showNextPhase, onToggleNextPhase)
-            Hint(stringResource(R.string.settings_next_phase_hint))
+            ToggleRow(
+                label = stringResource(R.string.settings_next_phase),
+                checked = showNextPhase,
+                onCheckedChange = onToggleNextPhase,
+                hint = stringResource(R.string.settings_next_phase_hint),
+            )
         }
     }
 }
@@ -418,20 +426,18 @@ private fun VoiceRow(
         }
 
         // Vorhören (funktioniert immer, auch vor dem Download).
-        val cdSample = stringResource(R.string.cd_voice_preview)
-        IconButton(onClick = onSample, modifier = Modifier.semantics { contentDescription = cdSample }) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+        AppIconButton(onClick = onSample) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_voice_preview))
         }
 
         when (state) {
             is VoiceDownloadState.Downloading -> {
-                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = 2.dp)
                 // Abbrechen: delete() bricht den laufenden Download-Job ab und räumt Reste weg.
-                val cdCancel = stringResource(R.string.cd_voice_cancel)
-                IconButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = cdCancel }) {
+                AppIconButton(onClick = onDelete) {
                     Icon(
                         Icons.Filled.Close,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_voice_cancel),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                     )
                 }
@@ -448,23 +454,22 @@ private fun VoiceRow(
                     )
 
                     active && !engineReady ->
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = 2.dp)
 
                     else ->
-                        TextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
+                        AppTextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
                 }
-                val cdDelete = stringResource(R.string.cd_voice_delete)
-                IconButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = cdDelete }) {
+                AppIconButton(onClick = onDelete) {
                     Icon(
                         Icons.Filled.Delete,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_voice_delete),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                     )
                 }
             }
 
             else -> // NotDownloaded / Failed
-                TextButton(onClick = onDownload) { Text(stringResource(R.string.settings_voice_download)) }
+                AppTextButton(onClick = onDownload) { Text(stringResource(R.string.settings_voice_download)) }
         }
     }
 }
@@ -542,24 +547,5 @@ private fun NavRow(label: String, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
             )
         }
-    }
-}
-
-@Composable
-private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = Dimens.GapTiny),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        WholeWordText(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

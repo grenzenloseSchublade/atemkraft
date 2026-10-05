@@ -5,14 +5,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SingleChoiceSegmentedButtonRowScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Einheitliche Einfachauswahl – ersetzt die mehrfach kopierten
@@ -45,11 +50,7 @@ fun <T> SegmentedChoiceRow(
         val needed = subcompose("probe") {
             items.forEachIndexed { index, item ->
                 SingleChoiceSegmentedButtonRow {
-                    SegmentedButton(
-                        selected = true,
-                        onClick = {},
-                        shape = SegmentedButtonDefaults.itemShape(index, items.size),
-                    ) { Text(label(item), maxLines = 1) }
+                    Segment(label(item), selected = true, onClick = {}, index = index, count = items.size)
                 }
             }
         }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
@@ -59,11 +60,7 @@ fun <T> SegmentedChoiceRow(
             if (fits) {
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     items.forEachIndexed { index, item ->
-                        SegmentedButton(
-                            selected = item == selected,
-                            onClick = { onSelect(item) },
-                            shape = SegmentedButtonDefaults.itemShape(index, items.size),
-                        ) { Text(label(item), maxLines = 1) }
+                        Segment(label(item), selected = item == selected, onClick = { onSelect(item) }, index = index, count = items.size)
                     }
                 }
             } else {
@@ -72,7 +69,7 @@ fun <T> SegmentedChoiceRow(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 48.dp)
+                                .heightIn(min = Dimens.MinTouchTarget)
                                 .selectable(
                                     selected = item == selected,
                                     onClick = { onSelect(item) },
@@ -80,7 +77,12 @@ fun <T> SegmentedChoiceRow(
                                 ),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            RadioButton(selected = item == selected, onClick = null)
+                            // Nur Anzeige (Tippfläche trägt die Zeile), deshalb verkleinert wie der Switch.
+                            RadioButton(
+                                selected = item == selected,
+                                onClick = null,
+                                modifier = Modifier.scaledLayout(Sizes.ControlScale),
+                            )
                             Spacer(Modifier.width(Dimens.GapSmall))
                             Text(
                                 text = label(item),
@@ -101,4 +103,31 @@ fun <T> SegmentedChoiceRow(
             }
         }
     }
+}
+
+/** Ein Segment; Probe und Anzeige nutzen dasselbe, damit die Breitenmessung stimmt. */
+@Composable
+private fun SingleChoiceSegmentedButtonRowScope.Segment(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    index: Int,
+    count: Int,
+) {
+    SegmentedButton(
+        selected = selected,
+        onClick = onClick,
+        shape = SegmentedButtonDefaults.itemShape(index, count),
+        modifier = Modifier.heightIn(min = Sizes.ButtonHeight),
+        icon = {
+            // activeContent benannt: ein nachgestelltes Lambda wäre inactiveContent und setzte
+            // das Häkchen an die NICHT gewählten Segmente.
+            SegmentedButtonDefaults.Icon(
+                active = selected,
+                activeContent = {
+                    Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(Sizes.IconInButton)) // dekorativ: Zustand trägt die Rolle RadioButton
+                },
+            )
+        },
+    ) { Text(text, maxLines = 1) }
 }

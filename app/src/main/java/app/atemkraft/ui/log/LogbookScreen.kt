@@ -21,7 +21,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
@@ -135,7 +135,7 @@ private fun StatsCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                         modifier = Modifier.align(Alignment.CenterVertically),
                     )
-                    TextButton(onClick = onClear) { Text(stringResource(R.string.log_clear)) }
+                    AppTextButton(onClick = onClear) { Text(stringResource(R.string.log_clear)) }
                 }
             }
         }

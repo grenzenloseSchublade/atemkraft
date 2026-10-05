@@ -18,7 +18,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,6 +28,7 @@ import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
@@ -182,14 +182,14 @@ private fun DailyPatternCard(
             // im Situationen-Tab unter „Meine Muster" – der Atmen-Tab bleibt schlank.
             // FlowRow: bei großer Schrift rutscht „Neu generieren“ unter „Speichern“ (LAYOUT-03).
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onSave, enabled = !saved) {
+                AppTextButton(onClick = onSave, enabled = !saved) {
                     Text(
                         stringResource(
                             if (saved) R.string.daily_pattern_saved else R.string.daily_pattern_save,
                         ),
                     )
                 }
-                TextButton(onClick = onRegenerate) {
+                AppTextButton(onClick = onRegenerate) {
                     Text(stringResource(R.string.daily_pattern_regenerate))
                 }
             }

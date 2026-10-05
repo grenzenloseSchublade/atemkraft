@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +39,7 @@ import app.atemkraft.ui.theme.SessionButtonCyan
 import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
+import app.atemkraft.ui.theme.Sizes
 import kotlinx.coroutines.delay
 
 // Geteilte Bausteine der Vollbild-Sitzungen (Atem-Session UND Meditation): Glow-Schrift,
@@ -67,7 +69,7 @@ fun GlowText(
 }
 
 // Schmaler als der M3-Standard (24 dp): Drei Buttons passen so auch bei fontScale 1,3 auf
-// 360 dp in eine Zeile. Die Höhe (≥ 48 dp Touch-Ziel) bleibt unverändert.
+// 360 dp in eine Zeile. Sichtbare Höhe Sizes.ButtonHeight, Tippfläche weiter 48 dp.
 private val SessionButtonPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall)
 
 /** Gefüllter Primär-Button (Pause/Weiter, Nochmal) im Session-Cyan. */
@@ -80,7 +82,7 @@ fun SessionPrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.heightIn(min = Sizes.ButtonHeight),
         enabled = enabled,
         contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.buttonColors(
@@ -102,7 +104,7 @@ fun SessionSecondaryButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.heightIn(min = Sizes.ButtonHeight),
         enabled = enabled,
         contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.outlinedButtonColors(
@@ -122,7 +124,7 @@ fun SessionStopButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.heightIn(min = Sizes.ButtonHeight),
         contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonPink),
         border = BorderStroke(1.dp, SessionButtonPink),

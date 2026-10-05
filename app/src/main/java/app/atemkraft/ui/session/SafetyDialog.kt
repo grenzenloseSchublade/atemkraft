@@ -8,11 +8,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import app.atemkraft.R
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.theme.Dimens
 
 /** Blockierender Sicherheits-Hinweis vor intensiven Übungen (Wim Hof, Feueratmung). */
@@ -36,8 +36,8 @@ fun SafetyDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.safety_confirm)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.safety_dismiss)) } },
+        confirmButton = { AppTextButton(onClick = onConfirm) { Text(stringResource(R.string.safety_confirm)) } },
+        dismissButton = { AppTextButton(onClick = onDismiss) { Text(stringResource(R.string.safety_dismiss)) } },
         properties = DialogProperties(dismissOnClickOutside = false),
     )
 }

@@ -20,7 +20,7 @@ Stand: v1.5.1 + Fix-Durchgang (Basis `2a1cb20`), 2026-10-01. Sicherheit, Datensc
 |---|---|---|---|---|
 | META-01 | MUSS | Fügt ein Commit ein Token in `src/ui/theme/**` hinzu oder entfernt eines, oder ändert er die Signatur einer öffentlichen `fun` in `src/ui/components/**`, ändert er auch diesen Guide (sonst Trailer `Guide: n/a` mit Grund). Ein behobener Backlog-Punkt und seine Baseline-Einträge fallen im selben Commit weg. | Guide und Baselines driften sonst. | auto: `guide-sync`, `baseline-stale` |
 
-**Kurz-Checkliste neuer Screen / Änderung:** Tokens statt Literale (FARBE-01, LAYOUT-01, TYPO-01, MOTION-04) · vorhandene Komponente, neue Kontrollen integriert (KOMP-01, PRIN-03) · Name, Rolle, Zustand, Überschrift, sichtbarer Fokus (A11Y-01, -07) · kein Text in fester Höhe, fontScale 2,0 und Querformat geprüft (LAYOUT-03) · Kontrast nach Alpha-Mischen (FARBE-03) · Texte in `strings.xml`/`src/data/`, „…“, Laiensprache, ohne Heilversprechen (TEXT-01, -05, -09, -10) · Löschen zweistufig im Element (MUSTER-05) · `scripts/check.sh` grün.
+**Kurz-Checkliste neuer Screen / Änderung:** Tokens statt Literale (FARBE-01, LAYOUT-01, TYPO-01, MOTION-04) · vorhandene Komponente, neue Kontrollen integriert, Bedienelemente nur über die Wrapper aus §5.1 (KOMP-01, -04, PRIN-03, LAYOUT-04) · Name, Rolle, Zustand, Überschrift, sichtbarer Fokus (A11Y-01, -07) · kein Text in fester Höhe, fontScale 2,0 und Querformat geprüft (LAYOUT-03) · Kontrast nach Alpha-Mischen (FARBE-03) · Texte in `strings.xml`/`src/data/`, „…“, Laiensprache, ohne Heilversprechen (TEXT-01, -05, -09, -10) · Löschen zweistufig im Element (MUSTER-05) · `scripts/check.sh` grün.
 
 ## <a id="prinzipien"></a>1 Prinzipien
 
@@ -115,7 +115,7 @@ Größen in sp (Schrift/Zeile), **effektiv nach `TEXT_SCALE` = 0,75** in `Type.k
 
 ### 4.1 Abstände ([Dimens.kt](../app/src/main/java/app/atemkraft/ui/theme/Dimens.kt)), Raster 4 dp
 
-Seit `TEXT_SCALE` 0,75 eine Stufe kompakter (Nutzerentscheidung 2026-10-05), damit Luft und Schrift im Verhältnis bleiben; Wert vor der Umstellung in Klammern. Streu-Literale für Abstände gibt es in `src/ui/` nicht mehr (LAYOUT-01). Touch-Ziele hängen nie an diesen Werten: Eigene klickbare Flächen tragen `heightIn(min = MinTouchTarget)`.
+Seit `TEXT_SCALE` 0,75 eine Stufe kompakter (Nutzerentscheidung 2026-10-05), damit Luft und Schrift im Verhältnis bleiben; Wert vor der Umstellung in Klammern. Streu-Literale für Abstände gibt es in `src/ui/` nicht mehr (LAYOUT-01). Touch-Ziele hängen nie an diesen Werten: Eigene klickbare Flächen tragen `heightIn(min = MinTouchTarget)`; die Optik der Bedienelemente kommt aus §4.2.
 
 | Token | dp | Rolle |
 |---|---|---|
@@ -128,16 +128,29 @@ Seit `TEXT_SCALE` 0,75 eine Stufe kompakter (Nutzerentscheidung 2026-10-05), dam
 | `GapSmall` / `GapTiny` / `GapHairline` | 8 / 4 / 2 | Label → Steuerung / Hint, Icon ↔ Text / Eyebrow → Titel, enge Divider |
 | `MinTouchTarget` | 48 | Mindesthöhe eigener klickbarer Flächen |
 
-### 4.2 Größen (*neu*: `object Sizes` in `src/ui/theme/`)
+### 4.2 Größen ([Sizes.kt](../app/src/main/java/app/atemkraft/ui/theme/Sizes.kt))
 
-| Token | Wert | Verwendung |
-|---|---|---|
-| `IconSmall` / `IconInButton` / `IconDefault` | 16 / 20 / 24 dp | inline / in Buttons / Standard |
-| `BorderThin` / `ProgressStroke` / `RingStroke` | 1 / 2 / 2,5 dp | Rand und Divider / Spinner / Meditations-Ring |
-| `ProgressInline` / `PauseFlashSize` | 20 / 150 dp | Inline-Spinner / Tap-Flash-Glyph |
-| `PinnedBarElevation` / `MiniBarMinHeight` / `ContentMaxWidth` | 3 / 60 / 600 dp | gepinnte Startleiste / Now-Playing-Leiste / NavHost-Breite |
-| `DotSmall` / `DotLarge` / `AccentBarWidth` × `Height` | 10 / 18 / 4 dp × Schriftgröße `headlineSmall` | Log-Punkt / Wochenpunkt / SectionHeader-Balken (Höhe folgt der Schrift) |
-| `CircleMaxWidthFraction` / `HeightFraction` | 0,9 / 0,62 | Atemkreis |
+**Bedienelemente folgen der Schrift** (Nutzerentscheidung 2026-10-05: mitwachsend, ganze dp, vorerst ohne 4-dp-Raster). Sichtbare Größe = M3-Wert × k, auf ganze dp gerundet; `k = controlScale(fontScale)` = `TEXT_SCALE` × Systemschrift, begrenzt auf 0,8 … 1,0. So stehen Bedienelement und Beschriftung im M3-Verhältnis (Button 40 dp zu `labelLarge` 14 sp), bei großer Systemschrift erreichen sie wieder die M3-Größe statt neben dem Text zu verschwinden. Die **Tippfläche wird nie skaliert**: `Dimens.MinTouchTarget` 48 (A11Y-05). Gesetzt werden die Tokens nur in `src/ui/components/` (LAYOUT-04), an M3-Elementen nur als `heightIn(min = …)` (LAYOUT-06).
+
+| Systemschrift | 1,0 | 1,1 (A54) | 1,3 | 2,0 |
+|---|---|---|---|---|
+| k | 0,8 | 0,825 | 0,975 | 1,0 |
+
+| Token | M3 | dp bei 1,0 / 1,1 / 1,3 / 2,0 | Verwendung |
+|---|---|---|---|
+| `ControlScale` | 1 | k | `scaledLayout` für Switch (`ToggleRow`) und Radio (`SegmentedChoiceRow`) |
+| `ButtonHeight` | 40 | 32 / 33 / 39 / 40 | Mindesthöhe: Start und Reset, `Session*Button`, `AppTextButton`, `DisclosureToggle`, Segmente |
+| `ChipHeight` | 32 | 26 / 26 / 31 / 32 | `SelectChip` |
+| `IconButtonSize` | 40 | 32 / 33 / 39 / 40 | Kreis von `AppIconButton` und den Stepper-Knöpfen |
+| `IconDefault` | 24 | 19 / 20 / 23 / 24 | Icon in `AppIconButton` (Zurück, Zahnrad, Anhören, Löschen), Expander-Caret, Mini-Leiste |
+| `IconInButton` | 18 | 14 / 15 / 18 / 18 | Icon neben Beschriftung: Reset, Segment-Häkchen, `DisclosureToggle`-Caret |
+| `IconSmall` | 16 | 13 / 13 / 16 / 16 | Info-Icon „Anleitung“ in der Session |
+| `ProgressInline` | 20 | 16 / 17 / 20 / 20 | Lade-Kreis in der Stimmenliste |
+| `StepperValueMinWidth` | 48 | 38 / 40 / 47 / 48 | Wertfeld des Steppers (kein Touch-Ziel) |
+
+Nicht skaliert: `NavigationBar` (M3 1.3.1: Höhe 80, Indikator 64 × 32 fest, S-37) und die Icons von `OverlayChrome` in der laufenden Sitzung (bewusst M3, Bedienung mit halb geschlossenen Augen). Die Mini-Leiste hat keine eigene Höhe mehr (`MinTouchTarget`, vorher 60 dp mit Leerraum).
+
+*Geplant* (S-29, heute noch Literale): `BorderThin` / `ProgressStroke` / `RingStroke` 1 / 2 / 2,5 dp · `PauseFlashSize` 150 · `PinnedBarElevation` 3 · `ContentMaxWidth` 600 · `DotSmall` / `DotLarge` / `AccentBarWidth` 10 / 18 / 4 dp (Balkenhöhe folgt `headlineSmall`) · `CircleMaxWidthFraction` / `HeightFraction` 0,9 / 0,62.
 
 ### 4.3 Formen und Screen-Gerüst
 
@@ -159,6 +172,10 @@ Seit `TEXT_SCALE` 0,75 eine Stufe kompakter (Nutzerentscheidung 2026-10-05), dam
 | LAYOUT-01 | MUSS | Abstände nur über `Dimens`, Größen über `Sizes`, Formen über `MaterialTheme.shapes.*` oder `CircleShape`. Keine `.dp`-Literale (außer `0.dp`) und kein `RoundedCornerShape`/`CutCornerShape` außerhalb `src/ui/theme/`. Nie eckige Schnitte. | 160 Literale, 36 davon nicht auf dem Raster; zwei Chip-Radien. | auto: `layout-literal` |
 | LAYOUT-02 | MUSS | Screens folgen dem Gerüst §4.3: Karte ↔ Karte immer `ListGap`, `SectionGap` nur zwischen Blöcken verschiedenen Typs. Insets nur über `Scaffold`-`innerPadding` oder `safeDrawingPadding()`, keine festen Leistenhöhen. | 8 nachgebaute Kopf-Blöcke, drei Kartenabstände; Edge-to-edge ab API 35 erzwungen. | manuell: R-VISUAL |
 | LAYOUT-03 | MUSS | **Kein Wort bricht um, kein Text wird gekürzt** – auf 360–412 dp Breite bei fontScale 1,0–2,0 (nichtlinear wie Android 14+), Querformat und Tablet ebenso. Eine Zeile beginnt nie mitten im Wort, mit Bindestrich oder Satzzeichen (`badBreakAt`). Mittel, in dieser Reihenfolge: (1) Layout gibt Platz – Titel mit Chips nur über `TitleWithChips`, Button-Reihen nur über `AdaptiveButtonRow`, Einfachauswahl über `SegmentedChoiceRow` (fällt auf Radioliste zurück), Text + Aktion in einer `FlowRow`, Sessions über `SessionRunningLayout`; (2) Titel, Namen und Beschriftungen über `WholeWordText` (verkleinert bis 70 %, Tabs bis 50 %, gleichrangige Texte mit gemeinsamer Größe); (3) Fließtext so formulieren, dass kein Wort die Zeile sprengt. Verboten: `maxLines` + Ellipse auf Inhaltstext, feste `height`/`size` für Text-Container (`heightIn(min)` erlaubt), `weight(…, fill = false)` für Text neben Chips, Orientierungssperre. | Nutzerbefund auf dem Galaxy A54 (384 dp, fontScale 1,1): „Resonanz-Atmun / g“, „Beende / n“, gekürzte Sicherheitshinweise („…Fahren oder Stehen …“ ohne „Ohnmachtsgefahr“). WCAG 1.4.4, 1.4.10, 1.3.4. | auto: `ScreenshotTest` (Testfehler bei jedem Befund), `weight-nofill`, `platform-override`; manuell: R-VISUAL |
+| LAYOUT-04 | MUSS | **Optik folgt der Schrift, zentral.** Die sichtbare Größe jedes Bedienelements (Höhe von Button, Chip, Segment; Kreis des Icon-Buttons; Icons; Switch; Radio; Inline-Spinner) kommt nur aus `Sizes` (§4.2). Die Tokens setzen nur die Komponenten in `src/ui/components/`; am Aufrufort keine Größe, kein `scale`, keine Einzelkorrektur. M3-Größenkonstanten (`ButtonDefaults.MinHeight` …) nur in `src/ui/theme/`. | `TEXT_SCALE` 0,75 hat nur die Schrift verkleinert: Bedienelemente wirkten 1,33-mal zu groß (Button 40 dp neben 11,6 sp, Session-Buttons 48). Einzelkorrekturen laufen auseinander. | auto: `SizesTest` (Optik/Schrift je Token bei fs 1,0 / 1,1 / 1,3 / 2,0, Ober- und Untergrenze), `m3-size-const`, `control-direct`, `layout-literal`; manuell: R-VISUAL |
+| LAYOUT-05 | MUSS | **Bedienelemente bleiben ganz.** Kein Bedienelement wird beschnitten oder aus dem Bild geschoben: waagerecht schneidet nie ein Elternteil ab, senkrecht nur eine Scroll-Fläche; Beschriftung und Icon bleiben im sichtbaren Behälter, bei fontScale 2,0 wächst er mit. | Kleinere Tokens und feste Höhen machen genau das wahrscheinlich; LAYOUT-03 prüft nur Text. | auto: `ScreenshotTest` (`BESCHNITTEN`, `AUSSERHALB`) |
+| LAYOUT-06 | MUSS | **Bauregeln für Bedienelemente.** (1) Höhe an M3-Elementen nur `heightIn(min = Sizes.…)`, nie `height`/`size`/`requiredSize`. (2) Eigene feste Größe nur als `minimumInteractiveComponentSize().size(x)`, in dieser Reihenfolge. (3) Kein `Modifier.scale` und kein `graphicsLayer { scaleX/scaleY }` auf Bedienbarem; Switch und Radio werden über `scaledLayout(Sizes.ControlScale)` verkleinert, die Tippfläche trägt ein äußerer `toggleable`-/`selectable`-Knoten. (4) Gleiche Höhe nebeneinander nie über `IntrinsicSize.Min` oder feste Constraints, sondern über gleiche Mindesthöhe, gleiches Polster und gleich hohen Inhalt. | `height` nahm dem Reset die 48-dp-Reservierung (58 × 40); `scale` verkleinert den Hit-Test mit (Switch 39 × 36); `IntrinsicSize.Min` und `Constraints.fixed` messen die 48-dp-Tippfläche mit und blähen die Optik auf 48 (Session-Buttons). | auto: `control-scale`, `touch-order`, `m3-size-const`, `ControlTouchTest` (Tap-Injektion), `ScreenshotTest` (`TIPPFLAECHE`) |
+| LAYOUT-07 | SOLL | **Steuerung beim Label.** In Karten und Einstellungen steht die Steuerung als rechte Spalte, ihre *sichtbare* Kante bündig an der Inhaltskante (unsichtbaren Touch-Rand vom Polster abziehen, kein `offset`; umgesetzt für Stepper und Schalter, Icon-only-Buttons am Zeilenende offen: S-38). Im freien Fluss (Meditations-Tab) folgt sie direkt dem Label (`Stepper(inline = true)`), linksbündig wie die Chips. Ein Schalter steht in der Zeile seines Namens, der Hinweis darunter (`ToggleRow`). | Nutzerbefund „weit versetzt“: 100–130 dp zwischen Label und Stepper, Switch neben dem Hinweis statt neben „Sprachanleitung“. | manuell: R-VISUAL |
 
 ## <a id="komponenten"></a>5 Komponenten
 
@@ -166,45 +183,49 @@ Seit `TEXT_SCALE` 0,75 eine Stufe kompakter (Nutzerentscheidung 2026-10-05), dam
 
 | Komponente | Nutzen für | Nicht für | A11y-Pflicht |
 |---|---|---|---|
-| `BackButton` | Zurück auf Push-Screens (AutoMirrored, −12 dp bündig) | Overlays (dort Minimieren) | cd `action_back` |
+| `AppIconButton` | jede Icon-only-Aktion: Kreis `IconButtonSize` (Ripple nur dort), Icon `IconDefault`, Tippfläche 48; `colors` wie M3 (Stepper: gefüllt) | Aktionen mit Text (→ `AppTextButton`) | cd am `Icon` (ICON-02), Rolle Button |
+| `AppTextButton` | Text-Aktion ohne Fläche (Laden, Wählen, Speichern, Dialog), Mindesthöhe `ButtonHeight` | Primäraktion (→ `StartSplitButton`) | Text = Name |
+| `BackButton` | Zurück auf Push-Screens (AutoMirrored, über `AppIconButton`; Versatz −(48 − `IconDefault`)/2 bündig) | Overlays (dort Minimieren) | cd `action_back` |
 | `BreathingCircle` | Atem-Pacer (`fraction` 0…1 → Skala 0,42…1,0) | dekorative Kreise | Aufrufer setzt Name, `onClickLabel`, Zustand, Fokus (A11Y-07) |
 | `Chip` / `TagChip` / `InfoChip` | nicht klickbare Info-Pillen | Auswahl (→ `SelectChip`) | Text Pflicht; einzige Info-Chip-Implementierung |
 | `DisclosureToggle` | Einstellungen in Karten aufklappen | Inhalt mit Teaser | `stateDescription` inkl. „angepasst“ |
 | `ExpanderSection` | Titel, Teaser (immer ganz), Detail; ohne Detail ein schlichter Abschnitt ohne Caret | Einstellungen | `heading()`, `Role.Button`, `stateDescription` (nur aufklappbar) |
 | `AdaptiveButtonRow` | Reihe gleichrangiger Buttons: gleich breit → nach Inhalt → Primär oben + Rest darunter → untereinander | Aktionspaare mit Split-Button (→ `StartSplitButton`) | Lesereihenfolge bleibt; Beschriftung einzeilig |
-| `MiniNowPlayingBar` | minimierte laufende Session über der NavigationBar | andere Meldungen | ≥ 60 dp, `maxLines = 1`, ein Fokus-Stopp |
+| `MiniNowPlayingBar` | minimierte laufende Session über der NavigationBar | andere Meldungen | ≥ 48 dp, `maxLines = 1`, ein Fokus-Stopp |
 | `OverlayChrome` | Rahmen jedes Vollbild-Overlays | Push-Screens | Ton als `Role.Switch` + `stateDescription`, `paneTitle` |
 | `ReferenceItem` | eine Quelle (Zitat, DOI/PMID) | – | Kennung ≥ 4,5:1 |
 | `ScreenHeader` | Kopf der Haupt-Tabs: Titel, optional Untertitel und Zahnrad (nur Tabs mit eigenen Einstellungen: Atmen, Meditation) | Push-Screens (→ `BackButton` + Titel) | Titel `heading()`; Zahnrad cd `settings_title` |
 | `SectionHeader` | Abschnittskopf mit Akzentbalken | Kartentitel | `heading()` |
 | `SubLabel` | Unter-Überschrift in Karten und Abschnitten (eine Ebene unter `SectionHeader`) | Abschnittsköpfe | – |
-| `SegmentedChoiceRow` | Einzelwahl, 2–4 kurze Optionen (`modifier`); passt eine Beschriftung nicht ins Segment, Radioliste | > 4 Optionen | Gruppenlabel verknüpft; Radioliste mit `selectableGroup()`, `Role.RadioButton` |
-| `SelectChip` | Einzelwahl aus vielen Presets | Info | Häkchen, `Role.RadioButton`, `selectableGroup()` |
+| `SegmentedChoiceRow` | Einzelwahl, 2–4 kurze Optionen (`modifier`); Segmente `ButtonHeight`, Häkchen `IconInButton`; passt eine Beschriftung nicht ins Segment, Radioliste (Radio per `scaledLayout`, Zeile 48 dp) | > 4 Optionen | Gruppenlabel verknüpft; Radioliste mit `selectableGroup()`, `Role.RadioButton` |
+| `SelectChip` | Einzelwahl aus vielen Presets (`ChipHeight`, `modifier`) | Info | Häkchen, `Role.RadioButton`, `selectableGroup()` |
 | `SessionAdjustCard` | Dauer und Intervalle vor dem Start | – | „· angepasst“ im Toggle-Zustand |
-| `Stepper` | ganzzahliger Wert in festem Bereich | Freitext | Buttons behalten Rolle und Disabled; Wert als Live-Region; Einheit ausgeschrieben |
+| `Stepper` | ganzzahliger Wert in festem Bereich; Knöpfe `AppIconButton` (gefüllt, Icons „−“/„+“), Wert `StepperValueMinWidth`; Karten: rechte Spalte, Kreis bündig; `inline = true`: direkt hinter dem Label (LAYOUT-07) | Freitext | Knöpfe mit Klick, Rolle, Disabled und Name „Label, Erhöhen“; Wert als Live-Region; Einheit ausgeschrieben |
 | `WholeWordText` | Titel, Namen, Beschriftungen, die nie im Wort brechen dürfen; verkleinert schrittweise (`minScale`; gemeinsame Größe über `sharedScale` + `onSharedScaleTooBig`) | Fließtext (→ umformulieren) | wie `Text` |
 | `SessionRunningLayout` | Gerüst laufender Sessions: Kopf, Kreis im freien Platz, Steuerung | andere Screens | Kopf liegt über dem Kreis, nicht davor |
 | `AppNavigationBar` | Haupt-Tabs unten | Push-Ziele | eine Beschriftungsgröße für alle Tabs |
 | `TitleWithChips` | Titel mit nachgestellten Chips (Karten, Detail-Kopf); Chips rutschen bei Platzmangel unter den Titel | Abschnittsköpfe (→ `SectionHeader`) | Titel-Rolle und Farbe vom Aufrufer; keine Chips → `null`, kein leerer Slot |
-| `StartSplitButton` | **jeder** Start einer konfigurierbaren Session | andere Aktionspaare | Reset Icon-only, cd `adjust_reset`; Fokus → Start, wenn Reset verschwindet |
+| `StartSplitButton` | **jeder** Start einer konfigurierbaren Session; Start und Reset gleich hoch (MUSTER-01) | andere Aktionspaare | Reset Icon-only, cd `adjust_reset`; Fokus → Start, wenn Reset verschwindet |
+| `ToggleRow` | Ein/Aus-Einstellung: Label, Switch in derselben Zeile, optional Hinweis darunter; Switch per `scaledLayout`, sichtbar bündig | Auswahl aus mehreren (→ `SegmentedChoiceRow`) | ganze Zeile `toggleable(Role.Switch)`, Name = Label (A11Y-03) |
 | `SessionControls.kt` (`GlowText`, `Session*Button`, `FinishedPanel`, `rememberTapFlash`), `PauseFlash` | Text, Buttons, Tap-Rückmeldung **nur** in Vollbild-Sessions | normale Screens, stehender Status | `FinishedPanel` sagt das Ende an; `PauseFlash` dekorativ |
 | `SafetyDialog` | Sicherheitsbestätigung vor intensiven Übungen | Infos ohne Risiko | nicht außen schließbar, scrollbar |
 
-Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplant** (ersetzen Duplikate): `PinnedActionBar`, `ToggleRow`, `PushHeader`, `Bullet`, `CardTitle`/`Hint` (öffentlich).
+Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplant** (ersetzen Duplikate): `PinnedActionBar`, `PushHeader`, `Bullet`, `CardTitle`/`Hint` (öffentlich). Die Wrapper `AppIconButton`, `AppTextButton`, `ToggleRow` und `scaledLayout` (intern) liegen in `Controls.kt`.
 
 ### 5.2 Regeln
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | KOMP-01 | MUSS | Gibt es eine Komponente in §5.1, wird sie genutzt; kein Inline-Nachbau. Wird ein Muster zum zweiten Mal gebraucht, wandert es nach `src/ui/components/`. | Konsistenz; 15 Duplikate im Audit. | manuell: R-CODE |
-| KOMP-02 | MUSS | Klickbare Karten: `Card(onClick = …)`, nie `Card(Modifier.clickable)`. Darin höchstens eine weitere Aktion, integriert als trailing `IconButton` (`IconDefault`, Tint `SECONDARY`) in der obersten Inhaltszeile, ohne eigene Zeile oder Fläche. | Ripple und Rolle stimmen; keine verschachtelten Ziele. | auto: `card-style`; manuell: R-VISUAL |
+| KOMP-02 | MUSS | Klickbare Karten: `Card(onClick = …)`, nie `Card(Modifier.clickable)`. Darin höchstens eine weitere Aktion, integriert als trailing `AppIconButton` (Tint `SECONDARY`) in der obersten Inhaltszeile, ohne eigene Zeile oder Fläche. | Ripple und Rolle stimmen; keine verschachtelten Ziele. | auto: `card-style`; manuell: R-VISUAL |
 | KOMP-03 | MUSS | Karte: Default-Farbe, `shapes.medium`, `CardPadding`, Titel `titleLarge`, Text `bodyMedium` `SECONDARY`; Rand (`BorderThin`, `ALPHA_BORDER`, Akzentfarbe) nur bei navigierenden Inhaltskarten. Trenner nur `HorizontalDivider()` mit Default-Farbe; Ausnahme Marken-Trenner über der NavigationBar (markiert). | Heute drei Trenner-Varianten. | auto: `card-style`; manuell: R-VISUAL |
+| KOMP-04 | MUSS | M3-Steuerelemente (`Button`, `TextButton`, `FilledTonalButton`, `OutlinedButton`, `IconButton`, `FilledTonalIconButton`, `FilterChip`, `SegmentedButton`, `Switch`, `RadioButton`, `Checkbox`, `Slider` …) stehen nur in `src/ui/components/`; Screens nutzen die Wrapper aus §5.1. | Nur so greift LAYOUT-04 an einer Stelle; vorher 14 direkte Aufrufe in 6 Dateien mit eigenen Größen. | auto: `control-direct` |
 
 ## <a id="muster"></a>6 Muster
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
-| MUSTER-01 | MUSS | **Split-Button.** Start (`Button`, primary) in voller Restbreite; Reset (`FilledTonalButton`, `ic_reset`, Icon-only) gleitet nur ein, wenn ein Wert vom Default abweicht; kein Bestätigungsdialog. Gleiche Höhe über `IntrinsicSize.Min` + `fillMaxHeight()`, nie feste Höhe. Sitzt in der gepinnten Leiste (`surface`, Elevation 3 dp). | Eine Fläche statt zwei; Reset nur, wenn er etwas bewirkt. | manuell: R-VISUAL |
+| MUSTER-01 | MUSS | **Split-Button.** Start (`Button`, primary) in voller Restbreite; Reset (`FilledTonalButton`, `ic_reset`, Icon-only) gleitet nur ein, wenn ein Wert vom Default abweicht; kein Bestätigungsdialog. Gleiche Höhe über dieselbe Mindesthöhe (`Sizes.ButtonHeight`), dasselbe senkrechte Polster und ein Icon-Feld so hoch wie die Textzeile – nie feste Höhe, nie `IntrinsicSize.Min` (LAYOUT-06). Sitzt in der gepinnten Leiste (`surface`, Elevation 3 dp). | Eine Fläche statt zwei; Reset nur, wenn er etwas bewirkt. | manuell: R-VISUAL |
 | MUSTER-02 | MUSS | **Rückmeldung im Element.** Bestätigung als Zustandswechsel des auslösenden Elements („Speichern“ → „✓ Gespeichert“), lesbar (≥ 4,5:1, nicht disabled) und als `liveRegion = Polite` angesagt. Abweichung vom Default als Suffix „· angepasst“ (`labelMedium` `SECONDARY`) am Element und in dessen `stateDescription`; kein Badge, kein loses Geschwister-`Text`. | Nichts frei Schwebendes; TalkBack erfährt den Erfolg. | auto: `no-fab-toast`; manuell: R-A11Y |
 | MUSTER-03 | MUSS | **Ausklappen.** `ExpanderSection`: Teaser steht immer ganz da (nie gekürzt, LAYOUT-03), Detail erscheint darunter (TEXT-06). Jedes Ein-/Ausklappen animiert die Höhe (`animateContentSize`/`AnimatedVisibility`). | Kontext bleibt sichtbar; Sprünge irritieren. | auto: `ContentRulesTest teaser`; manuell: R-VISUAL |
 | MUSTER-04 | SOLL | **Leer und Fehler.** Leer: „Noch keine …“ plus sanfte Einladung, ohne Illustration oder Extra-Button. Fehler inline im Element: was passiert ist und was du tun kannst; kein `e.message` in der UI. | Nutzer wissen, was zu tun ist; Exception-Texte sind technisch und oft englisch. | auto: `exception-message-ui`; manuell: R-TEXT |
@@ -249,10 +270,10 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | A11Y-01 | MUSS | Jedes Bedienelement hat Name, Rolle und Zustand: klickbare Nicht-M3-Elemente mit `role` und, wenn nötig, `onClickLabel`; Icon-Umschalter (Ton) mit `Role.Switch` und `stateDescription`. Screen-Titel, `SectionHeader`, Kartentitel tragen `heading()`, zentral in der Komponente. | WCAG 4.1.2, 1.3.1. | auto: `semantics-required`; manuell: R-A11Y |
-| A11Y-02 | MUSS | Semantik nicht zerstören: kein `clearAndSetSemantics` auf Klickbarem, außer `onClick(label)`, `role`, `disabled()` werden neu gesetzt; eine Container-cd verdeckt keine dynamischen Kind-Texte (Zeit, Phase). | Sonst fehlen Klick, Rolle oder Restzeit. | auto: `a11y-ratchet`; manuell: R-A11Y |
+| A11Y-02 | MUSS | Semantik nicht zerstören: kein `clearAndSetSemantics` auf Klickbarem, außer `onClick(label)`, `role`, `disabled()` werden neu gesetzt; eine Container-cd verdeckt keine dynamischen Kind-Texte (Zeit, Phase). | Sonst fehlen Klick, Rolle oder Restzeit. | auto: `a11y-ratchet`, `ScreenshotTest` (`OHNE_KLICK`); manuell: R-A11Y |
 | A11Y-03 | MUSS | Schalterzeilen: ganze Zeile `toggleable(role = Role.Switch)`, `Switch(onCheckedChange = null)`, Zeilentext = Name. Einzelwahl: `SegmentedChoiceRow` oder `SelectChip` mit Häkchen, `Role.RadioButton`, `selectableGroup()`, verknüpftes Gruppenlabel. | WCAG 1.4.1, 4.1.2. | auto: `switch-unlabeled`; manuell: R-A11Y |
 | A11Y-04 | MUSS | Zustandswechsel ohne Fokuswechsel (Phase, Pause, Ende, Stepper-Wert, „✓ Gespeichert“, Download fertig/Fehler, MUSTER-05) haben genau eine `liveRegion = Polite` an einem nicht zusammengeführten Knoten. Sekündlich tickende Werte nicht. | WCAG 4.1.3. | manuell: R-A11Y |
-| A11Y-05 | MUSS | Tippflächen ≥ 48 × 48 dp (M3 oder `minimumInteractiveComponentSize()`); `LocalMinimumInteractiveComponentSize` nie ändern. | Android-Richtlinie. | auto: `platform-override` |
+| A11Y-05 | MUSS | Tippflächen ≥ 48 × 48 dp **als Platz im Layout**, unabhängig von der Optik (M3 oder `minimumInteractiveComponentSize()`, LAYOUT-06); die Hit-Test-Erweiterung von Compose zählt nicht. `LocalMinimumInteractiveComponentSize` nie ändern. Ausnahme: Link mitten im Fließtext (WCAG 2.5.8 „Inline“). | Android-Richtlinie, WCAG 2.5.8. Compose vergrößert nur den Hit-Test auf 48 – reserviert das Layout weniger, ragen Nachbarn hinein (Reset 58 × 40). | auto: `ScreenshotTest` (`TIPPFLAECHE`), `ControlTouchTest` (±23 dp trifft, ±25 dp nicht), `platform-override` |
 | A11Y-06 | SOLL | Dekorative Glyphen (· • › ⚠ ✓) sind keine Fokus-Stopps; Listeneinträge sind ein Stopp. Namen tragen Kontext („Stimme Thorsten anhören“); Zeiten und Einheiten ausgeschrieben („4 Sekunden“, nicht „(s)“ oder „3:05“). | Weniger Rauschen, WCAG 2.4.6. | manuell: R-A11Y |
 | A11Y-07 | MUSS | Overlays und Screens setzen `paneTitle`; verschwindet ein fokussiertes Element, setzt `FocusRequester` den Fokus. Elemente mit `indication = null` zeigen eigenen Fokus (≥ 3:1). Der Atemkreis hat keine Ripple. | WCAG 2.4.3, 2.4.7; D-Pad, Switch Access. | auto: `a11y-ratchet`; manuell: R-A11Y |
 
@@ -316,8 +337,8 @@ Eingerichtet; offen sind nur die Sicherheitsschritte (warten auf die Veröffentl
 | `scripts/check-style.sh` | `scripts/check_style.py`, `config/style-baseline.txt`, `config/style-fixtures/<check>.{pos,neg}` | Checks aus §13.3 in Python 3 (im Skript teils in Unter-Checks aufgeteilt, z. B. `color-source-res`, `typo-chars-strings`). Zeilenweise, (ml) über die ganze Datei; `ui-literal` über die ganze Anweisung, damit Umformatieren keinen Fund „behebt“. Ignoriert Kommentarzeilen (außer bei `todo-unlinked`) und Zeilen mit Marker `// Abweichung <ID>:` / `// dekorativ:`. `--self-test` prüft jedes Muster gegen seine Fixtures, `--update-baseline` schreibt den Ist-Stand (meldet Anstiege), `--ci-range A..B` prüft nur `guide-sync` und `commit-msg`. |
 | ktlint 1.8.0 + compose-rules 0.5.8 | `.editorconfig`, Plugin `org.jlleitschuh.gradle.ktlint` 14.2.0, `config/ktlint-baseline.xml`, `.git-blame-ignore-revs` | Format, Compose-Regeln; in `*Screen.kt` ist `modifier-missing-check` aus. compose-rules 0.6.x ist gegen eine neuere Kotlin-Laufzeit gebaut und bricht im ktlint-Worker ab (`NoSuchMethodError`); Update erst mit neuerem Gradle. Bekannte Compose-Funde in der Baseline (S-32). |
 | Android Lint | `lint {}`: `abortOnError`, `warningsAsErrors` (aus: `GradleDependency`, `AndroidGradlePluginVersion`, `NewerVersionAvailable`, `ChromeOsAbiSupport`); `app/lint.xml` (`ObsoleteSdkInt` nur für `mipmap-anydpi-v26`, ohne Qualifier findet aapt die adaptiven Icons nicht) | Manifest, Ressourcen, Compose-Lint. |
-| JUnit-Regeltests | `ContentRulesTest`, `ThemeContrastTest`, `FractionContinuityTest`, `ToneEnvelopeTest`, `TypographyTest`; `config/health-claims.{txt,allow}`, `config/content-baseline.txt`, `config/contrast-baseline.txt` | Inhalte, Kontrast, Pacer, Hüllkurven, Umbruch-Stile (§13.3). `config/` ist Eingabe der Test-Tasks: Eine reine Baseline-Änderung löst die Tests neu aus. |
-| Screenshot-Test | `ScreenshotTest` (Robolectric + Roborazzi), `scripts/screenshot-sheet.py` | Alle Screens, Session und Meditation in Gerätehöhe, Navigationsleiste; 360 / 384 (Galaxy A54) / 412 dp × fontScale 1,0 / 1,1 / 1,3 / 2,0 über die echte Plattform-Skalierung (nichtlinear ab Android 14, am A54 auf 1 dp genau nachgemessen); Detailseiten aller Übungen auf A54 1,1 und 360 dp ab 1,3. Läuft in `testDebugUnitTest` (≈ 70 s) und **schlägt bei jedem Befund fehl** (`WORTBRUCH`, `GETRENNT`, `ABGESCHNITTEN`, Regel `badBreakAt`). Bilder: `./gradlew recordRoborazziDebug` → `app/build/outputs/roborazzi/<gerät>/fs<n>/`, je Bild eine `.tsv`. Endlos-Animationen eingefroren (`InfiniteAnimationPolicy`). |
+| JUnit-Regeltests | `ContentRulesTest`, `ThemeContrastTest`, `FractionContinuityTest`, `ToneEnvelopeTest`, `TypographyTest`, `SizesTest`, `ControlTouchTest` (Robolectric); `config/health-claims.{txt,allow}`, `config/content-baseline.txt`, `config/contrast-baseline.txt` | Inhalte, Kontrast, Pacer, Hüllkurven, Umbruch-Stile (§13.3). `config/` ist Eingabe der Test-Tasks: Eine reine Baseline-Änderung löst die Tests neu aus. |
+| Screenshot-Test | `ScreenshotTest` (Robolectric + Roborazzi), `scripts/screenshot-sheet.py` | Alle Screens, Session und Meditation in Gerätehöhe, Navigationsleiste; 360 / 384 (Galaxy A54) / 412 dp × fontScale 1,0 / 1,1 / 1,3 / 2,0 über die echte Plattform-Skalierung (nichtlinear ab Android 14, am A54 auf 1 dp genau nachgemessen); Detailseiten aller Übungen auf A54 1,1 und 360 dp ab 1,3. Läuft in `testDebugUnitTest` (≈ 70 s) und **schlägt bei jedem Befund fehl**: Text (`WORTBRUCH`, `GETRENNT`, `ABGESCHNITTEN`, Regel `badBreakAt`) und Bedienelemente (`ControlFindings`: `TIPPFLAECHE`, `OHNE_KLICK`, `BESCHNITTEN`, `AUSSERHALB`; erkannt über Klick-Semantik oder clickable-/toggleable-/selectable-Modifier, nur platzierte Knoten). Zustände mit sichtbarem Reset (`03_meditation_reset`, `08_detail_angepasst`). Bilder: `./gradlew recordRoborazziDebug` → `app/build/outputs/roborazzi/<gerät>/fs<n>/`, je Bild eine `.tsv`. Endlos-Animationen eingefroren (`InfiniteAnimationPolicy`). |
 | CI | `.github/workflows/ci.yml`, `.github/dependabot.yml` | Push auf `main` und PR, `permissions: contents: read`, Actions per SHA gepinnt, `persist-credentials: false`. Job `check`: `wrapper-validation` → `setup-java` 17 → `setup-gradle` → `check.sh` (bei Fehler die Screenshot-Befunde als Artefakt). Job `conventions`: `check-style.sh --ci-range` über alle Commits des Pushes/PRs. Sicherheitsschritte laut SECURITY folgen mit A-13. Dependabot monatlich, gruppiert, `gradle` und `github-actions`. |
 
 ### 13.2 Baselines
@@ -336,6 +357,10 @@ Muster vereinfacht, `\|` = Alternation. Ein Check ohne Ist-Treffer muss sein Pos
 | `type-literal` | `\b\d+(\.\d+)?f?\.sp\b\|FontWeight\.\|(fontSize\|letterSpacing\|lineHeight)\s*=` | `src/` ohne `ui/theme/`, Importe | TYPO-01 |
 | `layout-literal` | `\b([1-9]\d*\|\d*\.\d+)f?\.dp\b`; `(RoundedCorner\|CutCorner)Shape\(` | `src/` ohne `ui/theme/` | LAYOUT-01, ICON-01 |
 | `weight-nofill` | `weight\([^)]*fill\s*=\s*false` | `src/ui/` | LAYOUT-03 |
+| `m3-size-const` | `ButtonDefaults\.(MinHeight\|MinWidth\|IconSize)\|FilterChipDefaults\.Height\|SwitchDefaults\.IconSize\|SegmentedButtonDefaults\.IconSize` | `src/` ohne `ui/theme/` | LAYOUT-04 |
+| `control-scale` | `\.scale\(\|\bscale[XY]\s*=` | `src/ui/`, `MainActivity.kt` ohne `ui/theme/`, `components/Controls.kt` (`scaledLayout`) | LAYOUT-06 |
+| `touch-order` (ml) | `\.(size\|height\|width\|required…)\(…\)\s*\.minimumInteractiveComponentSize\(\)` | `src/ui/` | LAYOUT-06 |
+| `control-direct` | `(?<![\w.])(Button\|TextButton\|…\|IconButton\|FilterChip\|SegmentedButton\|Switch\|RadioButton\|Checkbox\|Slider)\(` | `src/ui/`, `MainActivity.kt` ohne `ui/components/` | KOMP-04 |
 | `platform-override` | `screenOrientation\|requestedOrientation`; `LocalMinimumInteractiveComponentSize\s+provides` | Manifest, `src/` | LAYOUT-03, A11Y-05 |
 | `dark-only` | `Theme\.Material\.Light\|DayNight\|lightColorScheme\|dynamic(Dark\|Light)ColorScheme\|enableEdgeToEdge\(\s*\)`; Existenz `res/values-night/` | `src/`, `res/` | PRIN-01 |
 | `neon-fill` | Datei mit > 1 `(?<![A-Za-z])Button\(` oder `containerColor\s*=\s*(…colorScheme\.(primary\|secondary\|tertiary)\|Neon\w+)` | `src/ui/` ohne `components/`, `MainActivity.kt` | PRIN-02 |
@@ -360,6 +385,8 @@ Muster vereinfacht, `\|` = Alternation. Ein Check ohne Ist-Treffer muss sein Pos
 | `commit-msg` (CI) | `^(v\d+\.\d+\.\d+\|build\|docs\|fix): \S` | Push-Bereich | CODE-08 |
 | `ContentRulesTest` | Fälle `teaser`, `first-caution`, `detail-length` (SOLL, nur Ausgabe), `health-claims` (nur Ausgabe bis S-08 behoben, dann scharf ohne Baseline), `jargon`, `formal-address`, `decimal-comma` (`\d\.\d` außerhalb Kennungen), `quotes`, `ref-format`, `ref-unused`, `phase-min-duration`, `phase-labels-distinct`, `store-lengths` (ab `fastlane/`); Baseline `config/content-baseline.txt`. Finites Verb und Evidenzhinweis im Teaser prüft nur R-TEXT | `BuiltInExercises`, `Situations`, `Refs`, `RandomPatternGenerator.forSeed(0..6)`, `strings.xml`; `store-lengths`: `fastlane/**` (README, Store-Texte, Release-Notes und PRIVACY auf Heilversprechen: `sec-health-claims`) | TEXT-02, -04 … -06, -09 … -12, MUSTER-03, MOTION-02 |
 | `TypographyTest` | jede `headline*`/`title*`-Rolle: `LineBreak.Heading`, `Hyphens.None`; keine Rolle mit `Hyphens.Auto` | Theme | TYPO-03 |
+| `SizesTest` | jedes Token aus `ControlSize` bei fs 1,0 / 1,1 / 1,3 / 2,0: Optik/Schrift (`labelLarge` gegen M3) ≤ 1,1 × M3-Verhältnis, ≥ 0,9 × M3 × min(1, Schrift), ≥ 80 % M3; k monoton, bei 2,0 = 1 | Theme | LAYOUT-04 |
+| `ControlTouchTest` | Tap-Injektion bei fs 1,0 / 1,1 / 2,0: `AppIconButton`, Stepper-Knöpfe, `SelectChip`, `AppTextButton`, Segment, Reset ±23 dp trifft, ±25 dp nicht; `ToggleRow` über die ganze Zeile; Naht zweier Icon-Buttons; Start = Reset und Session-Buttons sichtbar `ButtonHeight`; Stepper und `ToggleRow` im TalkBack-Baum mit Name, Rolle, Zustand, Disabled und Wert-Live-Region; Selbsttest von `ControlFindings` | Komponenten | A11Y-01 … -05, LAYOUT-06, MUSTER-01 |
 | `ThemeContrastTest` | WCAG-Kontrast aller Token-Paare (Vordergrund, Alpha, Hintergrund-Kette inkl. Leiste mit Tonal-Elevation 3 dp, Mindestwert); ΔE76 ≥ 25 der Semantikfarben und Pinktöne; Baseline `config/contrast-baseline.txt` | Theme | FARBE-03, -04 |
 | `FractionContinuityTest` | Skala Phasenende = nächster Phasenanfang inkl. Vorbereitung, alle Built-ins und `forSeed(0..6)` (`circleFraction` in `ui/session/BreathingFraction.kt`); bekannte Sprünge in `knownJumps` mit S-ID | Session | MOTION-03 |
 | `ToneEnvelopeTest` | Attack ≥ 8 ms, Release ≥ 60 ms, Spitze ≤ 0,95 FS je Stufe für Wechselton, Gong (erzeugte PCM-Daten, Pegel über 3,5 ms, bis zum 90-%-Punkt), Dauerton (über seine Konstanten) | `src/cue/` | AUDIO-01 |
@@ -388,6 +415,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 | A-13 | Sicherheitsschritte nach SECURITY: `check-security.sh`, `verify-apk.sh`, `check-github.sh`, CI-Schritte und `release-verify.yml`; erst mit Veröffentlichung von SECURITY.md (sonst zeigt ein öffentlicher CI-Lauf offene Befunde) | M |
 | A-12 | Referenzbilder (Viewport-Höhe, klein) im Repo und `verifyRoborazziDebug` in CI, damit auch rein optische Änderungen auffallen; Querformat und Tablet in die Matrix. Textprüfung steht bereits (§13.1). | S |
 | A-10 | später: Compose-UI-Semantiktests (`isHeading`, `hasClickAction`, `enableAccessibilityChecks()`) | L |
+| A-14 | Check `icon-size` (ICON-01, LAYOUT-04): `Icon(` ohne Größen-Token außerhalb von `AppIconButton`-Inhalten. Als regulärer Ausdruck nicht ohne Fehlalarm (Token in verschachtelten Argumenten, Slot-Inhalte) – erst mit Parser | S |
 
 ### P1 – sichtbare Fehler, blockierte Funktion, Inhaltsrisiko
 
@@ -395,7 +423,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 |---|---|---|---|
 | S-02 | PRIN-01 | Rest-Ordner `values-night/` (`colors.xml`, `window_background` identisch mit `values/colors.xml`): Datei löschen | S |
 | S-03 | FARBE-03 | Phasen-Notiz auf Kreiszentrum 3,56:1, Kommentar `Color.kt:53` behauptet Fix; Zentrum #A82F80 (Notiz 4,90, Phase 4,55) | S |
-| S-04 | A11Y-01 … -03 | 4 Switches ohne Namen (→ `ToggleRow`, `SettingsScreen.kt:458`, `MeditationScreen.kt:248`); Stepper `clearAndSetSemantics` ohne Klick/Rolle, Wert nicht angesagt; keine `heading()` außer Expander | S |
+| S-04 | A11Y-01 … -03 | ~~4 Switches ohne Namen; Stepper `clearAndSetSemantics` ohne Klick/Rolle, Wert nicht angesagt~~ (erledigt 2026-10-05: `ToggleRow`, Stepper-Knöpfe als `AppIconButton`, Wert als Live-Region); offen: keine `heading()` außer Expander | S |
 | S-05 | MUSTER-05 | Logbuch leeren, Muster löschen, Stimme löschen ohne zweistufige Bestätigung; „Leeren“ als `TextButton` in eigener Zeile (`LogbookScreen.kt:107`) | S |
 | S-06 | A11Y-02, -07, MUSTER-07 | Atemkreis: cd verdeckt Zeit-Texte, kein `onClickLabel`, „Weiter“ nur per Kreis, kein sichtbarer Fokus (`SessionScreen.kt:177-236`, `MeditationScreen.kt:367-374`) | M |
 | S-07 | LAYOUT-03 | Nur noch ungeprüft: Querformat und Tablet (nicht in der Matrix, A-12). Bei fontScale 2,0 auf 360 dp stehen im Logbuch Dauer und Runden unter dem Namen mit Einzug (FlowRow + `Alignment.End`) – unschön, nicht falsch | S |
@@ -414,7 +442,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 |---|---|---|---|
 | S-15 | FARBE-03, -05 | Text < 4,5:1 auf Card (`ThemeContrastTest`): `TERTIARY` 4,16, Caution-TagChip 4,15, InfoChip 3,23, Wochentage 4,16; WeekRow-Punkte α 0,12 / 0,4 nur 1,40 / 1,85. Heute-Ring nicht in der Semantik; Familie nur über Randfarbe/Log-Punkt | S |
 | S-16 | A11Y-01, -03, -04, -07 | `SelectChip` ohne Häkchen (Rolle Checkbox), `SegmentedChoiceRow`-Label nicht verknüpft; Mute ohne `Role.Switch`, kein `paneTitle`; Ende, Pause, Download-Status nicht angesagt; Fokusverlust bei Reset/Löschen | M |
-| S-17 | MUSTER-01, -02, -06 | „✓ Gespeichert“ disabled (3,00:1) ohne Live-Region; „· angepasst“ als loses Geschwister (`SessionAdjustCard.kt:66`); Reset mit fester Höhe 40 dp (`StartSplitButton.kt:56`); `SafetyDialog` ohne `verticalScroll` | S |
+| S-17 | MUSTER-01, -02, -06 | „✓ Gespeichert“ disabled (3,00:1) ohne Live-Region; „· angepasst“ als loses Geschwister (`SessionAdjustCard.kt:66`); ~~Reset mit fester Höhe 40 dp~~ (erledigt 2026-10-05, 48-dp-Tippfläche, gleiche Höhe wie Start); `SafetyDialog` ohne `verticalScroll` | S |
 | S-18 | FARBE-04, -06, KOMP-01 | `CharacterChip`: „aktivierend“ in `WarnAmber` (ΔE 23,9 zu `FamilySympathetic`, steht neben Familie B), „ruhig“ in `EvidenceBest`, eigener Nachbau; drei Pinktöne ΔE < 25 (primary↔EvidenceCaution 19,9, primary↔SessionButtonPink 23,0, EvidenceCaution↔SessionButtonPink 18,1; Entscheidung: `SessionButtonPink` aus `error` oder `EvidenceCaution` Richtung Koralle); `outline`/`error`/`onError`/`primaryContainer` fehlen; `SecondaryContainer` 1,18 auf Card (Option #5A4890) | S |
 | S-19 | AUDIO-01, -04, -05, MOTION-01, -02 | 528/396 Hz sind Solfeggio-Frequenzen; Tap-Tick ignoriert „Vibration“ und nutzt `USAGE_ALARM`; veralteter Vibrations-Overload; `HapticPlayer` in der Composable; Dauerton-Glide startet nach Fortsetzen bei f0; Tap-Flash fadet bei Animator-Skala 0 | M |
 | S-20 | TEXT-01, -05 | Hartkodierte TalkBack-Strings (`DisclosureToggle.kt:36`, `ExpanderSection.kt:59`, `SessionScreen.kt:182`, `LogbookScreen.kt:146`); Glossar im UI-File → `src/data/Glossary.kt`, Pflichtbegriffe ergänzen (RCT, Meta-Analyse, Hyperventilation, COPD …); `settings_safety_hint` nennt Übungen fest | S |
@@ -422,21 +450,23 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 | S-22 | TEXT-02, -05, -10 | Jargon in Situationen und Familien-Labels (`BuiltInExercises.kt:275-295`, `strings.xml:17-24`); `phase_hold_full` = `phase_hold_empty`; Wording („Session“, Lädt/lädt, „Aktiv ✓“, `action_end`/`action_stop`, „~“/„ca.“, Apostroph `strings.xml:118`) | S |
 | S-23 | TEXT-12 | „(Bowler 1998)“ und „(Vergleichsstudie 2025)“ in `4-7-8.effectDetail` ohne Quelle; `shetty2019`, `compare2025`, `nadiShodhana2024`, `nadiBhramari2023` unvollständig; `respeRate` (Patent, kein Studienzitat) und `fincham2023` ungenutzt; 8 deutsche Titel-Paraphrasen | M |
 | S-24 | CODE-03, -05 | `remember` statt `rememberSaveable` (`MeditationScreen.kt:160`, `ExerciseDetailScreen.kt:82`); unauflösbare `exerciseId` → leerer Screen (`MainActivity.kt:365`); Logik hängt an „Tagesmuster“ (`SavedPatternsRepository.kt:42`) | S |
-| S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1); ~~Stepper außerhalb der Karte eingerückt~~ (erledigt 2026-10-05, bündig); About-Titel `headlineLarge` in primary | M |
+| S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1; ~~`ToggleRow`~~ erledigt 2026-10-05); ~~Stepper außerhalb der Karte eingerückt~~ (erledigt 2026-10-05, bündig); About-Titel `headlineLarge` in primary | M |
 | S-26 | KOMP-02, A11Y-01 | `Card(Modifier.clickable)` 4×, `clickable` ohne Rolle 9×; `DailyPatternCard` mit zwei beschrifteten `TextButton`s (Entscheidung offen: Speichern als trailing Icon mit Morph) | S |
 | S-27 | A11Y-06 | Glyphen als Fokus-Stopps, `LogEntryCard` 4 Stopps, „3:05“; Stepper-cd „Einatmen (s): 4“; Stimmenliste ohne Namen | M |
 | S-28 | TEXT-03 | Keine `localeFilters`/`localeConfig`; `Locale.getDefault()` neben `Locale.GERMAN`; `"%d:%02d"` doppelt | S |
+| S-37 | LAYOUT-04, TYPO-02 | `NavigationBar` folgt der Schrift nicht: Höhe 80 und Indikator 64 × 32 sind in M3 1.3.1 fest, nur das Icon wäre steuerbar; eher ist das Label (`labelMedium`, 9,9 sp am A54) zu klein. Entscheidung offen: eigene Leiste oder größere Label-Rolle | M |
 
 ### P3 – Hygiene und Tokens
 
 | ID | Regel | Befund (Ort) | Aufwand |
 |---|---|---|---|
-| S-29 | LAYOUT-01, FARBE-02, MOTION-04 | Literale abbauen: 160 `.dp` (36 off-grid), 39 Alpha, 2 Shapes, Dauern inline; Tokens aus §2.2, §4 und `Motion.kt` anlegen; Kartenabstand 12/16/6+6; Transition-Zuweisung 4× dupliziert | L |
+| S-29 | LAYOUT-01, FARBE-02, MOTION-04 | Literale abbauen (~~Größen der Bedienelemente~~ erledigt 2026-10-05, `Sizes.kt`): 160 `.dp` (36 off-grid), 39 Alpha, 2 Shapes, Dauern inline; Tokens aus §2.2, §4 und `Motion.kt` anlegen; Kartenabstand 12/16/6+6; Transition-Zuweisung 4× dupliziert | L |
 | S-30 | FARBE-01, -06, KOMP-03 | Ungenutzte Tokens; KDoc-Drift (`PauseFlash` nutzt `SessionButtonCyan`; Dauerton „Quarte“ statt Quinte, „150 ms“, „bewusst dezent“); Launcher #1A0B2E nicht aus der Palette; drei Trenner-Varianten | S |
 | S-31 | CODE-01, -02 | `AppContainer.kt:8` → `ui.meditation`, `Chips.kt:17` → `ui.home`; `SettingsScreen` 27 Parameter, 13 Flows in der Root | M |
 | S-32 | CODE-04, -06 | 13 Komponenten ohne `modifier`, `GlowText`-Reihenfolge, 0 Previews; Imports und voll qualifizierte Namen (A-03); 67 Kommentarzeilen mit ASCII-Schlusszeichen | M |
-| S-33 | ICON-01, -02, TYPO-01 | Glyphen „−“/„+“/„›“ als Text, zwei Bullet-Varianten, `Icons.Outlined.Info`; cd 5× per `semantics` am Button, 11 `null` ohne Marker; Gewichtswechsel in der NavigationBar | S |
+| S-33 | ICON-01, -02, TYPO-01 | Glyph „›“ als Text (~~„−“/„+“ im Stepper~~ erledigt 2026-10-05, Icons), zwei Bullet-Varianten, `Icons.Outlined.Info`; cd 5× per `semantics` am Button, 11 `null` ohne Marker; Gewichtswechsel in der NavigationBar | S |
 | S-34 | MUSTER-03, -04 | `SessionAdjustCard` springt ohne `animateContentSize`; `log_empty` ohne Einladung, Fehlertexte ohne nächsten Schritt; `VoiceDownloadState.Failed` trägt freien Text (`VoiceModelManager.kt:158, 170`, `e.message`), die UI zeigt nur „Fehler – erneut versuchen“ → Grund-Enum (Integrität, Größe, Netz, Archiv) mit Texten in `strings.xml` | S |
+| S-38 | LAYOUT-03, -07 | „Atmen → Ton“ fällt auf dem A54 (1,1) trotz kleinerer Segmente auf die Radioliste zurück; in der Stimmenliste springt die Anhören-Spalte je nach Zustand (Aktiv, Laden, Wählen); trailing `AppIconButton`s (Gong- und Stimmen-Vorhören, Löschen, Abbrechen, Muster löschen) stehen um ihren Touch-Rand eingerückt (am A54 ≈ 17 dp bis zum Glyph), Schalter und Stepper daneben bündig – Lösung ohne `offset` braucht eine gemeinsame Endspalte | S |
 
 ## <a id="quellen"></a>Quellen
 

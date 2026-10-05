@@ -3,6 +3,8 @@ package app.atemkraft.ui.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -17,6 +19,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Einheitlicher Ein-/Ausklapp-Umschalter: animierter Caret + Label. Ersetzt die früher pro
@@ -32,7 +35,7 @@ fun DisclosureToggle(
     val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "caret")
     TextButton(
         onClick = onToggle,
-        modifier = modifier.semantics {
+        modifier = modifier.heightIn(min = Sizes.ButtonHeight).semantics {
             stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
         },
         contentPadding = PaddingValues(vertical = Dimens.GapTiny),
@@ -40,7 +43,7 @@ fun DisclosureToggle(
         Icon(
             imageVector = Icons.Filled.KeyboardArrowDown,
             contentDescription = null,
-            modifier = Modifier.rotate(rotation),
+            modifier = Modifier.rotate(rotation).size(Sizes.IconInButton),
         )
         Spacer(Modifier.width(Dimens.GapTiny))
         Text(text, style = MaterialTheme.typography.labelLarge)

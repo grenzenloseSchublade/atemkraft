@@ -1,0 +1,2 @@
+Modifier.heightIn(min = Sizes.ButtonHeight)
+ButtonDefaults.ContentPadding

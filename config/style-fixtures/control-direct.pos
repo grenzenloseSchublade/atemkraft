@@ -1,0 +1,3 @@
+TextButton(onClick = onSave) { Text(label) }
+IconButton(onClick = onDelete) {
+Switch(checked = on, onCheckedChange = null)

@@ -23,6 +23,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,7 @@ import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.BuiltInExercises
+import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.BreathingFamily
@@ -170,23 +173,28 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         }
     }
 
-    private fun snap(name: String, heightDp: Int = tallDp, content: @Composable () -> Unit) {
+    /** [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen). */
+    private fun snap(name: String, heightDp: Int = tallDp, prepare: () -> Unit = {}, content: @Composable () -> Unit) {
         currentHeightDp = heightDp
         current = content
+        prepare()
         val scale = (fontScale * 100).toInt()
         val dir = "${roborazziSystemPropertyOutputDirectory()}/${device.name}/fs$scale"
         compose.onNodeWithTag(SHOT).captureRoboImage("$dir/$name.png")
         // Befunde neben dem Bild ablegen (überschreibt den letzten Lauf); Übersicht per
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)
+        val controls = controlFindings(name)
         // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
         File(dir).mkdirs()
-        File("$dir/$name.tsv").writeText(findings.joinToString("") { "$it\n" })
+        File("$dir/$name.tsv").writeText((findings + controls).joinToString("") { "$it\n" })
         wordBreaks += findings
+        controlProblems += controls
         current = null
     }
 
     private val wordBreaks = mutableListOf<String>()
+    private val controlProblems = mutableListOf<String>()
 
     /** LAYOUT-03: Kein Wort bricht um, kein Text wird gekürzt – auf keiner Breite, bei keiner Schriftgröße. */
     @After
@@ -194,6 +202,22 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         if (wordBreaks.isNotEmpty()) {
             fail("Text bricht im Wort um oder wird gekürzt (LAYOUT-03):\n" + wordBreaks.joinToString("\n"))
         }
+    }
+
+    /** A11Y-05, A11Y-02, LAYOUT-05: Tippflächen ≥ 48 dp, Klick-Aktion vorhanden, nichts abgeschnitten. */
+    @After
+    fun controlsWhole() {
+        if (controlProblems.isNotEmpty()) {
+            fail("Bedienelement zu klein, ohne Klick-Aktion oder abgeschnitten (A11Y-05, A11Y-02, LAYOUT-05):\n" + controlProblems.joinToString("\n"))
+        }
+    }
+
+    /** Bedienelemente des aktuellen Bildes prüfen ([ControlFindings]). */
+    private fun controlFindings(screen: String): List<String> {
+        val nodes = compose.onAllNodes(SemanticsMatcher("alle") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+        val frame = compose.onNodeWithTag(SHOT).fetchSemanticsNode().boundsInRoot
+        return ControlFindings.findings(nodes, frame, compose.density.density, screen)
+            .map { "${device.name}\tfs${(fontScale * 100).toInt()}\t$it" }
     }
 
     /**
@@ -265,6 +289,18 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     fun meditation() = snap("03_meditation") {
         MeditationScreen(
             initialConfig = MeditationConfig(),
+            speechAvailable = true,
+            gongIntervalMin = 5,
+            onOpenSettings = {},
+            onStart = {},
+        )
+    }
+
+    /** Auswahl weicht vom Standard ab: Der Reset im Split-Button ist sichtbar (gleiche Höhe wie Start). */
+    @Test
+    fun meditationReset() = snap("03_meditation_reset", heightDp = device.heightDp) {
+        MeditationScreen(
+            initialConfig = MeditationConfig(minutes = 15),
             speechAvailable = true,
             gongIntervalMin = 5,
             onOpenSettings = {},
@@ -391,6 +427,29 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     onBack = {},
                 )
             }
+        }
+    }
+
+    /**
+     * Detailseite mit gespeicherter Anpassung: Reset sichtbar, Intervalle aufgeklappt – Stepper
+     * in der Karte und Split-Button auf jeder Breite und Schriftgröße.
+     */
+    @Test
+    fun detailAdjusted() {
+        val exercise = BuiltInExercises.all.first { it.id == "4-7-8" }
+        snap("08_detail_angepasst", prepare = {
+            compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.adjust_intervals)).performClick()
+        }) {
+            ExerciseDetailScreen(
+                exercise = exercise,
+                requireSafetyConfirm = false,
+                savedIntervals = IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9),
+                onIntervalsChange = { _, _, _, _ -> },
+                onIntervalsReset = {},
+                onConfirmedSafety = {},
+                onStart = {},
+                onBack = {},
+            )
         }
     }
 

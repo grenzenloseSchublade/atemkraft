@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +32,7 @@ import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
@@ -148,11 +148,10 @@ private fun SavedPatternCard(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
             }
-            val cd = stringResource(R.string.cd_pattern_delete)
-            IconButton(onClick = onDelete, modifier = Modifier.semantics { contentDescription = cd }) {
+            AppIconButton(onClick = onDelete) {
                 Icon(
                     Icons.Filled.Delete,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.cd_pattern_delete),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
             }

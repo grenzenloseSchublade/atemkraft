@@ -17,7 +17,8 @@ import app.atemkraft.ui.theme.Dimens
  * 3. sonst, wenn die übrigen nebeneinander passen → erster (Primär-)Button allein in voller
  *    Breite, die übrigen darunter in einer Reihe (spart eine Zeile Höhe),
  * 4. sonst → alle untereinander in voller Breite, in Lesereihenfolge.
- * Alle Buttons einer Reihe bekommen dieselbe Höhe.
+ * Alle Buttons einer Reihe teilen die Zeilenhöhe (einschließlich 48-dp-Tippfläche); sichtbar
+ * sind sie gleich hoch, weil ihre Beschriftungen einzeilig sind und dieselbe Mindesthöhe haben.
  */
 @Composable
 fun AdaptiveButtonRow(
@@ -91,9 +92,15 @@ private class MeasuredRow(val placeables: List<Placeable>, val height: Int, val 
     }
 }
 
-/** Misst eine Reihe mit festen Breiten; alle Buttons bekommen die Höhe des höchsten. */
+/**
+ * Misst eine Reihe mit festen Breiten. Die Höhe ist nur nach oben begrenzt: Eine feste Höhe
+ * würde die minIntrinsicHeight samt 48-dp-Tippfläche an die Buttons durchreichen und sie
+ * sichtbar 48 dp hoch machen statt `Sizes.ButtonHeight`.
+ */
 private fun placeRow(measurables: List<Measurable>, widths: List<Int>, gap: Int): MeasuredRow {
     val rowHeight = measurables.indices.maxOf { measurables[it].minIntrinsicHeight(widths[it]) }
-    val placeables = measurables.mapIndexed { i, m -> m.measure(Constraints.fixed(widths[i], rowHeight)) }
+    val placeables = measurables.mapIndexed { i, m ->
+        m.measure(Constraints(minWidth = widths[i], maxWidth = widths[i], minHeight = 0, maxHeight = rowHeight))
+    }
     return MeasuredRow(placeables, placeables.maxOf { it.height }, gap)
 }

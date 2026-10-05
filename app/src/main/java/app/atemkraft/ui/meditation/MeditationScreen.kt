@@ -19,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,6 +61,7 @@ import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
@@ -194,16 +194,17 @@ private fun SelectionContent(
                         )
                     }
                 }
-                // Frei wählbare Dauer (beliebige Minuten); Presets sind nur Schnellwahl.
+                // Frei wählbare Dauer (beliebige Minuten); Presets sind nur Schnellwahl. Inline:
+                // Knöpfe direkt hinter dem Label, linksbündig wie die Chips – keine weite Lücke
+                // zum rechten Rand. Kompakt, weil die Chip-Zeile darüber schon Touch-Rand mitbringt.
                 Stepper(
-                    label = stringResource(R.string.adjust_minutes),
+                    label = stringResource(R.string.meditation_minutes_label),
                     value = minutes,
                     range = 1..120,
-                    // Bündig mit Chips und Überschriften; kompakt, weil die Chip-Zeile darüber
-                    // schon 8 dp Touch-Rand mitbringt – so passt der Tab auf dem A54 ohne Scrollen.
-                    horizontal = 0.dp,
-                    vertical = Dimens.GapSmall,
                     onChange = { minutes = it },
+                    inline = true,
+                    horizontal = 0.dp,
+                    vertical = Dimens.GapTiny,
                 )
             } else {
                 Spacer(Modifier.height(Dimens.SectionGap))
@@ -245,29 +246,18 @@ private fun SelectionContent(
                 )
             }
 
-            Spacer(Modifier.height(Dimens.GapSmall))
-            SubLabel(stringResource(R.string.meditation_speech_label), color = MaterialTheme.colorScheme.onBackground)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = if (speechAvailable) {
-                        stringResource(R.string.meditation_speech_hint)
-                    } else {
-                        stringResource(R.string.meditation_speech_unavailable)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = speech && speechAvailable,
-                    onCheckedChange = { speech = it },
-                    enabled = speechAvailable,
-                )
-            }
+            // Schalter in der Zeile seines Namens, Hinweis darunter; die ganze Zeile schaltet.
+            ToggleRow(
+                label = stringResource(R.string.meditation_speech_label),
+                checked = speech && speechAvailable,
+                onCheckedChange = { speech = it },
+                hint = if (speechAvailable) {
+                    stringResource(R.string.meditation_speech_hint)
+                } else {
+                    stringResource(R.string.meditation_speech_unavailable)
+                },
+                enabled = speechAvailable,
+            )
             // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.
             Spacer(Modifier.height(Dimens.GapSmall))
         }

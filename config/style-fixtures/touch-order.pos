@@ -1,0 +1,5 @@
+Box(
+    Modifier
+        .size(Sizes.IconButtonSize)
+        .minimumInteractiveComponentSize(),
+)

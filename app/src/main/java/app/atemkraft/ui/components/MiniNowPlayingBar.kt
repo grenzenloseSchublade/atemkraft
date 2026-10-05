@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
@@ -17,9 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Geteilte „Now-Playing"-Leiste über der NavigationBar (Titel + Status + ˄), tippen öffnet die
@@ -33,7 +34,9 @@ fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit) {
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 60.dp),
+            // Zwei Textzeilen plus Polster ergeben schon ≈ 50 dp; die Mindesthöhe sichert nur
+            // das Touch-Ziel (früher 60 dp mit sichtbarem Leerraum).
+            .heightIn(min = Dimens.MinTouchTarget),
     ) {
         Row(
             modifier = Modifier
@@ -62,6 +65,7 @@ fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit) {
                 imageVector = Icons.Filled.KeyboardArrowUp,
                 contentDescription = stringResource(R.string.mini_open),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(Sizes.IconDefault),
             )
         }
     }

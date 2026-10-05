@@ -80,6 +80,7 @@ import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionNoteAmber
 import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
+import app.atemkraft.ui.theme.Sizes
 import kotlinx.coroutines.delay
 import kotlin.math.ceil
 
@@ -189,7 +190,7 @@ private fun ActiveContent(
                                 stateDescription = if (hintVisible) "Erweitert" else "Eingeklappt"
                             }
                             // 48-dp-Mindest-Touch-Target (Bedienung mitten in der Session).
-                            .heightIn(min = 48.dp)
+                            .heightIn(min = Dimens.MinTouchTarget)
                             .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapTiny),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -197,7 +198,7 @@ private fun ActiveContent(
                             imageVector = Icons.Outlined.Info,
                             contentDescription = null,
                             tint = hintColor,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(Sizes.IconSmall),
                         )
                         Spacer(Modifier.width(Dimens.GapTiny))
                         Text(

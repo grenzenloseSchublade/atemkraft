@@ -61,9 +61,9 @@ fun SessionAdjustCard(
                         text = stringResource(R.string.adjust_intervals),
                         expanded = intervalsExpanded,
                         onToggle = onToggleIntervals,
-                        // Caret-Glyph (6 dp Innenrand im Icon) steht wie bisher knapp vor der
-                        // Stepper-Label-Kante (CardPadding).
-                        modifier = Modifier.padding(start = Dimens.GapTiny),
+                        // Das Caret-Glyph (knapp ein Drittel Innenrand im Icon) steht so etwa an
+                        // der Stepper-Label-Kante (CardPadding).
+                        modifier = Modifier.padding(start = Dimens.GapSmall),
                     )
                     if (!intervalsExpanded && intervalsModified) {
                         Text(
