@@ -146,10 +146,13 @@ def locale_config(_: Check) -> dict[str, list[int]]:
 
 
 def section_header_heading(_: Check) -> dict[str, list[int]]:
-    """A11Y-01: Abschnittsköpfe sind Überschriften für TalkBack."""
-    path = SRC + "ui/components/SectionHeader.kt"
-    text = (ROOT / path).read_text(encoding="utf-8")
-    return {} if "heading()" in text else {path: [0]}
+    """A11Y-01: Abschnitts- und Seitenköpfe sind Überschriften für TalkBack."""
+    hits = {}
+    for name in ("SectionHeader", "ScreenHeader", "PushHeader"):
+        path = SRC + f"ui/components/{name}.kt"
+        if "heading()" not in (ROOT / path).read_text(encoding="utf-8"):
+            hits[path] = [0]
+    return hits
 
 
 UI_LITERAL_LINE = re.compile(r"Text\(|contentDescription\s*=|stateDescription\s*=|onClickLabel\s*=|listOf\(")

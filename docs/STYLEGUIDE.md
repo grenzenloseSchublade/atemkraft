@@ -162,7 +162,7 @@ Nicht skaliert: `NavigationBar` (M3 1.3.1: Höhe 80, Indikator 64 × 32 fest, S-
 | Typ | Container | oben | Kopf | unten |
 |---|---|---|---|---|
 | Tab | `Surface(background)` → `LazyColumn(spacedBy(ListGap))`, horizontal `ScreenPadding` | `ScreenTop` | `headlineLarge` + Untertitel `bodyLarge` `SECONDARY`, optional Icon-Aktion rechts | `ScreenBottom` |
-| Push | `Surface(background)` → `Column.verticalScroll`, ggf. gepinnte Startleiste | `ScreenTopSub` | `BackButton`, optional Eyebrow `labelLarge`, `headlineMedium` | `ScreenBottom` |
+| Push | `Surface(background)` → `Column` aus `PushHeader` (fest) und `Column(Modifier.weight(1f)).verticalScroll`, ggf. gepinnte Startleiste | `ScreenTopSub` (im `PushHeader`) | `PushHeader`: Pfeil und Titel `headlineMedium` fest (Einstellungen, Glossar) oder nur der Pfeil fest, wenn der Kopf zum Inhalt gehört (Über: Markenkopf; Detail: Eyebrow `labelLarge` + `TitleWithChips`) | `ScreenBottom` |
 | Vollbild-Session | `OverlayChrome` → Inhalt mit `SessionPadding` | `safeDrawing` | Minimieren links, Ton rechts | – |
 
 ### 4.4 Regeln
@@ -185,7 +185,7 @@ Nicht skaliert: `NavigationBar` (M3 1.3.1: Höhe 80, Indikator 64 × 32 fest, S-
 |---|---|---|---|
 | `AppIconButton` | jede Icon-only-Aktion: Kreis `IconButtonSize` (Ripple nur dort), Icon `IconDefault`, Tippfläche 48; `colors` wie M3 (Stepper: gefüllt) | Aktionen mit Text (→ `AppTextButton`) | cd am `Icon` (ICON-02), Rolle Button |
 | `AppTextButton` | Text-Aktion ohne Fläche (Laden, Wählen, Speichern, Dialog), Mindesthöhe `ButtonHeight` | Primäraktion (→ `StartSplitButton`) | Text = Name |
-| `BackButton` | Zurück auf Push-Screens (AutoMirrored, über `AppIconButton`; Versatz −(48 − `IconDefault`)/2 bündig) | Overlays (dort Minimieren) | cd `action_back` |
+| `BackButton` | Zurück-Pfeil im `PushHeader` (AutoMirrored, über `AppIconButton`; Versatz −(48 − `IconDefault`)/2 bündig) | Overlays (dort Minimieren); direkt im Scroll-Inhalt (scrollt aus dem Bild) | cd `action_back` |
 | `BreathingCircle` | Atem-Pacer (`fraction` 0…1 → Skala 0,42…1,0) | dekorative Kreise | Aufrufer setzt Name, `onClickLabel`, Zustand, Fokus (A11Y-07) |
 | `Chip` / `TagChip` / `InfoChip` | nicht klickbare Info-Pillen | Auswahl (→ `SelectChip`) | Text Pflicht; einzige Info-Chip-Implementierung |
 | `DisclosureToggle` | Einstellungen in Karten aufklappen | Inhalt mit Teaser | `stateDescription` inkl. „angepasst“ |
@@ -194,7 +194,8 @@ Nicht skaliert: `NavigationBar` (M3 1.3.1: Höhe 80, Indikator 64 × 32 fest, S-
 | `MiniNowPlayingBar` | minimierte laufende Session über der NavigationBar | andere Meldungen | ≥ 48 dp, `maxLines = 1`, ein Fokus-Stopp |
 | `OverlayChrome` | Rahmen jedes Vollbild-Overlays | Push-Screens | Ton als `Role.Switch` + `stateDescription`, `paneTitle` |
 | `ReferenceItem` | eine Quelle (Zitat, DOI/PMID) | – | Kennung ≥ 4,5:1 |
-| `ScreenHeader` | Kopf der Haupt-Tabs: Titel, optional Untertitel und Zahnrad (nur Tabs mit eigenen Einstellungen: Atmen, Meditation) | Push-Screens (→ `BackButton` + Titel) | Titel `heading()`; Zahnrad cd `settings_title` |
+| `ScreenHeader` | Kopf der Haupt-Tabs: Titel, optional Untertitel und Zahnrad (nur Tabs mit eigenen Einstellungen: Atmen, Meditation) | Push-Screens (→ `PushHeader`) | Titel `heading()`; Zahnrad cd `settings_title` |
+| `PushHeader` | fester Kopf jeder Push-Seite über der Scroll-Fläche: `BackButton` und optional Titel (`headlineMedium` über `WholeWordText`, Zeile `heightIn(min = 48)`); ohne eigene Fläche und Erhöhung, bringt `ScreenPadding` und `ScreenTopSub` selbst mit; Titel folgt dem Pfeil im Abstand des Touch-Überstands | Tab-Screens (→ `ScreenHeader`); Köpfe, die zum Inhalt gehören (Markenkopf, Titel mit Chips → dann ohne `title`) | Titel `heading()`; Pfeil cd `action_back`, Tippfläche 48 |
 | `SectionHeader` | Abschnittskopf mit Akzentbalken | Kartentitel | `heading()` |
 | `SubLabel` | Unter-Überschrift in Karten und Abschnitten (eine Ebene unter `SectionHeader`) | Abschnittsköpfe | – |
 | `SegmentedChoiceRow` | Einzelwahl, 2–4 kurze Optionen (`modifier`); Segmente `ButtonHeight`, Häkchen `IconInButton`; passt eine Beschriftung nicht ins Segment, Radioliste (Radio per `scaledLayout`, Zeile 48 dp) | > 4 Optionen | Gruppenlabel verknüpft; Radioliste mit `selectableGroup()`, `Role.RadioButton` |
@@ -210,7 +211,7 @@ Nicht skaliert: `NavigationBar` (M3 1.3.1: Höhe 80, Indikator 64 × 32 fest, S-
 | `SessionControls.kt` (`GlowText`, `Session*Button`, `FinishedPanel`, `rememberTapFlash`), `PauseFlash` | Text, Buttons, Tap-Rückmeldung **nur** in Vollbild-Sessions | normale Screens, stehender Status | `FinishedPanel` sagt das Ende an; `PauseFlash` dekorativ |
 | `SafetyDialog` | Sicherheitsbestätigung vor intensiven Übungen | Infos ohne Risiko | nicht außen schließbar, scrollbar |
 
-Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplant** (ersetzen Duplikate): `PinnedActionBar`, `PushHeader`, `Bullet`, `CardTitle`/`Hint` (öffentlich). Die Wrapper `AppIconButton`, `AppTextButton`, `ToggleRow` und `scaledLayout` (intern) liegen in `Controls.kt`.
+Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplant** (ersetzen Duplikate): `PinnedActionBar`, `Bullet`, `CardTitle`/`Hint` (öffentlich). Die Wrapper `AppIconButton`, `AppTextButton`, `ToggleRow` und `scaledLayout` (intern) liegen in `Controls.kt`.
 
 ### 5.2 Regeln
 
@@ -232,6 +233,7 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplan
 | MUSTER-05 | MUSS | **Zerstörende Aktion** (Logbuch, gespeicherte Muster, Stimmen): zweistufig im selben Element. Erster Tipp morpht in den Bestätigungszustand (Label „Wirklich leeren?“ bzw. Bestätigungs-Icon mit cd „‚X‘ wirklich löschen?“, Farbe `error`, `liveRegion`), zweiter Tipp löscht. Rückfall nach 4 s, nicht solange Screenreader/Switch Access aktiv ist oder das Element Fokus hat. Kein Dialog, keine Snackbar. | Schutz vor Fehltipp ohne Dialog (SEC-PRIV-04). | manuell: R-A11Y |
 | MUSTER-06 | MUSS | **Sicherheitsdialog** nur für `EvidenceTag.CAUTION`: M3 `AlertDialog`, Warn-Icon (cd null), Hinweisliste scrollbar, „Abbrechen“ links, „Verstanden, starten“ rechts, `dismissOnClickOutside = false`; erscheint bis zur ersten Bestätigung, danach in den Einstellungen abschaltbar. | Bewusste Bestätigung vor intensiven Übungen. | manuell: R-A11Y |
 | MUSTER-07 | MUSS | **Session.** Buttons nur `SessionPrimary/Secondary/StopButton`. Alles, was per Kreis-Tap geht (Pause, Weiter), hat zusätzlich einen benannten Button; in `WAITING_FOR_USER` morpht der Primärbutton zu „Weiter“. Minimiert ist eine laufende Session immer als `MiniNowPlayingBar` sichtbar; Zurück im Overlay minimiert. | Bedienbar ohne Kreis-Geste (TalkBack, Switch Access); eine laufende Session ist nie unsichtbar. | manuell: R-A11Y |
+| MUSTER-08 | MUSS | **Tabs und Zurück.** Push-Seiten haben einen festen Kopf (`PushHeader`); der Zurück-Pfeil scrollt nie aus dem Bild. Ein Tipp auf den markierten Tab führt zu dessen Startseite (`tapTab`: `popBackStack(route, inclusive = false)`, sonst `switchTab`), für alle vier Tabs. Ein anderer Tab stellt seinen gemerkten Stapel wieder her (`switchTab`, `restoreState`). Die Einstellungen bleiben eine zentrale Route. | Nutzerbefund: Aus den Einstellungen kam man nur über den Zurück-Pfeil heraus, und der war nach dem Sprung zur Meditations-Karte schon aus dem Bild gescrollt; der markierte Tab reagierte nicht. Der feste Kopf kostet beim Scrollen rund 56 dp – bewusst Platz gegen Orientierung. | auto: `TabNavigationTest`; manuell: R-VISUAL |
 
 ## <a id="icons"></a>7 Icons
 
@@ -371,7 +373,7 @@ Muster vereinfacht, `\|` = Alternation. Ein Check ohne Ist-Treffer muss sein Pos
 | `cd-style` | `IconButton\([^)]*semantics\s*\{\s*contentDescription`; `contentDescription\s*=\s*null(?!.*//\s*dekorativ:)` | `src/` | ICON-02 |
 | `motion-literal` (SOLL) | `tween\(\s*(durationMillis\s*=\s*)?\d`; `val\s+\w*(dur\|Duration\|Ms\|Millis)\w*\s*=\s*\d`; in `components/` `delay\(\s*\d` | `src/ui/`, `MainActivity.kt` ohne `ui/theme/` | MOTION-04 |
 | `player-in-composable` | `remember\s*\{\s*(Haptic\|ToneCue\|Continuous)\w*Player\(` | `src/ui/` | AUDIO-04 |
-| `semantics-required` | `\.clickable\s*(\((?![^)]*role\s*=)\|\{)` in `src/ui/`; `heading()` fehlt in `SectionHeader.kt` (künftig `ScreenHeader`, `PushHeader`, `CardTitle`) | `src/ui/` | A11Y-01 |
+| `semantics-required` | `\.clickable\s*(\((?![^)]*role\s*=)\|\{)` in `src/ui/`; `heading()` fehlt in `SectionHeader.kt`, `ScreenHeader.kt` oder `PushHeader.kt` (künftig `CardTitle`) | `src/ui/` | A11Y-01 |
 | `a11y-ratchet` (Review) | `clearAndSetSemantics` (ohne Importe); `indication\s*=\s*null` | `src/ui/` | A11Y-02, -07 |
 | `switch-unlabeled` (ml) | `\bSwitch\((?:[^()]\|\([^()]*\))*?onCheckedChange\s*=\s*(?!null)` | `src/ui/` | A11Y-03 |
 | `ui-literal` (perl) | in Zeilen mit `Text(`, `contentDescription =`, `stateDescription =`, `onClickLabel =`, `listOf(`: String-Literal mit `\p{L}` nach Entfernen von `$name`/`${…}` | `src/ui/` | TEXT-01 |
@@ -386,7 +388,8 @@ Muster vereinfacht, `\|` = Alternation. Ein Check ohne Ist-Treffer muss sein Pos
 | `ContentRulesTest` | Fälle `teaser`, `first-caution`, `detail-length` (SOLL, nur Ausgabe), `health-claims` (nur Ausgabe bis S-08 behoben, dann scharf ohne Baseline), `jargon`, `formal-address`, `decimal-comma` (`\d\.\d` außerhalb Kennungen), `quotes`, `ref-format`, `ref-unused`, `phase-min-duration`, `phase-labels-distinct`, `store-lengths` (ab `fastlane/`); Baseline `config/content-baseline.txt`. Finites Verb und Evidenzhinweis im Teaser prüft nur R-TEXT | `BuiltInExercises`, `Situations`, `Refs`, `RandomPatternGenerator.forSeed(0..6)`, `strings.xml`; `store-lengths`: `fastlane/**` (README, Store-Texte, Release-Notes und PRIVACY auf Heilversprechen: `sec-health-claims`) | TEXT-02, -04 … -06, -09 … -12, MUSTER-03, MOTION-02 |
 | `TypographyTest` | jede `headline*`/`title*`-Rolle: `LineBreak.Heading`, `Hyphens.None`; keine Rolle mit `Hyphens.Auto` | Theme | TYPO-03 |
 | `SizesTest` | jedes Token aus `ControlSize` bei fs 1,0 / 1,1 / 1,3 / 2,0: Optik/Schrift (`labelLarge` gegen M3) ≤ 1,1 × M3-Verhältnis, ≥ 0,9 × M3 × min(1, Schrift), ≥ 80 % M3; k monoton, bei 2,0 = 1 | Theme | LAYOUT-04 |
-| `ControlTouchTest` | Tap-Injektion bei fs 1,0 / 1,1 / 2,0: `AppIconButton`, Stepper-Knöpfe, `SelectChip`, `AppTextButton`, Segment, Reset ±23 dp trifft, ±25 dp nicht; `ToggleRow` über die ganze Zeile; Naht zweier Icon-Buttons; Start = Reset und Session-Buttons sichtbar `ButtonHeight`; Stepper und `ToggleRow` im TalkBack-Baum mit Name, Rolle, Zustand, Disabled und Wert-Live-Region; Selbsttest von `ControlFindings` | Komponenten | A11Y-01 … -05, LAYOUT-06, MUSTER-01 |
+| `ControlTouchTest` | Tap-Injektion bei fs 1,0 / 1,1 / 2,0: `AppIconButton`, Zurück-Pfeil im `PushHeader` (mit Titel), Stepper-Knöpfe, `SelectChip`, `AppTextButton`, Segment, Reset ±23 dp trifft, ±25 dp nicht; `ToggleRow` über die ganze Zeile; Naht zweier Icon-Buttons; Start = Reset und Session-Buttons sichtbar `ButtonHeight`; Stepper und `ToggleRow` im TalkBack-Baum mit Name, Rolle, Zustand, Disabled und Wert-Live-Region; Selbsttest von `ControlFindings` | Komponenten | A11Y-01 … -05, LAYOUT-06, MUSTER-01, -08 |
+| `TabNavigationTest` | NavHost mit den Routen der App und den echten Screens Einstellungen, Glossar, Über (A54-Größe): Re-Tap auf den markierten Tab führt aus Einstellungen, Glossar und Detail zur Tab-Startseite (alle vier Tabs), auf der Startseite ändert er nichts; Tab-Wechsel behält den Stapel; Zurück-Pfeil steht nach dem Sprung zur Meditations-Karte und am Ende des Glossars (360 × 640) im Bild und führt zurück; System-Zurück | Navigation | MUSTER-08 |
 | `ThemeContrastTest` | WCAG-Kontrast aller Token-Paare (Vordergrund, Alpha, Hintergrund-Kette inkl. Leiste mit Tonal-Elevation 3 dp, Mindestwert); ΔE76 ≥ 25 der Semantikfarben und Pinktöne; Baseline `config/contrast-baseline.txt` | Theme | FARBE-03, -04 |
 | `FractionContinuityTest` | Skala Phasenende = nächster Phasenanfang inkl. Vorbereitung, alle Built-ins und `forSeed(0..6)` (`circleFraction` in `ui/session/BreathingFraction.kt`); bekannte Sprünge in `knownJumps` mit S-ID | Session | MOTION-03 |
 | `ToneEnvelopeTest` | Attack ≥ 8 ms, Release ≥ 60 ms, Spitze ≤ 0,95 FS je Stufe für Wechselton, Gong (erzeugte PCM-Daten, Pegel über 3,5 ms, bis zum 90-%-Punkt), Dauerton (über seine Konstanten) | `src/cue/` | AUDIO-01 |
@@ -450,7 +453,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 | S-22 | TEXT-02, -05, -10 | Jargon in Situationen und Familien-Labels (`BuiltInExercises.kt:275-295`, `strings.xml:17-24`); `phase_hold_full` = `phase_hold_empty`; Wording („Session“, Lädt/lädt, „Aktiv ✓“, `action_end`/`action_stop`, „~“/„ca.“, Apostroph `strings.xml:118`) | S |
 | S-23 | TEXT-12 | „(Bowler 1998)“ und „(Vergleichsstudie 2025)“ in `4-7-8.effectDetail` ohne Quelle; `shetty2019`, `compare2025`, `nadiShodhana2024`, `nadiBhramari2023` unvollständig; `respeRate` (Patent, kein Studienzitat) und `fincham2023` ungenutzt; 8 deutsche Titel-Paraphrasen | M |
 | S-24 | CODE-03, -05 | `remember` statt `rememberSaveable` (`MeditationScreen.kt:160`, `ExerciseDetailScreen.kt:82`); unauflösbare `exerciseId` → leerer Screen (`MainActivity.kt:365`); Logik hängt an „Tagesmuster“ (`SavedPatternsRepository.kt:42`) | S |
-| S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1; ~~`ToggleRow`~~ erledigt 2026-10-05); ~~Stepper außerhalb der Karte eingerückt~~ (erledigt 2026-10-05, bündig); About-Titel `headlineLarge` in primary | M |
+| S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1; ~~`ToggleRow`~~, ~~`PushHeader`~~ erledigt 2026-10-05); ~~Stepper außerhalb der Karte eingerückt~~ (erledigt 2026-10-05, bündig); About-Titel `headlineLarge` in primary | M |
 | S-26 | KOMP-02, A11Y-01 | `Card(Modifier.clickable)` 4×, `clickable` ohne Rolle 9×; `DailyPatternCard` mit zwei beschrifteten `TextButton`s (Entscheidung offen: Speichern als trailing Icon mit Morph) | S |
 | S-27 | A11Y-06 | Glyphen als Fokus-Stopps, `LogEntryCard` 4 Stopps, „3:05“; Stepper-cd „Einatmen (s): 4“; Stimmenliste ohne Namen | M |
 | S-28 | TEXT-03 | Keine `localeFilters`/`localeConfig`; `Locale.getDefault()` neben `Locale.GERMAN`; `"%d:%02d"` doppelt | S |

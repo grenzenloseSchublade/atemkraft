@@ -55,7 +55,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -94,6 +93,7 @@ import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
+import app.atemkraft.ui.tapTab
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.NeonMagenta
 import kotlinx.coroutines.launch
@@ -181,7 +181,8 @@ private fun AtemkraftApp() {
     val currentDestination = navBackStackEntry?.destination
 
     // Aktueller Top-Level-Tab (null auf Push-Zielen wie Detail/Settings). Der zuletzt
-    // gewählte Tab bleibt markiert, während man in einer daraus geöffneten Seite ist.
+    // gewählte Tab bleibt markiert, während man in einer daraus geöffneten Seite ist; ein
+    // erneuter Tipp darauf führt zu seiner Startseite zurück (tapTab).
     val currentTopTab = when {
         currentDestination.isOn(AtmenRoute) -> TopTab.ATMEN
         currentDestination.isOn(SituationenRoute) -> TopTab.SITUATIONEN
@@ -221,22 +222,22 @@ private fun AtemkraftApp() {
                             AppNavItem(
                                 label = stringResource(R.string.tab_breathe),
                                 selected = selectedTab == TopTab.ATMEN,
-                                onClick = { navController.switchTab(AtmenRoute) },
+                                onClick = { navController.tapTab(AtmenRoute, selected = selectedTab == TopTab.ATMEN) },
                             ) { Icon(Icons.Filled.Home, contentDescription = null) },
                             AppNavItem(
                                 label = stringResource(R.string.tab_situations),
                                 selected = selectedTab == TopTab.SITUATIONEN,
-                                onClick = { navController.switchTab(SituationenRoute) },
+                                onClick = { navController.tapTab(SituationenRoute, selected = selectedTab == TopTab.SITUATIONEN) },
                             ) { Icon(Icons.Filled.Search, contentDescription = null) },
                             AppNavItem(
                                 label = stringResource(R.string.tab_meditation),
                                 selected = selectedTab == TopTab.MEDITATION,
-                                onClick = { navController.switchTab(MeditationRoute) },
+                                onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
                             ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) },
                             AppNavItem(
                                 label = stringResource(R.string.tab_logbook),
                                 selected = selectedTab == TopTab.LOGBUCH,
-                                onClick = { navController.switchTab(LogbuchRoute) },
+                                onClick = { navController.tapTab(LogbuchRoute, selected = selectedTab == TopTab.LOGBUCH) },
                             ) { Icon(Icons.Filled.DateRange, contentDescription = null) },
                         ),
                     )
@@ -505,15 +506,6 @@ private enum class TopTab { ATMEN, SITUATIONEN, LOGBUCH, MEDITATION }
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
 private fun androidx.navigation.NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true
-
-/** Tab-Wechsel mit erhaltenen Back-Stacks (NiA-Muster). */
-private fun androidx.navigation.NavController.switchTab(route: Any) {
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
-    }
-}
 
 @Composable
 private fun KeepScreenOn(enabled: Boolean) {

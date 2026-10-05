@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
-import app.atemkraft.ui.components.BackButton
+import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 
@@ -70,42 +70,38 @@ private val terms = listOf(
 @Composable
 fun GlossaryScreen(onBack: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Dimens.ScreenPadding),
-        ) {
-            Spacer(Modifier.height(Dimens.ScreenTopSub))
-            BackButton(onClick = onBack)
-            Text(
-                text = stringResource(R.string.glossary_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(Dimens.SectionGap))
-            // Karte ↔ Karte über spacedBy statt Außen-Padding je Karte: exakt ListGap, kein
-            // zusätzlicher Rand über der ersten bzw. unter der letzten Karte.
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                terms.forEach { term ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-                            WholeWordText(
-                                text = term.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Spacer(Modifier.height(Dimens.GapTiny))
-                            Text(
-                                text = term.definition,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            PushHeader(onBack = onBack, title = stringResource(R.string.glossary_title))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Dimens.ScreenPadding),
+            ) {
+                Spacer(Modifier.height(Dimens.SectionGap))
+                // Karte ↔ Karte über spacedBy statt Außen-Padding je Karte: exakt ListGap, kein
+                // zusätzlicher Rand über der ersten bzw. unter der letzten Karte.
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
+                    terms.forEach { term ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+                                WholeWordText(
+                                    text = term.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                Spacer(Modifier.height(Dimens.GapTiny))
+                                Text(
+                                    text = term.definition,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                )
+                            }
                         }
                     }
                 }
+                Spacer(Modifier.height(Dimens.ScreenBottom))
             }
-            Spacer(Modifier.height(Dimens.ScreenBottom))
         }
     }
 }

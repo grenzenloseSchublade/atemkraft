@@ -44,10 +44,10 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
-import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.PhaseAdjust
+import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
@@ -167,14 +167,14 @@ fun ExerciseDetailScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // Nur der Pfeil steht fest; Familie, Titel und Chips gehören zum Inhalt.
+            PushHeader(onBack = onBack)
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
-                Spacer(Modifier.height(Dimens.ScreenTopSub))
-                BackButton(onClick = onBack)
                 Text(
                     text = exercise.family.title(),
                     style = MaterialTheme.typography.labelLarge,

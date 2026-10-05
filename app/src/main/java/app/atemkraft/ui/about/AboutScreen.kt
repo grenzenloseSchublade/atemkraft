@@ -23,91 +23,93 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
-import app.atemkraft.ui.components.BackButton
+import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.theme.Dimens
 
 /** Über-Seite: App-Name, Version, Kurzbeschreibung und ehrlicher Haftungshinweis. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Dimens.ScreenPadding),
-        ) {
-            Spacer(Modifier.height(Dimens.ScreenTopSub))
-            BackButton(onClick = onBack)
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            )
-            Spacer(Modifier.height(Dimens.SectionGap))
-            Text(
-                text = stringResource(R.string.about_body),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
-            )
-            Spacer(Modifier.height(Dimens.SectionGap))
-            Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Nur der Pfeil steht fest; der Markenkopf (App-Name, Version) gehört zum Inhalt.
+            PushHeader(onBack = onBack)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Dimens.ScreenPadding),
+            ) {
                 Text(
-                    text = stringResource(R.string.about_disclaimer),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(Dimens.CardPadding),
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.primary,
                 )
-            }
-
-            Spacer(Modifier.height(Dimens.ListGap))
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+                Text(
+                    text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                )
+                Spacer(Modifier.height(Dimens.SectionGap))
+                Text(
+                    text = stringResource(R.string.about_body),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                )
+                Spacer(Modifier.height(Dimens.SectionGap))
+                Card(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = stringResource(R.string.about_credits_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(Modifier.height(Dimens.GapSmall))
-                    Text(
-                        text = stringResource(R.string.about_credits_body),
+                        text = stringResource(R.string.about_disclaimer),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        modifier = Modifier.padding(Dimens.CardPadding),
                     )
                 }
-            }
-            Spacer(Modifier.height(Dimens.SectionGap))
-            // Autor + Lizenz + offizielle Quelle: gerade bei manuell geteilten APKs die einzige
-            // Stelle, an der Empfänger Herkunft und Original-Repo der App sehen.
-            Text(
-                text = stringResource(R.string.about_author),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            )
-            // Klickbarer Repo-Link: LinkAnnotation öffnet den Browser ohne eigenen Intent-Code.
-            Text(
-                text = buildAnnotatedString {
-                    append(stringResource(R.string.about_source_prefix))
-                    withLink(
-                        LinkAnnotation.Url(
-                            url = "https://github.com/grenzenloseSchublade/atemkraft",
-                            styles = TextLinkStyles(
-                                style = SpanStyle(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textDecoration = TextDecoration.Underline,
+
+                Spacer(Modifier.height(Dimens.ListGap))
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+                        Text(
+                            text = stringResource(R.string.about_credits_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(Modifier.height(Dimens.GapSmall))
+                        Text(
+                            text = stringResource(R.string.about_credits_body),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(Dimens.SectionGap))
+                // Autor + Lizenz + offizielle Quelle: gerade bei manuell geteilten APKs die einzige
+                // Stelle, an der Empfänger Herkunft und Original-Repo der App sehen.
+                Text(
+                    text = stringResource(R.string.about_author),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                )
+                // Klickbarer Repo-Link: LinkAnnotation öffnet den Browser ohne eigenen Intent-Code.
+                Text(
+                    text = buildAnnotatedString {
+                        append(stringResource(R.string.about_source_prefix))
+                        withLink(
+                            LinkAnnotation.Url(
+                                url = "https://github.com/grenzenloseSchublade/atemkraft",
+                                styles = TextLinkStyles(
+                                    style = SpanStyle(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
                                 ),
                             ),
-                        ),
-                    ) { append("github.com/grenzenloseSchublade/atemkraft") }
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            )
-            Spacer(Modifier.height(Dimens.ScreenBottom))
+                        ) { append("github.com/grenzenloseSchublade/atemkraft") }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                )
+                Spacer(Modifier.height(Dimens.ScreenBottom))
+            }
         }
     }
 }

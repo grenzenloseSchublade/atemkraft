@@ -57,8 +57,8 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
+import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
@@ -118,54 +118,52 @@ fun SettingsScreen(
         focusDone = true
     }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = Dimens.ScreenPadding),
-        ) {
-            Spacer(Modifier.height(Dimens.ScreenTopSub))
-            BackButton(onClick = onBack)
-            Text(
-                text = stringResource(R.string.settings_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(Dimens.SectionGap))
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Fest über der Scroll-Fläche: Nach dem Sprung zur Meditations-Karte bliebe der
+            // Pfeil sonst außerhalb des Bildes (einziger sichtbarer Weg zurück).
+            PushHeader(onBack = onBack, title = stringResource(R.string.settings_title))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = Dimens.ScreenPadding),
+            ) {
+                Spacer(Modifier.height(Dimens.SectionGap))
 
-            TonCard(volume, onVolume, gongLong, onGongLong, onPreviewGong)
+                TonCard(volume, onVolume, gongLong, onGongLong, onPreviewGong)
 
-            Spacer(Modifier.height(Dimens.ListGap))
-            AtmenCard(soundMode, transition, onSoundMode, onTransition)
+                Spacer(Modifier.height(Dimens.ListGap))
+                AtmenCard(soundMode, transition, onSoundMode, onTransition)
 
-            Spacer(Modifier.height(Dimens.ListGap))
-            SessionCard(haptics, showSafetyWarning, showNextPhase, onToggleHaptics, onToggleSafety, onToggleNextPhase)
+                Spacer(Modifier.height(Dimens.ListGap))
+                SessionCard(haptics, showSafetyWarning, showNextPhase, onToggleHaptics, onToggleSafety, onToggleNextPhase)
 
-            Spacer(Modifier.height(Dimens.ListGap))
-            // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
-            Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
-                MeditationCard(
-                    gongIntervalMin, onGongInterval,
-                    voiceStates, activeVoiceId, piperEngineReady,
-                    onSampleVoice, onDownloadVoice, onSelectVoice, onDeleteVoice,
+                Spacer(Modifier.height(Dimens.ListGap))
+                // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
+                Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
+                    MeditationCard(
+                        gongIntervalMin, onGongInterval,
+                        voiceStates, activeVoiceId, piperEngineReady,
+                        onSampleVoice, onDownloadVoice, onSelectVoice, onDeleteVoice,
+                    )
+                }
+
+                Spacer(Modifier.height(Dimens.ListGap))
+                DataCard(onExportPatterns, onImportPatterns, dataStatus)
+
+                Spacer(Modifier.height(Dimens.ListGap))
+                NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
+                Spacer(Modifier.height(Dimens.ListGap))
+                NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
+
+                Spacer(Modifier.height(Dimens.SectionGap))
+                Text(
+                    text = stringResource(R.string.settings_about),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
+                Spacer(Modifier.height(Dimens.ScreenBottom))
             }
-
-            Spacer(Modifier.height(Dimens.ListGap))
-            DataCard(onExportPatterns, onImportPatterns, dataStatus)
-
-            Spacer(Modifier.height(Dimens.ListGap))
-            NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
-            Spacer(Modifier.height(Dimens.ListGap))
-            NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
-
-            Spacer(Modifier.height(Dimens.SectionGap))
-            Text(
-                text = stringResource(R.string.settings_about),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-            )
-            Spacer(Modifier.height(Dimens.ScreenBottom))
         }
     }
 }

@@ -52,6 +52,7 @@ import app.atemkraft.R
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.components.SessionPrimaryButton
@@ -167,6 +168,14 @@ class ControlTouchTest(private val fontScale: Float) {
     fun `AppIconButton trifft genau in der 48-dp-Tippflaeche`() {
         show { AppIconButton(onClick = { hits += "icon" }) { Icon(Icons.Filled.Delete, contentDescription = "x") } }
         probe("AppIconButton", clickables().single(), "icon", setOf('x', 'y'))
+    }
+
+    // PushHeader meldet den Pfeil schmaler, als seine Tippfläche ist (Titel rückt näher heran):
+    // Die Tippfläche muss trotzdem volle 48 dp bleiben und darf nicht unter den Titel reichen.
+    @Test
+    fun `Zurueck-Pfeil im PushHeader trifft genau in der 48-dp-Tippflaeche`() {
+        show { Box(Modifier.width(340.dp)) { PushHeader(onBack = { hits += "back" }, title = "Begriffe erklärt") } }
+        probe("PushHeader-Pfeil", clickables().single(), "back", setOf('x', 'y'))
     }
 
     @Test
