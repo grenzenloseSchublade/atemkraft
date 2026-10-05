@@ -26,11 +26,16 @@ fun SavedPatternEntity.toSpec(): PatternSpec = PatternSpec(inhale, holdFull, exh
 @Dao
 interface SavedPatternDao {
 
+    /** Liefert die neue Id (für die Anpassungen eines importierten Musters). */
     @Insert
-    suspend fun insert(pattern: SavedPatternEntity)
+    suspend fun insert(pattern: SavedPatternEntity): Long
 
     @Query("SELECT * FROM saved_patterns ORDER BY createdAtEpochMs DESC")
     fun all(): Flow<List<SavedPatternEntity>>
+
+    /** Momentaufnahme für Export/Import. */
+    @Query("SELECT * FROM saved_patterns ORDER BY createdAtEpochMs ASC")
+    suspend fun snapshot(): List<SavedPatternEntity>
 
     @Query("DELETE FROM saved_patterns WHERE id = :id")
     suspend fun delete(id: Long)

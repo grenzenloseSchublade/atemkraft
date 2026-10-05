@@ -90,7 +90,9 @@ import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionStatus
 import app.atemkraft.ui.session.SessionViewModel
+import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
+import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.NeonMagenta
@@ -388,6 +390,10 @@ private fun AtemkraftApp() {
                 ) { entry ->
                     // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
                     LaunchedEffect(Unit) { meditationController.prepareSpeech() }
+                    val patternTransfer = rememberPatternTransfer(
+                        container.savedPatternsRepository,
+                        container.settingsRepository,
+                    )
                     SettingsScreen(
                         soundMode = cueSettings.soundMode,
                         transition = cueSettings.transition,
@@ -419,6 +425,9 @@ private fun AtemkraftApp() {
                         onOpenGlossary = { navController.navigate(GlossaryRoute) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
+                        onExportPatterns = patternTransfer.export,
+                        onImportPatterns = patternTransfer.import,
+                        dataStatus = DataStatus(patternTransfer.exportLabel, patternTransfer.importLabel, patternTransfer.note),
                         focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )
                 }

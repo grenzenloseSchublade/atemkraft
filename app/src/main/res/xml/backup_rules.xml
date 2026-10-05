@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Auto-Backup (API < 31): Einstellungen (DataStore) + Logbuch (Room) sichern, aber die
-     großen nachgeladenen TTS-Stimmmodelle (files/tts, bis ~130 MB) ausschließen – sie sprengen
-     die Backup-Quote und lassen sich jederzeit erneut herunterladen. -->
+<!-- API < 31: allowBackup="false" schaltet Backup und Übertragung ohnehin ab. Die Regeln stehen
+     nur für Lint (DataExtractionRules) und als zweite Sicherung da: nichts wird gesichert –
+     keine Cloud (docs/SECURITY.md SEC-STORE-02). -->
 <full-backup-content>
-    <exclude domain="file" path="tts" />
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+    <exclude domain="device_root" path="." />
+    <exclude domain="device_file" path="." />
+    <exclude domain="device_database" path="." />
+    <exclude domain="device_sharedpref" path="." />
 </full-backup-content>

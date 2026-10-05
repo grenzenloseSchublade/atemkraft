@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+/** Ergebnis eines Imports: neu angelegt und als schon vorhanden übersprungen. */
+data class ImportResult(val added: Int, val duplicates: Int)
+
 /** Ein gespeichertes Muster fürs UI: DB-Id + fertige Übung + Parameter. */
 data class SavedPattern(val id: Long, val exercise: Exercise, val spec: PatternSpec) {
     val activating: Boolean get() = spec.activating
@@ -60,6 +63,61 @@ class SavedPatternsRepository(private val dao: SavedPatternDao) {
     }
 
     suspend fun delete(id: Long) = dao.delete(id)
+
+    suspend fun isEmpty(): Boolean = dao.snapshot().isEmpty()
+
+    /** Alle gespeicherten Muster samt Anpassung als Export-Datei (älteste zuerst). */
+    suspend fun exportFile(
+        nowEpochMs: Long,
+        overridesOf: suspend (exerciseId: String) -> IntervalOverrides?,
+    ): PatternBackupFile = PatternBackupFile(
+        exportedAtEpochMs = nowEpochMs,
+        patterns = dao.snapshot().map { e ->
+            PatternBackupEntry(
+                name = e.name,
+                inhale = e.inhale,
+                holdFull = e.holdFull,
+                exhale = e.exhale,
+                holdEmpty = e.holdEmpty,
+                activating = e.activating,
+                createdAtEpochMs = e.createdAtEpochMs,
+                overrides = overridesOf("$ID_PREFIX${e.id}")?.let {
+                    PatternBackupOverrides(it.duration, it.inhale, it.hold, it.exhale)
+                },
+            )
+        },
+    )
+
+    /**
+     * Legt die Einträge an, die es noch nicht gibt (gleiche Herkunft und Werte = Dublette, auch
+     * innerhalb der Datei). Anpassungen landen unter der neuen Id des Musters.
+     */
+    suspend fun import(
+        entries: List<PatternBackupEntry>,
+        writeOverrides: suspend (exerciseId: String, overrides: PatternBackupOverrides) -> Unit,
+    ): ImportResult {
+        val known = dao.snapshot()
+            .map { PatternBackup.identity(it.createdAtEpochMs, it.inhale, it.holdFull, it.exhale, it.holdEmpty, it.activating) }
+            .toMutableSet()
+        var added = 0
+        for (entry in entries) {
+            if (!known.add(with(PatternBackup) { entry.identity() })) continue
+            val id = dao.insert(
+                SavedPatternEntity(
+                    name = entry.name.trim(),
+                    inhale = entry.inhale,
+                    holdFull = entry.holdFull,
+                    exhale = entry.exhale,
+                    holdEmpty = entry.holdEmpty,
+                    activating = entry.activating,
+                    createdAtEpochMs = entry.createdAtEpochMs,
+                ),
+            )
+            entry.overrides?.let { writeOverrides("$ID_PREFIX$id", it) }
+            added++
+        }
+        return ImportResult(added = added, duplicates = entries.size - added)
+    }
 
     /** Synchrone Auflösung für den Session-Start ([ExerciseRepository.byId]). */
     fun byExerciseId(exerciseId: String): Exercise? {

@@ -8,6 +8,9 @@ getakteten Sessions (mitatmender Kreis, Ton, Vibration), ein **Meditations-Timer
 vollständig offline. Einzige Netznutzung: der **optionale, ausdrücklich angestoßene
 Download der neuronalen Sprachstimmen** (Piper-Modelle von der offiziellen
 sherpa-onnx-Release auf GitHub) — danach läuft auch die Sprachausgabe offline.
+Kein Cloud-Backup: Gespeicherte Muster lassen sich in den Einstellungen als Datei
+exportieren und wieder importieren; beim Handywechsel kann ab Android 12 die lokale
+Gerät-zu-Gerät-Übertragung (Kabel/WLAN-Direkt) die Daten mitnehmen.
 
 ### Berechtigungen (alle mit Zweck)
 
@@ -61,7 +64,7 @@ ui/       theme/ · components/ (geteilt) · home/ · situations/ · session/ ·
 - Atem-Session: `SessionViewModel` (monotone Uhr, fortlaufender Phasen-Anker → driftfrei).
 - Meditation: app-weiter `MeditationController` (überlebt Navigation) + Foreground-Service.
 - Sprach-Engines hinter gemeinsamer API; neuronale Modelle werden nach `filesDir/tts`
-  geladen (vom Backup ausgeschlossen, siehe `res/xml/`).
+  geladen (von der Gerät-zu-Gerät-Übertragung ausgeschlossen, siehe `res/xml/`).
 
 ## Eine neue Übung hinzufügen
 

@@ -36,7 +36,7 @@ Prüfen mit `apksigner verify --print-certs atemkraft-vX.Y.Z.apk`, AppVerifier o
 <a id="prinzipien"></a>
 ## Prinzipien und Daten-Inventar
 
-Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, keine Werbung. Alle Nutzerdaten bleiben auf dem Gerät. Ausnahmen sind nur der optionale, per Tap ausgelöste Stimm-Download ([Netzwerk](#netzwerk)) und das systemgesteuerte Android-Backup ([Speicherung](#speicherung)).
+Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, keine Werbung. Alle Nutzerdaten bleiben auf dem Gerät. Einzige Ausnahme ist der optionale, per Tap ausgelöste Stimm-Download ([Netzwerk](#netzwerk)). Es gibt **keine Cloud-Anbindung**, auch kein Android-Cloud-Backup (Nutzerentscheidung 2026-10-05, Datenhoheit). Daten verlassen das Gerät nur auf ausdrücklichen Wunsch: als Export-Datei an einen selbst gewählten Ort oder per lokaler Gerät-zu-Gerät-Übertragung beim Handywechsel ([Speicherung](#speicherung)).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -48,15 +48,15 @@ Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, kein
 
 **Daten-Inventar (v1.5.1)**
 
-| Speicherort | Inhalt | Sensitivität | Backup | Löschweg |
+| Speicherort | Inhalt | Sensitivität | Gerät-zu-Gerät / Export | Löschweg |
 |---|---|---|---|---|
-| Room `log_entries` | Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | ja | „Logbuch leeren“, App-Speicher löschen |
-| Room `saved_patterns` | Name und Phasenlängen eigener Muster | niedrig | ja | einzeln löschen |
-| DataStore `settings` | Einstellungen, Anpassungen pro Übung | niedrig | ja | zurücksetzen pro Übung, App-Speicher löschen |
-| `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB) | keine | nein | „Stimme löschen“ |
-| `cache/` | Teil-Download | keine | nein | beim nächsten Download-Versuch; Android leert `cache/` bei Speichermangel |
+| Room `log_entries` | Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | ja (ab Android 12) / nein | „Logbuch leeren“, App-Speicher löschen |
+| Room `saved_patterns` | Name und Phasenlängen eigener Muster | niedrig | ja (ab Android 12) / ja (mit Anpassung) | einzeln löschen |
+| DataStore `settings` | Einstellungen, Anpassungen pro Übung | niedrig | ja (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
+| `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB) | keine | nein / nein | „Stimme löschen“ |
+| `cache/` | Teil-Download | keine | nein / nein | beim nächsten Download-Versuch; Android leert `cache/` bei Speichermangel |
 
-Gespeichert werden keine Messwerte, keine Freitexte und keine Identität. Logbuch-Daten werden vorsorglich wie Gesundheitsdaten behandelt.
+Export-Datei (`atemkraft-muster-<datum>.json`, Format `atemkraft-muster` v1): Name, Phasenlängen, Zeitpunkt und Anpassung gespeicherter Muster; Ort wählt der Nutzer über das Storage Access Framework, die App behält keinen Zugriff. Der Import übernimmt nur, was die App selbst erzeugen könnte (Leitplanken des Generators, Stepper-Grenzen, Namen ohne Steuer-/Format-Zeichen, höchstens 512 KiB und 500 Muster). Gespeichert werden keine Messwerte, keine Freitexte und keine Identität. Logbuch-Daten werden vorsorglich wie Gesundheitsdaten behandelt.
 
 <a id="berechtigungen"></a>
 ## Berechtigungen
@@ -108,7 +108,7 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | SEC-STORE-01 | MUSS | Persistente Daten nur im app-internen Speicher (Room, DataStore, `filesDir`, `cacheDir`); kein externer Speicher, kein `MediaStore`, kein `MODE_WORLD_*`. Ein Export läuft nur über das Storage Access Framework. | App-Sandbox, keine Speicher-Berechtigung. | auto: `sec-storage`; Lint `WorldReadableFiles`, `SdCardPath` |
-| SEC-STORE-02 | MUSS | Jeder Pfad ist in `backup_rules.xml` und `data_extraction_rules.xml` (`cloud-backup`, `device-transfer`) bewusst ein- oder ausgeschlossen; große oder neu ladbare Daten sind ausgeschlossen. Cloud-Backup nur mit Ende-zu-Ende-Verschlüsselung (`disableIfNoEncryptionCapabilities="true"`). | Gesundheitsnahe Daten; 25-MB-Backup-Quota. | auto: `sec-backup`; Lint `DataExtractionRules` |
+| SEC-STORE-02 | MUSS | **Kein Cloud-Backup:** `android:allowBackup="false"` und in `data_extraction_rules.xml` schließt `cloud-backup` jede Domäne aus. Erlaubt ist nur `device-transfer` (lokal, ab Android 12; darunter schaltet `allowBackup="false"` auch sie ab); große oder neu ladbare Daten (`files/tts`) sind dort ausgeschlossen. Persistenz über eine Neuinstallation nur per Export-Datei (SEC-STORE-01); der Import behandelt die Datei als nicht vertrauenswürdig (Größe, Anzahl, Plausibilität begrenzt). | Datenhoheit: gesundheitsnahe Daten verlassen das Gerät nicht ohne ausdrückliche Wahl. | auto: `sec-backup`; Lint `DataExtractionRules`; JUnit `PatternBackupTest` |
 | SEC-STORE-03 | MUSS | Room-Schemaänderungen nur mit expliziter `Migration` und Migrationstest, Schema exportiert nach `app/schemas/`; `fallbackToDestructiveMigration*` ist verboten. DataStore hat einen `corruptionHandler`. | Das Logbuch ist Nutzerhistorie. | auto: `sec-room`; JUnit Migrationstest |
 
 <a id="lieferkette"></a>
@@ -196,7 +196,7 @@ scripts/check-github.sh                              # Repo-Einstellungen per gh
 | `sec-intents` | check-security | SEC-PLAT-02 | `intent\.(data\|extras)\|get\w*Extra\(` → 0; `<data ` im Manifest → 0; `FLAG_MUTABLE` → 0 außer mit `// mutable:`-Begründung |
 | `sec-no-dyncode` | check-security | SEC-PLAT-03 | `WebView\|DexClassLoader\|PathClassLoader\|InMemoryDexClassLoader\|System\.load\(` → 0 |
 | `sec-storage` | check-security | SEC-STORE-01 | `getExternal\w*Dir\|getExternalStorage\|MediaStore\|MODE_WORLD_` → 0 |
-| `sec-backup` | check-security | SEC-STORE-02 | `<exclude>`-Mengen in `backup_rules.xml`, `cloud-backup` und `device-transfer` identisch; `disableIfNoEncryptionCapabilities="true"` gesetzt |
+| `sec-backup` | check-security | SEC-STORE-02 | `allowBackup="false"`; `backup_rules.xml` (API < 31) und `cloud-backup` schließen alle Domänen aus; `device-transfer` schließt `files/tts` aus |
 | `sec-room` | check-security | SEC-STORE-03 | `fallbackToDestructiveMigration` → 0; `exportSchema = true`; `app/schemas/` versioniert; `corruptionHandler` gesetzt |
 | `sec-repos` | check-security | SEC-SUP-01 | `settings.gradle.kts`: `mavenLocal\|http://` → 0; jedes Repo hat `content {`; jede `includeGroup` eines Nicht-Standard-Repos hat einen `sha256`-Eintrag in `gradle/verification-metadata.xml` |
 | `sec-pinned-inputs` | check-security | SEC-SUP-02, SEC-DIST-01, SEC-REPO-01 | `distributionSha256Sum=[0-9a-f]{64}`; `git ls-files '*.aar' '*.jar' '*.so' '*.dex' '*.jks' '*.keystore' '*.p12' '*.apk' '*.aab'` ⊆ Allowlist; `sha256sum -c` jeder `.sha256`; Hash steht identisch im Herkunftsnachweis |

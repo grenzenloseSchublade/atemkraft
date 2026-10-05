@@ -169,6 +169,32 @@
     <string name="settings_breathing_title">Atmen</string>
     <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
     <string name="settings_meditation_title">Meditation</string>
+    <string name="settings_data_title">Daten</string>
+    <string name="settings_data_hint">Gespeicherte Muster als Datei sichern und wieder einlesen. Den Speicherort wählst du selbst – die App hat kein Konto und keine Cloud.</string>
+    <string name="settings_data_export">Muster exportieren</string>
+    <string name="settings_data_import">Muster importieren</string>
+    <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Sicher geht es mit „Muster exportieren“.</string>
+    <plurals name="data_export_done">
+        <item quantity="one">✓ %1$d exportiert</item>
+        <item quantity="other">✓ %1$d exportiert</item>
+    </plurals>
+    <string name="data_export_empty">Noch keine gespeicherten Muster – speichere unter Atmen ein Muster des Tages.</string>
+    <plurals name="data_import_done">
+        <item quantity="one">✓ %1$d neu · %2$d vorhanden</item>
+        <item quantity="other">✓ %1$d neu · %2$d vorhanden</item>
+    </plurals>
+    <string name="data_import_nothing">In der Datei war kein Muster, das sich übernehmen lässt.</string>
+    <plurals name="data_import_invalid_entries">
+        <item quantity="one">%1$d Eintrag lag außerhalb der Grenzen und wurde übersprungen.</item>
+        <item quantity="other">%1$d Einträge lagen außerhalb der Grenzen und wurden übersprungen.</item>
+    </plurals>
+    <plurals name="data_import_truncated">
+        <item quantity="one">Nur das erste Muster wurde gelesen.</item>
+        <item quantity="other">Nur die ersten %1$d Muster wurden gelesen.</item>
+    </plurals>
+    <string name="data_import_not_backup">Das ist keine Atemkraft-Musterdatei. Bitte eine exportierte .json-Datei wählen.</string>
+    <string name="data_import_too_large">Die Datei ist zu groß für eine Atemkraft-Musterdatei.</string>
+    <string name="data_io_error">Die Datei ließ sich nicht lesen oder schreiben. Bitte einen anderen Speicherort wählen.</string>
     <string name="cd_voice_preview">Stimme anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>

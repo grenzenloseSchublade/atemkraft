@@ -13,6 +13,24 @@ data class PatternSpec(
     val activating: Boolean,
 )
 
+/**
+ * Liegt das Muster in den Leitplanken des Generators (siehe [RandomPatternGenerator])? Eine
+ * Quelle für Generator-Test und Import: Von außen kommende Muster außerhalb dieser Grenzen
+ * werden nicht übernommen, weil ihre Beschreibung („Halten ≤ 4 s" …) sonst falsch wäre und sie
+ * ohne Sicherheitsabfrage starten.
+ */
+fun PatternSpec.withinGuardrails(): Boolean {
+    val phases = listOfNotNull(inhale, holdFull, exhale, holdEmpty)
+    if (phases.any { !it.isFinite() || it < 0.0 || it * 2 != Math.rint(it * 2) }) return false
+    if (inhale < 2.0 || exhale < 2.0 || exhale > 8.0) return false
+    val cycle = phases.sum()
+    return if (activating) {
+        holdEmpty == null && (holdFull ?: 0.0) <= 2.0 && exhale <= inhale && cycle in 6.0..9.0
+    } else {
+        exhale >= inhale && (holdFull ?: 0.0) <= 4.0 && (holdEmpty ?: 0.0) <= 2.0 && cycle in 8.5..13.0
+    }
+}
+
 /** Das Tagesmuster: die generierte Übung + ihre Parameter (für Chip + Speichern). */
 data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
     val activating: Boolean get() = spec.activating

@@ -12,3 +12,16 @@ data class SessionConfig(
     val exhaleSeconds: Double? = null,
     val holdSeconds: Double? = null,
 )
+
+/**
+ * Erlaubte Bereiche der Session-Anpassung (Detailseite). Eine Quelle für die Stepper und für
+ * alles, was gespeicherte Anpassungen von außen übernimmt (Import) – dort wird geklemmt bzw.
+ * verworfen, damit nichts die Grenzen der Oberfläche umgeht.
+ */
+object AdjustLimits {
+    val MINUTES = 1..30
+    val ROUNDS = 1..15
+    val INHALE_S = 2..12
+    val HOLD_S = 1..20
+    val EXHALE_S = 2..15
+}

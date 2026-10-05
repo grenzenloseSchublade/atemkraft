@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -55,6 +56,7 @@ import app.atemkraft.ui.meditation.MeditationUiState
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionStatus
 import app.atemkraft.ui.session.SessionUiState
+import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -310,8 +312,20 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         Settings(focusMeditation = true)
     }
 
+    /** Daten-Karte mit den längsten Rückmeldungen (Button-Labels + Hinweis) – LAYOUT-03. */
+    @Test
+    fun settingsDataStatus() = snap("05_einstellungen_daten") {
+        Settings(
+            dataStatus = DataStatus(
+                exportLabel = pluralStringResource(R.plurals.data_export_done, 120, 120),
+                importLabel = pluralStringResource(R.plurals.data_import_done, 120, 120, 380),
+                note = stringResource(R.string.data_import_not_backup),
+            ),
+        )
+    }
+
     @Composable
-    private fun Settings(focusMeditation: Boolean = false) {
+    private fun Settings(focusMeditation: Boolean = false, dataStatus: DataStatus = DataStatus()) {
         val voices = VoiceCatalog.all.mapIndexed { i, v ->
             v.id to when (i) {
                 0 -> VoiceDownloadState.Downloaded
@@ -347,6 +361,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onOpenGlossary = {},
             onOpenAbout = {},
             onBack = {},
+            onExportPatterns = {},
+            onImportPatterns = {},
+            dataStatus = dataStatus,
             focusMeditation = focusMeditation,
         )
     }

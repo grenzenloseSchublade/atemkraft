@@ -43,7 +43,9 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
@@ -55,6 +57,7 @@ import app.atemkraft.data.Refs
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
@@ -95,6 +98,9 @@ fun SettingsScreen(
     onOpenGlossary: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
+    onExportPatterns: () -> Unit,
+    onImportPatterns: () -> Unit,
+    dataStatus: DataStatus = DataStatus(),
     focusMeditation: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
@@ -145,6 +151,9 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(Dimens.ListGap))
+            DataCard(onExportPatterns, onImportPatterns, dataStatus)
+
+            Spacer(Modifier.height(Dimens.ListGap))
             NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
             Spacer(Modifier.height(Dimens.ListGap))
             NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
@@ -157,6 +166,46 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(Dimens.ScreenBottom))
         }
+    }
+}
+
+/** Rückmeldung der Daten-Karte: Erfolg als Button-Label (MUSTER-02), sonst eine Hinweiszeile. */
+data class DataStatus(val exportLabel: String? = null, val importLabel: String? = null, val note: String? = null)
+
+/**
+ * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
+ * keine Berechtigung, keine Cloud).
+ */
+@Composable
+private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, status: DataStatus) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+            CardTitle(stringResource(R.string.settings_data_title))
+            Spacer(Modifier.height(Dimens.GapTiny))
+            Hint(stringResource(R.string.settings_data_hint))
+            AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
+                DataButton(status.exportLabel ?: stringResource(R.string.settings_data_export), onExport)
+                DataButton(status.importLabel ?: stringResource(R.string.settings_data_import), onImport)
+            }
+            if (status.note != null) {
+                Text(
+                    text = status.note,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
+            Hint(stringResource(R.string.settings_data_transfer_hint))
+        }
+    }
+}
+
+/** Button der Daten-Karte; das Label wechselt zum Ergebnis und wird angesagt. */
+@Composable
+private fun DataButton(label: String, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+        Text(label)
     }
 }
 

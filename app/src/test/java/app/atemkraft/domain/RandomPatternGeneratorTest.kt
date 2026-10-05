@@ -28,6 +28,14 @@ class RandomPatternGeneratorTest {
         }
     }
 
+    /** Der Import prüft gegen [withinGuardrails]: Alles, was der Generator erzeugt, muss durchgehen. */
+    @Test
+    fun `withinGuardrails akzeptiert jedes generierte Muster`() {
+        (0L until 5000L).map { RandomPatternGenerator.forSeed(it) }.forEach { daily ->
+            assertTrue("${daily.spec}", daily.spec.withinGuardrails())
+        }
+    }
+
     @Test
     fun `ruhige Muster halten die Leitplanken ein`() {
         year.map { RandomPatternGenerator.forDate(it) }

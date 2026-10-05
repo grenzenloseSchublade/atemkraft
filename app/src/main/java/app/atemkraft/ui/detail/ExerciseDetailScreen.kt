@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.EvidenceTag
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
@@ -80,7 +81,7 @@ fun ExerciseDetailScreen(
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
-    val range = if (roundBased) 1..15 else 1..30
+    val range = if (roundBased) AdjustLimits.ROUNDS else AdjustLimits.MINUTES
     val isIntense = exercise.tag == EvidenceTag.CAUTION
     val valueDefault = if (roundBased) exercise.rounds else exercise.defaultMinutes()
     var value by rememberSaveable(exercise.id) { mutableIntStateOf(valueDefault) }
@@ -135,9 +136,10 @@ fun ExerciseDetailScreen(
         }
         storedApplied = true
         stored.duration?.let { value = it.coerceIn(range) }
-        if (hasInhale) stored.inhale?.let { inhaleSec = it }
-        if (hasHold) stored.hold?.let { holdSec = it }
-        if (hasExhale) stored.exhale?.let { exhaleSec = it }
+        // Geklemmt: Gespeichertes (auch Importiertes) darf die Grenzen der Stepper nicht umgehen.
+        if (hasInhale) stored.inhale?.let { inhaleSec = it.coerceIn(AdjustLimits.INHALE_S) }
+        if (hasHold) stored.hold?.let { holdSec = it.coerceIn(AdjustLimits.HOLD_S) }
+        if (hasExhale) stored.exhale?.let { exhaleSec = it.coerceIn(AdjustLimits.EXHALE_S) }
     }
 
     fun currentConfig(): SessionConfig {
@@ -276,7 +278,7 @@ fun ExerciseDetailScreen(
                             persistAdjustments()
                         },
                         inhale = if (hasInhale) {
-                            PhaseAdjust(inhaleSec, inhaleDefault, 2..12) {
+                            PhaseAdjust(inhaleSec, inhaleDefault, AdjustLimits.INHALE_S) {
                                 inhaleSec = it
                                 persistAdjustments()
                             }
@@ -284,7 +286,7 @@ fun ExerciseDetailScreen(
                             null
                         },
                         hold = if (hasHold) {
-                            PhaseAdjust(holdSec, holdDefault, 1..20) {
+                            PhaseAdjust(holdSec, holdDefault, AdjustLimits.HOLD_S) {
                                 holdSec = it
                                 persistAdjustments()
                             }
@@ -292,7 +294,7 @@ fun ExerciseDetailScreen(
                             null
                         },
                         exhale = if (hasExhale) {
-                            PhaseAdjust(exhaleSec, exhaleDefault, 2..15) {
+                            PhaseAdjust(exhaleSec, exhaleDefault, AdjustLimits.EXHALE_S) {
                                 exhaleSec = it
                                 persistAdjustments()
                             }

@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 31+: gleiche Regel für Cloud-Backup und Gerät-zu-Gerät-Übertragung – TTS-Modelle
-     (files/tts) nicht mitnehmen (Größe; teilübertragene Modelle würden zudem fälschlich als
-     „heruntergeladen" erkannt). -->
+<!-- Keine Cloud (Datenhoheit, docs/SECURITY.md SEC-STORE-02): allowBackup="false" schaltet das
+     Google-Backup ab; die Regeln hier schließen es ab Android 12 zusätzlich für jede Domäne aus.
+     Erlaubt bleibt nur die lokale Gerät-zu-Gerät-Übertragung beim Handywechsel (Kabel bzw.
+     WLAN-Direkt, z. B. Smart Switch) – ohne die nachladbaren TTS-Stimmmodelle (files/tts,
+     Größe; teilübertragene Modelle würden zudem fälschlich als „heruntergeladen" erkannt). -->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="file" path="tts" />
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="tts" />
