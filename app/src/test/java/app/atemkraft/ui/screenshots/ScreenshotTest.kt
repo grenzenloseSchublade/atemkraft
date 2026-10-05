@@ -258,16 +258,23 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     @Test
-    fun home() = snap("01_atmen") {
+    fun home() = snap("01_atmen") { Home(dailySaved = false) }
+
+    /** Lesezeichen im Zustand „gespeichert“: gefüllt im Akzent, Kartenhöhe unverändert. */
+    @Test
+    fun homeDailySaved() = snap("01_atmen_gespeichert", heightDp = device.heightDp) { Home(dailySaved = true) }
+
+    @Composable
+    private fun Home(dailySaved: Boolean) {
         HomeScreen(
             exercisesByFamily = BreathingFamily.entries
                 .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
                 .filter { (_, list) -> list.isNotEmpty() },
             programs = BuiltInExercises.all.filter { !it.guided },
             daily = daily,
-            dailySaved = false,
+            dailySaved = dailySaved,
             onRegenerateDaily = {},
-            onSaveDaily = {},
+            onDailySavedChange = {},
             onSelect = {},
             onOpenSettings = {},
         )

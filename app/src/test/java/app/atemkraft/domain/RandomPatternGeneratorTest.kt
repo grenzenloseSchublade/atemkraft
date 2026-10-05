@@ -98,4 +98,14 @@ class RandomPatternGeneratorTest {
             assertTrue(exercise.effect.contains("ohne spezifisches Wirkversprechen"))
         }
     }
+
+    @Test
+    fun `Hinweis bricht nie zwischen Zahl und Einheit oder vor dem Trennpunkt um`() {
+        year.forEach { date ->
+            val hint = RandomPatternGenerator.hintFor(RandomPatternGenerator.forDate(date).spec)
+            // Normales Leerzeichen vor „s“ oder „·“ wäre eine Umbruchstelle (TEXT-10).
+            assertTrue(hint, !Regex("\\d s\\b| ·").containsMatchIn(hint))
+            assertTrue(hint, hint.contains("\u00A0s"))
+        }
+    }
 }

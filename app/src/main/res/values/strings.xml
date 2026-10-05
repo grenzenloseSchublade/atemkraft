@@ -42,8 +42,9 @@
         <item quantity="one">%1$d Quelle</item>
         <item quantity="other">%1$d Quellen</item>
     </plurals>
-    <string name="duration_approx">ca. %1$d min</string>
-    <string name="duration_approx_from">ab ca. %1$d min</string>
+    <!-- Geschützte Leerzeichen: „ca. 4 min“ bricht nie zwischen Zahl und Einheit um (TEXT-10). -->
+    <string name="duration_approx">ca.\u00A0%1$d\u00A0min</string>
+    <string name="duration_approx_from">ab ca.\u00A0%1$d\u00A0min</string>
     <!-- „Starten · ca. 10 min“ – Gesamtdauer direkt am Start. -->
     <string name="action_start_duration">%1$s · %2$s</string>
 
@@ -67,9 +68,10 @@
     <string name="home_daily_pattern">Muster des Tages</string>
     <string name="daily_pattern_calm">ruhig</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
-    <string name="daily_pattern_regenerate">Neu generieren</string>
-    <string name="daily_pattern_save">Speichern</string>
-    <string name="daily_pattern_saved">✓ Gespeichert</string>
+    <string name="cd_pattern_regenerate">Muster neu generieren</string>
+    <string name="cd_pattern_save">Muster speichern</string>
+    <string name="state_saved">Gespeichert</string>
+    <string name="state_not_saved">Nicht gespeichert</string>
     <string name="situations_my_patterns">Meine Muster</string>
     <string name="cd_pattern_delete">Muster löschen</string>
 

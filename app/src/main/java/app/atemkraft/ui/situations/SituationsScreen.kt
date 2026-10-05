@@ -1,7 +1,6 @@
 package app.atemkraft.ui.situations
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
@@ -121,11 +120,8 @@ private fun SavedPatternCard(
 ) {
     val exercise = pattern.exercise
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            // Touch-Ziel unabhängig vom (kompakteren) Karten-Padding.
-            .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
     ) {
         Row(
@@ -142,7 +138,7 @@ private fun SavedPatternCard(
                 )
                 Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
-                    text = exercise.instructionHint.orEmpty() + " · " +
+                    text = exercise.instructionHint.orEmpty() + RandomPatternGenerator.HINT_SEPARATOR +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),

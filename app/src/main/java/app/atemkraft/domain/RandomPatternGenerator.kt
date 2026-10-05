@@ -136,13 +136,26 @@ object RandomPatternGenerator {
     fun numbersOf(spec: PatternSpec): String = listOfNotNull(spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty)
         .joinToString("·") { it.fmt() }
 
-    /** Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s". */
+    /**
+     * Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s". Zwischen Zahl und „s"
+     * steht ein geschütztes Leerzeichen ([NBSP]): Bei großer Schrift bricht die Zeile sonst
+     * zwischen „1" und „s" um (TEXT-10). Teile werden mit [HINT_SEPARATOR] verbunden.
+     */
     fun hintFor(spec: PatternSpec): String = buildList {
-        add("Einatmen ${spec.inhale.fmt()} s")
-        spec.holdFull?.let { add("Halten ${it.fmt()} s") }
-        add("Ausatmen ${spec.exhale.fmt()} s")
-        spec.holdEmpty?.let { add("Halten ${it.fmt()} s") }
-    }.joinToString(" · ")
+        add("Einatmen ${spec.inhale.fmt()}${NBSP}s")
+        spec.holdFull?.let { add("Halten ${it.fmt()}${NBSP}s") }
+        add("Ausatmen ${spec.exhale.fmt()}${NBSP}s")
+        spec.holdEmpty?.let { add("Halten ${it.fmt()}${NBSP}s") }
+    }.joinToString(HINT_SEPARATOR)
+
+    /**
+     * Trenner zwischen Teilen einer Hinweiszeile („… 6,5 s · ca. 4 min“). Das geschützte
+     * Leerzeichen vor dem Punkt hält ihn am Zeilenende – eine Zeile beginnt nie mit „·“.
+     */
+    const val HINT_SEPARATOR = "\u00A0· "
+
+    /** Geschütztes Leerzeichen zwischen Zahl und Einheit. */
+    private const val NBSP = '\u00A0'
 
     /** Baut aus [spec] eine lauffähige Übung – für das Tagesmuster UND gespeicherte Muster. */
     fun exerciseFrom(spec: PatternSpec, id: String, name: String): Exercise {

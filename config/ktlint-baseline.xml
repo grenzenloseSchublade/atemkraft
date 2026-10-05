@@ -21,9 +21,6 @@
     <file name="src/main/java/app/atemkraft/ui/components/ReferenceItem.kt">
         <error line="13" column="5" source="compose:modifier-missing-check" />
     </file>
-    <file name="src/main/java/app/atemkraft/ui/components/SectionHeader.kt">
-        <error line="25" column="5" source="compose:modifier-missing-check" />
-    </file>
     <file name="src/main/java/app/atemkraft/ui/components/SessionAdjustCard.kt">
         <error line="36" column="5" source="compose:modifier-missing-check" />
     </file>
@@ -32,6 +29,6 @@
         <error line="136" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt">
-        <error line="55" column="5" source="compose:parameter-naming" />
+        <error line="54" column="5" source="compose:parameter-naming" />
     </file>
 </baseline>

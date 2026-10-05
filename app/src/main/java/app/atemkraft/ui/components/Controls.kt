@@ -35,8 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -103,6 +108,43 @@ fun AppIconButton(
             // Begrenzt jedes Icon (Vektor 24 dp oder Painter) auf die Standardgröße.
             Box(Modifier.size(Sizes.IconDefault), contentAlignment = Alignment.Center) { content() }
         }
+    }
+}
+
+/**
+ * Icon-only-Umschalter mit Zustand (z. B. Muster speichern): Optik und Tippfläche wie
+ * [AppIconButton], aber `toggleable` mit `Role.Checkbox` und [stateDescription], damit TalkBack
+ * Name, Rolle und Zustand liest (A11Y-01). Die Live-Region sagt den Wechsel an, ohne dass der
+ * Fokus springt (A11Y-04, MUSTER-02) – statt eines ausgegrauten „✓ Gespeichert“. Den Zustand
+ * zeigt der Aufrufer im Icon (gefüllt/leer); das Icon trägt die `contentDescription` (ICON-02).
+ */
+@Composable
+fun AppIconToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    stateDescription: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .size(Sizes.IconButtonSize)
+            .clip(CircleShape)
+            .toggleable(
+                value = checked,
+                interactionSource = null,
+                indication = ripple(),
+                role = Role.Checkbox,
+                onValueChange = onCheckedChange,
+            )
+            .semantics {
+                this.stateDescription = stateDescription
+                liveRegion = LiveRegionMode.Polite
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.size(Sizes.IconDefault), contentAlignment = Alignment.Center) { content() }
     }
 }
 
@@ -183,6 +225,20 @@ fun ToggleRow(
 private fun AppIconButtonPreview() {
     AtemkraftTheme {
         AppIconButton(onClick = {}) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.cd_voice_delete)) }
+    }
+}
+
+@Preview
+@Composable
+private fun AppIconTogglePreview() {
+    AtemkraftTheme {
+        AppIconToggle(checked = true, onCheckedChange = {}, stateDescription = stringResource(R.string.state_saved)) {
+            Icon(
+                painterResource(R.drawable.ic_bookmark_filled),
+                contentDescription = stringResource(R.string.cd_pattern_save),
+                tint = MaterialTheme.colorScheme.secondary,
+            )
+        }
     }
 }
 

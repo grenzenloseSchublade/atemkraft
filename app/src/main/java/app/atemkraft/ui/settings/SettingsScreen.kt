@@ -1,6 +1,5 @@
 package app.atemkraft.ui.settings
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -524,7 +523,7 @@ private fun Hint(text: String) {
 
 @Composable
 private fun NavRow(label: String, onClick: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(
             // Mindesthöhe hält die klickbare Karte bei kompaktem Padding auf Touch-Ziel-Größe.
             modifier = Modifier

@@ -13,6 +13,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Ergebnis eines Imports: neu angelegt und als schon vorhanden übersprungen. */
 data class ImportResult(val added: Int, val duplicates: Int)
@@ -44,25 +46,48 @@ class SavedPatternsRepository(private val dao: SavedPatternDao) {
     /** Anzeigename, unter dem dieses Tagesmuster gespeichert wird/wurde. */
     fun savedName(daily: DailyPattern): String = daily.exercise.name.replace("Tagesmuster", "Muster")
 
-    /** Speichert das Muster; identischer Name wird nicht doppelt angelegt. */
+    /**
+     * Lesezeichen-Tipps nacheinander abarbeiten: Das Lesezeichen zeigt den Zustand erst, wenn
+     * die DB ihn liefert. Ein schneller Doppeltipp löst deshalb zweimal „speichern“ aus, und
+     * Speichern/Entfernen dürfen sich nicht überholen.
+     */
+    private val dailyLock = Mutex()
+
+    /**
+     * Speichert das Muster; identischer Name wird nicht doppelt angelegt. Geprüft wird in der
+     * DB, nicht im Cache: Der hinkt direkt nach dem vorigen Speichern noch hinterher.
+     */
     suspend fun save(daily: DailyPattern) {
-        val name = savedName(daily)
-        if (cached.any { it.exercise.name == name }) return
-        val spec = daily.spec
-        dao.insert(
-            SavedPatternEntity(
-                name = name,
-                inhale = spec.inhale,
-                holdFull = spec.holdFull,
-                exhale = spec.exhale,
-                holdEmpty = spec.holdEmpty,
-                activating = spec.activating,
-                createdAtEpochMs = System.currentTimeMillis(),
-            ),
-        )
+        dailyLock.withLock {
+            val name = savedName(daily)
+            if (dao.snapshot().any { it.name == name }) return
+            val spec = daily.spec
+            dao.insert(
+                SavedPatternEntity(
+                    name = name,
+                    inhale = spec.inhale,
+                    holdFull = spec.holdFull,
+                    exhale = spec.exhale,
+                    holdEmpty = spec.holdEmpty,
+                    activating = spec.activating,
+                    createdAtEpochMs = System.currentTimeMillis(),
+                ),
+            )
+        }
     }
 
     suspend fun delete(id: Long) = dao.delete(id)
+
+    /**
+     * Nimmt das Tagesmuster wieder heraus (Lesezeichen abgewählt). Gesucht wird per Name in der
+     * DB, nicht im Cache: Der hinkt direkt nach dem Speichern noch hinterher.
+     */
+    suspend fun unsave(daily: DailyPattern) {
+        dailyLock.withLock {
+            val name = savedName(daily)
+            dao.snapshot().filter { it.name == name }.forEach { dao.delete(it.id) }
+        }
+    }
 
     suspend fun isEmpty(): Boolean = dao.snapshot().isEmpty()
 

@@ -1,9 +1,6 @@
 package app.atemkraft.data
 
-import app.atemkraft.data.local.SavedPatternDao
 import app.atemkraft.data.local.SavedPatternEntity
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -11,25 +8,6 @@ import org.junit.Test
 
 /** SEC-STORE-01/-02: Export/Import gespeicherter Muster – Round-Trip und Import als nicht vertrauenswürdige Eingabe. */
 class PatternBackupTest {
-
-    private class FakeDao : SavedPatternDao {
-        val rows = MutableStateFlow<List<SavedPatternEntity>>(emptyList())
-        private var nextId = 1L
-
-        override suspend fun insert(pattern: SavedPatternEntity): Long {
-            val id = nextId++
-            rows.value = rows.value + pattern.copy(id = id)
-            return id
-        }
-
-        override fun all(): Flow<List<SavedPatternEntity>> = rows
-
-        override suspend fun snapshot(): List<SavedPatternEntity> = rows.value.sortedBy { it.createdAtEpochMs }
-
-        override suspend fun delete(id: Long) {
-            rows.value = rows.value.filterNot { it.id == id }
-        }
-    }
 
     private fun entity(created: Long, inhale: Double = 4.0, holdFull: Double? = 2.0) = SavedPatternEntity(
         name = "Muster $created",
@@ -43,7 +21,7 @@ class PatternBackupTest {
 
     @Test
     fun `Export und Import ergeben dieselben Werte und Anpassungen`() = runBlocking {
-        val source = FakeDao()
+        val source = FakeSavedPatternDao()
         source.insert(entity(1_000))
         source.insert(entity(2_000, inhale = 5.5, holdFull = null))
         val sourceRepo = SavedPatternsRepository(source)
@@ -53,7 +31,7 @@ class PatternBackupTest {
         val decoded = PatternBackup.decode(PatternBackup.encode(file))!!
         assertEquals(0, decoded.invalid)
 
-        val target = FakeDao()
+        val target = FakeSavedPatternDao()
         val written = mutableMapOf<String, PatternBackupOverrides>()
         val result = SavedPatternsRepository(target).import(decoded.entries) { id, o -> written[id] = o }
 
@@ -67,7 +45,7 @@ class PatternBackupTest {
 
     @Test
     fun `Import ueberspringt vorhandene und doppelte Muster`() = runBlocking {
-        val dao = FakeDao()
+        val dao = FakeSavedPatternDao()
         dao.insert(entity(1_000))
         val repo = SavedPatternsRepository(dao)
         val file = repo.exportFile(nowEpochMs = 0) { null }

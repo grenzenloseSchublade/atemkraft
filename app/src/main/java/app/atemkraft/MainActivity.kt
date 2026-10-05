@@ -282,7 +282,7 @@ private fun AtemkraftApp() {
                     var dailyPattern by remember {
                         mutableStateOf(container.exerciseRepository.daily())
                     }
-                    // „✓ Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
+                    // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
                     // selben Tag und Namensgleichheit mit einem früher gespeicherten Muster ab.
                     val savedPatterns by container.savedPatternsRepository.patterns
                         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -295,9 +295,15 @@ private fun AtemkraftApp() {
                         onRegenerateDaily = {
                             dailyPattern = container.exerciseRepository.regenerateDaily()
                         },
-                        onSaveDaily = {
-                            val toSave = dailyPattern
-                            scope.launch { container.savedPatternsRepository.save(toSave) }
+                        onDailySavedChange = { save ->
+                            val pattern = dailyPattern
+                            scope.launch {
+                                if (save) {
+                                    container.savedPatternsRepository.save(pattern)
+                                } else {
+                                    container.savedPatternsRepository.unsave(pattern)
+                                }
+                            }
                         },
                         exercisesByFamily = guidedByFamily,
                         programs = programs,
