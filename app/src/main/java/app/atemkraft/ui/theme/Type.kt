@@ -25,7 +25,7 @@ private fun TextStyle.asHeading() = copy(
  * an der sich die Schrift der ganzen App größer oder kleiner stellen lässt; die
  * Systemschriftgröße des Geräts wirkt zusätzlich darauf.
  */
-const val TEXT_SCALE = 0.7f
+const val TEXT_SCALE = 0.75f
 
 private fun TextStyle.scaled(): TextStyle = copy(
     fontSize = fontSize * TEXT_SCALE,
