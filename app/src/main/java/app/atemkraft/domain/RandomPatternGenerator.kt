@@ -171,7 +171,8 @@ object RandomPatternGenerator {
         val character = if (spec.activating) "sanft aktivierend" else "ruhig"
         // Atemort: ruhige Muster EMPFEHLEN konstant die Bauchatmung (fachlicher Standard);
         // bewusst NICHT randomisiert – und als Einladung formuliert, nicht als Muss.
-        val fullHint = if (spec.activating) hint else "$hint $BELLY_GUIDANCE"
+        // Punkt nach der Phasenzeile: Sonst liest sich „Ausatmen 5 s Wenn du magst …" als ein Satz.
+        val fullHint = if (spec.activating) hint else "$hint. $BELLY_GUIDANCE"
         val bellyNote = if (spec.activating) "" else " Bauchatmung empfohlen – ganz wie es angenehm ist."
 
         return Exercise(
