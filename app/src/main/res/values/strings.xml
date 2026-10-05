@@ -55,6 +55,17 @@
 
     <!-- Situationen -->
     <string name="situations_subtitle">Welche Atmung passt gerade?</string>
+    <!-- Befindens-Suche: Platzhalter muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
+    <string name="situations_search_placeholder">Wie fühlst du dich?</string>
+    <string name="cd_search_open">Situationen durchsuchen</string>
+    <string name="cd_search_clear">Eingabe löschen</string>
+    <string name="cd_search_close">Suche schließen</string>
+    <plurals name="situations_search_count">
+        <item quantity="one">%1$d Situation passt</item>
+        <item quantity="other">%1$d Situationen passen</item>
+    </plurals>
+    <string name="situations_search_none">Nichts gefunden</string>
+    <string name="action_show_all">Alle zeigen</string>
 
     <!-- Mini-Player / Overlay -->
     <string name="action_minimize">Minimieren</string>

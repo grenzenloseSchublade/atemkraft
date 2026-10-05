@@ -58,6 +58,7 @@ import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
+import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.SubLabel
@@ -165,7 +166,7 @@ private fun SelectionContent(
             ScreenHeader(
                 title = stringResource(R.string.meditation_title),
                 subtitle = stringResource(R.string.meditation_subtitle),
-                onOpenSettings = onOpenSettings,
+                action = { SettingsAction(onClick = onOpenSettings) },
             )
 
             Spacer(Modifier.height(Dimens.SectionGap))

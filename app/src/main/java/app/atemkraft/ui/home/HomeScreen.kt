@@ -35,6 +35,7 @@ import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.theme.Dimens
@@ -68,7 +69,7 @@ fun HomeScreen(
                 ScreenHeader(
                     title = stringResource(R.string.tab_breathe),
                     subtitle = stringResource(R.string.home_subtitle),
-                    onOpenSettings = onOpenSettings,
+                    action = { SettingsAction(onClick = onOpenSettings) },
                 )
             }
 

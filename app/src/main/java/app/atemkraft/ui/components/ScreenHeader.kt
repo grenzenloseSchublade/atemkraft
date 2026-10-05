@@ -22,15 +22,21 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
- * Einheitlicher Kopf der Top-Level-Tabs: Screen-Titel, optionaler Untertitel und – wo der Tab
- * eigene Einstellungen hat – das Zahnrad rechts, immer an derselben Stelle.
+ * Einheitlicher Kopf der Top-Level-Tabs: Screen-Titel, optionaler Untertitel und rechts
+ * höchstens eine Icon-Aktion ([action], ein `AppIconButton`), immer an derselben Stelle –
+ * das Zahnrad ([SettingsAction]) bei Tabs mit eigenen Einstellungen, die Lupe im
+ * Situationen-Tab.
+ *
+ * [subtitleContent] ersetzt den Untertitel (z. B. durch das [SearchField]): Der Kopf wechselt
+ * nur seinen Zustand, es entsteht keine neue Fläche (PRIN-03).
  */
 @Composable
 fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    onOpenSettings: (() -> Unit)? = null,
+    action: (@Composable () -> Unit)? = null,
+    subtitleContent: (@Composable () -> Unit)? = null,
 ) {
     Row(
         // Einheitlicher Abstand oben auf Tab-Screens.
@@ -44,7 +50,9 @@ fun ScreenHeader(
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.semantics { heading() },
             )
-            if (subtitle != null) {
+            if (subtitleContent != null) {
+                subtitleContent()
+            } else if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyLarge,
@@ -52,20 +60,30 @@ fun ScreenHeader(
                 )
             }
         }
-        if (onOpenSettings != null) {
-            AppIconButton(onClick = onOpenSettings) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = stringResource(R.string.settings_title),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
-            }
-        }
+        action?.invoke()
+    }
+}
+
+/** Zahnrad für [ScreenHeader]`.action`: öffnet die Einstellungen (cd `settings_title`). */
+@Composable
+fun SettingsAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AppIconButton(onClick = onClick, modifier = modifier) {
+        Icon(
+            imageVector = Icons.Filled.Settings,
+            contentDescription = stringResource(R.string.settings_title),
+            tint = MaterialTheme.colorScheme.onBackground,
+        )
     }
 }
 
 @Preview
 @Composable
 private fun ScreenHeaderPreview() {
-    AtemkraftTheme { ScreenHeader(title = "Meditation", subtitle = "Stille Sitzung mit Gong", onOpenSettings = {}) }
+    AtemkraftTheme {
+        ScreenHeader(
+            title = stringResource(R.string.meditation_title),
+            subtitle = stringResource(R.string.meditation_subtitle),
+            action = { SettingsAction(onClick = {}) },
+        )
+    }
 }

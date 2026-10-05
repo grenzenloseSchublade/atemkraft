@@ -22,11 +22,14 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.unit.dp
@@ -291,6 +294,28 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         snap("02_situationen_aufgeklappt", prepare = {
             compose.onNodeWithText(widest.title).performClick()
         }) { SituationsContent() }
+    }
+
+    /** Befindens-Suche offen, noch leer: Feld mit Platzhalter statt Untertitel, X rechts. */
+    @Test
+    fun situationsSearchEmpty() = snap("02_situationen_suche", heightDp = device.heightDp, prepare = { openSearch() }) { SituationsContent() }
+
+    /** Suche mit zwei Treffern: aufgeklappt, beste zuerst, Trefferzahl darüber. */
+    @Test
+    fun situationsSearchHits() = snap("02_situationen_suche_treffer", prepare = {
+        openSearch()
+        compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
+    }) { SituationsContent() }
+
+    /** Suche ohne Treffer: „Nichts gefunden“ mit „Alle zeigen“. */
+    @Test
+    fun situationsSearchNone() = snap("02_situationen_suche_leer", heightDp = device.heightDp, prepare = {
+        openSearch()
+        compose.onNode(hasSetTextAction()).performTextInput("Asthma")
+    }) { SituationsContent() }
+
+    private fun openSearch() {
+        compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.cd_search_open)).performClick()
     }
 
     @Composable

@@ -5,15 +5,16 @@ import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
+import app.atemkraft.domain.SituationRecommendation
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -12), MUSTER-03 und MOTION-02,
- * geprüft über alle Fachinhalte: eingebaute Übungen, Muster des Tages (Seeds 0–6),
- * Situationen, Quellen und `strings.xml`.
+ * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -12), MUSTER-03, -09 und
+ * MOTION-02, geprüft über alle Fachinhalte: eingebaute Übungen, Muster des Tages (Seeds 0–6),
+ * Situationen samt Suchbegriffen, Quellen und `strings.xml`.
  *
  * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Testfall | Datensatz | S-nn`).
  * Ein Fall schlägt fehl bei einem neuen Verstoß und bei einem Baseline-Eintrag, der nicht mehr
@@ -55,9 +56,12 @@ class ContentRulesTest {
             listOf(
                 Text("situation.${it.situation}.title", it.title),
                 Text("situation.${it.situation}.rationale", it.rationale),
-            )
+            ) + keywordTexts(it)
         }
     }
+
+    /** Suchbegriffe einer Situation (MUSTER-09) – sie folgen denselben Inhaltsregeln. */
+    private fun keywordTexts(rec: SituationRecommendation): List<Text> = rec.keywords.mapIndexed { i, k -> Text("situation.${rec.situation}.keywords[$i]", k) }
 
     /** Alle Quellen aus [Refs] mit ihrem Property-Namen (per Reflexion, damit keine fehlt). */
     private val refs: Map<String, Reference> by lazy {
@@ -235,6 +239,18 @@ class ContentRulesTest {
             jargon.mapNotNull { re -> re.find(t.value)?.let { Finding(t.id, "„${it.value}“") } }
         }
         assertAgainstBaseline("jargon", findings)
+    }
+
+    /**
+     * Suchbegriffe sind neu und ohne Altlasten: Heilversprechen und Jargon sind hier sofort
+     * ein Fehler, ohne Baseline (TEXT-05, TEXT-09, MUSTER-09).
+     */
+    @Test
+    fun `situation-keywords`() {
+        val findings = Situations.all.flatMap(::keywordTexts).flatMap { t ->
+            (healthClaims + jargon).mapNotNull { re -> re.find(t.value)?.let { "${t.id}: „${it.value}“" } }
+        }
+        if (findings.isNotEmpty()) fail("ContentRulesTest situation-keywords:\n" + findings.joinToString("\n"))
     }
 
     // ---- TEXT-04: Anrede ----------------------------------------------------------------
