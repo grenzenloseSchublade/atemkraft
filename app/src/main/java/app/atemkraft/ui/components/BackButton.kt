@@ -14,7 +14,8 @@ import app.atemkraft.R
 
 /**
  * Einheitlicher Zurück-Button (Material-Pfeil, RTL-gespiegelt). Der −12dp-Versatz richtet
- * das Glyph an der 20dp-Inhaltskante aus (IconButton hat 12dp Innenabstand bei 48dp Ziel).
+ * das Glyph an der Inhaltskante (Dimens.ScreenPadding) aus (IconButton hat 12dp Innenabstand
+ * bei 48dp Ziel).
  */
 @Composable
 fun BackButton(onClick: () -> Unit) {

@@ -15,8 +15,9 @@ object LogbuchRoute
 @Serializable
 object MeditationRoute
 
+/** [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte. */
 @Serializable
-object SettingsRoute
+data class SettingsRoute(val focusMeditation: Boolean = false)
 
 @Serializable
 object GlossaryRoute

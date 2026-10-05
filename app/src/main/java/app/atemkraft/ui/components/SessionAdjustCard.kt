@@ -14,8 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /** Ein anpassbarer Intervall-Wert in der Einstell-Karte; als Parameter null = Phase fehlt. */
@@ -48,12 +48,12 @@ fun SessionAdjustCard(
     val intervalsModified = listOfNotNull(inhale, hold, exhale).any { it.value != it.default }
 
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(vertical = 6.dp)) {
-            Stepper(durationLabel, duration, durationRange, vertical = 10.dp, onChange = onDuration)
+        Column(modifier = Modifier.padding(vertical = Dimens.GapTiny)) {
+            Stepper(durationLabel, duration, durationRange, vertical = Dimens.GapSmall, onChange = onDuration)
 
             if (inhale != null || hold != null || exhale != null) {
                 HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = Dimens.CardPadding),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -61,28 +61,30 @@ fun SessionAdjustCard(
                         text = stringResource(R.string.adjust_intervals),
                         expanded = intervalsExpanded,
                         onToggle = onToggleIntervals,
-                        modifier = Modifier.padding(start = 8.dp),
+                        // Caret-Glyph (6 dp Innenrand im Icon) steht wie bisher knapp vor der
+                        // Stepper-Label-Kante (CardPadding).
+                        modifier = Modifier.padding(start = Dimens.GapTiny),
                     )
                     if (!intervalsExpanded && intervalsModified) {
                         Text(
                             text = "· " + stringResource(R.string.adjust_modified),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                            modifier = Modifier.padding(start = 6.dp),
+                            modifier = Modifier.padding(start = Dimens.GapTiny),
                         )
                     }
                 }
                 if (intervalsExpanded) {
                     inhale?.let {
-                        Stepper(stringResource(R.string.adjust_inhale), it.value, it.range, vertical = 6.dp, onChange = it.onChange)
+                        Stepper(stringResource(R.string.adjust_inhale), it.value, it.range, vertical = Dimens.GapTiny, onChange = it.onChange)
                     }
                     hold?.let {
-                        Stepper(stringResource(R.string.adjust_hold), it.value, it.range, vertical = 6.dp, onChange = it.onChange)
+                        Stepper(stringResource(R.string.adjust_hold), it.value, it.range, vertical = Dimens.GapTiny, onChange = it.onChange)
                     }
                     exhale?.let {
-                        Stepper(stringResource(R.string.adjust_exhale), it.value, it.range, vertical = 6.dp, onChange = it.onChange)
+                        Stepper(stringResource(R.string.adjust_exhale), it.value, it.range, vertical = Dimens.GapTiny, onChange = it.onChange)
                     }
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(Modifier.height(Dimens.GapHairline))
                 }
             }
         }

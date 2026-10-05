@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceTag
 import app.atemkraft.ui.home.label
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.EvidenceBest
 import app.atemkraft.ui.theme.EvidenceCaution
 
@@ -43,7 +44,7 @@ fun Chip(text: String, color: Color) {
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(color.copy(alpha = 0.16f))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelSmall, color = color)
     }

@@ -6,25 +6,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,6 +30,7 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.InfoChip
+import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.components.TitleWithChips
@@ -66,32 +62,11 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
-                Spacer(Modifier.height(20.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.tab_breathe),
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
-                        Text(
-                            text = stringResource(R.string.home_subtitle),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                        )
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = stringResource(R.string.settings_title),
-                            tint = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
-                }
+                ScreenHeader(
+                    title = stringResource(R.string.tab_breathe),
+                    subtitle = stringResource(R.string.home_subtitle),
+                    onOpenSettings = onOpenSettings,
+                )
             }
 
             item(key = "daily-pattern") {
@@ -129,7 +104,7 @@ fun HomeScreen(
                 }
             }
 
-            item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
         }
     }
 }
@@ -140,6 +115,8 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            // Touch-Ziel unabhängig vom (kompakteren) Karten-Padding.
+            .heightIn(min = Dimens.MinTouchTarget)
             .clickable(onClick = onClick),
         border = BorderStroke(1.dp, accent.copy(alpha = 0.35f)),
     ) {
@@ -157,7 +134,7 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
                     }
                 },
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             Text(
                 text = exercise.shortDescription,
                 style = MaterialTheme.typography.bodyMedium,
@@ -181,10 +158,12 @@ private fun DailyPatternCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            // Touch-Ziel unabhängig vom (kompakteren) Karten-Padding.
+            .heightIn(min = Dimens.MinTouchTarget)
             .clickable(onClick = onClick),
         border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             TitleWithChips(
                 title = exercise.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -192,7 +171,7 @@ private fun DailyPatternCard(
             ) {
                 CharacterChip(activating = daily.activating)
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             Text(
                 text = RandomPatternGenerator.hintFor(daily.spec) + " · " +
                     stringResource(R.string.duration_approx, exercise.defaultMinutes()),
@@ -232,7 +211,7 @@ private fun CharacterChip(activating: Boolean) {
                 if (activating) R.string.daily_pattern_gentle_up else R.string.daily_pattern_calm,
             ),
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
         )
     }
 }

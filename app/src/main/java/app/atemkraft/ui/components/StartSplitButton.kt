@@ -23,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Gepinnter Start als Split-Button: links Starten in voller Restbreite, rechts gleitet – nur
@@ -41,7 +42,7 @@ fun StartSplitButton(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {
         Button(onClick = onStart, modifier = Modifier.weight(1f)) {
             Text(label)
@@ -54,7 +55,7 @@ fun StartSplitButton(
             FilledTonalButton(
                 onClick = onReset,
                 modifier = Modifier.height(ButtonDefaults.MinHeight),
-                contentPadding = PaddingValues(horizontal = 16.dp),
+                contentPadding = PaddingValues(horizontal = Dimens.CardPadding),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_reset),

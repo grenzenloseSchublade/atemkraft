@@ -21,7 +21,6 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
-import androidx.compose.ui.unit.dp
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
 import app.atemkraft.ui.components.BackButton
@@ -37,7 +36,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimens.ScreenPadding),
         ) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Dimens.ScreenTopSub))
             BackButton(onClick = onBack)
             Text(
                 text = stringResource(R.string.app_name),
@@ -49,13 +48,13 @@ fun AboutScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.SectionGap))
             Text(
                 text = stringResource(R.string.about_body),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.SectionGap))
             Card(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.about_disclaimer),
@@ -65,7 +64,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.ListGap))
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(Dimens.CardPadding)) {
                     Text(
@@ -73,7 +72,7 @@ fun AboutScreen(onBack: () -> Unit) {
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Dimens.GapSmall))
                     Text(
                         text = stringResource(R.string.about_credits_body),
                         style = MaterialTheme.typography.bodyMedium,
@@ -81,7 +80,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.SectionGap))
             // Autor + Lizenz + offizielle Quelle: gerade bei manuell geteilten APKs die einzige
             // Stelle, an der Empfänger Herkunft und Original-Repo der App sehen.
             Text(
@@ -108,7 +107,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(Dimens.ScreenBottom))
         }
     }
 }

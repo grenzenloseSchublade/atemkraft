@@ -159,8 +159,8 @@ private fun ActiveContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(Dimens.SessionPadding),
-        // „Als Nächstes“-Zeile unter dem Kreis: 12 dp Abstand + eine Zeile.
-        centerExtra = if (showNextPhase) 12.dp + nextRowHeight else 0.dp,
+        // „Als Nächstes“-Zeile unter dem Kreis: Abstand (wie der Spacer unten) + eine Zeile.
+        centerExtra = if (showNextPhase) Dimens.GapSmall + nextRowHeight else 0.dp,
         top = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -190,7 +190,7 @@ private fun ActiveContent(
                             }
                             // 48-dp-Mindest-Touch-Target (Bedienung mitten in der Session).
                             .heightIn(min = 48.dp)
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapTiny),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -199,7 +199,7 @@ private fun ActiveContent(
                             tint = hintColor,
                             modifier = Modifier.size(16.dp),
                         )
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(Dimens.GapTiny))
                         Text(
                             text = stringResource(R.string.detail_instruction),
                             style = MaterialTheme.typography.labelMedium,
@@ -216,7 +216,7 @@ private fun ActiveContent(
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                            modifier = Modifier.padding(top = 2.dp),
+                            modifier = Modifier.padding(top = Dimens.GapHairline),
                         )
                     }
                 }
@@ -238,7 +238,7 @@ private fun ActiveContent(
                         .alpha(if (waiting) 1f else 0f)
                         .then(if (waiting) Modifier else Modifier.clearAndSetSemantics {}),
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Dimens.SectionGap))
 
                 // Immer alle drei Buttons rendern (im Countdown deaktiviert statt abwesend) –
                 // so springt das Layout beim Übergang Countdown → Übung nicht.
@@ -313,7 +313,7 @@ private fun ActiveContent(
                         )
                     }
                     if (secondsText.isNotEmpty()) {
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(Dimens.GapTiny))
                         GlowText(
                             text = secondsText,
                             style = MaterialTheme.typography.displaySmall,
@@ -328,7 +328,7 @@ private fun ActiveContent(
             // Feste Höhe reservieren, damit der Kreis NICHT springt, wenn die Zeile
             // erscheint/verschwindet oder der Text (kurz/lang) wechselt.
             if (showNextPhase) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 val hintStyle = MaterialTheme.typography.labelMedium
                 val nextLabel = stringResource(R.string.session_next)

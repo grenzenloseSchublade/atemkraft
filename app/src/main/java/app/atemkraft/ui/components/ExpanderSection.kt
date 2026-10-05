@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -27,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Wiederverwendbarer Inline-Expander (Progressive Disclosure): Titel + Appetizer, tippbar zum
@@ -54,12 +55,19 @@ fun ExpanderSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (expandable) Modifier.clickable { expanded = !expanded } else Modifier)
+                // Eigene Klickfläche: Mindesthöhe unabhängig vom (kompakten) Padding.
+                .then(
+                    if (expandable) {
+                        Modifier.heightIn(min = Dimens.MinTouchTarget).clickable { expanded = !expanded }
+                    } else {
+                        Modifier
+                    },
+                )
                 .semantics {
                     heading()
                     if (expandable) stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
                 }
-                .padding(vertical = 12.dp),
+                .padding(vertical = Dimens.ListGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -88,7 +96,7 @@ fun ExpanderSection(
         }
         if (expanded && content != null) {
             content()
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
     }

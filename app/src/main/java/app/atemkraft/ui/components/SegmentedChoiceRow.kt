@@ -21,6 +21,7 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Einheitliche Einfachauswahl – ersetzt die mehrfach kopierten
@@ -80,7 +81,7 @@ fun <T> SegmentedChoiceRow(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(selected = item == selected, onClick = null)
-                            Spacer(Modifier.width(12.dp))
+                            Spacer(Modifier.width(Dimens.GapSmall))
                             Text(
                                 text = label(item),
                                 style = MaterialTheme.typography.bodyLarge,

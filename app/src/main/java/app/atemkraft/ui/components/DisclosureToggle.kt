@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Einheitlicher Ein-/Ausklapp-Umschalter: animierter Caret + Label. Ersetzt die früher pro
@@ -35,14 +35,14 @@ fun DisclosureToggle(
         modifier = modifier.semantics {
             stateDescription = if (expanded) "Erweitert" else "Eingeklappt"
         },
-        contentPadding = PaddingValues(vertical = 4.dp),
+        contentPadding = PaddingValues(vertical = Dimens.GapTiny),
     ) {
         Icon(
             imageVector = Icons.Filled.KeyboardArrowDown,
             contentDescription = null,
             modifier = Modifier.rotate(rotation),
         )
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(Dimens.GapTiny))
         Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }

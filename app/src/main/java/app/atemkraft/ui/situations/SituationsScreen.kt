@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.ExerciseCard
@@ -64,16 +65,9 @@ fun SituationsScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = stringResource(R.string.tab_situations),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(
-                    text = stringResource(R.string.situations_subtitle),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                ScreenHeader(
+                    title = stringResource(R.string.tab_situations),
+                    subtitle = stringResource(R.string.situations_subtitle),
                 )
             }
 
@@ -102,7 +96,7 @@ fun SituationsScreen(
                         text = rec.rationale,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                        modifier = Modifier.padding(bottom = 4.dp),
+                        modifier = Modifier.padding(bottom = Dimens.GapTiny),
                     )
                 }
                 items(
@@ -113,7 +107,7 @@ fun SituationsScreen(
                 }
             }
 
-            item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
         }
     }
 }
@@ -129,6 +123,8 @@ private fun SavedPatternCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            // Touch-Ziel unabhängig vom (kompakteren) Karten-Padding.
+            .heightIn(min = Dimens.MinTouchTarget)
             .clickable(onClick = onClick),
         border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
     ) {
@@ -144,7 +140,7 @@ private fun SavedPatternCard(
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = exercise.instructionHint.orEmpty() + " · " +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),

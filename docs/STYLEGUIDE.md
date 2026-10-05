@@ -115,16 +115,18 @@ Größen in sp (Schrift/Zeile), **effektiv nach `TEXT_SCALE` = 0,75** in `Type.k
 
 ### 4.1 Abstände ([Dimens.kt](../app/src/main/java/app/atemkraft/ui/theme/Dimens.kt)), Raster 4 dp
 
-| Token | dp | Rolle | Status |
-|---|---|---|---|
-| `ScreenPadding` | 20 | horizontaler Screen-Rand | Ist |
-| `CardPadding` | 16 | Karten-Innenabstand | Ist |
-| `ListGap` | 12 | **Karte ↔ Karte (immer)**, Listen, Button-Reihen | Ist |
-| `SessionPadding` | 24 | Rand der Vollbild-Sessions | Ist |
-| `GapSmall` / `GapTiny` | 8 / 4 | Label → Steuerung / Hint, Icon ↔ Text | Ist (ungenutzt) |
-| `ScreenTop` / `ScreenTopSub` / `ScreenBottom` | 20 / 12 / 24 | oben Tab-Screen / oben Push-Screen / unten alle Scroll-Screens | *neu* |
-| `SectionGap` / `SectionHeaderTop` | 16 / 28 | nur zwischen Blöcken **verschiedenen Typs** / über `SectionHeader` | *neu* |
-| `GapHairline` | 2 | Eyebrow → Titel, Divider (Raster-Ausnahme) | *neu* |
+Seit `TEXT_SCALE` 0,75 eine Stufe kompakter (Nutzerentscheidung 2026-10-05), damit Luft und Schrift im Verhältnis bleiben; Wert vor der Umstellung in Klammern. Streu-Literale für Abstände gibt es in `src/ui/` nicht mehr (LAYOUT-01). Touch-Ziele hängen nie an diesen Werten: Eigene klickbare Flächen tragen `heightIn(min = MinTouchTarget)`.
+
+| Token | dp | Rolle |
+|---|---|---|
+| `ScreenPadding` | 16 (20) | horizontaler Screen-Rand |
+| `CardPadding` | 12 (16) | Karten-Innenabstand |
+| `ListGap` | 8 (12) | **Karte ↔ Karte (immer)**, Listen, Button-Reihen |
+| `SessionPadding` | 20 (24) | Rand der Vollbild-Sessions |
+| `ScreenTop` / `ScreenTopSub` / `ScreenBottom` | 16 / 8 / 16 (20 / 12 / 24) | oben Tab-Screen / oben Push-Screen / unten alle Scroll-Screens |
+| `SectionGap` / `SectionHeaderTop` | 12 / 20 (16 / 28) | nur zwischen Blöcken **verschiedenen Typs** / über `SectionHeader` |
+| `GapSmall` / `GapTiny` / `GapHairline` | 8 / 4 / 2 | Label → Steuerung / Hint, Icon ↔ Text / Eyebrow → Titel, enge Divider |
+| `MinTouchTarget` | 48 | Mindesthöhe eigener klickbarer Flächen |
 
 ### 4.2 Größen (*neu*: `object Sizes` in `src/ui/theme/`)
 
@@ -134,7 +136,7 @@ Größen in sp (Schrift/Zeile), **effektiv nach `TEXT_SCALE` = 0,75** in `Type.k
 | `BorderThin` / `ProgressStroke` / `RingStroke` | 1 / 2 / 2,5 dp | Rand und Divider / Spinner / Meditations-Ring |
 | `ProgressInline` / `PauseFlashSize` | 20 / 150 dp | Inline-Spinner / Tap-Flash-Glyph |
 | `PinnedBarElevation` / `MiniBarMinHeight` / `ContentMaxWidth` | 3 / 60 / 600 dp | gepinnte Startleiste / Now-Playing-Leiste / NavHost-Breite |
-| `DotSmall` / `DotLarge` / `AccentBarWidth` × `Height` | 10 / 18 / 4 × 24 dp | Log-Punkt / Wochenpunkt / SectionHeader-Balken |
+| `DotSmall` / `DotLarge` / `AccentBarWidth` × `Height` | 10 / 18 / 4 dp × Schriftgröße `headlineSmall` | Log-Punkt / Wochenpunkt / SectionHeader-Balken (Höhe folgt der Schrift) |
 | `CircleMaxWidthFraction` / `HeightFraction` | 0,9 / 0,62 | Atemkreis |
 
 ### 4.3 Formen und Screen-Gerüst
@@ -173,7 +175,9 @@ Größen in sp (Schrift/Zeile), **effektiv nach `TEXT_SCALE` = 0,75** in `Type.k
 | `MiniNowPlayingBar` | minimierte laufende Session über der NavigationBar | andere Meldungen | ≥ 60 dp, `maxLines = 1`, ein Fokus-Stopp |
 | `OverlayChrome` | Rahmen jedes Vollbild-Overlays | Push-Screens | Ton als `Role.Switch` + `stateDescription`, `paneTitle` |
 | `ReferenceItem` | eine Quelle (Zitat, DOI/PMID) | – | Kennung ≥ 4,5:1 |
+| `ScreenHeader` | Kopf der Haupt-Tabs: Titel, optional Untertitel und Zahnrad (nur Tabs mit eigenen Einstellungen: Atmen, Meditation) | Push-Screens (→ `BackButton` + Titel) | Titel `heading()`; Zahnrad cd `settings_title` |
 | `SectionHeader` | Abschnittskopf mit Akzentbalken | Kartentitel | `heading()` |
+| `SubLabel` | Unter-Überschrift in Karten und Abschnitten (eine Ebene unter `SectionHeader`) | Abschnittsköpfe | – |
 | `SegmentedChoiceRow` | Einzelwahl, 2–4 kurze Optionen (`modifier`); passt eine Beschriftung nicht ins Segment, Radioliste | > 4 Optionen | Gruppenlabel verknüpft; Radioliste mit `selectableGroup()`, `Role.RadioButton` |
 | `SelectChip` | Einzelwahl aus vielen Presets | Info | Häkchen, `Role.RadioButton`, `selectableGroup()` |
 | `SessionAdjustCard` | Dauer und Intervalle vor dem Start | – | „· angepasst“ im Toggle-Zustand |
@@ -186,7 +190,7 @@ Größen in sp (Schrift/Zeile), **effektiv nach `TEXT_SCALE` = 0,75** in `Type.k
 | `SessionControls.kt` (`GlowText`, `Session*Button`, `FinishedPanel`, `rememberTapFlash`), `PauseFlash` | Text, Buttons, Tap-Rückmeldung **nur** in Vollbild-Sessions | normale Screens, stehender Status | `FinishedPanel` sagt das Ende an; `PauseFlash` dekorativ |
 | `SafetyDialog` | Sicherheitsbestätigung vor intensiven Übungen | Infos ohne Risiko | nicht außen schließbar, scrollbar |
 
-Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplant** (ersetzen Duplikate): `PinnedActionBar`, `ToggleRow`, `ScreenHeader`/`PushHeader`, `Bullet`, `CardTitle`/`Hint` (öffentlich).
+Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. **Geplant** (ersetzen Duplikate): `PinnedActionBar`, `ToggleRow`, `PushHeader`, `Bullet`, `CardTitle`/`Hint` (öffentlich).
 
 ### 5.2 Regeln
 

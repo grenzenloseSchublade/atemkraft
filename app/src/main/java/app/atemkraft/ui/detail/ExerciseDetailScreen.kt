@@ -55,6 +55,7 @@ import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
 import app.atemkraft.ui.session.SafetyDialog
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
@@ -168,33 +169,33 @@ fun ExerciseDetailScreen(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = Dimens.ScreenPadding),
             ) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Dimens.ScreenTopSub))
                 BackButton(onClick = onBack)
                 Text(
                     text = exercise.family.title(),
                     style = MaterialTheme.typography.labelLarge,
                     color = accent,
                 )
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(Dimens.GapHairline))
                 TitleWithChips(
                     title = exercise.name,
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                     chips = exercise.tag?.let { tag -> { TagChip(tag) } },
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 Text(
                     text = exercise.shortDescription,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
                 ) {
                     Chip(
                         text = if (roundBased) {
@@ -211,7 +212,7 @@ fun ExerciseDetailScreen(
                 }
 
                 if (isIntense && exercise.cautions.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(Dimens.GapSmall))
                     Text(
                         text = "⚠ " + stringResource(R.string.detail_safety_appetizer),
                         style = MaterialTheme.typography.bodyMedium,
@@ -219,7 +220,7 @@ fun ExerciseDetailScreen(
                     )
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 exercise.instructionHint?.let { hint ->
                     ExpanderSection(stringResource(R.string.detail_instruction), hint, accent)
                 }
@@ -240,7 +241,7 @@ fun ExerciseDetailScreen(
                             null
                         } else {
                             {
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                                     moreCautions.forEach { Bullet(it) }
                                 }
                             }
@@ -253,14 +254,14 @@ fun ExerciseDetailScreen(
                         appetizer = pluralStringResource(R.plurals.detail_sources_count, exercise.references.size, exercise.references.size),
                         accent = accent,
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                             exercise.references.forEach { ReferenceItem(it) }
                         }
                     }
                 }
 
                 if (exercise.guided) {
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(Dimens.SectionGap))
                     SessionAdjustCard(
                         durationLabel = if (roundBased) {
                             stringResource(R.string.adjust_rounds)
@@ -302,14 +303,14 @@ fun ExerciseDetailScreen(
                         onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
                     )
                 } else {
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(Dimens.SectionGap))
                     Text(
                         text = stringResource(R.string.detail_info_only),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     )
                 }
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(Dimens.ScreenBottom))
             }
 
             // Gepinnter Start (immer sichtbar) – nur bei getakteten Übungen.
@@ -318,7 +319,7 @@ fun ExerciseDetailScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.CardPadding),
                     ) {
                         // Gesamtdauer direkt am Start: „Starten · ca. 10 min".
                         val start = stringResource(R.string.action_start)
@@ -379,7 +380,7 @@ private fun Body(text: String) {
 
 @Composable
 private fun Bullet(text: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
         Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
         Text(
             text = text,

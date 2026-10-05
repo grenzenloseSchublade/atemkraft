@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.theme.Dimens
@@ -73,15 +74,12 @@ fun LogbookScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = stringResource(R.string.tab_logbook),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Spacer(Modifier.height(8.dp))
+                ScreenHeader(title = stringResource(R.string.tab_logbook))
+                // Titel und Statistik gehören zusammen – kleine Lücke statt Abschnitts-Abstand.
+                Spacer(Modifier.height(Dimens.GapSmall))
                 StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, onClear = onClear)
-                Spacer(Modifier.height(4.dp))
+                // Zusammen mit dem ListGap ergibt das den SectionGap zur Verlaufsliste.
+                Spacer(Modifier.height(Dimens.GapTiny))
             }
 
             if (entries.isEmpty()) {
@@ -95,7 +93,7 @@ fun LogbookScreen(
             }
 
             items(entries, key = { it.id }) { entry -> LogEntryCard(entry) }
-            item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
         }
     }
 }
@@ -119,10 +117,10 @@ private fun StatsCard(
                 style = MaterialTheme.typography.titleMedium,
                 color = if (streak > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Dimens.ListGap))
             WeekRow(minutesPerDay = minutesPerDay)
             if (entries.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Dimens.ListGap))
                 // FlowRow: Reicht der Platz nicht (große Schrift), rutscht „Logbuch leeren“ in die
                 // nächste Zeile, statt Buchstabe für Buchstabe umzubrechen (LAYOUT-03).
                 FlowRow(
@@ -192,7 +190,7 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>) {
                             },
                         ),
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = labels[(day.dayOfWeek.value - 1).coerceIn(0, 6)],
                     style = MaterialTheme.typography.labelSmall,
@@ -210,7 +208,7 @@ private fun LogEntryCard(entry: SessionLogEntry) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Dimens.CardPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
@@ -226,7 +224,7 @@ private fun LogEntryCard(entry: SessionLogEntry) {
             FlowRow(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny),
             ) {
                 Column(modifier = Modifier.align(Alignment.CenterVertically)) {
                     WholeWordText(

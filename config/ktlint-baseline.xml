@@ -4,13 +4,13 @@
         <error line="131" column="9" source="compose:vm-injection-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/BackButton.kt">
-        <error line="20" column="5" source="compose:modifier-missing-check" />
+        <error line="21" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/Chips.kt">
-        <error line="41" column="5" source="compose:modifier-missing-check" />
+        <error line="42" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/MiniNowPlayingBar.kt">
-        <error line="29" column="5" source="compose:modifier-missing-check" />
+        <error line="30" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/OverlayChrome.kt">
         <error line="29" column="5" source="compose:modifier-missing-check" />
@@ -22,7 +22,7 @@
         <error line="13" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/SectionHeader.kt">
-        <error line="23" column="5" source="compose:modifier-missing-check" />
+        <error line="25" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/SelectChip.kt">
         <error line="10" column="5" source="compose:modifier-missing-check" />
@@ -31,13 +31,13 @@
         <error line="36" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/SessionControls.kt">
-        <error line="48" column="5" source="compose:param-order-check" />
-        <error line="133" column="5" source="compose:modifier-missing-check" />
+        <error line="49" column="5" source="compose:param-order-check" />
+        <error line="134" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/Stepper.kt">
-        <error line="29" column="5" source="compose:modifier-missing-check" />
+        <error line="30" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt">
-        <error line="54" column="5" source="compose:parameter-naming" />
+        <error line="55" column="5" source="compose:parameter-naming" />
     </file>
 </baseline>

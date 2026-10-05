@@ -299,7 +299,7 @@ private fun AtemkraftApp() {
                         exercisesByFamily = guidedByFamily,
                         programs = programs,
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
-                        onOpenSettings = { navController.navigate(SettingsRoute) },
+                        onOpenSettings = { navController.navigate(SettingsRoute()) },
                     )
                 }
                 composable<SituationenRoute> {
@@ -328,6 +328,7 @@ private fun AtemkraftApp() {
                         initialConfig = meditationConfig,
                         speechAvailable = meditationSpeechAvailable,
                         gongIntervalMin = gongIntervalMin,
+                        onOpenSettings = { navController.navigate(SettingsRoute(focusMeditation = true)) },
                         onStart = { config ->
                             scope.launch { container.settingsRepository.setMeditationConfig(config) }
                             meditationController.start(config)
@@ -384,7 +385,7 @@ private fun AtemkraftApp() {
                     exitTransition = pushExit,
                     popEnterTransition = popEnter,
                     popExitTransition = popExit,
-                ) {
+                ) { entry ->
                     // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
                     LaunchedEffect(Unit) { meditationController.prepareSpeech() }
                     SettingsScreen(
@@ -418,6 +419,7 @@ private fun AtemkraftApp() {
                         onOpenGlossary = { navController.navigate(GlossaryRoute) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
+                        focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )
                 }
                 composable<GlossaryRoute>(

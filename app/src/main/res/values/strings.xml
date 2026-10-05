@@ -216,6 +216,7 @@
     <string name="meditation_duration">Dauer</string>
     <string name="meditation_free_hint">Offene Sitzung – die Stoppuhr läuft, bis du beendest.</string>
     <string name="meditation_gong_label">Gong</string>
+    <string name="meditation_sound_voice_label">Klang &amp; Stimme</string>
     <string name="meditation_gong_startstop">Start &amp; Ende</string>
     <string name="meditation_interval_minutes">alle %1$d min</string>
     <string name="meditation_off">Aus</string>

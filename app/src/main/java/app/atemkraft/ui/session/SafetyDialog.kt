@@ -11,9 +11,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 
 /** Blockierender Sicherheits-Hinweis vor intensiven Übungen (Wim Hof, Feueratmung). */
 @Composable
@@ -27,7 +27,7 @@ fun SafetyDialog(
         icon = { Icon(Icons.Filled.Warning, contentDescription = null) },
         title = { Text(stringResource(R.string.safety_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                 cautions.forEach { caution ->
                     Text(
                         text = "• $caution",

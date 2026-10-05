@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Einheitlicher Zahl-Stepper (−  wert  +) mit Label. Wird von der Übungs-Anpassung und dem
@@ -30,8 +31,8 @@ fun Stepper(
     label: String,
     value: Int,
     range: IntRange,
-    horizontal: Dp = 16.dp,
-    vertical: Dp = 16.dp,
+    horizontal: Dp = Dimens.CardPadding,
+    vertical: Dp = Dimens.CardPadding,
     onChange: (Int) -> Unit,
 ) {
     val decreaseLabel = stringResource(R.string.adjust_decrease)
@@ -43,12 +44,16 @@ fun Stepper(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
+        // weight: Die Knopfgruppe wird zuerst vermessen und behält ihre volle Breite; bei wenig
+        // Platz (360 dp, große Schrift) bricht das Label zwischen ganzen Wörtern um, statt „+“
+        // aus der Zeile zu drücken.
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f).padding(end = Dimens.GapSmall),
         )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
             FilledTonalIconButton(
                 onClick = { onChange((value - 1).coerceIn(range)) },
                 enabled = value > range.first,

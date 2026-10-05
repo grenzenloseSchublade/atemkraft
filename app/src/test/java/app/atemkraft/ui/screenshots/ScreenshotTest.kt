@@ -265,6 +265,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             initialConfig = MeditationConfig(),
             speechAvailable = true,
             gongIntervalMin = 5,
+            onOpenSettings = {},
             onStart = {},
         )
     }
@@ -301,7 +302,16 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     @Test
-    fun settings() = snap("05_einstellungen") {
+    fun settings() = snap("05_einstellungen") { Settings() }
+
+    /** Vom Meditations-Tab geöffnet (Zahnrad): in Gerätehöhe, direkt bei der Meditations-Karte. */
+    @Test
+    fun settingsFromMeditation() = snap("05_einstellungen_meditation", heightDp = device.heightDp) {
+        Settings(focusMeditation = true)
+    }
+
+    @Composable
+    private fun Settings(focusMeditation: Boolean = false) {
         val voices = VoiceCatalog.all.mapIndexed { i, v ->
             v.id to when (i) {
                 0 -> VoiceDownloadState.Downloaded
@@ -337,6 +347,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onOpenGlossary = {},
             onOpenAbout = {},
             onBack = {},
+            focusMeditation = focusMeditation,
         )
     }
 

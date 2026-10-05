@@ -2,12 +2,14 @@ package app.atemkraft.ui.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -27,12 +29,19 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -50,9 +59,11 @@ import app.atemkraft.ui.components.BackButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
+import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import kotlinx.coroutines.flow.first
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
 @Composable
@@ -84,50 +95,67 @@ fun SettingsScreen(
     onOpenGlossary: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
+    focusMeditation: Boolean = false,
 ) {
+    val scrollState = rememberScrollState()
+    // Vom Meditations-Tab aus geöffnet: einmal direkt zur Meditations-Karte springen. Gemerkt
+    // (rememberSaveable), damit die Rückkehr aus Glossar/Über die Scroll-Position nicht überschreibt.
+    var meditationCardY by remember { mutableIntStateOf(-1) }
+    val topMarginPx = with(LocalDensity.current) { Dimens.CardPadding.roundToPx() }
+    var focusDone by rememberSaveable { mutableStateOf(!focusMeditation) }
+    LaunchedEffect(focusDone) {
+        if (focusDone) return@LaunchedEffect
+        val y = snapshotFlow { meditationCardY }.first { it >= 0 }
+        // Etwas Luft über der Karte, damit sie nicht an der Oberkante klebt.
+        scrollState.scrollTo((y - topMarginPx).coerceAtLeast(0))
+        focusDone = true
+    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = Dimens.ScreenPadding),
         ) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Dimens.ScreenTopSub))
             BackButton(onClick = onBack)
             Text(
                 text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground,
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.SectionGap))
 
             TonCard(volume, onVolume, gongLong, onGongLong, onPreviewGong)
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.ListGap))
             AtmenCard(soundMode, transition, onSoundMode, onTransition)
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.ListGap))
             SessionCard(haptics, showSafetyWarning, showNextPhase, onToggleHaptics, onToggleSafety, onToggleNextPhase)
 
-            Spacer(Modifier.height(16.dp))
-            MeditationCard(
-                gongIntervalMin, onGongInterval,
-                voiceStates, activeVoiceId, piperEngineReady,
-                onSampleVoice, onDownloadVoice, onSelectVoice, onDeleteVoice,
-            )
+            Spacer(Modifier.height(Dimens.ListGap))
+            // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
+            Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
+                MeditationCard(
+                    gongIntervalMin, onGongInterval,
+                    voiceStates, activeVoiceId, piperEngineReady,
+                    onSampleVoice, onDownloadVoice, onSelectVoice, onDeleteVoice,
+                )
+            }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.ListGap))
             NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Dimens.ListGap))
             NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimens.SectionGap))
             Text(
                 text = stringResource(R.string.settings_about),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(Dimens.ScreenBottom))
         }
     }
 }
@@ -144,9 +172,9 @@ private fun TonCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_tone_title))
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.volume_title))
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
             SegmentedChoiceRow(ToneVolume.entries, volume, onVolume) { v ->
                 when (v) {
                     ToneVolume.QUIET -> stringResource(R.string.volume_quiet)
@@ -154,10 +182,10 @@ private fun TonCard(
                     ToneVolume.LOUD -> stringResource(R.string.volume_loud)
                 }
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             Hint(stringResource(R.string.volume_hint))
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SubLabel(stringResource(R.string.settings_gong_length))
                 Spacer(Modifier.weight(1f))
@@ -170,7 +198,7 @@ private fun TonCard(
             SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong) { long ->
                 stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             Hint(stringResource(R.string.settings_gong_length_hint))
         }
     }
@@ -188,9 +216,9 @@ private fun AtmenCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_breathing_title))
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_sound_title))
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
             SegmentedChoiceRow(SoundMode.entries, soundMode, onSoundMode) { mode ->
                 when (mode) {
                     SoundMode.OFF -> stringResource(R.string.sound_mode_off)
@@ -198,7 +226,7 @@ private fun AtmenCard(
                     SoundMode.CONTINUOUS -> stringResource(R.string.sound_mode_continuous)
                 }
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             Hint(stringResource(R.string.settings_sound_appetizer))
             DisclosureToggle(
                 text = stringResource(R.string.settings_sound_more),
@@ -207,22 +235,22 @@ private fun AtmenCard(
             )
             if (soundInfoExpanded) {
                 Hint(stringResource(R.string.settings_sound_hint))
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 Text(
                     text = stringResource(R.string.settings_sources),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Dimens.GapTiny))
                 listOf(Refs.respeRate, Refs.shaffer2020, Refs.zaccaro2018).forEach { ref ->
                     ReferenceItem(ref)
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(Dimens.GapTiny))
                 }
             }
             if (soundMode == SoundMode.CONTINUOUS) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 SubLabel(stringResource(R.string.emphasis_title))
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(Dimens.GapSmall))
                 SegmentedChoiceRow(TransitionEmphasis.entries, transition, onTransition) { emphasis ->
                     when (emphasis) {
                         TransitionEmphasis.SOFT -> stringResource(R.string.emphasis_soft)
@@ -230,7 +258,7 @@ private fun AtmenCard(
                         TransitionEmphasis.STRONG -> stringResource(R.string.emphasis_strong)
                     }
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Dimens.GapTiny))
                 Hint(stringResource(R.string.emphasis_hint))
             }
         }
@@ -249,12 +277,12 @@ private fun SessionCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_session_title))
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_safety), showSafetyWarning, onToggleSafety)
             Hint(stringResource(R.string.settings_safety_hint))
-            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_next_phase), showNextPhase, onToggleNextPhase)
             Hint(stringResource(R.string.settings_next_phase_hint))
         }
@@ -279,23 +307,23 @@ private fun MeditationCard(
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_meditation_title))
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval))
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Dimens.GapSmall))
             SegmentedChoiceRow(GONG_INTERVALS, gongIntervalMin, onGongInterval) { m ->
                 stringResource(R.string.meditation_minutes, m)
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
             Hint(stringResource(R.string.settings_gong_interval_hint))
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_voice))
             Hint(stringResource(R.string.settings_voice_catalog_hint))
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Dimens.GapTiny))
 
             // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
             VoiceCatalog.all.forEachIndexed { index, spec ->
-                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
+                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapHairline))
                 VoiceRow(
                     spec = spec,
                     state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
@@ -324,7 +352,7 @@ private fun VoiceRow(
     onDelete: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.GapTiny),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -432,12 +460,6 @@ private fun CardTitle(text: String) {
     Text(text = text, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
 }
 
-/** Unter-Überschrift innerhalb einer Karte. */
-@Composable
-private fun SubLabel(text: String) {
-    Text(text = text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-}
-
 /** Dezenter Hinweis-/Beschriftungstext (einheitliche Sekundär-Deckkraft). */
 @Composable
 private fun Hint(text: String) {
@@ -452,7 +474,11 @@ private fun Hint(text: String) {
 private fun NavRow(label: String, onClick: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            // Mindesthöhe hält die klickbare Karte bei kompaktem Padding auf Touch-Ziel-Größe.
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Dimens.MinTouchTarget)
+                .padding(Dimens.CardPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -475,7 +501,7 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = Dimens.GapTiny),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

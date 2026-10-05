@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 
 /**
  * Geteilte „Now-Playing"-Leiste über der NavigationBar (Titel + Status + ˄), tippen öffnet die
@@ -37,9 +38,9 @@ fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.GapSmall),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(

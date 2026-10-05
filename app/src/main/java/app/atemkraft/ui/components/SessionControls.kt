@@ -33,6 +33,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SessionButtonCyan
 import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionTextGlow
@@ -67,7 +68,7 @@ fun GlowText(
 
 // Schmaler als der M3-Standard (24 dp): Drei Buttons passen so auch bei fontScale 1,3 auf
 // 360 dp in eine Zeile. Die Höhe (≥ 48 dp Touch-Ziel) bleibt unverändert.
-private val SessionButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+private val SessionButtonPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall)
 
 /** Gefüllter Primär-Button (Pause/Weiter, Nochmal) im Session-Cyan. */
 @Composable
@@ -134,7 +135,7 @@ fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(Dimens.SessionPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -143,14 +144,14 @@ fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Dimens.GapSmall))
         Text(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(Dimens.SessionPadding))
         AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
             SessionPrimaryButton(
                 text = stringResource(R.string.action_again),

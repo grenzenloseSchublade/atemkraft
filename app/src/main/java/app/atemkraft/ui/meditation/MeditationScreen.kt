@@ -1,6 +1,5 @@
 package app.atemkraft.ui.meditation
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,50 +10,36 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.cue.HapticPlayer
@@ -67,6 +52,7 @@ import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.OverlayChrome
 import app.atemkraft.ui.components.PauseFlash
+import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.components.SessionPrimaryButton
@@ -75,16 +61,12 @@ import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
+import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
-import app.atemkraft.ui.theme.SessionButtonCyan
-import app.atemkraft.ui.theme.SessionButtonPink
-import app.atemkraft.ui.theme.SessionTextGlow
-import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.SynthTrack
-import kotlinx.coroutines.delay
 
 /** Auswählbare Dauer-Vorgaben (Minuten) und Intervall-Gong-Optionen (Minuten). */
 private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60, 90)
@@ -99,13 +81,14 @@ fun MeditationScreen(
     initialConfig: MeditationConfig,
     speechAvailable: Boolean,
     gongIntervalMin: Int,
+    onOpenSettings: () -> Unit,
     onStart: (MeditationConfig) -> Unit,
 ) {
     // Der Tab zeigt nur die Auswahl; die laufende/abgeschlossene Sitzung liegt als Vollbild-Overlay
     // darüber ([MeditationOverlay]) – so ist sie (wie die Atem-Session) minimierbar und über die
     // Mini-Leiste erreichbar.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onStart)
+        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onStart)
     }
 }
 
@@ -159,13 +142,18 @@ private fun SelectionContent(
     initialConfig: MeditationConfig,
     speechAvailable: Boolean,
     gongIntervalMin: Int,
+    onOpenSettings: () -> Unit,
     onStart: (MeditationConfig) -> Unit,
 ) {
-    var mode by remember(initialConfig) { mutableStateOf(initialConfig.mode) }
-    var minutes by remember(initialConfig) { mutableIntStateOf(initialConfig.minutes) }
-    var startEndGong by remember(initialConfig) { mutableStateOf(initialConfig.startEndGong) }
-    var intervalOn by remember(initialConfig) { mutableStateOf(initialConfig.gongEveryMin != null) }
-    var speech by remember(initialConfig) { mutableStateOf(initialConfig.speech) }
+    // Saveable: Die Auswahl überlebt den Abstecher in die Einstellungen und Tab-Wechsel. Schlüssel
+    // ohne die Intervall-LÄNGE (die ist global, s. SettingsRepository) – sonst würde eine Änderung
+    // in den Einstellungen die noch nicht gestartete Auswahl zurücksetzen.
+    val key = initialConfig.copy(gongEveryMin = initialConfig.gongEveryMin?.let { 0 })
+    var mode by rememberSaveable(key) { mutableStateOf(initialConfig.mode) }
+    var minutes by rememberSaveable(key) { mutableIntStateOf(initialConfig.minutes) }
+    var startEndGong by rememberSaveable(key) { mutableStateOf(initialConfig.startEndGong) }
+    var intervalOn by rememberSaveable(key) { mutableStateOf(initialConfig.gongEveryMin != null) }
+    var speech by rememberSaveable(key) { mutableStateOf(initialConfig.speech) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -174,21 +162,15 @@ private fun SelectionContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Dimens.ScreenPadding),
         ) {
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(R.string.meditation_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                text = stringResource(R.string.meditation_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+            ScreenHeader(
+                title = stringResource(R.string.meditation_title),
+                subtitle = stringResource(R.string.meditation_subtitle),
+                onOpenSettings = onOpenSettings,
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Dimens.SectionGap))
             // Modus: Timer / Frei
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
                 SelectChip(
                     label = stringResource(R.string.meditation_mode_timed),
                     selected = mode == MeditationMode.TIMED,
@@ -203,7 +185,7 @@ private fun SelectionContent(
 
             if (mode == MeditationMode.TIMED) {
                 SectionHeader(stringResource(R.string.meditation_duration), NeonCyan)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
                     DURATION_PRESETS.forEach { m ->
                         SelectChip(
                             label = stringResource(R.string.meditation_minutes, m),
@@ -217,10 +199,14 @@ private fun SelectionContent(
                     label = stringResource(R.string.adjust_minutes),
                     value = minutes,
                     range = 1..120,
+                    // Bündig mit Chips und Überschriften; kompakt, weil die Chip-Zeile darüber
+                    // schon 8 dp Touch-Rand mitbringt – so passt der Tab auf dem A54 ohne Scrollen.
+                    horizontal = 0.dp,
+                    vertical = Dimens.GapSmall,
                     onChange = { minutes = it },
                 )
             } else {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(Dimens.SectionGap))
                 Text(
                     text = stringResource(R.string.meditation_free_hint),
                     style = MaterialTheme.typography.bodyMedium,
@@ -228,9 +214,11 @@ private fun SelectionContent(
                 )
             }
 
-            SectionHeader(stringResource(R.string.meditation_gong_label), NeonCyan)
+            // Klang & Stimme: Gong und Sprach-Anleitung als ein Abschnitt mit Unter-Labels.
+            SectionHeader(stringResource(R.string.meditation_sound_voice_label), NeonCyan)
+            SubLabel(stringResource(R.string.meditation_gong_label), color = MaterialTheme.colorScheme.onBackground)
             // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
                 SelectChip(
                     label = stringResource(R.string.meditation_off),
                     selected = !startEndGong && !intervalOn,
@@ -257,7 +245,8 @@ private fun SelectionContent(
                 )
             }
 
-            SectionHeader(stringResource(R.string.meditation_speech_label), NeonCyan)
+            Spacer(Modifier.height(Dimens.GapSmall))
+            SubLabel(stringResource(R.string.meditation_speech_label), color = MaterialTheme.colorScheme.onBackground)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -279,7 +268,8 @@ private fun SelectionContent(
                     enabled = speechAvailable,
                 )
             }
-            Spacer(Modifier.height(20.dp))
+            // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.
+            Spacer(Modifier.height(Dimens.GapSmall))
         }
 
         // Gepinnter Start über der Tab-Leiste (wie auf der Detailseite) – als Split-Button:
@@ -423,7 +413,7 @@ private fun RunningContent(
                             text = stringResource(R.string.session_get_ready),
                             style = MaterialTheme.typography.headlineMedium,
                         )
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(Dimens.GapTiny))
                     }
                     GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
                 }
