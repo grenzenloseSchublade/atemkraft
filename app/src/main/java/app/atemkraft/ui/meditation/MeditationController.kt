@@ -323,7 +323,7 @@ class MeditationController(
         }
     }
 
-    /** Sprach-Anleitung in unregelmäßigen Abständen; ein Satz früh, dann spärlicher. */
+    /** Sprachanleitung in unregelmäßigen Abständen; ein Satz früh, dann spärlicher. */
     private suspend fun speechLoop(fromResume: Boolean) {
         var last = -1
         delay(

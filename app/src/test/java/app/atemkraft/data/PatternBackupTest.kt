@@ -42,7 +42,7 @@ class PatternBackupTest {
     )
 
     @Test
-    fun roundTripKeepsValuesAndOverrides() = runBlocking {
+    fun `Export und Import ergeben dieselben Werte und Anpassungen`() = runBlocking {
         val source = FakeDao()
         source.insert(entity(1_000))
         source.insert(entity(2_000, inhale = 5.5, holdFull = null))
@@ -66,7 +66,7 @@ class PatternBackupTest {
     }
 
     @Test
-    fun importSkipsExistingAndDuplicatesInFile() = runBlocking {
+    fun `Import ueberspringt vorhandene und doppelte Muster`() = runBlocking {
         val dao = FakeDao()
         dao.insert(entity(1_000))
         val repo = SavedPatternsRepository(dao)
@@ -80,7 +80,7 @@ class PatternBackupTest {
     }
 
     @Test
-    fun rejectsForeignOrOversizedFiles() {
+    fun `fremde oder zu grosse Dateien werden abgewiesen`() {
         assertNull(PatternBackup.decode("""{"format":"anderes","version":1,"exportedAtEpochMs":0,"patterns":[]}"""))
         assertNull(PatternBackup.decode("""{"format":"atemkraft-muster","version":99,"exportedAtEpochMs":0,"patterns":[]}"""))
         assertNull(PatternBackup.decode("kein json"))
@@ -88,7 +88,7 @@ class PatternBackupTest {
     }
 
     @Test
-    fun dropsImplausibleEntriesButKeepsTheRest() {
+    fun `unplausible Eintraege fallen weg, der Rest bleibt`() {
         val ok = """{"name":"Muster","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}"""
         val bad = listOf(
             """{"name":" ","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""",
@@ -109,7 +109,7 @@ class PatternBackupTest {
     }
 
     @Test
-    fun capsNumberOfPatterns() {
+    fun `Anzahl der Muster ist begrenzt`() {
         val one = """{"name":"M","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}"""
         val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,
             "patterns":[${List(PatternBackup.MAX_PATTERNS + 5) { one }.joinToString(",")}]}"""
@@ -122,7 +122,7 @@ class PatternBackupTest {
     }
 
     @Test
-    fun rejectsPatternsOutsideGuardrailsAndOverridesOutsideStepperLimits() {
+    fun `Muster ausserhalb der Leitplanken und Anpassungen ausserhalb der Stepper werden abgewiesen`() {
         fun entry(fields: String) = """{"name":"M","activating":false,"createdAtEpochMs":1,$fields}"""
         val bad = listOf(
             // 30 s Halten: läge außerhalb der Generator-Leitplanken (Halten ≤ 4 s)
@@ -144,7 +144,7 @@ class PatternBackupTest {
     }
 
     @Test
-    fun rejectsNamesWithHiddenOrBreakingCharacters() {
+    fun `Namen mit Steuer- oder Formatzeichen werden abgewiesen`() {
         val names = listOf("\u202Eretsum", "Muster\nzwei", "\u200B", "\u0000x", "x\u2028y")
         val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"patterns":[${
             names.joinToString(",") { """{"name":"$it","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""" }

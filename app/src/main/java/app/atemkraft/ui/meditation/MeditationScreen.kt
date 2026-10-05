@@ -72,7 +72,7 @@ import app.atemkraft.ui.theme.SynthTrack
 private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60, 90)
 
 /**
- * Meditations-Tab: Auswahl (Modus Timer/Frei, Dauer, Intervall-Gong, Sprach-Anleitung) und
+ * Meditations-Tab: Auswahl (Modus Timer/Frei, Dauer, Intervall-Gong, Sprachanleitung) und
  * laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
  * liegt im [MeditationController].
  */
@@ -214,7 +214,7 @@ private fun SelectionContent(
                 )
             }
 
-            // Klang & Stimme: Gong und Sprach-Anleitung als ein Abschnitt mit Unter-Labels.
+            // Klang & Stimme: Gong und Sprachanleitung als ein Abschnitt mit Unter-Labels.
             SectionHeader(stringResource(R.string.meditation_sound_voice_label), NeonCyan)
             SubLabel(stringResource(R.string.meditation_gong_label), color = MaterialTheme.colorScheme.onBackground)
             // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.

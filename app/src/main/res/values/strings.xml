@@ -203,7 +203,7 @@
     <string name="gong_length_short">Kurz</string>
     <string name="gong_length_long">Lang</string>
     <string name="settings_gong_length_hint">Gilt für Sitzungs- und Meditations-Gong. Beide klingen natürlich bis zur Stille aus – „Lang“ hallt voller nach.</string>
-    <string name="settings_voice">Sprach-Stimme</string>
+    <string name="settings_voice">Stimme</string>
 
     <!-- Zustände beim Nachladen einer Katalog-Stimme -->
     <string name="settings_speech_pack_downloading">Lädt … %1$d %%</string>
@@ -246,7 +246,7 @@
     <string name="meditation_gong_startstop">Start &amp; Ende</string>
     <string name="meditation_interval_minutes">alle %1$d min</string>
     <string name="meditation_off">Aus</string>
-    <string name="meditation_speech_label">Sprach-Anleitung</string>
+    <string name="meditation_speech_label">Sprachanleitung</string>
     <string name="meditation_speech_hint">Spricht in unregelmäßigen Abständen kurze Hinweise.</string>
     <string name="meditation_speech_unavailable">Keine deutsche Sprachausgabe auf dem Gerät verfügbar.</string>
     <string name="meditation_minutes">%1$d min</string>

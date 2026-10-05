@@ -422,7 +422,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 | S-22 | TEXT-02, -05, -10 | Jargon in Situationen und Familien-Labels (`BuiltInExercises.kt:275-295`, `strings.xml:17-24`); `phase_hold_full` = `phase_hold_empty`; Wording („Session“, Lädt/lädt, „Aktiv ✓“, `action_end`/`action_stop`, „~“/„ca.“, Apostroph `strings.xml:118`) | S |
 | S-23 | TEXT-12 | „(Bowler 1998)“ und „(Vergleichsstudie 2025)“ in `4-7-8.effectDetail` ohne Quelle; `shetty2019`, `compare2025`, `nadiShodhana2024`, `nadiBhramari2023` unvollständig; `respeRate` (Patent, kein Studienzitat) und `fincham2023` ungenutzt; 8 deutsche Titel-Paraphrasen | M |
 | S-24 | CODE-03, -05 | `remember` statt `rememberSaveable` (`MeditationScreen.kt:160`, `ExerciseDetailScreen.kt:82`); unauflösbare `exerciseId` → leerer Screen (`MainActivity.kt:365`); Logik hängt an „Tagesmuster“ (`SavedPatternsRepository.kt:42`) | S |
-| S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1); Stepper außerhalb der Karte eingerückt (`MeditationScreen.kt:212`); About-Titel `headlineLarge` in primary | M |
+| S-25 | KOMP-01, LAYOUT-02 | Duplikate → geplante Komponenten (§5.1); ~~Stepper außerhalb der Karte eingerückt~~ (erledigt 2026-10-05, bündig); About-Titel `headlineLarge` in primary | M |
 | S-26 | KOMP-02, A11Y-01 | `Card(Modifier.clickable)` 4×, `clickable` ohne Rolle 9×; `DailyPatternCard` mit zwei beschrifteten `TextButton`s (Entscheidung offen: Speichern als trailing Icon mit Morph) | S |
 | S-27 | A11Y-06 | Glyphen als Fokus-Stopps, `LogEntryCard` 4 Stopps, „3:05“; Stepper-cd „Einatmen (s): 4“; Stimmenliste ohne Namen | M |
 | S-28 | TEXT-03 | Keine `localeFilters`/`localeConfig`; `Locale.getDefault()` neben `Locale.GERMAN`; `"%d:%02d"` doppelt | S |
