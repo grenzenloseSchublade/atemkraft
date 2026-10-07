@@ -1,138 +1,132 @@
 # Atemkraft
 
-Android-App für evidenzbasiertes Atmen und stille Meditation: **16 Atemtechniken** mit
-getakteten Sessions (mitatmender Kreis, Ton, Vibration), ein **Meditations-Timer**
-(Timer/Frei, Gongs, gesprochene Anleitung) und ein **Logbuch**. Synthwave-Design, dark-only.
+Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 16 Atemtechniken; zu jeder steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen. Dazu ein Meditations-Timer und ein Logbuch.
 
-**Privatsphäre:** ohne Konto, ohne Werbung, ohne Tracking, ohne Analytics. Die App läuft
-vollständig offline. Einzige Netznutzung: der **optionale, ausdrücklich angestoßene
-Download der neuronalen Sprachstimmen** (Piper-Modelle von der offiziellen
-sherpa-onnx-Release auf GitHub) — danach läuft auch die Sprachausgabe offline.
-Kein Cloud-Backup: Gespeicherte Muster lassen sich in den Einstellungen als Datei
-exportieren und wieder importieren; beim Handywechsel kann ab Android 12 die lokale
-Gerät-zu-Gerät-Übertragung (Kabel/WLAN-Direkt) die Daten mitnehmen. Details, auch was GitHub
-beim Stimm-Download sieht: [Datenschutzerklärung](docs/PRIVACY.md).
+Ohne Konto, ohne Werbung, ohne Tracking. Die App läuft offline; Netz braucht sie nur, wenn du eine Sprachstimme lädst.
 
-### Berechtigungen (alle mit Zweck)
+Atemkraft ist eine Wellness-App und kein Medizinprodukt. Sie ersetzt keinen Rat von Ärztin, Arzt oder anderem Fachpersonal.
 
-| Berechtigung | Zweck |
+<p>
+  <img src="docs/screenshot-atmen.png" width="160" alt="Tab Atmen: Muster des Tages und Liste der Atemübungen">
+  <img src="docs/screenshot-sitzung.png" width="160" alt="Laufende Sitzung: Atemkreis mit „Einatmen“ und Sekunden-Zähler">
+  <img src="docs/screenshot-situationen.png" width="160" alt="Tab Situationen: Meine Muster und Anlässe wie „Vor dem Einschlafen“">
+  <img src="docs/screenshot-meditation.png" width="160" alt="Tab Meditation: Dauer, Gong und Sprachanleitung">
+  <img src="docs/screenshot-logbuch.png" width="160" alt="Tab Logbuch: Wochenübersicht und abgeschlossene Sitzungen">
+</p>
+
+**Inhalt:** [Funktionen](#funktionen) · [Installieren](#installieren) · [Datenschutz](#datenschutz) · [Rückmeldung](#rueckmeldung) · [Mitmachen](#mitmachen) · [Aus dem Quellcode bauen](#bauen) · [Projektstand](#projektstand) · [Lizenz](#lizenz)
+
+<a id="funktionen"></a>
+## Funktionen
+
+Beschrieben ist der aktuelle Entwicklungsstand (`main`). Was die neueste Release-Version 1.5.1 noch nicht hat, ist mit *ab nächster Version* markiert.
+
+- **Atmen:** 16 Atemtechniken in vier Gruppen (Herunterregeln, Hochregeln, Balancieren, Funktionell), z. B. Resonanz-Atmung, 4-7-8, Box-Atmung, Lippenbremse. Jede Übung hat Anleitung, Einordnung der Studienlage, Sicherheitshinweise und Quellenangaben, in der Regel mit DOI oder PMID. Bei getakteten Übungen lassen sich Ein-, Aus- und Halte-Zeiten anpassen; die Anpassung bleibt pro Übung gespeichert. Vor Wim Hof und Feueratmung erscheint ein Sicherheitshinweis, beim ersten Mal immer.
+- **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar. Eine laufende Sitzung lässt sich zu einer Leiste verkleinern.
+- **Muster des Tages:** jeden Tag ein neues, zufällig erzeugtes Atemmuster, gleich für alle am selben Tag. Es bleibt in festen Grenzen (ruhige Muster: 8,5–13 s pro Atemzug, Ausatmen mindestens so lang wie Einatmen, Halten höchstens 4 s; sanft aktivierende: 6–9 s, Halten höchstens 2 s). Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern; gespeicherte stehen unter „Meine Muster“.
+- **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen. *Ab nächster Version* mit Suche nach deinem Befinden („Wie fühlst du dich?“): Sie läuft ohne Netz und wird nicht gespeichert.
+- **Meditation:** Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer von sieben deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
+- **Logbuch:** abgeschlossene Sitzungen mit Wochenübersicht, Tagen in Folge und Minuten gesamt; lässt sich jederzeit leeren.
+- **Begriffe erklärt:** ein Glossar für Fachwörter wie HRV oder Vagus.
+- **Daten sichern** (*ab nächster Version*): gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
+
+<a id="installieren"></a>
+## Installieren
+
+Atemkraft gibt es als APK-Datei auf GitHub, nicht im Play Store. Die App braucht Android 8.0 oder neuer.
+
+1. Öffne auf dem Handy die Seite [Neueste Version](https://github.com/grenzenloseSchublade/atemkraft/releases/latest).
+2. Tippe unter „Assets“ auf `atemkraft-vX.Y.Z.apk` (ca. 55 MB) und lade die Datei.
+3. Öffne die geladene Datei. Android fragt beim ersten Mal, ob dein Browser (oder Dateimanager) Apps installieren darf. Tippe auf „Einstellungen“, erlaube es für diese eine App (der Schalter heißt je nach Hersteller etwa „Aus dieser Quelle zulassen“) und geh zurück.
+4. Tippe auf „Installieren“. Google Play Protect kann bei Apps außerhalb des Play Store eine Warnung oder eine Prüfung anzeigen.
+5. Wenn du magst, nimm die Erlaubnis aus Schritt 3 danach in den Einstellungen wieder zurück.
+
+**Update:** die neue APK genauso über die alte installieren. Logbuch, Muster und Einstellungen bleiben erhalten. Automatische Update-Hinweise bekommst du z. B. mit [Obtainium](https://github.com/ImranR98/Obtainium), wenn du dort die Adresse dieses Repos einträgst.
+
+### Echtheit prüfen
+
+Jede offizielle APK ist mit demselben Zertifikat signiert. Sein SHA-256-Fingerabdruck:
+
+```
+75:02:2D:EF:E6:5A:A2:4E:22:3F:3E:79:88:0F:09:F4:23:45:67:57:00:2F:F0:B3:3B:A2:AE:29:B9:F4:18:90
+```
+
+- **Ohne Computer:** Die App [AppVerifier](https://github.com/soupslurpr/AppVerifier) zeigt den Fingerabdruck einer installierten App; vergleiche ihn für `app.atemkraft` mit dem Wert oben.
+- **Am Computer:** `apksigner verify --print-certs atemkraft-vX.Y.Z.apk` (aus den Android Build-Tools) muss diesen Wert zeigen.
+- Ab Version 1.4.1 steht die SHA-256-Prüfsumme der APK in den Release-Notes.
+
+Eine APK mit anderem Zertifikat, etwa `CN=Android Debug`, ist kein offizielles Release. Einzelheiten: [docs/SECURITY.md](docs/SECURITY.md#echtheit-einer-apk-prüfen).
+
+<a id="datenschutz"></a>
+## Datenschutz
+
+Atemkraft erhebt keine Daten über dich: kein Konto, kein Server, keine Analyse, keine Werbung, keine Absturzberichte, keine Google Play Services. Logbuch, Muster und Einstellungen bleiben auf deinem Gerät.
+
+- **Einzige Netzverbindung:** Tippst du in den Einstellungen bei einer Stimme auf „Laden“, holt die App das Stimm-Archiv von GitHub (Projekt [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)) und prüft es gegen eine fest hinterlegte Prüfsumme. Danach läuft auch die Sprachausgabe offline. GitHub sieht dabei u. a. deine IP-Adresse.
+- **Keine Cloud:** Die App ist vom Android-Cloud-Backup ausgeschlossen. Beim Handywechsel kann ab Android 12 die direkte Übertragung (Kabel oder WLAN-Direkt) die Daten mitnehmen. **Version 1.5.1** erlaubt das Android-Backup noch; ist es auf deinem Gerät eingeschaltet, kann Android die App-Daten in dein Backup-Konto (meist Google) sichern.
+
+Alle Einzelheiten, auch was bis Version 1.5.1 anders ist: [Datenschutzerklärung](docs/PRIVACY.md).
+
+### Berechtigungen
+
+| Berechtigung | Wofür |
 |---|---|
-| `INTERNET` | Nur für den optionalen Stimmen-Download (Einstellungen → Meditation) |
-| `VIBRATE` | Fühlbare Phasenwechsel in Atem-Sessions (abschaltbar) |
-| `FOREGROUND_SERVICE` + `_MEDIA_PLAYBACK` | Meditation läuft zuverlässig bei ausgeschaltetem Bildschirm |
-| `POST_NOTIFICATIONS` | Dezente Dauer-Notification der laufenden Meditation (mit „Beenden") |
-| `WAKE_LOCK` | Hält die CPU während einer laufenden Meditation wach (Gongs pünktlich trotz Doze) |
+| `INTERNET` | nur das Laden einer Stimme |
+| `VIBRATE` | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; mit dem Schalter „Vibration“ abschaltbar, den Tick erst ab nächster Version |
+| `WAKE_LOCK` | hält den Prozessor während einer Meditation wach, damit Gongs pünktlich kommen |
+| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
+| `POST_NOTIFICATIONS` | Benachrichtigung „Meditation läuft“ mit „Beenden“; ohne sie läuft der Timer trotzdem |
 
-## Funktionsumfang
+<a id="rueckmeldung"></a>
+## Rückmeldung
 
-- **Atmen:** 16 Techniken in vier Familien (A Herunterregeln/vagal · B Hochregeln/
-  sympathisch · C Balancieren/Programme · D Funktionell), je mit Anleitung, Wirkung,
-  Sicherheitshinweisen und verifizierten Quellen (`data/Refs.kt`). Sessions minimierbar
-  zur „Now-Playing"-Leiste.
-- **Meditation:** Timer (5–90 min + frei einstellbar) oder Stoppuhr; Gongs
-  (Aus / Start & Ende / alle X min), natürlicher Klangschalen-Ausklang (Kurz/Lang);
-  optionale gesprochene Anleitung mit **neuronalen deutschen Stimmen** (Piper via
-  sherpa-onnx, Katalog mit Vorhören vor dem Download); Foreground-Service + Wakelock.
-- **Muster des Tages:** ein **generiertes Atemmuster**, deterministisch aus dem Datum
-  (gleicher Tag ⇒ gleiches Muster), dazu „Neu generieren" und „Speichern". 5 Stile
-  (4 ruhige + 1 sanft aktivierender, ~75/25), gewürfelt wird **nur die Zeitstruktur** –
-  immer innerhalb physiologischer Leitplanken (ruhig: Zyklus 8,5–13 s ≈ 4,6–7 Atemzüge/min,
-  Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: 6–9 s, Halten ≤ 2 s – nie Hyperventilation;
-  Quellen: Russo 2017, Zaccaro 2018). **Atemort (Bauchatmung):** bewusst *nicht* randomisiert –
-  ruhige Muster **empfehlen** konstant die Zwerchfell-/Bauchatmung, als Einladung statt
-  Anweisung („Wenn du magst, atme dabei in den Bauch …" in Session-ⓘ-Anleitung und
-  Beschreibung – ein Angebot, kein Muss); Brustatmung wäre als Anweisung fachlich
-  fragwürdig, sanft aktivierende Muster bleiben neutral. Gespeicherte Muster erscheinen
-  unter **„Meine Muster" im Situationen-Tab** (der Atmen-Tab bleibt schlank). Ehrlich
-  positioniert: spielerische Abwechslung ohne Wirkversprechen – für regelmäßiges Üben
-  verweist die App auf konstante Muster (Resonanz-Atmung).
-- **Logbuch:** abgeschlossene Sitzungen mit Statistik (Serie, Minuten).
-- **Situationen:** Einstiege nach Anlass („Was passt gerade?") + „Meine Muster".
+Fehler gefunden oder eine Idee? Eröffne ein [Issue](https://github.com/grenzenloseSchublade/atemkraft/issues/new/choose) mit der Vorlage „Fehler melden“ oder „Idee vorschlagen“. Die Vorlagen fragen nach Gerät, Android-Version und App-Version (Einstellungen → „Über Atemkraft“).
 
-## Architektur
+Issues sind öffentlich: Bitte keine Gesundheitsdaten eintragen. Sicherheitslücken bitte vertraulich melden, siehe [docs/SECURITY.md](docs/SECURITY.md#melden).
 
-```
-domain/   Reines Modell: Phase, PhaseType, PhaseDuration, Segment, Exercise + buildTimeline()
-          RandomPatternGenerator (Muster des Tages: PatternSpec → Exercise, 365-Tage-getestet)
-data/     ExerciseRepository · SavedPatternsRepository (Room) · SettingsRepository (DataStore)
-          LogbookRepository (Room) · AppContainer
-cue/      ToneCuePlayer (Gong/Cues) · ContinuousTonePlayer · SpeechGuide (System-TTS-Fallback)
-          PiperSpeechGuide (sherpa-onnx) · tts/ (VoiceCatalog, VoiceModelManager, Samples)
-ui/       theme/ · components/ (geteilt) · home/ · situations/ · session/ · meditation/
-          log/ · settings/ · detail/ · glossary/ · about/
-```
+<a id="mitmachen"></a>
+## Mitmachen
 
-- Atem-Session: `SessionViewModel` (monotone Uhr, fortlaufender Phasen-Anker → driftfrei).
-- Meditation: app-weiter `MeditationController` (überlebt Navigation) + Foreground-Service.
-- Sprach-Engines hinter gemeinsamer API; neuronale Modelle werden nach `filesDir/tts`
-  geladen (von der Gerät-zu-Gerät-Übertragung ausgeschlossen, siehe `res/xml/`).
+Beiträge sind willkommen, vom Tippfehler bis zur neuen Übung. Wie du baust, prüfst und einreichst, steht in [CONTRIBUTING.md](CONTRIBUTING.md). Es gilt der [Verhaltenskodex](CODE_OF_CONDUCT.md).
 
-## Eine neue Übung hinzufügen
+Die Regeln für Design, Text und Code stehen im [Styleguide](docs/STYLEGUIDE.md), die für Sicherheit und Datenschutz in [docs/SECURITY.md](docs/SECURITY.md).
 
-In `data/BuiltInExercises.kt` ein `Exercise` definieren und in `all` aufnehmen:
+<a id="bauen"></a>
+## Aus dem Quellcode bauen
 
-```kotlin
-private val meine = Exercise(
-    id = "meine-uebung",
-    name = "Meine Übung",
-    description = "Kurzbeschreibung",
-    rounds = 5,
-    segments = listOf(
-        Segment(
-            phases = listOf(
-                Phase(PhaseType.INHALE, secs(4.0)),
-                Phase(PhaseType.HOLD_FULL, secs(2.0)),
-                Phase(PhaseType.EXHALE, secs(6.0)),
-            ),
-        ),
-    ),
-)
-```
-
-## Build & Installation
-
-Voraussetzungen: JDK 21, Android SDK (Plattform 36) unter `~/Android/Sdk`
-(Pfad in `local.properties`, nicht eingecheckt).
+Voraussetzungen: JDK 17, Android SDK mit Plattform 36 (Pfad in `local.properties` oder `ANDROID_HOME`), Python 3 für die Stil-Checks.
 
 ```bash
-./gradlew assembleDebug          # Debug-APK
-./gradlew installDebug           # bauen + installieren
-# oder komfortabel (sucht JDK, setzt JAVA_HOME):
-scripts/build.sh installDebug
+git clone https://github.com/grenzenloseSchublade/atemkraft.git
+cd atemkraft
+scripts/build.sh installDebug    # Debug-APK bauen und installieren
+scripts/check.sh                 # alle Prüfungen wie im CI
 ```
 
-Release-Builds werden mit einem lokalen Release-Keystore signiert (Properties-Datei über
-`ATEMKRAFT_KEYSTORE_PROPERTIES` oder `keystore.properties` im Projekt-Root, beides bewusst
-außerhalb von Git). Fehlt der Keystore, entsteht eine **unsignierte** Release-APK mit Warnung
-(so erwartet es F-Droid, das selbst signiert); Debug-Signatur nur explizit per
-`-PallowDebugSignedRelease=true`. Echtheit offizieller APKs: Zertifikats-Fingerprint in
-[docs/SECURITY.md](docs/SECURITY.md). Toolchain: Gradle 8.11.1, AGP 8.9.1, Kotlin 2.1.0,
-Compose (BOM 2025.01.00), Material 3, compileSdk/targetSdk 36, minSdk 26.
+Eine Release-APK ohne eigenen Schlüssel ist unsigniert (so erwartet es z. B. F-Droid, das selbst signiert); eine selbst gebaute APK lässt sich nicht über die offizielle installieren, weil die Signatur abweicht.
 
-**Hinweis Verteilung:** Wegen der vorkompilierten sherpa-onnx-Native-Libs (`app/libs/*.aar`)
-ist die App nicht für das Haupt-f-droid.org-Repo geeignet (build-from-source-Regel);
-IzzyOnDroid oder Direkt-APK sind passende Kanäle. Alle Bausteine in der APK sind freie
-Software; von den ladbaren Stimmen sind Miro und Dii nur nicht kommerziell freigegeben
-(CC BY-NC-ND 4.0), GLaDOS hat keine Lizenzangabe – Einzelheiten in
-[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+Toolchain: Gradle 8.11.1, Android Gradle Plugin 8.9.1, Kotlin 2.1.0, Jetpack Compose (BOM 2025.01.00) mit Material 3, compileSdk und targetSdk 36, minSdk 26.
 
+```
+domain/   reines Modell: Phase, Segment, Exercise, Zeitplan, Muster-Generator, Befindens-Suche
+data/     Übungen, Situationen und Quellen (Refs.kt), Room (Logbuch, Muster), DataStore (Einstellungen)
+cue/      Töne, Gong, Vibration, Sprachausgabe (System oder Piper-Stimmen über sherpa-onnx)
+ui/       theme/, components/ und je Screen ein Paket
+```
+
+<a id="projektstand"></a>
+## Projektstand
+
+- **Neueste Version:** [1.5.1](https://github.com/grenzenloseSchublade/atemkraft/releases/latest). Seitdem auf `main`: Befindens-Suche, Export und Import der Muster, kein Cloud-Backup mehr, Feinschliff an Schrift und Bedienelementen sowie viele kleine Korrekturen.
+- **Verteilung:** GitHub-Releases. Wegen der vorkompilierten sherpa-onnx-Bibliothek (`app/libs/*.aar`) passt die App nicht ins Haupt-Repo von F-Droid, das alles aus dem Quellcode baut; IzzyOnDroid wäre ein passender Kanal.
+- **Ideen:** eigene Übungen per Editor, Wear OS, Widgets. Eine eigene Stimme für die Meditationsanleitung: Anleitung in [docs/VOICE_CLONING.md](docs/VOICE_CLONING.md).
+- **iOS:** Recherche und Plan, noch nicht umgesetzt: [docs/IOS_PLAN.md](docs/IOS_PLAN.md).
+
+<a id="lizenz"></a>
 ## Lizenz
 
-Der **Quellcode** von Atemkraft steht unter **MIT** ([LICENSE](LICENSE)): frei
-wiederverwendbar, auch kommerziell, solange der Copyright-Hinweis genannt bleibt.
+Der Quellcode von Atemkraft steht unter der [MIT-Lizenz](LICENSE): frei wiederverwendbar, auch kommerziell, solange der Copyright-Hinweis erhalten bleibt.
 
-Die **verteilte APK** enthält zusätzlich Fremdbausteine unter Apache-2.0, MIT, BSD-2-Clause,
-MPL-2.0 und Unlicense sowie **eSpeak NG unter GPL-3.0-or-later** (statisch in der
-sherpa-onnx-Bibliothek). Nach Auffassung der FSF gilt deshalb für die Weitergabe der APK als
-Ganzes die GPL-3.0: Lizenztexte beilegen (liegen in der APK unter `assets/licenses/`) und den
-Quellcode zugänglich machen (dieses Repo plus sherpa-onnx v1.13.6 mit den dort gepinnten
-Bibliotheken). Die Stimmen sind nicht in der APK; die App lädt sie auf Wunsch von GitHub, mit
-je eigener Lizenz. Vollständige Liste mit Versionen, Rechteinhabern und Belegen:
-[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); in der App unter *Über Atemkraft →
-Lizenzen*. Keine Rechtsberatung.
+Die verteilte APK enthält zusätzlich Bausteine unter Apache-2.0, MIT, BSD-2-Clause, MPL-2.0 und Unlicense sowie **eSpeak NG unter GPL-3.0-or-later** (statisch in der sherpa-onnx-Bibliothek). Nach Auffassung der FSF gilt deshalb für die Weitergabe der APK als Ganzes die GPL-3.0: Lizenztexte beilegen (liegen in der APK unter `assets/licenses/`) und den Quellcode zugänglich machen (dieses Repo plus sherpa-onnx v1.13.6 mit den dort gepinnten Bibliotheken).
 
-## Ideen / Backlog
-
-Eigene Übungen per Editor, Wear OS, Widgets.
-**Voice-Cloning** (eigene Stimme für die Meditations-Anleitung): Schritt-für-Schritt-Anleitung
-in [docs/VOICE_CLONING.md](docs/VOICE_CLONING.md).
+Die Stimmen sind nicht in der APK; die App lädt sie auf Wunsch, jede mit eigener Lizenz. Miro und Dii stehen unter CC BY-NC-ND 4.0 (nur nicht kommerziell), GLaDOS hat keine Lizenzangabe. Vollständige Liste mit Versionen, Rechteinhabern und Belegen: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); in der App unter *Über Atemkraft → Lizenzen*. Keine Rechtsberatung.

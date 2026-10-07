@@ -1,0 +1,83 @@
+name: Fehler melden
+description: Etwas funktioniert nicht oder sieht falsch aus.
+title: "Fehler: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke fürs Melden! Issues sind **öffentlich**.
+        **Bitte keine Gesundheitsdaten** eintragen: keine Diagnosen, Medikamente oder Logbuch-Auszüge, auch nicht auf Screenshots.
+        Eine **Sicherheitslücke** bitte nicht hier melden, sondern vertraulich (siehe docs/SECURITY.md).
+  - type: textarea
+    id: was
+    attributes:
+      label: Was ist passiert?
+      description: Kurz in deinen Worten.
+    validations:
+      required: true
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zum Nachstellen
+      description: Was hast du nacheinander getippt?
+      placeholder: |
+        1. Tab „Atmen“ öffnen
+        2. „Resonanz-Atmung“ antippen
+        3. „Starten“ antippen
+        4. …
+    validations:
+      required: true
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Was hast du erwartet?
+    validations:
+      required: true
+  - type: textarea
+    id: tatsaechlich
+    attributes:
+      label: Was ist stattdessen passiert?
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App-Version
+      description: Zu finden unter Einstellungen (Zahnrad oben rechts im Tab „Atmen“) → „Über Atemkraft“.
+      placeholder: z. B. 1.5.1
+    validations:
+      required: true
+  - type: input
+    id: geraet
+    attributes:
+      label: Gerät
+      description: Hersteller und Modell.
+      placeholder: z. B. Samsung Galaxy A54
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android-Version
+      description: Zu finden in den Android-Einstellungen unter „Telefoninfo“ bzw. „Über das Telefon“.
+      placeholder: z. B. Android 14
+    validations:
+      required: true
+  - type: dropdown
+    id: haeufigkeit
+    attributes:
+      label: Wie oft passiert es?
+      options:
+        - immer
+        - manchmal
+        - einmal
+    validations:
+      required: false
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot oder Bildschirmaufnahme (optional)
+      description: Hilft sehr bei Darstellungsfehlern. Bild hier hineinziehen. Bitte vorher prüfen, dass keine persönlichen Daten zu sehen sind.
+    validations:
+      required: false

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sicherheitslücke vertraulich melden
+    url: https://github.com/grenzenloseSchublade/atemkraft/security/advisories/new
+    about: Bitte nicht öffentlich. Ablauf und Zusagen stehen in docs/SECURITY.md.
+  - name: Sicherheitsrichtlinie (docs/SECURITY.md)
+    url: https://github.com/grenzenloseSchublade/atemkraft/blob/main/docs/SECURITY.md#melden
+    about: Meldeweg, Echtheitsprüfung der APK und Sicherheitsregeln.
+  - name: Datenschutzerklärung
+    url: https://github.com/grenzenloseSchublade/atemkraft/blob/main/docs/PRIVACY.md
+    about: Welche Daten die App speichert und welche Verbindung sie aufbaut.

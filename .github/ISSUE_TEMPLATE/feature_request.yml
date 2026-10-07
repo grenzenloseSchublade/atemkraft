@@ -1,0 +1,32 @@
+name: Idee vorschlagen
+description: Eine neue Funktion oder Verbesserung anregen.
+title: "Idee: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deine Idee! Atemkraft bleibt bewusst offline, ohne Konto und ohne Tracking, und macht keine Heilversprechen. Ideen in diesem Rahmen sind willkommen.
+        **Bitte keine Gesundheitsdaten** eintragen, Issues sind öffentlich.
+  - type: textarea
+    id: anliegen
+    attributes:
+      label: Was möchtest du erreichen?
+      description: Beschreibe die Situation, in der dir etwas fehlt.
+      placeholder: z. B. „Abends möchte ich …, aber dafür muss ich jedes Mal …“
+    validations:
+      required: true
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Wie könnte es aussehen?
+      description: Dein Vorschlag, gern mit Skizze oder Beispiel aus einer anderen App.
+    validations:
+      required: false
+  - type: textarea
+    id: quellen
+    attributes:
+      label: Quellen (bei neuen Übungen oder Wirkaussagen)
+      description: Studien mit DOI oder PMID, die du selbst gelesen hast.
+    validations:
+      required: false

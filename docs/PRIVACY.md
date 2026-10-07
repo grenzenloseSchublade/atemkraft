@@ -2,12 +2,12 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Berechtigungen](#berechtigungen)).
+- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche und Export-Datei gibt es erst ab der nächsten Version.
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
 
-Atemkraft erhebt keine Daten über dich. Es gibt kein Konto, keinen Server des Anbieters, keine Analyse, keine Werbung, keine Absturzberichte und kein Tracking; die App enthält keine solchen Bibliotheken und keine Google Play Services. Was du in der App tust, bleibt auf deinem Gerät. Die einzige Netzverbindung der App ist der Download einer Stimme, und den löst nur ein Tippen von dir aus.
+Atemkraft erhebt keine Daten über dich. Es gibt kein Konto, keinen Server des Anbieters, keine Analyse, keine Werbung, keine Absturzberichte und kein Tracking; die App enthält keine solchen Bibliotheken und keine Google Play Services. Was du in der App tust, bleibt auf deinem Gerät (bis einschließlich Version 1.5.1 mit einer Ausnahme, dem Android-Backup, siehe [unten](#wechsel)). Die einzige Netzverbindung der App ist der Download einer Stimme, und den löst nur ein Tippen von dir aus.
 
 ## Was auf deinem Gerät gespeichert wird
 
@@ -21,7 +21,7 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 | Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien, Download je ca. 25–110 MB) | „Stimme löschen“ in den Einstellungen |
 | Zwischenspeicher | ein abgebrochener oder laufender Download | wird beim nächsten Versuch ersetzt; Android leert ihn bei Speichermangel |
 
-Die Befindens-Suche im Situationen-Tab wird nicht gespeichert: Der Suchtext lebt nur, solange die Suche offen ist, und die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
+Die Befindens-Suche im Situationen-Tab (ab der nächsten Version) wird nicht gespeichert: Der Suchtext lebt nur, solange die Suche offen ist, und die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
 
 Das Logbuch kann Rückschlüsse auf dein Befinden zulassen, weil manche Übungen zu bestimmten Anlässen passen. Die App gibt es deshalb nur auf deinen ausdrücklichen Wunsch weiter (siehe [Handywechsel](#wechsel)). Beim Deinstallieren löscht Android alle Daten der App.
 
@@ -53,12 +53,14 @@ Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läu
 
 ## Export-Datei
 
-Unter *Einstellungen → Daten* („Muster exportieren“) kannst du deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Zeitpunkt des Speicherns und die Anpassungen dieser Muster, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
+Ab der nächsten Version kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Zeitpunkt des Speicherns und die Anpassungen dieser Muster, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
 
 <a id="wechsel"></a>
 ## Kein Cloud-Backup, Handywechsel
 
 Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die direkte Übertragung beim Handywechsel (Kabel oder WLAN-Direkt, z. B. Smart Switch) Logbuch, Muster und Einstellungen von Gerät zu Gerät mitnehmen, ohne Umweg über eine Cloud; Stimmen lädst du danach neu. Bis Android 11 ist auch diese Übertragung abgeschaltet.
+
+**Bis einschließlich Version 1.5.1** ist das Android-Backup noch erlaubt: Ist auf deinem Gerät die Sicherung eingeschaltet (meist in dein Google-Konto), kann Android Logbuch, Muster und Einstellungen dorthin sichern, Stimmen nicht. Auch die Übertragung beim Handywechsel funktioniert dort unter Android 11 und älter. Der Anbieter von Atemkraft hat auf diese Sicherung keinen Zugriff. Abschalten lässt sie sich in der Regel nur für das ganze Gerät, in den Sicherungs-Einstellungen von Android (Bezeichnung je nach Hersteller).
 
 <a id="berechtigungen"></a>
 ## Berechtigungen
