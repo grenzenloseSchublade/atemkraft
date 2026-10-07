@@ -471,7 +471,7 @@ private fun VoiceRow(
     }
 }
 
-/** Untertitel einer Katalog-Zeile: Geschlecht · Qualität (+ Zustand). */
+/** Untertitel einer Katalog-Zeile: Geschlecht · Qualität · Lizenz (+ Zustand). */
 @Composable
 private fun voiceSubtitle(
     spec: VoiceSpec,
@@ -484,7 +484,7 @@ private fun voiceSubtitle(
         VoiceGender.FEMALE -> stringResource(R.string.voice_gender_female)
         VoiceGender.SPECIAL -> stringResource(R.string.voice_gender_special)
     }
-    val base = "$gender · ${spec.qualityLabel}"
+    val base = "$gender · ${spec.qualityLabel} · ${spec.license}"
     val extra = when (state) {
         is VoiceDownloadState.NotDownloaded -> stringResource(R.string.voice_size_mb, spec.approxMb)
 

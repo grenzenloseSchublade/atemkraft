@@ -56,6 +56,18 @@ class VoiceCatalogTest {
     }
 
     @Test
+    fun `jede Stimme nennt Lizenz und Rechteinhaber (SEC-LEGAL-03)`() {
+        VoiceCatalog.all.forEach { spec ->
+            assertTrue("${spec.id}: license fehlt", spec.license.isNotBlank())
+            assertTrue("${spec.id}: rightsHolder fehlt", spec.rightsHolder.isNotBlank())
+        }
+        // Nicht kommerzielle Stimmen müssen das im Kurzlabel zeigen (Modellkarte von TigreGotico).
+        listOf("miro", "dii").forEach { id ->
+            assertTrue(id, VoiceCatalog.byId(id)!!.license.contains("NC"))
+        }
+    }
+
+    @Test
     fun `byId liefert null fuer Unbekanntes`() {
         assertEquals(null, VoiceCatalog.byId("gibtsnicht"))
         assertEquals(null, VoiceCatalog.byId(null))

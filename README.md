@@ -10,7 +10,8 @@ Download der neuronalen Sprachstimmen** (Piper-Modelle von der offiziellen
 sherpa-onnx-Release auf GitHub) — danach läuft auch die Sprachausgabe offline.
 Kein Cloud-Backup: Gespeicherte Muster lassen sich in den Einstellungen als Datei
 exportieren und wieder importieren; beim Handywechsel kann ab Android 12 die lokale
-Gerät-zu-Gerät-Übertragung (Kabel/WLAN-Direkt) die Daten mitnehmen.
+Gerät-zu-Gerät-Übertragung (Kabel/WLAN-Direkt) die Daten mitnehmen. Details, auch was GitHub
+beim Stimm-Download sieht: [Datenschutzerklärung](docs/PRIVACY.md).
 
 ### Berechtigungen (alle mit Zweck)
 
@@ -110,15 +111,25 @@ Compose (BOM 2025.01.00), Material 3, compileSdk/targetSdk 36, minSdk 26.
 
 **Hinweis Verteilung:** Wegen der vorkompilierten sherpa-onnx-Native-Libs (`app/libs/*.aar`)
 ist die App nicht für das Haupt-f-droid.org-Repo geeignet (build-from-source-Regel);
-IzzyOnDroid oder Direkt-APK sind passende Kanäle. Alle Komponenten sind FOSS
-(sherpa-onnx Apache-2.0, Piper MIT, ONNX Runtime MIT, Stimme „Thorsten" CC0) —
-Credits im Über-Screen.
+IzzyOnDroid oder Direkt-APK sind passende Kanäle. Alle Bausteine in der APK sind freie
+Software; von den ladbaren Stimmen sind Miro und Dii nur nicht kommerziell freigegeben
+(CC BY-NC-ND 4.0), GLaDOS hat keine Lizenzangabe – Einzelheiten in
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Lizenz
 
-**MIT** ([LICENSE](LICENSE)) — frei wiederverwendbar, auch kommerziell, solange der
-Copyright-Hinweis genannt bleibt. Eingebundene Komponenten: sherpa-onnx (Apache-2.0),
-Piper (MIT), ONNX Runtime (MIT), Stimme „Thorsten" (CC0) — Credits im Über-Screen.
+Der **Quellcode** von Atemkraft steht unter **MIT** ([LICENSE](LICENSE)): frei
+wiederverwendbar, auch kommerziell, solange der Copyright-Hinweis genannt bleibt.
+
+Die **verteilte APK** enthält zusätzlich Fremdbausteine unter Apache-2.0, MIT, BSD-2-Clause,
+MPL-2.0 und Unlicense sowie **eSpeak NG unter GPL-3.0-or-later** (statisch in der
+sherpa-onnx-Bibliothek). Nach Auffassung der FSF gilt deshalb für die Weitergabe der APK als
+Ganzes die GPL-3.0: Lizenztexte beilegen (liegen in der APK unter `assets/licenses/`) und den
+Quellcode zugänglich machen (dieses Repo plus sherpa-onnx v1.13.6 mit den dort gepinnten
+Bibliotheken). Die Stimmen sind nicht in der APK; die App lädt sie auf Wunsch von GitHub, mit
+je eigener Lizenz. Vollständige Liste mit Versionen, Rechteinhabern und Belegen:
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); in der App unter *Über Atemkraft →
+Lizenzen*. Keine Rechtsberatung.
 
 ## Ideen / Backlog
 

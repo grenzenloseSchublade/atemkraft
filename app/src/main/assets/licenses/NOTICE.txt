@@ -1,0 +1,75 @@
+NOTICE – Apache-2.0-Hinweise (Abschnitt 4 d) der in Atemkraft enthaltenen Bibliotheken
+Wortgleich übernommen aus den NOTICE-Dateien der jeweiligen Projekte.
+
+----------------------------------------------------------------------
+commons-compress-1.27.1.jar (META-INF/NOTICE.txt)
+----------------------------------------------------------------------
+Apache Commons Compress
+Copyright 2002-2024 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+----------------------------------------------------------------------
+commons-io-2.16.1.jar (META-INF/NOTICE.txt)
+----------------------------------------------------------------------
+Apache Commons IO
+Copyright 2002-2024 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+----------------------------------------------------------------------
+commons-lang3-3.16.0.jar (META-INF/NOTICE.txt)
+----------------------------------------------------------------------
+Apache Commons Lang
+Copyright 2001-2024 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+----------------------------------------------------------------------
+commons-codec-1.17.1.jar (META-INF/NOTICE.txt)
+----------------------------------------------------------------------
+Apache Commons Codec
+Copyright 2002-2024 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+----------------------------------------------------------------------
+Kotlin (JetBrains/kotlin, license/NOTICE.txt, Tag v2.1.0)
+----------------------------------------------------------------------
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Kotlin Compiler distribution.                 ==
+   =========================================================================
+
+   Kotlin Compiler
+   Copyright 2010-2024 JetBrains s.r.o and respective authors and developers
+
+----------------------------------------------------------------------
+kotlinx.coroutines (Kotlin/kotlinx.coroutines, license/NOTICE.txt, Tag 1.7.3)
+----------------------------------------------------------------------
+=========================================================================
+==  NOTICE file corresponding to the section 4 d of                    ==
+==  the Apache License, Version 2.0,                                   ==
+==  in this case for the kotlinx.coroutines library.                   ==
+=========================================================================
+
+kotlinx.coroutines library.
+Copyright 2016-2021 JetBrains s.r.o and respective authors and developers
+
+----------------------------------------------------------------------
+kotlinx.serialization (Kotlin/kotlinx.serialization, license/NOTICE.txt, Tag v1.7.3)
+----------------------------------------------------------------------
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the kotlix.serialization library.                 ==
+   =========================================================================
+
+   kotlinx.serialization library.
+   Copyright 2017-2019 JetBrains s.r.o and respective authors and developers
+

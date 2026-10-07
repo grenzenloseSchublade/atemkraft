@@ -101,7 +101,7 @@
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_about_entry">Über Atemkraft</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_body">16 evidenzbasierte Atemtechniken mit Quellen, Logbuch und konfigurierbaren Tönen. Läuft komplett offline – ohne Konto, ohne Werbung, ohne Tracking.</string>
+    <string name="about_body">16 evidenzbasierte Atemtechniken mit Quellen, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</string>
     <string name="about_disclaimer">Evidenzbasiert, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe im Glossar. Bei Erkrankungen vorher ärztlich abklären.</string>
     <string name="settings_next_phase">Nächste Phase anzeigen</string>
     <string name="settings_next_phase_hint">Blendet während der Session dezent die kommende Phase ein – hilfreich für den Anfang.</string>
@@ -245,11 +245,19 @@
     <string name="voice_loading">lädt …</string>
     <string name="voice_failed_short">Fehler – erneut versuchen</string>
 
-    <!-- Credits / Open-Source-Danksagung (Über-Screen) -->
+    <!-- Herkunft, Lizenzen, Datenschutz (Über-Screen) -->
     <string name="about_author">von grenzenloseSchublade · MIT-Lizenz</string>
-    <string name="about_source_prefix">Quellcode: </string>
-    <string name="about_credits_title">Open-Source-Komponenten</string>
-    <string name="about_credits_body">Die hochwertige Sprachausgabe steht dank dieser freien Projekte zur Verfügung:\n\n• sherpa-onnx (k2-fsa) — Apache-2.0\ngithub.com/k2-fsa/sherpa-onnx\n\n• Piper (rhasspy) — MIT\ngithub.com/rhasspy/piper\n\n• ONNX Runtime (Microsoft) — MIT\ngithub.com/microsoft/onnxruntime\n\n• Stimme „Thorsten“ (Thorsten Müller) — CC0 / gemeinfrei\ngithub.com/thorstenMueller/Thorsten-Voice\n\n• Apache Commons Compress — Apache-2.0\n\nDas Stimmmodell wird nur auf ausdrücklichen Wunsch von GitHub geladen — die einzige Netznutzung der App.</string>
+    <string name="about_source_prefix">Quellcode:\u0020</string>
+    <string name="about_privacy_link">Datenschutzerklärung</string>
+    <string name="about_open_link">im Browser öffnen</string>
+    <string name="about_licenses_title">Lizenzen</string>
+    <string name="about_licenses_teaser">Atemkraft steht unter MIT-Lizenz und nutzt freie Bausteine; Stimmen haben eigene Lizenzen.</string>
+    <string name="about_licenses_app">In der App</string>
+    <string name="about_licenses_gpl">Über sherpa-onnx enthält die App eSpeak NG (GPL-3.0); für die Weitergabe der App gelten daher auch deren Bedingungen. Den Quellcode aller Bestandteile nennt die vollständige Liste.</string>
+    <string name="about_licenses_voices">Stimmen</string>
+    <string name="about_licenses_voices_note">Die Stimmen lädst du auf Wunsch direkt von GitHub (Projekt sherpa-onnx); Atemkraft enthält nur kurze Hörproben. Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben, für GLaDOS gibt es keine Lizenzangabe.</string>
+    <string name="about_license_line">%1$s · %2$s</string>
+    <string name="about_licenses_link">Vollständige Liste und Lizenztexte</string>
 
     <!-- Barrierefreiheit -->
     <string name="cd_breathing_circle">Atemkreis</string>

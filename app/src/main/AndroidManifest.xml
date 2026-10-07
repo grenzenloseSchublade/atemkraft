@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- INTERNET wird ausschließlich für den bewussten, einmaligen Download des optionalen
-         hochwertigen Sprachmodells (Piper „Thorsten") genutzt; danach läuft alles offline.
+    <!-- INTERNET wird ausschließlich für den bewussten Download optionaler Stimmen (Piper-Modelle
+         von GitHub, docs/PRIVACY.md) genutzt; danach läuft alles offline.
          VIBRATE (normal-level) für fühlbare Phasenwechsel. Ein Foreground-Service (mediaPlayback)
          hält den Meditations-Timer bei ausgeschaltetem Bildschirm zuverlässig am Laufen. -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Sichtbarkeit der geräteeigenen Text-to-Speech-Engine (Package-Visibility ab Android 11),
-         für die optionale gesprochene Meditations-Anleitung. Läuft lokal/offline. -->
+         für die optionale gesprochene Meditations-Anleitung; sie erhält nur feste Ansagetexte. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />

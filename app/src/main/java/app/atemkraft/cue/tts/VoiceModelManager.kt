@@ -1,6 +1,7 @@
 package app.atemkraft.cue.tts
 
 import android.content.Context
+import app.atemkraft.BuildConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,9 @@ import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+
+/** User-Agent des Stimm-Downloads: nur App-Name und Version, keine Gerätedaten. */
+private val USER_AGENT = "Atemkraft/${BuildConfig.VERSION_NAME}"
 
 /** Download-Zustand einer einzelnen Stimme. */
 sealed interface VoiceDownloadState {
@@ -183,6 +187,10 @@ class VoiceModelManager(context: Context) {
             connectTimeout = 30_000
             readTimeout = 30_000
             instanceFollowRedirects = true
+            // Eigener User-Agent statt des System-Standards („Dalvik/… (Linux; U; Android …;
+            // <Gerätemodell> Build/…)“): GitHub erfährt so weder Gerät noch Android-Version
+            // (SEC-NET-02, docs/PRIVACY.md).
+            setRequestProperty("User-Agent", USER_AGENT)
         }
         try {
             conn.connect()

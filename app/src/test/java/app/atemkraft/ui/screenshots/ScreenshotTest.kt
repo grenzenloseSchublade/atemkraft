@@ -475,6 +475,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun about() = snap("07_ueber") { AboutScreen(onBack = {}) }
 
+    /** Über-Screen mit aufgeklappten Lizenzen: Bausteine, Stimmen, Links mit 48-dp-Zeilen. */
+    @Test
+    fun aboutLicenses() = snap("07_ueber_lizenzen") { AboutScreen(onBack = {}, licensesExpanded = true) }
+
     /** Jede eingebaute Übung plus Muster des Tages: Detail-Kopf mit großem Titel und Chips. */
     @Test
     fun details() {

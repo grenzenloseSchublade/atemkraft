@@ -2,7 +2,7 @@
 
 Sicherheits-, Datenschutz-, Lieferketten- und Release-Regeln für Atemkraft (`app.atemkraft`). Zielgruppe: Maintainer und Claude. Gegenstück für Design, Text und Code: [STYLEGUIDE.md](STYLEGUIDE.md).
 
-- **Stand:** 2026-10-01 (v1.5.1).
+- **Stand:** 2026-10-07 (v1.5.1 und `main`).
 - **Schlüsselwörter:** MUSS / DARF NICHT / SOLL im Sinne von RFC 2119.
 - **Regelformat** (gemeinsam mit STYLEGUIDE): `ID | Stufe | Regel | Warum | Prüfung`. `auto:` nennt Werkzeug und Check (siehe [Automatische Prüfung](#automatische-pruefung)), `manuell:` nennt Review oder Checklisten-Schritt. In der Check-Tabelle stehen die vollen Regel-IDs.
 - **Grundlage:** OWASP MASVS v2.1.0 (L1 + Privacy), Android Security Checklist, Google-Play-Richtlinien, F-Droid Inclusion Policy.
@@ -36,7 +36,7 @@ Prüfen mit `apksigner verify --print-certs atemkraft-vX.Y.Z.apk`, AppVerifier o
 <a id="prinzipien"></a>
 ## Prinzipien und Daten-Inventar
 
-Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, keine Werbung. Alle Nutzerdaten bleiben auf dem Gerät. Einzige Ausnahme ist der optionale, per Tap ausgelöste Stimm-Download ([Netzwerk](#netzwerk)). Es gibt **keine Cloud-Anbindung**, auch kein Android-Cloud-Backup (Nutzerentscheidung 2026-10-05, Datenhoheit). Daten verlassen das Gerät nur auf ausdrücklichen Wunsch: als Export-Datei an einen selbst gewählten Ort oder per lokaler Gerät-zu-Gerät-Übertragung beim Handywechsel ([Speicherung](#speicherung)).
+Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, keine Werbung. Alle Nutzerdaten bleiben auf dem Gerät. Einzige Ausnahme ist der optionale, per Tap ausgelöste Stimm-Download ([Netzwerk](#netzwerk)). Es gibt **keine Cloud-Anbindung**, auch kein Android-Cloud-Backup (Nutzerentscheidung 2026-10-05, Datenhoheit). Daten verlassen das Gerät nur auf ausdrücklichen Wunsch: als Export-Datei an einen selbst gewählten Ort oder per lokaler Gerät-zu-Gerät-Übertragung beim Handywechsel ([Speicherung](#speicherung)). Für Nutzer zusammengefasst in der [Datenschutzerklärung](PRIVACY.md).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -51,7 +51,7 @@ Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, kein
 
 | Speicherort | Inhalt | Sensitivität | Gerät-zu-Gerät / Export | Löschweg |
 |---|---|---|---|---|
-| Room `log_entries` | Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | ja (ab Android 12) / nein | „Logbuch leeren“, App-Speicher löschen |
+| Room `log_entries` | Art (Atemübung/Meditation), Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | ja (ab Android 12) / nein | „Logbuch leeren“, App-Speicher löschen |
 | Room `saved_patterns` | Name und Phasenlängen eigener Muster | niedrig | ja (ab Android 12) / ja (mit Anpassung) | einzeln löschen |
 | DataStore `settings` | Einstellungen, Anpassungen pro Übung, Aufklapp-Zustand „Meine Muster“ (`saved_patterns_expanded`) | niedrig | ja (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
 | `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB) | keine | nein / nein | „Stimme löschen“ |
@@ -85,8 +85,8 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 
 | Zweck | Ziel | Auslöser | Übertragene Daten | Empfänger |
 |---|---|---|---|---|
-| Stimm-Download | `https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/<stimme>.tar.bz2` (Weiterleitung auf `release-assets.githubusercontent.com`) | nur expliziter Tap | IP-Adresse, User-Agent, Zeitpunkt, Dateiname | GitHub / Microsoft (USA) |
-| Quellcode-Link | `https://github.com/grenzenloseSchublade/atemkraft` | Tap, öffnet externen Browser | – (kein App-Traffic) | – |
+| Stimm-Download | `https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/<stimme>.tar.bz2` (Weiterleitung auf `release-assets.githubusercontent.com`) | nur expliziter Tap | IP-Adresse, User-Agent `Atemkraft/<version>` (bis v1.5.1 der Android-Standard mit Android-Version und Gerätemodell), Zeitpunkt, Dateiname | GitHub / Microsoft (USA) |
+| Links im Über-Screen | `https://github.com/grenzenloseSchublade/atemkraft` sowie dort `blob/main/docs/PRIVACY.md` und `blob/main/THIRD_PARTY_LICENSES.md` | Tap, öffnet externen Browser | – (kein App-Traffic) | – |
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -120,7 +120,7 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 
 | Datei | SHA-256 | Herkunft | Enthaltene Komponenten |
 |---|---|---|---|
-| `app/libs/sherpa-onnx-1.13.6.aar` | `0012d9a28f15bd6fb966b62b70a75da3990512fdccce28b83098248ce4be1698` | Release `v1.13.6` von `k2-fsa/sherpa-onnx`, byte-identisch mit dem GitHub-Asset | sherpa-onnx (Apache-2.0), onnxruntime (MIT), espeak-ng (GPL-3.0-or-later) |
+| `app/libs/sherpa-onnx-1.13.6.aar` | `0012d9a28f15bd6fb966b62b70a75da3990512fdccce28b83098248ce4be1698` | Release `v1.13.6` von `k2-fsa/sherpa-onnx`, byte-identisch mit dem GitHub-Asset | sherpa-onnx (Apache-2.0), onnxruntime 1.27.1 (MIT), espeak-ng (GPL-3.0-or-later), piper-phonemize (MIT), OpenFst/Kaldi-Bausteine (Apache-2.0), Eigen (MPL-2.0), hclust-cpp (BSD-2-Clause), nlohmann/json (MIT); vollständig mit Commits in [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md) |
 | `gradle/wrapper/gradle-wrapper.jar` | `2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046` | offizieller Gradle-8.11.1-Wrapper | – |
 
 | ID | Stufe | Regel | Warum | Prüfung |
@@ -174,6 +174,8 @@ Atemkraft ist eine Wellness-App und **kein Medizinprodukt** (MDR 2017/745, Erwä
 | SEC-LEGAL-02 | MUSS | Die Store-Beschreibung enthält: „Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. Für medizinischen Rat wende dich an Fachpersonal.“ Mess-, Diagnose- oder Auswertungsfunktionen mit gesundheitlicher Bewertung kommen erst nach einer MDR-Neubewertung in diesem Dokument; vor einer Monetarisierung wird der EU Cyber Resilience Act neu bewertet. | Play Health Content Policy; MDR Rule 11; CRA-FOSS-Ausnahme gilt nur ohne Monetarisierung. | auto: `sec-store-disclaimer`; manuell: Review |
 | SEC-LEGAL-03 | MUSS | Nur FLOSS-Abhängigkeiten. Jede gebündelte oder ladbare Komponente und Stimme hat eine Lizenz, die Weiterverbreitung erlaubt, und steht mit ihr in den Credits (App und README). Keine Stimmen aus urheberrechtlich geschütztem Material; NC-Lizenzen nur als deklarierte Ausnahme (Anti-Feature). Lizenztexte und NOTICE-Dateien liegen im APK; für GPL-Bestandteile ist der Upstream-Quellstand genannt. | Urheberrecht; Apache-2.0 § 4, GPL-3.0 § 6; F-Droid und Play. | auto: JUnit `VoiceCatalogTest` (Lizenzfeld), `apk-licenses`; manuell: Credits |
 
+**Ist-Stand SEC-LEGAL-03 (2026-10-07):** Lizenzliste in [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md), Lizenztexte und NOTICE in der APK unter `assets/licenses/`, Liste in der App unter *Über → Lizenzen*, Lizenz je Stimme im Katalog. Offen und vom Maintainer zu entscheiden: Miro und Dii stehen unter CC BY-NC-ND 4.0 (nicht kommerziell, bisher nicht als Ausnahme deklariert), GLaDOS hat keine Lizenzangabe und ist laut Autor aus Spieldateien von Valve trainiert; ihre Hörproben liegen in der APK.
+
 <a id="automatische-pruefung"></a>
 ## Automatische Prüfung
 
@@ -192,7 +194,7 @@ scripts/check-github.sh                              # Repo-Einstellungen per gh
 | `sec-device-leaks` | check-security | SEC-PRIV-03 | `ANDROID_ID\|AdvertisingIdClient\|getDeviceId\|getImei\|Build\.SERIAL`, `\bLog\.[vdiwe]\(\|println\(\|printStackTrace\(\|Timber\.`, `ClipboardManager\|setPrimaryClip` in `app/src/main/java` → 0 |
 | `sec-privacy-link` | check-security | SEC-PRIV-05 | `docs/PRIVACY.md` existiert; ihre URL steht in `AboutScreen.kt` |
 | `sec-wakelock` | check-security | SEC-PERM-02 | `newWakeLock\(` nur mit `PARTIAL_WAKE_LOCK`; `\bacquire\(\s*\)` → 0 |
-| `sec-tls` | check-security | SEC-NET-01 | `http://` in `app/src/main` (ohne `xmlns`/`schemas.android.com`) → 0; `X509TrustManager\|HostnameVerifier\|SSLSocketFactory\|setDefaultSSL` → 0; `network_security_config.xml` mit `cleartextTrafficPermitted="false"` existiert und ist im Manifest referenziert |
+| `sec-tls` | check-security | SEC-NET-01 | `http://` in `app/src/main` (ohne `xmlns`/`schemas.android.com` und ohne die wortgetreuen Lizenztexte unter `assets/licenses/`) → 0; `X509TrustManager\|HostnameVerifier\|SSLSocketFactory\|setDefaultSSL` → 0; `network_security_config.xml` mit `cleartextTrafficPermitted="false"` existiert und ist im Manifest referenziert |
 | `sec-download` | check-security | SEC-NET-02 | jede Datei mit `openConnection` setzt `connectTimeout`, `readTimeout` und `User-Agent`; `strings.xml` hat `settings_voice_source` mit „GitHub“ |
 | `sec-components` | check-security | SEC-PLAT-01 | `<receiver` im Quell-Manifest → 0; jede Zeile mit `registerReceiver\(` enthält `RECEIVER_NOT_EXPORTED` |
 | `sec-intents` | check-security | SEC-PLAT-02 | `intent\.(data\|extras)\|get\w*Extra\(` → 0; `<data ` im Manifest → 0; `FLAG_MUTABLE` → 0 außer mit `// mutable:`-Begründung |
