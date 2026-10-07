@@ -127,6 +127,6 @@ ui/       theme/, components/ und je Screen ein Paket
 
 Der Quellcode von Atemkraft steht unter der [MIT-Lizenz](LICENSE): frei wiederverwendbar, auch kommerziell, solange der Copyright-Hinweis erhalten bleibt.
 
-Die verteilte APK enthält zusätzlich Bausteine unter Apache-2.0, MIT, BSD-2-Clause, MPL-2.0 und Unlicense sowie **eSpeak NG unter GPL-3.0-or-later** (statisch in der sherpa-onnx-Bibliothek). Nach Auffassung der FSF gilt deshalb für die Weitergabe der APK als Ganzes die GPL-3.0: Lizenztexte beilegen (liegen in der APK unter `assets/licenses/`) und den Quellcode zugänglich machen (dieses Repo plus sherpa-onnx v1.13.6 mit den dort gepinnten Bibliotheken).
+Die verteilte APK enthält zusätzlich Bausteine unter Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, MPL-2.0, Unlicense und der Unicode-Lizenz sowie **eSpeak NG unter GPL-3.0-or-later** (statisch in der sherpa-onnx-Bibliothek). Nach Auffassung der FSF gilt deshalb für die Weitergabe der APK als Ganzes die GPL-3.0: Lizenztexte beilegen (liegen in der APK unter `assets/licenses/`) und den Quellcode zugänglich machen (dieses Repo plus sherpa-onnx v1.13.6 mit den dort gepinnten Bibliotheken).
 
 Die Stimmen sind nicht in der APK; die App lädt sie auf Wunsch, jede mit eigener Lizenz. Miro und Dii stehen unter CC BY-NC-ND 4.0 (nur nicht kommerziell), GLaDOS hat keine Lizenzangabe. Vollständige Liste mit Versionen, Rechteinhabern und Belegen: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); in der App unter *Über Atemkraft → Lizenzen*. Keine Rechtsberatung.

@@ -3,7 +3,7 @@
 Was in der App steckt, was sie auf Wunsch lädt und unter welchen Bedingungen. Gegenstück in der App: *Einstellungen → Über Atemkraft → Lizenzen*.
 
 - **Stand:** 2026-10-07, gilt für App-Version 1.5.1 (`versionCode` 17) und 1.6.0 (`versionCode` 18). Die Laufzeit-Abhängigkeiten und `app/libs/` sind zwischen beiden gleich; seit 1.5.1 kamen nur Test- und Prüfwerkzeuge hinzu, die nicht in die APK gehen.
-- **Belege:** Lizenzangaben aus Maven-POMs, `LICENSE`/`COPYING`-Dateien der Upstream-Repos am genannten Tag oder Commit und den Modellkarten der Stimmen. Der Inhalt der APK ist mit `unzip -l` an der Release-APK v1.5.1 geprüft, die gebündelten Bibliotheken über die Build-Skripte von sherpa-onnx v1.13.6 und Zeichenketten in `libsherpa-onnx-jni.so`.
+- **Belege:** Lizenzangaben aus Maven-POMs, `LICENSE`/`COPYING`-Dateien der Upstream-Repos am genannten Tag oder Commit und den Modellkarten der Stimmen. Der Inhalt der APK ist mit `unzip -l` an der Release-APK v1.5.1 und an einem Build des Stands 1.6.0 geprüft, die gebündelten Bibliotheken über die Build-Skripte von sherpa-onnx v1.13.6 (samt der von dort geladenen Bibliotheken) und Zeichenketten in `libsherpa-onnx-jni.so` und `libsherpa-onnx-c-api.so`.
 - **Keine Rechtsberatung.** Die Einordnungen unten geben Lizenztexte und veröffentlichte Auffassungen wieder.
 
 ## Kurzfassung
@@ -11,13 +11,13 @@ Was in der App steckt, was sie auf Wunsch lädt und unter welchen Bedingungen. G
 | Teil | Lizenz | Bedeutung |
 |---|---|---|
 | Quellcode von Atemkraft (dieses Repo) | MIT ([LICENSE](LICENSE)) | frei nutzbar, auch kommerziell, mit Copyright-Hinweis |
-| Verteilte APK | enthält Bausteine unter Apache-2.0, MIT, BSD-2-Clause, MPL-2.0, Unlicense und **eSpeak NG unter GPL-3.0-or-later** | siehe [GPL und die APK](#gpl) |
+| Verteilte APK | enthält Bausteine unter Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, MPL-2.0, Unlicense, der Unicode-Lizenz und **eSpeak NG unter GPL-3.0-or-later** | siehe [GPL und die APK](#gpl) |
 | Stimmmodelle | je Stimme verschieden, teils nur nicht kommerziell, eine ohne Lizenzangabe | **nicht in der APK**; die App lädt sie auf Wunsch direkt von GitHub ([Stimmen](#stimmen)) |
 
 <a id="gpl"></a>
 ### GPL und die APK
 
-eSpeak NG ist über piper-phonemize statisch in `libsherpa-onnx-jni.so` gelinkt (Zeichenketten wie `Wrong version of espeak-ng-data` und `phondata` in der Bibliothek). Die Free Software Foundation vertritt die Auffassung, dass ein Programm, das mit einer GPL-Bibliothek gelinkt ist, mit ihr ein kombiniertes Werk bildet, für das als Ganzes die GPL gilt – gleich ob statisch oder dynamisch gelinkt ([GPL-FAQ „IfLibraryIsGPL“](https://www.gnu.org/licenses/gpl-faq.html#IfLibraryIsGPL), [„GPLStaticVsDynamic“](https://www.gnu.org/licenses/gpl-faq.html#GPLStaticVsDynamic)). Nach dieser Auffassung gilt für die **Weitergabe der APK** die GPL-3.0; die übrigen Lizenzen (MIT, Apache-2.0, BSD-2-Clause, MPL-2.0, Unlicense) sind laut FSF mit ihr vereinbar ([Lizenzliste der FSF](https://www.gnu.org/licenses/license-list.html)). Der Quellcode von Atemkraft bleibt davon unberührt MIT-lizenziert und darf auch ohne die GPL-Teile weiterverwendet werden.
+eSpeak NG ist über piper-phonemize statisch in `libsherpa-onnx-jni.so` und `libsherpa-onnx-c-api.so` gelinkt (Zeichenketten wie `Wrong version of espeak-ng-data` und `phondata` in beiden Bibliotheken). Die Free Software Foundation vertritt die Auffassung, dass ein Programm, das mit einer GPL-Bibliothek gelinkt ist, mit ihr ein kombiniertes Werk bildet, für das als Ganzes die GPL gilt – gleich ob statisch oder dynamisch gelinkt ([GPL-FAQ „IfLibraryIsGPL“](https://www.gnu.org/licenses/gpl-faq.html#IfLibraryIsGPL), [„GPLStaticVsDynamic“](https://www.gnu.org/licenses/gpl-faq.html#GPLStaticVsDynamic)). Nach dieser Auffassung gilt für die **Weitergabe der APK** die GPL-3.0; die übrigen Lizenzen (MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, MPL-2.0, Unlicense, Unicode-Lizenz) sind laut FSF mit ihr vereinbar ([Lizenzliste der FSF](https://www.gnu.org/licenses/license-list.html)). Der Quellcode von Atemkraft bleibt davon unberührt MIT-lizenziert und darf auch ohne die GPL-Teile weiterverwendet werden.
 
 Was das praktisch heißt (GPL-3.0 §§ 4–6): Wer die APK weitergibt, gibt die Lizenztexte mit (sie liegen in der APK unter `assets/licenses/`) und macht den vollständigen Quellcode zugänglich. Dazu gehören dieses Repo und der Quellstand von sherpa-onnx samt den gebündelten Bibliotheken, siehe [Quellcode der Native-Bibliotheken](#quellcode). Wer nur Links weitergibt, bleibt nach § 6 d selbst dafür verantwortlich, dass der Quellcode erreichbar bleibt.
 
@@ -29,7 +29,7 @@ Ermittelt mit `./gradlew :app:dependencies --configuration releaseRuntimeClasspa
 |---|---|---|---|---|
 | AndroidX Core, Activity, Lifecycle, Navigation, Room, SQLite, DataStore, SavedState, Startup, Emoji2, Profile Installer, Tracing, Collection, Annotation, Arch Core, Concurrent Futures, Graphics Path u. a. | Core 1.15.0, Activity 1.9.3, Lifecycle 2.8.7, Navigation 2.8.5, Room 2.6.1, SQLite 2.4.0, DataStore 1.1.1 | Apache-2.0 | The Android Open Source Project ([androidx/androidx](https://github.com/androidx/androidx)) | bringt die Native-Bibliotheken `libandroidx.graphics.path.so` (Graphics Path) und `libdatastore_shared_counter.so` (DataStore) mit |
 | Jetpack Compose (UI, Foundation, Animation, Runtime, Material 3, Material Icons Core, Ripple) | BOM 2025.01.00: UI 1.7.6, Material 3 1.3.1 | Apache-2.0 | The Android Open Source Project | – |
-| Kotlin Standardbibliothek | 2.1.0 (jdk7/jdk8-Teile 1.8.22, Parcelize-Runtime 1.9.22) | Apache-2.0 | JetBrains s.r.o. ([JetBrains/kotlin](https://github.com/JetBrains/kotlin)) | NOTICE |
+| Kotlin Standardbibliothek | 2.1.0 (jdk7/jdk8-Teile 1.8.22, Parcelize- und Android-Extensions-Runtime 1.9.22) | Apache-2.0 | JetBrains s.r.o. ([JetBrains/kotlin](https://github.com/JetBrains/kotlin)) | NOTICE |
 | kotlinx.coroutines | 1.7.3 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
 | kotlinx.serialization | 1.7.3 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
 | JetBrains Annotations | 23.0.0 | Apache-2.0 | JetBrains s.r.o. | nur Annotationen |
@@ -40,25 +40,28 @@ Ermittelt mit `./gradlew :app:dependencies --configuration releaseRuntimeClasspa
 
 ## 2 In der APK: Native Bibliotheken aus sherpa-onnx
 
-Quelle: `app/libs/sherpa-onnx-1.13.6.aar`, byte-gleich mit dem Asset der Release [v1.13.6 von k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.6) (SHA-256 `0012d9a2…1698`, siehe [SECURITY.md](docs/SECURITY.md#lieferkette)). Die APK enthält daraus `libsherpa-onnx-jni.so`, `libsherpa-onnx-c-api.so`, `libsherpa-onnx-cxx-api.so` und `libonnxruntime.so` für `arm64-v8a` und `armeabi-v7a`. Versionen und Commits der gebündelten Bibliotheken stammen aus `cmake/*.cmake` und `build-android-arm64-v8a.sh` am Tag v1.13.6.
+Quelle: `app/libs/sherpa-onnx-1.13.6.aar`, byte-gleich mit dem Asset der Release [v1.13.6 von k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.6) (SHA-256 `0012d9a2…1698`, siehe [SECURITY.md](docs/SECURITY.md#lieferkette)). Die APK enthält daraus `libsherpa-onnx-jni.so`, `libsherpa-onnx-c-api.so`, `libsherpa-onnx-cxx-api.so` und `libonnxruntime.so` für `arm64-v8a` und `armeabi-v7a`. Versionen und Commits der gebündelten Bibliotheken stammen aus `cmake/*.cmake` und `build-android-arm64-v8a.sh` am Tag v1.13.6 sowie aus den CMake-Dateien der dort geladenen Bibliotheken (kaldi-decoder, kaldifst, kaldi-native-fbank).
 
 | Komponente | Version / Commit | Lizenz | Rechteinhaber / Quelle | Lizenztext in der APK |
 |---|---|---|---|---|
 | sherpa-onnx | 1.13.6 | Apache-2.0 | Xiaomi Corporation und Mitwirkende ([k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)) | `Apache-2.0.txt` |
+| Supertonic (Teile, in sherpa-onnx) | wie sherpa-onnx; die Dateien `offline-tts-supertonic-*` beruhen laut Dateikopf auf [Supertone-Inc/supertonic](https://github.com/Supertone-Inc/supertonic) | MIT | Supertone Inc. | `supertonic-LICENSE.txt` |
 | **eSpeak NG** (Fork für Piper) | Commit [`ed530aa`](https://github.com/csukuangfj/espeak-ng/tree/ed530aa113046142eb5115cf2fc9157854d0ffe1) von csukuangfj/espeak-ng (Fork von rhasspy/espeak-ng) | **GPL-3.0-or-later**; enthaltene Unicode-Daten unter der Unicode-Lizenz (`COPYING.UCD`) | Jonathan Duddington, Reece H. Dunn und Mitwirkende | `GPL-3.0.txt`, `espeak-ng-COPYING.UCD.txt` |
 | piper-phonemize (Fork) | Commit [`f3ff95a`](https://github.com/csukuangfj/piper-phonemize/tree/f3ff95afc03640bc1399e113e83361192a2fafb4) von csukuangfj/piper-phonemize | MIT | Michael Hansen | `piper-phonemize-LICENSE.txt` |
 | uni-algo (in piper-phonemize) | wie piper-phonemize | Unlicense oder MIT | uni-algo-Projekt | `uni-algo-LICENSE.txt` |
 | ONNX Runtime | 1.27.1 (Binärpaket aus [csukuangfj/onnxruntime-libs](https://github.com/csukuangfj/onnxruntime-libs/releases/tag/v1.27.1), Quelle [microsoft/onnxruntime v1.27.1](https://github.com/microsoft/onnxruntime/tree/v1.27.1)) | MIT; enthaltene Drittbausteine laut `ThirdPartyNotices.txt` | Microsoft Corporation | `onnxruntime-LICENSE.txt`, `onnxruntime-ThirdPartyNotices.txt` |
 | OpenFst (Fork) | [csukuangfj/openfst v1.8.5-2026-07-09](https://github.com/csukuangfj/openfst/tree/v1.8.5-2026-07-09) | Apache-2.0 | Google und Mitwirkende | `Apache-2.0.txt` |
-| kaldifst | 1.8.0 ([k2-fsa/kaldifst](https://github.com/k2-fsa/kaldifst/tree/v1.8.0), über kaldi-decoder) | Apache-2.0 | k2-fsa und Mitwirkende | `Apache-2.0.txt` |
-| kaldi-decoder | [0.3.0](https://github.com/k2-fsa/kaldi-decoder/tree/v0.3.0) | Apache-2.0 | k2-fsa und Mitwirkende | `Apache-2.0.txt` |
-| kaldi-native-fbank | [1.22.3](https://github.com/csukuangfj/kaldi-native-fbank/tree/v1.22.3) | Apache-2.0 | k2-fsa und Mitwirkende | `Apache-2.0.txt` |
-| simple-sentencepiece | [0.7](https://github.com/pkufool/simple-sentencepiece/tree/v0.7) | Apache-2.0 | pkufool und Mitwirkende | `Apache-2.0.txt` |
-| Eigen (Header-Bibliothek, über kaldi-decoder) | laut `cmake/eigen.cmake` von sherpa-onnx v1.13.6 | MPL-2.0 | Eigen-Projekt ([libeigen/eigen](https://gitlab.com/libeigen/eigen)) | `MPL-2.0.txt`; Quellcode unter dem Link (MPL-2.0 § 3.2) |
+| kaldifst | 1.8.0 ([k2-fsa/kaldifst](https://github.com/k2-fsa/kaldifst/tree/v1.8.0), über kaldi-decoder) | Apache-2.0 | Xiaomi Corporation; Teile aus Kaldi (u. a. Microsoft Corporation, Johns Hopkins University) | `Apache-2.0.txt` |
+| kaldi-decoder | [0.3.0](https://github.com/k2-fsa/kaldi-decoder/tree/v0.3.0) | Apache-2.0 | Xiaomi Corporation; Teile aus Kaldi (u. a. Microsoft Corporation, Johns Hopkins University) | `Apache-2.0.txt` |
+| kaldi-native-fbank | [1.22.3](https://github.com/csukuangfj/kaldi-native-fbank/tree/v1.22.3) | Apache-2.0 | Xiaomi Corporation und Mitwirkende | `Apache-2.0.txt` |
+| KISS FFT (in kaldi-native-fbank) | Commit [`febd4ca`](https://github.com/mborgerding/kissfft/tree/febd4caeed32e33ad8b2e0bb5ea77542c40f18ec) laut `cmake/kissfft.cmake` von kaldi-native-fbank 1.22.3 | BSD-3-Clause | Mark Borgerding | `kissfft-LICENSE.txt` |
+| simple-sentencepiece | [0.7](https://github.com/pkufool/simple-sentencepiece/tree/v0.7) | Apache-2.0 | Wei Kang (pkufool) | `Apache-2.0.txt` |
+| Darts-clone (in simple-sentencepiece) | 0.32 (`ssentencepiece/csrc/darts.h`, aus [s-yata/darts-clone](https://github.com/s-yata/darts-clone)) | BSD-2-Clause | Susumu Yata | `darts-clone-LICENSE.txt` |
+| Eigen (Header-Bibliothek, über kaldi-decoder) | 5.0.1 laut `cmake/eigen.cmake` von sherpa-onnx v1.13.6 | MPL-2.0 | Eigen-Projekt ([libeigen/eigen](https://gitlab.com/libeigen/eigen)) | `MPL-2.0.txt`; Quellcode unter dem Link (MPL-2.0 § 3.2) |
 | hclust-cpp (fastcluster) | [csukuangfj/hclust-cpp 2026-02-25](https://github.com/csukuangfj/hclust-cpp/tree/2026-02-25) | BSD-2-Clause | Daniel Müllner, Christoph Dalitz | `hclust-cpp-LICENSE.txt` |
 | JSON for Modern C++ (Header-Bibliothek) | [3.12.0](https://github.com/nlohmann/json/tree/v3.12.0) | MIT | Niels Lohmann | `nlohmann-json-LICENSE.txt` |
 
-Die sherpa-onnx-Bibliothek bringt auch Spracherkennung und Sprecher-Diarisierung mit; Atemkraft nutzt davon nur die Sprachsynthese.
+Die sherpa-onnx-Bibliothek bringt auch Spracherkennung und Sprecher-Diarisierung mit; Atemkraft nutzt davon nur die Sprachsynthese. Aus der Unicode Character Database abgeleitete Zeichentabellen (in eSpeak NG über ucd-tools, in sherpa-onnx für Supertonic) stehen unter der Unicode-Lizenz; den Text enthält `espeak-ng-COPYING.UCD.txt`.
 
 <a id="quellcode"></a>
 ### Quellcode der Native-Bibliotheken
@@ -90,7 +93,7 @@ Die App lädt eine Stimme nur nach ausdrücklichem Tippen aus der Release [`tts-
 | Kerstin | `vits-piper-de_DE-kerstin-low` | Trainingsdaten CC0 1.0; keine eigene Modelllizenz genannt | Datensatz [rhasspy/dataset-voice-kerstin](https://github.com/rhasspy/dataset-voice-kerstin); Modell aus [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices/blob/main/de/de_DE/kerstin/low/MODEL_CARD) | laut Modellkarte feinjustiert aus der englischen Stimme „ryan“, deren Trainingsdaten unter CC BY-NC-SA 4.0 stehen |
 | Ramona | `vits-piper-de_DE-ramona-low` | Trainingsdaten unter der M-AILABS-Lizenz (BSD-artig: Weitergabe und kommerzielle Nutzung mit Copyright-Hinweis) | M-AILABS Speech Dataset, Aufnahmen von LibriVox (gemeinfrei); Modell aus [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices/blob/main/de/de_DE/ramona/low/MODEL_CARD) | von Grund auf trainiert; die Website des Datensatzes (caito.de) ist offline, Lizenztext über das [Internet Archive](https://web.archive.org/web/2023/https://www.caito.de/2019/01/03/the-m-ailabs-speech-dataset/) |
 | Eva | `vits-piper-de_DE-eva_k-x_low` | wie Ramona | wie Ramona ([Modellkarte](https://huggingface.co/rhasspy/piper-voices/blob/main/de/de_DE/eva_k/x_low/MODEL_CARD)) | von Grund auf trainiert |
-| GLaDOS | `vits-piper-de_DE-glados-high` | **keine Lizenzangabe** | [systemofapwne/piper-de-glados](https://huggingface.co/systemofapwne/piper-de-glados) | laut Autor aus den deutschen Sprachdateien von „Portal“ und „Portal 2“ trainiert, die er als geistiges Eigentum von Valve bezeichnet; Name und Figur gehören Valve. Die Rechtslage der Weitergabe ist ungeklärt. |
+| GLaDOS | `vits-piper-de_DE-glados-high` | **keine Lizenzangabe** | [systemofapwne/piper-de-glados](https://huggingface.co/systemofapwne/piper-de-glados) | laut Autor aus Thorsten (high) feinjustiert, mit den deutschen Sprachdateien von „Portal“ und „Portal 2“, die er als geistiges Eigentum von Valve bezeichnet; Name und Figur gehören Valve. Die Rechtslage der Weitergabe ist ungeklärt. |
 
 Copyright-Hinweis der M-AILABS-Lizenz: „Copyright (c) 2017-2019 by the original creators @ M-AILABS“.
 
@@ -108,6 +111,9 @@ Die Volltexte liegen im Repo unter [`app/src/main/assets/licenses/`](app/src/mai
 | `onnxruntime-LICENSE.txt`, `onnxruntime-ThirdPartyNotices.txt` | MIT-Lizenz und Drittanbieter-Hinweise von ONNX Runtime v1.27.1 |
 | `piper-phonemize-LICENSE.txt` | MIT-Lizenz von piper-phonemize |
 | `uni-algo-LICENSE.txt` | Unlicense/MIT von uni-algo |
+| `kissfft-LICENSE.txt` | Copyright-Hinweis (`COPYING`) und BSD-3-Clause-Text (`LICENSES/BSD-3-Clause`) von KISS FFT, Commit `febd4ca` |
+| `darts-clone-LICENSE.txt` | BSD-2-Clause von Darts-clone, aus dem Dateikopf von `darts.h` in simple-sentencepiece 0.7 |
+| `supertonic-LICENSE.txt` | MIT-Lizenz von Supertonic (Supertone Inc.) |
 | `hclust-cpp-LICENSE.txt` | BSD-2-Clause von hclust-cpp |
 | `nlohmann-json-LICENSE.txt` | MIT-Lizenz von JSON for Modern C++ |
 

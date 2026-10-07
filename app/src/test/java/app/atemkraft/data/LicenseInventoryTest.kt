@@ -4,11 +4,13 @@ import app.atemkraft.cue.tts.VoiceCatalog
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.util.zip.ZipFile
 
 /**
  * Lizenzen und Datenschutz bleiben beieinander (SEC-LEGAL-03, SEC-PRIV-05): Was die App in
  * „Über → Lizenzen“ zeigt, steht auch in THIRD_PARTY_LICENSES.md; jeder Lizenztext in der APK
- * ist dort genannt; die Datenschutzerklärung existiert und ist im Über-Screen verlinkt.
+ * ist dort genannt, ebenso jede Native-Bibliothek aus `app/libs`; die Datenschutzerklärung
+ * existiert und ist im Über-Screen verlinkt.
  */
 class LicenseInventoryTest {
 
@@ -43,6 +45,21 @@ class LicenseInventoryTest {
         files.forEach { f ->
             assertTrue("${f.name} ist leer", f.length() > 0)
             assertTrue("${f.name} fehlt in THIRD_PARTY_LICENSES.md", inventory.contains(f.name))
+        }
+    }
+
+    @Test
+    fun `jede Native-Bibliothek aus app libs ist genannt`() {
+        val aars = moduleFile("libs").listFiles().orEmpty().filter { it.name.endsWith(".aar") }
+        assertTrue("kein AAR unter app/libs", aars.isNotEmpty())
+        aars.forEach { aar ->
+            assertTrue("${aar.name} fehlt in THIRD_PARTY_LICENSES.md", inventory.contains(aar.name))
+            val libs = ZipFile(aar).use { zip ->
+                zip.entries().asSequence().map { it.name }.filter { it.startsWith("jni/") && it.endsWith(".so") }
+                    .map { it.substringAfterLast('/') }.toSet()
+            }
+            assertTrue("${aar.name} ohne Native-Bibliotheken", libs.isNotEmpty())
+            libs.forEach { lib -> assertTrue("$lib aus ${aar.name} fehlt in THIRD_PARTY_LICENSES.md", inventory.contains(lib)) }
         }
     }
 
