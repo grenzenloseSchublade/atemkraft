@@ -6,5 +6,5 @@
 - Stimme laden ohne Gerätedaten, mit Prüfsumme
 - Lizenzen in der App
 - Tick am Kreis folgt dem Schalter „Vibration“
-- Kleinere Schrift, kein Wortbruch
+- Kleinere Schrift, kein Umbruch mitten im Wort
 - Fester Zurück-Pfeil

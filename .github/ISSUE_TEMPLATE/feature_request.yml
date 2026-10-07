@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Danke für deine Idee! Atemkraft bleibt bewusst offline, ohne Konto und ohne Tracking, und macht keine Heilversprechen. Ideen in diesem Rahmen sind willkommen.
+        Danke für deine Idee! Atemkraft bleibt bewusst offline (Netz nur für das Laden einer Stimme), ohne Konto und ohne Tracking, und macht keine Heilversprechen. Ideen in diesem Rahmen sind willkommen.
         **Bitte keine Gesundheitsdaten** eintragen, Issues sind öffentlich.
   - type: textarea
     id: anliegen

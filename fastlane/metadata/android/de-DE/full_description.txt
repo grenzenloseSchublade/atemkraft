@@ -19,6 +19,6 @@ Atemkraft erhebt keine Daten über dich: kein Konto, kein eigener Server, keine 
 
 Lizenzen
 
-Der Quellcode steht unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later) über sherpa-onnx; Lizenztexte liegen in der App. Die Stimmen haben eigene Lizenzen: Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben, für GLaDOS gibt es keine Lizenzangabe. Vollständige Liste in der App unter Über Atemkraft → Lizenzen.
+Der Quellcode steht unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later) über sherpa-onnx; Lizenztexte liegen in der App. Die Stimmen haben eigene Lizenzen: Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben, für GLaDOS gibt es keine Lizenzangabe. Übersicht in der App unter Über Atemkraft → Lizenzen; die vollständige Liste mit Versionen und Belegen steht im Quellcode-Repo auf GitHub (THIRD_PARTY_LICENSES.md).
 
 Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. Für medizinischen Rat wende dich an Fachpersonal.

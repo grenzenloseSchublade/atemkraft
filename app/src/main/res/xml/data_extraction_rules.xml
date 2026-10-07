@@ -3,7 +3,10 @@
      Google-Backup ab; die Regeln hier schließen es ab Android 12 zusätzlich für jede Domäne aus.
      Erlaubt bleibt nur die lokale Gerät-zu-Gerät-Übertragung beim Handywechsel (Kabel bzw.
      WLAN-Direkt, z. B. Smart Switch) – ohne die nachladbaren TTS-Stimmmodelle (files/tts,
-     Größe; teilübertragene Modelle würden zudem fälschlich als „heruntergeladen" erkannt). -->
+     Größe; teilübertragene Modelle würden zudem fälschlich als „heruntergeladen" erkannt).
+     Achtung: Laut Android-Doku (application-element, allowBackup) schaltet allowBackup="false"
+     auch ab Android 12 die Gerät-zu-Gerät-Übertragung ab, nur bei manchen Herstellern nicht –
+     der device-transfer-Block greift also nur auf solchen Geräten. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" path="." />

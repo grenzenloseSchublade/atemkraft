@@ -209,7 +209,7 @@
     <string name="settings_data_hint">Gespeicherte Muster als Datei sichern und wieder einlesen. Den Speicherort wählst du selbst – die App hat kein Konto und keine Cloud.</string>
     <string name="settings_data_export">Muster exportieren</string>
     <string name="settings_data_import">Muster importieren</string>
-    <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Sicher geht es mit „Muster exportieren“.</string>
+    <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) je nach Hersteller Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Sicher geht es mit „Muster exportieren“.</string>
     <plurals name="data_export_done">
         <item quantity="one">✓ %1$d exportiert</item>
         <item quantity="other">✓ %1$d exportiert</item>

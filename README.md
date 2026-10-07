@@ -63,7 +63,7 @@ Eine APK mit anderem Zertifikat, etwa `CN=Android Debug`, ist kein offizielles R
 Atemkraft erhebt keine Daten über dich: kein Konto, kein eigener Server, keine Analyse, keine Werbung, keine Absturzberichte, keine Google Play Services. Logbuch, Muster und Einstellungen bleiben auf deinem Gerät.
 
 - **Einzige Netzverbindung:** Tippst du in den Einstellungen bei einer Stimme auf „Laden“, holt die App das Stimm-Archiv von GitHub (Projekt [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)) und prüft es gegen eine fest hinterlegte Prüfsumme. Danach läuft auch die Sprachausgabe offline. GitHub sieht dabei u. a. deine IP-Adresse.
-- **Keine Cloud:** Die App ist vom Android-Cloud-Backup ausgeschlossen. Beim Handywechsel kann ab Android 12 die direkte Übertragung (Kabel oder WLAN-Direkt) die Daten mitnehmen. **Version 1.5.1** erlaubt das Android-Backup noch; ist es auf deinem Gerät eingeschaltet, kann Android die App-Daten in dein Backup-Konto (meist Google) sichern.
+- **Keine Cloud:** Die App ist vom Android-Cloud-Backup ausgeschlossen. Beim Handywechsel kann ab Android 12 die direkte Übertragung (Kabel oder WLAN-Direkt) die Daten mitnehmen; ob sie das tut, hängt laut Android-Dokumentation vom Gerätehersteller ab. Sicher mitnehmen lassen sich gespeicherte Muster per Export (*ab Version 1.6.0*). **Version 1.5.1** erlaubt das Android-Backup noch; ist es auf deinem Gerät eingeschaltet, kann Android die App-Daten in dein Backup-Konto (meist Google) sichern.
 
 Alle Einzelheiten, auch was bis Version 1.5.1 anders ist: [Datenschutzerklärung](docs/PRIVACY.md).
 
