@@ -13,9 +13,17 @@
 *.ap_
 *.aab
 
-# Release-Signatur: Keystore + Passwörter bleiben lokal
-/keystore.properties
-/app/atemkraft-release.keystore
+# Release-Signatur: Keystores und Passwörter nie ins Repo (docs/SECURITY.md SEC-REPO-01).
+# Einzige Ausnahme ist der öffentliche Debug-Keystore, der nie ein verteiltes Artefakt signiert.
+*.jks
+*.keystore
+!/app/debug.keystore
+*.p12
+**/keystore.properties
+*.idsig
+
+# Lokale Einstellungen von Claude Code
+.claude/settings.local.json
 
 # Private Sicherheitsnotizen (offene Befunde) – nie committen
 /docs/private/
