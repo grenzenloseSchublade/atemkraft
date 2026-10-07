@@ -52,13 +52,13 @@ Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, kein
 | Speicherort | Inhalt | Sensitivität | Gerät-zu-Gerät / Export | Löschweg |
 |---|---|---|---|---|
 | Room `log_entries` | Art (Atemübung/Meditation), Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | ja (ab Android 12) / nein | „Logbuch leeren“, App-Speicher löschen |
-| Room `saved_patterns` | Name und Phasenlängen eigener Muster | niedrig | ja (ab Android 12) / ja (mit Anpassung) | einzeln löschen |
-| DataStore `settings` | Einstellungen, Anpassungen pro Übung, Aufklapp-Zustand „Meine Muster“ (`saved_patterns_expanded`) | niedrig | ja (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
-| `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB) | keine | nein / nein | „Stimme löschen“ |
-| `cache/` | Teil-Download | keine | nein / nein | beim nächsten Download-Versuch; Android leert `cache/` bei Speichermangel |
+| Room `saved_patterns` | Name, Phasenlängen, Art (`activating`: aktivierend ja/nein) und Speicherzeitpunkt eigener Muster | niedrig | ja (ab Android 12) / ja (mit Anpassung) | einzeln löschen |
+| DataStore `settings` | Einstellungen (inkl. bestätigter Sicherheitshinweis `safety_acknowledged`), Anpassungen pro Übung, Aufklapp-Zustand „Meine Muster“ (`saved_patterns_expanded`) | niedrig | ja (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
+| `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB), beim Entpacken ein Zwischenordner `.<stimme>.staging` | keine | nein / nein | „Stimme löschen“ |
+| `cache/` | Teil-Download | keine | nein / nein | bei Abbruch oder Fehler sofort; nach Prozess-Ende beim nächsten Download-Versuch; Android leert `cache/` bei Speichermangel |
 | Activity-Zustand (flüchtig, `rememberSaveable`) | Suchtext der Befindens-Suche (SEC-PRIV-06) | gesundheitsnah | nein / nein | Suche schließen (X, Zurück, „Alle zeigen“), App beenden |
 
-Export-Datei (`atemkraft-muster-<datum>.json`, Format `atemkraft-muster` v1): Name, Phasenlängen, Zeitpunkt und Anpassung gespeicherter Muster; Ort wählt der Nutzer über das Storage Access Framework, die App behält keinen Zugriff. Der Import übernimmt nur, was die App selbst erzeugen könnte (Leitplanken des Generators, Stepper-Grenzen, Namen ohne Steuer-/Format-Zeichen, höchstens 512 KiB und 500 Muster). Gespeichert werden keine Messwerte, keine Freitexte (auch nicht die Befindens-Suche) und keine Identität. Logbuch-Daten werden vorsorglich wie Gesundheitsdaten behandelt.
+Export-Datei (`atemkraft-muster-<datum>.json`, Format `atemkraft-muster` v1): Name, Phasenlängen, Art, Speicherzeitpunkt und Anpassung gespeicherter Muster sowie der Exportzeitpunkt; Ort wählt der Nutzer über das Storage Access Framework, die App behält keinen Zugriff. Der Import übernimmt nur, was die App selbst erzeugen könnte (Leitplanken des Generators, Stepper-Grenzen, Namen ohne Steuer-/Format-Zeichen, höchstens 512 KiB und 500 Muster). Gespeichert werden keine Messwerte, keine Freitexte (auch nicht die Befindens-Suche) und keine Identität. Logbuch-Daten werden vorsorglich wie Gesundheitsdaten behandelt.
 
 <a id="berechtigungen"></a>
 ## Berechtigungen
@@ -68,7 +68,7 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 | Berechtigung | Zweck |
 |---|---|
 | `INTERNET` | nur der optionale Stimm-Download |
-| `VIBRATE` | Haptik bei Phasenwechseln |
+| `VIBRATE` | Haptik bei Phasenwechseln und Tipp-Tick am Kreis (beides hinter dem Schalter „Vibration“) |
 | `WAKE_LOCK` | Meditations-Timer im Doze-Modus (`PARTIAL_WAKE_LOCK`) |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Meditation läuft bei gesperrtem Bildschirm weiter |
 | `POST_NOTIFICATIONS` | Status der Meditation; bei Ablehnung läuft der Timer weiter |

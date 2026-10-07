@@ -15,7 +15,7 @@ Funktionen
 
 Datenschutz
 
-Atemkraft erhebt keine Daten über dich: kein Konto, kein Server, keine Analyse, keine Werbung, keine Absturzberichte, keine Google Play Services. Logbuch, Muster und Einstellungen bleiben auf deinem Gerät; die App ist vom Android-Cloud-Backup ausgeschlossen. Einzige Netzverbindung: Tippst du bei einer Stimme auf „Laden“, holt die App sie von GitHub (Projekt sherpa-onnx) und prüft sie gegen eine fest hinterlegte Prüfsumme. GitHub sieht dabei u. a. deine IP-Adresse.
+Atemkraft erhebt keine Daten über dich: kein Konto, kein eigener Server, keine Analyse, keine Werbung, keine Absturzberichte, keine Google Play Services. Logbuch, Muster und Einstellungen bleiben auf deinem Gerät; die App ist vom Android-Cloud-Backup ausgeschlossen. Einzige Netzverbindung: Tippst du bei einer Stimme auf „Laden“, holt die App sie von GitHub (Projekt sherpa-onnx) und prüft sie gegen eine fest hinterlegte Prüfsumme. GitHub sieht dabei u. a. deine IP-Adresse.
 
 Lizenzen
 
