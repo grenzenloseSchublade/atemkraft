@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -150,7 +151,7 @@ private fun StatsCard(
 @Composable
 private fun WeekRow(minutesPerDay: Map<Long, Long>) {
     val today = LocalDate.now()
-    val labels = listOf("M", "D", "M", "D", "F", "S", "S")
+    val labels = stringArrayResource(R.array.log_weekday_initials)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -167,15 +168,14 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>) {
             }
             val isToday = offset == 0
             val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.GERMAN)
+            val dayDescription = if (minutes > 0) {
+                pluralStringResource(R.plurals.cd_log_day_minutes, minutes.toInt(), dayName, minutes.toInt())
+            } else {
+                stringResource(R.string.cd_log_day_none, dayName)
+            }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.semantics {
-                    contentDescription = if (minutes > 0) {
-                        "$dayName: $minutes Minuten geübt"
-                    } else {
-                        "$dayName: keine Übung"
-                    }
-                },
+                modifier = Modifier.semantics { contentDescription = dayDescription },
             ) {
                 Box(
                     modifier = Modifier

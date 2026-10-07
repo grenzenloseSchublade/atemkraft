@@ -85,7 +85,8 @@ fun ExerciseDetailScreen(
     val isIntense = exercise.tag == EvidenceTag.CAUTION
     val valueDefault = if (roundBased) exercise.rounds else exercise.defaultMinutes()
     var value by rememberSaveable(exercise.id) { mutableIntStateOf(valueDefault) }
-    var showSafety by remember { mutableStateOf(false) }
+    // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
+    var showSafety by rememberSaveable { mutableStateOf(false) }
 
     // Optionale Feineinstellung der Phasenlängen (dezent hinter „Intervalle anpassen").
     val cyclePhases = remember(exercise.id) { exercise.segments.flatMap { it.phases } }

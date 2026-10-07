@@ -65,7 +65,7 @@ class SessionAudioCoordinator(
                 }
                 // Stummschalter betrifft nur den Ton – Haptik folgt weiter der Einstellung.
                 if (toneWanted && !mutedState.value) tonePlayer.play(event)
-                if (cfg.haptics) hapticPlayer.play(event)
+                hapticPlayer.play(event, enabled = cfg.haptics)
             }
         }
         scope.launch {

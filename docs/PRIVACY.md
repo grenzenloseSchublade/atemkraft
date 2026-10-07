@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz)).
+- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Berechtigungen](#berechtigungen)).
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
@@ -60,12 +60,13 @@ Unter *Einstellungen → Daten* („Muster exportieren“) kannst du deine gespe
 
 Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die direkte Übertragung beim Handywechsel (Kabel oder WLAN-Direkt, z. B. Smart Switch) Logbuch, Muster und Einstellungen von Gerät zu Gerät mitnehmen, ohne Umweg über eine Cloud; Stimmen lädst du danach neu. Bis Android 11 ist auch diese Übertragung abgeschaltet.
 
+<a id="berechtigungen"></a>
 ## Berechtigungen
 
 | Berechtigung | Wofür |
 |---|---|
 | Internet (`INTERNET`) | nur der Stimm-Download |
-| Vibration (`VIBRATE`) | fühlbare Phasenwechsel, abschaltbar |
+| Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides mit dem Schalter „Vibration“ abschaltbar. **Bis einschließlich Version 1.5.1** vibriert der Tick auch bei ausgeschaltetem Schalter |
 | Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation wach, damit Gongs pünktlich kommen |
 | Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
 | Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation; lehnst du ab, läuft der Timer trotzdem |

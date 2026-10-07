@@ -360,7 +360,15 @@ private fun AtemkraftApp() {
                     popExitTransition = popExit,
                 ) { entry ->
                     val id = entry.toRoute<DetailRoute>().exerciseId
-                    val exercise = container.exerciseRepository.byId(id) ?: return@composable
+                    val exercise = container.exerciseRepository.byId(id)
+                    if (exercise == null) {
+                        // Unauflösbare Route (z. B. gelöschtes oder noch nicht geladenes Muster):
+                        // zurück statt leerer Screen (CODE-05) – nur, solange dieses Ziel oben liegt.
+                        LaunchedEffect(entry.id) {
+                            if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
+                        }
+                        return@composable
+                    }
                     val requireSafety = exercise.tag == EvidenceTag.CAUTION &&
                         (!safetySettings.acknowledged || safetySettings.showWarning)
                     // Intervall-Anpassungen pro Übung merken – außer beim Muster des Tages: dessen
@@ -479,6 +487,8 @@ private fun AtemkraftApp() {
                         sessionViewModel.pause()
                     }
                 },
+                // Tipp-Tick nur bei eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
+                onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
                 onContinue = sessionViewModel::continueFromUserPaced,
                 onRestart = sessionViewModel::restart,
                 onStop = {
@@ -504,6 +514,7 @@ private fun AtemkraftApp() {
                         meditationController.pause()
                     }
                 },
+                onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
                 onRestart = meditationController::restart,
                 onEnd = {
                     meditationController.end()

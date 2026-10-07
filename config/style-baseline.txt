@@ -51,14 +51,11 @@ cd-style	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 motion-literal	app/src/main/java/app/atemkraft/MainActivity.kt	5
 motion-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
 motion-literal-delay	app/src/main/java/app/atemkraft/ui/components/SessionControls.kt	2
-player-in-composable	app/src/main/java/app/atemkraft/ui/meditation/MeditationScreen.kt	1
-player-in-composable	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 semantics-required	app/src/main/java/app/atemkraft/ui/meditation/MeditationScreen.kt	1
 semantics-required	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	3
 a11y-ratchet	app/src/main/java/app/atemkraft/ui/meditation/MeditationScreen.kt	1
 a11y-ratchet	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	4
 ui-literal	app/src/main/java/app/atemkraft/ui/glossary/GlossaryScreen.kt	1
-ui-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2
 locale	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2
 locale-config	app/build.gradle.kts	1
 locale-config	app/src/main/AndroidManifest.xml	1

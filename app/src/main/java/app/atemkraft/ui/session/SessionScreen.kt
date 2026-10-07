@@ -46,7 +46,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -61,7 +60,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.BreathingCircle
@@ -89,12 +87,15 @@ import kotlin.math.ceil
 /**
  * Zeigt die laufende Session: Start-Countdown, Atemkreis, Phasenname (+ optionale Zusatzinfo),
  * Restzeit/Verstrichen, Steuerung und – optional, dezent – die kommende Phase.
+ * [onTapHaptic] spielt den Tipp-Tick beim Antippen des Kreises; ob er vibriert, entscheidet
+ * der Aufrufer anhand des App-Schalters „Vibration“.
  */
 @Composable
 fun SessionScreen(
     state: SessionUiState,
     showNextPhase: Boolean,
     onTogglePause: () -> Unit,
+    onTapHaptic: () -> Unit,
     onContinue: () -> Unit,
     onRestart: () -> Unit,
     onStop: () -> Unit,
@@ -110,6 +111,7 @@ fun SessionScreen(
                 state = state,
                 showNextPhase = showNextPhase,
                 onTogglePause = onTogglePause,
+                onTapHaptic = onTapHaptic,
                 onContinue = onContinue,
                 onRestart = onRestart,
                 onStop = onStop,
@@ -123,6 +125,7 @@ private fun ActiveContent(
     state: SessionUiState,
     showNextPhase: Boolean,
     onTogglePause: () -> Unit,
+    onTapHaptic: () -> Unit,
     onContinue: () -> Unit,
     onRestart: () -> Unit,
     onStop: () -> Unit,
@@ -142,12 +145,11 @@ private fun ActiveContent(
 
     // Tap-Flash (geteilt mit der Meditation): großes Pause/Play-Symbol beim Antippen.
     val tapFlash = rememberTapFlash()
-    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap – über den Vibrator (USAGE_ALARM), damit es
-    // nicht am System-Schalter „Tipp-Vibration" hängt (Samsung verwirft das sonst still).
-    val context = LocalContext.current
-    val haptics = remember { HapticPlayer(context) }
+
+    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap; der Player liegt im AppContainer und
+    // folgt dem App-Schalter „Vibration“ (AUDIO-04, -05).
     fun flashToggle() {
-        haptics.tick()
+        onTapHaptic()
         tapFlash.flash(isPause = state.status == SessionStatus.RUNNING) // läuft → wird pausiert
         onTogglePause()
     }

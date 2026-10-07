@@ -33,7 +33,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -41,7 +40,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.ui.components.AdaptiveButtonRow
@@ -121,6 +119,7 @@ fun MeditationOverlay(
     onMinimize: () -> Unit,
     onToggleMute: () -> Unit,
     onTogglePause: () -> Unit,
+    onTapHaptic: () -> Unit,
     onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
@@ -132,7 +131,13 @@ fun MeditationOverlay(
                 onExit = onEnd,
             )
         } else {
-            RunningContent(state = state, onTogglePause = onTogglePause, onRestart = onRestart, onEnd = onEnd)
+            RunningContent(
+                state = state,
+                onTogglePause = onTogglePause,
+                onTapHaptic = onTapHaptic,
+                onRestart = onRestart,
+                onEnd = onEnd,
+            )
         }
     }
 }
@@ -305,6 +310,7 @@ private fun SelectionContent(
 private fun RunningContent(
     state: MeditationUiState,
     onTogglePause: () -> Unit,
+    onTapHaptic: () -> Unit,
     onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
@@ -328,12 +334,11 @@ private fun RunningContent(
 
     // Tap-Flash (geteilt mit der Atem-Session).
     val tapFlash = rememberTapFlash()
-    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap – über den Vibrator (USAGE_ALARM), damit es
-    // nicht am System-Schalter „Tipp-Vibration" hängt (Samsung verwirft das sonst still).
-    val context = LocalContext.current
-    val haptics = remember { HapticPlayer(context) }
+
+    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap; der Player liegt im AppContainer und
+    // folgt dem App-Schalter „Vibration“ (AUDIO-04, -05).
     fun flashToggle() {
-        haptics.tick()
+        onTapHaptic()
         tapFlash.flash(isPause = state.status == MeditationStatus.RUNNING) // läuft → wird pausiert
         onTogglePause()
     }

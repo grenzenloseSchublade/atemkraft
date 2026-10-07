@@ -557,6 +557,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     onMinimize = {},
                     onToggleMute = {},
                     onTogglePause = {},
+                    onTapHaptic = {},
                     onContinue = {},
                     onRestart = {},
                     onStop = {},
@@ -580,6 +581,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     onMinimize = {},
                     onToggleMute = {},
                     onTogglePause = {},
+                    onTapHaptic = {},
                     onRestart = {},
                     onEnd = {},
                 )

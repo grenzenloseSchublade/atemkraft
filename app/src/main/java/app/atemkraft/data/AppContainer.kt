@@ -1,6 +1,7 @@
 package app.atemkraft.data
 
 import android.content.Context
+import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
@@ -31,6 +32,9 @@ class AppContainer(context: Context) {
 
     /** Vorhören des Gongs in den Einstellungen (eigene Instanz, unabhängig von laufenden Sessions). */
     val gongPreviewPlayer: ToneCuePlayer = ToneCuePlayer()
+
+    /** Tipp-Tick am Atem- und Meditationskreis (eine Instanz, nicht pro Composition, AUDIO-04). */
+    val hapticPlayer: HapticPlayer = HapticPlayer(context)
 
     /** App-weiter Meditations-Ablauf (überlebt Tab-Wechsel und läuft mit dem Foreground-Service). */
     val meditationController: MeditationController = MeditationController(

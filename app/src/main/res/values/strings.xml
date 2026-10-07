@@ -155,6 +155,21 @@
         <item quantity="other">%d Runden</item>
     </plurals>
     <string name="log_clear">Logbuch leeren</string>
+    <!-- 7-Tage-Übersicht: Anfangsbuchstaben Montag … Sonntag und TalkBack-Text je Tag. -->
+    <string-array name="log_weekday_initials">
+        <item>M</item>
+        <item>D</item>
+        <item>M</item>
+        <item>D</item>
+        <item>F</item>
+        <item>S</item>
+        <item>S</item>
+    </string-array>
+    <plurals name="cd_log_day_minutes">
+        <item quantity="one">%1$s: %2$d Minute geübt</item>
+        <item quantity="other">%1$s: %2$d Minuten geübt</item>
+    </plurals>
+    <string name="cd_log_day_none">%1$s: keine Übung</string>
 
     <!-- Steuerung -->
     <string name="action_start">Starten</string>
@@ -183,7 +198,7 @@
     <string name="volume_medium">Mittel</string>
     <string name="volume_loud">Laut</string>
     <string name="volume_hint">Relativ zur Medien-Lautstärke deines Geräts.</string>
-    <string name="settings_haptics">Vibration bei Phasenwechsel</string>
+    <string name="settings_haptics">Vibration</string>
 
     <!-- Einstellungen · Abschnitts-Titel -->
     <string name="settings_tone_title">Ton</string>
