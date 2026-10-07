@@ -47,7 +47,7 @@ Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, kein
 | SEC-PRIV-05 | MUSS | Texte zur Datennutzung (App, README, Store) sind wahr und vollständig („offline, außer optionalem Stimm-Download“). Eine Datenschutzerklärung liegt unter `docs/PRIVACY.md` und ist im Über-Screen verlinkt. | Play-Pflicht auch ohne Datenerhebung; DSGVO Art. 13. | auto: `sec-privacy-link`; manuell: Inhalt |
 | SEC-PRIV-06 | MUSS | Freitext-Eingaben (heute nur die Befindens-Suche im Situationen-Tab) sind flüchtig: nur `rememberSaveable` (Activity-Zustand für Drehen und Prozess-Neustart), nie DataStore, Room, Datei oder Log; sie verfallen beim Schließen der Suche. Die Tastatur bekommt `autoCorrectEnabled = false` und `IME_FLAG_NO_PERSONALIZED_LEARNING` (über `InterceptPlatformTextInput` im `SearchField`), damit Tastatur-Apps Befindens-Wörter nicht lernen oder synchronisieren. | Eingaben zum Befinden sind gesundheitsnah; Drittanbieter-Tastaturen lernen und synchronisieren sonst Wörter. Das Flag ist eine Bitte an die Tastatur, kein Schutz vor einer bösartigen. | auto: JUnit `SituationsScreenTest` (EditorInfo des Feldes), `sec-device-leaks`; manuell: Review bei neuen Textfeldern |
 
-**Daten-Inventar (v1.5.1)**
+**Daten-Inventar (ab v1.6.0, Stand `main`)**
 
 | Speicherort | Inhalt | Sensitivität | Gerät-zu-Gerät / Export | Löschweg |
 |---|---|---|---|---|
@@ -225,15 +225,17 @@ scripts/check-github.sh                              # Repo-Einstellungen per gh
 <a id="release-checkliste"></a>
 ## Release-Checkliste
 
+**Ist-Stand (2026-10-07):** `scripts/verify-apk.sh`, `scripts/check-security.sh`, `scripts/check-github.sh` und der CI-Job `release-verify` sind Soll-Setup und gibt es noch nicht; die Schritte nennen dafür den manuellen Ersatz. Bis v1.5.1 waren die Tags nicht annotiert, und der Release-Commit enthielt die Versionsänderung selbst.
+
 1. `git status` leer, `main` gepusht, `scripts/check.sh` grün.
-2. `versionCode` +1, `versionName` gesetzt; Release-Notes `docs/release-notes/vX.Y.Z.md` und Changelog `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt` geschrieben (SEC-LEGAL-01).
+2. `versionCode` +1, `versionName` gesetzt; Release-Notes `docs/release-notes/vX.Y.Z.md` und Changelog `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt` geschrieben (SEC-LEGAL-01). Die Notes-Datei enthält nur die Änderungen; SHA-256 und Fingerprint kommen in Schritt 7 dazu. Versionsangaben nachziehen: „Neueste Version“ im README, „Unterstützte Version“ in diesem Dokument und der Stand in `THIRD_PARTY_LICENSES.md`; Markierungen „ab Version X.Y.Z“ in README und Datenschutzerklärung bleiben gültig.
 3. Release-Commit `vX.Y.Z: …` und annotierter Tag `git tag -a vX.Y.Z` gepusht.
 4. Im frischen Worktree des Tags mit JDK 17 bauen: `git worktree add ../atemkraft-rel vX.Y.Z`, dort mit `ATEMKRAFT_KEYSTORE_PROPERTIES=<pfad>` (`storeFile` absolut oder relativ zur Properties-Datei) `scripts/build.sh clean assembleRelease`; Signatur-Geheimnisse nach SEC-BUILD-02. Fehlt der Key, entsteht nur eine unsignierte APK (Warnung), die Schritt 5 abfängt.
-5. `scripts/verify-apk.sh <apk> --tag vX.Y.Z` grün. Mindestens: `apksigner verify --print-certs` zeigt `75022def…1890`, **Abbruch bei unsignierter APK oder `CN=Android Debug`**.
+5. `scripts/verify-apk.sh <apk> --tag vX.Y.Z` grün. Mindestens: `apksigner verify --print-certs` zeigt `75022def…1890`, **Abbruch bei unsignierter APK oder `CN=Android Debug`**. Solange das Skript fehlt: `$ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs <apk>` muss `Signer #1 certificate DN: CN=grenzenloseSchublade, O=Atemkraft` und `Signer #1 certificate SHA-256 digest: 75022defe65aa24e223f3e79880f09f423456757002ff0b33ba2ae29b9f41890` zeigen.
 6. Auf einem Gerät als Update über die Vorversion installieren: kein Signaturkonflikt, Logbuch bleibt, kurzer Test von Atem-Session, Meditation und Stimme.
-7. APK als `atemkraft-vX.Y.Z.apk` benennen; Release-Body = Notes-Datei + Block mit SHA-256 und Fingerprint-Verweis.
+7. APK als `atemkraft-vX.Y.Z.apk` benennen; Release-Body als eigene Datei außerhalb des Repo-Baums = Notes-Datei + Block mit SHA-256 (`sha256sum atemkraft-vX.Y.Z.apk`, Zeile „SHA-256 der APK:“ wie bei v1.5.1) und Verweis auf den Fingerprint ([Echtheit einer APK prüfen](#echtheit-einer-apk-prüfen)).
 8. `gh release create vX.Y.Z atemkraft-vX.Y.Z.apk --title … --notes-file <datei>`. Ein Asset wird nie ersetzt (SEC-BUILD-05).
-9. CI `release-verify` grün, sonst manuell: Asset laden, Hash vergleichen.
+9. CI `release-verify` grün, sonst manuell: Asset mit `gh release download vX.Y.Z` laden, `sha256sum` mit dem Release-Body und `apksigner` wie in Schritt 5 vergleichen.
 10. Play (sobald aktiv): `scripts/build.sh bundleRelease`, 16-KB-Alignment per `bundletool dump config` prüfen, mit Upload-Key hochladen; Formulare gegen SEC-DIST-03 prüfen.
 11. F-Droid (sobald aktiv): `rebuild-compare` grün oder lokal `apksigcopier compare` gegen einen Rebuild im sauberen Klon; Rezept (`Binaries:`, `AllowedAPKSigningKeys:`, Anti-Features) aktuell.
 12. Worktree entfernen, lokale APK/AAB löschen.

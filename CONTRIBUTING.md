@@ -103,6 +103,10 @@ Danach `scripts/check.sh`: Der `ContentRulesTest` prüft u. a. Teaser-Länge, An
 - Bei sichtbaren Änderungen bitte Screenshots vorher und nachher in den Pull Request.
 - Mit dem Einreichen stimmst du zu, dass dein Beitrag unter der [MIT-Lizenz](LICENSE) des Projekts steht.
 
+## Releases
+
+Releases baut und signiert nur der Maintainer. Der Ablauf steht in der [Release-Checkliste](docs/SECURITY.md#release-checkliste): `versionCode` um 1 erhöhen, Release-Notes unter `docs/release-notes/vX.Y.Z.md` und kurzer Changelog unter `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt`, Tag, Build aus einem frischen Checkout des Tags, Signatur mit `apksigner` gegen den Fingerabdruck prüfen, dann `gh release create` mit `atemkraft-vX.Y.Z.apk` und den Notes samt SHA-256 der APK. Für Release-Notes und Store-Texte gelten dieselben Textregeln wie in der App (STYLEGUIDE TEXT-09, TEXT-11).
+
 ## Fragen
 
 Für Fragen ein Issue eröffnen. Vertrauliches (z. B. Sicherheitslücken) über [Private Vulnerability Reporting](https://github.com/grenzenloseSchublade/atemkraft/security/advisories/new).

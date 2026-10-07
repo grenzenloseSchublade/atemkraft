@@ -19,16 +19,16 @@ Atemkraft ist eine Wellness-App und kein Medizinprodukt. Sie ersetzt keinen Rat 
 <a id="funktionen"></a>
 ## Funktionen
 
-Beschrieben ist der aktuelle Entwicklungsstand (`main`). Was die neueste Release-Version 1.5.1 noch nicht hat, ist mit *ab nächster Version* markiert.
+Beschrieben ist der aktuelle Entwicklungsstand (`main`). Was die neueste Release-Version 1.5.1 noch nicht hat, ist mit *ab Version 1.6.0* markiert.
 
 - **Atmen:** 16 Atemtechniken in vier Gruppen (Herunterregeln, Hochregeln, Balancieren, Funktionell), z. B. Resonanz-Atmung, 4-7-8, Box-Atmung, Lippenbremse. Jede Übung hat Anleitung, Einordnung der Studienlage, Sicherheitshinweise und Quellenangaben, in der Regel mit DOI oder PMID. Bei getakteten Übungen lassen sich Ein-, Aus- und Halte-Zeiten anpassen; die Anpassung bleibt pro Übung gespeichert. Vor Wim Hof und Feueratmung erscheint ein Sicherheitshinweis, beim ersten Mal immer.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar. Eine laufende Sitzung lässt sich zu einer Leiste verkleinern.
 - **Muster des Tages:** jeden Tag ein neues, zufällig erzeugtes Atemmuster, gleich für alle am selben Tag. Es bleibt in festen Grenzen (ruhige Muster: 8,5–13 s pro Atemzug, Ausatmen mindestens so lang wie Einatmen, Halten höchstens 4 s; sanft aktivierende: 6–9 s, Halten höchstens 2 s). Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern; gespeicherte stehen unter „Meine Muster“.
-- **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen. *Ab nächster Version* mit Suche nach deinem Befinden („Wie fühlst du dich?“): Sie läuft ohne Netz und wird nicht gespeichert.
+- **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen. *Ab Version 1.6.0* mit Suche nach deinem Befinden („Wie fühlst du dich?“): Sie läuft ohne Netz und wird nicht gespeichert.
 - **Meditation:** Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer von sieben deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
 - **Logbuch:** abgeschlossene Sitzungen mit Wochenübersicht, Tagen in Folge und Minuten gesamt; lässt sich jederzeit leeren.
 - **Begriffe erklärt:** ein Glossar für Fachwörter wie HRV oder Vagus.
-- **Daten sichern** (*ab nächster Version*): gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
+- **Daten sichern** (*ab Version 1.6.0*): gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
 
 <a id="installieren"></a>
 ## Installieren
@@ -72,7 +72,7 @@ Alle Einzelheiten, auch was bis Version 1.5.1 anders ist: [Datenschutzerklärung
 | Berechtigung | Wofür |
 |---|---|
 | `INTERNET` | nur das Laden einer Stimme |
-| `VIBRATE` | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; mit dem Schalter „Vibration“ abschaltbar, den Tick erst ab nächster Version |
+| `VIBRATE` | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; mit dem Schalter „Vibration“ abschaltbar, den Tick erst ab Version 1.6.0 |
 | `WAKE_LOCK` | hält den Prozessor während einer Meditation wach, damit Gongs pünktlich kommen |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
 | `POST_NOTIFICATIONS` | Benachrichtigung „Meditation läuft“ mit „Beenden“; ohne sie läuft der Timer trotzdem |

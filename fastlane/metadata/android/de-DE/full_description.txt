@@ -1,0 +1,24 @@
+Atemkraft ist eine App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 16 Atemtechniken; zu jeder steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen. Dazu ein Meditations-Timer und ein Logbuch.
+
+Ohne Konto, ohne Werbung, ohne Tracking. Die App läuft offline; Netz braucht sie nur, wenn du eine Stimme lädst.
+
+Funktionen
+
+- Atmen: 16 Atemtechniken in vier Gruppen (Herunterregeln, Hochregeln, Balancieren, Funktionell), z. B. Resonanz-Atmung, 4-7-8, Box-Atmung, Lippenbremse. Jede Übung hat Anleitung, Einordnung der Studienlage, Sicherheitshinweise und Quellenangaben, in der Regel mit DOI oder PMID. Bei getakteten Übungen lassen sich Ein-, Aus- und Halte-Zeiten anpassen; die Anpassung bleibt pro Übung gespeichert. Vor Wim Hof und Feueratmung erscheint ein Sicherheitshinweis, beim ersten Mal immer.
+- Sitzung: Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar.
+- Muster des Tages: jeden Tag ein neues, zufällig erzeugtes Atemmuster in festen Grenzen. Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern.
+- Situationen: Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen und einer Suche nach deinem Befinden. Die Suche läuft ohne Netz und wird nicht gespeichert.
+- Meditation: Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine Sprachanleitung mit der Sprachausgabe deines Geräts oder mit einer von sieben deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
+- Logbuch: abgeschlossene Sitzungen mit Wochenübersicht, Tagen in Folge und Minuten gesamt; lässt sich jederzeit leeren.
+- Begriffe erklärt: ein Glossar für Fachwörter wie HRV oder Vagus.
+- Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
+
+Datenschutz
+
+Atemkraft erhebt keine Daten über dich: kein Konto, kein Server, keine Analyse, keine Werbung, keine Absturzberichte, keine Google Play Services. Logbuch, Muster und Einstellungen bleiben auf deinem Gerät; die App ist vom Android-Cloud-Backup ausgeschlossen. Einzige Netzverbindung: Tippst du bei einer Stimme auf „Laden“, holt die App sie von GitHub (Projekt sherpa-onnx) und prüft sie gegen eine fest hinterlegte Prüfsumme. GitHub sieht dabei u. a. deine IP-Adresse.
+
+Lizenzen
+
+Der Quellcode steht unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later) über sherpa-onnx; Lizenztexte liegen in der App. Die Stimmen haben eigene Lizenzen: Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben, für GLaDOS gibt es keine Lizenzangabe. Vollständige Liste in der App unter Über Atemkraft → Lizenzen.
+
+Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. Für medizinischen Rat wende dich an Fachpersonal.

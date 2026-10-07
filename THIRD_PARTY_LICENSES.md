@@ -2,7 +2,7 @@
 
 Was in der App steckt, was sie auf Wunsch lädt und unter welchen Bedingungen. Gegenstück in der App: *Einstellungen → Über Atemkraft → Lizenzen*.
 
-- **Stand:** 2026-10-07, App-Version 1.5.1 (`versionCode` 17).
+- **Stand:** 2026-10-07, gilt für App-Version 1.5.1 (`versionCode` 17) und 1.6.0 (`versionCode` 18). Die Laufzeit-Abhängigkeiten und `app/libs/` sind zwischen beiden gleich; seit 1.5.1 kamen nur Test- und Prüfwerkzeuge hinzu, die nicht in die APK gehen.
 - **Belege:** Lizenzangaben aus Maven-POMs, `LICENSE`/`COPYING`-Dateien der Upstream-Repos am genannten Tag oder Commit und den Modellkarten der Stimmen. Der Inhalt der APK ist mit `unzip -l` an der Release-APK v1.5.1 geprüft, die gebündelten Bibliotheken über die Build-Skripte von sherpa-onnx v1.13.6 und Zeichenketten in `libsherpa-onnx-jni.so`.
 - **Keine Rechtsberatung.** Die Einordnungen unten geben Lizenztexte und veröffentlichte Auffassungen wieder.
 

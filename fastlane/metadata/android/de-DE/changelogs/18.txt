@@ -1,0 +1,10 @@
+- Suche nach Befinden im Tab Situationen, ohne Netz und ohne Speichern
+- Situationen aufklappbar, „Meine Muster“ ab drei einklappbar
+- Muster des Tages per Lesezeichen speichern
+- Muster als Datei exportieren und importieren
+- Kein Cloud-Backup mehr
+- Stimme laden ohne Gerätedaten, mit Prüfsumme
+- Lizenzen in der App
+- Tick am Kreis folgt dem Schalter „Vibration“
+- Kleinere Schrift, kein Wortbruch
+- Fester Zurück-Pfeil

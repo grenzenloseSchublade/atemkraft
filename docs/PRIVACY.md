@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche und Export-Datei gibt es erst ab der nächsten Version.
+- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche und Export-Datei gibt es erst ab Version 1.6.0.
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
@@ -21,7 +21,7 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 | Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien, Download je ca. 25–110 MB) | „Stimme löschen“ in den Einstellungen |
 | Zwischenspeicher | ein abgebrochener oder laufender Download | wird beim nächsten Versuch ersetzt; Android leert ihn bei Speichermangel |
 
-Die Befindens-Suche im Situationen-Tab (ab der nächsten Version) wird nicht gespeichert: Der Suchtext lebt nur, solange die Suche offen ist, und die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
+Die Befindens-Suche im Situationen-Tab (ab Version 1.6.0) wird nicht gespeichert: Der Suchtext lebt nur, solange die Suche offen ist, und die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
 
 Das Logbuch kann Rückschlüsse auf dein Befinden zulassen, weil manche Übungen zu bestimmten Anlässen passen. Die App gibt es deshalb nur auf deinen ausdrücklichen Wunsch weiter (siehe [Handywechsel](#wechsel)). Beim Deinstallieren löscht Android alle Daten der App.
 
@@ -35,7 +35,7 @@ Wenn du in den Einstellungen bei einer Stimme auf „Laden“ tippst, lädt die 
 | Adresse | `https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/<stimme>.tar.bz2`, von dort weitergeleitet zu `release-assets.githubusercontent.com` |
 | Auslöser | nur dein Tippen auf „Laden“; nie automatisch oder im Hintergrund |
 | Was GitHub dabei sieht | deine IP-Adresse, Zeitpunkt, die angefragte Datei und den User-Agent der App |
-| User-Agent | ab der nächsten Version nur `Atemkraft/<Version>`. **Bis einschließlich Version 1.5.1** sendet die App den Standard von Android, der Android-Version und Gerätemodell enthält (z. B. `Dalvik/2.1.0 (Linux; U; Android 14; <Modell> Build/…)`). |
+| User-Agent | ab Version 1.6.0 nur `Atemkraft/<Version>`. **Bis einschließlich Version 1.5.1** sendet die App den Standard von Android, der Android-Version und Gerätemodell enthält (z. B. `Dalvik/2.1.0 (Linux; U; Android 14; <Modell> Build/…)`). |
 | Was nicht übertragen wird | keine Kennung, kein Konto, keine Daten aus der App |
 | Empfänger | GitHub, Inc. (ein Unternehmen von Microsoft, USA). Für die Verarbeitung dort gilt das [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Der Anbieter von Atemkraft hat keinen Zugriff auf diese Daten. |
 
@@ -53,7 +53,7 @@ Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läu
 
 ## Export-Datei
 
-Ab der nächsten Version kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Zeitpunkt des Speicherns und die Anpassungen dieser Muster, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
+Ab Version 1.6.0 kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Zeitpunkt des Speicherns und die Anpassungen dieser Muster, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
 
 <a id="wechsel"></a>
 ## Kein Cloud-Backup, Handywechsel
