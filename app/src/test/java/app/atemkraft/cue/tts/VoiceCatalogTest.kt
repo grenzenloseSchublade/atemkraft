@@ -3,6 +3,7 @@ package app.atemkraft.cue.tts
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /** Integrität des Stimmen-Katalogs: eindeutige Ids, gepinnte Prüfsummen, Ableitungen aus dem Piper-Schema. */
 class VoiceCatalogTest {
@@ -65,6 +66,19 @@ class VoiceCatalogTest {
         listOf("miro", "dii").forEach { id ->
             assertTrue(id, VoiceCatalog.byId(id)!!.license.contains("NC"))
         }
+    }
+
+    @Test
+    fun `GLaDOS ist entfernt, weil das Modell keine Lizenz hat (SEC-LEGAL-03)`() {
+        assertEquals(null, VoiceCatalog.byId("glados"))
+        assertTrue(VoiceCatalog.all.none { it.dirName.contains("glados") })
+    }
+
+    @Test
+    fun `jede Hoerprobe gehoert zu einer Stimme und umgekehrt`() {
+        val dir = listOf(File("src/main/assets"), File("app/src/main/assets")).first { it.isDirectory }
+        val files = File(dir, "voice_samples").listFiles().orEmpty().map { "voice_samples/${it.name}" }.toSet()
+        assertEquals(VoiceCatalog.all.map { it.sampleAsset }.toSet(), files)
     }
 
     @Test

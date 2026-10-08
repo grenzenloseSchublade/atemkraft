@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-07, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
+- **Stand:** 2026-10-08, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
@@ -18,7 +18,7 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 | Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | „Logbuch leeren“ im Logbuch; App-Speicher löschen |
 | Eigene Muster (Datenbank) | Name, Phasenlängen und Art (aktivierend oder nicht) gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen unter „Meine Muster“ |
 | Einstellungen | Ton, Haptik, Hinweise (auch, ob du den Sicherheitshinweis vor intensiven Übungen bestätigt hast), Meditation, gewählte Stimme, Anpassungen pro Übung, ob „Meine Muster“ aufgeklappt ist | pro Übung zurücksetzen; App-Speicher löschen |
-| Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien, Download je ca. 25–110 MB) | „Stimme löschen“ in den Einstellungen |
+| Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien, Download je ca. 25–110 MB) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |
 | Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Versuch. Den Download-Cache leert Android auch bei Speichermangel |
 
 Die Befindens-Suche im Situationen-Tab (ab Version 1.6.0) wird nicht gespeichert: Der Suchtext bleibt nur erhalten, solange die Suche offen ist (auch beim Drehen oder wenn Android die App im Hintergrund beendet und du zurückkehrst), und ist weg, sobald du die Suche schließt. Die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
@@ -45,7 +45,7 @@ Links im Über-Screen (Quellcode, diese Erklärung, Lizenzen) öffnen deinen Bro
 
 ## Sprachausgabe des Systems
 
-Hast du keine Stimme geladen oder gewählt, kann die gesprochene Meditationsanleitung die Sprachausgabe deines Geräts nutzen. Sie erhält nur die festen Ansagetexte der App, nie Daten aus Logbuch oder Einstellungen. Die App wählt dabei eine deutsche Stimme, die kein Netz braucht, sofern eine installiert ist. Ob die Sprachausgabe selbst eine Netzverbindung nutzt, hängt von der installierten Sprach-App ab, nicht von Atemkraft.
+Hast du keine Stimme geladen oder gewählt, kann die gesprochene Meditationsanleitung die Sprachausgabe deines Geräts nutzen. Das gilt auch, wenn du bis Version 1.5.1 GLaDOS gewählt hattest; ab Version 1.6.0 vergisst die App diese Wahl. Sie erhält nur die festen Ansagetexte der App, nie Daten aus Logbuch oder Einstellungen. Die App wählt dabei eine deutsche Stimme, die kein Netz braucht, sofern eine installiert ist. Ob die Sprachausgabe selbst eine Netzverbindung nutzt, hängt von der installierten Sprach-App ab, nicht von Atemkraft.
 
 ## Benachrichtigung
 

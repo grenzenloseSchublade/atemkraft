@@ -5,6 +5,7 @@
 - Kein Cloud-Backup mehr
 - Stimme laden ohne Gerätedaten, mit Prüfsumme
 - Lizenzen in der App
+- Stimme GLaDOS entfernt (keine Lizenz)
 - Tick am Kreis folgt dem Schalter „Vibration“
 - Kleinere Schrift, kein Umbruch mitten im Wort
 - Fester Zurück-Pfeil

@@ -77,7 +77,7 @@ Der vollständige Quellstand des AAR ist der Tag [`v1.13.6` von k2-fsa/sherpa-on
 | App-Symbol (`ic_launcher_foreground`) | eigene Gestaltung (konzentrische Atemringe) | MIT wie die App |
 | Töne und Gong | zur Laufzeit im Code synthetisiert (`ToneCuePlayer`, `ContinuousTonePlayer`); keine Audiodateien | MIT wie die App |
 | Schriften | keine gebündelt; die App nutzt die Systemschrift | – |
-| Hörproben `assets/voice_samples/*.mp3` (7 Dateien, je 2–4 s) | mit der jeweiligen Stimme erzeugt (Abtastrate passt zum Modell: 16 kHz bei „low“/„x_low“, 22,05 kHz bei „high“) | siehe [Stimmen](#stimmen). Ob eine Modelllizenz auch für damit erzeugtes Audio gilt, ist rechtlich nicht eindeutig; die Proben sind deshalb vorsorglich mit der Lizenz und Namensnennung ihrer Stimme aufgeführt. |
+| Hörproben `assets/voice_samples/*.mp3` (6 Dateien, je 2–4 s) | mit der jeweiligen Stimme erzeugt (Abtastrate passt zum Modell: 16 kHz bei „low“/„x_low“, 22,05 kHz bei „high“) | siehe [Stimmen](#stimmen). Ob eine Modelllizenz auch für damit erzeugtes Audio gilt, ist rechtlich nicht eindeutig; die Proben sind deshalb vorsorglich mit der Lizenz und Namensnennung ihrer Stimme aufgeführt. |
 | Texte, Übungen, Quellenangaben | eigene Inhalte; Studien sind zitiert (`data/Refs.kt`), nicht übernommen | MIT wie die App |
 
 <a id="stimmen"></a>
@@ -93,7 +93,6 @@ Die App lädt eine Stimme nur nach ausdrücklichem Tippen aus der Release [`tts-
 | Kerstin | `vits-piper-de_DE-kerstin-low` | Trainingsdaten CC0 1.0; keine eigene Modelllizenz genannt | Datensatz [rhasspy/dataset-voice-kerstin](https://github.com/rhasspy/dataset-voice-kerstin); Modell aus [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices/blob/main/de/de_DE/kerstin/low/MODEL_CARD) | laut Modellkarte feinjustiert aus der englischen Stimme „ryan“, deren Trainingsdaten unter CC BY-NC-SA 4.0 stehen |
 | Ramona | `vits-piper-de_DE-ramona-low` | Trainingsdaten unter der M-AILABS-Lizenz (BSD-artig: Weitergabe und kommerzielle Nutzung mit Copyright-Hinweis) | M-AILABS Speech Dataset, Aufnahmen von LibriVox (gemeinfrei); Modell aus [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices/blob/main/de/de_DE/ramona/low/MODEL_CARD) | von Grund auf trainiert; die Website des Datensatzes (caito.de) ist offline, Lizenztext über das [Internet Archive](https://web.archive.org/web/2023/https://www.caito.de/2019/01/03/the-m-ailabs-speech-dataset/) |
 | Eva | `vits-piper-de_DE-eva_k-x_low` | wie Ramona | wie Ramona ([Modellkarte](https://huggingface.co/rhasspy/piper-voices/blob/main/de/de_DE/eva_k/x_low/MODEL_CARD)) | von Grund auf trainiert |
-| GLaDOS | `vits-piper-de_DE-glados-high` | **keine Lizenzangabe** | [systemofapwne/piper-de-glados](https://huggingface.co/systemofapwne/piper-de-glados) | laut Autor aus Thorsten (high) feinjustiert, mit den deutschen Sprachdateien von „Portal“ und „Portal 2“, die er als geistiges Eigentum von Valve bezeichnet; Name und Figur gehören Valve. Die Rechtslage der Weitergabe ist ungeklärt. |
 
 Copyright-Hinweis der M-AILABS-Lizenz: „Copyright (c) 2017-2019 by the original creators @ M-AILABS“.
 

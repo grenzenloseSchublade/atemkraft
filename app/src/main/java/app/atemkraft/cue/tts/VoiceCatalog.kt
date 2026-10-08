@@ -1,7 +1,7 @@
 package app.atemkraft.cue.tts
 
 /** Geschlecht/Charakter einer Stimme – steuert Icon/Label im UI. */
-enum class VoiceGender { MALE, FEMALE, SPECIAL }
+enum class VoiceGender { MALE, FEMALE }
 
 /**
  * Beschreibung einer neuronalen deutschen Stimme (Piper via sherpa-onnx). Alle Modelle stammen
@@ -126,19 +126,12 @@ object VoiceCatalog {
             license = "Daten M-AILABS",
             rightsHolder = "M-AILABS, Aufnahmen von LibriVox",
         ),
-        VoiceSpec(
-            "glados",
-            "GLaDOS",
-            VoiceGender.SPECIAL,
-            "Roboter · Spaß",
-            "vits-piper-de_DE-glados-high",
-            "voice_samples/glados.mp3",
-            sizeBytes = 115_594_308L,
-            sha256 = "77a041d0f7a0a6a27bf6e260aa5de0d17ad0772d46a815e83f0594bd498291f6",
-            license = "ohne Lizenzangabe",
-            rightsHolder = "systemofapwne, aus Spieldateien von Valve",
-        ),
     )
 
+    /**
+     * Stimme zur Id; null auch für Ids, die nicht mehr im Katalog stehen (GLaDOS, bis 1.5.1
+     * enthalten, wegen fehlender Lizenz entfernt). Wer so eine Id gespeichert hat, bekommt
+     * dieselbe Behandlung wie ohne gewählte Stimme.
+     */
     fun byId(id: String?): VoiceSpec? = all.firstOrNull { it.id == id }
 }

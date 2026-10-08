@@ -25,7 +25,7 @@ Beschrieben ist der aktuelle Entwicklungsstand (`main`). Was die neueste Release
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar. Eine laufende Sitzung lässt sich zu einer Leiste verkleinern.
 - **Muster des Tages:** jeden Tag ein neues, zufällig erzeugtes Atemmuster, gleich für alle am selben Tag. Es bleibt in festen Grenzen (ruhige Muster: 8,5–13 s pro Atemzug, Ausatmen mindestens so lang wie Einatmen, Halten höchstens 4 s; sanft aktivierende: 6–9 s, Halten höchstens 2 s). Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern; gespeicherte stehen unter „Meine Muster“.
 - **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen. *Ab Version 1.6.0* mit Suche nach deinem Befinden („Wie fühlst du dich?“): Sie läuft ohne Netz und wird nicht gespeichert.
-- **Meditation:** Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer von sieben deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
+- **Meditation:** Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer von sechs deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
 - **Logbuch:** abgeschlossene Sitzungen mit Wochenübersicht, Tagen in Folge und Minuten gesamt; lässt sich jederzeit leeren.
 - **Begriffe erklärt:** ein Glossar für Fachwörter wie HRV oder Vagus.
 - **Daten sichern** (*ab Version 1.6.0*): gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
@@ -117,7 +117,7 @@ ui/       theme/, components/ und je Screen ein Paket
 <a id="projektstand"></a>
 ## Projektstand
 
-- **Neueste Version:** [1.5.1](https://github.com/grenzenloseSchublade/atemkraft/releases/latest). Seitdem auf `main`: Befindens-Suche, Export und Import der Muster, kein Cloud-Backup mehr, Feinschliff an Schrift und Bedienelementen sowie viele kleine Korrekturen.
+- **Neueste Version:** [1.5.1](https://github.com/grenzenloseSchublade/atemkraft/releases/latest). Seitdem auf `main`: Befindens-Suche, Export und Import der Muster, kein Cloud-Backup mehr, die Stimme GLaDOS entfernt (keine Lizenz), Feinschliff an Schrift und Bedienelementen sowie viele kleine Korrekturen.
 - **Verteilung:** GitHub-Releases. Wegen der vorkompilierten sherpa-onnx-Bibliothek (`app/libs/*.aar`) passt die App nicht ins Haupt-Repo von F-Droid, das alles aus dem Quellcode baut; IzzyOnDroid wäre ein passender Kanal.
 - **Ideen:** eigene Übungen per Editor, Wear OS, Widgets. Eine eigene Stimme für die Meditationsanleitung: Anleitung in [docs/VOICE_CLONING.md](docs/VOICE_CLONING.md).
 - **iOS:** Recherche und Plan, noch nicht umgesetzt: [docs/IOS_PLAN.md](docs/IOS_PLAN.md).
@@ -129,4 +129,4 @@ Der Quellcode von Atemkraft steht unter der [MIT-Lizenz](LICENSE): frei wiederve
 
 Die verteilte APK enthält zusätzlich Bausteine unter Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, MPL-2.0, Unlicense und der Unicode-Lizenz sowie **eSpeak NG unter GPL-3.0-or-later** (statisch in der sherpa-onnx-Bibliothek). Nach Auffassung der FSF gilt deshalb für die Weitergabe der APK als Ganzes die GPL-3.0: Lizenztexte beilegen (liegen in der APK unter `assets/licenses/`) und den Quellcode zugänglich machen (dieses Repo plus sherpa-onnx v1.13.6 mit den dort gepinnten Bibliotheken).
 
-Die Stimmen sind nicht in der APK; die App lädt sie auf Wunsch, jede mit eigener Lizenz. Miro und Dii stehen unter CC BY-NC-ND 4.0 (nur nicht kommerziell), GLaDOS hat keine Lizenzangabe. Vollständige Liste mit Versionen, Rechteinhabern und Belegen: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); in der App unter *Über Atemkraft → Lizenzen*. Keine Rechtsberatung.
+Die Stimmen sind nicht in der APK; die App lädt sie auf Wunsch, jede mit eigener Lizenz. Miro und Dii stehen unter CC BY-NC-ND 4.0 (nur nicht kommerziell). Vollständige Liste mit Versionen, Rechteinhabern und Belegen: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md); in der App unter *Über Atemkraft → Lizenzen*. Keine Rechtsberatung.

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SoundMode
@@ -82,8 +83,27 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[Keys.MED_GONG_LONG] = long }
     }
 
-    /** Aktive neuronale Stimme ([app.atemkraft.cue.tts.VoiceCatalog]-Id); null = keine gewählt. */
-    val neuralVoiceId: Flow<String?> = context.dataStore.data.map { it[Keys.MED_NEURAL_VOICE] }
+    /**
+     * Aktive neuronale Stimme ([VoiceCatalog]-Id); null = keine gewählt. Eine gespeicherte Id, die
+     * nicht mehr im Katalog steht (GLaDOS bis 1.5.1), zählt als keine Wahl: Die Anleitung nutzt dann
+     * die Sprachausgabe des Geräts. Bereinigt wird sie über [dropUnknownNeuralVoice].
+     */
+    val neuralVoiceId: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[Keys.MED_NEURAL_VOICE]?.takeIf { VoiceCatalog.byId(it) != null }
+    }
+
+    /** Entfernt eine gespeicherte Stimmen-Id, die nicht mehr im Katalog steht; true, wenn eine entfernt wurde. */
+    suspend fun dropUnknownNeuralVoice(): Boolean {
+        var dropped = false
+        context.dataStore.edit { prefs ->
+            val id = prefs[Keys.MED_NEURAL_VOICE]
+            if (id != null && VoiceCatalog.byId(id) == null) {
+                prefs.remove(Keys.MED_NEURAL_VOICE)
+                dropped = true
+            }
+        }
+        return dropped
+    }
 
     suspend fun setNeuralVoiceId(voiceId: String?) {
         context.dataStore.edit { prefs ->

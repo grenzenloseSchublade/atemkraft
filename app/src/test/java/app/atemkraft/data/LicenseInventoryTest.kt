@@ -25,6 +25,13 @@ class LicenseInventoryTest {
     }
 
     @Test
+    fun `THIRD_PARTY_LICENSES nennt die Zahl der Hoerproben und keine entfernte Stimme`() {
+        val n = moduleFile("src/main/assets/voice_samples").listFiles().orEmpty().count { it.isFile }
+        assertTrue("Hörproben-Zahl $n fehlt", inventory.contains("($n Dateien"))
+        assertTrue("GLaDOS steht noch in der Liste", !inventory.contains("glados", ignoreCase = true))
+    }
+
+    @Test
     fun `jeder Baustein der App-Liste steht in THIRD_PARTY_LICENSES`() {
         ThirdParty.components.forEach { c ->
             // Erstes Wort des Namens genügt („sherpa-onnx 1.13.6“ → „sherpa-onnx“).

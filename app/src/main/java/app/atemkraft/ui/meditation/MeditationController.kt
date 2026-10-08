@@ -90,10 +90,14 @@ class MeditationController(
         scope.launch {
             settingsRepository.cueSettings.collect { audio.updateVolume(it.volume) }
         }
-        // Persistierte neuronale Stimmen-Wahl anwenden (lädt sie, sobald installiert).
+        // Persistierte neuronale Stimmen-Wahl anwenden (lädt sie, sobald installiert). Eine Wahl,
+        // die nicht mehr im Katalog steht (GLaDOS bis 1.5.1), liefert der Flow schon als null;
+        // hier wird sie auch aus den Einstellungen entfernt. Auf IO, weil DataStore den edit-Block
+        // im Kontext des Aufrufers ausführt und der Main-Thread beim App-Start nicht warten soll.
         scope.launch {
             settingsRepository.neuralVoiceId.collect { audio.setActiveVoice(it) }
         }
+        scope.launch(Dispatchers.IO) { settingsRepository.dropUnknownNeuralVoice() }
         // Gong-Ausklang (lang/kurz) übernehmen.
         scope.launch {
             settingsRepository.gongLong.collect { audio.setGongLong(it) }

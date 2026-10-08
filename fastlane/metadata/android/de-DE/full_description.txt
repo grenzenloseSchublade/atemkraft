@@ -8,7 +8,7 @@ Funktionen
 - Sitzung: Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar.
 - Muster des Tages: jeden Tag ein neues, zufällig erzeugtes Atemmuster in festen Grenzen. Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern.
 - Situationen: Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen und einer Suche nach deinem Befinden. Die Suche läuft ohne Netz und wird nicht gespeichert.
-- Meditation: Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine Sprachanleitung mit der Sprachausgabe deines Geräts oder mit einer von sieben deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
+- Meditation: Timer (Schnellwahl 5–90 min, frei 1–120 min) oder offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine Sprachanleitung mit der Sprachausgabe deines Geräts oder mit einer von sechs deutschen Stimmen, die du vor dem Laden anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
 - Logbuch: abgeschlossene Sitzungen mit Wochenübersicht, Tagen in Folge und Minuten gesamt; lässt sich jederzeit leeren.
 - Begriffe erklärt: ein Glossar für Fachwörter wie HRV oder Vagus.
 - Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
@@ -19,6 +19,6 @@ Atemkraft erhebt keine Daten über dich: kein Konto, kein eigener Server, keine 
 
 Lizenzen
 
-Der Quellcode steht unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later) über sherpa-onnx; Lizenztexte liegen in der App. Die Stimmen haben eigene Lizenzen: Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben, für GLaDOS gibt es keine Lizenzangabe. Übersicht in der App unter Über Atemkraft → Lizenzen; die vollständige Liste mit Versionen und Belegen steht im Quellcode-Repo auf GitHub (THIRD_PARTY_LICENSES.md).
+Der Quellcode steht unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later) über sherpa-onnx; Lizenztexte liegen in der App. Die Stimmen haben eigene Lizenzen: Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben. Übersicht in der App unter Über Atemkraft → Lizenzen; die vollständige Liste mit Versionen und Belegen steht im Quellcode-Repo auf GitHub (THIRD_PARTY_LICENSES.md).
 
 Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. Für medizinischen Rat wende dich an Fachpersonal.

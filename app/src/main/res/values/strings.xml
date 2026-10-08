@@ -255,7 +255,6 @@
     <string name="cd_voice_cancel">Download abbrechen</string>
     <string name="voice_gender_male">männlich</string>
     <string name="voice_gender_female">weiblich</string>
-    <string name="voice_gender_special">Spezial</string>
     <string name="voice_size_mb">~%1$d MB</string>
     <string name="voice_loading">lädt …</string>
     <string name="voice_failed_short">Fehler – erneut versuchen</string>
@@ -270,7 +269,7 @@
     <string name="about_licenses_app">In der App</string>
     <string name="about_licenses_gpl">Über sherpa-onnx enthält die App eSpeak NG (GPL-3.0); für die Weitergabe der App gelten daher auch deren Bedingungen. Den Quellcode aller Bestandteile nennt die vollständige Liste.</string>
     <string name="about_licenses_voices">Stimmen</string>
-    <string name="about_licenses_voices_note">Die Stimmen lädst du auf Wunsch direkt von GitHub (Projekt sherpa-onnx); Atemkraft enthält nur kurze Hörproben. Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben, für GLaDOS gibt es keine Lizenzangabe.</string>
+    <string name="about_licenses_voices_note">Die Stimmen lädst du auf Wunsch direkt von GitHub (Projekt sherpa-onnx); Atemkraft enthält nur kurze Hörproben. Miro und Dii sind nur für nicht kommerzielle Nutzung freigegeben.</string>
     <string name="about_license_line">%1$s · %2$s</string>
     <string name="about_licenses_link">Vollständige Liste und Lizenztexte</string>
 

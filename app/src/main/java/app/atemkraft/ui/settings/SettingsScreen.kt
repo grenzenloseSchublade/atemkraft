@@ -482,7 +482,6 @@ private fun voiceSubtitle(
     val gender = when (spec.gender) {
         VoiceGender.MALE -> stringResource(R.string.voice_gender_male)
         VoiceGender.FEMALE -> stringResource(R.string.voice_gender_female)
-        VoiceGender.SPECIAL -> stringResource(R.string.voice_gender_special)
     }
     val base = "$gender · ${spec.qualityLabel} · ${spec.license}"
     val extra = when (state) {

@@ -24,6 +24,12 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 
 /** User-Agent des Stimm-Downloads: nur App-Name und Version, keine Gerätedaten. */
@@ -72,6 +78,12 @@ class VoiceModelManager(context: Context) {
 
     /** Zustand je Stimmen-Id. */
     val states: StateFlow<Map<String, VoiceDownloadState>> = _states.asStateFlow()
+
+    init {
+        // Modelle von Stimmen, die nicht mehr im Katalog stehen (GLaDOS bis 1.5.1, ca. 110 MB),
+        // kann niemand mehr wählen oder löschen: Speicher beim Start freigeben.
+        scope.launch { deleteOrphanVoiceDirs(baseDir, VoiceCatalog.all) }
+    }
 
     private fun dirOf(spec: VoiceSpec) = File(baseDir, spec.dirName)
     private fun onnxOf(spec: VoiceSpec) = File(dirOf(spec), spec.onnxName)
@@ -299,4 +311,46 @@ internal fun extractTarBz2Safely(archive: File, targetDir: File, checkActive: ()
             entry = tar.nextEntry
         }
     }
+}
+
+/** Namen, die ein Stimmordner in `files/tts` haben kann: Zielordner oder Staging-Ordner (Piper-Schema). */
+private val VOICE_DIR_NAME = Regex("""^vits-piper-[A-Za-z0-9_-]+$|^\.vits-piper-[A-Za-z0-9_-]+\.staging$""")
+
+/**
+ * Löscht in [baseDir] die Stimmordner, die zu keiner Stimme aus [catalog] gehören, und liefert
+ * ihre Namen. Vorsichtig: nur direkte Unterordner mit dem Namensmuster eines Stimm- oder
+ * Staging-Ordners; Symlinks werden weder gelöscht noch verfolgt, auch nicht innerhalb eines
+ * Ordners (dort wird nur der Link selbst entfernt). Fehler lassen den Ordner stehen.
+ */
+internal fun deleteOrphanVoiceDirs(baseDir: File, catalog: List<VoiceSpec>): List<String> {
+    if (Files.isSymbolicLink(baseDir.toPath())) return emptyList()
+    val known = catalog.flatMap { listOf(it.dirName, ".${it.dirName}.staging") }.toSet()
+    val children = baseDir.listFiles() ?: return emptyList()
+    return children
+        .filter { it.name !in known && VOICE_DIR_NAME.matches(it.name) }
+        .filter { Files.isDirectory(it.toPath(), LinkOption.NOFOLLOW_LINKS) }
+        .mapNotNull { dir -> dir.name.takeIf { deleteTreeWithoutFollowingLinks(dir.toPath()) } }
+}
+
+/** Löscht [root] samt Inhalt; Symlinks darin werden als Links gelöscht, nie ihr Ziel. */
+private fun deleteTreeWithoutFollowingLinks(root: Path): Boolean = try {
+    // walkFileTree folgt ohne FOLLOW_LINKS keinem Link: ein Link kommt als Datei bei visitFile an.
+    Files.walkFileTree(
+        root,
+        object : SimpleFileVisitor<Path>() {
+            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                Files.delete(file)
+                return FileVisitResult.CONTINUE
+            }
+
+            override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+                if (exc != null) throw exc
+                Files.delete(dir)
+                return FileVisitResult.CONTINUE
+            }
+        },
+    )
+    true
+} catch (e: IOException) {
+    false
 }
