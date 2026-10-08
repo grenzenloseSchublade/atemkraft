@@ -6,7 +6,7 @@
 - Stimme laden ohne Gerätedaten, mit Prüfsumme
 - Lizenzen in der App
 - Stimme GLaDOS entfernt (keine Lizenz)
-- Übungstexte ordnen die Studienlage ein
+- Studienlage als Etikett und im Text
 - Tick am Kreis folgt dem Schalter „Vibration“
 - Kleinere Schrift, kein Umbruch mitten im Wort
 - Fester Zurück-Pfeil

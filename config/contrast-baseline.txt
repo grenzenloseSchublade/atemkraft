@@ -1,6 +1,6 @@
 # Bekannte Verstöße gegen FARBE-03/-04 (ThemeContrastTest), Format: Testfall | Token-Paar | S-nn
 kontrast | onSurface TERTIARY auf Card | S-15
-kontrast | TagChip EvidenceCaution auf Card | S-15
+kontrast | Chip EvidenceCaution auf Card | S-15
 kontrast | InfoChip auf Card | S-15
 kontrast | Wochentag auf Card | S-15
 kontrast | WeekRow-Punkt α0.12 auf Card | S-15

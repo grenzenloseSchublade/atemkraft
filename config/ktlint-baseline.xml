@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <baseline version="1.0">
     <file name="src/main/java/app/atemkraft/MainActivity.kt">
-        <error line="133" column="9" source="compose:vm-injection-check" />
+        <error line="132" column="9" source="compose:vm-injection-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/BackButton.kt">
         <error line="21" column="5" source="compose:modifier-missing-check" />
-    </file>
-    <file name="src/main/java/app/atemkraft/ui/components/Chips.kt">
-        <error line="42" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/MiniNowPlayingBar.kt">
         <error line="31" column="5" source="compose:modifier-missing-check" />

@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.domain.AdjustLimits
-import app.atemkraft.domain.EvidenceTag
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
@@ -44,14 +43,15 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
+import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.Chip
+import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
-import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
@@ -82,7 +82,7 @@ fun ExerciseDetailScreen(
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
     val range = if (roundBased) AdjustLimits.ROUNDS else AdjustLimits.MINUTES
-    val isIntense = exercise.tag == EvidenceTag.CAUTION
+    val isIntense = exercise.caution
     val valueDefault = if (roundBased) exercise.rounds else exercise.defaultMinutes()
     var value by rememberSaveable(exercise.id) { mutableIntStateOf(valueDefault) }
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
@@ -186,7 +186,14 @@ fun ExerciseDetailScreen(
                     title = exercise.name,
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    chips = exercise.tag?.let { tag -> { TagChip(tag) } },
+                    chips = if (exercise.evidence == null && !exercise.caution) {
+                        null
+                    } else {
+                        {
+                            exercise.evidence?.let { EvidenceChip(it) }
+                            if (exercise.caution) CautionChip()
+                        }
+                    },
                 )
                 Spacer(Modifier.height(Dimens.GapSmall))
                 Text(

@@ -3,7 +3,6 @@ package app.atemkraft.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,12 +40,13 @@ fun TitleWithChips(
         // null statt leerer Row: ein leeres Item bekäme sonst Abstand bzw. eine Leerzeile.
         if (chips == null) return@FlowRow
         // Chips als Gruppe: rutschen gemeinsam um und bleiben zum Titel vertikal zentriert
-        // (FlowRow kennt in foundation 1.7 noch kein itemVerticalAlignment).
-        Row(
+        // (FlowRow kennt in foundation 1.7 noch kein itemVerticalAlignment). Innen wieder eine
+        // FlowRow: Passen zwei Chips (Studienlage + Vorsicht) nicht in eine Zeile, bricht die
+        // Zeile zwischen den Chips um statt im Text des zweiten Chips.
+        FlowRow(
             modifier = Modifier.align(Alignment.CenterVertically),
             horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-            verticalAlignment = Alignment.CenterVertically,
-            content = chips,
-        )
+            verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny),
+        ) { chips() }
     }
 }

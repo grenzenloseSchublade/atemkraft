@@ -19,8 +19,11 @@
     <string name="family_balance">C · Balancieren / Programme</string>
     <string name="family_functional">D · Funktionell</string>
 
-    <!-- Tags -->
-    <string name="tag_best">am besten belegt</string>
+    <!-- Tags: Studienlage (EvidenceLevel, TEXT-07), Vorsicht, Programm -->
+    <string name="tag_well_supported">gut belegt</string>
+    <string name="tag_studied">in Studien geprüft</string>
+    <string name="tag_little_studied">kaum untersucht</string>
+    <string name="cd_evidence">Studienlage: %1$s</string>
     <string name="tag_caution">nur gesund &amp; ausgeruht</string>
     <string name="tag_info">Programm</string>
 

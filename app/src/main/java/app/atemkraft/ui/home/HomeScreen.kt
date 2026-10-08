@@ -32,11 +32,12 @@ import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
+import app.atemkraft.ui.components.CautionChip
+import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
-import app.atemkraft.ui.components.TagChip
 import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
@@ -137,11 +138,12 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
                 title = exercise.name,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                chips = if (exercise.tag == null && exercise.guided) {
+                chips = if (exercise.evidence == null && !exercise.caution && exercise.guided) {
                     null
                 } else {
                     {
-                        exercise.tag?.let { TagChip(it) }
+                        exercise.evidence?.let { EvidenceChip(it) }
+                        if (exercise.caution) CautionChip()
                         if (!exercise.guided) InfoChip()
                     }
                 },

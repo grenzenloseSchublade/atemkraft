@@ -34,7 +34,11 @@ val FamilyBalance = Color(0xFFA78BFA)
 val FamilyFunctional = Color(0xFF34D399)
 
 // Semantische Tokens (zentral, statt mehrfach hardcodierter Hex in den Screens).
-val EvidenceBest = NeonCyan // „am besten belegt" – Cyan
+// Studienlage (EvidenceLevel): drei ruhige, klar unterscheidbare Töne, Chip-Text ≥ 4,5:1 und
+// ΔE76 ≥ 25 zu allen Farben des Atmen-Tabs (ThemeContrastTest).
+val EvidenceBest = NeonCyan // „gut belegt" – Cyan
+val EvidenceStudied = Color(0xFF78B0CC) // „in Studien geprüft" – gedämpftes Stahlblau
+val EvidenceLittle = Color(0xFFC8B8B4) // „kaum untersucht" – neutrales, warmes Grau
 val EvidenceCaution = Color(0xFFFF6B8B) // „nur gesund & ausgeruht" / Vorsicht – Neon-Pink/Rot
 val WarnAmber = NeonYellow // Hinweis/Warnung – Synthwave-Gelb
 

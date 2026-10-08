@@ -17,7 +17,10 @@ package app.atemkraft.domain
  * @param instructionHint Kurzanleitung in Worten (ergänzend zum getakteten Ablauf).
  * @param cautions Sicherheits-/Anwendungshinweise (können leer sein).
  * @param references Verifizierte Quellen zu den Wirkaussagen.
- * @param tag Optionales Badge (gut belegt / Vorsicht).
+ * @param evidence Studienlage als Etikett; Pflicht für jede eingebaute Übung, `null` nur bei
+ *   generierten Mustern (TEXT-07).
+ * @param caution Etikett „nur gesund & ausgeruht“ und Sicherheitsdialog vor dem Start
+ *   (MUSTER-06); unabhängig von der Studienlage.
  * @param guided true = getakteter Atemkreis-Ablauf; false = Programm/Gewohnheit
  *   ohne festen Takt (nur Infoseite, kein Start).
  * @param perRound Hook, um Phasen pro Runde anzupassen (z. B. Wim-Hof-Retention).
@@ -34,7 +37,8 @@ data class Exercise(
     val instructionHint: String? = null,
     val cautions: List<String> = emptyList(),
     val references: List<Reference> = emptyList(),
-    val tag: EvidenceTag? = null,
+    val evidence: EvidenceLevel? = null,
+    val caution: Boolean = false,
     val guided: Boolean = true,
     val perRound: (phase: Phase, roundIndex: Int) -> Phase = { phase, _ -> phase },
 )

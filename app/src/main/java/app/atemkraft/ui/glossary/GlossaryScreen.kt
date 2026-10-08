@@ -25,6 +25,15 @@ private data class Term(val name: String, val definition: String)
 
 private val terms = listOf(
     Term(
+        "Studienlage",
+        "Wie gut eine Atemtechnik untersucht ist; jede trägt dazu ein Etikett (Muster nicht, sie " +
+            "sind spielerische Variationen). „gut belegt“: Eine Auswertung vieler Studien oder " +
+            "mehrere unabhängige Studien zeigen dasselbe. „in Studien geprüft“: Es gibt Studien, " +
+            "aber wenige, kleine oder nur mit bestimmten Gruppen. „kaum untersucht“: Die Wirkweise " +
+            "ist plausibel, direkte Studien fehlen weitgehend. Das Etikett sagt, wie sicher das " +
+            "Wissen ist, nicht wie stark eine Technik wirkt.",
+    ),
+    Term(
         "HRV – Herzratenvariabilität",
         "Die natürliche Schwankung der Zeit zwischen zwei Herzschlägen. Eine höhere HRV gilt als " +
             "Zeichen für Erholung, Stressresistenz und einen aktiven Vagus.",

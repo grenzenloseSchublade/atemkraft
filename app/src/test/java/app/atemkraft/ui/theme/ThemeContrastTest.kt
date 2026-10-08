@@ -48,7 +48,7 @@ class ThemeContrastTest {
     private val circleCenter = SynthCircleCenter
 
     // Alpha-Werte, die (noch) als Literal in Komponenten stehen; Quelle jeweils genannt.
-    // Chip.kt: Fläche color.copy(alpha = 0.16f), InfoChip-Text onSurface 0.5f.
+    // Chips.kt: Fläche color.copy(alpha = 0.16f), InfoChip-Text onSurface 0.5f.
     private val chipFill = 0.16f
     private val infoChipText = 0.5f
 
@@ -91,9 +91,16 @@ class ThemeContrastTest {
         add(Pair("EvidenceCaution auf Leiste", EvidenceCaution, bar, text))
         add(Pair("OnNeon auf NeonMagenta", OnNeon, NeonMagenta, text))
 
-        // Chips: Text in Chipfarbe auf der eigenen, über die Karte gemischten Fläche.
-        listOf("EvidenceBest" to EvidenceBest, "EvidenceCaution" to EvidenceCaution).forEach { (n, c) ->
-            add(Pair("TagChip $n auf Card", c, c.copy(alpha = chipFill) over card, text))
+        // Chips: Text in Chipfarbe auf der eigenen, über den Grund gemischten Fläche – Karte im
+        // Atmen-Tab, Screen-Grund im Detail-Kopf. Studienlage (drei Stufen) und Vorsicht.
+        listOf(
+            "EvidenceBest" to EvidenceBest,
+            "EvidenceStudied" to EvidenceStudied,
+            "EvidenceLittle" to EvidenceLittle,
+            "EvidenceCaution" to EvidenceCaution,
+        ).forEach { (n, c) ->
+            add(Pair("Chip $n auf Card", c, c.copy(alpha = chipFill) over card, text))
+            add(Pair("Chip $n auf background", c, c.copy(alpha = chipFill) over background, text))
         }
         val infoColor = DarkOnSurface.copy(alpha = infoChipText)
         add(Pair("InfoChip auf Card", infoColor, infoColor.copy(alpha = chipFill) over card, text))
@@ -126,10 +133,12 @@ class ThemeContrastTest {
 
     /** FARBE-04: semantische Farben, die gemeinsam auf einem Screen stehen, ΔE76 ≥ 25. */
     private fun deltaEPairs(): List<Triple<String, Color, Color>> {
-        // Atmen-Tab: Familien-Akzente, Evidenz-Chips, Charakter-Chips, Marke.
+        // Atmen-Tab: Familien-Akzente, Evidenz-Chips (drei Stufen), Charakter-Chips, Marke.
         val home = listOf(
             "primary" to NeonMagenta,
             "EvidenceBest" to EvidenceBest,
+            "EvidenceStudied" to EvidenceStudied,
+            "EvidenceLittle" to EvidenceLittle,
             "EvidenceCaution" to EvidenceCaution,
             "WarnAmber" to WarnAmber,
             "FamilyVagal" to FamilyVagal,

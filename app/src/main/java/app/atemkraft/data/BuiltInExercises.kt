@@ -2,7 +2,7 @@ package app.atemkraft.data
 
 import app.atemkraft.domain.BreathSide
 import app.atemkraft.domain.BreathingFamily
-import app.atemkraft.domain.EvidenceTag
+import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.Phase
 import app.atemkraft.domain.PhaseDuration
@@ -27,7 +27,7 @@ object BuiltInExercises {
         id = "resonanz",
         name = "Resonanz-Atmung",
         family = BreathingFamily.DOWNREGULATE,
-        tag = EvidenceTag.BEST_EVIDENCE,
+        evidence = EvidenceLevel.WELL_SUPPORTED,
         shortDescription = "Gleichmäßig ~6 Atemzüge/Minute: 4 s ein, 6 s aus, ohne Halten. " +
             "Bei dieser Rate geraten Herzschlag und Blutdruck in Resonanz – die HRV-Ausschläge " +
             "werden dabei besonders groß.",
@@ -63,6 +63,7 @@ object BuiltInExercises {
         id = "cyclic-sighing",
         name = "Cyclic Sighing",
         family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Dieselbe Technik wie der Physiological Sigh, aber als ~5-minütige " +
             "Dauerpraxis: ein voller Einatem durch die Nase, ein kurzer zweiter oben drauf " +
             "(füllt die Lunge ganz), dann ein langer Ausatem durch den Mund – fortlaufend.",
@@ -99,21 +100,21 @@ object BuiltInExercises {
         id = "physiological-sigh",
         name = "Physiological Sigh",
         family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Der Doppel-Seufzer für den Stressmoment: ein voller Einatem durch die " +
             "Nase, dann ein kurzer zweiter oben drauf (bläht kollabierte Lungenbläschen wieder " +
             "auf), gefolgt von einem langen Ausatem durch den Mund.",
-        effect = "Kurzform von Cyclic Sighing für den Stressmoment; als Einzelatemzug ist sie kaum " +
-            "untersucht.",
-        effectDetail = "Die Idee dahinter: Der zweite Einatem öffnet kollabierte " +
-            "Lungenbläschen wieder und stellt die Dehnbarkeit der Lunge her; der betont lange " +
-            "Ausatem erhöht die vagale Bremswirkung und verlangsamt den Herzschlag. Vom " +
-            "Huberman-Lab wird der Doppel-Seufzer als schnellster akuter Stresslöser " +
-            "beschrieben – das ist physiologisch plausibel, aber nur indirekt belegt: Die " +
-            "Studienlage (Balban 2023) prüfte die 5-Minuten-Praxis (Cyclic Sighing), nicht den " +
-            "einzelnen Atemzug. Dass der Körper solche Doppel-Seufzer von selbst erzeugt, ist " +
-            "dagegen gut belegt (Li 2016 fand die auslösenden Hirnstamm-Neurone). Als kurzes, " +
-            "risikoarmes Werkzeug bei aufkommender Anspannung 1–3× einsetzen, danach normal " +
-            "weiteratmen.",
+        effect = "Als 5-Minuten-Praxis hob sie in einer Studie die Stimmung; als Einzelatemzug " +
+            "kaum untersucht.",
+        effectDetail = "Gemeint ist die Stanford-Studie (Balban 2023): Dort hob diese Atmung " +
+            "als tägliche 5-Minuten-Praxis (Cyclic Sighing) die Stimmung; den einzelnen Atemzug " +
+            "prüfte sie nicht. Die Idee dahinter: Der zweite Einatem öffnet kollabierte " +
+            "Lungenbläschen wieder, der lange Ausatem verlangsamt über den Vagus den Herzschlag. " +
+            "Als schnellster Stresslöser im Moment, wie ihn das Huberman-Lab beschreibt, ist der " +
+            "Doppel-Seufzer plausibel, aber nicht geprüft. Gut belegt ist dagegen, dass der " +
+            "Körper solche Seufzer von selbst erzeugt (Li 2016 fand die auslösenden " +
+            "Hirnstamm-Neurone). Als kurzes, risikoarmes Werkzeug bei aufkommender Anspannung " +
+            "1–3× einsetzen, danach normal weiteratmen.",
         instructionHint = "1× voll durch die Nase ein → kurzer zweiter Einatem ganz oben drauf " +
             "→ langer Ausatem durch den Mund. Bei Anspannung 1–3×, danach normal weiter.",
         references = listOf(Refs.li2016, Refs.balban2023),
@@ -133,6 +134,7 @@ object BuiltInExercises {
         id = "4-7-8",
         name = "4-7-8-Atmung",
         family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Langer Ausatem mit Atempause: 4 s ein, 7 s halten, 8 s aus. " +
             "Gedacht zum Herunterfahren am Abend.",
         effect = "Langer Ausatem zum Herunterfahren; Studien dazu sind wenige und klein.",
@@ -169,6 +171,7 @@ object BuiltInExercises {
         id = "bhramari",
         name = "Bhramari (Summen)",
         family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Ein langer, summender Ausatem („Bienenatem“). Der lange Ausatem wirkt " +
             "beruhigend, das Summen steigert das Stickstoffmonoxid in der Nase.",
         effect = "In kleinen Studien sanken Blutdruck und Puls direkt nach dem summenden Ausatem.",
@@ -199,6 +202,7 @@ object BuiltInExercises {
         id = "zwerchfell",
         name = "Zwerchfellatmung",
         family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
         shortDescription = "Die Grundlagentechnik: langsam in den Bauch atmen (Zwerchfell) statt " +
             "in die Brust. Basis, auf der alle anderen Techniken aufbauen.",
         effect = "Die ruhige Basis aller Techniken: verlangsamt den Atem; einzeln ist sie kaum " +
@@ -231,6 +235,7 @@ object BuiltInExercises {
         id = "sitali",
         name = "Sitali (Kühlatmung)",
         family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
         shortDescription = "Einatmen über die gerollte Zunge, ausatmen durch die Nase – die " +
             "einströmende Luft fühlt sich kühl und frisch an. Eine angenehme Variante des " +
             "langsamen, ausatem-betonten Atmens.",
@@ -270,7 +275,8 @@ object BuiltInExercises {
         id = "wim-hof",
         name = "Wim Hof",
         family = BreathingFamily.UPREGULATE,
-        tag = EvidenceTag.CAUTION,
+        evidence = EvidenceLevel.STUDIED,
+        caution = true,
         shortDescription = "Kontrollierte Hyperventilation plus Atemanhalten: 30 tiefe Atemzüge, " +
             "dann Halten auf leerer Lunge bis zum Atemreiz, dann tief einatmen und 15 s halten. " +
             "Ein bewusster Belastungsreiz – nur, wenn du dich gesund und ausgeruht fühlst.",
@@ -327,7 +333,8 @@ object BuiltInExercises {
         id = "feueratmung",
         name = "Feueratmung (Kapalabhati)",
         family = BreathingFamily.UPREGULATE,
-        tag = EvidenceTag.CAUTION,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
+        caution = true,
         shortDescription = "Schnelle, kräftige Ausatemstöße aus dem Bauch, der Einatem geschieht " +
             "passiv (yogischer „Blasebalg“). Energetisierend – für Wachheit am Morgen, nicht zur " +
             "Beruhigung.",
@@ -372,13 +379,14 @@ object BuiltInExercises {
         id = "box-4-4-4-4",
         name = "Box-Atmung",
         family = BreathingFamily.BALANCE,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Gleich lange Phasen: 4 s ein, 4 s halten, 4 s aus, 4 s halten. " +
             "Ein gleichmäßiges Muster für „ruhig, aber wach“ – das „taktische“ Atmen.",
-        effect = "Für „ruhig, aber wach“ vor einer Aufgabe; speziell zu Box gibt es kaum Studien.",
+        effect = "Für „ruhig, aber wach“ vor einer Aufgabe; speziell zu Box gibt es nur wenige Studien.",
         effectDetail = "„Ruhig, aber wach“ entsteht, weil gleich lange Phasen mit zwei Pausen " +
             "den Atem auf einen langen, ruhigen Zyklus takten und so HRV und Baroreflex " +
             "stützen – die Belege stammen vor allem aus " +
-            "der allgemeinen Slow-Breathing-Forschung, kaum aus Box-spezifischen Studien. In der " +
+            "der allgemeinen Slow-Breathing-Forschung, wenig aus Box-spezifischen Studien. In der " +
             "Stanford-Studie senkte Box die Anspannung, war aber schwächer als Cyclic Sighing. " +
             "Die bekannte „Navy-SEAL“-Erzählung ist Folklore, kein Studienbeleg – überzeugend ist " +
             "Box als einfaches, symmetrisches Muster für „ruhig, aber wach“ vor einer Aufgabe. " +
@@ -404,6 +412,7 @@ object BuiltInExercises {
         id = "nadi-shodhana",
         name = "Nadi Shodhana (Wechselatmung)",
         family = BreathingFamily.BALANCE,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Abwechselndes Atmen durch je ein Nasenloch, gesteuert mit dem Finger. " +
             "Der Wechsel bindet die Aufmerksamkeit, der Rhythmus bleibt langsam.",
         effect = "Langsamer Wechselrhythmus; eine Meta-Analyse fand niedrigeren Blutdruck, " +
@@ -442,6 +451,7 @@ object BuiltInExercises {
         id = "sky",
         name = "Sudarshan Kriya (SKY)",
         family = BreathingFamily.BALANCE,
+        evidence = EvidenceLevel.STUDIED,
         guided = false,
         shortDescription = "Ein strukturiertes, angeleitetes Atemprogramm aus einer Abfolge " +
             "getakteter Atemmuster. Der genaue Kriya-Rhythmus ist nicht öffentlich und wird per " +
@@ -467,6 +477,7 @@ object BuiltInExercises {
         id = "lippenbremse",
         name = "Lippenbremse",
         family = BreathingFamily.FUNCTIONAL,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Ausatmen gegen leicht gespitzte Lippen verlangsamt den Ausatem und " +
             "hält die Atemwege offen. Ein einfaches Werkzeug, wenn der Atem hektisch wird.",
         effect = "Verlangsamt den Ausatem; eine Meta-Analyse zeigt bei COPD ruhigeres, " +
@@ -499,6 +510,7 @@ object BuiltInExercises {
         id = "walking-breath",
         name = "Atmen im Gehen",
         family = BreathingFamily.FUNCTIONAL,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
         shortDescription = "Langsames, getaktetes Atmen im Schritt-Rhythmus: ~3 Schritte ein, " +
             "~6 Schritte aus. Ein alltagstaugliches Werkzeug, das du im Gehen anwenden kannst.",
         effect = "Langsames Atmen im Takt der Schritte; als eigene Technik ist es nicht untersucht.",
@@ -534,6 +546,7 @@ object BuiltInExercises {
         id = "buteyko",
         name = "Buteyko",
         family = BreathingFamily.FUNCTIONAL,
+        evidence = EvidenceLevel.STUDIED,
         guided = false,
         shortDescription = "Ein Atemmuster-Training hin zu reduzierter, ruhiger, nasaler Atmung, " +
             "mit dem Ziel, die CO₂-Toleranz zu erhöhen. Ein Wochen-Programm, kein Akut-Trick.",
@@ -564,6 +577,7 @@ object BuiltInExercises {
         id = "nasenatmung",
         name = "Nasenatmung (Basis)",
         family = BreathingFamily.FUNCTIONAL,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
         guided = false,
         shortDescription = "Konsequentes Atmen durch die Nase – Tag und Nacht. Erzeugt " +
             "Stickstoffmonoxid, befeuchtet und filtert die Luft. Das Fundament aller anderen " +

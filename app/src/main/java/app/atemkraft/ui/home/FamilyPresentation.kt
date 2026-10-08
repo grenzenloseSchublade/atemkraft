@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.BreathingFamily
-import app.atemkraft.domain.EvidenceTag
+import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.ui.theme.FamilyBalance
 import app.atemkraft.ui.theme.FamilyFunctional
 import app.atemkraft.ui.theme.FamilySympathetic
@@ -30,11 +30,12 @@ fun BreathingFamily.title(): String = stringResource(
     },
 )
 
-/** Lokalisierter Tag-Text. */
+/** Lokalisierter Text des Studienlage-Etiketts. */
 @Composable
-fun EvidenceTag.label(): String = stringResource(
+fun EvidenceLevel.label(): String = stringResource(
     when (this) {
-        EvidenceTag.BEST_EVIDENCE -> R.string.tag_best
-        EvidenceTag.CAUTION -> R.string.tag_caution
+        EvidenceLevel.WELL_SUPPORTED -> R.string.tag_well_supported
+        EvidenceLevel.STUDIED -> R.string.tag_studied
+        EvidenceLevel.LITTLE_STUDIED -> R.string.tag_little_studied
     },
 )

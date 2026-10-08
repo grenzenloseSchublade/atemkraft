@@ -24,13 +24,24 @@ enum class BreathingFamily {
 /** Art eines Logbuch-Eintrags: getaktete Atemübung oder stille Meditation. */
 enum class SessionKind { BREATHING, MEDITATION }
 
-/** Optionaler Evidenz-/Sicherheits-Hinweis als Badge an der Übung. */
-enum class EvidenceTag {
-    /** Besonders gut belegt. */
-    BEST_EVIDENCE,
+/**
+ * Studienlage einer eingebauten Übung (TEXT-07), sichtbar als Etikett auf Karte und Detailseite.
+ * Jede eingebaute Übung hat genau eine Stufe; generierte Muster haben keine (`null`), weil sie
+ * spielerische Variationen ohne eigene Studien sind. Die Stufe sagt, wie sicher das Wissen ist,
+ * nicht wie stark eine Übung wirkt.
+ */
+enum class EvidenceLevel {
+    /** „gut belegt“: Meta-Analyse oder mehrere unabhängige RCTs zur Anwendung. */
+    WELL_SUPPORTED,
 
-    /** Nur in stabiler Phase / mit Vorsicht. */
-    CAUTION,
+    /**
+     * „in Studien geprüft“: mindestens ein RCT oder mehrere kleinere Studien, aber dünn, nicht
+     * unabhängig wiederholt oder nur in bestimmten Gruppen.
+     */
+    STUDIED,
+
+    /** „kaum untersucht“: Mechanismus plausibel, wenig direkte Studien. */
+    LITTLE_STUDIED,
 }
 
 /**

@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasScrollAction
@@ -52,6 +54,7 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
+import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
@@ -227,7 +230,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      * Liest von jedem gerenderten Text das Layout aus und meldet
      * - `WORTBRUCH`: Umbruch mitten im Wort oder vor Bindestrich/Satzzeichen (`badBreakAt`),
      * - `GETRENNT`: dasselbe mit `Hyphens.Auto` (Trennstrich gesetzt; zur Durchsicht),
-     * - `ABGESCHNITTEN`: Text per Ellipse gekürzt oder über maxLines/Höhe hinaus ausgeblendet.
+     * - `ABGESCHNITTEN`: Text per Ellipse gekürzt oder über maxLines/Höhe hinaus ausgeblendet,
+     * - `CHIP_UMBRUCH`: Chip-Text über mehr als eine Zeile (z. B. zweiter Chip zusammengedrückt).
      */
     private fun textBreaks(screen: String): List<String> {
         val nodes = compose.onAllNodes(
@@ -253,7 +257,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 val truncated = last >= 0 &&
                     (layout.isLineEllipsized(last) || layout.getLineEnd(last, visibleEnd = true) < text.trimEnd().length)
                 val clipped = if (truncated) listOf("ABGESCHNITTEN\t$screen\t$text") else emptyList()
-                breaks + clipped
+                // Chips bleiben einzeilig; zu viele Chips brechen zwischen den Chips um (TitleWithChips).
+                val chipWrap = node.config.getOrNull(SemanticsProperties.TestTag) == CHIP_TEXT_TAG && layout.lineCount > 1
+                breaks + clipped + if (chipWrap) listOf("CHIP_UMBRUCH\t$screen\t$text") else emptyList()
             }
         }.map { "${device.name}\tfs${(fontScale * 100).toInt()}\t$it".replace("\n", "⏎") }
     }

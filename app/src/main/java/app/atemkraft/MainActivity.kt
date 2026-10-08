@@ -63,7 +63,6 @@ import androidx.navigation.toRoute
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
-import app.atemkraft.domain.EvidenceTag
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.AboutRoute
@@ -369,7 +368,7 @@ private fun AtemkraftApp() {
                         }
                         return@composable
                     }
-                    val requireSafety = exercise.tag == EvidenceTag.CAUTION &&
+                    val requireSafety = exercise.caution &&
                         (!safetySettings.acknowledged || safetySettings.showWarning)
                     // Intervall-Anpassungen pro Übung merken – außer beim Muster des Tages: dessen
                     // Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten
