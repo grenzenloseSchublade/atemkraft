@@ -16,11 +16,12 @@ import androidx.annotation.RequiresApi
  * Jede Vibration folgt dem App-Schalter „Vibration“ (AUDIO-05): Die Einstellung ist Pflicht-
  * Parameter jeder Methode, damit keine Aufrufstelle sie vergessen kann.
  *
- * Phasen-Haptik läuft als Alarm-Vibration, damit sie NICHT an der System-Einstellung für
- * Berührungs-Vibration (`Settings.System.HAPTIC_FEEDBACK_ENABLED`) hängt – sie ist ein Cue,
- * keine Bedien-Rückmeldung. Der Tipp-Tick ist dagegen Touch-Feedback (AUDIO-05) und folgt
- * auch dieser System-Einstellung. Ab API 33 über [VibrationAttributes], davor über die
- * gleichwertigen [AudioAttributes]-Usages.
+ * Alles läuft als Alarm-Vibration, auch der Tipp-Tick, damit es NICHT an der System-Einstellung
+ * für Berührungs-Vibration (`Settings.System.HAPTIC_FEEDBACK_ENABLED`) hängt: Ist sie aus,
+ * verwerfen manche Geräte (u. a. Samsung) Touch-Vibrationen still, und der Tick wäre trotz
+ * eingeschaltetem App-Schalter weg (Nutzerentscheidung 2026-10-08, AUDIO-05). Abschalten lässt
+ * sich alles über den App-Schalter. Ab API 33 über [VibrationAttributes], davor über die
+ * gleichwertige [AudioAttributes]-Usage.
  */
 class HapticPlayer(context: Context) {
 
@@ -35,7 +36,7 @@ class HapticPlayer(context: Context) {
     /** Sanftes UI-Tick (Kreis-Tap): kurz und leise – Bestätigung, kein Cue. */
     fun tick(enabled: Boolean) {
         if (!enabled) return
-        vibrate(VibrationEffect.createOneShot(25, 130), touch = true)
+        vibrate(VibrationEffect.createOneShot(25, 130))
     }
 
     /** Phasen- und End-Haptik; nur bei eingeschaltetem App-Schalter „Vibration“. */
@@ -49,36 +50,30 @@ class HapticPlayer(context: Context) {
 
             CueEvent.FINISH -> VibrationEffect.createWaveform(longArrayOf(0, 200, 120, 280), intArrayOf(0, 255, 0, 255), -1)
         }
-        vibrate(effect, touch = false)
+        vibrate(effect)
     }
 
-    private fun vibrate(effect: VibrationEffect, touch: Boolean) {
+    private fun vibrate(effect: VibrationEffect) {
         val v = vibrator ?: return
         if (!v.hasVibrator()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            vibrateWithAttributes(v, effect, touch)
+            vibrateAsAlarm(v, effect)
         } else {
-            // Vor API 33 gibt es nur diesen Overload; das System bildet ASSISTANCE_SONIFICATION
-            // auf Touch- und ALARM auf Alarm-Vibration ab.
+            // Vor API 33 gibt es nur diesen Overload; das System bildet USAGE_ALARM auf
+            // Alarm-Vibration ab.
             @Suppress("DEPRECATION")
-            v.vibrate(effect, if (touch) touchAudioAttributes else alarmAudioAttributes)
+            v.vibrate(effect, alarmAudioAttributes)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun vibrateWithAttributes(v: Vibrator, effect: VibrationEffect, touch: Boolean) {
-        val usage = if (touch) VibrationAttributes.USAGE_TOUCH else VibrationAttributes.USAGE_ALARM
-        v.vibrate(effect, VibrationAttributes.createForUsage(usage))
+    private fun vibrateAsAlarm(v: Vibrator, effect: VibrationEffect) {
+        v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
     }
 
     private companion object {
         val alarmAudioAttributes: AudioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
-        val touchAudioAttributes: AudioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
     }

@@ -18,8 +18,8 @@ import org.robolectric.shadows.ShadowVibrator
 
 /**
  * AUDIO-05: Jede Vibration folgt dem App-Schalter „Vibration“ – auch der Tipp-Tick am Kreis.
- * Phasen-Haptik läuft als Alarm-, der Tipp-Tick als Touch-Vibration; ab API 33 über
- * `VibrationAttributes`, davor über die gleichwertige `AudioAttributes`-Usage.
+ * Phasen-Haptik und Tipp-Tick laufen als Alarm-Vibration (nicht abhängig von der System-
+ * Tippvibration); ab API 33 über `VibrationAttributes`, davor über die `AudioAttributes`-Usage.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -42,11 +42,11 @@ class HapticPlayerTest {
     }
 
     @Test
-    fun `Tipp-Tick vibriert als Touch-Feedback, wenn der App-Schalter an ist`() {
+    fun `Tipp-Tick vibriert als Alarm, wenn der App-Schalter an ist`() {
         player.tick(enabled = true)
         val shadow = vibrator()
         assertTrue(shadow.isVibrating)
-        assertEquals(VibrationAttributes.USAGE_TOUCH, usage(shadow))
+        assertEquals(VibrationAttributes.USAGE_ALARM, usage(shadow))
     }
 
     @Test
@@ -73,7 +73,7 @@ class HapticPlayerTest {
         assertFalse(shadow.isVibrating)
 
         player.tick(enabled = true)
-        assertEquals(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION, shadow.audioAttributesFromLastVibration?.usage)
+        assertEquals(AudioAttributes.USAGE_ALARM, shadow.audioAttributesFromLastVibration?.usage)
         player.play(CueEvent.HOLD, enabled = true)
         assertEquals(AudioAttributes.USAGE_ALARM, shadow.audioAttributesFromLastVibration?.usage)
     }
