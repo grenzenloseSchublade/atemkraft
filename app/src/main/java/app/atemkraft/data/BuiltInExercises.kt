@@ -104,7 +104,7 @@ object BuiltInExercises {
         shortDescription = "Der Doppel-Seufzer für den Stressmoment: ein voller Einatem durch die " +
             "Nase, dann ein kurzer zweiter oben drauf (bläht kollabierte Lungenbläschen wieder " +
             "auf), gefolgt von einem langen Ausatem durch den Mund.",
-        effect = "Als 5-Minuten-Praxis hob sie in einer Studie die Stimmung; als Einzelatemzug " +
+        effect = "Hob als 5-Minuten-Praxis in einer Studie die Stimmung; als Einzelatemzug noch " +
             "kaum untersucht.",
         effectDetail = "Gemeint ist die Stanford-Studie (Balban 2023): Dort hob diese Atmung " +
             "als tägliche 5-Minuten-Praxis (Cyclic Sighing) die Stimmung; den einzelnen Atemzug " +
