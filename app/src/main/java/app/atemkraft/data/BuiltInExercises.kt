@@ -29,15 +29,16 @@ object BuiltInExercises {
         family = BreathingFamily.DOWNREGULATE,
         tag = EvidenceTag.BEST_EVIDENCE,
         shortDescription = "Gleichmäßig ~6 Atemzüge/Minute: 4 s ein, 6 s aus, ohne Halten. " +
-            "Bei dieser Rate geraten Herzschlag und Blutdruck in Resonanz – HRV und " +
-            "Baroreflex werden maximal.",
-        effect = "Das tägliche Grundlagen-Werkzeug: die höchste HRV-Wirkung unter den " +
-            "langsamen Techniken.",
+            "Bei dieser Rate geraten Herzschlag und Blutdruck in Resonanz – die HRV-Ausschläge " +
+            "werden dabei besonders groß.",
+        effect = "Das tägliche Grundlagen-Werkzeug: Im Vergleich hob 6/min die HRV stärker als " +
+            "Box oder 4-7-8.",
         effectDetail = "Die hohe HRV-Wirkung entsteht, weil bei ~6 Atemzügen pro Minute (≈0,1 Hz) " +
             "Atem, Herzschlag und Blutdruck-Regelkreis (Baroreflex) im selben Takt schwingen – " +
-            "die HRV erreicht ihr Maximum. " +
+            "die HRV-Ausschläge werden besonders groß. " +
             "Über Wochen geübt kann das den Ruhe-Vagustonus und die Baroreflex-Empfindlichkeit " +
-            "anheben (Goessl 2017: deutliche Wirkung auf Stress und Angst). Die „5,5/min“ sind " +
+            "anheben (Goessl 2017, Meta-Analyse zu HRV-Biofeedback: weniger selbstberichteter " +
+            "Stress und Angst). Die „5,5/min“ sind " +
             "nur ein gerundeter Startwert – deine persönliche Resonanz liegt meist zwischen 4,5 " +
             "und 6,5/min, etwas Ausprobieren lohnt sich. Anders als 4-7-8 oder Box kommt " +
             "Resonanz ohne Halten aus und ist damit das ruhige tägliche Grundlagen-Werkzeug. " +
@@ -62,7 +63,6 @@ object BuiltInExercises {
         id = "cyclic-sighing",
         name = "Cyclic Sighing",
         family = BreathingFamily.DOWNREGULATE,
-        tag = EvidenceTag.BEST_EVIDENCE,
         shortDescription = "Dieselbe Technik wie der Physiological Sigh, aber als ~5-minütige " +
             "Dauerpraxis: ein voller Einatem durch die Nase, ein kurzer zweiter oben drauf " +
             "(füllt die Lunge ganz), dann ein langer Ausatem durch den Mund – fortlaufend.",
@@ -76,8 +76,8 @@ object BuiltInExercises {
             "Ausatem maximiert die CO₂-Abgabe und senkt über den Vagus die Herzfrequenz. " +
             "Das ist bislang eine einzelne, autoren-nahe Studie " +
             "ohne unabhängige Replikation – „am wirksamsten“ ist also ein vorsichtiges " +
-            "Zwischenergebnis, kein Endurteil. Als tägliche 5-Minuten-Praxis das stärkste der " +
-            "kurzen Stimmungs-Werkzeuge; dieselbe Mechanik einzeln im Stressmoment heißt " +
+            "Zwischenergebnis, kein Endurteil. In dieser Studie war es als tägliche " +
+            "5-Minuten-Praxis das stärkste der verglichenen Stimmungs-Werkzeuge; dieselbe Mechanik einzeln im Stressmoment heißt " +
             "„Physiological Sigh“.",
         instructionHint = "1 voller Einatem durch die Nase → kurzer zweiter Einatem ganz oben " +
             "drauf → langsam vollständig durch den Mund aus. ~5 min am Stück, langer Ausatem.",
@@ -99,13 +99,12 @@ object BuiltInExercises {
         id = "physiological-sigh",
         name = "Physiological Sigh",
         family = BreathingFamily.DOWNREGULATE,
-        tag = EvidenceTag.BEST_EVIDENCE,
-        shortDescription = "Die Sofort-Notbremse: ein voller Einatem durch die Nase, dann ein " +
-            "kurzer zweiter oben drauf (bläht kollabierte Lungenbläschen wieder auf), gefolgt " +
-            "von einem langen Ausatem durch den Mund. Senkt akute Anspannung in Sekunden.",
-        effect = "Die Kurzform von Cyclic Sighing für den akuten Stressmoment – schon 1–3 " +
-            "Atemzüge genügen.",
-        effectDetail = "Warum wenige Atemzüge reichen: Der zweite Einatem öffnet kollabierte " +
+        shortDescription = "Der Doppel-Seufzer für den Stressmoment: ein voller Einatem durch die " +
+            "Nase, dann ein kurzer zweiter oben drauf (bläht kollabierte Lungenbläschen wieder " +
+            "auf), gefolgt von einem langen Ausatem durch den Mund.",
+        effect = "Kurzform von Cyclic Sighing für den Stressmoment; als Einzelatemzug ist sie kaum " +
+            "untersucht.",
+        effectDetail = "Die Idee dahinter: Der zweite Einatem öffnet kollabierte " +
             "Lungenbläschen wieder und stellt die Dehnbarkeit der Lunge her; der betont lange " +
             "Ausatem erhöht die vagale Bremswirkung und verlangsamt den Herzschlag. Vom " +
             "Huberman-Lab wird der Doppel-Seufzer als schnellster akuter Stresslöser " +
@@ -135,14 +134,15 @@ object BuiltInExercises {
         name = "4-7-8-Atmung",
         family = BreathingFamily.DOWNREGULATE,
         shortDescription = "Langer Ausatem mit Atempause: 4 s ein, 7 s halten, 8 s aus. " +
-            "Gut zum Herunterfahren und Einschlafen.",
-        effect = "Beruhigt akut und hilft beim Herunterfahren und Einschlafen.",
+            "Gedacht zum Herunterfahren am Abend.",
+        effect = "Langer Ausatem zum Herunterfahren; Studien dazu sind wenige und klein.",
         effectDetail = "Der entscheidende Wirkstoff hinter der Beruhigung ist der lange Ausatem (8 s), nicht das " +
             "Halten: Ausatem länger als Einatem verschiebt die Balance über den Vagus Richtung " +
-            "Parasympathikus und verstärkt die RSA. Akut sinken Stress, Herzfrequenz und " +
-            "Blutdruck (Vierra 2022, kleine Akutstudie). Im direkten Vergleich hob gleichmäßiges " +
-            "6/min die HRV allerdings stärker als 4-7-8 oder Box (Vergleichsstudie 2025) – 4-7-8 " +
-            "ist eher die Runterfahr- und Einschlaf-Variante als ein HRV-Training. Das populäre " +
+            "Parasympathikus und verstärkt die RSA. In einer kleinen Akutstudie sanken Puls und " +
+            "systolischer Blutdruck (Vierra 2022); eine Vergleichsstudie 2025 fand dagegen keine " +
+            "nennenswerte Änderung von Blutdruck oder Stimmung. Dort hob gleichmäßiges 6/min die " +
+            "HRV stärker als 4-7-8 oder Box – 4-7-8 ist eher eine Variante zum Herunterfahren als " +
+            "ein HRV-Training. Das populäre " +
             "„natürliche Beruhigungsmittel“ (Andrew Weil) ist eine anschauliche, aber nicht durch " +
             "Studien belegte Formulierung. Wenige Zyklen genügen; das 7-Sekunden-Halten bei " +
             "Bedarf verkürzen.",
@@ -169,8 +169,8 @@ object BuiltInExercises {
         id = "bhramari",
         name = "Bhramari (Summen)",
         family = BreathingFamily.DOWNREGULATE,
-        shortDescription = "Ein langer, summender Ausatem („Bienenatem“). Die Vibration und der " +
-            "lange tonisierte Ausatem wirken stark vagal und steigern das nasale Stickstoffmonoxid.",
+        shortDescription = "Ein langer, summender Ausatem („Bienenatem“). Der lange Ausatem wirkt " +
+            "beruhigend, das Summen steigert das Stickstoffmonoxid in der Nase.",
         effect = "In kleinen Studien sanken Blutdruck und Puls direkt nach dem summenden Ausatem.",
         effectDetail = "Hinter der unmittelbaren Beruhigung wirken zwei Dinge zusammen: der " +
             "lange, gegen Widerstand summende Ausatem " +
@@ -179,7 +179,7 @@ object BuiltInExercises {
             "15-Fache (Weitzberg 2002). Dieser NO-Effekt ist allerdings lokal in den " +
             "Nasennebenhöhlen; ein systemischer oder gar krankheitsheilender Nutzen ist nicht " +
             "belegt. Die klinischen Studien sind meist klein und unverblindet, zeigen aber " +
-            "konsistent eine sofortige Senkung von Blutdruck und Puls. Ein ruhiger „Bienenatem“ " +
+            "meist direkt danach einen niedrigeren Blutdruck; der Puls sank nur leicht. Ein ruhiger „Bienenatem“ " +
             "mit lockerem Kiefer und geschlossenem Mund.",
         instructionHint = "Durch die Nase einatmen → mit geschlossenem Mund lang summend " +
             "durch die Nase ausatmen · 5–10 Runden, Mund geschlossen, Kiefer locker.",
@@ -201,8 +201,8 @@ object BuiltInExercises {
         family = BreathingFamily.DOWNREGULATE,
         shortDescription = "Die Grundlagentechnik: langsam in den Bauch atmen (Zwerchfell) statt " +
             "in die Brust. Basis, auf der alle anderen Techniken aufbauen.",
-        effect = "Die ruhige Basis aller Techniken: senkt Anspannung und verlangsamt den Atem " +
-            "von selbst.",
+        effect = "Die ruhige Basis aller Techniken: verlangsamt den Atem; einzeln ist sie kaum " +
+            "untersucht.",
         effectDetail = "Die Anspannung sinkt, weil Bauchatmung (Zwerchfell) mehr Luft mit " +
             "weniger Aufwand bewegt: Wer so atmet, wird automatisch langsamer – und unterhalb " +
             "von ~10 Atemzügen pro Minute verschiebt sich die Balance Richtung Parasympathikus, " +
@@ -234,13 +234,14 @@ object BuiltInExercises {
         shortDescription = "Einatmen über die gerollte Zunge, ausatmen durch die Nase – die " +
             "einströmende Luft fühlt sich kühl und frisch an. Eine angenehme Variante des " +
             "langsamen, ausatem-betonten Atmens.",
-        effect = "Beruhigt wie die anderen langsamen Techniken – mit angenehm kühlem Sinnesreiz.",
+        effect = "Beruhigt wie langsames Atmen, mit kühlem Sinnesreiz; eigene Studien zu Sitali " +
+            "sind dünn.",
         effectDetail = "Die Wirkung kommt – wie bei den anderen ruhigen Techniken – aus dem " +
             "langsamen, ausatem-betonten Atmen, das die Balance Richtung Parasympathikus " +
             "verschiebt; der kühle Luftstrom über die feuchte Zunge ist ein angenehmer " +
             "Sinnesreiz, der beim Dranbleiben hilft. Die Evidenz speziell zu Sitali ist dünn: " +
             "Eine kleine, unverblindete Studie fand eine Blutdrucksenkung (Shetty), das Ergebnis " +
-            "unterscheidet sich aber kaum von einfachem langsamem Atmen. Wichtig zur Ehrlichkeit: Der Name verspricht „Kühlung“, doch eine Messung " +
+            "unterscheidet sich aber kaum von einfachem langsamem Atmen. Der Name verspricht „Kühlung“, doch eine Messung " +
             "(Telles 2020) fand die Körpertemperatur sogar leicht erhöht – es ist ein gefühlt " +
             "kühler Atem, keine echte Abkühlung des Körpers.",
         instructionHint = "Zunge zu einem Röhrchen rollen, ~4 s kühl darüber einatmen → Mund zu, " +
@@ -272,7 +273,7 @@ object BuiltInExercises {
         tag = EvidenceTag.CAUTION,
         shortDescription = "Kontrollierte Hyperventilation plus Atemanhalten: 30 tiefe Atemzüge, " +
             "dann Halten auf leerer Lunge bis zum Atemreiz, dann tief einatmen und 15 s halten. " +
-            "Ein hormetischer Stressor – nur in stabiler, guter Phase.",
+            "Ein bewusster Belastungsreiz – nur, wenn du dich gesund und ausgeruht fühlst.",
         effect = "Dämpft im Experiment die akute Entzündungsreaktion; ein Heileffekt ist " +
             "nicht belegt.",
         effectDetail = "Die schnellen tiefen Atemzüge senken das CO₂ (Hypokapnie – daher Kribbeln " +
@@ -284,15 +285,17 @@ object BuiltInExercises {
             "isolierte die Atmung als Haupttreiber. Zur Einordnung: Die systematische " +
             "Übersicht (2024) stuft die Gesamtevidenz als „sehr niedrig“ ein (winzige, fast nur " +
             "männliche Stichproben); ein chronischer Heileffekt ist nicht belegt. Es ist ein " +
-            "hormetischer Stressor – das Gegenteil von langsamem Beruhigungsatmen – und gehört " +
-            "nur in eine klar stabile, gute Phase, nie ins oder ans Wasser.",
+            "bewusster Belastungsreiz (Hormese) – das Gegenteil von langsamem Beruhigungsatmen – " +
+            "und gehört nur in Zeiten, in denen du dich gesund und ausgeruht fühlst, nie ins " +
+            "oder ans Wasser.",
         instructionHint = "30 tiefe Atemzüge (tief ein, locker durch den Mund aus, nicht ganz leeren) → ausatmen und halten, so lange " +
             "angenehm → tief einatmen, 15 s halten · 3 Runden · nur im Sitzen/Liegen.",
         cautions = listOf(
             "Nur im Sitzen oder Liegen – nie im/am Wasser, beim Duschen, Fahren oder Stehen " +
                 "(Ohnmachtsgefahr).",
             "Kribbeln und Schwindel sind normal; bei zu viel sofort aufhören und normal atmen.",
-            "Nur in klar stabilen, guten Phasen – nicht im Schub, Crash oder akuten Infekt.",
+            "Nur, wenn du dich gesund und ausgeruht fühlst – nicht bei einem akuten Infekt, wenn " +
+                "eine Erkrankung gerade aufflammt oder du erschöpft bist.",
             "Bei Epilepsie, Herz-Kreislauf-Erkrankung oder Schwangerschaft vorher ärztlich abklären.",
         ),
         references = listOf(Refs.kox2014, Refs.zwaag2022, Refs.whmReview2024),
@@ -370,8 +373,8 @@ object BuiltInExercises {
         name = "Box-Atmung",
         family = BreathingFamily.BALANCE,
         shortDescription = "Gleich lange Phasen: 4 s ein, 4 s halten, 4 s aus, 4 s halten. " +
-            "Balanciert das Nervensystem auf ruhig, aber wach – das „taktische“ Atmen.",
-        effect = "Senkt akut die Anspannung und hält dich dabei wach und konzentriert.",
+            "Ein gleichmäßiges Muster für „ruhig, aber wach“ – das „taktische“ Atmen.",
+        effect = "Für „ruhig, aber wach“ vor einer Aufgabe; speziell zu Box gibt es kaum Studien.",
         effectDetail = "„Ruhig, aber wach“ entsteht, weil gleich lange Phasen mit zwei Pausen " +
             "den Atem auf einen langen, ruhigen Zyklus takten und so HRV und Baroreflex " +
             "stützen – die Belege stammen vor allem aus " +
@@ -402,8 +405,9 @@ object BuiltInExercises {
         name = "Nadi Shodhana (Wechselatmung)",
         family = BreathingFamily.BALANCE,
         shortDescription = "Abwechselndes Atmen durch je ein Nasenloch, gesteuert mit dem Finger. " +
-            "Wirkt ausgleichend und zentrierend.",
-        effect = "Wirkt ausgleichend und zentrierend – getragen vom langsamen Atemrhythmus.",
+            "Der Wechsel bindet die Aufmerksamkeit, der Rhythmus bleibt langsam.",
+        effect = "Langsamer Wechselrhythmus; eine Meta-Analyse fand niedrigeren Blutdruck, " +
+            "Studien sind schwach.",
         effectDetail = "Wahrscheinlicher Wirkstoff ist das langsame, ausatem-betonte Atmen, nicht " +
             "der Nasenloch-Wechsel selbst – die Vorstellung, einzelne Nasenlöcher steuerten gezielt " +
             "Sympathikus bzw. Gehirnhälften, ist spekulativ. Eine Meta-Analyse (Nam 2024, 6 RCTs, " +
@@ -442,13 +446,13 @@ object BuiltInExercises {
         shortDescription = "Ein strukturiertes, angeleitetes Atemprogramm aus einer Abfolge " +
             "getakteter Atemmuster. Der genaue Kriya-Rhythmus ist nicht öffentlich und wird per " +
             "geführter Audio im Kurs vermittelt.",
-        effect = "Als Gesamtprogramm mit antidepressiver Wirkung in klinischen Studien geprüft.",
+        effect = "Wurde als Kursprogramm in Studien geprüft, meist von programmnahen Forschenden.",
         effectDetail = "SKY ist keine Einzeltechnik, sondern ein angeleitetes Programm aus " +
             "langsamen und schnellen Atemstufen, das die autonome Balance verschiebt (mehr " +
             "Vagustonus, weniger Sympathikus). Die klassische RCT (Janakiramaiah 2000) zeigte bei " +
             "schwerer Depression eine Remission von 67 % – schwächer als EKT (93 %), aber in der " +
             "Größenordnung von Imipramin. Neuere, sauberere Studien (Seppälä 2020, n=131) fanden " +
-            "Vorteile bei Stress und Wohlbefinden. Viel Evidenz stammt von programm-nahen " +
+            "Vorteile bei Stress und Wohlbefinden. Viel Evidenz stammt von programmnahen " +
             "Forschenden und ist niedrig bis moderat – die Effekte sind real, aber vermutlich " +
             "überzeichnet. Der genaue Kriya-Rhythmus wird im Kurs per Audio vermittelt und lässt " +
             "sich nicht in einen einfachen Takt übersetzen.",
@@ -464,15 +468,17 @@ object BuiltInExercises {
         name = "Lippenbremse",
         family = BreathingFamily.FUNCTIONAL,
         shortDescription = "Ausatmen gegen leicht gespitzte Lippen verlangsamt den Ausatem und " +
-            "hält die Atemwege offen. Sofort-Werkzeug bei Atemnot oder hektischem Atmen.",
-        effect = "Das etablierte Sofort-Werkzeug bei Atemnot und hektischem Atmen.",
-        effectDetail = "Warum sie bei Atemnot hilft: Der Gegendruck der gespitzten Lippen hält " +
+            "hält die Atemwege offen. Ein einfaches Werkzeug, wenn der Atem hektisch wird.",
+        effect = "Verlangsamt den Ausatem; eine Meta-Analyse zeigt bei COPD ruhigeres, " +
+            "langsameres Atmen.",
+        effectDetail = "Wie sie wirkt: Der Gegendruck der gespitzten Lippen hält " +
             "die kleinen Atemwege beim " +
-            "Ausatmen offen und verlängert den Ausatem – das senkt Atemfrequenz und Atemnot, " +
+            "Ausatmen offen und verlängert den Ausatem – das senkt die Atemfrequenz, " +
             "besonders bei COPD und unter Belastung. Eine Meta-Analyse (Mayer 2018) bestätigt das " +
             "langsamere, ruhigere Atmen, fand aber keinen verlässlichen Gewinn bei Gehstrecke oder " +
-            "Sauerstoffsättigung; spürbar belastbarer werden nur ein Teil der Übenden. Akut senkt " +
-            "die Technik in einer RCT auch Blutdruck und Puls (Mitsungnern 2021). Sehr sicher und " +
+            "Sauerstoffsättigung; spürbar belastbarer werden nur ein Teil der Übenden. In einer RCT " +
+            "bei Menschen mit stark erhöhtem Blutdruck in der Notaufnahme sanken – kombiniert " +
+            "mit Mitzählen – auch Blutdruck und Puls (Mitsungnern 2021). Sehr sicher und " +
             "sofort einsetzbar bei hektischem Atmen – ohne den Ausatem zu pressen.",
         instructionHint = "~2 s durch die Nase ein → ~4 s langsam gegen gespitzte Lippen aus " +
             "(Ausatem doppelt so lang).",
@@ -495,12 +501,12 @@ object BuiltInExercises {
         family = BreathingFamily.FUNCTIONAL,
         shortDescription = "Langsames, getaktetes Atmen im Schritt-Rhythmus: ~3 Schritte ein, " +
             "~6 Schritte aus. Ein alltagstaugliches Werkzeug, das du im Gehen anwenden kannst.",
-        effect = "Beruhigt unterwegs: langsames Atmen im Takt der Schritte.",
+        effect = "Langsames Atmen im Takt der Schritte; als eigene Technik ist es nicht untersucht.",
         effectDetail = "Das Prinzip ist dasselbe wie bei den anderen ruhigen Techniken: ein " +
             "Ausatem, der länger ist als der Einatem, wirkt über den Vagus beruhigend (Zaccaro " +
             "2018). Neu ist nur das Format – der Atem koppelt an die Schritte, und das Mitzählen " +
             "der Schritte bindet die Aufmerksamkeit, was hilft, sich aus Grübeln oder Anspannung " +
-            "zu lösen. Ehrlich: Es gibt keinen eigenen Studienbeleg für genau diese Technik; ihr " +
+            "zu lösen. Es gibt keinen eigenen Studienbeleg für genau diese Technik; ihr " +
             "Wert liegt in der Alltagstauglichkeit – langsam atmen, während du dich bewegst oder " +
             "weg von einem Auslöser gehst. Tempo nicht zu hoch wählen, der Ausatem bleibt länger " +
             "als der Einatem.",
@@ -530,15 +536,15 @@ object BuiltInExercises {
         family = BreathingFamily.FUNCTIONAL,
         guided = false,
         shortDescription = "Ein Atemmuster-Training hin zu reduzierter, ruhiger, nasaler Atmung, " +
-            "um die CO₂-Toleranz zu erhöhen und chronisches Überatmen zu korrigieren. Ein " +
-            "Wochen-Programm, kein Akut-Trick.",
-        effect = "In Studien hatten Menschen mit Asthma weniger Beschwerden und brauchten " +
-            "seltener Notfallspray.",
+            "mit dem Ziel, die CO₂-Toleranz zu erhöhen. Ein Wochen-Programm, kein Akut-Trick.",
+        effect = "In Asthma-Studien besserte sich vor allem die Lebensqualität; die Studienlage " +
+            "ist schwach.",
         effectDetail = "Buteyko trainiert bewusst reduziertes, ruhiges Nasenatmen samt kurzer " +
             "Atempausen („Control Pause“) mit dem Ziel, die CO₂-Toleranz zu erhöhen. Die " +
-            "Cochrane-Übersicht (2020) fand: Symptome, Lebensqualität und Bedarf an " +
-            "Notfallspray bessern sich, die objektive Lungenfunktion (FEV1) jedoch nicht; die " +
-            "Evidenz ist moderat bis sehr niedrig. Die angenommene CO₂-Korrektur ließ sich in " +
+            "Cochrane-Übersicht (2020, Atemübungen bei Asthma allgemein, nur zwei von 22 Studien " +
+            "mit Buteyko) fand eine bessere Lebensqualität (moderate Evidenz); ob sich die " +
+            "Symptome bessern, blieb unklar, ebenso die Lungenfunktion (FEV1, sehr niedrige " +
+            "Evidenz). Die angenommene CO₂-Korrektur ließ sich in " +
             "Studien nicht bestätigen (Bowler 1998) – der Nutzen kommt eher aus ruhigerem Atmen " +
             "und weniger Atem-Aufwand. Relevant ist das Training vor allem bei Asthma und dysfunktionaler " +
             "Atmung/Atemnot. Wichtig: ein ergänzendes Wochen-Training neben der ärztlichen " +

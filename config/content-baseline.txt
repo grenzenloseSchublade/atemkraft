@@ -13,12 +13,10 @@ quotes | strings:session_get_ready | S-22
 phase-labels-distinct | strings:phase_*:Halten | S-22
 
 ref-format | refs.shetty2019 | S-23
-ref-format | refs.compare2025 | S-23
 ref-format | refs.nadiShodhana2024 | S-23
 ref-format | refs.nadiBhramari2023 | S-23
 ref-format | refs.respeRate | S-23
 ref-format | refs.respeRate.identifier | S-23
-ref-format | 4-7-8.effectDetail:Vergleichsstudie 2025 | S-23
 ref-format | buteyko.effectDetail:Bowler 1998 | S-23
 ref-unused | refs.fincham2023 | S-23
 ref-unused | refs.respeRate | S-23

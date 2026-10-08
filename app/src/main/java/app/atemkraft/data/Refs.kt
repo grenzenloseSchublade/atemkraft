@@ -104,8 +104,10 @@ object Refs {
         "doi:10.14814/phy2.15389 · PMID 35822447",
     )
     val compare2025 = Reference(
-        "Vergleich Box vs. 4-7-8 vs. 6/min auf HRV, CO₂ und Stimmung (2025). " +
-            "Applied Psychophysiology and Biofeedback. 6/min hebt HRV stärker als Box/4-7-8.",
+        "Marchant J. et al. (2025): Comparing the Effects of Square, 4-7-8, and 6 " +
+            "Breaths-per-Minute Breathing Conditions on Heart Rate Variability, CO2 Levels, and " +
+            "Mood. Appl Psychophysiol Biofeedback 50(2):261–76. 84 Studierende: 6/min hebt die " +
+            "HRV stärker als Box/4-7-8; keine nennenswerte Änderung von Blutdruck oder Stimmung.",
         "doi:10.1007/s10484-025-09688-z · PMID 39864026",
     )
     val pramanik2010 = Reference(
@@ -141,8 +143,8 @@ object Refs {
     )
     val buteykoCochrane2020 = Reference(
         "Santino T. A. et al. (2020): Breathing exercises for adults with asthma. " +
-            "Cochrane Database Syst Rev 3:CD001277. Kann Lebensqualität/Symptome verbessern; " +
-            "Evidenz moderat bis sehr niedrig.",
+            "Cochrane Database Syst Rev 3:CD001277. 22 Studien, 2 mit Buteyko: Lebensqualität " +
+            "besser (moderat), Asthma-Symptome und FEV1 unklar.",
         "doi:10.1002/14651858.CD001277.pub4 · PMID 32212422",
     )
     val mayer2018 = Reference(

@@ -32,8 +32,8 @@ import java.text.Normalizer
  *   dieser Situation – „kann nachts wach liegen“ führt nicht über „wach“ zu „Wach &
  *   energiegeladen werden“.
  * - **Warn-Situationen** treffen nur über ihren Titel, nie über den Begründungssatz: Dessen
- *   Vorbehalt („nur, wenn du dich stabil und gesund fühlst“) würde sonst „nicht gesund“ oder
- *   „fühle mich nicht stabil“ ausgerechnet zu Wim Hof führen. Und sie erscheinen nur, wenn
+ *   Vorbehalt („nur, wenn du dich gesund und ausgeruht fühlst“) würde sonst „nicht gesund“
+ *   oder „nicht ausgeruht“ ausgerechnet zu Wim Hof führen. Und sie erscheinen nur, wenn
  *   kein kuratierter Begriff einer anderen Situation trifft („müde, will wach werden“ zeigt
  *   „Erschöpft oder ausgelaugt“, nicht „Wach & energiegeladen werden“).
  * - **Verneinungen** werden nicht gedeutet: „nicht müde“ trifft wie „müde“. Raten wäre

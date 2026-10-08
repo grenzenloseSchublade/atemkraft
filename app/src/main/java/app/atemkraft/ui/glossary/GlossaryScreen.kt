@@ -56,8 +56,8 @@ private val terms = listOf(
     ),
     Term(
         "Hormese",
-        "Kleine, dosierte Stressreize (z. B. Wim Hof), an die sich der Körper anpasst und dadurch " +
-            "widerstandsfähiger wird.",
+        "Die Idee, dass kleine, dosierte Belastungsreize (z. B. Wim Hof) den Körper zur Anpassung " +
+            "anregen. Für Atemtechniken ist das kaum untersucht.",
     ),
     Term(
         "PEM – Post-Exertional Malaise",

@@ -219,9 +219,14 @@ class ContentRulesTest {
                 .filter { m -> allowed.none { m.range.first >= it.first && m.range.last <= it.last } }
                 .map { m -> Finding(t.id, "„${m.value}“") }
         }
-        // TODO(S-08): scharf schalten (assertAgainstBaseline ohne Baseline), sobald die
-        // Overclaims abgebaut sind – TEXT-09 lässt für Heilversprechen keine Baseline zu.
-        report("health-claims", findings)
+        // TEXT-09 lässt für Heilversprechen keine Baseline zu: jeder Fund ist ein Fehler, nur
+        // bewusste Verneinungen und Disclaimer stehen zeilengenau in health-claims.allow.
+        if (baseline["health-claims"].orEmpty().isNotEmpty()) {
+            fail("ContentRulesTest health-claims: keine Baseline erlaubt (TEXT-09), Einträge streichen")
+        }
+        if (findings.isNotEmpty()) {
+            fail("ContentRulesTest health-claims:\n" + findings.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
+        }
     }
 
     // ---- TEXT-05: Jargon ----------------------------------------------------------------

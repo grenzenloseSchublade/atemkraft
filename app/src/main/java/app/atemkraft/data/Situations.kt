@@ -15,15 +15,15 @@ import app.atemkraft.domain.SituationRecommendation
  * SituationSearchTest und ContentRulesTest): keine Symptome oder Diagnosen, nichts, was etwas
  * verspricht; Müdigkeit führt zu „Erschöpft oder ausgelaugt“; die Warn-Situation „Wach &
  * energiegeladen werden“ bekommt keine einladenden Begriffe und trifft nur über ihren Titel
- * (nicht über ihren Satz mit dem Vorbehalt „stabil und gesund“).
+ * (nicht über ihren Satz mit dem Vorbehalt „gesund und ausgeruht“).
  */
 object Situations {
 
     val all: List<SituationRecommendation> = listOf(
         SituationRecommendation(
             situation = Situation.ACUTE_STRESS,
-            title = "Akuter Stress oder Panik",
-            rationale = "Die schnellste Soforthilfe – beruhigt in Sekunden.",
+            title = "Akuter Stress",
+            rationale = "Ein langer Ausatem für den akuten Moment – kurz, einfach und risikoarm.",
             exerciseIds = listOf("physiological-sigh", "cyclic-sighing"),
             keywords = listOf(
                 "Stress", "gestresst", "stressig", "Angst", "Ängste", "ängstlich", "angespannt", "Anspannung",
@@ -50,7 +50,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.SLEEP,
             title = "Vor dem Einschlafen",
-            rationale = "Langer, ruhiger Ausatem zum Herunterfahren – hilft beim Einschlafen.",
+            rationale = "Langer, ruhiger Ausatem zum Herunterfahren vor dem Schlafen.",
             exerciseIds = listOf("4-7-8", "resonanz", "sitali"),
             keywords = listOf(
                 "Schlaf", "schlafen", "Einschlafen", "kann nicht schlafen", "wach liegen", "liege wach",
@@ -63,7 +63,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.FOCUS,
             title = "Konzentration & Fokus",
-            rationale = "Ruhig und zugleich wach – schärft den Fokus vor einer Aufgabe.",
+            rationale = "Ruhig und zugleich wach – ein gleichmäßiger Takt vor einer Aufgabe.",
             exerciseIds = listOf("box-4-4-4-4"),
             keywords = listOf(
                 "Prüfung", "Prüfungsangst", "Klausur", "Test", "Examen", "Fahrprüfung", "Führerschein",
@@ -77,11 +77,11 @@ object Situations {
             situation = Situation.HIGH_PHASE,
             title = "Wach & energiegeladen werden",
             rationale = "Ein kräftiger, anregender Atem-Reiz, der aktiviert und wach macht. " +
-                "Nur üben, wenn du dich stabil und gesund fühlst.",
+                "Nur üben, wenn du dich gesund und ausgeruht fühlst.",
             exerciseIds = listOf("wim-hof", "feueratmung"),
             warn = true,
             // Bewusst keine keywords: Sie würden Leute aktiv zu Hyperventilationstechniken
-            // schicken, obwohl die Situation selbst einschränkt („nur, wenn du dich stabil …“).
+            // schicken, obwohl die Situation selbst einschränkt („nur, wenn du dich gesund …“).
         ),
         SituationRecommendation(
             situation = Situation.CRASH,

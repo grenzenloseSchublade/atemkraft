@@ -1,4 +1,4 @@
-- Suche nach Befinden im Tab Situationen, ohne Netz und ohne Speichern
+- Suche nach Befinden, ohne Netz und ohne Speichern
 - Situationen aufklappbar, „Meine Muster“ ab drei einklappbar
 - Muster des Tages per Lesezeichen speichern
 - Muster als Datei exportieren und importieren
@@ -6,6 +6,7 @@
 - Stimme laden ohne Gerätedaten, mit Prüfsumme
 - Lizenzen in der App
 - Stimme GLaDOS entfernt (keine Lizenz)
+- Übungstexte ordnen die Studienlage ein
 - Tick am Kreis folgt dem Schalter „Vibration“
 - Kleinere Schrift, kein Umbruch mitten im Wort
 - Fester Zurück-Pfeil

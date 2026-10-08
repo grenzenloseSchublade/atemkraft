@@ -101,11 +101,11 @@
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_about_entry">Über Atemkraft</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_body">16 evidenzbasierte Atemtechniken mit Quellen, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</string>
-    <string name="about_disclaimer">Evidenzbasiert, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe im Glossar. Bei Erkrankungen vorher ärztlich abklären.</string>
+    <string name="about_body">16 Atemtechniken mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</string>
+    <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe im Glossar. Bei Erkrankungen vorher ärztlich abklären.</string>
     <string name="settings_next_phase">Nächste Phase anzeigen</string>
     <string name="settings_next_phase_hint">Blendet während der Session dezent die kommende Phase ein – hilfreich für den Anfang.</string>
-    <string name="settings_about">Atemkraft · evidenzbasiert, keine ärztliche Empfehlung. Quellen stehen je Übung im Detail.</string>
+    <string name="settings_about">Atemkraft · keine ärztliche Empfehlung. Quellen stehen je Übung im Detail.</string>
 
     <!-- Sicherheits-Dialog -->
     <string name="safety_title">Intensive Übung</string>
@@ -186,7 +186,7 @@
     <string name="sound_mode_continuous">Durchgehend</string>
     <string name="settings_sound_appetizer">Durchgehend: ein leiser Ton führt deinen Atem – höher beim Einatmen, tiefer beim Ausatmen.</string>
     <string name="settings_sound_more">Wie funktioniert das?</string>
-    <string name="settings_sound_hint">Der Ton steigt beim Einatmen und fällt beim Ausatmen, mit einer kurzen Zäsur am Wechsel. Dieses Prinzip nutzen auch klinische Atemtrainer (z. B. RESPeRATE); langsames, gleichmäßiges Atmen erhöht nachweislich die HRV und den Vagustonus. Keine esoterischen Heilfrequenzen.</string>
+    <string name="settings_sound_hint">Der Ton steigt beim Einatmen und fällt beim Ausatmen, mit einer kurzen Zäsur am Wechsel. Dieses Prinzip nutzen auch klinische Atemtrainer (z. B. RESPeRATE); langsames, gleichmäßiges Atmen erhöht in Studien die HRV (Zaccaro 2018). Keine esoterischen Heilfrequenzen.</string>
     <string name="settings_sources">Quellen</string>
     <string name="emphasis_title">Wechsel-Betonung</string>
     <string name="emphasis_soft">Sanft</string>

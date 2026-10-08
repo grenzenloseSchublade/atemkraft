@@ -86,9 +86,19 @@ class SituationSearchTest {
 
     @Test
     fun `der Vorbehalt im Satz der Warn-Situation führt nicht zu ihr`() {
-        // „Nur üben, wenn du dich stabil und gesund fühlst“: Wer „nicht gesund“ tippt, darf
-        // nicht bei Wim Hof landen – Warn-Situationen treffen nur über ihren Titel.
-        listOf("nicht gesund", "gesund", "fühle mich nicht stabil", "kräftig", "Reiz", "aktiviert").forEach { q ->
+        // „Nur üben, wenn du dich gesund und ausgeruht fühlst“: Wer „nicht gesund“ oder „nicht
+        // ausgeruht“ tippt, darf nicht bei Wim Hof landen – Warn-Situationen treffen nur über
+        // ihren Titel.
+        listOf(
+            "nicht gesund",
+            "gesund",
+            "nicht ausgeruht",
+            "ausgeruht",
+            "fühle mich nicht stabil",
+            "kräftig",
+            "Reiz",
+            "aktiviert",
+        ).forEach { q ->
             val hits = find(q)!!
             assertTrue("$q → $hits", warn.none { it.situation in hits })
         }
@@ -99,7 +109,7 @@ class SituationSearchTest {
         listOf(
             "Asthma", "COPD", "Depression", "Angststörung", "Panikstörung", "Bluthochdruck", "Brustschmerz",
             "Brustschmerzen", "Atemnot", "Schlafstörung", "Herzrasen", "Long Covid", "Burnout",
-            "Panikattacke", "Schwindel", "Herzklopfen", "Engegefühl", "Kribbeln",
+            "Panik", "Panikattacke", "Schwindel", "Herzklopfen", "Engegefühl", "Kribbeln",
         ).forEach { assertEquals(it, emptyList<Situation>(), find(it)) }
     }
 
