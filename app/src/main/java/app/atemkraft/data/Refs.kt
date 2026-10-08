@@ -144,7 +144,7 @@ object Refs {
     val buteykoCochrane2020 = Reference(
         "Santino T. A. et al. (2020): Breathing exercises for adults with asthma. " +
             "Cochrane Database Syst Rev 3:CD001277. 22 Studien, 2 mit Buteyko: Lebensqualität " +
-            "besser (moderat), Asthma-Symptome und FEV1 unklar.",
+            "besser (moderat), Asthma-Symptome und FEV1 unklar, FEV1 in % vom Soll besser.",
         "doi:10.1002/14651858.CD001277.pub4 · PMID 32212422",
     )
     val mayer2018 = Reference(

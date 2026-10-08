@@ -46,7 +46,7 @@ object BuiltInExercises {
             "hyperventilieren.",
         instructionHint = "~4 s durch die Nase ein, ~6 s ruhig aus, ohne zu pressen. " +
             "Finde ggf. deine persönliche Resonanz (oft 5,5/min).",
-        references = listOf(Refs.shaffer2020, Refs.lehrer2014, Refs.goessl2017),
+        references = listOf(Refs.shaffer2020, Refs.lehrer2014, Refs.goessl2017, Refs.compare2025),
         rounds = 1,
         segments = listOf(
             Segment(
@@ -73,12 +73,12 @@ object BuiltInExercises {
             "Box-Atmung oder kontrollierte Hyperventilation und senkte die Atemfrequenz am " +
             "deutlichsten. Der Mechanismus dahinter: Der zweite kurze Einatem bläht " +
             "Lungenbläschen wieder auf, die im flachen Atem teils kollabieren; der lange " +
-            "Ausatem maximiert die CO₂-Abgabe und senkt über den Vagus die Herzfrequenz. " +
+            "Ausatem fördert die CO₂-Abgabe und senkt über den Vagus die Herzfrequenz. " +
             "Das ist bislang eine einzelne, autoren-nahe Studie " +
             "ohne unabhängige Replikation – „am wirksamsten“ ist also ein vorsichtiges " +
             "Zwischenergebnis, kein Endurteil. In dieser Studie war es als tägliche " +
-            "5-Minuten-Praxis das stärkste der verglichenen Stimmungs-Werkzeuge; dieselbe Mechanik einzeln im Stressmoment heißt " +
-            "„Physiological Sigh“.",
+            "5-Minuten-Praxis das stärkste der verglichenen Stimmungs-Werkzeuge; dieselbe " +
+            "Mechanik einzeln im Stressmoment heißt „Physiological Sigh“.",
         instructionHint = "1 voller Einatem durch die Nase → kurzer zweiter Einatem ganz oben " +
             "drauf → langsam vollständig durch den Mund aus. ~5 min am Stück, langer Ausatem.",
         references = listOf(Refs.balban2023),
@@ -386,7 +386,7 @@ object BuiltInExercises {
             "Technik ohne Halten (z. B. Resonanz). Für reine HRV ist 6/min stärker.",
         instructionHint = "4 s ein · 4 s halten · 4 s aus · 4 s halten · ~2–5 min. " +
             "Durch die Nase. Zu lang? Nimm 3-3-3-3. Ideal vor einer Aufgabe – ruhig und konzentriert.",
-        references = listOf(Refs.balban2023),
+        references = listOf(Refs.balban2023, Refs.compare2025),
         rounds = 8, // ~2 min
         segments = listOf(
             Segment(
@@ -543,8 +543,9 @@ object BuiltInExercises {
             "Atempausen („Control Pause“) mit dem Ziel, die CO₂-Toleranz zu erhöhen. Die " +
             "Cochrane-Übersicht (2020, Atemübungen bei Asthma allgemein, nur zwei von 22 Studien " +
             "mit Buteyko) fand eine bessere Lebensqualität (moderate Evidenz); ob sich die " +
-            "Symptome bessern, blieb unklar, ebenso die Lungenfunktion (FEV1, sehr niedrige " +
-            "Evidenz). Die angenommene CO₂-Korrektur ließ sich in " +
+            "Symptome bessern, blieb unklar; bei der Lungenfunktion waren die Ergebnisse " +
+            "uneinheitlich (FEV1 unklar, sehr niedrige Evidenz). Die angenommene CO₂-Korrektur " +
+            "ließ sich in " +
             "Studien nicht bestätigen (Bowler 1998) – der Nutzen kommt eher aus ruhigerem Atmen " +
             "und weniger Atem-Aufwand. Relevant ist das Training vor allem bei Asthma und dysfunktionaler " +
             "Atmung/Atemnot. Wichtig: ein ergänzendes Wochen-Training neben der ärztlichen " +
