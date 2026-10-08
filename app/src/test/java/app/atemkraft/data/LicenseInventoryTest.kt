@@ -31,6 +31,28 @@ class LicenseInventoryTest {
         assertTrue("GLaDOS steht noch in der Liste", !inventory.contains("glados", ignoreCase = true))
     }
 
+    /**
+     * Einzige Quelle der Stimmen sind `VoiceCatalog.kt` und THIRD_PARTY_LICENSES.md: README,
+     * Store-Texte, Datenschutzerklärung, Release-Notes und App-Texte nennen weder Stimmen beim
+     * Namen noch ihre Anzahl. Eine Stimme hinzufügen oder entfernen heißt dann nur: Katalog,
+     * Lizenzliste, Hörprobe. (Der historische Hinweis „GLaDOS entfernt“ ist erlaubt, weil GLaDOS
+     * nicht mehr im Katalog steht.)
+     */
+    @Test
+    fun `Stimmen stehen nur im Katalog und in der Lizenzliste`() {
+        val docs = listOf(repoFile("README.md"), repoFile("docs/PRIVACY.md"), moduleFile("src/main/res/values/strings.xml")) +
+            repoFile("docs/release-notes").listFiles().orEmpty().filter { it.name.endsWith(".md") } +
+            repoFile("fastlane/metadata").walkTopDown().filter { it.isFile && it.name.endsWith(".txt") }.toList()
+        val count = Regex("""(?<![\p{L}\d])(\d+|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\s+(\p{L}+\s+)?Stimmen""", RegexOption.IGNORE_CASE)
+        val findings = docs.filter { it.isFile }.flatMap { f ->
+            val text = f.readText()
+            VoiceCatalog.all.mapNotNull { spec ->
+                Regex("""(?<![\p{L}\d])${Regex.escape(spec.displayName)}(?![\p{L}\d])""").find(text)?.let { "${f.name}: „${it.value}“" }
+            } + listOfNotNull(count.find(text)?.let { "${f.name}: „${it.value}“" })
+        }
+        assertTrue("Stimmen außerhalb von Katalog und Lizenzliste:\n" + findings.joinToString("\n"), findings.isEmpty())
+    }
+
     @Test
     fun `jeder Baustein der App-Liste steht in THIRD_PARTY_LICENSES`() {
         ThirdParty.components.forEach { c ->

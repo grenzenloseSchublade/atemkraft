@@ -35,6 +35,13 @@ data class VoiceSpec(
     /** Rechteinhaber bzw. Quelle laut Modellkarte (Namensnennung). */
     val rightsHolder: String,
 ) {
+    /**
+     * Lizenz erlaubt nur nicht kommerzielle Nutzung (Creative Commons „NC“). Stimmenauswahl und
+     * Lizenzliste zeigen dann ausdrücklich „nur nicht kommerziell“ (SEC-LEGAL-03, deklarierte
+     * Ausnahme); so folgt die Kennzeichnung allein aus [license].
+     */
+    val nonCommercialOnly: Boolean get() = Regex("""\bNC\b""").containsMatchIn(license)
+
     /** Download-Größe in MiB, abgerundet (für den UI-Hinweis). */
     val approxMb: Int get() = (sizeBytes / (1024L * 1024L)).toInt()
 

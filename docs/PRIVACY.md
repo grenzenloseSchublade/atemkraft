@@ -18,7 +18,7 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 | Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | „Logbuch leeren“ im Logbuch; App-Speicher löschen |
 | Eigene Muster (Datenbank) | Name, Phasenlängen und Art (aktivierend oder nicht) gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen unter „Meine Muster“ |
 | Einstellungen | Ton, Haptik, Hinweise (auch, ob du den Sicherheitshinweis vor intensiven Übungen bestätigt hast), Meditation, gewählte Stimme, Anpassungen pro Übung, ob „Meine Muster“ aufgeklappt ist | pro Übung zurücksetzen; App-Speicher löschen |
-| Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien, Download je ca. 25–110 MB) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |
+| Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |
 | Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Versuch. Den Download-Cache leert Android auch bei Speichermangel |
 
 Die Befindens-Suche im Situationen-Tab (ab Version 1.6.0) wird nicht gespeichert: Der Suchtext bleibt nur erhalten, solange die Suche offen ist (auch beim Drehen oder wenn Android die App im Hintergrund beendet und du zurückkehrst), und ist weg, sobald du die Suche schließt. Die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.

@@ -66,6 +66,7 @@ import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
+import app.atemkraft.ui.theme.WarnAmber
 import kotlinx.coroutines.flow.first
 
 /** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
@@ -420,6 +421,15 @@ private fun VoiceRow(
                 },
             )
             Hint(voiceSubtitle(spec, state, active, engineReady))
+            if (spec.nonCommercialOnly) {
+                // Eigene Zeile in Warnfarbe statt im grauen Untertitel: Die Einschränkung soll vor
+                // dem Laden auffallen (SEC-LEGAL-03), ohne die Zeile breiter zu machen (LAYOUT-03).
+                WholeWordText(
+                    text = stringResource(R.string.voice_non_commercial),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = WarnAmber,
+                )
+            }
         }
 
         // Vorhören (funktioniert immer, auch vor dem Download).

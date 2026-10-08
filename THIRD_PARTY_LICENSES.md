@@ -12,7 +12,7 @@ Was in der App steckt, was sie auf Wunsch lädt und unter welchen Bedingungen. G
 |---|---|---|
 | Quellcode von Atemkraft (dieses Repo) | MIT ([LICENSE](LICENSE)) | frei nutzbar, auch kommerziell, mit Copyright-Hinweis |
 | Verteilte APK | enthält Bausteine unter Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, MPL-2.0, Unlicense, der Unicode-Lizenz und **eSpeak NG unter GPL-3.0-or-later** | siehe [GPL und die APK](#gpl) |
-| Stimmmodelle | je Stimme verschieden, teils nur nicht kommerziell, eine ohne Lizenzangabe | **nicht in der APK**; die App lädt sie auf Wunsch direkt von GitHub ([Stimmen](#stimmen)) |
+| Stimmmodelle | je Stimme verschieden, teils nur nicht kommerziell, teils nur mit Lizenz der Trainingsdaten | **nicht in der APK**; die App lädt sie auf Wunsch direkt von GitHub ([Stimmen](#stimmen)) |
 
 <a id="gpl"></a>
 ### GPL und die APK

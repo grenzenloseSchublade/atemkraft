@@ -65,6 +65,11 @@ class VoiceCatalogTest {
         // Nicht kommerzielle Stimmen müssen das im Kurzlabel zeigen (Modellkarte von TigreGotico).
         listOf("miro", "dii").forEach { id ->
             assertTrue(id, VoiceCatalog.byId(id)!!.license.contains("NC"))
+            assertTrue("$id: Kennzeichnung „nur nicht kommerziell“ fehlt", VoiceCatalog.byId(id)!!.nonCommercialOnly)
+        }
+        // Gegenprobe: Lizenzen ohne NC lösen den Hinweis nicht aus.
+        VoiceCatalog.all.filterNot { "NC" in it.license }.forEach { spec ->
+            assertTrue("${spec.id}: fälschlich als nicht kommerziell markiert", !spec.nonCommercialOnly)
         }
     }
 

@@ -122,7 +122,11 @@ private fun LicenseList() {
 
         Spacer(Modifier.height(Dimens.GapTiny))
         SubLabel(stringResource(R.string.about_licenses_voices), color = MaterialTheme.colorScheme.onBackground)
-        VoiceCatalog.all.forEach { LicenseEntry(it.displayName, it.license, it.rightsHolder) }
+        val nonCommercial = stringResource(R.string.voice_non_commercial)
+        VoiceCatalog.all.forEach { spec ->
+            val license = if (spec.nonCommercialOnly) "${spec.license}, $nonCommercial" else spec.license
+            LicenseEntry(spec.displayName, license, spec.rightsHolder)
+        }
         Note(stringResource(R.string.about_licenses_voices_note))
 
         LinkRow(label = stringResource(R.string.about_licenses_link), url = LICENSES_URL)
