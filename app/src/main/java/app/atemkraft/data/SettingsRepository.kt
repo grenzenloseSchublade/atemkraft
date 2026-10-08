@@ -44,7 +44,14 @@ data class IntervalOverrides(
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-class SettingsRepository(private val context: Context) {
+/**
+ * Die App nutzt den einen DataStore „settings“ ([Context.dataStore]). Tests geben einen eigenen
+ * Speicher mit, damit Hintergrund-Aufräumarbeiten der App (z. B. [dropUnknownNeuralVoice] beim
+ * Start) nicht in ihre Daten schreiben.
+ */
+class SettingsRepository(private val store: DataStore<Preferences>) {
+
+    constructor(context: Context) : this(context.dataStore)
 
     private object Keys {
         val SOUND = booleanPreferencesKey("cue_sound") // alt, nur für Migration
@@ -70,17 +77,17 @@ class SettingsRepository(private val context: Context) {
      * Zuletzt gewählter Aufklapp-Zustand von „Meine Muster“ im Situationen-Tab. Gilt erst ab
      * drei gespeicherten Mustern; nicht gesetzt = zu.
      */
-    val savedPatternsExpanded: Flow<Boolean> = context.dataStore.data.map { it[Keys.SAVED_PATTERNS_EXPANDED] ?: false }
+    val savedPatternsExpanded: Flow<Boolean> = store.data.map { it[Keys.SAVED_PATTERNS_EXPANDED] ?: false }
 
     suspend fun setSavedPatternsExpanded(expanded: Boolean) {
-        context.dataStore.edit { it[Keys.SAVED_PATTERNS_EXPANDED] = expanded }
+        store.edit { it[Keys.SAVED_PATTERNS_EXPANDED] = expanded }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */
-    val gongLong: Flow<Boolean> = context.dataStore.data.map { it[Keys.MED_GONG_LONG] ?: true }
+    val gongLong: Flow<Boolean> = store.data.map { it[Keys.MED_GONG_LONG] ?: true }
 
     suspend fun setGongLong(long: Boolean) {
-        context.dataStore.edit { it[Keys.MED_GONG_LONG] = long }
+        store.edit { it[Keys.MED_GONG_LONG] = long }
     }
 
     /**
@@ -88,14 +95,14 @@ class SettingsRepository(private val context: Context) {
      * nicht mehr im Katalog steht (GLaDOS bis 1.5.1), zählt als keine Wahl: Die Anleitung nutzt dann
      * die Sprachausgabe des Geräts. Bereinigt wird sie über [dropUnknownNeuralVoice].
      */
-    val neuralVoiceId: Flow<String?> = context.dataStore.data.map { prefs ->
+    val neuralVoiceId: Flow<String?> = store.data.map { prefs ->
         prefs[Keys.MED_NEURAL_VOICE]?.takeIf { VoiceCatalog.byId(it) != null }
     }
 
     /** Entfernt eine gespeicherte Stimmen-Id, die nicht mehr im Katalog steht; true, wenn eine entfernt wurde. */
     suspend fun dropUnknownNeuralVoice(): Boolean {
         var dropped = false
-        context.dataStore.edit { prefs ->
+        store.edit { prefs ->
             val id = prefs[Keys.MED_NEURAL_VOICE]
             if (id != null && VoiceCatalog.byId(id) == null) {
                 prefs.remove(Keys.MED_NEURAL_VOICE)
@@ -106,7 +113,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setNeuralVoiceId(voiceId: String?) {
-        context.dataStore.edit { prefs ->
+        store.edit { prefs ->
             if (voiceId == null) prefs.remove(Keys.MED_NEURAL_VOICE) else prefs[Keys.MED_NEURAL_VOICE] = voiceId
         }
     }
@@ -115,17 +122,17 @@ class SettingsRepository(private val context: Context) {
      *  Alt-Werte < 3 (frühere „kein Intervall = 0"-Semantik) fallen auf den Standard zurück. */
     private fun gongIntervalOf(prefs: Preferences): Int = prefs[Keys.MED_GONG_INTERVAL]?.takeIf { it >= 3 }?.coerceAtMost(60) ?: 5
 
-    val gongIntervalMin: Flow<Int> = context.dataStore.data.map { gongIntervalOf(it) }
+    val gongIntervalMin: Flow<Int> = store.data.map { gongIntervalOf(it) }
 
     suspend fun setGongIntervalMin(minutes: Int) {
-        context.dataStore.edit { it[Keys.MED_GONG_INTERVAL] = minutes.coerceIn(3, 60) }
+        store.edit { it[Keys.MED_GONG_INTERVAL] = minutes.coerceIn(3, 60) }
     }
 
-    val showNextPhase: Flow<Boolean> = context.dataStore.data.map { prefs ->
+    val showNextPhase: Flow<Boolean> = store.data.map { prefs ->
         prefs[Keys.SHOW_NEXT] ?: true
     }
 
-    val cueSettings: Flow<CueSettings> = context.dataStore.data.map { prefs ->
+    val cueSettings: Flow<CueSettings> = store.data.map { prefs ->
         val mode = prefs[Keys.SOUND_MODE]?.let { SoundMode.entries.getOrNull(it) }
             ?: if (prefs[Keys.SOUND] == false) SoundMode.OFF else SoundMode.CUES // Migration
         CueSettings(
@@ -139,7 +146,7 @@ class SettingsRepository(private val context: Context) {
         )
     }
 
-    val safetySettings: Flow<SafetySettings> = context.dataStore.data.map { prefs ->
+    val safetySettings: Flow<SafetySettings> = store.data.map { prefs ->
         SafetySettings(
             showWarning = prefs[Keys.SHOW_SAFETY] ?: true,
             acknowledged = prefs[Keys.SAFETY_ACK] ?: false,
@@ -147,31 +154,31 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setSoundMode(mode: SoundMode) {
-        context.dataStore.edit { it[Keys.SOUND_MODE] = mode.ordinal }
+        store.edit { it[Keys.SOUND_MODE] = mode.ordinal }
     }
 
     suspend fun setTransitionEmphasis(emphasis: TransitionEmphasis) {
-        context.dataStore.edit { it[Keys.TRANSITION] = emphasis.ordinal }
+        store.edit { it[Keys.TRANSITION] = emphasis.ordinal }
     }
 
     suspend fun setToneVolume(volume: ToneVolume) {
-        context.dataStore.edit { it[Keys.VOLUME] = volume.ordinal }
+        store.edit { it[Keys.VOLUME] = volume.ordinal }
     }
 
     suspend fun setHaptics(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.HAPTICS] = enabled }
+        store.edit { it[Keys.HAPTICS] = enabled }
     }
 
     suspend fun setShowSafetyWarning(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.SHOW_SAFETY] = enabled }
+        store.edit { it[Keys.SHOW_SAFETY] = enabled }
     }
 
     suspend fun setSafetyAcknowledged(value: Boolean) {
-        context.dataStore.edit { it[Keys.SAFETY_ACK] = value }
+        store.edit { it[Keys.SAFETY_ACK] = value }
     }
 
     suspend fun setShowNextPhase(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.SHOW_NEXT] = enabled }
+        store.edit { it[Keys.SHOW_NEXT] = enabled }
     }
 
     // Angepasste Phasenlängen je Übung (dynamische Keys pro Übungs-Id). Das Muster des Tages
@@ -180,7 +187,7 @@ class SettingsRepository(private val context: Context) {
     private fun ivKey(exerciseId: String, part: String) = intPreferencesKey("iv_${exerciseId}_$part")
 
     /** Gespeicherte Session-Anpassung der Übung; null = nie angepasst. */
-    fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> = context.dataStore.data.map { prefs ->
+    fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> = store.data.map { prefs ->
         val duration = prefs[ivKey(exerciseId, "dur")]
         val inhale = prefs[ivKey(exerciseId, "in")]
         val hold = prefs[ivKey(exerciseId, "hold")]
@@ -193,7 +200,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun setExerciseIntervals(exerciseId: String, duration: Int?, inhale: Int?, hold: Int?, exhale: Int?) {
-        context.dataStore.edit { prefs ->
+        store.edit { prefs ->
             fun put(part: String, value: Int?) {
                 if (value != null) prefs[ivKey(exerciseId, part)] = value else prefs.remove(ivKey(exerciseId, part))
             }
@@ -205,7 +212,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun clearExerciseIntervals(exerciseId: String) {
-        context.dataStore.edit { prefs ->
+        store.edit { prefs ->
             prefs.remove(ivKey(exerciseId, "dur"))
             prefs.remove(ivKey(exerciseId, "in"))
             prefs.remove(ivKey(exerciseId, "hold"))
@@ -214,7 +221,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     /** Zuletzt gewählte Meditations-Einstellung (Modus, Dauer, Intervall-Gong, Sprache). */
-    val meditationSettings: Flow<MeditationConfig> = context.dataStore.data.map { prefs ->
+    val meditationSettings: Flow<MeditationConfig> = store.data.map { prefs ->
         // Intervall an/aus ist die Tab-Wahl; die Länge X kommt aus der Einstellung.
         val intervalOn = prefs[Keys.MED_INTERVAL_ON] ?: false
         val intervalMin = gongIntervalOf(prefs)
@@ -230,7 +237,7 @@ class SettingsRepository(private val context: Context) {
 
     /** Speichert die Tab-Wahl (nicht die globale Intervall-Länge – die bleibt eine Einstellung). */
     suspend fun setMeditationConfig(config: MeditationConfig) {
-        context.dataStore.edit { prefs ->
+        store.edit { prefs ->
             prefs[Keys.MED_MODE] = config.mode.ordinal
             prefs[Keys.MED_MINUTES] = config.minutes
             prefs[Keys.MED_START_END_GONG] = config.startEndGong
