@@ -35,7 +35,7 @@ val FamilyFunctional = Color(0xFF34D399)
 
 // Semantische Tokens (zentral, statt mehrfach hardcodierter Hex in den Screens).
 val EvidenceBest = NeonCyan // „am besten belegt" – Cyan
-val EvidenceCaution = Color(0xFFFF6B8B) // „nur stabile Phase" / Vorsicht – Neon-Pink/Rot
+val EvidenceCaution = Color(0xFFFF6B8B) // „nur gesund & ausgeruht" / Vorsicht – Neon-Pink/Rot
 val WarnAmber = NeonYellow // Hinweis/Warnung – Synthwave-Gelb
 
 // Session-Atemkreis (synthwave): Magenta-Verlauf + Cyan-Ring, damit die helle Schrift

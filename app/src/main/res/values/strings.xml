@@ -14,14 +14,14 @@
     <string name="phase_rest">Locker atmen</string>
 
     <!-- Familien (Kategorien) -->
-    <string name="family_downregulate">A · Herunterregeln (vagal)</string>
-    <string name="family_upregulate">B · Hochregeln (sympathisch)</string>
+    <string name="family_downregulate">A · Herunterregeln</string>
+    <string name="family_upregulate">B · Hochregeln</string>
     <string name="family_balance">C · Balancieren / Programme</string>
     <string name="family_functional">D · Funktionell</string>
 
     <!-- Tags -->
     <string name="tag_best">am besten belegt</string>
-    <string name="tag_caution">nur stabile Phase</string>
+    <string name="tag_caution">nur gesund &amp; ausgeruht</string>
     <string name="tag_info">Programm</string>
 
     <!-- Detailseite -->

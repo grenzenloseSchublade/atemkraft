@@ -21,7 +21,7 @@ object BuiltInExercises {
 
     private fun secs(value: Double): PhaseDuration = PhaseDuration.Fixed((value * 1000).toLong())
 
-    // ── A · Herunterregeln (vagal) ───────────────────────────────────────────
+    // ── A · Herunterregeln ───────────────────────────────────────────────────
 
     private val resonance = Exercise(
         id = "resonanz",
@@ -37,8 +37,8 @@ object BuiltInExercises {
             "Atem, Herzschlag und Blutdruck-Regelkreis (Baroreflex) im selben Takt schwingen – " +
             "die HRV-Ausschläge werden besonders groß. " +
             "Über Wochen geübt kann das den Ruhe-Vagustonus und die Baroreflex-Empfindlichkeit " +
-            "anheben (Goessl 2017, Meta-Analyse zu HRV-Biofeedback: weniger selbstberichteter " +
-            "Stress und Angst). Die „5,5/min“ sind " +
+            "anheben (Goessl 2017, Meta-Analyse zu HRV-Biofeedback: deutlich weniger " +
+            "selbstberichteter Stress und Angst). Die „5,5/min“ sind " +
             "nur ein gerundeter Startwert – deine persönliche Resonanz liegt meist zwischen 4,5 " +
             "und 6,5/min, etwas Ausprobieren lohnt sich. Anders als 4-7-8 oder Box kommt " +
             "Resonanz ohne Halten aus und ist damit das ruhige tägliche Grundlagen-Werkzeug. " +
@@ -264,7 +264,7 @@ object BuiltInExercises {
         ),
     )
 
-    // ── B · Hochregeln (sympathisch) ─────────────────────────────────────────
+    // ── B · Hochregeln ───────────────────────────────────────────────────────
 
     private val wimHof = Exercise(
         id = "wim-hof",

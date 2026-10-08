@@ -88,8 +88,10 @@ object Refs {
         "doi:10.3389/fnins.2020.570400",
     )
     val goessl2017 = Reference(
-        "Goessl V. C. et al. (2017): HRV-Biofeedback-Training auf Stress und Angst – " +
-            "Meta-Analyse. Psychological Medicine 47(15):2578–86.",
+        "Goessl V. C. et al. (2017): The effect of heart rate variability biofeedback training " +
+            "on stress and anxiety: a meta-analysis. Psychological Medicine 47(15):2578–86. " +
+            "24 Studien, 484 Teilnehmende: großer Rückgang von selbstberichtetem Stress und Angst " +
+            "(Effektstärke g ≈ 0,8); es braucht mehr gut kontrollierte Studien.",
         "doi:10.1017/S0033291717001003 · PMID 28478782",
     )
     val zaccaro2018 = Reference(

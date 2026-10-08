@@ -62,7 +62,7 @@ private val terms = listOf(
     Term(
         "PEM – Post-Exertional Malaise",
         "Verschlechterung des Zustands nach Anstrengung (z. B. bei ME/CFS oder Long COVID). Dann nur " +
-            "sanfte, vagale Übungen.",
+            "sanfte Übungen zum Herunterregeln.",
     ),
 )
 
