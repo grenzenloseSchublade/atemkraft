@@ -84,6 +84,7 @@ fun SituationsScreen(
     resolve: (String) -> Exercise?,
     onSelect: (String) -> Unit,
     onDeleteSaved: (Long) -> Unit,
+    markedIds: Set<String> = emptySet(),
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
@@ -160,7 +161,7 @@ fun SituationsScreen(
                 // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der
                 // Übersicht zu überschreiben.
                 items(results, key = { "q-${it.situation.name}" }) { rec ->
-                    SituationSection(rec, initiallyExpanded = true, resolve = resolve, onSelect = onSelect)
+                    SituationSection(rec, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
                 }
             } else {
                 // Vom Nutzer gespeicherte generierte Muster – bewusst hier (nicht im Atmen-Tab).
@@ -179,7 +180,7 @@ fun SituationsScreen(
                 // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
                 // als langes Scrollen.
                 items(recommendations, key = { "s-${it.situation.name}" }) { rec ->
-                    SituationSection(rec, initiallyExpanded = false, resolve = resolve, onSelect = onSelect)
+                    SituationSection(rec, initiallyExpanded = false, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
                 }
             }
 
@@ -246,6 +247,7 @@ private fun SituationSection(
     rec: SituationRecommendation,
     initiallyExpanded: Boolean,
     resolve: (String) -> Exercise?,
+    markedIds: Set<String>,
     onSelect: (String) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
@@ -263,7 +265,7 @@ private fun SituationSection(
         )
         if (expanded) {
             rec.exerciseIds.mapNotNull(resolve).forEach { exercise ->
-                ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) })
+                ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
             }
         }
     }

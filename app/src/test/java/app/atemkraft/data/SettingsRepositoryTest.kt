@@ -48,6 +48,19 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `Markierung tut mir gut gilt je Übung und bleibt nach einem neuen Repository`() = runBlocking {
+        assertEquals(emptySet<String>(), SettingsRepository(store).markedExercises.first())
+
+        SettingsRepository(store).setExerciseMarked("resonanz", true)
+        SettingsRepository(store).setExerciseMarked("box-4-4-4-4", true)
+        assertEquals(setOf("resonanz", "box-4-4-4-4"), SettingsRepository(store).markedExercises.first())
+
+        SettingsRepository(store).setExerciseMarked("box-4-4-4-4", false)
+        SettingsRepository(store).setExerciseMarked("4-7-8", false)
+        assertEquals(setOf("resonanz"), SettingsRepository(store).markedExercises.first())
+    }
+
+    @Test
     fun `Meine Muster startet zu, und die Wahl steht nach einem neuen Repository wieder da`() = runBlocking {
         assertEquals(false, SettingsRepository(store).savedPatternsExpanded.first())
 

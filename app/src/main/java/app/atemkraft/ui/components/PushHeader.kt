@@ -2,6 +2,7 @@ package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -30,12 +31,14 @@ import app.atemkraft.ui.theme.Sizes
  * auf „Über“, Titel mit Chips auf der Detailseite). Rand (`ScreenPadding`) und Abstand oben
  * (`ScreenTopSub`) bringt er selbst mit, weil er neben und nicht in der Scroll-Spalte steht.
  * Der Titel bricht nie im Wort um ([WholeWordText]); wird er zweizeilig, wächst die Zeile mit.
+ * [action] steht rechts außen, ihr Icon bündig zur Inhaltskante wie der Pfeil links.
  */
 @Composable
 fun PushHeader(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
+    action: (@Composable () -> Unit)? = null,
 ) {
     // Um diesen Rand rückt BackButton den Pfeil an die Inhaltskante (Tippfläche 48 − Icon, halbiert).
     val inset = (Dimens.MinTouchTarget - Sizes.IconDefault) / 2
@@ -67,6 +70,17 @@ fun PushHeader(
                     .weight(1f)
                     .semantics { heading() },
             )
+        }
+        if (action != null) {
+            if (title == null) Spacer(Modifier.weight(1f))
+            // Spiegelbild zum Pfeil: um [inset] schmaler melden, die Tippfläche steht rechts über.
+            Box(
+                Modifier.layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    val width = (placeable.width - inset.roundToPx()).coerceAtLeast(0)
+                    layout(width, placeable.height) { placeable.place(0, 0) }
+                },
+            ) { action() }
         }
     }
 }

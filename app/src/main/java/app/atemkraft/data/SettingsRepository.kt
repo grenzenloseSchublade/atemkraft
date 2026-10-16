@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.domain.MeditationConfig
@@ -71,6 +72,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val MED_NEURAL_VOICE = stringPreferencesKey("med_neural_voice") // VoiceCatalog.id; leer = keine
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
         val SAVED_PATTERNS_EXPANDED = booleanPreferencesKey("saved_patterns_expanded") // „Meine Muster“ offen
+        val MARKED_EXERCISES = stringSetPreferencesKey("marked_exercises") // Atemkreis „tut mir gut“
     }
 
     /**
@@ -81,6 +83,20 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setSavedPatternsExpanded(expanded: Boolean) {
         store.edit { it[Keys.SAVED_PATTERNS_EXPANDED] = expanded }
+    }
+
+    /**
+     * Übungs-Ids mit persönlicher Markierung („tut mir gut“, Atemkreis). Eine eigene Einschätzung
+     * neben der Studienlage; sie ändert weder Reihenfolge noch Gruppen. Nur stabile Ids eingebauter
+     * Übungen – das entscheidet der Aufrufer.
+     */
+    val markedExercises: Flow<Set<String>> = store.data.map { it[Keys.MARKED_EXERCISES].orEmpty() }
+
+    suspend fun setExerciseMarked(exerciseId: String, marked: Boolean) {
+        store.edit { prefs ->
+            val current = prefs[Keys.MARKED_EXERCISES].orEmpty()
+            prefs[Keys.MARKED_EXERCISES] = if (marked) current + exerciseId else current - exerciseId
+        }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

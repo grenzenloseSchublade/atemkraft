@@ -47,6 +47,7 @@ import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.PersonalMarkToggle
 import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
@@ -78,6 +79,9 @@ fun ExerciseDetailScreen(
     onConfirmedSafety: () -> Unit,
     onStart: (SessionConfig) -> Unit,
     onBack: () -> Unit,
+    // Persönliche Markierung „tut mir gut“; ohne [onMarkedChange] (Muster) kein Schalter.
+    marked: Boolean = false,
+    onMarkedChange: ((Boolean) -> Unit)? = null,
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
@@ -168,8 +172,11 @@ fun ExerciseDetailScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Nur der Pfeil steht fest; Familie, Titel und Chips gehören zum Inhalt.
-            PushHeader(onBack = onBack)
+            // Nur Pfeil und Markierung stehen fest; Familie, Titel und Chips gehören zum Inhalt.
+            PushHeader(
+                onBack = onBack,
+                action = onMarkedChange?.let { onChange -> { PersonalMarkToggle(marked = marked, onMarkedChange = onChange) } },
+            )
             Column(
                 modifier = Modifier
                     .weight(1f)

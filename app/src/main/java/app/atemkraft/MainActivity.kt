@@ -60,6 +60,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
@@ -143,6 +144,8 @@ private fun AtemkraftApp() {
     // Öffnen der Situationen schon da ist und „Meine Muster“ nicht sichtbar umspringt.
     val savedPatternsExpanded by container.settingsRepository.savedPatternsExpanded
         .collectAsStateWithLifecycle(initialValue = false)
+    val markedExercises by container.settingsRepository.markedExercises
+        .collectAsStateWithLifecycle(initialValue = emptySet())
 
     val meditationController = container.meditationController
     val meditationState by meditationController.state.collectAsStateWithLifecycle()
@@ -312,6 +315,7 @@ private fun AtemkraftApp() {
                         programs = programs,
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
                         onOpenSettings = { navController.navigate(SettingsRoute()) },
+                        markedIds = markedExercises,
                     )
                 }
                 composable<SituationenRoute> {
@@ -329,6 +333,7 @@ private fun AtemkraftApp() {
                         onDeleteSaved = { id ->
                             scope.launch { container.savedPatternsRepository.delete(id) }
                         },
+                        markedIds = markedExercises,
                     )
                 }
                 composable<LogbuchRoute> {
@@ -374,6 +379,9 @@ private fun AtemkraftApp() {
                     // Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten
                     // sonst morgen für ein anderes Muster.
                     val persistIntervals = id != RandomPatternGenerator.ID
+                    // Markieren nur eingebaute Übungen: Ihre Id ist stabil und ihre Karten stehen
+                    // in den Listen; Muster wechseln oder lassen sich löschen.
+                    val markable = exercise in BuiltInExercises.all
                     val savedIntervals by remember(id) {
                         container.settingsRepository.exerciseIntervals(id)
                     }.collectAsStateWithLifecycle(initialValue = null)
@@ -402,6 +410,12 @@ private fun AtemkraftApp() {
                             navController.popBackStack()
                         },
                         onBack = { navController.popBackStack() },
+                        marked = id in markedExercises,
+                        onMarkedChange = if (markable) {
+                            { marked -> scope.launch { container.settingsRepository.setExerciseMarked(id, marked) } }
+                        } else {
+                            null
+                        },
                     )
                 }
                 composable<SettingsRoute>(

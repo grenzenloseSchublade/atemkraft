@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,8 +35,8 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.CautionChip
-import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.InfoChip
+import app.atemkraft.ui.components.PersonalMarkIndicator
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
@@ -55,6 +57,7 @@ fun HomeScreen(
     onDailySavedChange: (Boolean) -> Unit,
     onSelect: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    markedIds: Set<String> = emptySet(),
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -102,7 +105,7 @@ fun HomeScreen(
                     SectionHeader(title = family.title(), color = family.color())
                 }
                 items(exercises, key = { it.id }) { exercise ->
-                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) })
+                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
             }
 
@@ -114,7 +117,7 @@ fun HomeScreen(
                     )
                 }
                 items(programs, key = { it.id }) { program ->
-                    ExerciseCard(exercise = program, onClick = { onSelect(program.id) })
+                    ExerciseCard(exercise = program, onClick = { onSelect(program.id) }, marked = program.id in markedIds)
                 }
             }
 
@@ -123,9 +126,15 @@ fun HomeScreen(
     }
 }
 
+/**
+ * Übungskarte in Listen. Die Studienlage steht nur auf der Detailseite: Auf der Liste trüge fast
+ * jede Karte dasselbe Etikett. Die Karte zeigt, was vor dem Antippen zählt – Vorsicht, „Programm“
+ * und die persönliche Markierung ([marked], Atemkreis rechts auf Höhe der ersten Titelzeile).
+ */
 @Composable
-fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
+fun ExerciseCard(exercise: Exercise, marked: Boolean = false, onClick: () -> Unit) {
     val accent = exercise.family.color()
+    val titleStyle = MaterialTheme.typography.titleLarge
     // Card(onClick) statt Modifier.clickable: Ripple folgt der Kartenform, Tippfläche ≥ 48 dp
     // bringt die M3-Surface selbst mit (KOMP-02).
     Card(
@@ -134,20 +143,30 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit) {
         border = BorderStroke(1.dp, accent.copy(alpha = 0.35f)),
     ) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            TitleWithChips(
-                title = exercise.name,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                chips = if (exercise.evidence == null && !exercise.caution && exercise.guided) {
-                    null
-                } else {
-                    {
-                        exercise.evidence?.let { EvidenceChip(it) }
-                        if (exercise.caution) CautionChip()
-                        if (!exercise.guided) InfoChip()
-                    }
-                },
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+                TitleWithChips(
+                    title = exercise.name,
+                    style = titleStyle,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                    chips = if (!exercise.caution && exercise.guided) {
+                        null
+                    } else {
+                        {
+                            if (exercise.caution) CautionChip()
+                            if (!exercise.guided) InfoChip()
+                        }
+                    },
+                )
+                if (marked) {
+                    // Box in Höhe einer Titelzeile: Der Kreis steht mittig zur ersten Zeile,
+                    // auch wenn Titel und Chips umbrechen.
+                    Box(
+                        modifier = Modifier.height(with(LocalDensity.current) { titleStyle.lineHeight.toDp() }),
+                        contentAlignment = Alignment.Center,
+                    ) { PersonalMarkIndicator() }
+                }
+            }
             Spacer(Modifier.height(Dimens.GapTiny))
             Text(
                 text = exercise.shortDescription,

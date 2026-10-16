@@ -1,6 +1,7 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceLevel
@@ -24,6 +26,7 @@ import app.atemkraft.ui.theme.EvidenceBest
 import app.atemkraft.ui.theme.EvidenceCaution
 import app.atemkraft.ui.theme.EvidenceLittle
 import app.atemkraft.ui.theme.EvidenceStudied
+import app.atemkraft.ui.theme.SECONDARY
 
 /** Test-Tag des Chip-Texts: Der ScreenshotTest meldet einen Chip, dessen Text umbricht (LAYOUT-03). */
 const val CHIP_TEXT_TAG = "chip-text"
@@ -46,12 +49,16 @@ fun CautionChip() {
     Chip(text = stringResource(R.string.tag_caution), color = EvidenceCaution)
 }
 
-/** „Programm"-Chip für nicht-getaktete Info-Einträge. */
+/**
+ * „Programm"-Chip für nicht-getaktete Info-Einträge. Umriss statt Füllung: Er nennt eine Art
+ * von Eintrag, keine Studienlage, und darf deshalb nicht wie das graue „kaum untersucht“ aussehen.
+ */
 @Composable
 fun InfoChip() {
     Chip(
         text = stringResource(R.string.tag_info),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+        outlined = true,
     )
 }
 
@@ -61,11 +68,18 @@ fun InfoChip() {
  * Lesereihenfolge, und das Text-Layout bleibt für die Umbruchprüfung erhalten).
  */
 @Composable
-fun Chip(text: String, color: Color, modifier: Modifier = Modifier, spokenText: String? = null) {
+fun Chip(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    spokenText: String? = null,
+    outlined: Boolean = false,
+) {
+    val shape = RoundedCornerShape(8.dp)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(color.copy(alpha = 0.16f))
+            .clip(shape)
+            .then(if (outlined) Modifier.border(Dp.Hairline, color, shape) else Modifier.background(color.copy(alpha = 0.16f)))
             .padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
     ) {
         Text(
