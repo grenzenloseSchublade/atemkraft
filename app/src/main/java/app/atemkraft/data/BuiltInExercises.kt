@@ -202,11 +202,11 @@ object BuiltInExercises {
         id = "zwerchfell",
         name = "Zwerchfellatmung",
         family = BreathingFamily.DOWNREGULATE,
-        evidence = EvidenceLevel.LITTLE_STUDIED,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Die Grundlagentechnik: langsam in den Bauch atmen (Zwerchfell) statt " +
             "in die Brust. Basis, auf der alle anderen Techniken aufbauen.",
-        effect = "Die ruhige Basis aller Techniken: verlangsamt den Atem; einzeln ist sie kaum " +
-            "untersucht.",
+        effect = "Die ruhige Basis aller Techniken: verlangsamt den Atem; Studien dazu sind wenige " +
+            "und klein.",
         effectDetail = "Die Anspannung sinkt, weil Bauchatmung (Zwerchfell) mehr Luft mit " +
             "weniger Aufwand bewegt: Wer so atmet, wird automatisch langsamer – und unterhalb " +
             "von ~10 Atemzügen pro Minute verschiebt sich die Balance Richtung Parasympathikus, " +
@@ -235,7 +235,7 @@ object BuiltInExercises {
         id = "sitali",
         name = "Sitali (Kühlatmung)",
         family = BreathingFamily.DOWNREGULATE,
-        evidence = EvidenceLevel.LITTLE_STUDIED,
+        evidence = EvidenceLevel.STUDIED,
         shortDescription = "Einatmen über die gerollte Zunge, ausatmen durch die Nase – die " +
             "einströmende Luft fühlt sich kühl und frisch an. Eine angenehme Variante des " +
             "langsamen, ausatem-betonten Atmens.",
