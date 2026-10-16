@@ -1,0 +1,91 @@
+package app.atemkraft.data
+
+import app.atemkraft.domain.RandomPatternGenerator
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * TEXT-13: Die Yoga-Lehre steht getrennt von der Studienlage. Hier steht fest, welche Übungen
+ * einen Abschnitt „Aus der Yoga-Lehre“ tragen (nur yogischer Ursprung, Nutzerentscheidung), dass
+ * jeder Verweis auf eine Muster-Karte der Atemlehre aufgeht und dass die Teaser zuschreiben statt
+ * Wirkung zu behaupten. Die Teaser-Form prüft `ContentRulesTest lore-teaser`.
+ */
+class AtemlehreTest {
+
+    private val builtInIds = BuiltInExercises.all.map { it.id }.toSet()
+    private val knownExerciseIds = builtInIds + RandomPatternGenerator.ID
+
+    /** Muster des Tages über viele Seeds, damit alle Stile und Grenzfälle vorkommen. */
+    private val generated = (0L..199L).map(RandomPatternGenerator::forSeed)
+
+    @Test
+    fun `genau die Übungen yogischen Ursprungs tragen Yoga-Lehre`() {
+        val withLore = BuiltInExercises.all.filter { it.lore != null }.map { it.id }.toSet()
+        assertEquals(
+            setOf("bhramari", "sitali", "nadi-shodhana", "feueratmung", "sky", "box-4-4-4-4", "4-7-8"),
+            withLore,
+        )
+    }
+
+    @Test
+    fun `jeder Verweis auf eine Muster-Karte geht auf`() {
+        val lore = BuiltInExercises.all.mapNotNull { e -> e.lore?.let { e.id to it } } +
+            generated.take(50).mapIndexed { seed, p -> "${RandomPatternGenerator.ID}#seed$seed" to p.exercise.lore }
+        lore.forEach { (key, l) ->
+            assertNotNull("$key ohne Yoga-Lehre", l)
+            val id = l!!.patternId
+            assertNotNull("$key verweist auf unbekannte Karte „$id“", Atemlehre.pattern(id))
+        }
+    }
+
+    @Test
+    fun `Kennungen der Muster-Karten sind eindeutig`() {
+        val ids = Atemlehre.patterns.map { it.id }
+        assertEquals("doppelte Kennung: ${ids.groupBy { it }.filterValues { it.size > 1 }.keys}", ids.size, ids.toSet().size)
+    }
+
+    @Test
+    fun `Übungen auf Muster-Karten und Einflüssen gibt es in der App`() {
+        val referenced = Atemlehre.patterns.flatMap { p -> p.exerciseIds.map { "${p.id} → $it" to it } } +
+            Atemlehre.influences.flatMap { inf -> inf.exerciseIds.map { "${inf.label} → $it" to it } }
+        val unknown = referenced.filter { (_, id) -> id !in knownExerciseIds }.map { it.first }
+        assertTrue("unbekannte Übung: $unknown", unknown.isEmpty())
+    }
+
+    @Test
+    fun `Muster des Tages verweist je nach Verhältnis auf Brmhana, Langhana oder Samana`() {
+        generated.forEachIndexed { seed, p ->
+            val expected = when {
+                p.spec.activating -> "brmhana"
+                p.spec.exhale > p.spec.inhale -> "langhana"
+                else -> "samana"
+            }
+            assertEquals("Seed $seed (${p.spec})", expected, p.exercise.lore?.patternId)
+        }
+    }
+
+    @Test
+    fun `jede Muster-Karte hat ein Rhythmusbild mit positiven Dauern`() {
+        Atemlehre.patterns.forEach { p ->
+            assertTrue("${p.id}: Rhythmus leer", p.rhythm.isNotEmpty())
+            assertTrue("${p.id}: Dauer ≤ 0 in ${p.rhythm}", p.rhythm.all { it.seconds > 0.0 })
+        }
+    }
+
+    /** Zuschreibend statt behauptend (TEXT-13): „gilt in der Yoga-Lehre als …“, nie „wirkt“. */
+    @Test
+    fun `Teaser der Yoga-Lehre behaupten keine Wirkung`() {
+        val claim = Regex("""\b(wirkt|bewirkt|hilft gegen)\b""", RegexOption.IGNORE_CASE)
+        val teasers = BuiltInExercises.all.mapNotNull { e -> e.lore?.let { "${e.id}.lore" to it.teaser } } +
+            generated.take(50).mapNotNull { p -> p.exercise.lore?.let { "${RandomPatternGenerator.ID}.lore" to it.teaser } } +
+            Atemlehre.patterns.map { "atemlehre.${it.id}" to it.teaser } +
+            listOf(
+                "atemlehre.rulesTeaser" to Atemlehre.rulesTeaser,
+                "atemlehre.influencesTeaser" to Atemlehre.influencesTeaser,
+            )
+        val findings = teasers.distinct().mapNotNull { (key, t) -> claim.find(t)?.let { "$key: „${it.value}“ in „$t“" } }
+        assertTrue("Wirkbehauptung statt Zuschreibung:\n" + findings.joinToString("\n"), findings.isEmpty())
+    }
+}

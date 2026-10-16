@@ -17,65 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.data.Glossary
+import app.atemkraft.data.GlossaryTerm
 import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 
-private data class Term(val name: String, val definition: String)
-
-private val terms = listOf(
-    Term(
-        "Studienlage",
-        "Wie gut eine Atemtechnik untersucht ist; jede trägt dazu ein Etikett (Muster nicht, sie " +
-            "sind spielerische Variationen). „gut belegt“: Eine Auswertung vieler Studien oder " +
-            "mehrere unabhängige Studien zeigen dasselbe. „in Studien geprüft“: Es gibt Studien, " +
-            "aber wenige, kleine oder nur mit bestimmten Gruppen. „kaum untersucht“: Die Wirkweise " +
-            "ist plausibel, direkte Studien fehlen weitgehend. Das Etikett sagt, wie sicher das " +
-            "Wissen ist, nicht wie stark eine Technik wirkt.",
-    ),
-    Term(
-        "HRV – Herzratenvariabilität",
-        "Die natürliche Schwankung der Zeit zwischen zwei Herzschlägen. Eine höhere HRV gilt als " +
-            "Zeichen für Erholung, Stressresistenz und einen aktiven Vagus.",
-    ),
-    Term(
-        "Vagus / Vagustonus",
-        "Der Vagusnerv ist der Hauptnerv des Ruhe-Systems (Parasympathikus). Hoher Vagustonus " +
-            "bedeutet bessere Beruhigung, Erholung und HRV.",
-    ),
-    Term(
-        "Parasympathikus / Sympathikus",
-        "Die zwei Gegenspieler des vegetativen Nervensystems: der Parasympathikus beruhigt " +
-            "(„Bremse“), der Sympathikus aktiviert („Gas“).",
-    ),
-    Term(
-        "Baroreflex",
-        "Ein Regelkreis, der den Blutdruck stabil hält. Langsames Atmen (~6/min) bringt ihn in " +
-            "Resonanz und trainiert ihn.",
-    ),
-    Term(
-        "RSA – Respiratorische Sinusarrhythmie",
-        "Die Herzfrequenz steigt beim Einatmen und sinkt beim Ausatmen. Eine ausgeprägte RSA " +
-            "spricht für einen guten Vagustonus.",
-    ),
-    Term(
-        "CO₂-Toleranz",
-        "Wie gut der Körper einen leichten Anstieg von Kohlendioxid verträgt. Höhere Toleranz " +
-            "ermöglicht ruhigeres, effizienteres Atmen.",
-    ),
-    Term(
-        "Hormese",
-        "Die Idee, dass kleine, dosierte Belastungsreize (z. B. Wim Hof) den Körper zur Anpassung " +
-            "anregen. Für Atemtechniken ist das kaum untersucht.",
-    ),
-    Term(
-        "PEM – Post-Exertional Malaise",
-        "Verschlechterung des Zustands nach Anstrengung (z. B. bei ME/CFS oder Long COVID). Dann nur " +
-            "sanfte Übungen zum Herunterregeln.",
-    ),
-)
-
-/** Glossar: erklärt Abkürzungen und Fachbegriffe aus den Übungsbeschreibungen. */
+/**
+ * Glossar: erklärt Abkürzungen und Fachbegriffe aus den Übungsbeschreibungen, in zwei Gruppen
+ * („Körper & Studien“, „Aus der Yoga-Lehre“) mit einheitlichem Abschnitts-Header.
+ */
 @Composable
 fun GlossaryScreen(onBack: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -87,29 +39,37 @@ fun GlossaryScreen(onBack: () -> Unit) {
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                // Karte ↔ Karte über spacedBy statt Außen-Padding je Karte: exakt ListGap, kein
-                // zusätzlicher Rand über der ersten bzw. unter der letzten Karte.
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    terms.forEach { term ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-                                WholeWordText(
-                                    text = term.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                                Spacer(Modifier.height(Dimens.GapTiny))
-                                Text(
-                                    text = term.definition,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                )
-                            }
-                        }
-                    }
-                }
+                // Abstand über den Gruppen bringt der SectionHeader selbst mit (SectionHeaderTop).
+                TermGroup(stringResource(R.string.glossary_group_body), Glossary.bodyTerms)
+                TermGroup(stringResource(R.string.glossary_group_yoga), Glossary.yogaTerms)
                 Spacer(Modifier.height(Dimens.ScreenBottom))
+            }
+        }
+    }
+}
+
+/** Eine Begriffsgruppe: einheitlicher Abschnitts-Header, darunter die Karten. */
+@Composable
+private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
+    SectionHeader(title = title, color = MaterialTheme.colorScheme.primary)
+    // Karte ↔ Karte über spacedBy statt Außen-Padding je Karte: exakt ListGap, kein
+    // zusätzlicher Rand über der ersten bzw. unter der letzten Karte.
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
+        terms.forEach { term ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+                    WholeWordText(
+                        text = term.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.height(Dimens.GapTiny))
+                    Text(
+                        text = term.definition,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    )
+                }
             }
         }
     }

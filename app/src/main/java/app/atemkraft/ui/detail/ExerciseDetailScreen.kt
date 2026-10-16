@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
@@ -43,6 +44,7 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.EvidenceChip
@@ -60,6 +62,7 @@ import app.atemkraft.ui.session.SafetyDialog
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
 import kotlin.math.roundToInt
 
@@ -79,6 +82,8 @@ fun ExerciseDetailScreen(
     onConfirmedSafety: () -> Unit,
     onStart: (SessionConfig) -> Unit,
     onBack: () -> Unit,
+    // Sprung zur Muster-Karte der Atemlehre aus „Aus der Yoga-Lehre“; ohne ihn kein Verweis.
+    onOpenLore: ((patternId: String) -> Unit)? = null,
     // Persönliche Markierung „tut mir gut“; ohne [onMarkedChange] (Muster) kein Schalter.
     marked: Boolean = false,
     onMarkedChange: ((Boolean) -> Unit)? = null,
@@ -247,6 +252,34 @@ fun ExerciseDetailScreen(
                     accent = accent,
                     content = exercise.effectDetail?.let { detail -> { Body(detail) } },
                 )
+                // Deutung der Tradition, getrennt von „Wirkung“ (keine Studienlage, TEXT-13).
+                exercise.lore?.let { lore ->
+                    val pattern = Atemlehre.pattern(lore.patternId)
+                    ExpanderSection(
+                        title = stringResource(R.string.detail_lore),
+                        appetizer = lore.teaser,
+                        accent = accent,
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+                            Body(lore.detail)
+                            lore.source?.let { source ->
+                                Text(
+                                    text = source,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
+                                )
+                            }
+                            if (onOpenLore != null && pattern != null) {
+                                AppTextButton(onClick = { onOpenLore(lore.patternId) }) {
+                                    Text(
+                                        text = stringResource(R.string.detail_lore_link, pattern.linkName) + " ›",
+                                        color = accent,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
                 if (exercise.cautions.isNotEmpty()) {
                     val moreCautions = exercise.cautions.drop(1)
                     ExpanderSection(

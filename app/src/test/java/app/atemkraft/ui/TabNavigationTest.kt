@@ -145,7 +145,7 @@ class TabNavigationTest {
 
         // Ganz ans Ende scrollen: Der alte Kopf wäre damit sicher aus dem Bild.
         rule.onNode(hasScrollAction()).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, Float.MAX_VALUE) }
-        rule.onNodeWithText("Post-Exertional", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("Uddiyana", substring = true).assertIsDisplayed()
         backArrow().assertIsDisplayed()
         assertEquals("AtmenRoute > SettingsRoute", step { backArrow().performClick() })
     }
@@ -202,6 +202,7 @@ class TabNavigationTest {
             onSelectVoice = {},
             onDeleteVoice = {},
             onOpenGlossary = { nav.navigate(GlossaryRoute) },
+            onOpenAtemlehre = {},
             onOpenAbout = { nav.navigate(AboutRoute) },
             onBack = { nav.popBackStack() },
             onExportPatterns = {},

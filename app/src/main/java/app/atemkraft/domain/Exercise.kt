@@ -21,6 +21,8 @@ package app.atemkraft.domain
  *   generierten Mustern (TEXT-07).
  * @param caution Etikett „nur gesund & ausgeruht“ und Sicherheitsdialog vor dem Start
  *   (MUSTER-06); unabhängig von der Studienlage.
+ * @param lore Deutung der Yoga-Lehre (eigener Abschnitt, keine Studienlage); nur bei Übungen
+ *   yogischen Ursprungs und bei generierten Mustern.
  * @param guided true = getakteter Atemkreis-Ablauf; false = Programm/Gewohnheit
  *   ohne festen Takt (nur Infoseite, kein Start).
  * @param perRound Hook, um Phasen pro Runde anzupassen (z. B. Wim-Hof-Retention).
@@ -39,6 +41,7 @@ data class Exercise(
     val references: List<Reference> = emptyList(),
     val evidence: EvidenceLevel? = null,
     val caution: Boolean = false,
+    val lore: YogaLore? = null,
     val guided: Boolean = true,
     val perRound: (phase: Phase, roundIndex: Int) -> Phase = { phase, _ -> phase },
 )

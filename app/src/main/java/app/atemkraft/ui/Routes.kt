@@ -25,5 +25,9 @@ object GlossaryRoute
 @Serializable
 object AboutRoute
 
+/** [focus]: Kennung einer Muster-Karte (z. B. „langhana“) – Sprung aus der Detailseite, Karte aufgeklappt. */
+@Serializable
+data class AtemlehreRoute(val focus: String? = null)
+
 @Serializable
 data class DetailRoute(val exerciseId: String)

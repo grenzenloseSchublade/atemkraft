@@ -67,6 +67,7 @@ import app.atemkraft.data.Situations
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.AboutRoute
+import app.atemkraft.ui.AtemlehreRoute
 import app.atemkraft.ui.AtmenRoute
 import app.atemkraft.ui.DetailRoute
 import app.atemkraft.ui.GlossaryRoute
@@ -75,6 +76,7 @@ import app.atemkraft.ui.MeditationRoute
 import app.atemkraft.ui.SettingsRoute
 import app.atemkraft.ui.SituationenRoute
 import app.atemkraft.ui.about.AboutScreen
+import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.detail.ExerciseDetailScreen
@@ -410,6 +412,7 @@ private fun AtemkraftApp() {
                             navController.popBackStack()
                         },
                         onBack = { navController.popBackStack() },
+                        onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
                         marked = id in markedExercises,
                         onMarkedChange = if (markable) {
                             { marked -> scope.launch { container.settingsRepository.setExerciseMarked(id, marked) } }
@@ -459,6 +462,7 @@ private fun AtemkraftApp() {
                         onSelectVoice = meditationController::selectNeuralVoice,
                         onDeleteVoice = { id -> meditationController.deleteNeuralVoice(id) },
                         onOpenGlossary = { navController.navigate(GlossaryRoute) },
+                        onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
                         onExportPatterns = patternTransfer.export,
@@ -474,6 +478,18 @@ private fun AtemkraftApp() {
                     popExitTransition = popExit,
                 ) {
                     GlossaryScreen(onBack = { navController.popBackStack() })
+                }
+                composable<AtemlehreRoute>(
+                    enterTransition = pushEnter,
+                    exitTransition = pushExit,
+                    popEnterTransition = popEnter,
+                    popExitTransition = popExit,
+                ) { entry ->
+                    AtemlehreScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
+                        focus = entry.toRoute<AtemlehreRoute>().focus,
+                    )
                 }
                 composable<AboutRoute>(
                     enterTransition = pushEnter,

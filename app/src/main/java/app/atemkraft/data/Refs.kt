@@ -172,4 +172,37 @@ object Refs {
             "kräftiger, langer Feueratmung.",
         "PMID 15136413",
     )
+
+    // ---- Atemlehre: Verhältnis von Ein- und Ausatmen (Karten „Studien“) ----
+
+    val laborde2022 = Reference(
+        "Laborde S. et al. (2022): Effects of voluntary slow breathing on heart rate and heart " +
+            "rate variability: A systematic review and a meta-analysis. Neurosci Biobehav Rev " +
+            "138:104711. 223 Studien; langsames Atmen erhöht die vagal vermittelte HRV.",
+        "doi:10.1016/j.neubiorev.2022.104711 · PMID 35623448",
+    )
+    val bae2021 = Reference(
+        "Bae D. et al. (2021): Increased exhalation to inhalation ratio during breathing " +
+            "enhances high-frequency heart rate variability in healthy adults. Psychophysiology " +
+            "58(11):e13905. Ausatmen doppelt so lang: HRV höher als bei 1 : 1 (n = 28).",
+        "doi:10.1111/psyp.13905 · PMID 34289128",
+    )
+    val meehan2024 = Reference(
+        "Meehan Z. M. & Shaffer F. (2024): Do Longer Exhalations Increase HRV During " +
+            "Slow-Paced Breathing? Appl Psychophysiol Biofeedback 49(3):407–417. Bei 6/min kein " +
+            "Unterschied zwischen 1 : 1 und 1 : 2, in einer zweiten Studie bestätigt.",
+        "doi:10.1007/s10484-024-09637-2 · PMID 38507210",
+    )
+    val birdee2023 = Reference(
+        "Birdee G. et al. (2023): Slow breathing for reducing stress: The effect of extending " +
+            "exhale. Complement Ther Med 73:102937. RCT, 12 Wochen, n = 100: langsames Atmen " +
+            "senkte Stress, das Verhältnis machte keinen signifikanten Unterschied.",
+        "doi:10.1016/j.ctim.2023.102937 · PMID 36871835",
+    )
+    val chetry2026 = Reference(
+        "Chetry D. et al. (2026): Heart Rate Variability and Mood State Changes in Three Yoga " +
+            "Breathing Practices: A Randomized Crossover Trial. Int J Yoga Therap 35. Schnelles " +
+            "Atmen senkte die HRV, Bhramari hob die Stimmung (Geübte, nur Sofortwirkung).",
+        "doi:10.17761/2025-D-25-00006 · PMID 41580220",
+    )
 }

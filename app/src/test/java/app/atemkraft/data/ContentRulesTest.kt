@@ -12,9 +12,9 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -12), MUSTER-03, -09 und
- * MOTION-02, geprüft über alle Fachinhalte: eingebaute Übungen, Muster des Tages (Seeds 0–6),
- * Situationen samt Suchbegriffen, Quellen und `strings.xml`.
+ * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -13), MUSTER-03, -09 und
+ * MOTION-02, geprüft über alle Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages
+ * (Seeds 0–6), Atemlehre, Situationen samt Suchbegriffen, Quellen und `strings.xml`.
  *
  * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Testfall | Datensatz | S-nn`).
  * Ein Fall schlägt fehl bei einem neuen Verstoß und bei einem Baseline-Eintrag, der nicht mehr
@@ -47,6 +47,11 @@ class ContentRulesTest {
             p.label?.let { add(Text("${key()}.phase[$i].label", it)) }
             p.note?.let { add(Text("${key()}.phase[$i].note", it)) }
         }
+        lore?.let { l ->
+            add(Text("${key()}.lore.teaser", l.teaser))
+            add(Text("${key()}.lore.detail", l.detail))
+            l.source?.let { add(Text("${key()}.lore.source", it)) }
+        }
     }
 
     private val exerciseTexts: List<Text> by lazy { exercises.flatMap { it.texts() }.distinct() }
@@ -57,6 +62,46 @@ class ContentRulesTest {
                 Text("situation.${it.situation}.title", it.title),
                 Text("situation.${it.situation}.rationale", it.rationale),
             ) + keywordTexts(it)
+        }
+    }
+
+    /** Texte der Seite „Atemlehre“ (TEXT-13) – sie folgen denselben Inhaltsregeln wie die Übungen. */
+    private val atemlehreTexts: List<Text> by lazy {
+        buildList {
+            add(Text("atemlehre.intro", Atemlehre.intro))
+            Atemlehre.phases.forEachIndexed { i, p ->
+                add(Text("atemlehre.phase[$i].name", p.name))
+                add(Text("atemlehre.phase[$i].sanskrit", p.sanskrit))
+                add(Text("atemlehre.phase[$i].meaning", p.meaning))
+            }
+            add(Text("atemlehre.rulesTitle", Atemlehre.rulesTitle))
+            add(Text("atemlehre.rulesTeaser", Atemlehre.rulesTeaser))
+            Atemlehre.rules.forEachIndexed { i, (core, rest) -> add(Text("atemlehre.rules[$i]", core + rest)) }
+            add(Text("atemlehre.samanaNote", Atemlehre.samanaNote))
+            add(Text("atemlehre.rulesCheck", Atemlehre.rulesCheck))
+            Atemlehre.patterns.forEach { p ->
+                val k = "atemlehre.${p.id}"
+                add(Text("$k.title", p.title))
+                add(Text("$k.linkName", p.linkName))
+                add(Text("$k.counts", p.counts))
+                add(Text("$k.teaser", p.teaser))
+                add(Text("$k.teaching", p.teaching))
+                add(Text("$k.typical", p.typical))
+                add(Text("$k.studies", p.studies))
+                p.appNote?.let { add(Text("$k.appNote", it)) }
+                p.origin?.let { add(Text("$k.origin", it)) }
+                p.warning?.let { add(Text("$k.warning", it)) }
+            }
+            add(Text("atemlehre.influencesTitle", Atemlehre.influencesTitle))
+            add(Text("atemlehre.influencesTeaser", Atemlehre.influencesTeaser))
+            Atemlehre.influences.forEachIndexed { i, inf ->
+                add(Text("atemlehre.influence[$i].label", inf.label))
+                add(Text("atemlehre.influence[$i].text", inf.text))
+            }
+            add(Text("atemlehre.quote", Atemlehre.influencesQuote))
+            add(Text("atemlehre.sourcesTitle", Atemlehre.sourcesTitle))
+            add(Text("atemlehre.sourcesTeaser", Atemlehre.sourcesTeaser))
+            Atemlehre.textSources.forEachIndexed { i, t -> add(Text("atemlehre.textSources[$i]", t)) }
         }
     }
 
@@ -100,7 +145,14 @@ class ContentRulesTest {
         .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
         .replace(Regex("%(\\d+\\$)?[sd]"), "0")
 
-    private val contentTexts get() = exerciseTexts + situationTexts
+    /** Glossar-Einträge (Körper & Studien, Yoga-Lehre): dieselben Regeln wie Übungstexte. */
+    private val glossaryTexts: List<Text> by lazy {
+        (Glossary.bodyTerms + Glossary.yogaTerms).flatMapIndexed { i, t ->
+            listOf(Text("glossary[$i].name", t.name), Text("glossary[$i].definition", t.definition))
+        }
+    }
+
+    private val contentTexts get() = exerciseTexts + atemlehreTexts + glossaryTexts + situationTexts
     private val allTexts get() = contentTexts + strings
 
     // ---- Baseline -----------------------------------------------------------------------
@@ -172,6 +224,34 @@ class ContentRulesTest {
             own + if (repeats) listOf(Finding("${e.key()}.effectDetail", "beginnt mit dem Teaser")) else emptyList()
         }
         assertAgainstBaseline("teaser", findings)
+    }
+
+    /**
+     * TEXT-13: Teaser der Yoga-Lehre (Detailseite, Muster-Karten und Abschnitte der Atemlehre)
+     * folgen der Teaser-Regel aus TEXT-06. Neue Inhalte ohne Altlasten: jeder Fund ist ein
+     * Fehler, keine Baseline.
+     */
+    @Test
+    fun `lore-teaser`() {
+        val lore = exercises.mapNotNull { e -> e.lore?.let { Triple("${e.key()}.lore", it.teaser, it.detail) } }
+        val patterns = Atemlehre.patterns.map { Triple("atemlehre.${it.id}", it.teaser, it.teaching) }
+        val sections = listOf(
+            "atemlehre.rulesTeaser" to Atemlehre.rulesTeaser,
+            "atemlehre.influencesTeaser" to Atemlehre.influencesTeaser,
+            "atemlehre.sourcesTeaser" to Atemlehre.sourcesTeaser,
+        )
+        val findings = (lore + patterns).flatMap { (key, teaser, detail) ->
+            val repeats = detail.startsWith(teaser.trimEnd('.').take(40))
+            teaserProblems(teaser).map { Finding("$key.teaser", it) } +
+                if (repeats) listOf(Finding("$key.detail", "beginnt mit dem Teaser")) else emptyList()
+        } + sections.flatMap { (key, teaser) -> teaserProblems(teaser).map { Finding(key, it) } }
+        if (baseline["lore-teaser"].orEmpty().isNotEmpty()) {
+            fail("ContentRulesTest lore-teaser: keine Baseline erlaubt (TEXT-13), Einträge streichen")
+        }
+        val collapsed = findings.collapseSeeds()
+        if (collapsed.isNotEmpty()) {
+            fail("ContentRulesTest lore-teaser:\n" + collapsed.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
+        }
     }
 
     @Test
@@ -332,8 +412,9 @@ class ContentRulesTest {
 
     @Test
     fun `ref-unused`() {
-        val used = exercises.flatMap { it.references }.toSet()
-        val findings = refs.filterValues { it !in used }.keys.map { Finding("refs.$it", "von keiner Übung genutzt") }
+        // Die Studien der Atemlehre (TEXT-13) zählen als genutzt: Sie belegen die „Studien“-Zeilen der Karten.
+        val used = (exercises.flatMap { it.references } + Atemlehre.studyRefs).toSet()
+        val findings = refs.filterValues { it !in used }.keys.map { Finding("refs.$it", "von keiner Übung und nicht von der Atemlehre genutzt") }
         assertAgainstBaseline("ref-unused", findings)
     }
 

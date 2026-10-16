@@ -192,7 +192,40 @@ object RandomPatternGenerator {
             segments = listOf(Segment(phases = phases, repeat = repeat)),
             rounds = 1,
             instructionHint = fullHint,
+            lore = loreFor(spec),
         )
+    }
+
+    /**
+     * Einordnung nach der Atemlehre: folgt nur dem Verhältnis der Phasen, nicht einer Quelle.
+     * Die Kennungen sind die Muster-Karten der Atemlehre (Datenschicht, hier nur als String).
+     */
+    private fun loreFor(spec: PatternSpec): YogaLore {
+        val (patternId, teaser) = when {
+            // Aktivierende Muster atmen nie länger aus als ein, aber manchmal gleich lang: Dann
+            // trägt das zügige Tempo die Einordnung, nicht ein längeres Einatmen.
+            spec.activating && spec.exhale < spec.inhale ->
+                "brmhana" to
+                    "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
+
+            spec.activating ->
+                "brmhana" to
+                    "Zügiges Atmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
+
+            spec.exhale > spec.inhale ->
+                "langhana" to
+                    "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
+
+            else ->
+                "samana" to
+                    "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
+        }
+        val detail = buildString {
+            append("Das Muster ist zufällig erzeugt; die Einordnung folgt nur dem Verhältnis der Phasen.")
+            if (spec.holdFull != null) append(" Das Halten nach dem Einatmen gilt dort als sammelnd.")
+            if (spec.holdEmpty != null) append(" Das Halten nach dem Ausatmen gilt als Weg in die Stille.")
+        }
+        return YogaLore(teaser = teaser, detail = detail, patternId = patternId, source = null)
     }
 
     // ---- Helfer ----

@@ -97,6 +97,7 @@ fun SettingsScreen(
     onSelectVoice: (String?) -> Unit,
     onDeleteVoice: (String) -> Unit,
     onOpenGlossary: () -> Unit,
+    onOpenAtemlehre: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
     onExportPatterns: () -> Unit,
@@ -153,6 +154,8 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
+                Spacer(Modifier.height(Dimens.ListGap))
+                NavRow(stringResource(R.string.settings_atemlehre), onOpenAtemlehre)
                 Spacer(Modifier.height(Dimens.ListGap))
                 NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
 

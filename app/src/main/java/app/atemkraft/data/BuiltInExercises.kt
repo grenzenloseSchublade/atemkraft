@@ -8,6 +8,7 @@ import app.atemkraft.domain.Phase
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.Segment
+import app.atemkraft.domain.YogaLore
 
 /**
  * Die Atemtechniken (Basis: Vorlage F3_Atmung, ergänzt um Sitali und Atmen im Gehen) –
@@ -135,6 +136,14 @@ object BuiltInExercises {
         name = "4-7-8-Atmung",
         family = BreathingFamily.DOWNREGULATE,
         evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "Andrew Weil leitet 4-7-8 aus dem Pranayama ab: voll halten, dann lange lösen.",
+            detail = "Nach der Atemlehre verbindet das Muster zwei Richtungen: Das Halten mit voller Lunge " +
+                "(Antara Kumbhaka) gilt als sammelnd, das doppelt so lange Ausatmen als Langhana, also " +
+                "beruhigend. Das Verhältnis ähnelt dem klassischen 1 : 4 : 2, mit kürzerem Halten.",
+            patternId = "halten-voll",
+            source = "Swami Kuvalayananda: Pranayama",
+        ),
         shortDescription = "Langer Ausatem mit Atempause: 4 s ein, 7 s halten, 8 s aus. " +
             "Gedacht zum Herunterfahren am Abend.",
         effect = "Langer Ausatem zum Herunterfahren; Studien dazu sind wenige und klein.",
@@ -172,6 +181,15 @@ object BuiltInExercises {
         name = "Bhramari (Summen)",
         family = BreathingFamily.DOWNREGULATE,
         evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "Langes, summendes Ausatmen gilt in der Yoga-Lehre als beruhigend und nach innen lenkend.",
+            detail = "Bhramari heißt „Biene“. Die Hatha Yoga Pradipika beschreibt das Einatmen mit dem Brummen der " +
+                "männlichen und das langsame Ausatmen mit dem Summen der weiblichen Biene; die Übung soll den " +
+                "Geist nach innen führen. Nach der Atemlehre ist das Muster Langhana: Das Ausatmen ist doppelt " +
+                "so lang wie das Einatmen.",
+            patternId = "langhana",
+            source = "Hatha Yoga Pradipika 2,68",
+        ),
         shortDescription = "Ein langer, summender Ausatem („Bienenatem“). Der lange Ausatem wirkt " +
             "beruhigend, das Summen steigert das Stickstoffmonoxid in der Nase.",
         effect = "In kleinen Studien sanken Blutdruck und Puls direkt nach dem summenden Ausatem.",
@@ -236,6 +254,15 @@ object BuiltInExercises {
         name = "Sitali (Kühlatmung)",
         family = BreathingFamily.DOWNREGULATE,
         evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "In der Yoga-Lehre gilt Sitali als kühlend: Die Luft strömt über die feuchte Zunge.",
+            detail = "Die Hatha Yoga Pradipika beschreibt, wie der Atem über die Zunge eingesogen und dann " +
+                "angehalten wird; in der App ohne Halten. Nach der Atemlehre kommen zwei kühlende Züge " +
+                "zusammen: der Weg über die Zunge und das längere Ausatmen (Langhana). Ayurveda rät dazu bei " +
+                "Hitze und Reizbarkeit (Pitta).",
+            patternId = "langhana",
+            source = "Hatha Yoga Pradipika 2,57–2,58",
+        ),
         shortDescription = "Einatmen über die gerollte Zunge, ausatmen durch die Nase – die " +
             "einströmende Luft fühlt sich kühl und frisch an. Eine angenehme Variante des " +
             "langsamen, ausatem-betonten Atmens.",
@@ -335,6 +362,15 @@ object BuiltInExercises {
         family = BreathingFamily.UPREGULATE,
         evidence = EvidenceLevel.LITTLE_STUDIED,
         caution = true,
+        lore = YogaLore(
+            teaser = "In der Hatha-Lehre zählt Kapalabhati zu den Reinigungen; es gilt als wärmend und klärend.",
+            detail = "Kapalabhati heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika zählt es zu den sechs " +
+                "Reinigungen und vergleicht es mit dem Blasebalg eines Schmieds. Nach der Atemlehre ist " +
+                "schnelles Atmen Feuer: Es soll Agni anfachen, das innere Feuer am Nabel, und gilt als stark " +
+                "belebend (Brmhana).",
+            patternId = "kapalabhati",
+            source = "Hatha Yoga Pradipika 2,35",
+        ),
         shortDescription = "Schnelle, kräftige Ausatemstöße aus dem Bauch, der Einatem geschieht " +
             "passiv (yogischer „Blasebalg“). Energetisierend – für Wachheit am Morgen, nicht zur " +
             "Beruhigung.",
@@ -380,6 +416,14 @@ object BuiltInExercises {
         name = "Box-Atmung",
         family = BreathingFamily.BALANCE,
         evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "Alle Phasen gleich lang heißt im Yoga Sama Vritti, der gleichmäßige Atem.",
+            detail = "Sama Vritti nennt B. K. S. Iyengar das Atmen in gleich langen Phasen, auch mit Pausen; " +
+                "ungleiche Verhältnisse heißen Vishama Vritti. Fülle und Leere bekommen gleich viel Raum, die " +
+                "Lehre sieht darin Ordnung für den Geist. Die Box-Atmung selbst ist eine moderne Form.",
+            patternId = "sama-vritti",
+            source = "B. K. S. Iyengar: Light on Pranayama",
+        ),
         shortDescription = "Gleich lange Phasen: 4 s ein, 4 s halten, 4 s aus, 4 s halten. " +
             "Ein gleichmäßiges Muster für „ruhig, aber wach“ – das „taktische“ Atmen.",
         effect = "Für „ruhig, aber wach“ vor einer Aufgabe; speziell zu Box gibt es nur wenige Studien.",
@@ -413,6 +457,15 @@ object BuiltInExercises {
         name = "Nadi Shodhana (Wechselatmung)",
         family = BreathingFamily.BALANCE,
         evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "Die Yoga-Lehre sieht in der Wechselatmung den Ausgleich von Sonne (rechts) und Mond (links).",
+            detail = "Nadi Shodhana heißt „Reinigung der Kanäle“. Nach der Lehre fließt Prana durch zwei " +
+                "Hauptkanäle: Ida links, Mond, kühlend; Pingala rechts, Sonne, wärmend. Der Wechsel soll " +
+                "beide ausgleichen. Die Hatha Yoga Pradipika übt ihn mit langem Halten, spätere Lehrer oft " +
+                "im Maß 1 : 4 : 2; in der App ohne Halten.",
+            patternId = "samana",
+            source = "Hatha Yoga Pradipika 2,7–2,10",
+        ),
         shortDescription = "Abwechselndes Atmen durch je ein Nasenloch, gesteuert mit dem Finger. " +
             "Der Wechsel bindet die Aufmerksamkeit, der Rhythmus bleibt langsam.",
         effect = "Langsamer Wechselrhythmus; eine Meta-Analyse fand niedrigeren Blutdruck, " +
@@ -452,6 +505,15 @@ object BuiltInExercises {
         name = "Sudarshan Kriya (SKY)",
         family = BreathingFamily.BALANCE,
         evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "SKY verbindet klassische Pranayamas: Ujjayi, Bhastrika und Atmen in wechselndem Tempo.",
+            detail = "Ujjayi, das Atmen mit leicht verengter Kehle, gilt in der Hatha-Lehre als wärmend und " +
+                "sammelnd. Bhastrika, der „Blasebalg“, gilt als Feuer. Der Hauptteil, die Kriya, wechselt " +
+                "langsame, mittlere und schnelle Atemzyklen; nach der Atemlehre wechseln damit Langhana und " +
+                "Brmhana. Das Programm stammt aus den 1980er-Jahren (Art of Living).",
+            patternId = "feuer",
+            source = "Hatha Yoga Pradipika 2,51–2,53; 2,59–2,67",
+        ),
         guided = false,
         shortDescription = "Ein strukturiertes, angeleitetes Atemprogramm aus einer Abfolge " +
             "getakteter Atemmuster. Der genaue Kriya-Rhythmus ist nicht öffentlich und wird per " +

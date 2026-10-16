@@ -52,6 +52,7 @@ import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.about.AboutScreen
+import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
@@ -466,6 +467,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onSelectVoice = {},
             onDeleteVoice = {},
             onOpenGlossary = {},
+            onOpenAtemlehre = {},
             onOpenAbout = {},
             onBack = {},
             onExportPatterns = {},
@@ -500,8 +502,31 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     onConfirmedSafety = {},
                     onStart = {},
                     onBack = {},
+                    onOpenLore = {},
                 )
             }
+        }
+    }
+
+    /** Detailseite mit aufgeklapptem Abschnitt „Aus der Yoga-Lehre“: Detail, Quelle, Verweis zur Atemlehre. */
+    @Test
+    fun detailLore() {
+        assumeTrue(detailConfig)
+        val exercise = BuiltInExercises.all.first { it.id == "bhramari" }
+        snap("08_detail_lehre_bhramari", prepare = {
+            compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
+        }) {
+            ExerciseDetailScreen(
+                exercise = exercise,
+                requireSafetyConfirm = false,
+                savedIntervals = null,
+                onIntervalsChange = { _, _, _, _ -> },
+                onIntervalsReset = {},
+                onConfirmedSafety = {},
+                onStart = {},
+                onBack = {},
+                onOpenLore = {},
+            )
         }
     }
 
@@ -593,6 +618,16 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 )
             }
         }
+    }
+
+    /** Atemlehre: alle Karten zu, Rhythmusbilder und Teaser ganz. */
+    @Test
+    fun atemlehre() = snap("12_atemlehre") { AtemlehreScreen(onBack = {}, onOpenExercise = {}) }
+
+    /** Sprung aus der Detailseite: Karte „Feuer“ aufgeklappt (Lehre, Studien, Vorsicht-Chip, Warnung). */
+    @Test
+    fun atemlehreFokus() = snap("12_atemlehre_fokus") {
+        AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer")
     }
 
     /** Untere Navigationsleiste (liegt in MainActivity, hier einzeln): Beschriftungen ganz. */
