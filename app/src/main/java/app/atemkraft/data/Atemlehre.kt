@@ -217,11 +217,12 @@ object Atemlehre {
             teaser = "In Stufen atmen (Viloma) baut Brmhana oder Langhana sanft auf.",
             teaching = "Viloma heißt „gegen den Strich“: Das Einatmen oder das Ausatmen wird in " +
                 "kleine Abschnitte mit kurzen Pausen geteilt. Stufen beim Einatmen gelten als " +
-                "aufbauend, Stufen beim Ausatmen als lösend. Ein sanfter Einstieg, wenn lange " +
-                "Phasen noch nicht gehen.",
-            typical = "Zum Einstieg, bei Schwäche, nach Krankheit.",
-            studies = "Nicht untersucht.",
-            appNote = "Noch keine Übung in der App.",
+                "aufbauend, Stufen beim Ausatmen als lösend. Iyengar teilt in Abschnitte von 2–3 s " +
+                "mit ebenso langen Pausen, bis die Lunge voll oder leer ist.",
+            typical = "Zum Einstieg, im Liegen, wenn lange Phasen noch nicht gehen.",
+            studies = "Nicht untersucht; die Studien zu „Anuloma Viloma“ betreffen die Wechselatmung.",
+            exerciseIds = listOf("viloma-ein", "viloma-aus"),
+            appNote = "In der App mit drei Stufen; der Atemkreis bleibt in den Pausen stehen.",
         ),
     )
 

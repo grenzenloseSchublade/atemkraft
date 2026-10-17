@@ -41,6 +41,7 @@ class FractionContinuityTest {
         return SessionUiState(
             status = if (phase.duration is PhaseDuration.Fixed) SessionStatus.RUNNING else SessionStatus.WAITING_FOR_USER,
             phaseType = phase.type,
+            phaseLevel = phase.level,
             phaseTotalMs = total,
             remainingMs = if (atEnd) 0L else total,
         )
@@ -93,5 +94,30 @@ class FractionContinuityTest {
 
     private companion object {
         const val TOLERANCE = 0.001f
+    }
+
+    /**
+     * Viloma (Atmen in Stufen): Der Kreis läuft an keiner Grenze zurück, auch nicht von Runde zu
+     * Runde, und steht in den Pausen bei ⅓ bzw. ⅔. Unabhängig von [knownJumps], die für Wim Hof
+     * dieselben Übergangstypen erlauben.
+     */
+    @Test
+    fun `Viloma waechst und schrumpft stufenweise ohne Sprung`() {
+        listOf("viloma-ein", "viloma-aus").forEach { id ->
+            val timeline = BuiltInExercises.all.first { it.id == id }.buildTimeline()
+            timeline.zipWithNext().forEach { (a, b) ->
+                val end = circleFraction(stateAt(a, atEnd = true))
+                val start = circleFraction(stateAt(b, atEnd = false))
+                assertTrue("$id: ${a.type} → ${b.type} springt ($end → $start)", abs(end - start) <= TOLERANCE)
+            }
+            val pauses = timeline.filter { it.level != null && it.level!!.from == it.level!!.to }
+            assertTrue("$id: Pausen mit festem Füllstand", pauses.isNotEmpty())
+            pauses.forEach { p ->
+                val atStart = circleFraction(stateAt(p, atEnd = false))
+                val atEnd = circleFraction(stateAt(p, atEnd = true))
+                assertTrue("$id: Kreis steht in der Pause ($atStart → $atEnd)", abs(atStart - atEnd) <= TOLERANCE)
+                assertTrue("$id: Pause zwischen leer und voll ($atStart)", atStart > 0.2f && atStart < 0.8f)
+            }
+        }
     }
 }

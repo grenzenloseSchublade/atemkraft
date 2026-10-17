@@ -12,6 +12,7 @@ import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.toCueEvent
 import app.atemkraft.data.ExerciseRepository
 import app.atemkraft.data.LogbookRepository
+import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
@@ -40,7 +41,7 @@ import kotlin.math.min
 enum class SessionStatus { IDLE, PREPARING, RUNNING, PAUSED, WAITING_FOR_USER, FINISHED }
 
 /** Audio-Info zum Phasenbeginn für den durchgehenden Ton (Typ + Dauer; open = ohne feste Dauer). */
-data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean)
+data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean, val level: BreathLevel? = null)
 
 /**
  * Sichtbarer Zustand der laufenden Session. Die UI ist eine reine Funktion davon –
@@ -52,6 +53,8 @@ data class SessionUiState(
     val exerciseName: String = "",
     val status: SessionStatus = SessionStatus.IDLE,
     val phaseType: PhaseType? = null,
+    /** Füllstand für Atmen in Stufen (Viloma); null = Kreis nach [phaseType]. */
+    val phaseLevel: BreathLevel? = null,
     val phaseLabel: String? = null,
     val phaseNote: String? = null,
     /** Countdown der aktuellen Phase mit fester Dauer (ms). */
@@ -233,7 +236,7 @@ class SessionViewModel(
             val phase = timeline[index]
             // Durchgehender Ton: Phasenbeginn (auch beim Fortsetzen, damit der Ton wieder anläuft).
             val fixedMs = (phase.duration as? PhaseDuration.Fixed)?.let { resumeRemainingMs ?: it.millis } ?: 0L
-            _phaseAudio.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed))
+            _phaseAudio.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed, phase.level))
             // Cue nur zum echten Phasenbeginn, nicht beim Fortsetzen mitten in der Phase.
             if (resumeRemainingMs == null) {
                 _cues.tryEmit(phase.type.toCueEvent())
@@ -275,6 +278,7 @@ class SessionViewModel(
                 it.copy(
                     status = SessionStatus.RUNNING,
                     phaseType = phase.type,
+                    phaseLevel = phase.level,
                     phaseLabel = phase.label,
                     phaseNote = phase.note,
                     remainingMs = left,
@@ -298,6 +302,7 @@ class SessionViewModel(
             it.copy(
                 status = SessionStatus.WAITING_FOR_USER,
                 phaseType = phase.type,
+                phaseLevel = phase.level,
                 phaseLabel = phase.label,
                 phaseNote = phase.note,
                 remainingMs = 0L,

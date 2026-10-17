@@ -18,6 +18,8 @@ internal fun breathingFraction(state: SessionUiState): Float {
     } else {
         0f
     }
+    // Atmen in Stufen (Viloma): Der Kreis folgt dem Füllstand der Phase, beim Halten steht er.
+    state.phaseLevel?.let { level -> return level.from + (level.to - level.from) * progress }
     return when (state.phaseType) {
         PhaseType.INHALE, PhaseType.INHALE_TOP_UP -> progress
         PhaseType.EXHALE -> 1f - progress

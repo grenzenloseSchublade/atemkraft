@@ -17,6 +17,8 @@ data class RuntimePhase(
     val roundIndex: Int,
     /** Gesamtzahl der Runden (für Anzeige „Runde x von y"). */
     val roundCount: Int,
+    /** Füllstand für Atmen in Stufen, siehe [Phase.level]; null = nach Phasentyp. */
+    val level: BreathLevel? = null,
 )
 
 /**
@@ -39,6 +41,7 @@ fun Exercise.buildTimeline(): List<RuntimePhase> {
                             side = resolved.side,
                             roundIndex = round,
                             roundCount = rounds,
+                            level = resolved.level,
                         ),
                     )
                 }

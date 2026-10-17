@@ -34,6 +34,8 @@ class EvidenceLevelTest {
         "walking-breath" to LITTLE_STUDIED,
         "nasenatmung" to LITTLE_STUDIED,
         "feueratmung" to LITTLE_STUDIED,
+        "viloma-ein" to LITTLE_STUDIED,
+        "viloma-aus" to LITTLE_STUDIED,
     )
 
     @Test

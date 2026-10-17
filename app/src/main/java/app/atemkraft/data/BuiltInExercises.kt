@@ -1,5 +1,6 @@
 package app.atemkraft.data
 
+import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.BreathSide
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.EvidenceLevel
@@ -411,6 +412,100 @@ object BuiltInExercises {
 
     // ── C · Balancieren / Programme ──────────────────────────────────────────
 
+    // ---- Viloma: Atmen in Stufen (Iyengar, Light on Pranayama, Kap. 20) ----
+    // Der Füllstand (BreathLevel) lässt den Atemkreis stufenweise wachsen bzw. schrumpfen und in
+    // den Pausen stehen bleiben; ohne ihn liefe jede Stufe von leer bis voll.
+
+    private const val THIRD = 1f / 3f
+    private const val TWO_THIRDS = 2f / 3f
+
+    private val vilomaCautions = listOf(
+        "Anfangs im Liegen üben und nie pressen; in den Pausen entweicht keine Luft.",
+        "Bei Schwindel, Druck oder Atemnot sofort normal weiteratmen.",
+        "Bei Herz- oder Lungenerkrankung und in der Schwangerschaft vorher ärztlich abklären.",
+    )
+
+    private val vilomaEffectDetail = "Viloma ist eine Form sehr langsamen Atmens: Ein Zyklus dauert 16–18 s, " +
+        "gut drei Atemzüge pro Minute. Für langsames Atmen allgemein zeigen Übersichten mehr " +
+        "Herzratenvariabilität und Entspannung (Zaccaro 2018). Ob die Pausen dabei etwas beitragen, ist " +
+        "nicht untersucht; eine Studie zu Viloma selbst gibt es nicht. Nicht verwechseln mit „Anuloma " +
+        "Viloma“, der Wechselatmung."
+
+    private val vilomaIn = Exercise(
+        id = "viloma-ein",
+        name = "Viloma I (Einatmen in Stufen)",
+        family = BreathingFamily.BALANCE,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
+        lore = YogaLore(
+            teaser = "In Stufen einatmen gilt in der Atemlehre als sanftes Brmhana: aufbauend, ohne zu drängen.",
+            detail = "Viloma heißt „gegen den Strich“: Der Atem fließt nicht in einem Zug, sondern mit Pausen. " +
+                "Iyengar beschreibt als erste Stufe das Einatmen in Abschnitten von 2–3 s mit ebenso langen " +
+                "Pausen, danach langsam und tief aus; für Anfänger und im Liegen. Nach der Atemlehre betont " +
+                "das schrittweise Einatmen das Aufnehmende (Brmhana). Die Hatha Yoga Pradipika kennt Viloma nicht.",
+            patternId = "viloma",
+            source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
+            morePatternIds = listOf("brmhana"),
+        ),
+        shortDescription = "Einatmen in drei Stufen mit kurzen Pausen, dann lang und ruhig aus. Der " +
+            "Atemkreis wächst stufenweise und bleibt in den Pausen stehen.",
+        effect = "Langsames Atmen in Stufen; zu Viloma selbst gibt es keine Studien.",
+        effectDetail = vilomaEffectDetail,
+        instructionHint = "2 s ein · 2 s anhalten · 2 s ein · 2 s anhalten · 2 s ein bis ganz voll · " +
+            "8 s langsam aus. In den Pausen nichts entweichen lassen, nichts erzwingen.",
+        cautions = vilomaCautions,
+        references = listOf(Refs.zaccaro2018),
+        segments = listOf(
+            Segment(
+                repeat = 17, // 18-s-Zyklus → gut 5 min
+                phases = listOf(
+                    Phase(PhaseType.INHALE, secs(2.0), note = "1. Stufe", level = BreathLevel(0f, THIRD)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "anhalten", level = BreathLevel.at(THIRD)),
+                    Phase(PhaseType.INHALE, secs(2.0), note = "2. Stufe", level = BreathLevel(THIRD, TWO_THIRDS)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "anhalten", level = BreathLevel.at(TWO_THIRDS)),
+                    Phase(PhaseType.INHALE, secs(2.0), note = "3. Stufe", level = BreathLevel(TWO_THIRDS, 1f)),
+                    Phase(PhaseType.EXHALE, secs(8.0), note = "langsam, in einem Zug"),
+                ),
+            ),
+        ),
+    )
+
+    private val vilomaOut = Exercise(
+        id = "viloma-aus",
+        name = "Viloma II (Ausatmen in Stufen)",
+        family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
+        lore = YogaLore(
+            teaser = "In Stufen ausatmen gilt in der Atemlehre als sanftes Langhana: lösend und leicht.",
+            detail = "Bei der zweiten Stufe des Viloma atmet man in einem Zug ein und in Abschnitten mit kurzen " +
+                "Pausen aus. Iyengar beschreibt sie für Anfänger im Liegen und nennt als Erfahrung „Leichtigkeit“. " +
+                "Nach der Atemlehre betont das schrittweise Ausatmen das Loslassen (Langhana).",
+            patternId = "viloma",
+            source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
+            morePatternIds = listOf("langhana"),
+        ),
+        shortDescription = "In einem Zug ein, dann in drei Stufen mit kurzen Pausen aus. Der Atemkreis " +
+            "schrumpft stufenweise und bleibt in den Pausen stehen.",
+        effect = "Langsames Ausatmen in Stufen; zu Viloma selbst gibt es keine Studien.",
+        effectDetail = vilomaEffectDetail,
+        instructionHint = "6 s ruhig ein · 2 s aus · 2 s anhalten · 2 s aus · 2 s anhalten · 2 s aus bis " +
+            "ganz leer. In den Pausen nichts entweichen lassen, nichts erzwingen.",
+        cautions = vilomaCautions,
+        references = listOf(Refs.zaccaro2018),
+        segments = listOf(
+            Segment(
+                repeat = 19, // 16-s-Zyklus → gut 5 min
+                phases = listOf(
+                    Phase(PhaseType.INHALE, secs(6.0), note = "ruhig, in einem Zug"),
+                    Phase(PhaseType.EXHALE, secs(2.0), note = "1. Stufe", level = BreathLevel(1f, TWO_THIRDS)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "anhalten", level = BreathLevel.at(TWO_THIRDS)),
+                    Phase(PhaseType.EXHALE, secs(2.0), note = "2. Stufe", level = BreathLevel(TWO_THIRDS, THIRD)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "anhalten", level = BreathLevel.at(THIRD)),
+                    Phase(PhaseType.EXHALE, secs(2.0), note = "3. Stufe", level = BreathLevel(THIRD, 0f)),
+                ),
+            ),
+        ),
+    )
+
     private val box = Exercise(
         id = "box-4-4-4-4",
         name = "Box-Atmung",
@@ -661,9 +756,9 @@ object BuiltInExercises {
 
     /** Alle Übungen in Familien-Reihenfolge (A → D). */
     val all: List<Exercise> = listOf(
-        resonance, cyclicSighing, physiologicalSigh, fourSevenEight, bhramari, diaphragmatic, sitali,
+        resonance, cyclicSighing, physiologicalSigh, fourSevenEight, bhramari, diaphragmatic, sitali, vilomaOut,
         wimHof, fireBreath,
-        box, nadiShodhana, sky,
+        box, nadiShodhana, sky, vilomaIn,
         pursedLip, walkingBreath, buteyko, nasalBreathing,
     )
 }

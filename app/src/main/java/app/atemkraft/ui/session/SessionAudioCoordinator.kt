@@ -73,7 +73,7 @@ class SessionAudioCoordinator(
                 if (current.value.soundMode == SoundMode.CONTINUOUS) {
                     // Beim Stummschalten die Tonhöhe weiter mitführen (nur ohne Pegel), damit
                     // das Aufheben der Stummschaltung nicht auf einer alten Phase hängen bleibt.
-                    continuousPlayer.onPhase(pa.type, pa.durationMs, pa.open, raiseGain = !mutedState.value)
+                    continuousPlayer.onPhase(pa.type, pa.durationMs, pa.open, raiseGain = !mutedState.value, level = pa.level)
                 }
             }
         }

@@ -24,7 +24,7 @@ class AtemlehreTest {
     fun `genau die Übungen yogischen Ursprungs tragen Yoga-Lehre`() {
         val withLore = BuiltInExercises.all.filter { it.lore != null }.map { it.id }.toSet()
         assertEquals(
-            setOf("bhramari", "sitali", "nadi-shodhana", "feueratmung", "sky", "box-4-4-4-4", "4-7-8"),
+            setOf("bhramari", "sitali", "nadi-shodhana", "feueratmung", "sky", "box-4-4-4-4", "4-7-8", "viloma-ein", "viloma-aus"),
             withLore,
         )
     }

@@ -42,6 +42,7 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.Situations
+import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.PhaseType
@@ -594,6 +595,15 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 remainingMs = 2_400,
                 phaseTotalMs = 4_000,
                 nextPhaseType = PhaseType.HOLD_FULL,
+            ),
+            // Viloma: Pause nach der ersten Einatemstufe – Kreis steht bei ⅓.
+            "viloma_pause" to base.copy(
+                phaseType = PhaseType.HOLD_FULL,
+                phaseLevel = BreathLevel.at(1f / 3f),
+                phaseNote = "anhalten",
+                remainingMs = 1_200,
+                phaseTotalMs = 2_000,
+                nextPhaseType = PhaseType.INHALE,
             ),
             "warten" to base.copy(
                 status = SessionStatus.WAITING_FOR_USER,

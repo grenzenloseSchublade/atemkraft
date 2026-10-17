@@ -4,6 +4,7 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
+import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -93,8 +94,8 @@ class ContinuousTonePlayer {
      * den Ton stumm (z. B. In-Session-Mute), aktualisiert aber die Tonhöhe weiter, damit nach
      * dem Aufheben der Stummschaltung sofort die richtige Phase klingt.
      */
-    fun onPhase(type: PhaseType, durationMs: Long, open: Boolean, raiseGain: Boolean = true) {
-        val (f0, f1) = freqsFor(type)
+    fun onPhase(type: PhaseType, durationMs: Long, open: Boolean, raiseGain: Boolean = true, level: BreathLevel? = null) {
+        val (f0, f1) = level?.let { freqAt(it.from) to freqAt(it.to) } ?: freqsFor(type)
         val total = if (open || durationMs <= 0L) 0L else durationMs * SAMPLE_RATE / 1000L
         ramp = Ramp(f0, f1, total) // neue Identität → Audio-Thread setzt seine Position auf 0
         if (raiseGain) targetGain = 1f
@@ -222,6 +223,9 @@ class ContinuousTonePlayer {
             AudioManager.AUDIO_SESSION_ID_GENERATE,
         )
     }
+
+    /** Tonhöhe zum Füllstand (Atmen in Stufen): leer = [LOW], voll = [HIGH], dazwischen linear. */
+    private fun freqAt(level: Float): Double = LOW + (HIGH - LOW) * level
 
     private fun freqsFor(type: PhaseType): Pair<Double, Double> = when (type) {
         PhaseType.INHALE, PhaseType.INHALE_TOP_UP -> LOW to HIGH
