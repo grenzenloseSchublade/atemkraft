@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.isSpecified
  * Bis dahin wird nicht gezeichnet, es flackert also nichts. Gleichrangige Texte (z. B.
  * Tab-Beschriftungen) teilen sich eine Größe: Der Aufrufer reicht [sharedScale] herein und
  * übernimmt per [onSharedScaleTooBig] den kleineren Wert – die kleinste nötige gilt für alle.
+ * [singleLine]: Der Text muss zusätzlich in eine Zeile passen (Chip-Beschriftungen, LAYOUT-03);
+ * auch dafür wird höchstens bis [minScale] verkleinert.
  *
  * Für Titel, Namen und Beschriftungen; Fließtext wird stattdessen so formuliert, dass kein
  * Wort die Zeile sprengt.
@@ -38,6 +40,7 @@ fun WholeWordText(
     color: Color = Color.Unspecified,
     textAlign: TextAlign? = null,
     minScale: Float = MIN_SCALE,
+    singleLine: Boolean = false,
     sharedScale: Float? = null,
     onSharedScaleTooBig: (Float) -> Unit = {},
 ) {
@@ -61,7 +64,8 @@ fun WholeWordText(
         color = color,
         textAlign = textAlign ?: TextAlign.Unspecified,
         onTextLayout = { layout ->
-            if (breaksInsideWord(layout) && scale > minScale) {
+            val tooBig = breaksInsideWord(layout) || (singleLine && layout.lineCount > 1)
+            if (tooBig && scale > minScale) {
                 val smaller = (scale - STEP).coerceAtLeast(minScale)
                 if (sharedScale != null) onSharedScaleTooBig(smaller) else ownScale = smaller
             } else {

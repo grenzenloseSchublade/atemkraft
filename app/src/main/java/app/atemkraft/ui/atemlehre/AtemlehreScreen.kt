@@ -1,5 +1,6 @@
 package app.atemkraft.ui.atemlehre
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,7 @@ import app.atemkraft.ui.components.LinkChip
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
@@ -66,16 +68,18 @@ import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
 import kotlinx.coroutines.flow.first
 
-/** Ziffern gleich breit, damit „Ein 4 · Aus 6“ unter dem Rhythmusbild ruhig steht. */
-private const val TABULAR_NUMS = "tnum"
-
 /**
  * Atemlehre: wie die Yoga-Tradition Einatmen, Ausatmen und Halten deutet (TEXT-13). Vier
  * Phasen, Grundregeln, Muster-Karten mit Rhythmusbild, weitere Einflüsse, Quellen. Lehre, keine
  * Studienlage – was Studien sagen, steht je Karte unter „Studien“.
  *
- * Bewusst einfarbig: Alle Abschnittstitel tragen dieselbe Akzentfarbe; Farbe tragen nur die
- * Phasen selbst (Einatmen Cyan, Ausatmen Magenta, Halten gestrichelt), wie im Atemkreis.
+ * Gliederung: eine Überschrift je Abschnitt (`SectionHeader`); Grundregeln, Einflüsse und
+ * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster-Karten stehen eine Ebene tiefer
+ * unter „Die Muster“ und bleiben deshalb `ExpanderSection`.
+ *
+ * Farbe wie das Glossar: Überschriften in `primary`, keine Farbcodierung je Muster (FARBE-04).
+ * Bedeutung trägt Farbe nur im Rhythmusbild (Einatmen Cyan, Ausatmen Magenta, Halten
+ * gestrichelt); die Phasen-Karte oben erklärt sie in Worten (FARBE-05).
  *
  * [focus]: Kennung einer Muster-Karte (Sprung aus der Detailseite) – die Karte steht dann
  * aufgeklappt mit ihrem Rhythmusbild oben im Bild.
@@ -83,7 +87,7 @@ private const val TABULAR_NUMS = "tnum"
 @Composable
 fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus: String? = null) {
     val scrollState = rememberScrollState()
-    val accent = MaterialTheme.colorScheme.onBackground
+    val accent = MaterialTheme.colorScheme.primary
     val focusId = focus?.takeIf { Atemlehre.pattern(it) != null }
     // Einmal zur Karte springen; gemerkt, damit die Rückkehr aus einer Übung die Position hält.
     var focusY by remember { mutableIntStateOf(-1) }
@@ -115,8 +119,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 SectionHeader(title = stringResource(R.string.atemlehre_phases), color = accent)
                 PhasesCard(Atemlehre.phases)
 
-                SectionHeader(title = stringResource(R.string.atemlehre_rules), color = accent)
-                ExpanderSection(title = Atemlehre.rulesTitle, appetizer = Atemlehre.rulesTeaser, accent = accent) {
+                ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, accent) {
                     RulesContent()
                 }
 
@@ -136,7 +139,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                         Spacer(Modifier.height(Dimens.GapTiny))
                         Text(
                             text = pattern.counts,
-                            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = TABULAR_NUMS),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                         )
                         ExpanderSection(
@@ -150,17 +153,39 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                     }
                 }
 
-                SectionHeader(title = stringResource(R.string.atemlehre_influences), color = accent)
-                ExpanderSection(title = Atemlehre.influencesTitle, appetizer = Atemlehre.influencesTeaser, accent = accent) {
+                ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, accent) {
                     InfluencesContent(onOpenExercise)
                 }
-
-                SectionHeader(title = stringResource(R.string.atemlehre_sources), color = accent)
-                ExpanderSection(title = Atemlehre.sourcesTitle, appetizer = Atemlehre.sourcesTeaser, accent = accent) {
+                ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, accent) {
                     SourcesContent()
                 }
                 Spacer(Modifier.height(Dimens.ScreenBottom))
             }
+        }
+    }
+}
+
+/**
+ * Abschnitt mit aufklappbarem Kopf (MUSTER-03): Titel und Teaser im `SectionHeader`, der Inhalt
+ * darunter. Standard zu, Zustand per `rememberSaveable` (überlebt den Weg in eine Übung und zurück).
+ */
+@Composable
+private fun ExpandableSection(title: String, teaser: String, accent: Color, content: @Composable () -> Unit) {
+    var expanded by rememberSaveable(title) { mutableStateOf(false) }
+    Column(modifier = Modifier.animateContentSize()) {
+        SectionHeader(
+            title = title,
+            color = accent,
+            // Der aufklappbare Kopf polstert selbst 2 × GapSmall; ergänzt auf SectionHeaderTop, damit
+            // er so weit vom Abschnitt darüber steht wie die festen Köpfe.
+            modifier = Modifier.padding(top = Dimens.SectionHeaderTop - Dimens.GapSmall * 2),
+            teaser = teaser,
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+        )
+        if (expanded) {
+            Spacer(Modifier.height(Dimens.GapSmall))
+            content()
         }
     }
 }
@@ -342,7 +367,7 @@ private fun RhythmBar(steps: List<RhythmStep>) {
 /** Ein Phasen-Abschnitt: Einatmen Cyan, Ausatmen Magenta gefüllt; Halten als gestrichelter Umriss. */
 @Composable
 private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: Boolean = false) {
-    // secondary = Cyan, primary = Magenta (Theme.kt) – dieselben Phasenfarben wie im Atemkreis.
+    // secondary = Cyan, primary = Magenta (Theme.kt): die beiden Grundfarben der App.
     val inhale = MaterialTheme.colorScheme.secondary
     val exhale = MaterialTheme.colorScheme.primary
     val base: Color = when (type) {
@@ -373,15 +398,11 @@ private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: B
     )
 }
 
-/** Beschrifteter Block („Lehre“, „Typisch“ …): kleine Beschriftung, darunter der Inhalt. */
+/** Beschrifteter Block („Lehre“, „Typisch“ …): Unter-Überschrift, darunter der Inhalt. */
 @Composable
 private fun Labeled(label: String, content: @Composable () -> Unit) {
     Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-        )
+        SubLabel(label, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(Dimens.GapHairline))
         content()
     }

@@ -624,6 +624,15 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun atemlehre() = snap("12_atemlehre") { AtemlehreScreen(onBack = {}, onOpenExercise = {}) }
 
+    /** Atemlehre mit aufgeklappten Köpfen: Grundregeln, Weitere Einflüsse (Chips), Quellen. */
+    @Test
+    fun atemlehreOffen() = snap("12_atemlehre_offen", prepare = {
+        val app = RuntimeEnvironment.getApplication()
+        listOf(R.string.atemlehre_rules, R.string.atemlehre_influences, R.string.atemlehre_sources).forEach {
+            compose.onNodeWithText(app.getString(it)).performClick()
+        }
+    }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}) }
+
     /** Sprung aus der Detailseite: Karte „Feuer“ aufgeklappt (Lehre, Studien, Vorsicht-Chip, Warnung). */
     @Test
     fun atemlehreFokus() = snap("12_atemlehre_fokus") {

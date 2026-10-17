@@ -31,7 +31,6 @@ object Atemlehre {
 
     // ---- Grundregeln ----
 
-    val rulesTitle = "Vier Regeln"
     val rulesTeaser = "Einatmen nimmt auf, Ausatmen lässt los; Halten verstärkt, Tempo dosiert."
 
     /** Je Regel: fett gesetzter Kern, dann die Erläuterung. */
@@ -230,7 +229,6 @@ object Atemlehre {
 
     // ---- Weitere Einflüsse ----
 
-    val influencesTitle = "Atemweg, Tageszeit, Typ"
     val influencesTeaser = "Auch der Weg der Luft und die Tageszeit gelten in der Lehre als wichtig."
     val influences = listOf(
         LoreInfluence(
@@ -252,7 +250,6 @@ object Atemlehre {
 
     // ---- Quellen ----
 
-    val sourcesTitle = "Texte und Studien"
     val sourcesTeaser = "Klassische Texte für die Lehre, Studien für die Einordnung."
 
     /** Klassische Texte und Lehrbücher, Verse deutsch zitiert. */

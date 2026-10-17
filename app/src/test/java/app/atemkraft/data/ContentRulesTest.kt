@@ -74,7 +74,6 @@ class ContentRulesTest {
                 add(Text("atemlehre.phase[$i].sanskrit", p.sanskrit))
                 add(Text("atemlehre.phase[$i].meaning", p.meaning))
             }
-            add(Text("atemlehre.rulesTitle", Atemlehre.rulesTitle))
             add(Text("atemlehre.rulesTeaser", Atemlehre.rulesTeaser))
             Atemlehre.rules.forEachIndexed { i, (core, rest) -> add(Text("atemlehre.rules[$i]", core + rest)) }
             add(Text("atemlehre.samanaNote", Atemlehre.samanaNote))
@@ -92,14 +91,12 @@ class ContentRulesTest {
                 p.origin?.let { add(Text("$k.origin", it)) }
                 p.warning?.let { add(Text("$k.warning", it)) }
             }
-            add(Text("atemlehre.influencesTitle", Atemlehre.influencesTitle))
             add(Text("atemlehre.influencesTeaser", Atemlehre.influencesTeaser))
             Atemlehre.influences.forEachIndexed { i, inf ->
                 add(Text("atemlehre.influence[$i].label", inf.label))
                 add(Text("atemlehre.influence[$i].text", inf.text))
             }
             add(Text("atemlehre.quote", Atemlehre.influencesQuote))
-            add(Text("atemlehre.sourcesTitle", Atemlehre.sourcesTitle))
             add(Text("atemlehre.sourcesTeaser", Atemlehre.sourcesTeaser))
             Atemlehre.textSources.forEachIndexed { i, t -> add(Text("atemlehre.textSources[$i]", t)) }
         }
