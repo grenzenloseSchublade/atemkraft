@@ -33,6 +33,7 @@ import app.atemkraft.ui.theme.Dimens
  * aufgeklappt darunter und vertieft ihn. Ohne [content] gibt es nichts aufzuklappen: dann
  * ein schlichter Abschnitt ohne Caret und ohne Klick. Caret dreht sich, sanftes
  * Größen-Animieren, TalkBack bekommt Überschrift, Rolle Button und Ausgeklappt/Eingeklappt.
+ * [divider] = false lässt die Trennlinie weg, wenn der Abschnitt allein in einer Karte steht.
  */
 @Composable
 fun ExpanderSection(
@@ -41,6 +42,7 @@ fun ExpanderSection(
     accent: Color,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
+    divider: Boolean = true,
     content: (@Composable () -> Unit)? = null,
 ) {
     val expandable = content != null
@@ -89,6 +91,6 @@ fun ExpanderSection(
             content()
             Spacer(Modifier.height(Dimens.GapSmall))
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+        if (divider) HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
     }
 }

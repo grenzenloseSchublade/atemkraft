@@ -75,8 +75,9 @@ import kotlinx.coroutines.flow.first
  * Studienlage – was Studien sagen, steht je Karte unter „Studien“.
  *
  * Gliederung: eine Überschrift je Abschnitt (`SectionHeader`); Grundregeln, Einflüsse und
- * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster-Karten stehen eine Ebene tiefer
- * unter „Die Muster“ und bleiben deshalb `ExpanderSection`.
+ * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster stehen eine Ebene tiefer unter
+ * „Die Muster“, jedes in einer eigenen Karte mit `ExpanderSection` (Rhythmusbild und Titel gehören
+ * sichtbar zusammen).
  *
  * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen Magenta, Halten
  * gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe tragen deshalb
@@ -126,32 +127,21 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 }
 
                 SectionHeader(title = stringResource(R.string.atemlehre_patterns), color = accent)
-                // Jede Karte direkt in der Scroll-Spalte: ihre Lage dient als Sprungziel.
-                Atemlehre.patterns.forEach { pattern ->
-                    val isFocus = pattern.id == focusId
-                    Column(
-                        modifier = if (isFocus) {
-                            Modifier.onPlaced { focusY = it.positionInParent().y.toInt() }
-                        } else {
-                            Modifier
-                        },
-                    ) {
-                        Spacer(Modifier.height(Dimens.GapSmall))
-                        RhythmBar(pattern.rhythm)
-                        Spacer(Modifier.height(Dimens.GapTiny))
-                        Text(
-                            text = pattern.counts,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
+                // Balken zu welchem Titel gehört. Die Karten stehen direkt in der Scroll-Spalte, ihre
+                // Lage dient als Sprungziel.
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
+                    Atemlehre.patterns.forEach { pattern ->
+                        PatternCard(
+                            pattern = pattern,
+                            focused = pattern.id == focusId,
+                            onOpenExercise = onOpenExercise,
+                            modifier = if (pattern.id == focusId) {
+                                Modifier.onPlaced { focusY = it.positionInParent().y.toInt() }
+                            } else {
+                                Modifier
+                            },
                         )
-                        ExpanderSection(
-                            title = pattern.title,
-                            appetizer = pattern.teaser,
-                            accent = MaterialTheme.colorScheme.onBackground,
-                            initiallyExpanded = isFocus,
-                        ) {
-                            PatternContent(pattern, onOpenExercise)
-                        }
                     }
                 }
 
@@ -188,6 +178,39 @@ private fun ExpandableSection(title: String, teaser: String, accent: Color, cont
         if (expanded) {
             Spacer(Modifier.height(Dimens.GapSmall))
             content()
+        }
+    }
+}
+
+/**
+ * Ein Muster als Karte: Rhythmusbild und Takt oben, darunter Titel und Teaser zum Aufklappen. Der
+ * Sprung aus der Detailseite ([focused]) öffnet die Karte gleich.
+ */
+@Composable
+private fun PatternCard(
+    pattern: LorePattern,
+    focused: Boolean,
+    onOpenExercise: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(start = Dimens.CardPadding, end = Dimens.CardPadding, top = Dimens.CardPadding)) {
+            RhythmBar(pattern.rhythm)
+            Spacer(Modifier.height(Dimens.GapTiny))
+            Text(
+                text = pattern.counts,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+            )
+            ExpanderSection(
+                title = pattern.title,
+                appetizer = pattern.teaser,
+                accent = MaterialTheme.colorScheme.onSurface,
+                initiallyExpanded = focused,
+                divider = false,
+            ) {
+                PatternContent(pattern, onOpenExercise)
+            }
         }
     }
 }
