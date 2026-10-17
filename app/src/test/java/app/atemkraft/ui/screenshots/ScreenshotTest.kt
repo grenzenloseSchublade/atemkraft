@@ -530,6 +530,28 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         }
     }
 
+    /** Tagesmuster mit beiden Halten: Lehre aufgeklappt, drei Verweise (Verhältnis, Halten voll, Halten leer). */
+    @Test
+    fun detailLoreDaily() {
+        assumeTrue(detailConfig)
+        val exercise = (0L until 200L).map(RandomPatternGenerator::forSeed).first { it.spec.holdEmpty != null }.exercise
+        snap("08_detail_lehre_tagesmuster", prepare = {
+            compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
+        }) {
+            ExerciseDetailScreen(
+                exercise = exercise,
+                requireSafetyConfirm = false,
+                savedIntervals = null,
+                onIntervalsChange = { _, _, _, _ -> },
+                onIntervalsReset = {},
+                onConfirmedSafety = {},
+                onStart = {},
+                onBack = {},
+                onOpenLore = {},
+            )
+        }
+    }
+
     /**
      * Detailseite mit gespeicherter Anpassung: Reset sichtbar, Intervalle aufgeklappt – Stepper
      * in der Karte und Split-Button auf jeder Breite und Schriftgröße.

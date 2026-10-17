@@ -11,12 +11,15 @@ package app.atemkraft.domain
  * @param patternId Kennung der Muster-Karte in der Atemlehre ([LorePattern.id]).
  * @param source Klassischer Text als Kurznachweis, Verse deutsch zitiert („Hatha Yoga Pradipika
  *   2,68“); `null`, wenn die Deutung aus der Atemlehre selbst folgt (generierte Muster).
+ * @param morePatternIds Weitere passende Karten nach der Hauptkarte, z. B. „Halten voll“ für ein
+ *   generiertes Muster mit Halten nach dem Einatmen; je Karte ein eigener Verweis.
  */
 data class YogaLore(
     val teaser: String,
     val detail: String,
     val patternId: String,
     val source: String? = null,
+    val morePatternIds: List<String> = emptyList(),
 )
 
 /** Ein Abschnitt des Rhythmusbildes einer Muster-Karte; [passive] wird blasser gezeichnet. */

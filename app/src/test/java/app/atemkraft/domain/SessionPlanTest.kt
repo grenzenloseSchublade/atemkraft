@@ -98,4 +98,45 @@ class SessionPlanTest {
         assertEquals(10, ex.cycleSeconds())
         assertEquals(5, ex.defaultMinutes())
     }
+
+    @Test
+    fun `Minuten rechnen mit der exakten Zykluslaenge`() {
+        // 11,5-s-Zyklus (gespeichertes Muster mit 0,5-s-Phasen): 5 min → 26 Zyklen = 299 s, nicht 27 (310,5 s).
+        val ex = exercise(
+            segments = listOf(
+                Segment(phases = listOf(fixed(PhaseType.INHALE, 5.0), fixed(PhaseType.EXHALE, 6.5)), repeat = 1),
+            ),
+        )
+        val repeat = ex.adjusted(SessionConfig(minutes = 5)).segments.single().repeat
+        assertEquals(26, repeat)
+        assertEquals(11_500L, ex.cycleMillis())
+    }
+
+    @Test
+    fun `Halten leer folgt dem Stepper nur, wenn es so lang ist wie Halten voll`() {
+        fun box(full: Double, empty: Double) = exercise(
+            segments = listOf(
+                Segment(
+                    phases = listOf(
+                        fixed(PhaseType.INHALE, 4.0),
+                        fixed(PhaseType.HOLD_FULL, full),
+                        fixed(PhaseType.EXHALE, 5.0),
+                        fixed(PhaseType.HOLD_EMPTY, empty),
+                    ),
+                    repeat = 1,
+                ),
+            ),
+        )
+        fun millisOf(ex: Exercise, type: PhaseType) = (ex.segments.single().phases.single { it.type == type }.duration as PhaseDuration.Fixed).millis
+
+        // Box (gleich lang): beide Halten folgen.
+        val equal = box(4.0, 4.0).adjusted(SessionConfig(minutes = 5, holdSeconds = 6.0))
+        assertEquals(6_000L, millisOf(equal, PhaseType.HOLD_FULL))
+        assertEquals(6_000L, millisOf(equal, PhaseType.HOLD_EMPTY))
+
+        // Tagesmuster (voll 3 s, leer 1 s): nur Halten voll folgt, Halten leer bleibt ≤ 2 s.
+        val soft = box(3.0, 1.0).adjusted(SessionConfig(minutes = 5, holdSeconds = 4.0))
+        assertEquals(4_000L, millisOf(soft, PhaseType.HOLD_FULL))
+        assertEquals(1_000L, millisOf(soft, PhaseType.HOLD_EMPTY))
+    }
 }

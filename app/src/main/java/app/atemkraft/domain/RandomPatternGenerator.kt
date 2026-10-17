@@ -18,6 +18,10 @@ data class PatternSpec(
  * Quelle für Generator-Test und Import: Von außen kommende Muster außerhalb dieser Grenzen
  * werden nicht übernommen, weil ihre Beschreibung („Halten ≤ 4 s" …) sonst falsch wäre und sie
  * ohne Sicherheitsabfrage starten.
+ *
+ * Bewusst weiter als der heutige Generator: 0,5-s-Werte und aktivierende Muster mit gleich
+ * langem Ein- und Ausatmen erzeugte er bis Version 1.6.2; gespeicherte und exportierte Muster
+ * aus dieser Zeit bleiben gültig.
  */
 fun PatternSpec.withinGuardrails(): Boolean {
     val phases = listOfNotNull(inhale, holdFull, exhale, holdEmpty)
@@ -43,9 +47,15 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
  * Üben EIN konstantes langsames Muster, siehe effectDetail-Text).
  *
  * Leitplanken (Russo 2017, Zaccaro 2018, Pranayama-Konventionen):
- * - ruhig: Zyklus 8,5–13 s (≈ 4,6–7 Atemzüge/min), Ausatmen ≥ Einatmen, Halten ≤ 4 s
+ * - ruhig: Zyklus 9–13 s (≈ 4,6–6,7 Atemzüge/min), Ausatmen ≥ Einatmen, Halten ≤ 4 s
  *   (nach dem Ausatmen ≤ 2 s);
- * - sanft aktivierend: Einatmen-betont, Zyklus 6–9 s, Halten ≤ 2 s – nie Hyperventilation.
+ * - sanft aktivierend: Einatmen länger als Ausatmen (Brmhana der Atemlehre), Zyklus 6–9 s,
+ *   Halten ≤ 2 s – nie Hyperventilation.
+ *
+ * Alle Phasen in ganzen Sekunden: So zählt man mit, der Countdown der Session stimmt mit der
+ * Angabe überein, „Intervalle anpassen“ (ganze Sekunden) zeigt dieselben Werte, und die
+ * Verhältnisse sind ganzzahlig wie in der Atemlehre (4 : 6, 4 : 8). Halbe Sekunden spürt man
+ * beim Atmen kaum, und für die Studienlage zählt das Tempo, nicht das genaue Verhältnis.
  */
 object RandomPatternGenerator {
 
@@ -65,70 +75,70 @@ object RandomPatternGenerator {
         }
     }
 
-    // ---- Stile (alle Werte in Sekunden, 0,5-s-Raster) ----
+    // ---- Stile (alle Werte in ganzen Sekunden) ----
 
     private fun calmNoHold(r: Random): DailyPattern {
-        val inhale = r.halfSteps(3.5, 5.5)
-        var exhale = (inhale * r.ratio(1.1, 1.6)).toHalfSteps().coerceIn(inhale, 8.0)
-        exhale = fitCalmCycle(inhale, exhale, holds = 0.0)
+        val inhale = r.seconds(3, 5)
+        val exhale = fitCalmCycle(inhale, r.exhaleFor(inhale, 1.0, 2.0), holds = 0)
         return build(inhale, null, exhale, null, activating = false)
     }
 
     private fun calmHoldFull(r: Random): DailyPattern {
-        val inhale = r.halfSteps(3.5, 5.0)
+        val inhale = r.seconds(3, 5)
         // Halten so kappen, dass selbst mit minimalem Ausatmen (= Einatmen) Zyklus <= 13 s bleibt.
-        val hold = r.halfSteps(1.0, minOf(4.0, CALM_CYCLE_MAX - 2 * inhale))
-        var exhale = (inhale * r.ratio(1.1, 1.6)).toHalfSteps().coerceIn(inhale, 8.0)
-        exhale = fitCalmCycle(inhale, exhale, holds = hold)
+        val hold = r.seconds(1, minOf(4, CALM_CYCLE_MAX - 2 * inhale))
+        val exhale = fitCalmCycle(inhale, r.exhaleFor(inhale, 1.2, 2.0), holds = hold)
         return build(inhale, hold, exhale, null, activating = false)
     }
 
+    /** Nach 4-7-8: kurzes Einatmen, Halten, doppelt so langes Ausatmen – in 13 s nur mit 3 s Einatmen. */
     private fun calm478Like(r: Random): DailyPattern {
-        val inhale = r.halfSteps(3.0, 4.0)
-        val hold = r.halfSteps(3.0, 4.0)
-        var exhale = (inhale * r.ratio(1.7, 2.0)).toHalfSteps().coerceIn(inhale, 8.0)
-        exhale = fitCalmCycle(inhale, exhale, holds = hold)
+        val inhale = 3
+        val hold = r.seconds(2, 4)
+        val exhale = fitCalmCycle(inhale, 2 * inhale, holds = hold)
         return build(inhale, hold, exhale, null, activating = false)
     }
 
     private fun calmSoftBox(r: Random): DailyPattern {
-        // Enge Grenzen, damit auch der Maximal-Wurf (Ein + H + Aus(=Ein+1) + H) <= 13 s bleibt.
-        val inhale = r.halfSteps(3.5, 4.0)
-        val holdFull = r.halfSteps(2.0, 2.5)
-        val holdEmpty = r.halfSteps(1.0, 1.5)
-        var exhale = r.halfSteps(inhale, inhale + 1.0)
-        exhale = fitCalmCycle(inhale, exhale, holds = holdFull + holdEmpty)
+        // Enge Grenzen, damit auch der Maximal-Wurf (4 + 3 + 5 + 2) mit dem Nachjustieren <= 13 s bleibt.
+        val inhale = r.seconds(3, 4)
+        val holdFull = r.seconds(2, 3)
+        val holdEmpty = r.seconds(1, 2)
+        val exhale = fitCalmCycle(inhale, r.seconds(inhale, inhale + 1), holds = holdFull + holdEmpty)
         return build(inhale, holdFull, exhale, holdEmpty, activating = false)
     }
 
     private fun gentlyActivating(r: Random): DailyPattern {
-        val inhale = r.halfSteps(3.0, 4.5)
-        val hold = if (r.nextBoolean()) r.halfSteps(0.5, 2.0) else 0.0
-        var exhale = r.halfSteps(2.5, inhale)
-        // Zyklus sanft in 6–9 s halten (Ausatmen innerhalb seiner Grenzen anpassen).
-        while (inhale + hold + exhale < 6.0 && exhale < inhale) exhale += 0.5
-        while (inhale + hold + exhale > 9.0 && exhale > 2.5) exhale -= 0.5
-        return build(inhale, hold.takeIf { it > 0.0 }, exhale, null, activating = true)
+        val inhale = r.seconds(3, 5)
+        // Ausatmen immer kürzer als Einatmen (Brmhana), aber nie unter 2 s.
+        var exhale = r.seconds(maxOf(ACTIVE_EXHALE_MIN, inhale - 2), inhale - 1)
+        var hold = if (r.nextBoolean()) r.seconds(1, 2) else 0
+        // Zyklus sanft in 6–9 s halten: erst über das Halten, dann über das Ausatmen.
+        while (inhale + hold + exhale < ACTIVE_CYCLE_MIN && hold < 2) hold++
+        while (inhale + hold + exhale < ACTIVE_CYCLE_MIN && exhale < inhale - 1) exhale++
+        while (inhale + hold + exhale > ACTIVE_CYCLE_MAX && hold > 0) hold--
+        while (inhale + hold + exhale > ACTIVE_CYCLE_MAX && exhale > ACTIVE_EXHALE_MIN) exhale--
+        return build(inhale, hold.takeIf { it > 0 }, exhale, null, activating = true)
     }
 
-    /** Ausatmen so nachjustieren, dass der ruhige Zyklus in 8,5–13 s liegt (Aus ≥ Ein bleibt). */
-    private fun fitCalmCycle(inhale: Double, exhaleStart: Double, holds: Double): Double {
-        var exhale = exhaleStart
-        while (inhale + holds + exhale < CALM_CYCLE_MIN && exhale < 8.0) exhale += 0.5
-        while (inhale + holds + exhale > CALM_CYCLE_MAX && exhale > inhale) exhale -= 0.5
+    /** Ausatmen so nachjustieren, dass der ruhige Zyklus in 9–13 s liegt (Aus ≥ Ein bleibt). */
+    private fun fitCalmCycle(inhale: Int, exhaleStart: Int, holds: Int): Int {
+        var exhale = exhaleStart.coerceIn(inhale, CALM_EXHALE_MAX)
+        while (inhale + holds + exhale < CALM_CYCLE_MIN && exhale < CALM_EXHALE_MAX) exhale++
+        while (inhale + holds + exhale > CALM_CYCLE_MAX && exhale > inhale) exhale--
         return exhale
     }
 
     // ---- Exercise-Bau ----
 
     private fun build(
-        inhale: Double,
-        holdFull: Double?,
-        exhale: Double,
-        holdEmpty: Double?,
+        inhale: Int,
+        holdFull: Int?,
+        exhale: Int,
+        holdEmpty: Int?,
         activating: Boolean,
     ): DailyPattern {
-        val spec = PatternSpec(inhale, holdFull, exhale, holdEmpty, activating)
+        val spec = PatternSpec(inhale.toDouble(), holdFull?.toDouble(), exhale.toDouble(), holdEmpty?.toDouble(), activating)
         return DailyPattern(exerciseFrom(spec, ID, "Tagesmuster ${numbersOf(spec)}"), spec)
     }
 
@@ -185,8 +195,8 @@ object RandomPatternGenerator {
                 "ohne spezifisches Wirkversprechen.",
             effectDetail = "Das Muster entsteht deterministisch aus dem Datum: Stil und " +
                 "Phasenlängen werden zufällig gewählt, aber in Grenzen gehalten, die der " +
-                "Forschung zu langsamem Atmen entsprechen (ruhig: 4,6–7 Atemzüge/min, " +
-                "Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: zügiger, nie forciert). " +
+                "Forschung zu langsamem Atmen entsprechen (ruhig: 4,6–6,7 Atemzüge/min, " +
+                "Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: Einatmen länger, nie forciert). " +
                 "Für regelmäßiges Üben ist ein konstantes Muster – etwa die Resonanz-Atmung – " +
                 "die besser belegte Wahl; das Tagesmuster ist die Einladung, Neues zu entdecken.",
             segments = listOf(Segment(phases = phases, repeat = repeat)),
@@ -198,50 +208,57 @@ object RandomPatternGenerator {
 
     /**
      * Einordnung nach der Atemlehre: folgt nur dem Verhältnis der Phasen, nicht einer Quelle.
-     * Die Kennungen sind die Muster-Karten der Atemlehre (Datenschicht, hier nur als String).
+     * Die Kennungen sind die Muster-Karten der Atemlehre (Datenschicht, hier nur als String);
+     * ein Halten verweist zusätzlich auf seine Karte.
      */
     private fun loreFor(spec: PatternSpec): YogaLore {
         val (patternId, teaser) = when {
-            // Aktivierende Muster atmen nie länger aus als ein, aber manchmal gleich lang: Dann
-            // trägt das zügige Tempo die Einordnung, nicht ein längeres Einatmen.
-            spec.activating && spec.exhale < spec.inhale ->
+            spec.exhale < spec.inhale ->
                 "brmhana" to
                     "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
-
-            spec.activating ->
-                "brmhana" to
-                    "Zügiges Atmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
 
             spec.exhale > spec.inhale ->
                 "langhana" to
                     "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
 
+            // Auch aktivierende Muster mit gleich langem Ein- und Ausatmen (gespeichert bis 1.6.2):
+            // Das Verhältnis ist Samana, das Tempo allein macht es nach der Lehre nicht zu Brmhana.
             else ->
                 "samana" to
                     "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
         }
         val detail = buildString {
             append("Das Muster ist zufällig erzeugt; die Einordnung folgt nur dem Verhältnis der Phasen.")
-            if (spec.holdFull != null) append(" Das Halten nach dem Einatmen gilt dort als sammelnd.")
-            if (spec.holdEmpty != null) append(" Das Halten nach dem Ausatmen gilt als Weg in die Stille.")
+            if (spec.holdFull != null) {
+                append(
+                    if (patternId == "brmhana") {
+                        " Das Halten nach dem Einatmen verstärkt nach der Lehre das Belebende."
+                    } else {
+                        " Das Halten nach dem Einatmen gilt in der Lehre als sammelnd und verstärkt eher das " +
+                            "Belebende; das Muster mischt also beides."
+                    },
+                )
+            }
+            if (spec.holdEmpty != null) {
+                append(" Das Halten nach dem Ausatmen gilt als Weg in die Stille und verstärkt das Beruhigende.")
+            }
         }
-        return YogaLore(teaser = teaser, detail = detail, patternId = patternId, source = null)
+        val holds = listOfNotNull(
+            "halten-voll".takeIf { spec.holdFull != null },
+            "halten-leer".takeIf { spec.holdEmpty != null },
+        )
+        return YogaLore(teaser = teaser, detail = detail, patternId = patternId, morePatternIds = holds)
     }
 
     // ---- Helfer ----
 
     private fun secs(value: Double) = PhaseDuration.Fixed((value * 1000).toLong())
 
-    /** Zufallswert im 0,5-s-Raster (inklusive Grenzen). */
-    private fun Random.halfSteps(min: Double, max: Double): Double {
-        val lo = (min * 2).roundToInt()
-        val hi = (max * 2).roundToInt()
-        return nextInt(lo, hi + 1) / 2.0
-    }
+    /** Ganze Sekunden zwischen [min] und [max] (inklusive). */
+    private fun Random.seconds(min: Int, max: Int): Int = nextInt(min, max + 1)
 
-    private fun Random.ratio(min: Double, max: Double): Double = min + nextDouble() * (max - min)
-
-    private fun Double.toHalfSteps(): Double = (this * 2).roundToInt() / 2.0
+    /** Ausatmen als Vielfaches des Einatmens (Verhältnis zufällig in [min]..[max]), gerundet. */
+    private fun Random.exhaleFor(inhale: Int, min: Double, max: Double): Int = (inhale * (min + nextDouble() * (max - min))).roundToInt()
 
     /** „4" bzw. „4,5" (deutsches Komma, ohne unnötige Null). */
     private fun Double.fmt(): String = if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
@@ -255,6 +272,10 @@ object RandomPatternGenerator {
 
     /** Ziel-Vorgabedauer ≈ 5 min (Nutzer regelt im Detail 1–30 min). */
     private const val TARGET_SECONDS = 300.0
-    private const val CALM_CYCLE_MIN = 8.5
-    private const val CALM_CYCLE_MAX = 13.0
+    private const val CALM_CYCLE_MIN = 9
+    private const val CALM_CYCLE_MAX = 13
+    private const val CALM_EXHALE_MAX = 8
+    private const val ACTIVE_CYCLE_MIN = 6
+    private const val ACTIVE_CYCLE_MAX = 9
+    private const val ACTIVE_EXHALE_MIN = 2
 }

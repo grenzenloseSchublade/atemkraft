@@ -1,5 +1,7 @@
 package app.atemkraft.domain
 
+import kotlin.math.roundToInt
+
 /**
  * Eine bereits aufgelöste Phase im Ablauf einer konkreten Session: alle Runden
  * und Wiederholungen sind ausmultipliziert, [perRound] ist angewandt. Der
@@ -67,18 +69,25 @@ val Exercise.hasOpenPhases: Boolean
     get() = segments.any { seg -> seg.phases.any { it.duration !is PhaseDuration.Fixed } }
 
 /** Dauer eines Zyklus (eine Segment-Wiederholung) in Sekunden, aus festen Phasen. */
-fun Exercise.cycleSeconds(): Int {
-    val segment = segments.firstOrNull() ?: return 1
+fun Exercise.cycleSeconds(): Int = (cycleMillis() / 1000L).toInt().coerceAtLeast(1)
+
+/**
+ * Exakte Zyklusdauer des ersten Segments in Millisekunden (mindestens 1 s). Grundlage für Minuten
+ * und Wiederholungen: Abgeschnitten auf ganze Sekunden liefe ein 11,5-s-Zyklus sonst rund 4 %
+ * länger als gewählt (gespeicherte Muster können 0,5-s-Phasen haben).
+ */
+fun Exercise.cycleMillis(): Long {
+    val segment = segments.firstOrNull() ?: return 1000L
     val millis = segment.phases.sumOf { phase ->
         (phase.duration as? PhaseDuration.Fixed)?.millis ?: 0L
     }
-    return (millis / 1000L).toInt().coerceAtLeast(1)
+    return millis.coerceAtLeast(1000L)
 }
 
-/** Vorgabe-Minuten einer kontinuierlichen Übung (aus repeat × Zyklusdauer). */
+/** Vorgabe-Minuten einer kontinuierlichen Übung (aus repeat × Zyklusdauer, gerundet). */
 fun Exercise.defaultMinutes(): Int {
     val segment = segments.firstOrNull() ?: return 5
-    return ((segment.repeat * cycleSeconds()) / 60).coerceAtLeast(1)
+    return (segment.repeat * cycleMillis() / 60_000.0).roundToInt().coerceAtLeast(1)
 }
 
 /**
@@ -92,6 +101,13 @@ fun Exercise.adjusted(config: SessionConfig): Exercise {
     val base = if (!hasOverrides) {
         this
     } else {
+        // Halten leer folgt dem Halten-Stepper nur, wenn es so lang ist wie Halten voll (Box) oder
+        // allein steht. Sind beide verschieden (Tagesmuster: voll 2–3 s, leer 1–2 s), bleibt das
+        // kurze Halten nach dem Ausatmen bei seiner Vorgabe – sonst würde es mitwachsen und seine
+        // Grenze (≤ 2 s) verlassen.
+        val holdFullMs = fixedMillisOf(PhaseType.HOLD_FULL)
+        val holdEmptyMs = fixedMillisOf(PhaseType.HOLD_EMPTY)
+        val holdEmptyFollows = holdFullMs == null || holdFullMs == holdEmptyMs
         copy(
             segments = segments.map { segment ->
                 segment.copy(
@@ -99,7 +115,8 @@ fun Exercise.adjusted(config: SessionConfig): Exercise {
                         val secs = when (phase.type) {
                             PhaseType.INHALE -> config.inhaleSeconds
                             PhaseType.EXHALE -> config.exhaleSeconds
-                            PhaseType.HOLD_FULL, PhaseType.HOLD_EMPTY -> config.holdSeconds
+                            PhaseType.HOLD_FULL -> config.holdSeconds
+                            PhaseType.HOLD_EMPTY -> config.holdSeconds.takeIf { holdEmptyFollows }
                             else -> null
                         }
                         if (secs != null && phase.duration is PhaseDuration.Fixed) {
@@ -120,6 +137,9 @@ fun Exercise.adjusted(config: SessionConfig): Exercise {
     }
     val segment = base.segments.firstOrNull() ?: return base
     val minutes = (config.minutes ?: base.defaultMinutes()).coerceIn(1, 30)
-    val repeat = ((minutes * 60) / base.cycleSeconds()).coerceAtLeast(1)
+    val repeat = (minutes * 60_000.0 / base.cycleMillis()).roundToInt().coerceAtLeast(1)
     return base.copy(segments = listOf(segment.copy(repeat = repeat)))
 }
+
+/** Feste Dauer der ersten Phase vom Typ [type] im ersten Segment, sonst null. */
+private fun Exercise.fixedMillisOf(type: PhaseType): Long? = (segments.firstOrNull()?.phases?.firstOrNull { it.type == type }?.duration as? PhaseDuration.Fixed)?.millis

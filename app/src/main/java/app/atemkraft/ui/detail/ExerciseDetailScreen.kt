@@ -254,7 +254,8 @@ fun ExerciseDetailScreen(
                 )
                 // Deutung der Tradition, getrennt von „Wirkung“ (keine Studienlage, TEXT-13).
                 exercise.lore?.let { lore ->
-                    val pattern = Atemlehre.pattern(lore.patternId)
+                    // Hauptkarte zuerst, dann weitere (z. B. die Halten-Karte eines Tagesmusters).
+                    val patterns = (listOf(lore.patternId) + lore.morePatternIds).mapNotNull(Atemlehre::pattern)
                     ExpanderSection(
                         title = stringResource(R.string.detail_lore),
                         appetizer = lore.teaser,
@@ -269,12 +270,14 @@ fun ExerciseDetailScreen(
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
                                 )
                             }
-                            if (onOpenLore != null && pattern != null) {
-                                AppTextButton(onClick = { onOpenLore(lore.patternId) }) {
-                                    Text(
-                                        text = stringResource(R.string.detail_lore_link, pattern.linkName) + " ›",
-                                        color = accent,
-                                    )
+                            if (onOpenLore != null) {
+                                patterns.forEach { pattern ->
+                                    AppTextButton(onClick = { onOpenLore(pattern.id) }) {
+                                        Text(
+                                            text = stringResource(R.string.detail_lore_link, pattern.linkName) + " ›",
+                                            color = accent,
+                                        )
+                                    }
                                 }
                             }
                         }

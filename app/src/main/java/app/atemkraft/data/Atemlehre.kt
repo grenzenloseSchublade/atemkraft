@@ -68,7 +68,7 @@ object Atemlehre {
                 "Ausatmen mehr bringt als gleich langes, langsames Atmen, ist offen: Eine Studie " +
                 "fand mehr Herzratenvariabilität (Bae 2021), andere keinen Unterschied " +
                 "(Meehan & Shaffer 2024, Birdee 2023).",
-            exerciseIds = listOf("resonanz", "bhramari", "cyclic-sighing", "zwerchfell", "sitali", "lippenbremse"),
+            exerciseIds = listOf("resonanz", "bhramari", "cyclic-sighing", "zwerchfell", "sitali", "lippenbremse", RandomPatternGenerator.ID),
         ),
         LorePattern(
             id = "brmhana",
@@ -84,7 +84,7 @@ object Atemlehre {
             studies = "Beim Einatmen steigt der Puls kurz an, die Richtung ist plausibel. Gezielt " +
                 "untersucht ist langes Einatmen kaum.",
             exerciseIds = listOf(RandomPatternGenerator.ID),
-            appNote = "Das Muster des Tages ist an manchen Tagen sanft aktivierend.",
+            appNote = "Das Muster des Tages ist an manchen Tagen sanft aktivierend; dann atmet es länger ein als aus.",
         ),
         LorePattern(
             id = "samana",
@@ -152,7 +152,7 @@ object Atemlehre {
             typical = "Zum Sammeln und Konzentrieren.",
             studies = "Zum Halten selbst gibt es kaum Daten. Pressen bei geschlossener Kehle lässt " +
                 "den Blutdruck schwanken.",
-            exerciseIds = listOf("4-7-8"),
+            exerciseIds = listOf("4-7-8", RandomPatternGenerator.ID),
             appNote = "4-7-8 verbindet volles Halten mit langem Ausatmen: erst sammeln, dann loslassen.",
             origin = "Die Zuordnung zu Brmhana folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
         ),
@@ -170,7 +170,7 @@ object Atemlehre {
                 "(Uddiyana Bandha).",
             typical = "Für Geübte, in ruhiger Verfassung.",
             studies = "Kaum Daten. Mit leerer Lunge ist der Sauerstoffvorrat klein, Atemnot kommt früher.",
-            exerciseIds = listOf("box-4-4-4-4"),
+            exerciseIds = listOf("box-4-4-4-4", RandomPatternGenerator.ID),
             appNote = "Bei der Box-Atmung ist die leere Pause kurz. Wim Hof hält ebenfalls leer, " +
                 "aber nach schnellem Atmen; das ist ein anderer Zusammenhang.",
             origin = "Die Zuordnung zu Langhana folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",

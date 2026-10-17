@@ -35,8 +35,9 @@ class AtemlehreTest {
             generated.take(50).mapIndexed { seed, p -> "${RandomPatternGenerator.ID}#seed$seed" to p.exercise.lore }
         lore.forEach { (key, l) ->
             assertNotNull("$key ohne Yoga-Lehre", l)
-            val id = l!!.patternId
-            assertNotNull("$key verweist auf unbekannte Karte „$id“", Atemlehre.pattern(id))
+            (listOf(l!!.patternId) + l.morePatternIds).forEach { id ->
+                assertNotNull("$key verweist auf unbekannte Karte „$id“", Atemlehre.pattern(id))
+            }
         }
     }
 
@@ -58,11 +59,18 @@ class AtemlehreTest {
     fun `Muster des Tages verweist je nach Verhältnis auf Brmhana, Langhana oder Samana`() {
         generated.forEachIndexed { seed, p ->
             val expected = when {
-                p.spec.activating -> "brmhana"
+                p.spec.exhale < p.spec.inhale -> "brmhana"
                 p.spec.exhale > p.spec.inhale -> "langhana"
                 else -> "samana"
             }
             assertEquals("Seed $seed (${p.spec})", expected, p.exercise.lore?.patternId)
+            if (p.spec.activating) assertEquals("Seed $seed aktivierend", "brmhana", expected)
+            // Jedes Halten verweist zusätzlich auf seine Karte.
+            val holds = listOfNotNull(
+                "halten-voll".takeIf { p.spec.holdFull != null },
+                "halten-leer".takeIf { p.spec.holdEmpty != null },
+            )
+            assertEquals("Seed $seed (${p.spec})", holds, p.exercise.lore?.morePatternIds)
         }
     }
 

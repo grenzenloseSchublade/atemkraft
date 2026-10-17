@@ -55,6 +55,24 @@ class RandomPatternGeneratorTest {
             }
     }
 
+    /** Ganze Sekunden: Countdown, „Intervalle anpassen“ und Atemlehre-Verhältnisse passen zusammen. */
+    @Test
+    fun `alle Phasen in ganzen Sekunden`() {
+        (0L until 5000L).map { RandomPatternGenerator.forSeed(it).spec }.forEach { spec ->
+            listOfNotNull(spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty).forEach { seconds ->
+                assertTrue("$spec", seconds % 1.0 == 0.0)
+            }
+        }
+    }
+
+    /** Aktivierend heißt Brmhana: Einatmen immer länger als Ausatmen, nie nur „zügig“. */
+    @Test
+    fun `aktivierende Muster atmen laenger ein als aus`() {
+        (0L until 5000L).map { RandomPatternGenerator.forSeed(it).spec }.filter { it.activating }.forEach { spec ->
+            assertTrue("$spec", spec.inhale > spec.exhale)
+        }
+    }
+
     @Test
     fun `aktivierende Muster bleiben sanft`() {
         val activating = year.map { RandomPatternGenerator.forDate(it) }.filter { it.activating }
