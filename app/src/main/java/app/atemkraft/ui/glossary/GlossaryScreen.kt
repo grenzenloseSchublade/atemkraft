@@ -48,7 +48,7 @@ fun GlossaryScreen(onBack: () -> Unit) {
     }
 }
 
-/** Eine Begriffsgruppe: einheitlicher Abschnitts-Header, darunter die Karten. */
+/** Eine Begriffsgruppe: farbiger Abschnitts-Header, darunter die Karten mit neutralen Titeln (FARBE-07). */
 @Composable
 private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
     SectionHeader(title = title, color = MaterialTheme.colorScheme.primary)
@@ -61,7 +61,7 @@ private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
                     WholeWordText(
                         text = term.name,
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.height(Dimens.GapTiny))
                     Text(

@@ -77,9 +77,9 @@ import kotlinx.coroutines.flow.first
  * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster-Karten stehen eine Ebene tiefer
  * unter „Die Muster“ und bleiben deshalb `ExpanderSection`.
  *
- * Farbe wie das Glossar: Überschriften in `primary`, keine Farbcodierung je Muster (FARBE-04).
- * Bedeutung trägt Farbe nur im Rhythmusbild (Einatmen Cyan, Ausatmen Magenta, Halten
- * gestrichelt); die Phasen-Karte oben erklärt sie in Worten (FARBE-05).
+ * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen Magenta, Halten
+ * gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Deshalb sind alle Überschriften
+ * neutral (FARBE-07): Pink stünde sonst zugleich für „Überschrift“ und „Ausatmen“.
  *
  * [focus]: Kennung einer Muster-Karte (Sprung aus der Detailseite) – die Karte steht dann
  * aufgeklappt mit ihrem Rhythmusbild oben im Bild.
@@ -87,7 +87,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus: String? = null) {
     val scrollState = rememberScrollState()
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = MaterialTheme.colorScheme.onBackground
     val focusId = focus?.takeIf { Atemlehre.pattern(it) != null }
     // Einmal zur Karte springen; gemerkt, damit die Rückkehr aus einer Übung die Position hält.
     var focusY by remember { mutableIntStateOf(-1) }
@@ -145,7 +145,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                         ExpanderSection(
                             title = pattern.title,
                             appetizer = pattern.teaser,
-                            accent = accent,
+                            accent = MaterialTheme.colorScheme.onBackground,
                             initiallyExpanded = isFocus,
                         ) {
                             PatternContent(pattern, onOpenExercise)

@@ -1,12 +1,12 @@
+- Atemlehre: was die Yoga-Lehre zu Ein-, Ausatmen und Halten sagt
+- Eigene Markierung „tut mir gut“
 - Suche nach Befinden, ohne Netz und ohne Speichern
-- Situationen aufklappbar, „Meine Muster“ ab drei einklappbar
+- Situationen aufklappbar, „Meine Muster“ einklappbar
 - Muster des Tages per Lesezeichen speichern
-- Muster als Datei exportieren und importieren
+- Muster exportieren und importieren
 - Kein Cloud-Backup mehr
 - Stimme laden ohne Gerätedaten, mit Prüfsumme
-- Lizenzen in der App
-- Stimme GLaDOS entfernt (keine Lizenz)
-- Studienlage als Etikett und im Text
-- Tick am Kreis folgt dem Schalter „Vibration“
-- Kleinere Schrift, kein Umbruch mitten im Wort
+- Lizenzen in der App, Stimme GLaDOS entfernt
+- Studienlage in drei Stufen
+- Kleinere Schrift, kein Umbruch im Wort
 - Fester Zurück-Pfeil
