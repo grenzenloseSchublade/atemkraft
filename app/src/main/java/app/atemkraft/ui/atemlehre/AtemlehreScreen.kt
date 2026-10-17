@@ -38,8 +38,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -93,7 +93,10 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
     val accent = LoreAccent
     val focusId = focus?.takeIf { Atemlehre.pattern(it) != null }
     // Einmal zur Karte springen; gemerkt, damit die Rückkehr aus einer Übung die Position hält.
+    // Die Lage der Karte wird gegen den Scroll-Inhalt gemessen, nicht gegen ihre direkte Spalte:
+    // Seit die Muster in einer eigenen Kartenspalte stehen, wäre „positionInParent“ zu klein.
     var focusY by remember { mutableIntStateOf(-1) }
+    var content by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var focusDone by rememberSaveable { mutableStateOf(focusId == null) }
     val topMarginPx = with(LocalDensity.current) { Dimens.CardPadding.roundToPx() }
     LaunchedEffect(focusDone) {
@@ -110,6 +113,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(scrollState)
+                    .onPlaced { content = it }
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 Spacer(Modifier.height(Dimens.SectionGap))
@@ -137,7 +141,9 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                             focused = pattern.id == focusId,
                             onOpenExercise = onOpenExercise,
                             modifier = if (pattern.id == focusId) {
-                                Modifier.onPlaced { focusY = it.positionInParent().y.toInt() }
+                                Modifier.onPlaced { card ->
+                                    content?.let { focusY = it.localPositionOf(card, Offset.Zero).y.toInt() }
+                                }
                             } else {
                                 Modifier
                             },
