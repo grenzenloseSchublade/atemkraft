@@ -72,3 +72,9 @@ const val TERTIARY = 0.5f
 
 /** Creme-Ton des Pause-/Play-Symbols (PauseFlash) – zentral statt Inline-Hex. */
 val PauseGlyphCreme = Color(0xFFFFF3D6)
+
+/**
+ * Überschriften der Atemlehre. Cyan und Magenta stehen dort für Ein- und Ausatmen, Gelb für Warnung,
+ * Familienfarben für Familien – die Abschnittsköpfe brauchen deshalb einen eigenen Ton (FARBE-04, -07).
+ */
+val LoreAccent = Color(0xFFFF9E7A)

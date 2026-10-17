@@ -83,6 +83,7 @@ class ThemeContrastTest {
             "FamilySympathetic" to FamilySympathetic,
             "FamilyBalance" to FamilyBalance,
             "FamilyFunctional" to FamilyFunctional,
+            "LoreAccent" to LoreAccent,
         )
         accents.forEach { (n, c) ->
             add(Pair("$n auf background", c, background, text))
@@ -152,7 +153,19 @@ class ThemeContrastTest {
             Triple("primary ↔ SessionButtonPink", NeonMagenta, SessionButtonPink),
             Triple("EvidenceCaution ↔ SessionButtonPink", EvidenceCaution, SessionButtonPink),
         )
-        return homePairs + pinks
+        // Atemlehre (FARBE-07): eigener Überschriftenton gegen Phasenfarben, Warnung, Vorsicht und
+        // – weil app-weit belegt – die Familienfarben.
+        val lore = listOf(
+            "NeonCyan" to NeonCyan,
+            "primary" to NeonMagenta,
+            "WarnAmber" to WarnAmber,
+            "EvidenceCaution" to EvidenceCaution,
+            "FamilyVagal" to FamilyVagal,
+            "FamilySympathetic" to FamilySympathetic,
+            "FamilyBalance" to FamilyBalance,
+            "FamilyFunctional" to FamilyFunctional,
+        ).map { (n, c) -> Triple("LoreAccent ↔ $n", LoreAccent, c) }
+        return homePairs + pinks + lore
     }
 
     @Test

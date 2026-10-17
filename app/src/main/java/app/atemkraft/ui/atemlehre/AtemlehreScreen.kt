@@ -62,6 +62,7 @@ import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.LoreAccent
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
@@ -78,8 +79,9 @@ import kotlinx.coroutines.flow.first
  * unter „Die Muster“ und bleiben deshalb `ExpanderSection`.
  *
  * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen Magenta, Halten
- * gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Deshalb sind alle Überschriften
- * neutral (FARBE-07): Pink stünde sonst zugleich für „Überschrift“ und „Ausatmen“.
+ * gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe tragen deshalb
+ * einen eigenen Ton, [LoreAccent] (Koralle), die Mustertitel darunter sind neutral (FARBE-07):
+ * Pink stünde sonst zugleich für „Überschrift“ und „Ausatmen“.
  *
  * [focus]: Kennung einer Muster-Karte (Sprung aus der Detailseite) – die Karte steht dann
  * aufgeklappt mit ihrem Rhythmusbild oben im Bild.
@@ -87,7 +89,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus: String? = null) {
     val scrollState = rememberScrollState()
-    val accent = MaterialTheme.colorScheme.onBackground
+    val accent = LoreAccent
     val focusId = focus?.takeIf { Atemlehre.pattern(it) != null }
     // Einmal zur Karte springen; gemerkt, damit die Rückkehr aus einer Übung die Position hält.
     var focusY by remember { mutableIntStateOf(-1) }

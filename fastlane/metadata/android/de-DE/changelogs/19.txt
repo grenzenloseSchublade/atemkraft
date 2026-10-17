@@ -1,0 +1,3 @@
+- Atemlehre: Abschnittsköpfe in eigener Farbe (Koralle), Mustertitel weiß
+- Cyan und Pink stehen dort nur noch für Ein- und Ausatmen
+- Glossar: Begriffe mit weißen Titeln unter farbigem Gruppenkopf
