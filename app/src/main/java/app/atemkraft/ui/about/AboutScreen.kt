@@ -23,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.Placeholder
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.withStyle
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
+import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.ThirdParty
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
@@ -80,7 +83,9 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
                 Spacer(Modifier.height(Dimens.SectionGap))
-                BodyText(stringResource(R.string.about_body), style = MaterialTheme.typography.bodyMedium)
+                // Zahl aus dem Katalog: Eine neue Übung zählt mit, ohne dass der Text veraltet.
+                val count = BuiltInExercises.all.size
+                BodyText(pluralStringResource(R.plurals.about_body, count, count), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(Dimens.SectionGap))
                 Card(modifier = Modifier.fillMaxWidth()) {
                     BodyText(stringResource(R.string.about_disclaimer), modifier = Modifier.padding(Dimens.CardPadding))
@@ -102,9 +107,11 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                 LinkRow(
                     prefix = stringResource(R.string.about_source_prefix),
                     // Kurz statt der vollen Adresse: Die URL ist ein einziges langes Wort und
-                    // passt bei großer Schrift samt Symbol nicht in die Zeile (LAYOUT-03).
+                    // passt bei großer Schrift samt Symbol nicht in die Zeile (LAYOUT-03). Die
+                    // Adresse steht darunter ohne Symbol, damit die Herkunft lesbar bleibt.
                     label = stringResource(R.string.about_source_link),
                     url = REPO_URL,
+                    address = REPO_URL.removePrefix(HTTPS),
                 )
                 LinkRow(label = stringResource(R.string.about_privacy_link), url = PRIVACY_URL)
                 Spacer(Modifier.height(Dimens.ScreenBottom))
@@ -150,15 +157,12 @@ private fun LicenseEntry(name: String, license: String, holder: String) {
 /**
  * Externer Link als eigene Zeile: Die ganze Zeile ist die Tippfläche, mindestens 48 dp hoch
  * (A11Y-05). Das Ziel steht in `primary`, dahinter das Symbol „öffnet im Browser“ – ohne
- * Unterstreichung, wie die übrigen Verweise der App. Öffnet [url] im Browser.
+ * Unterstreichung, wie die übrigen Verweise der App. Öffnet [url] im Browser. [address] steht
+ * als Hinweiszeile ohne Symbol darunter und darf nur nach „/“ umbrechen ([breakAfterSlashes]).
  */
 @Composable
-private fun LinkRow(label: String, url: String, prefix: String? = null) {
+private fun LinkRow(label: String, url: String, prefix: String? = null, address: String? = null) {
     val uriHandler = LocalUriHandler.current
-    val linkColor = MaterialTheme.colorScheme.primary
-    // Platzhalter = Abstand + Symbol; das Symbol sitzt an seinem Ende.
-    val iconWidthSp = with(LocalDensity.current) { (Dimens.GapTiny + Sizes.IconSmall).toSp() }
-    val iconHeightSp = with(LocalDensity.current) { Sizes.IconSmall.toSp() }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -166,31 +170,52 @@ private fun LinkRow(label: String, url: String, prefix: String? = null) {
             .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link)) { uriHandler.openUri(url) },
         contentAlignment = Alignment.CenterStart,
     ) {
-        Text(
-            text = buildAnnotatedString {
-                if (prefix != null) append(prefix)
-                withStyle(SpanStyle(color = linkColor)) { append(label) }
-                // Das Symbol ersetzt ein geschütztes Leerzeichen: Es bleibt beim letzten Wort (kein
-                // Umbruch davor), und TalkBack liest nichts dafür.
-                appendInlineContent(EXTERNAL_ICON, NBSP)
-            },
-            inlineContent = mapOf(
-                EXTERNAL_ICON to InlineTextContent(Placeholder(iconWidthSp, iconHeightSp, PlaceholderVerticalAlign.TextCenter)) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_open_in_new),
-                            contentDescription = null, // dekorativ: Name und Hinweis „im Browser öffnen“ trägt die Zeile
-                            tint = linkColor,
-                            modifier = Modifier.size(Sizes.IconSmall),
-                        )
-                    }
-                },
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-        )
+        Column {
+            LinkText(label, prefix, MaterialTheme.colorScheme.primary)
+            if (address != null) HintText(breakAfterSlashes(address))
+        }
     }
 }
 
+/** Beschriftung einer [LinkRow]: [prefix] neutral, [label] in [linkColor], dahinter das Symbol. */
+@Composable
+private fun LinkText(label: String, prefix: String?, linkColor: Color) {
+    // Platzhalter = Abstand + Symbol; das Symbol sitzt an seinem Ende.
+    val iconWidthSp = with(LocalDensity.current) { (Dimens.GapTiny + Sizes.IconSmall).toSp() }
+    val iconHeightSp = with(LocalDensity.current) { Sizes.IconSmall.toSp() }
+    Text(
+        text = buildAnnotatedString {
+            if (prefix != null) append(prefix)
+            withStyle(SpanStyle(color = linkColor)) { append(label) }
+            // Das Symbol ersetzt ein geschütztes Leerzeichen: Es bleibt beim letzten Wort (kein
+            // Umbruch davor), und TalkBack liest nichts dafür.
+            appendInlineContent(EXTERNAL_ICON, NBSP)
+        },
+        inlineContent = mapOf(
+            EXTERNAL_ICON to InlineTextContent(Placeholder(iconWidthSp, iconHeightSp, PlaceholderVerticalAlign.TextCenter)) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_open_in_new),
+                        contentDescription = null, // dekorativ: Name und Hinweis „im Browser öffnen“ trägt die Zeile
+                        tint = linkColor,
+                        modifier = Modifier.size(Sizes.IconSmall),
+                    )
+                }
+            },
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+    )
+}
+
+/**
+ * Adresse, die nur nach einem „/“ umbrechen darf: Ein Leerzeichen ohne Breite hinter jedem „/“
+ * erlaubt dort den Umbruch, Wörter wie „grenzenloseSchublade“ bleiben ganz (LAYOUT-03).
+ */
+private fun breakAfterSlashes(address: String): String = address.replace(SLASH, SLASH + ZWSP)
+
 private const val EXTERNAL_ICON = "extern"
 private const val NBSP = "\u00A0"
+private const val ZWSP = "\u200B"
+private const val SLASH = "/"
+private const val HTTPS = "https://"

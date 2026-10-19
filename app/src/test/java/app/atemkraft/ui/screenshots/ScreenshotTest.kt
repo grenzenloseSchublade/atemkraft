@@ -129,8 +129,8 @@ import java.time.ZoneId
  * Leisten der App mit ([TabFrame]): Statusleiste, Tab-Leiste und Systemnavigation – sonst
  * überschätzt das Bild den Platz um rund 150 dp.
  *
- * Der Meditations-Tab scrollt bis fontScale 1,3 nicht (LAYOUT-08, `SCROLLT`); aufgeklappt ist das
- * ein offener Verstoß (S-40), der nur gemessen wird (`SCROLLT_OFFEN`).
+ * Der Meditations-Tab scrollt bis fontScale 1,3 nicht (LAYOUT-08, `SCROLLT`); aufgeklappter Klang
+ * ist eine akzeptierte Ausnahme (S-40), die nur gemessen wird (`SCROLLT_AUSNAHME`).
  *
  * Endlos-Animationen stehen still (FrozenInfiniteAnimations).
  *
@@ -161,8 +161,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
 
-        /** Befund für einen bekannten, offenen Scroll-Verstoß (S-40): gemessen, nicht als Fehler gewertet. */
-        private const val OPEN_SCROLL = "SCROLLT_OFFEN"
+        /** Befund für eine akzeptierte Scroll-Ausnahme (S-40): gemessen, nicht als Fehler gewertet. */
+        private const val ACCEPTED_SCROLL = "SCROLLT_AUSNAHME"
 
         // Feste Werte statt „heute“, damit die Bilder reproduzierbar sind.
         private val DAY = LocalDate.of(2026, 10, 3)
@@ -229,9 +229,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
      * Mit [tab] liegt der Inhalt wie in der App über Tab-Leiste und Systemleisten ([TabFrame],
      * dann immer in Gerätehöhe); [noScroll] prüft, dass die Seite bis
-     * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt. [openScroll] misst denselben Weg für einen
-     * bekannten, noch nicht entschiedenen Verstoß (S-40): Befund `SCROLLT_OFFEN` in der `.tsv`,
-     * der Test schlägt nicht fehl – so bleibt der Verstoß sichtbar, bis er behoben ist.
+     * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt. [acceptedScroll] misst denselben Weg für eine
+     * akzeptierte Ausnahme (S-40): Befund `SCROLLT_AUSNAHME` in der `.tsv`, der Test schlägt
+     * nicht fehl – so bleibt sichtbar, wie weit die Seite dort scrollt.
      * [screen] nimmt den ganzen Bildschirm samt eigener Fenster auf (Dialoge); das Fenster muss
      * dafür Gerätegröße haben ([deviceWindow]).
      */
@@ -242,7 +242,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         widthDp: Int = device.widthDp,
         tab: Tab? = null,
         noScroll: Boolean = false,
-        openScroll: Boolean = false,
+        acceptedScroll: Boolean = false,
         screen: Boolean = false,
         prepare: () -> Unit = {},
         content: @Composable () -> Unit,
@@ -265,10 +265,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val controls = controlFindings(name)
         val checked = fontScale <= NO_SCROLL_MAX_FONT_SCALE
         val scrolls = if (noScroll && checked) scrollFindings(name) else emptyList()
-        val openScrolls = if (openScroll && checked) scrollFindings(name, OPEN_SCROLL) else emptyList()
+        val acceptedScrolls = if (acceptedScroll && checked) scrollFindings(name, ACCEPTED_SCROLL) else emptyList()
         // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
         File(dir).mkdirs()
-        File("$dir/$name.tsv").writeText((findings + controls + scrolls + openScrolls).joinToString("") { "$it\n" })
+        File("$dir/$name.tsv").writeText((findings + controls + scrolls + acceptedScrolls).joinToString("") { "$it\n" })
         wordBreaks += findings
         controlProblems += controls
         scrollProblems += scrolls
@@ -510,11 +510,11 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     /**
      * Modus „Frei“ (∞): Bogen voll in Pink; „Klang & Stimme“ aufgeklappt mit Gong „alle N min“
      * (längstes Segment) – Ring am kleinsten. Aufgeklappt scrollt die Seite auf 360 dp schon bei
-     * fontScale 1,0 – ein Verstoß gegen LAYOUT-08, keine Ausnahme; bis zur Entscheidung des
-     * Eigentümers (S-40) nur gemessen (`SCROLLT_OFFEN`), nicht als Fehler gewertet.
+     * fontScale 1,0 – akzeptierte Ausnahme von LAYOUT-08 (S-40, Eigentümer 2026-10-19: der
+     * Abschnitt ist standardmäßig zu); nur gemessen (`SCROLLT_AUSNAHME`), nicht als Fehler gewertet.
      */
     @Test
-    fun meditationFree() = snap("03_meditation_frei", tab = Tab.MEDITATION, openScroll = true, prepare = {
+    fun meditationFree() = snap("03_meditation_frei", tab = Tab.MEDITATION, acceptedScroll = true, prepare = {
         val app = RuntimeEnvironment.getApplication()
         compose.onNodeWithText(app.getString(R.string.meditation_sound_voice_label)).performClick()
     }) {

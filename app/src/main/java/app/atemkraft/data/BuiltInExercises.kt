@@ -723,8 +723,7 @@ object BuiltInExercises {
         instructionHint = "Bewusst weniger und ruhiger durch die Nase atmen, sanfte „Lufthunger“-" +
             "Phasen, über Wochen. Messbarer Anker: die Control Pause (Dauer der Atempause).",
         cautions = listOf(
-            "Ersetzt keine Asthma-Medikamente – Kortison-Sprays nie ohne ärztliche Rücksprache " +
-                "reduzieren oder absetzen.",
+            "Ersetzt keine Asthma-Medikamente – Kortison-Sprays nie eigenmächtig reduzieren oder absetzen.",
             "Bei einem akuten Asthma-Anfall gilt dein Notfallplan, nicht diese Übung.",
         ),
         references = listOf(Refs.buteykoPrem2013, Refs.buteykoCochrane2020),

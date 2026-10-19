@@ -105,6 +105,7 @@ private fun SelectionContent(
     var startEndGong by rememberSaveable(key) { mutableStateOf(initialConfig.startEndGong) }
     var intervalOn by rememberSaveable(key) { mutableStateOf(initialConfig.gongEveryMin != null) }
     var speech by rememberSaveable(key) { mutableStateOf(initialConfig.speech) }
+    // Standardmäßig zu: Aufgeklappt darf die Seite auf 360 dp scrollen (LAYOUT-08, Ausnahme S-40).
     var soundExpanded by rememberSaveable { mutableStateOf(false) }
     val mode = if (duration.free) MeditationMode.FREE else MeditationMode.TIMED
 

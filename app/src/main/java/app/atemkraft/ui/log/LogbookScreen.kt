@@ -41,6 +41,7 @@ import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
@@ -126,7 +127,7 @@ fun LogbookScreen(
 /**
  * Titel „7 Sitzungen · 65 min gesamt“, die Serie als eigene Zeile erst ab zwei Tagen in Folge
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
- * die Wochenpunkte. Leer: „Noch keine Sitzung“.
+ * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung.
  */
 @Composable
 private fun StatsCard(
@@ -148,6 +149,11 @@ private fun StatsCard(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            if (entries.isEmpty()) {
+                // Sanfte Einladung statt leerer Karte (MUSTER-04).
+                Spacer(Modifier.height(Dimens.GapTiny))
+                HintText(stringResource(R.string.log_empty_invite))
+            }
             if (streak >= 2) {
                 Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
