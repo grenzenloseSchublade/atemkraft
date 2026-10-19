@@ -36,6 +36,12 @@ import app.atemkraft.ui.theme.Sizes
  * Häkchen des ausgewählten Segments) nicht einzeilig in ihr gleich breites Segment, wird
  * stattdessen eine senkrechte Liste mit Radiobuttons gezeigt – Beschriftungen brechen nie
  * im Wort um (LAYOUT-03).
+ *
+ * Mehr als vier Optionen nur als Raster über [columns] (Meditations-Dauer 4 × 2): gleich breite
+ * Segmente in Reihen à [columns], gemeinsame Auswahl, gemeinsamer Rückfall auf die Radioliste.
+ * Die Reihen stehen ohne eigene Lücke übereinander – der Abstand ist der Rest der
+ * 48-dp-Tippfläche, enger ginge nur mit überlappenden Tippflächen (A11Y-05). Ein [selected], das
+ * nicht in [items] liegt (z. B. Stepper-Wert neben Schnellwahl), markiert keines.
  */
 @Composable
 fun <T> SegmentedChoiceRow(
@@ -43,24 +49,33 @@ fun <T> SegmentedChoiceRow(
     selected: T,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    columns: Int = items.size,
     label: @Composable (T) -> String,
 ) {
+    val rows = items.chunked(columns)
     SubcomposeLayout(modifier.fillMaxWidth()) { constraints ->
         // Jede Beschriftung einzeln als ausgewähltes Segment messen (breiteste Variante).
+        // Die Zeile misst mit width(IntrinsicSize.Min), also nur das längste Wort – deshalb
+        // in der Probe untrennbar machen, sonst gilt „Start & Ende“ als so breit wie „Start“.
         val needed = subcompose("probe") {
-            items.forEachIndexed { index, item ->
-                SingleChoiceSegmentedButtonRow {
-                    Segment(label(item), selected = true, onClick = {}, index = index, count = items.size)
+            rows.forEach { row ->
+                row.forEachIndexed { index, item ->
+                    SingleChoiceSegmentedButtonRow {
+                        Segment(label(item).unbreakable(), selected = true, onClick = {}, index = index, count = row.size)
+                    }
                 }
             }
         }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
-        val fits = needed * items.size <= constraints.maxWidth
+        val fits = needed * columns <= constraints.maxWidth
 
         val placeables = subcompose(fits) {
             if (fits) {
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    items.forEachIndexed { index, item ->
-                        Segment(label(item), selected = item == selected, onClick = { onSelect(item) }, index = index, count = items.size)
+                // Je Reihe ein Placeable; layout() unten stapelt sie.
+                rows.forEach { row ->
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        row.forEachIndexed { index, item ->
+                            Segment(label(item), selected = item == selected, onClick = { onSelect(item) }, index = index, count = row.size)
+                        }
                     }
                 }
             } else {
@@ -104,6 +119,9 @@ fun <T> SegmentedChoiceRow(
         }
     }
 }
+
+/** Leerzeichen und Bindestriche geschützt, damit die Mindestbreite die ganze Beschriftung ist. */
+private fun String.unbreakable(): String = replace(' ', '\u00A0').replace('-', '\u2011')
 
 /** Ein Segment; Probe und Anzeige nutzen dasselbe, damit die Breitenmessung stimmt. */
 @Composable

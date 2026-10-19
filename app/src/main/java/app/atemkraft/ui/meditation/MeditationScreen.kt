@@ -3,11 +3,8 @@ package app.atemkraft.ui.meditation
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,7 +48,7 @@ import app.atemkraft.ui.components.OverlayChrome
 import app.atemkraft.ui.components.PauseFlash
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.SelectChip
+import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.SessionSecondaryButton
@@ -67,11 +64,22 @@ import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SynthTrack
 
-/** Auswählbare Dauer-Vorgaben (Minuten) und Intervall-Gong-Optionen (Minuten). */
-private val DURATION_PRESETS = listOf(5, 10, 15, 20, 30, 45, 60, 90)
+/**
+ * Schnellwahl der Dauer (Minuten) in einer Reihe; [FREE] steht als „∞“ am Ende und wählt die
+ * offene Sitzung. Andere Längen stellt der Stepper ein.
+ */
+private const val FREE = 0
+private val DURATION_CHOICES = listOf(5, 10, 20, 30, FREE)
+
+/** Gong-Wahl im Tab; die Intervall-Länge steht in den Einstellungen. */
+private enum class GongChoice {
+    OFF,
+    START_END,
+    INTERVAL,
+}
 
 /**
- * Meditations-Tab: Auswahl (Modus Timer/Frei, Dauer, Intervall-Gong, Sprachanleitung) und
+ * Meditations-Tab: Auswahl (Dauer samt offener Sitzung „∞“, eingeklappt Gong und Sprachanleitung) und
  * laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
  * liegt im [MeditationController].
  */
@@ -142,7 +150,6 @@ fun MeditationOverlay(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SelectionContent(
     initialConfig: MeditationConfig,
@@ -174,35 +181,26 @@ private fun SelectionContent(
                 action = { SettingsAction(onClick = onOpenSettings) },
             )
 
-            Spacer(Modifier.height(Dimens.SectionGap))
-            // Modus: Timer / Frei
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                SelectChip(
-                    label = stringResource(R.string.meditation_mode_timed),
-                    selected = mode == MeditationMode.TIMED,
-                    onClick = { mode = MeditationMode.TIMED },
-                )
-                SelectChip(
-                    label = stringResource(R.string.meditation_mode_free),
-                    selected = mode == MeditationMode.FREE,
-                    onClick = { mode = MeditationMode.FREE },
-                )
-            }
+            // Dauer: eine Reihe Schnellwahl, „∞“ ist die offene Sitzung (kein eigener Timer/Frei-
+            // Schalter). Ein Stepper-Wert außerhalb der Schnellwahl markiert keines.
+            SectionHeader(stringResource(R.string.meditation_duration), NeonCyan)
+            SegmentedChoiceRow(
+                items = DURATION_CHOICES,
+                selected = if (mode == MeditationMode.FREE) FREE else minutes,
+                onSelect = { choice ->
+                    if (choice == FREE) {
+                        mode = MeditationMode.FREE
+                    } else {
+                        mode = MeditationMode.TIMED
+                        minutes = choice
+                    }
+                },
+            ) { m -> if (m == FREE) stringResource(R.string.meditation_free_symbol) else m.toString() }
 
             if (mode == MeditationMode.TIMED) {
-                SectionHeader(stringResource(R.string.meditation_duration), NeonCyan)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    DURATION_PRESETS.forEach { m ->
-                        SelectChip(
-                            label = stringResource(R.string.meditation_minutes, m),
-                            selected = minutes == m,
-                            onClick = { minutes = m },
-                        )
-                    }
-                }
-                // Frei wählbare Dauer (beliebige Minuten); Presets sind nur Schnellwahl. Inline:
-                // Knöpfe direkt hinter dem Label, linksbündig wie die Chips – keine weite Lücke
-                // zum rechten Rand. Kompakt, weil die Chip-Zeile darüber schon Touch-Rand mitbringt.
+                // Frei wählbare Dauer (beliebige Minuten); die Reihe ist nur Schnellwahl. Inline:
+                // Knöpfe direkt hinter dem Label, linksbündig – keine weite Lücke zum rechten
+                // Rand. Kompakt, weil die Segmentreihe darüber schon Touch-Rand mitbringt.
                 Stepper(
                     label = stringResource(R.string.meditation_minutes_label),
                     value = minutes,
@@ -213,7 +211,7 @@ private fun SelectionContent(
                     vertical = Dimens.GapTiny,
                 )
             } else {
-                Spacer(Modifier.height(Dimens.SectionGap))
+                Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = stringResource(R.string.meditation_free_hint),
                     style = MaterialTheme.typography.bodyMedium,
@@ -221,49 +219,45 @@ private fun SelectionContent(
                 )
             }
 
-            // Klang & Stimme: Gong und Sprachanleitung als ein Abschnitt mit Unter-Labels.
-            SectionHeader(stringResource(R.string.meditation_sound_voice_label), NeonCyan)
-            SubLabel(stringResource(R.string.meditation_gong_label), color = MaterialTheme.colorScheme.onBackground)
-            // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                SelectChip(
-                    label = stringResource(R.string.meditation_off),
-                    selected = !startEndGong && !intervalOn,
-                    onClick = {
-                        startEndGong = false
-                        intervalOn = false
+            // Klang & Stimme: zugeklappt nur eine Zeile mit der aktuellen Wahl (MUSTER-03) – eine
+            // schlichte Sitzung braucht nur die Dauer. Aufgeklappt Gong und Sprachanleitung.
+            // Zustand bleibt startEndGong/intervalOn, die Reihe bildet ihn nur auf eine Wahl ab.
+            val gong = when {
+                intervalOn -> GongChoice.INTERVAL
+                startEndGong -> GongChoice.START_END
+                else -> GongChoice.OFF
+            }
+            var soundExpanded by rememberSaveable { mutableStateOf(false) }
+            SectionHeader(
+                title = stringResource(R.string.meditation_sound_voice_label),
+                color = NeonCyan,
+                teaser = stringResource(
+                    R.string.meditation_sound_summary,
+                    when (gong) {
+                        GongChoice.OFF -> stringResource(R.string.meditation_gong_off_short)
+                        GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
+                        GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
                     },
-                )
-                SelectChip(
-                    label = stringResource(R.string.meditation_gong_startstop),
-                    selected = startEndGong && !intervalOn,
-                    onClick = {
-                        startEndGong = true
-                        intervalOn = false
+                    stringResource(
+                        if (speech && speechAvailable) R.string.meditation_voice_on else R.string.meditation_voice_off,
+                    ),
+                ),
+                expanded = soundExpanded,
+                onExpandedChange = { soundExpanded = it },
+            )
+            if (soundExpanded) {
+                SoundOptions(
+                    gong = gong,
+                    gongIntervalMin = gongIntervalMin,
+                    speech = speech,
+                    speechAvailable = speechAvailable,
+                    onGong = { choice ->
+                        startEndGong = choice != GongChoice.OFF
+                        intervalOn = choice == GongChoice.INTERVAL
                     },
-                )
-                SelectChip(
-                    label = stringResource(R.string.meditation_interval_minutes, gongIntervalMin),
-                    selected = intervalOn,
-                    onClick = {
-                        startEndGong = true
-                        intervalOn = true
-                    },
+                    onSpeech = { speech = it },
                 )
             }
-
-            // Schalter in der Zeile seines Namens, Hinweis darunter; die ganze Zeile schaltet.
-            ToggleRow(
-                label = stringResource(R.string.meditation_speech_label),
-                checked = speech && speechAvailable,
-                onCheckedChange = { speech = it },
-                hint = if (speechAvailable) {
-                    stringResource(R.string.meditation_speech_hint)
-                } else {
-                    stringResource(R.string.meditation_speech_unavailable)
-                },
-                enabled = speechAvailable,
-            )
             // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.
             Spacer(Modifier.height(Dimens.GapSmall))
         }
@@ -303,6 +297,45 @@ private fun SelectionContent(
                 )
             }
         }
+    }
+}
+
+/** Aufgeklappter Inhalt von „Klang & Stimme“: Gong-Wahl und Sprachanleitung. */
+@Composable
+private fun SoundOptions(
+    gong: GongChoice,
+    gongIntervalMin: Int,
+    speech: Boolean,
+    speechAvailable: Boolean,
+    onGong: (GongChoice) -> Unit,
+    onSpeech: (Boolean) -> Unit,
+) {
+    Column {
+        Spacer(Modifier.height(Dimens.GapSmall))
+        SubLabel(stringResource(R.string.meditation_gong_label), color = MaterialTheme.colorScheme.onBackground)
+        Spacer(Modifier.height(Dimens.GapSmall))
+        // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
+        SegmentedChoiceRow(GongChoice.entries, gong, onGong) { choice ->
+            when (choice) {
+                GongChoice.OFF -> stringResource(R.string.meditation_off)
+                GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
+                GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
+            }
+        }
+        // Abstand wie nach dem Dauer-Raster; der Touch-Rand der Segmente allein wirkte zu eng.
+        Spacer(Modifier.height(Dimens.GapSmall))
+        // Schalter in der Zeile seines Namens, Hinweis darunter; die ganze Zeile schaltet.
+        ToggleRow(
+            label = stringResource(R.string.meditation_speech_label),
+            checked = speech && speechAvailable,
+            onCheckedChange = onSpeech,
+            hint = if (speechAvailable) {
+                stringResource(R.string.meditation_speech_hint)
+            } else {
+                stringResource(R.string.meditation_speech_unavailable)
+            },
+            enabled = speechAvailable,
+        )
     }
 }
 

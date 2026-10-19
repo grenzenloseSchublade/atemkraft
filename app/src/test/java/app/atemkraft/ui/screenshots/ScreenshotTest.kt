@@ -45,6 +45,7 @@ import app.atemkraft.data.Situations
 import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionKind
@@ -370,6 +371,21 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             initialConfig = MeditationConfig(minutes = 15),
             speechAvailable = true,
             gongIntervalMin = 5,
+            onOpenSettings = {},
+            onStart = {},
+        )
+    }
+
+    /** Modus „Frei“ (∞): Hinweis statt Stepper; „Klang & Stimme“ aufgeklappt mit Gong „alle N min“ (längstes Segment). */
+    @Test
+    fun meditationFree() = snap("03_meditation_frei", prepare = {
+        val app = RuntimeEnvironment.getApplication()
+        compose.onNodeWithText(app.getString(R.string.meditation_sound_voice_label)).performClick()
+    }) {
+        MeditationScreen(
+            initialConfig = MeditationConfig(mode = MeditationMode.FREE, gongEveryMin = 15),
+            speechAvailable = true,
+            gongIntervalMin = 15,
             onOpenSettings = {},
             onStart = {},
         )

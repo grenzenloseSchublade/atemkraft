@@ -308,7 +308,6 @@
     <string name="meditation_title">Meditation</string>
     <string name="meditation_subtitle">Stille Sitzung mit Gong</string>
     <string name="meditation_mode_timed">Timer</string>
-    <string name="meditation_mode_free">Frei</string>
     <string name="meditation_duration">Dauer</string>
     <!-- Stepper unter dem Abschnitt „Dauer“: nur die Einheit, sonst doppelt sich der Titel. -->
     <string name="meditation_minutes_label">Minuten</string>
@@ -322,6 +321,12 @@
     <string name="meditation_speech_hint">Spricht in unregelmäßigen Abständen kurze Hinweise.</string>
     <string name="meditation_speech_unavailable">Keine deutsche Sprachausgabe auf dem Gerät verfügbar.</string>
     <string name="meditation_minutes">%1$d min</string>
+    <string name="meditation_free_symbol">∞</string>
+    <!-- Zusammenfassung unter dem zugeklappten Kopf „Klang & Stimme“: Gong-Wahl · Stimme. -->
+    <string name="meditation_sound_summary">Gong %1$s · %2$s</string>
+    <string name="meditation_gong_off_short">aus</string>
+    <string name="meditation_voice_on">mit Stimme</string>
+    <string name="meditation_voice_off">ohne Stimme</string>
     <string name="meditation_done_title">Sitzung beendet</string>
     <string name="cd_meditation_ring">Meditations-Ring</string>
     <string name="meditation_notification_channel">Meditation</string>
