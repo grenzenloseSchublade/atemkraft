@@ -7,6 +7,8 @@ lifecycle = "2.8.7"
 composeBom = "2025.01.00"
 datastore = "1.1.1"
 kotlinxSerialization = "1.7.3"
+# Nur für Tests (virtuelle Zeit); gleich der Version, die Lifecycle/Compose transitiv bringen.
+kotlinxCoroutines = "1.7.3"
 navigationCompose = "2.8.5"
 room = "2.6.1"
 ksp = "2.1.0-1.0.29"
@@ -25,6 +27,7 @@ androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "l
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }

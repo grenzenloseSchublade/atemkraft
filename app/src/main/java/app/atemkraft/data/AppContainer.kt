@@ -8,6 +8,7 @@ import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.data.local.AtemkraftDatabase
 import app.atemkraft.playback.MeditationAudioCoordinator
 import app.atemkraft.playback.MeditationController
+import app.atemkraft.playback.MeditationServiceLink
 
 /**
  * Manuelles DI: hält die Repositories einmalig (keine Instanziierung in Composables).
@@ -33,14 +34,14 @@ class AppContainer(context: Context) {
     /** Vorhören des Gongs in den Einstellungen (eigene Instanz, unabhängig von laufenden Sessions). */
     val gongPreviewPlayer: ToneCuePlayer = ToneCuePlayer()
 
-    /** Tipp-Tick am Atem- und Meditationskreis (eine Instanz, nicht pro Composition, AUDIO-04). */
+    /** Vibration: Phasen der Atem-Session, Tipp-Tick am Kreis, Rasten des Zeitrings (eine Instanz, AUDIO-04). */
     val hapticPlayer: HapticPlayer = HapticPlayer(context)
 
     /** App-weiter Meditations-Ablauf (überlebt Tab-Wechsel und läuft mit dem Foreground-Service). */
     val meditationController: MeditationController = MeditationController(
-        context = context,
         settingsRepository = settingsRepository,
         logbook = logbookRepository,
         audio = MeditationAudioCoordinator(context, voiceModelManager),
+        service = MeditationServiceLink(context),
     )
 }

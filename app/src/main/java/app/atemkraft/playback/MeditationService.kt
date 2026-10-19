@@ -11,6 +11,8 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import app.atemkraft.AtemkraftApplication
 import app.atemkraft.MainActivity
 import app.atemkraft.R
@@ -190,5 +192,23 @@ class MeditationService : Service() {
         private const val WAKELOCK_TIMEOUT_MS = 3 * 60 * 60 * 1000L
 
         fun startIntent(context: Context): Intent = Intent(context, MeditationService::class.java)
+    }
+}
+
+/**
+ * Startet und beendet den [MeditationService] für den [MeditationController]. Beim Beenden räumt
+ * er die Notification zusätzlich app-seitig weg: Der Service tut das in onDestroy zwar selbst, aber
+ * dessen Teardown-Timing ist herstellerabhängig (v. a. Samsung) – so bleibt keine Waise zurück.
+ */
+class MeditationServiceLink(context: Context) : ForegroundLink {
+    private val appContext = context.applicationContext
+
+    override fun start() {
+        ContextCompat.startForegroundService(appContext, MeditationService.startIntent(appContext))
+    }
+
+    override fun stop() {
+        appContext.stopService(MeditationService.startIntent(appContext))
+        appContext.getSystemService<NotificationManager>()?.cancel(MeditationService.NOTIF_ID)
     }
 }

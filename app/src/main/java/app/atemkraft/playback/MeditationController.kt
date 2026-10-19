@@ -1,17 +1,17 @@
 package app.atemkraft.playback
 
-import android.app.NotificationManager
-import android.content.Context
 import android.os.SystemClock
-import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationCues
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.SessionClock
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.domain.SessionTiming
+import app.atemkraft.domain.ToneVolume
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,16 +53,22 @@ data class MeditationUiState(
  * gebunden, sondern an einen eigenen [scope] – zusammen mit dem [MeditationService]
  * (Foreground) läuft der Timer damit zuverlässig weiter, auch wenn der Bildschirm aus ist
  * oder die Activity im Hintergrund pausiert. An die Monotonuhr verankert (kein Drift).
- * Gongs/Sprache laufen über den [MeditationAudioCoordinator].
+ * Gongs/Sprache laufen über [MeditationAudio] (in der App der [MeditationAudioCoordinator]), der
+ * Service über [ForegroundLink]; Uhr, Dispatcher und Zufall sind für Tests injizierbar.
  */
 class MeditationController(
-    context: Context,
     private val settingsRepository: SettingsRepository,
     private val logbook: LogbookRepository,
-    private val audio: MeditationAudioCoordinator,
+    private val audio: MeditationAudio,
+    private val service: ForegroundLink,
+    now: () -> Long = SystemClock::elapsedRealtime,
+    dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+    private val random: Random = Random,
 ) {
-    private val appContext = context.applicationContext
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+
+    /** Countdown und aktive Zeit, geteilt mit der Atem-Session ([SessionClock]). */
+    private val clock = SessionClock(now)
 
     private val _state = MutableStateFlow(MeditationUiState())
     val state: StateFlow<MeditationUiState> = _state.asStateFlow()
@@ -85,8 +91,6 @@ class MeditationController(
     private var resumeElapsedMs: Long? = null
 
     private var startedAtEpochMs = 0L
-    private var activeElapsedMs = 0L
-    private var lastTickRealtime = 0L
 
     // Intervall-Gong an der AKTIVEN Zeit verankert (pausenbereinigt), damit Pausen nicht driften.
     private var gongIntervalMs = 0L
@@ -156,14 +160,14 @@ class MeditationController(
         resumeRemainingMs = null
         resumeElapsedMs = null
         startedAtEpochMs = System.currentTimeMillis()
-        activeElapsedMs = 0L
+        clock.reset()
         _state.value = MeditationUiState(
             mode = config.mode,
             status = MeditationStatus.PREPARING,
-            countdown = COUNTDOWN_SECONDS,
+            countdown = SessionTiming.COUNTDOWN_SECONDS,
         )
         // Foreground-Service startet die Dauer-Notification und hält den Prozess wach.
-        ContextCompat.startForegroundService(appContext, MeditationService.startIntent(appContext))
+        service.start()
         launchActive(fromResume = false)
     }
 
@@ -174,7 +178,7 @@ class MeditationController(
         if (finishing) return
         if (_state.value.status != MeditationStatus.RUNNING) return
         runnerJob?.cancel()
-        accrueActiveTime() // aktive Zeit bis zum Pausenzeitpunkt banken, bevor die Uhr einfriert
+        clock.accrue() // aktive Zeit bis zum Pausenzeitpunkt banken, bevor die Uhr einfriert
         if (currentConfig.mode == MeditationMode.TIMED) {
             resumeRemainingMs = _state.value.remainingMs
         } else {
@@ -222,7 +226,7 @@ class MeditationController(
         // Zuerst IDLE setzen, dann Service/Notification entfernen: So kann der Notification-
         // Collector im Service (er überspringt IDLE) nach unserem cancel() nichts mehr nachposten.
         _state.value = MeditationUiState()
-        stopService()
+        service.stop()
     }
 
     private fun finishNow() {
@@ -230,14 +234,6 @@ class MeditationController(
         finishing = true
         runnerJob?.cancel()
         runnerJob = scope.launch { finish() }
-    }
-
-    private fun stopService() {
-        appContext.stopService(MeditationService.startIntent(appContext))
-        // Backstop: Die Notification app-seitig direkt entfernen. Der Service räumt sie in
-        // onDestroy zwar selbst weg, aber dessen Teardown-Timing ist herstellerabhängig
-        // (v. a. Samsung) – dieser Aufruf stellt sicher, dass keine Waise zurückbleibt.
-        appContext.getSystemService<NotificationManager>()?.cancel(MeditationService.NOTIF_ID)
     }
 
     private fun launchActive(fromResume: Boolean) {
@@ -248,7 +244,7 @@ class MeditationController(
                 if (currentConfig.startEndGong) audio.gong() // Start-Gong nach dem Countdown
             }
             val cfg = currentConfig
-            lastTickRealtime = SystemClock.elapsedRealtime()
+            clock.resume() // Pausen zählen nicht zur aktiven Zeit
             coroutineScope {
                 // Intervall-Gongs laufen in der Haupt-Tick-Schleife (maybeGong), nicht als
                 // eigener Loop – so bleiben sie an der aktiven Zeit verankert und driften nicht.
@@ -274,21 +270,18 @@ class MeditationController(
         }
     }
 
-    private suspend fun runCountdown() {
-        for (n in COUNTDOWN_SECONDS downTo 1) {
-            _state.update { it.copy(status = MeditationStatus.PREPARING, countdown = n) }
-            delay(1000L)
-        }
+    private suspend fun runCountdown() = clock.countdown { n ->
+        _state.update { it.copy(status = MeditationStatus.PREPARING, countdown = n) }
     }
 
     private suspend fun runTimed() {
         val remaining = resumeRemainingMs ?: totalMs
         resumeRemainingMs = null
-        val deadline = SystemClock.elapsedRealtime() + remaining
+        val deadline = clock.now() + remaining
         while (true) {
-            val left = deadline - SystemClock.elapsedRealtime()
+            val left = deadline - clock.now()
             if (left <= 0L) break
-            accrueActiveTime()
+            clock.accrue()
             maybeGong()
             _state.update {
                 it.copy(
@@ -297,7 +290,7 @@ class MeditationController(
                     elapsedMs = totalMs - left,
                 )
             }
-            delay(min(left, FRAME_MS))
+            delay(min(left, SessionTiming.FRAME_MS))
         }
         _state.update { it.copy(remainingMs = 0L, elapsedMs = totalMs) }
     }
@@ -305,14 +298,14 @@ class MeditationController(
     private suspend fun runFree() {
         val startElapsed = resumeElapsedMs ?: 0L
         resumeElapsedMs = null
-        val base = SystemClock.elapsedRealtime() - startElapsed
+        val base = clock.now() - startElapsed
         while (true) {
-            accrueActiveTime()
+            clock.accrue()
             maybeGong()
             _state.update {
                 it.copy(
                     status = MeditationStatus.RUNNING,
-                    elapsedMs = SystemClock.elapsedRealtime() - base,
+                    elapsedMs = clock.now() - base,
                 )
             }
             delay(TICK_MS)
@@ -320,13 +313,13 @@ class MeditationController(
     }
 
     /**
-     * Intervall-Gong an der aktiven (pausenbereinigten) Zeit: feuert, sobald [activeElapsedMs]
+     * Intervall-Gong an der aktiven (pausenbereinigten) Zeit: feuert, sobald die aktive Zeit ([SessionClock.activeMs])
      * die nächste n·[gongIntervalMs]-Marke erreicht. Im TIMED-Modus nicht am/hinter dem Ende
      * (dort übernimmt der End-Gong). Pausen driften dadurch nicht mehr.
      */
     private fun maybeGong() {
         if (gongIntervalMs <= 0L) return
-        while (activeElapsedMs >= nextGongAtMs) {
+        while (clock.activeMs >= nextGongAtMs) {
             if (currentConfig.mode == MeditationMode.TIMED && nextGongAtMs >= totalMs) {
                 nextGongAtMs = Long.MAX_VALUE
                 break
@@ -341,23 +334,23 @@ class MeditationController(
         var last = -1
         delay(
             if (fromResume) {
-                Random.nextLong(GAP_MIN_MS, GAP_MAX_MS)
+                random.nextLong(GAP_MIN_MS, GAP_MAX_MS)
             } else {
-                Random.nextLong(FIRST_MIN_MS, FIRST_MAX_MS)
+                random.nextLong(FIRST_MIN_MS, FIRST_MAX_MS)
             },
         )
         while (true) {
             val idx = nextCueIndex(last)
             last = idx
             audio.speak(MeditationCues.de[idx])
-            delay(Random.nextLong(GAP_MIN_MS, GAP_MAX_MS))
+            delay(random.nextLong(GAP_MIN_MS, GAP_MAX_MS))
         }
     }
 
     private fun nextCueIndex(last: Int): Int {
         val size = MeditationCues.de.size
         if (size <= 1) return 0
-        var idx = Random.nextInt(size)
+        var idx = random.nextInt(size)
         if (idx == last) idx = (idx + 1) % size
         return idx
     }
@@ -365,53 +358,44 @@ class MeditationController(
     private suspend fun finish() {
         // Aus der Pause beendet: pause() hat die aktive Zeit bereits gebankt – nicht erneut
         // (sonst würde die gesamte Pausendauer als Meditationszeit mitgezählt).
-        if (_state.value.status != MeditationStatus.PAUSED) accrueActiveTime()
+        if (_state.value.status != MeditationStatus.PAUSED) clock.accrue()
         audio.stopSpeech() // eine ggf. noch laufende Ansage nicht über den End-Gong sprechen lassen
         // Nur für einen tatsächlich hörbaren End-Gong den Fokus (erneut) anfordern.
         if (currentConfig.startEndGong && !_state.value.muted) audio.requestFocus()
         if (currentConfig.startEndGong) audio.gong()
         // Nur nennenswerte Sitzungen protokollieren (verhindert Ein-Sekunden-Einträge).
-        if (activeElapsedMs >= MIN_LOG_MS) {
+        if (clock.activeMs >= MIN_LOG_MS) {
             logbook.append(
                 SessionLogEntry(
                     exerciseId = MEDITATION_ID,
                     exerciseName = MEDITATION_NAME,
                     family = null,
                     startedAtEpochMs = startedAtEpochMs,
-                    durationMs = activeElapsedMs,
+                    durationMs = clock.activeMs,
                     roundsCompleted = 0,
                     kind = SessionKind.MEDITATION,
                 ),
             )
         }
         // Die Bilanz am Ende zeigt dieselbe aktive Zeit, die ins Logbuch geht (nicht die Sollzeit).
-        _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = activeElapsedMs) }
+        _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = clock.activeMs) }
         // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
         // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
         if (currentConfig.startEndGong) delay(audio.gongTotalMs().toLong() + FINISH_ABANDON_MARGIN_MS)
         audio.abandonFocus()
-        stopService()
-    }
-
-    /** Verstrichene aktive Zeit fortschreiben (Pausen zählen nicht, da beim Fortsetzen neu gesetzt). */
-    private fun accrueActiveTime() {
-        val now = SystemClock.elapsedRealtime()
-        activeElapsedMs += now - lastTickRealtime
-        lastTickRealtime = now
+        service.stop()
     }
 
     companion object {
-        private const val COUNTDOWN_SECONDS = 3
-
-        /** Kennung/Name der Meditation im Logbuch (App ist deutschsprachig). */
+        /**
+         * Kennung/Name der Meditation im Logbuch: stabiler Schlüssel der gespeicherten Einträge
+         * (Gruppierung, Serie), deshalb nicht übersetzen (App ist deutschsprachig).
+         */
         private const val MEDITATION_ID = "meditation"
         private const val MEDITATION_NAME = "Meditation"
 
         /** Mindest-Dauer, ab der eine Sitzung ins Logbuch kommt. */
         private const val MIN_LOG_MS = 10_000L
-
-        /** ~30 fps für den Countdown-Ring; schonend für den Akku. */
-        private const val FRAME_MS = 33L
 
         /** Stoppuhr-Tick im FREE-Modus (5 fps genügt für Sekundenanzeige). */
         private const val TICK_MS = 200L
@@ -428,4 +412,30 @@ class MeditationController(
          */
         private const val FINISH_ABANDON_MARGIN_MS = 500L
     }
+}
+
+/** Die Audio-Bausteine, die der [MeditationController] braucht; in der App der [MeditationAudioCoordinator]. */
+interface MeditationAudio {
+    val speechAvailable: StateFlow<Boolean>
+    val piperReady: StateFlow<Boolean>
+
+    fun prepareSpeech()
+    fun setActiveVoice(voiceId: String?)
+    fun isActiveVoice(voiceId: String): Boolean
+    fun deleteVoice(voiceId: String)
+    fun updateVolume(volume: ToneVolume)
+    fun setGongLong(long: Boolean)
+    fun gongTotalMs(): Int
+    fun setMuted(value: Boolean)
+    fun requestFocus()
+    fun abandonFocus()
+    fun gong()
+    fun speak(text: String)
+    fun stopSpeech()
+}
+
+/** Start und Ende des Foreground-Service einer Meditation; in der App [MeditationServiceLink]. */
+interface ForegroundLink {
+    fun start()
+    fun stop()
 }

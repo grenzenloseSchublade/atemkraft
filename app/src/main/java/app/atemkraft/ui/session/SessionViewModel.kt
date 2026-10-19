@@ -16,10 +16,12 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RuntimePhase
+import app.atemkraft.domain.SessionClock
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SessionProgress
 import app.atemkraft.domain.SessionSummary
+import app.atemkraft.domain.SessionTiming
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.buildTimeline
 import app.atemkraft.domain.sessionSummary
@@ -84,13 +86,17 @@ data class SessionUiState(
 /**
  * Steuert den zeitlichen Ablauf einer Atemübung. Der Timer läuft im
  * [viewModelScope] und übersteht damit Rotation/Recomposition. Phasen mit fester
- * Dauer sind an die Monotonuhr ([SystemClock.elapsedRealtime]) verankert, sodass
- * sich kein Drift aufsummiert.
+ * Dauer sind an die Monotonuhr [now] verankert (in der App [SystemClock.elapsedRealtime],
+ * im Test die virtuelle Zeit), sodass sich kein Drift aufsummiert.
  */
 class SessionViewModel(
     private val audio: SessionAudioCoordinator? = null,
     private val logbook: LogbookRepository? = null,
+    now: () -> Long = SystemClock::elapsedRealtime,
 ) : ViewModel() {
+
+    /** Countdown und aktive Atemzeit, geteilt mit der Meditation ([SessionClock]). */
+    private val clock = SessionClock(now)
 
     private val _state = MutableStateFlow(SessionUiState())
     val state: StateFlow<SessionUiState> = _state.asStateFlow()
@@ -146,8 +152,6 @@ class SessionViewModel(
     // Logbuch-Metadaten der laufenden Session.
     private var currentExercise: Exercise? = null
     private var startedAtEpochMs = 0L
-    private var activeElapsedMs = 0L
-    private var lastTickRealtime = 0L
 
     /**
      * Startet [exercise] mit der Anpassung [config]. Die Übung kommt als aufgelöstes Objekt von der
@@ -165,13 +169,12 @@ class SessionViewModel(
         resumeRemainingMs = null
         currentExercise = adjusted
         startedAtEpochMs = System.currentTimeMillis()
-        activeElapsedMs = 0L
-        lastTickRealtime = SystemClock.elapsedRealtime()
+        clock.reset()
         _state.value = SessionUiState(
             exerciseName = adjusted.name,
             status = SessionStatus.PREPARING,
             roundCount = adjusted.rounds,
-            countdown = COUNTDOWN_SECONDS,
+            countdown = SessionTiming.COUNTDOWN_SECONDS,
             patternHint = adjusted.instructionHint,
         )
         if (timeline.isEmpty()) {
@@ -189,12 +192,9 @@ class SessionViewModel(
         baseExercise?.let { start(it, currentConfig) }
     }
 
-    private suspend fun runCountdown() {
-        for (n in COUNTDOWN_SECONDS downTo 1) {
-            _state.update {
-                it.copy(status = SessionStatus.PREPARING, countdown = n, phaseType = null, phaseNote = null)
-            }
-            delay(1000L)
+    private suspend fun runCountdown() = clock.countdown { n ->
+        _state.update {
+            it.copy(status = SessionStatus.PREPARING, countdown = n, phaseType = null, phaseNote = null)
         }
     }
 
@@ -230,25 +230,17 @@ class SessionViewModel(
         _state.update { SessionUiState() }
     }
 
-    /** Zählt die seit dem letzten Tick verstrichene Zeit zur aktiven Atemzeit (Pausen zählen nicht,
-     *  weil [lastTickRealtime] beim Fortsetzen neu gesetzt wird). */
-    private fun accrueActiveTime() {
-        val now = SystemClock.elapsedRealtime()
-        activeElapsedMs += now - lastTickRealtime
-        lastTickRealtime = now
-    }
-
     private fun launchRunner() {
         runnerJob?.cancel()
         runnerJob = viewModelScope.launch { runPhaseLoop() }
     }
 
     private suspend fun runPhaseLoop() {
-        lastTickRealtime = SystemClock.elapsedRealtime()
+        clock.resume() // Pausen zählen nicht zur aktiven Atemzeit
         // Fortlaufender Zeit-Anker über feste Phasen hinweg: Jede Phase startet dort, wo die
         // vorherige rechnerisch endete – sonst erbt jede Phase bis zu FRAME_MS Überschuss und
         // lange Abläufe (~190 Phasen bei Feueratmung) laufen Sekunden zu lang.
-        var nextAnchorMs = SystemClock.elapsedRealtime()
+        var nextAnchorMs = clock.now()
         while (index < timeline.size) {
             val phase = timeline[index]
             // Durchgehender Ton: Phasenbeginn (auch beim Fortsetzen, damit der Ton wieder anläuft).
@@ -261,11 +253,11 @@ class SessionViewModel(
             when (val duration = phase.duration) {
                 is PhaseDuration.Fixed -> {
                     val deadline = if (resumeRemainingMs != null) {
-                        SystemClock.elapsedRealtime() + resumeRemainingMs!!
+                        clock.now() + resumeRemainingMs!!
                     } else {
                         // Kleiner Catch-up-Deckel: Nach einer längeren Stall-Phase (Prozess
                         // eingefroren) nicht alle verpassten Phasen im Zeitraffer nachholen.
-                        maxOf(nextAnchorMs, SystemClock.elapsedRealtime() - CATCHUP_SLACK_MS) +
+                        maxOf(nextAnchorMs, clock.now() - CATCHUP_SLACK_MS) +
                             duration.millis
                     }
                     runFixedPhase(phase, deadline, duration.millis)
@@ -274,7 +266,7 @@ class SessionViewModel(
 
                 PhaseDuration.OpenEnded, PhaseDuration.UntilUrge -> {
                     runUserPacedPhase(phase)
-                    nextAnchorMs = SystemClock.elapsedRealtime() // menschlich getaktet → neu ankern
+                    nextAnchorMs = clock.now() // menschlich getaktet → neu ankern
                 }
             }
             resumeRemainingMs = null
@@ -288,9 +280,9 @@ class SessionViewModel(
 
     private suspend fun runFixedPhase(phase: RuntimePhase, deadline: Long, totalMs: Long) {
         while (true) {
-            val left = deadline - SystemClock.elapsedRealtime()
+            val left = deadline - clock.now()
             if (left <= 0L) break
-            accrueActiveTime()
+            clock.accrue()
             _state.update {
                 it.copy(
                     status = SessionStatus.RUNNING,
@@ -307,7 +299,7 @@ class SessionViewModel(
                     progress = progressTracker.at(index, totalMs - left),
                 )
             }
-            delay(min(left, FRAME_MS))
+            delay(min(left, SessionTiming.FRAME_MS))
         }
         _state.update { it.copy(remainingMs = 0L) }
     }
@@ -315,7 +307,7 @@ class SessionViewModel(
     private suspend fun runUserPacedPhase(phase: RuntimePhase) = coroutineScope {
         val signal = CompletableDeferred<Unit>()
         continueSignal = signal
-        val start = SystemClock.elapsedRealtime()
+        val start = clock.now()
         _state.update {
             it.copy(
                 status = SessionStatus.WAITING_FOR_USER,
@@ -334,8 +326,8 @@ class SessionViewModel(
         }
         val ticker = launch {
             while (isActive) {
-                accrueActiveTime()
-                _state.update { it.copy(elapsedMs = SystemClock.elapsedRealtime() - start) }
+                clock.accrue()
+                _state.update { it.copy(elapsedMs = clock.now() - start) }
                 delay(100L)
             }
         }
@@ -348,7 +340,7 @@ class SessionViewModel(
     }
 
     private fun finish() {
-        accrueActiveTime()
+        clock.accrue()
         _cues.tryEmit(CueEvent.FINISH)
         // Logbuch direkt im viewModelScope schreiben (kein UI-Collector nötig) – der
         // Eintrag geht damit auch bei gesperrtem Bildschirm oder Recreation nicht verloren.
@@ -358,7 +350,7 @@ class SessionViewModel(
                 exerciseName = exercise.name,
                 family = exercise.family,
                 startedAtEpochMs = startedAtEpochMs,
-                durationMs = activeElapsedMs,
+                durationMs = clock.activeMs,
                 roundsCompleted = exercise.rounds,
             )
             logbook?.let { viewModelScope.launch { it.append(entry) } }
@@ -370,7 +362,7 @@ class SessionViewModel(
                 remainingMs = 0L,
                 elapsedMs = 0L,
                 progress = 1f,
-                summary = sessionSummary(timeline, activeElapsedMs),
+                summary = sessionSummary(timeline, clock.activeMs),
             )
         }
     }
@@ -381,19 +373,17 @@ class SessionViewModel(
             initializer {
                 val app = this[APPLICATION_KEY] as AtemkraftApplication
                 SessionViewModel(
-                    audio = SessionAudioCoordinator(app, app.container.settingsRepository.cueSettings),
+                    audio = SessionAudioCoordinator(
+                        context = app,
+                        settings = app.container.settingsRepository.cueSettings,
+                        hapticPlayer = app.container.hapticPlayer,
+                    ),
                     logbook = app.container.logbookRepository,
                 )
             }
         }
 
-        /** ~30 fps Tick – flüssig genug für Kreis + Countdown, schonend für den Akku. */
-        private const val FRAME_MS = 33L
-
         /** Max. Aufhol-Spielraum des Phasen-Ankers nach einem Stall (kein Zeitraffer-Nachholen). */
         private const val CATCHUP_SLACK_MS = 250L
-
-        /** Länge des Start-Countdowns in Sekunden. */
-        private const val COUNTDOWN_SECONDS = 3
     }
 }

@@ -29,10 +29,11 @@ import kotlinx.coroutines.launch
 class SessionAudioCoordinator(
     context: Context,
     private val settings: Flow<CueSettings>,
+    /** Die eine Instanz aus dem AppContainer (AUDIO-04); Phasen-Haptik nutzt deren Drossel nicht. */
+    private val hapticPlayer: HapticPlayer,
 ) {
     private val tonePlayer = ToneCuePlayer()
     private val continuousPlayer = ContinuousTonePlayer()
-    private val hapticPlayer = HapticPlayer(context.applicationContext)
     private val audioFocus = AudioFocusController(context)
 
     fun bind(
