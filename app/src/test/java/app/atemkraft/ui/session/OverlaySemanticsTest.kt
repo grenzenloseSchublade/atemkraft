@@ -21,7 +21,9 @@ import app.atemkraft.domain.PhaseType
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
-import app.atemkraft.ui.meditation.MeditationOverlay
+import app.atemkraft.ui.TestMatrix
+import app.atemkraft.ui.TestMeditationOverlay
+import app.atemkraft.ui.TestSessionOverlay
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -39,7 +41,7 @@ import org.robolectric.annotation.Config
  * Schalter, System-Zurück am Ende = „Ende“.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class OverlaySemanticsTest {
 
     @get:Rule
@@ -67,7 +69,7 @@ class OverlaySemanticsTest {
 
     private fun session(status: SessionStatus, muted: Boolean = false) {
         show {
-            SessionOverlay(
+            TestSessionOverlay(
                 state = SessionUiState(
                     exerciseName = "Box-Atmung",
                     status = status,
@@ -76,13 +78,8 @@ class OverlaySemanticsTest {
                     remainingMs = 2_000L,
                     muted = muted,
                 ),
-                showNextPhase = false,
                 onMinimize = { events += "minimieren" },
                 onToggleMute = { events += "ton" },
-                onTogglePause = {},
-                onTapHaptic = {},
-                onContinue = {},
-                onRestart = {},
                 onStop = { events += "ende" },
             )
         }
@@ -90,13 +87,9 @@ class OverlaySemanticsTest {
 
     private fun meditation(status: MeditationStatus) {
         show {
-            MeditationOverlay(
+            TestMeditationOverlay(
                 state = MeditationUiState(status = status, remainingMs = 60_000L, elapsedMs = 10 * 60_000L),
                 onMinimize = { events += "minimieren" },
-                onToggleMute = {},
-                onTogglePause = {},
-                onTapHaptic = {},
-                onRestart = {},
                 onEnd = { events += "ende" },
             )
         }

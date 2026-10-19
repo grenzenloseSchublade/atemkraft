@@ -325,7 +325,7 @@ private fun AtemkraftApp(
                         },
                         resolve = { id -> container.exerciseRepository.byId(id) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
-                        onDeleteSaved = { id ->
+                        onDeleteSavedPattern = { id ->
                             scope.launch { container.savedPatternsRepository.delete(id) }
                         },
                         markedIds = markedExercises,

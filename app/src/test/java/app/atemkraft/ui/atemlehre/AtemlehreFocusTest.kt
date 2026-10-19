@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import app.atemkraft.data.Atemlehre
+import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -21,7 +22,7 @@ import org.robolectric.annotation.Config
  * eigenen Spalte) nur zu kurz scrollt: Die Karte wäre sichtbar, aber in der unteren Bildhälfte.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class AtemlehreFocusTest {
 
     @get:Rule

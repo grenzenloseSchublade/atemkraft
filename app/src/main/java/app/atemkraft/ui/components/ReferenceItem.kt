@@ -4,14 +4,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import app.atemkraft.domain.Reference
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
 
 /** Einheitliche Darstellung einer Literaturquelle (Kurznachweis + Kennung). App-weit (Detail, Einstellungen). */
 @Composable
-fun ReferenceItem(reference: Reference) {
-    Column {
+fun ReferenceItem(reference: Reference, modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text(
             text = reference.citation,
             style = MaterialTheme.typography.bodySmall,

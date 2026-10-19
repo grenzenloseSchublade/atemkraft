@@ -10,6 +10,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import app.atemkraft.R
 import app.atemkraft.playback.SessionStatus
+import app.atemkraft.ui.TestMatrix
+import app.atemkraft.ui.TestSessionOverlay
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,7 +28,7 @@ import org.robolectric.annotation.Config
  * im Countdown auf dem Kreis und mit TalkBack (Touch-Erkundung) bleibt alles sichtbar.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class CalmViewTest {
 
     @get:Rule
@@ -38,16 +40,11 @@ class CalmViewTest {
     private fun show(status: SessionStatus) {
         compose.setContent {
             AtemkraftTheme {
-                SessionOverlay(
+                TestSessionOverlay(
                     state = SessionUiState(exerciseName = "Test", status = status, roundIndex = 2, roundCount = 8),
                     showNextPhase = true,
-                    onMinimize = {},
-                    onToggleMute = {},
                     onTogglePause = { events += "pause" },
-                    onTapHaptic = {},
                     onContinue = { events += "weiter" },
-                    onRestart = {},
-                    onStop = {},
                 )
             }
         }

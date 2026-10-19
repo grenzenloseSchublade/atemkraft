@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import app.atemkraft.R
+import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -23,7 +24,7 @@ import org.robolectric.annotation.Config
  * „Einatmen (s): 4“) – und dass Kartentitel Überschriften sind.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class SpokenTextTest {
 
     @get:Rule

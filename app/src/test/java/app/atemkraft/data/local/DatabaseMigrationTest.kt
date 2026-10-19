@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
  * Eigene [Application], damit der App-Start nicht nebenher die echte Datenbank öffnet.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], application = Application::class)
+@Config(application = Application::class)
 class DatabaseMigrationTest {
 
     @get:Rule

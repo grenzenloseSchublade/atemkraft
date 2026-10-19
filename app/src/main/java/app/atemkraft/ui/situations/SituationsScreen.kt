@@ -73,7 +73,7 @@ fun SituationsScreen(
     onSavedPatternsExpandedChange: (Boolean) -> Unit,
     resolve: (String) -> Exercise?,
     onSelect: (String) -> Unit,
-    onDeleteSaved: (Long) -> Unit,
+    onDeleteSavedPattern: (Long) -> Unit,
     markedIds: Set<String> = emptySet(),
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
@@ -164,7 +164,7 @@ fun SituationsScreen(
                             expanded = savedPatternsShownExpanded(savedPatterns.size, savedPatternsExpanded),
                             onExpandedChange = onSavedPatternsExpandedChange,
                             onSelect = onSelect,
-                            onDelete = onDeleteSaved,
+                            onDelete = onDeleteSavedPattern,
                         )
                     }
                 }

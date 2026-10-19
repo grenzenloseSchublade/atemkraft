@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<baseline version="1.0">
-    <file name="src/main/java/app/atemkraft/ui/components/ReferenceItem.kt">
-        <error line="13" column="5" source="compose:modifier-missing-check" />
-    </file>
-    <file name="src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt">
-        <error line="76" column="5" source="compose:parameter-naming" />
-    </file>
-</baseline>

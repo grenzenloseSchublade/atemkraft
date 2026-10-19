@@ -71,6 +71,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
@@ -115,13 +116,13 @@ import kotlin.math.sqrt
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w412dp-h800dp-xhdpi")
+@Config(qualifiers = "w412dp-h800dp-xhdpi")
 class ControlTouchTest(private val fontScale: Float) {
 
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "fs{0}")
-        fun params(): List<Array<Any>> = listOf(1.0f, 1.1f, 2.0f).map { arrayOf<Any>(it) }
+        fun params(): List<Array<Any>> = TestMatrix.FONT_SCALES.map { arrayOf<Any>(it) }
 
         private const val INSIDE_DP = 23f
         private const val OUTSIDE_DP = 25f
@@ -637,10 +638,14 @@ class ControlTouchTest(private val fontScale: Float) {
         return node.size.height.toFloat().also { check(it > 0f) { "Knoten ohne Größe: $text" } }
     }
 
-    /** Sichtbar genau die M3-Mindesthöhe, solange die Beschriftung hineinpasst (fs ≤ 1,3). */
+    /**
+     * Sichtbar genau die M3-Mindesthöhe, solange die Beschriftung hineinpasst (fs ≤ 1,1). Ab 1,3
+     * wächst der Button mit der M3-Beschriftung (gemessen 43 statt 40 dp) – gewollt, sonst würde
+     * der Text beschnitten (LAYOUT-03).
+     */
     private fun assertMinHeight(name: String, heightPx: Float) {
         val expected = Sizes.ButtonHeight.value * density
-        if (fontScale <= 1.3f) {
+        if (fontScale <= TestMatrix.A54_FONT_SCALE) {
             assertEquals("$name fs$fontScale sichtbar", expected, heightPx, 1f)
         } else {
             assertTrue("$name fs$fontScale wächst mit der Schrift: $heightPx < $expected", heightPx >= expected - 1f)

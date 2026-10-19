@@ -26,7 +26,6 @@ import org.robolectric.shadows.ShadowVibrator
  * Rasten: Primitive, wenn der Motor sie kann, sonst One-Shot; gedrosselt, ein Klick hat Vorrang.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class HapticPlayerTest {
 
     private val context: Context = RuntimeEnvironment.getApplication()

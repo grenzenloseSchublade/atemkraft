@@ -20,7 +20,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * Zweistufiges Löschen im selben Element (MUSTER-05): erst der zweite Tipp löscht, der
@@ -28,7 +27,6 @@ import org.robolectric.annotation.Config
  * Bedienungshilfe-Dienst läuft, auch wenn er erst während der Anzeige startet.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class ConfirmIconButtonTest {
 
     @get:Rule

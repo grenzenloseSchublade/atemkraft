@@ -12,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 import java.time.Duration
 
 /**
@@ -20,7 +19,6 @@ import java.time.Duration
  * die Bilanz zählt nur aktive Atemzeit. Die Uhr läuft über den pausierten Main-Looper von Robolectric.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
 class SessionViewModelProgressTest {
 
     private val repository = ExerciseRepository(SavedPatternsRepository(FakeSavedPatternDao()))

@@ -155,11 +155,10 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
-// ktlint mit Compose-Regeln (docs/STYLEGUIDE.md CODE-04, CODE-06); Regeln in .editorconfig,
-// bekannte Compose-Funde in der Baseline (dürfen nur weniger werden).
+// ktlint mit Compose-Regeln (docs/STYLEGUIDE.md CODE-04, CODE-06); Regeln in .editorconfig.
+// Ohne Baseline: Jeder Fund ist ein Fehler (die letzten Altlasten sind seit 2026-10-19 behoben).
 ktlint {
     version.set(libs.versions.ktlint)
-    baseline.set(rootProject.file("config/ktlint-baseline.xml"))
 }
 
 // Regeltests lesen Baselines und Wortlisten aus config/ und prüfen die öffentlichen Texte

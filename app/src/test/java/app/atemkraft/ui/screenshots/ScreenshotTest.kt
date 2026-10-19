@@ -74,6 +74,11 @@ import app.atemkraft.domain.sessionSummary
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
+import app.atemkraft.ui.TestDetail
+import app.atemkraft.ui.TestMatrix
+import app.atemkraft.ui.TestMatrix.Device
+import app.atemkraft.ui.TestMeditationOverlay
+import app.atemkraft.ui.TestSessionOverlay
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
@@ -81,14 +86,11 @@ import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.badBreakAt
-import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
-import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
-import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionUiState
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
@@ -132,35 +134,18 @@ import java.time.ZoneId
  *
  * Endlos-Animationen stehen still (FrozenInfiniteAnimations).
  *
- * Bilder erzeugen: `./gradlew recordRoborazziDebug` → `app/build/outputs/roborazzi/`.
+ * Bilder erzeugen: `scripts/build.sh recordRoborazziDebug` → `app/build/outputs/roborazzi/`.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 // Fenster groß genug für den höchsten Screen (fontScale 2,0); gerendert wird nur der Testknoten.
-@Config(sdk = [35], qualifiers = "w412dp-h8000dp-xhdpi")
+@Config(qualifiers = "w412dp-h8000dp-xhdpi")
 class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
-    /** Breite × Höhe in dp, wie das Gerät sie der App meldet (Standard-Anzeigegröße). */
-    data class Device(val name: String, val widthDp: Int, val heightDp: Int) {
-        override fun toString() = name
-    }
-
     companion object {
-        private val DEVICES = listOf(
-            // Kleine Geräte und große Anzeigegröße auf Mittelklasse-Geräten.
-            Device("kompakt360", 360, 640),
-            // Galaxy A54 (1080 × 2340 px, 450 dpi): das Testgerät des Maintainers.
-            Device("a54", 384, 832),
-            // Pixel 7/8, Galaxy S24+ und ähnliche.
-            Device("gross412", 412, 915),
-        )
-
-        // 1,0 Standard · 1,1 Samsung-Voreinstellung des A54 · 1,3 groß · 2,0 maximal (LAYOUT-03).
-        private val FONT_SCALES = listOf(1.0f, 1.1f, 1.3f, 2.0f)
-
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}_fs{1}")
-        fun params(): List<Array<Any>> = DEVICES.flatMap { d -> FONT_SCALES.map { arrayOf<Any>(d, it) } }
+        fun params(): List<Array<Any>> = TestMatrix.DEVICES.flatMap { d -> TestMatrix.FONT_SCALES.map { arrayOf<Any>(d, it) } }
 
         private const val SHOT = "screenshot"
 
@@ -189,9 +174,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     private val tallDp get() = (TALL_DP * fontScale).toInt()
 
     // Detailseiten (eine pro Übung) nur in den aussagekräftigsten Kombinationen, sonst dauert
-    // der Lauf zu lange: Testgerät mit Voreinstellung, kleinstes Gerät mit großer Schrift.
-    private val detailConfig get() =
-        (device.name == "a54" && fontScale == 1.1f) || (device.name == "kompakt360" && fontScale >= 1.3f)
+    // der Lauf zu lange.
+    private val detailConfig get() = TestMatrix.isDetailConfig(device, fontScale)
 
     // Endlos-Animationen (Schimmer des Atemkreises) einfrieren: Der Test wartet sonst bei jedem
     // Bild bis zum Timeout auf Leerlauf (~150 s pro Session-Screenshot).
@@ -507,7 +491,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     ?: saved.firstOrNull { it.exercise.id == id }?.exercise
             },
             onSelect = {},
-            onDeleteSaved = {},
+            onDeleteSavedPattern = {},
         )
     }
 
@@ -703,15 +687,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         assumeTrue(detailConfig)
         (BuiltInExercises.all + daily.exercise).forEach { exercise ->
             snap("08_detail_${exercise.id}") {
-                ExerciseDetailScreen(
+                TestDetail(
                     exercise = exercise,
-                    requireSafetyConfirm = false,
-                    savedIntervals = null,
-                    onIntervalsChange = { _, _, _, _ -> },
-                    onIntervalsReset = {},
-                    onConfirmedSafety = {},
-                    onStart = {},
-                    onBack = {},
                     onOpenLore = {},
                     onMarkedChange = if (exercise in BuiltInExercises.all) ({ _: Boolean -> }) else null,
                 )
@@ -727,15 +704,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         snap("08_detail_lehre_bhramari", prepare = {
             compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
         }) {
-            ExerciseDetailScreen(
+            TestDetail(
                 exercise = exercise,
-                requireSafetyConfirm = false,
-                savedIntervals = null,
-                onIntervalsChange = { _, _, _, _ -> },
-                onIntervalsReset = {},
-                onConfirmedSafety = {},
-                onStart = {},
-                onBack = {},
                 onOpenLore = {},
             )
         }
@@ -749,15 +719,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         snap("08_detail_lehre_tagesmuster", prepare = {
             compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
         }) {
-            ExerciseDetailScreen(
+            TestDetail(
                 exercise = exercise,
-                requireSafetyConfirm = false,
-                savedIntervals = null,
-                onIntervalsChange = { _, _, _, _ -> },
-                onIntervalsReset = {},
-                onConfirmedSafety = {},
-                onStart = {},
-                onBack = {},
                 onOpenLore = {},
             )
         }
@@ -775,7 +738,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     /** Dasselbe quer, nur Testgerät mit Voreinstellung und kleinstes Gerät mit größter Schrift. */
     @Test
     fun safetyDialogQuer() {
-        assumeTrue((device.name == "a54" && fontScale == 1.1f) || (device.name == "kompakt360" && fontScale == 2.0f))
+        assumeTrue(TestMatrix.isKeyConfig(device, fontScale))
         safetyDialogs("_quer")
     }
 
@@ -798,15 +761,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         snap("08_detail_angepasst", prepare = {
             compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.adjust_intervals)).performClick()
         }) {
-            ExerciseDetailScreen(
+            TestDetail(
                 exercise = exercise,
-                requireSafetyConfirm = false,
                 savedIntervals = IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9),
-                onIntervalsChange = { _, _, _, _ -> },
-                onIntervalsReset = {},
-                onConfirmedSafety = {},
-                onStart = {},
-                onBack = {},
             )
         }
     }
@@ -903,35 +860,22 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     @Config(qualifiers = "w920dp-h8000dp-xhdpi")
     fun sessionQuer() {
-        assumeTrue((device.name == "a54" && fontScale == 1.1f) || (device.name == "kompakt360" && fontScale == 2.0f))
+        assumeTrue(TestMatrix.isKeyConfig(device, fontScale))
         // Box-Atmung in Runde 3 von 8, Einatmen nach 1,6 s.
         val box = BuiltInExercises.all.first { it.id == "box-4-4-4-4" }
         val state = sessionAt(box, elapsedMs = 1_600) { it.roundIndex == 2 && it.type == PhaseType.INHALE }
         snap("09_session_quer", heightDp = device.widthDp, widthDp = device.heightDp) { SessionShot(state) }
         snap("10_meditation_quer", heightDp = device.widthDp, widthDp = device.heightDp) {
-            MeditationOverlay(
+            TestMeditationOverlay(
                 state = MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
-                onMinimize = {},
-                onToggleMute = {},
-                onTogglePause = {},
-                onTapHaptic = {},
-                onRestart = {},
-                onEnd = {},
             )
         }
     }
 
     @Composable
-    private fun SessionShot(state: SessionUiState) = SessionOverlay(
+    private fun SessionShot(state: SessionUiState) = TestSessionOverlay(
         state = state,
         showNextPhase = true,
-        onMinimize = {},
-        onToggleMute = {},
-        onTogglePause = {},
-        onTapHaptic = {},
-        onContinue = {},
-        onRestart = {},
-        onStop = {},
     )
 
     /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Pause, Ende. */
@@ -945,14 +889,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
         states.forEach { (name, state) ->
             snap("10_meditation_$name", heightDp = device.heightDp) {
-                MeditationOverlay(
+                TestMeditationOverlay(
                     state = state,
-                    onMinimize = {},
-                    onToggleMute = {},
-                    onTogglePause = {},
-                    onTapHaptic = {},
-                    onRestart = {},
-                    onEnd = {},
                 )
             }
         }

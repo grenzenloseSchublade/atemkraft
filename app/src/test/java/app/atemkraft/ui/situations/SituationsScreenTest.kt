@@ -33,6 +33,7 @@ import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Situation
+import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -54,7 +55,7 @@ import org.robolectric.annotation.Config
  * Der Screenshot-Test zeigt nur, wie es aussieht – hier wird das Verhalten festgehalten.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class SituationsScreenTest {
 
     @get:Rule
@@ -91,7 +92,7 @@ class SituationsScreenTest {
                     },
                     resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
                     onSelect = { started += it },
-                    onDeleteSaved = { deletedIds = deletedIds + it },
+                    onDeleteSavedPattern = { deletedIds = deletedIds + it },
                 )
             }
         }

@@ -36,6 +36,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import app.atemkraft.R
 import app.atemkraft.ui.about.AboutScreen
+import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.settings.NoOpSettingsActions
@@ -55,13 +56,13 @@ import org.robolectric.annotation.Config
 /**
  * Navigation zwischen Tabs und weitergeführten Seiten: Re-Tap auf den markierten Tab
  * ([tapTab]), Tab-Wechsel ([switchTab]) und Zurück über den festen Kopf ([PushHeader]).
- * Der NavHost hat dieselben Routen wie MainActivity; Einstellungen, Glossar und Über sind die
- * echten Screens, damit der Test auch den festen Zurück-Pfeil prüft. Gerätegröße wie das A54.
+ * Der NavHost hat dieselben Routen wie MainActivity; Einstellungen, Glossar, Über und Atemlehre
+ * sind die echten Screens, damit der Test auch den festen Zurück-Pfeil prüft. Gerätegröße wie das A54.
  * Darüber liegt wie in MainActivity bei Bedarf ein Session-Overlay; die App darunter ist dann
  * per [inertWhen] für TalkBack und Tastatur nicht da.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class TabNavigationTest {
 
     @get:Rule
@@ -126,6 +127,13 @@ class TabNavigationTest {
             }
             composable<GlossaryRoute> { GlossaryScreen(onBack = { nav.popBackStack() }) }
             composable<AboutRoute> { AboutScreen(onBack = { nav.popBackStack() }) }
+            composable<AtemlehreRoute> { entry ->
+                AtemlehreScreen(
+                    onBack = { nav.popBackStack() },
+                    onOpenExercise = { id -> nav.navigate(DetailRoute(id)) },
+                    focus = entry.toRoute<AtemlehreRoute>().focus,
+                )
+            }
             composable<DetailRoute> { Text("Detail") }
         }
     }
@@ -236,6 +244,19 @@ class TabNavigationTest {
     }
 
     @Test
+    fun `Zurück-Pfeil der Atemlehre führt zu den Einstellungen, erneuter Tab-Tipp zur Startseite`() {
+        step { nav.tapTab(MeditationRoute, selected = false) }
+        step { nav.navigate(SettingsRoute(focusMeditation = true)) }
+        step { nav.navigate(AtemlehreRoute()) }
+
+        rule.onNodeWithText(string(R.string.atemlehre_title)).assertIsDisplayed()
+        assertEquals("AtmenRoute > MeditationRoute > SettingsRoute", step { backArrow().performClick() })
+
+        step { nav.navigate(AtemlehreRoute(focus = "langhana")) }
+        assertEquals("AtmenRoute > MeditationRoute", step { nav.tapTab(MeditationRoute, selected = true) })
+    }
+
+    @Test
     fun `System-Zurück schließt die Einstellungen`() {
         step { nav.tapTab(MeditationRoute, selected = false) }
         step { nav.navigate(SettingsRoute(focusMeditation = true)) }
@@ -270,7 +291,7 @@ class TabNavigationTest {
             state = SettingsUiState(gongIntervalMin = 5, gongLong = false, piperEngineReady = true),
             actions = NoOpSettingsActions,
             onOpenGlossary = { nav.navigate(GlossaryRoute) },
-            onOpenAtemlehre = {},
+            onOpenAtemlehre = { nav.navigate(AtemlehreRoute()) },
             onOpenAbout = { nav.navigate(AboutRoute) },
             onBack = { nav.popBackStack() },
             focusMeditation = focusMeditation,

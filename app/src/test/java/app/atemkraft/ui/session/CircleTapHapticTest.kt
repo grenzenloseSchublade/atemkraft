@@ -7,7 +7,9 @@ import app.atemkraft.R
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
-import app.atemkraft.ui.meditation.MeditationOverlay
+import app.atemkraft.ui.TestMatrix
+import app.atemkraft.ui.TestMeditationOverlay
+import app.atemkraft.ui.TestSessionOverlay
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -23,7 +25,7 @@ import org.robolectric.annotation.Config
  * Composition würde die Einstellung umgehen.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class CircleTapHapticTest {
 
     @get:Rule
@@ -36,16 +38,10 @@ class CircleTapHapticTest {
     fun `Tippen auf den Atemkreis meldet den Tipp-Tick und pausiert`() {
         compose.setContent {
             AtemkraftTheme {
-                SessionOverlay(
+                TestSessionOverlay(
                     state = SessionUiState(exerciseName = "Test", status = SessionStatus.RUNNING),
-                    showNextPhase = false,
-                    onMinimize = {},
-                    onToggleMute = {},
                     onTogglePause = { events += "pause" },
                     onTapHaptic = { events += "tick" },
-                    onContinue = {},
-                    onRestart = {},
-                    onStop = {},
                 )
             }
         }
@@ -57,14 +53,10 @@ class CircleTapHapticTest {
     fun `Tippen auf den Meditations-Ring meldet den Tipp-Tick und pausiert`() {
         compose.setContent {
             AtemkraftTheme {
-                MeditationOverlay(
+                TestMeditationOverlay(
                     state = MeditationUiState(status = MeditationStatus.RUNNING),
-                    onMinimize = {},
-                    onToggleMute = {},
                     onTogglePause = { events += "pause" },
                     onTapHaptic = { events += "tick" },
-                    onRestart = {},
-                    onEnd = {},
                 )
             }
         }

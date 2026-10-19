@@ -6,7 +6,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import app.atemkraft.R
 import app.atemkraft.data.BuiltInExercises
-import app.atemkraft.ui.detail.ExerciseDetailScreen
+import app.atemkraft.ui.TestDetail
+import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
@@ -25,7 +26,7 @@ import org.robolectric.annotation.Config
  * persönliche Markierung „Tut mir gut“.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
+@Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class EvidenceChipSemanticsTest {
 
     @get:Rule
@@ -39,15 +40,8 @@ class EvidenceChipSemanticsTest {
     fun `Detailseite liest Studienlage vor Vorsicht`() {
         compose.setContent {
             AtemkraftTheme {
-                ExerciseDetailScreen(
+                TestDetail(
                     exercise = wimHof,
-                    requireSafetyConfirm = false,
-                    savedIntervals = null,
-                    onIntervalsChange = { _, _, _, _ -> },
-                    onIntervalsReset = {},
-                    onConfirmedSafety = {},
-                    onStart = {},
-                    onBack = {},
                 )
             }
         }
