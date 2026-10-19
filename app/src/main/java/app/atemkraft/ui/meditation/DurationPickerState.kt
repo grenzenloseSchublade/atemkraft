@@ -108,6 +108,14 @@ fun DurationPickerState.selectFreeWithTick(onTick: (major: Boolean) -> Unit) {
     if (selectFree()) onTick(true)
 }
 
+/**
+ * ∞-Knopf: wählt ∞, ein erneuter Tipp gibt es wieder frei und kehrt zum letzten Minutenwert
+ * zurück. Beides mit Raste.
+ */
+fun DurationPickerState.toggleFreeWithTick(onTick: (major: Boolean) -> Unit) {
+    if (free) selectWithTick(minutes, onTick) else selectFreeWithTick(onTick)
+}
+
 private inline fun DurationPickerState.withTick(onTick: (major: Boolean) -> Unit, change: DurationPickerState.() -> Boolean) {
     val wasFree = free
     val previous = minutes

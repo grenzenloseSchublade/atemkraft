@@ -18,9 +18,11 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowVibrator
 
 /**
- * AUDIO-05: Jede Vibration folgt dem App-Schalter „Vibration“ – auch der Tipp-Tick am Kreis.
- * Phasen-Haptik und Tipp-Tick laufen als Alarm-Vibration (nicht abhängig von der System-
+ * AUDIO-05: Jede Session-Vibration folgt dem App-Schalter „Vibration“ – auch der Tipp-Tick am
+ * Kreis. Phasen-Haptik und Tipp-Tick laufen als Alarm-Vibration (nicht abhängig von der System-
  * Tippvibration); ab API 33 über `VibrationAttributes`, davor über die `AudioAttributes`-Usage.
+ * Die Rasten des Zeitrings ([HapticPlayer.dialTick]) sind Bedien-Rückmeldung: ohne App-Schalter,
+ * als Berührungs-Vibration, die Android regelt.
  * Rasten: Primitive, wenn der Motor sie kann, sonst One-Shot; gedrosselt, ein Klick hat Vorrang.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -53,16 +55,14 @@ class HapticPlayerTest {
     }
 
     @Test
-    fun `Raste des Dauer-Reglers folgt dem App-Schalter, je 5 Minuten deutlicher`() {
-        player.tick(enabled = false, strong = true)
-        assertFalse(vibrator().isVibrating)
-
-        player.tick(enabled = true)
+    fun `Raste des Dauer-Reglers ist Beruehrungs-Vibration ohne App-Schalter, je 5 Minuten deutlicher`() {
+        player.dialTick(strong = false)
         val light = vibrator().milliseconds
+        assertEquals(VibrationAttributes.USAGE_TOUCH, usage(vibrator()))
         now += TICK_GAP_MS
-        player.tick(enabled = true, strong = true)
+        player.dialTick(strong = true)
         val shadow = vibrator()
-        assertEquals(VibrationAttributes.USAGE_ALARM, usage(shadow))
+        assertEquals(VibrationAttributes.USAGE_TOUCH, usage(shadow))
         assertTrue("deutliche Raste ($light → ${shadow.milliseconds} ms)", shadow.milliseconds > light)
     }
 
@@ -71,7 +71,7 @@ class HapticPlayerTest {
         player.tick(enabled = true)
         assertEquals(TICK_ONE_SHOT_MS, vibrator().milliseconds)
         now += TICK_GAP_MS
-        player.tick(enabled = true, strong = true)
+        player.dialTick(strong = true)
         assertEquals(STRONG_ONE_SHOT_MS, vibrator().milliseconds)
     }
 
@@ -85,10 +85,10 @@ class HapticPlayerTest {
             vibrator().primitiveSegmentsInPrimitiveEffects,
         )
         now += TICK_GAP_MS
-        player.tick(enabled = true, strong = true)
+        player.dialTick(strong = true)
         val shadow = vibrator()
         assertEquals(listOf(ShadowVibrator.PrimitiveEffect(VibrationEffect.Composition.PRIMITIVE_CLICK, STRONG_PRIMITIVE_SCALE, 0)), shadow.primitiveSegmentsInPrimitiveEffects)
-        assertEquals(VibrationAttributes.USAGE_ALARM, usage(shadow))
+        assertEquals(VibrationAttributes.USAGE_TOUCH, usage(shadow))
     }
 
     @Test
@@ -102,7 +102,7 @@ class HapticPlayerTest {
         player.tick(enabled = true) // zu dicht: bricht den laufenden Tick nicht ab
         assertFalse(vibrator().isVibrating)
 
-        player.tick(enabled = true, strong = true) // Klick hat Vorrang
+        player.dialTick(strong = true) // Klick hat Vorrang
         assertTrue(vibrator().isVibrating)
         assertEquals(STRONG_ONE_SHOT_MS, vibrator().milliseconds)
         v.cancel()
@@ -173,8 +173,8 @@ class HapticPlayerTest {
         player.tick(enabled = true)
         assertEquals(VibrationEffect.EFFECT_TICK, shadow.effectId)
         now += TICK_GAP_MS
-        player.tick(enabled = true, strong = true)
+        player.dialTick(strong = true)
         assertEquals(VibrationEffect.EFFECT_HEAVY_CLICK, shadow.effectId)
-        assertEquals(AudioAttributes.USAGE_ALARM, shadow.audioAttributesFromLastVibration?.usage)
+        assertEquals(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION, shadow.audioAttributesFromLastVibration?.usage)
     }
 }

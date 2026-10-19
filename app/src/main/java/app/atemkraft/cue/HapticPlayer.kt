@@ -16,10 +16,13 @@ import androidx.annotation.RequiresApi
  * Echte Geräte-Vibration (Vibrator-API, benötigt VIBRATE-Permission): Impuls je Phasenwechsel,
  * Doppel-Muster am Ende, ein sanfter Tick beim Tippen auf den Kreis und die Rasten des Dauer-Reglers.
  *
- * Jede Vibration folgt dem App-Schalter „Vibration“ (AUDIO-05): Die Einstellung ist Pflicht-
- * Parameter jeder Methode, damit keine Aufrufstelle sie vergessen kann.
+ * Session-Vibration (Phasen, Ende, Tipp-Tick am Kreis) folgt dem App-Schalter „Vibration“
+ * (AUDIO-05): Die Einstellung ist Pflicht-Parameter dieser Methoden, damit keine Aufrufstelle sie
+ * vergessen kann. Ausnahme sind die Rasten des Dauer-Reglers ([dialTick]): Sie sind Bedien-
+ * Rückmeldung wie ein Drehknopf, kein Session-Cue, und laufen deshalb als Berührungs-Vibration –
+ * an/aus und Stärke regelt allein Android (Nutzerentscheidung 2026-10-19).
  *
- * Alles läuft als Alarm-Vibration, auch der Tipp-Tick, damit es NICHT an der System-Einstellung
+ * Session-Vibration läuft als Alarm-Vibration, auch der Tipp-Tick, damit es NICHT an der System-Einstellung
  * für Berührungs-Vibration (`Settings.System.HAPTIC_FEEDBACK_ENABLED`) hängt: Ist sie aus,
  * verwerfen manche Geräte (u. a. Samsung) Touch-Vibrationen still, und der Tick wäre trotz
  * eingeschaltetem App-Schalter weg (Nutzerentscheidung 2026-10-08, AUDIO-05). Alarm läuft auch im
@@ -45,9 +48,16 @@ class HapticPlayer(context: Context, private val clock: () -> Long = SystemClock
     private val tickKind: TickKind by lazy { tickKindOf(vibrator) }
     private val tickGate = TickGate()
 
+    /** Sanfter Tick beim Tippen auf den Kreis; nur bei eingeschaltetem App-Schalter „Vibration“. */
+    fun tick(enabled: Boolean) {
+        if (!enabled) return
+        raste(strong = false, touch = false)
+    }
+
     /**
-     * Raste: sanfter Tick (Kreis-Tap, Dauer-Regler je Minute); [strong]: satter, deutlich
-     * abgesetzter Klick (Dauer-Regler je 5 Minuten, ∞).
+     * Raste des Dauer-Reglers: leiser Tick je Minute; [strong]: satter, deutlich abgesetzter Klick
+     * (je 5 Minuten, ∞). Unabhängig vom App-Schalter, als Berührungs-Vibration – Android regelt
+     * an/aus und Stärke über die System-Einstellung für Berührungs-Feedback.
      *
      * Jeder neue Vibrationsauftrag bricht den laufenden ab (gleiche Usage). Dichte Ticks beim
      * schnellen Ziehen löschten sich so gegenseitig aus, bevor der Motor anlief – am Galaxy A54
@@ -59,10 +69,11 @@ class HapticPlayer(context: Context, private val clock: () -> Long = SystemClock
      * kann es nicht abfragen und nimmt sie mit Ersatz); sonst One-Shot mit voller Amplitude, lang
      * genug, dass auch ein träger Motor anläuft.
      */
-    fun tick(enabled: Boolean, strong: Boolean = false) {
-        if (!enabled) return
+    fun dialTick(strong: Boolean) = raste(strong, touch = true)
+
+    private fun raste(strong: Boolean, touch: Boolean) {
         if (!tickGate.admit(strong, clock())) return
-        vibrate(tickEffect(tickKind, strong))
+        vibrate(tickEffect(tickKind, strong), touch)
     }
 
     /** Phasen- und End-Haptik; nur bei eingeschaltetem App-Schalter „Vibration“. */
@@ -76,30 +87,36 @@ class HapticPlayer(context: Context, private val clock: () -> Long = SystemClock
 
             CueEvent.FINISH -> VibrationEffect.createWaveform(longArrayOf(0, 200, 120, 280), intArrayOf(0, 255, 0, 255), -1)
         }
-        vibrate(effect)
+        vibrate(effect, touch = false)
     }
 
-    private fun vibrate(effect: VibrationEffect) {
+    /** [touch]: Berührungs-Vibration (System regelt sie), sonst Alarm-Vibration (App-Schalter). */
+    private fun vibrate(effect: VibrationEffect, touch: Boolean) {
         val v = vibrator ?: return
         if (!v.hasVibrator()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            vibrateAsAlarm(v, effect)
+            vibrateWithUsage(v, effect, if (touch) VibrationAttributes.USAGE_TOUCH else VibrationAttributes.USAGE_ALARM)
         } else {
-            // Vor API 33 gibt es nur diesen Overload; das System bildet USAGE_ALARM auf
-            // Alarm-Vibration ab.
+            // Vor API 33 gibt es nur diesen Overload; das System bildet USAGE_ALARM auf Alarm- und
+            // USAGE_ASSISTANCE_SONIFICATION auf Berührungs-Vibration ab.
             @Suppress("DEPRECATION")
-            v.vibrate(effect, alarmAudioAttributes)
+            v.vibrate(effect, if (touch) touchAudioAttributes else alarmAudioAttributes)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun vibrateAsAlarm(v: Vibrator, effect: VibrationEffect) {
-        v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
+    private fun vibrateWithUsage(v: Vibrator, effect: VibrationEffect, usage: Int) {
+        v.vibrate(effect, VibrationAttributes.createForUsage(usage))
     }
 
     private companion object {
         val alarmAudioAttributes: AudioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        val touchAudioAttributes: AudioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
     }

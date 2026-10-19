@@ -352,9 +352,9 @@ private fun AtemkraftApp() {
                         speechAvailable = meditationSpeechAvailable,
                         gongIntervalMin = gongIntervalMin,
                         onOpenSettings = { navController.navigate(SettingsRoute(focusMeditation = true)) },
-                        // Raste des Zeitrings: leicht je Minute, deutlicher je 5 – nur bei
-                        // eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
-                        onDurationTick = { major -> container.hapticPlayer.tick(enabled = cueSettings.haptics, strong = major) },
+                        // Raste des Zeitrings: leicht je Minute, deutlicher je 5. Bedien-Rückmeldung,
+                        // kein Session-Cue: unabhängig vom App-Schalter, Android regelt sie (AUDIO-05).
+                        onDurationTick = { major -> container.hapticPlayer.dialTick(strong = major) },
                         onStart = { config ->
                             scope.launch { container.settingsRepository.setMeditationConfig(config) }
                             meditationController.start(config)

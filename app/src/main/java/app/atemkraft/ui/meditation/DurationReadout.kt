@@ -127,7 +127,7 @@ internal fun Modifier.durationSlider(state: DurationPickerState, texts: Duration
  */
 internal fun Modifier.freeMark(state: DurationPickerState, texts: DurationTexts, onTick: (major: Boolean) -> Unit): Modifier = this
     .clip(CircleShape)
-    .clickable(role = Role.Button, interactionSource = null, indication = ripple()) { state.selectFreeWithTick(onTick) }
+    .clickable(role = Role.Button, interactionSource = null, indication = ripple()) { state.toggleFreeWithTick(onTick) }
     .semantics {
         contentDescription = texts.freeLabel
         selected = state.free

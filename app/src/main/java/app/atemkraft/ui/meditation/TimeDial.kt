@@ -182,7 +182,7 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
                 if (free) {
                     drawCircle(colors.primary, radius = geo.markRadius, center = markAt)
                 } else {
-                    drawCircle(colors.outline, radius = geo.markRadius, center = markAt, style = Stroke(geo.tickWidth))
+                    drawCircle(colors.outline, radius = geo.markRadius, center = markAt, style = Stroke(geo.tickWidth * MARK_STROKE_FRACTION))
                 }
                 drawCentered(mark, markAt, if (free) colors.onPrimary else colors.onSurfaceVariant)
                 if (!free) {
@@ -333,6 +333,9 @@ private const val TRACK_FRACTION = 0.05f
 private const val TICK_MAJOR_FRACTION = 0.035f
 private const val TICK_MINOR_RATIO = 0.5f
 private const val TICK_WIDTH_FRACTION = 0.006f
+
+// Rand des ∞-Knopfs: halb so stark wie die Minutenstriche (Nutzer: „Ring um ∞ zu dick“).
+private const val MARK_STROKE_FRACTION = 0.5f
 private const val KNOB_FRACTION = 0.85f
 private const val KNOB_OUTLINE_FRACTION = 0.15f
 

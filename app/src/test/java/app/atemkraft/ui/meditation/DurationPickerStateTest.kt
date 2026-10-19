@@ -143,4 +143,16 @@ class DurationPickerStateTest {
         assertNotNull(saved)
         return requireNotNull(saver.restore(saved!!))
     }
+
+    @Test
+    fun `erneuter Tipp auf unendlich gibt den letzten Minutenwert frei`() {
+        val state = DurationPickerState(20, false)
+        val ticks = mutableListOf<Boolean>()
+        state.toggleFreeWithTick { ticks += it }
+        assertTrue(state.free)
+        state.toggleFreeWithTick { ticks += it }
+        assertFalse(state.free)
+        assertEquals(20, state.minutes)
+        assertEquals(listOf(true, true), ticks)
+    }
 }
