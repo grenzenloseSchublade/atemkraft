@@ -14,7 +14,8 @@ import java.io.File
 /**
  * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -13), MUSTER-03, -09 und
  * MOTION-02, geprüft über alle Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages
- * (Seeds 0–6), Atemlehre, Situationen samt Suchbegriffen, Quellen und `strings.xml`.
+ * (Seeds 0–6), Atemlehre, Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die
+ * öffentlichen Texte (README, Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen.
  *
  * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Testfall | Datensatz | S-nn`).
  * Ein Fall schlägt fehl bei einem neuen Verstoß und bei einem Baseline-Eintrag, der nicht mehr
@@ -284,26 +285,54 @@ class ContentRulesTest {
             .filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
     }
 
-    @Test
-    fun `health-claims`() {
-        val findings = allTexts.flatMap { t ->
-            // Eine Ausnahme deckt nur Treffer innerhalb ihres eigenen Wortlauts ab, nicht den
-            // ganzen Datensatz – ein zweites Versprechen im selben Text fällt weiter auf.
-            val allowed = healthClaimsAllow.flatMap { a ->
-                Regex(Regex.escape(a)).findAll(t.value).map { it.range }.toList()
-            }
-            healthClaims.flatMap { re -> re.findAll(t.value).toList() }
-                .filter { m -> allowed.none { m.range.first >= it.first && m.range.last <= it.last } }
-                .map { m -> Finding(t.id, "„${m.value}“") }
+    private fun healthClaimFindings(texts: List<Text>): List<Finding> = texts.flatMap { t ->
+        // Eine Ausnahme deckt nur Treffer innerhalb ihres eigenen Wortlauts ab, nicht den
+        // ganzen Datensatz – ein zweites Versprechen im selben Text fällt weiter auf.
+        val allowed = healthClaimsAllow.flatMap { a ->
+            Regex(Regex.escape(a)).findAll(t.value).map { it.range }.toList()
         }
-        // TEXT-09 lässt für Heilversprechen keine Baseline zu: jeder Fund ist ein Fehler, nur
-        // bewusste Verneinungen und Disclaimer stehen zeilengenau in health-claims.allow.
-        if (baseline["health-claims"].orEmpty().isNotEmpty()) {
-            fail("ContentRulesTest health-claims: keine Baseline erlaubt (TEXT-09), Einträge streichen")
+        healthClaims.flatMap { re -> re.findAll(t.value).toList() }
+            .filter { m -> allowed.none { m.range.first >= it.first && m.range.last <= it.last } }
+            .map { m -> Finding(t.id, "„${m.value}“") }
+    }
+
+    /**
+     * TEXT-09 lässt für Heilversprechen keine Baseline zu: jeder Fund ist ein Fehler, nur
+     * bewusste Verneinungen und Disclaimer stehen zeilengenau in health-claims.allow.
+     */
+    private fun assertNoHealthClaims(case: String, findings: List<Finding>) {
+        if (baseline[case].orEmpty().isNotEmpty()) {
+            fail("ContentRulesTest $case: keine Baseline erlaubt (TEXT-09), Einträge streichen")
         }
         if (findings.isNotEmpty()) {
-            fail("ContentRulesTest health-claims:\n" + findings.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
+            fail("ContentRulesTest $case:\n" + findings.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
         }
+    }
+
+    @Test
+    fun `health-claims`() {
+        assertNoHealthClaims("health-claims", healthClaimFindings(allTexts))
+    }
+
+    /**
+     * Öffentliche Texte außerhalb der App (SEC-LEGAL-01): README, Datenschutzerklärung,
+     * Release-Notes und Store-Texte samt Changelogs, je Zeile ein Datensatz `datei:zeile`.
+     */
+    private val publicTexts: List<Text> by lazy {
+        val files = listOf(repoFile("README.md"), repoFile("docs/PRIVACY.md")) +
+            repoFile("docs/release-notes").listFiles { f -> f.extension == "md" }.orEmpty().sorted() +
+            repoFile("fastlane/metadata/android/de-DE").walkTopDown().filter { it.isFile && it.extension == "txt" }.sorted()
+        val root = repoFile("README.md").absoluteFile.parentFile
+        files.filter { it.isFile }.flatMap { f ->
+            val name = f.absoluteFile.relativeTo(root).path
+            f.readLines().mapIndexed { i, line -> Text("$name:${i + 1}", line) }
+        }
+    }
+
+    @Test
+    fun `health-claims-public`() {
+        assumeTrue("README.md fehlt", repoFile("README.md").isFile)
+        assertNoHealthClaims("health-claims-public", healthClaimFindings(publicTexts))
     }
 
     // ---- TEXT-05: Jargon ----------------------------------------------------------------
@@ -504,6 +533,18 @@ class ContentRulesTest {
             f.readText().trim().takeIf { it.length > 500 }?.let { Finding("fastlane:changelogs/${f.name}", "${it.length} Zeichen > 500") }
         }
         assertAgainstBaseline("store-lengths", findings)
+    }
+
+    /** Der Disclaimer aus SECURITY.md SEC-LEGAL-02 steht wörtlich in der Store-Beschreibung. */
+    @Test
+    fun `store-disclaimer`() {
+        val file = repoFile("fastlane/metadata/android/de-DE/full_description.txt")
+        assumeTrue("fastlane/ gibt es noch nicht", file.isFile)
+        val disclaimer = "Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. " +
+            "Für medizinischen Rat wende dich an Fachpersonal."
+        if (disclaimer !in file.readText()) {
+            fail("ContentRulesTest store-disclaimer: full_description.txt enthält den Disclaimer aus SEC-LEGAL-02 nicht wörtlich")
+        }
     }
 
     // ---- Pfade --------------------------------------------------------------------------

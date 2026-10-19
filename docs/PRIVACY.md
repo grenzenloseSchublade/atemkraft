@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-08, geprüft gegen den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
+- **Stand:** 2026-10-19, geprüft gegen Version 1.6.5 und den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
@@ -15,9 +15,9 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 
 | Ort | Inhalt | So löschst du es |
 |---|---|---|
-| Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | „Logbuch leeren“ im Logbuch; App-Speicher löschen |
+| Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden *Einstellungen → Daten → „Logbuch leeren“* (ein zweiter Tipp bestätigt); App-Speicher löschen |
 | Eigene Muster (Datenbank) | Name, Phasenlängen und Art (aktivierend oder nicht) gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen unter „Meine Muster“ |
-| Einstellungen | Ton, Haptik, Hinweise (auch, ob du den Sicherheitshinweis vor intensiven Übungen bestätigt hast), Meditation, gewählte Stimme, Anpassungen pro Übung, ob „Meine Muster“ aufgeklappt ist | pro Übung zurücksetzen; App-Speicher löschen |
+| Einstellungen | Ton, Haptik, Hinweise (auch, ob du den Sicherheitshinweis vor intensiven Übungen bestätigt hast), Meditation, gewählte Stimme, Anpassungen pro Übung, Übungen, die du mit „Tut mir gut“ markiert hast, ob „Meine Muster“ aufgeklappt ist, ob die App schon nach der Benachrichtigung gefragt hat und, falls die Einstellungsdatei einmal beschädigt war, wann die App sie zurückgesetzt hat | Anpassungen pro Übung zurücksetzen; Markierung durch erneutes Antippen aufheben; App-Speicher löschen |
 | Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |
 | Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Versuch. Den Download-Cache leert Android auch bei Speichermangel |
 
@@ -70,7 +70,7 @@ Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die dire
 | Berechtigung | Wofür |
 |---|---|
 | Internet (`INTERNET`) | nur der Stimm-Download |
-| Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides mit dem Schalter „Vibration“ abschaltbar. **Bis einschließlich Version 1.5.1** vibriert der Tick auch bei ausgeschaltetem Schalter |
+| Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“. Die Rasten des Zeitrings in der Meditation (ab Version 1.6.5) sind Berührungs-Feedback und folgen der Android-Einstellung dafür, nicht dem Schalter. **Bis einschließlich Version 1.5.1** vibriert der Tick auch bei ausgeschaltetem Schalter |
 | Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation wach, damit Gongs pünktlich kommen |
 | Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
 | Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Meditation. Lehnst du ab, läuft der Timer trotzdem |

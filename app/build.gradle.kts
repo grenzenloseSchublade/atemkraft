@@ -158,11 +158,20 @@ ktlint {
     baseline.set(rootProject.file("config/ktlint-baseline.xml"))
 }
 
-// Regeltests lesen Baselines und Wortlisten aus config/: als Test-Eingabe registrieren, sonst
-// hält Gradle die Tests nach einer reinen Baseline-Änderung für aktuell und überspringt sie.
+// Regeltests lesen Baselines und Wortlisten aus config/ und prüfen die öffentlichen Texte
+// (README, PRIVACY, Release-Notes, Store): als Test-Eingabe registrieren, sonst hält Gradle die
+// Tests nach einer reinen Text- oder Baseline-Änderung für aktuell und überspringt sie.
 tasks.withType<Test>().configureEach {
     inputs.dir(rootProject.file("config"))
         .withPropertyName("regelConfig")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        rootProject.file("README.md"),
+        rootProject.file("docs/PRIVACY.md"),
+        rootProject.fileTree("docs/release-notes"),
+        rootProject.fileTree("fastlane/metadata"),
+    )
+        .withPropertyName("oeffentlicheTexte")
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
