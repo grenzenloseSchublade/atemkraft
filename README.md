@@ -111,6 +111,7 @@ Toolchain: Gradle 8.11.1, Android Gradle Plugin 8.9.1, Kotlin 2.1.0, Jetpack Com
 domain/   reines Modell: Phase, Segment, Exercise, Zeitplan, Muster-Generator, Befindens-Suche
 data/     Übungen, Situationen und Quellen (Refs.kt), Room (Logbuch, Muster), DataStore (Einstellungen)
 cue/      Töne, Gong, Vibration, Sprachausgabe (System oder Piper-Stimmen über sherpa-onnx)
+playback/ Abläufe ohne UI: Sitzungsstatus, Meditations-Controller, Foreground-Service, Audio-Koordinatoren
 ui/       theme/, components/ und je Screen ein Paket
 ```
 
