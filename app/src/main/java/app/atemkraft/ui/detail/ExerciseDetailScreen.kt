@@ -46,6 +46,7 @@ import app.atemkraft.domain.isRoundBased
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
+import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.ExpanderSection
@@ -59,8 +60,8 @@ import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
 import app.atemkraft.ui.session.SafetyDialog
+import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
@@ -198,7 +199,9 @@ fun ExerciseDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
                 ) {
                     WholeWordText(
-                        text = exercise.family.title(),
+                        // Generierte Muster sind keine Übung der Familie: Sie heißen hier „Muster“, die
+                        // Familie bleibt nur als Farbe.
+                        text = if (exercise.generated) stringResource(R.string.family_pattern) else exercise.family.title(),
                         style = MaterialTheme.typography.labelMedium,
                         color = accent,
                         modifier = Modifier.align(Alignment.CenterVertically),
@@ -218,7 +221,7 @@ fun ExerciseDetailScreen(
                 Text(
                     text = exercise.shortDescription,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
                 )
 
                 Spacer(Modifier.height(Dimens.GapSmall))
@@ -234,10 +237,7 @@ fun ExerciseDetailScreen(
                         },
                         color = accent,
                     )
-                    Chip(
-                        text = if (isIntense) stringResource(R.string.detail_intense) else stringResource(R.string.detail_calm),
-                        color = if (isIntense) WarnAmber else NeonCyan,
-                    )
+                    CharacterChip(intense = isIntense, activating = exercise.activating)
                 }
 
                 if (isIntense && exercise.cautions.isNotEmpty()) {
@@ -302,7 +302,7 @@ fun ExerciseDetailScreen(
                         } else {
                             {
                                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                                    moreCautions.forEach { Bullet(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)) }
+                                    moreCautions.forEach { Bullet(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY)) }
                                 }
                             }
                         },
@@ -434,6 +434,6 @@ private fun Body(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
     )
 }

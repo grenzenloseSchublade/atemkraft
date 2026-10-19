@@ -45,10 +45,15 @@ import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
+import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
+import app.atemkraft.ui.theme.ALPHA_HEAT_MID
+import app.atemkraft.ui.theme.ALPHA_HEAT_NONE
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SynthTrack
+import app.atemkraft.ui.theme.TERTIARY
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -177,9 +182,9 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate) {
             val minutes = minutesPerDay[day.toEpochDay()] ?: 0L
             // Sequenzielle Rampe (eine Hue): leer → leise → präsent → voll.
             val fill = when {
-                minutes <= 0L -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-                minutes < 10L -> MaterialTheme.colorScheme.primary.copy(alpha = 0.40f)
-                minutes < 25L -> MaterialTheme.colorScheme.primary.copy(alpha = 0.70f)
+                minutes <= 0L -> MaterialTheme.colorScheme.onSurface.copy(alpha = ALPHA_HEAT_NONE)
+                minutes < 10L -> MaterialTheme.colorScheme.primary.copy(alpha = ALPHA_HEAT_LOW)
+                minutes < 25L -> MaterialTheme.colorScheme.primary.copy(alpha = ALPHA_HEAT_MID)
                 else -> MaterialTheme.colorScheme.primary
             }
             val isToday = offset == 0
@@ -210,7 +215,7 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate) {
                 Text(
                     text = labels[(day.dayOfWeek.value - 1).coerceIn(0, 6)],
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
                 )
             }
         }
@@ -258,7 +263,7 @@ private fun LogGroupSection(group: LogGroup, zone: ZoneId) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding)) {
                         day.entries.forEachIndexed { index, entry ->
-                            if (index > 0) HorizontalDivider()
+                            if (index > 0) HorizontalDivider(color = DividerSubtle)
                             LogEntryRow(
                                 entry = entry,
                                 time = Instant.ofEpochMilli(entry.startedAtEpochMs).atZone(zone).format(TIME_FORMAT),

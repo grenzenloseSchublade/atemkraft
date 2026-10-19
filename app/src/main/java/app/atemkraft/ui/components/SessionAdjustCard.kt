@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
 
 /** Ein anpassbarer Intervall-Wert in der Einstell-Karte; als Parameter null = Phase fehlt. */
@@ -54,7 +55,7 @@ fun SessionAdjustCard(
             if (inhale != null || hold != null || exhale != null) {
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = Dimens.CardPadding),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                    color = DividerSubtle,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     DisclosureToggle(

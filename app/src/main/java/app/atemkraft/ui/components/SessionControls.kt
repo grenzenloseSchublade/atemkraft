@@ -61,6 +61,7 @@ import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
+import app.atemkraft.ui.theme.TERTIARY
 import kotlinx.coroutines.delay
 
 // Geteilte Bausteine der Vollbild-Sitzungen (Atem-Session UND Meditation): Glow-Schrift,
@@ -229,7 +230,7 @@ fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit, summar
         Text(
             text = "✓ " + stringResource(R.string.session_done_title),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
         )
         Spacer(Modifier.height(Dimens.GapSmall))
         Text(

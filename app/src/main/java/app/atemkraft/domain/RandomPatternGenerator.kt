@@ -178,6 +178,8 @@ object RandomPatternGenerator {
         val cycleSeconds = spec.inhale + (spec.holdFull ?: 0.0) + spec.exhale + (spec.holdEmpty ?: 0.0)
         val repeat = (TARGET_SECONDS / cycleSeconds).roundToInt().coerceAtLeast(1)
         val hint = hintFor(spec)
+        // Gleichlautend mit dem Charakter-Chip (strings.xml daily_pattern_gentle_up / detail_calm);
+        // domain/ kennt keine Ressourcen.
         val character = if (spec.activating) "sanft aktivierend" else "ruhig"
         // Atemort: ruhige Muster EMPFEHLEN konstant die Bauchatmung (fachlicher Standard);
         // bewusst NICHT randomisiert – und als Einladung formuliert, nicht als Muss.
@@ -189,7 +191,7 @@ object RandomPatternGenerator {
             id = id,
             name = name,
             family = BreathingFamily.BALANCE,
-            shortDescription = "$hint — heute $character.$bellyNote Jeden Tag ein neues, " +
+            shortDescription = "$hint – heute $character.$bellyNote Jeden Tag ein neues, " +
                 "zufällig erzeugtes Muster in physiologisch üblichen Grenzen.",
             effect = "Spielerische Abwechslung: ein generiertes Muster zum Ausprobieren – " +
                 "ohne spezifisches Wirkversprechen.",
@@ -203,6 +205,8 @@ object RandomPatternGenerator {
             rounds = 1,
             instructionHint = fullHint,
             lore = loreFor(spec),
+            generated = true,
+            activating = spec.activating,
         )
     }
 

@@ -1,4 +1,9 @@
 Card(onClick = { open() }) {
     Text("x")
 }
-HorizontalDivider()
+HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
+HorizontalDivider(
+    modifier = Modifier.padding(horizontal = Dimens.CardPadding),
+    color = DividerSubtle,
+)
+HorizontalDivider(modifier = Modifier.padding(top = Dimens.GapTiny)) // Abweichung KOMP-03: Grundlinie des Suchfelds

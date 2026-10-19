@@ -33,6 +33,7 @@ import app.atemkraft.data.ThirdParty
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
@@ -72,14 +73,14 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                 Text(
                     text = stringResource(R.string.about_body),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
                 )
                 Spacer(Modifier.height(Dimens.SectionGap))
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.about_disclaimer),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = BODY),
                         modifier = Modifier.padding(Dimens.CardPadding),
                     )
                 }

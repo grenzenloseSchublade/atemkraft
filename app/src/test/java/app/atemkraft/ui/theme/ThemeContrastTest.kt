@@ -47,20 +47,8 @@ class ThemeContrastTest {
     /** Kritischer Punkt des Atemkreises: das Zentrum des radialen Verlaufs. */
     private val circleCenter = SynthCircleCenter
 
-    // Alpha-Werte, die (noch) als Literal in Komponenten stehen; Quelle jeweils genannt.
-    // Chips.kt: Fläche color.copy(alpha = 0.16f), InfoChip-Text onSurface 0.5f.
-    private val chipFill = 0.16f
-    private val infoChipText = 0.5f
-
-    // HomeScreen.CharacterChip: Fläche color.copy(alpha = 0.14f).
-    private val characterChipFill = 0.14f
-
-    // AppNavigationBar: unselektierte Icons/Labels onSurface 0.55f.
-    private val navUnselected = 0.55f
-
-    // LogbookScreen.WeekRow: Punkt-Stufen und Wochentags-Buchstaben.
-    private val weekLevels = listOf(0.12f to DarkOnSurface, 0.40f to NeonMagenta, 0.70f to NeonMagenta)
-    private val weekdayText = 0.5f
+    // LogbookScreen.WeekRow: Punkt-Stufen (Zustandsgrafik).
+    private val weekLevels = listOf(ALPHA_HEAT_NONE to DarkOnSurface, ALPHA_HEAT_LOW to NeonMagenta, ALPHA_HEAT_MID to NeonMagenta)
 
     private fun contrastPairs(): List<Pair> = buildList {
         // Primärtext und Alpha-Stufen (§2.2).
@@ -70,6 +58,8 @@ class ThemeContrastTest {
         add(Pair("onSurface SECONDARY auf Card", DarkOnSurface.copy(alpha = SECONDARY), card, text))
         add(Pair("onSurface TERTIARY auf background", DarkOnSurface.copy(alpha = TERTIARY), background, text))
         add(Pair("onSurface TERTIARY auf Card", DarkOnSurface.copy(alpha = TERTIARY), card, text))
+        add(Pair("onSurface BODY auf background", DarkOnSurface.copy(alpha = BODY), background, text))
+        add(Pair("onSurface BODY auf Card", DarkOnSurface.copy(alpha = BODY), card, text))
         add(Pair("onSurfaceVariant auf Dialog", DarkOnSurfaceVariant, dialog, text))
         add(Pair("onSurfaceVariant auf Leiste", DarkOnSurfaceVariant, bar, text))
 
@@ -93,29 +83,30 @@ class ThemeContrastTest {
         add(Pair("OnNeon auf NeonMagenta", OnNeon, NeonMagenta, text))
         add(Pair("onError OnNeon auf error EvidenceCaution", OnNeon, EvidenceCaution, text))
 
-        // Chips: Text in Chipfarbe auf der eigenen, über den Grund gemischten Fläche – Karte im
-        // Atmen-Tab, Screen-Grund im Detail-Kopf. Studienlage (drei Stufen) und Vorsicht.
+        // Chips (Chips.kt): gefüllt = Text in Chipfarbe auf der eigenen, über den Grund gemischten
+        // Fläche (CHIP_FILL) – Karte im Atmen-Tab, Screen-Grund im Detail-Kopf. Gefüllt sind nur
+        // die drei Studienlagen und „intensiv“; Vorsicht und die neutralen Chips („Programm“,
+        // „ruhig“, „sanft aktivierend“) sind umrandet, ihr Text steht direkt auf dem Grund.
         listOf(
             "EvidenceBest" to EvidenceBest,
             "EvidenceStudied" to EvidenceStudied,
             "EvidenceLittle" to EvidenceLittle,
-            "EvidenceCaution" to EvidenceCaution,
+            "intensiv WarnAmber" to WarnAmber,
         ).forEach { (n, c) ->
-            add(Pair("Chip $n auf Card", c, c.copy(alpha = chipFill) over card, text))
-            add(Pair("Chip $n auf background", c, c.copy(alpha = chipFill) over background, text))
+            add(Pair("Chip $n auf Card", c, c.copy(alpha = CHIP_FILL) over card, text))
+            add(Pair("Chip $n auf background", c, c.copy(alpha = CHIP_FILL) over background, text))
         }
-        val infoColor = DarkOnSurface.copy(alpha = infoChipText)
-        add(Pair("InfoChip auf Card", infoColor, infoColor.copy(alpha = chipFill) over card, text))
-        listOf("WarnAmber" to WarnAmber, "NeonCyan" to NeonCyan).forEach { (n, c) ->
-            add(Pair("CharacterChip $n auf Card", c, c.copy(alpha = characterChipFill) over card, text))
-        }
+        add(Pair("CautionChip umrandet auf Card", EvidenceCaution, card, text))
+        add(Pair("CautionChip umrandet auf background", EvidenceCaution, background, text))
+        add(Pair("Neutraler Chip umrandet auf Card", DarkOnSurface.copy(alpha = SECONDARY), card, text))
+        add(Pair("Neutraler Chip umrandet auf background", DarkOnSurface.copy(alpha = SECONDARY), background, text))
 
         // Navigationsleiste.
-        add(Pair("Nav unselektiert auf Leiste", DarkOnSurface.copy(alpha = navUnselected), bar, text))
+        add(Pair("Nav unselektiert auf Leiste", DarkOnSurface.copy(alpha = TERTIARY), bar, text))
         add(Pair("Nav selektiert NeonMagenta auf Leiste", NeonMagenta, bar, text))
 
         // Logbuch-Wochenzeile: Wochentage sind Text, die Punkte Zustandsgrafik (FARBE-05).
-        add(Pair("Wochentag auf Card", DarkOnSurface.copy(alpha = weekdayText), card, text))
+        add(Pair("Wochentag auf Card", DarkOnSurface.copy(alpha = TERTIARY), card, text))
         weekLevels.forEach { (a, c) ->
             add(Pair("WeekRow-Punkt α$a auf Card", c.copy(alpha = a), card, graphic))
         }
@@ -139,7 +130,8 @@ class ThemeContrastTest {
 
     /** FARBE-04: semantische Farben, die gemeinsam auf einem Screen stehen, ΔE76 ≥ 25. */
     private fun deltaEPairs(): List<Triple<String, Color, Color>> {
-        // Atmen-Tab: Familien-Akzente, Evidenz-Chips (drei Stufen), Charakter-Chips, Marke.
+        // Atmen-Tab und Detailseite: Familien-Akzente, Evidenz-Chips (drei Stufen), Vorsicht,
+        // „intensiv“ und ⚠-Zeile (WarnAmber neben Familie B), Marke.
         val home = listOf(
             "primary" to NeonMagenta,
             "EvidenceBest" to EvidenceBest,

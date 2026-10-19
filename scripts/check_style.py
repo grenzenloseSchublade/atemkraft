@@ -441,7 +441,7 @@ CHECKS: list[Check] = [
           exclude=[SRC + "ui/components/*"], multiline=True, per_file=True),
     Check("no-fab-toast", "PRIN-03", [SRC + "*.kt"], [r"FloatingActionButton|Toast\.|Snackbar"], skip_imports=True),
     Check("card-style", "KOMP-02", [SRC + "ui/*.kt", SRC + "MainActivity.kt"],
-          [r"Card\((?:(?!\)\s*\{)[\s\S])*?\.clickable", r"HorizontalDivider\((?:[^()]|\([^()]*\))*?color\s*="], multiline=True),
+          [r"Card\((?:(?!\)\s*\{)[\s\S])*?\.clickable", r"HorizontalDivider\((?!(?:[^()]|\([^()]*\))*?color\s*=\s*DividerSubtle\b)"], multiline=True),
     Check("exception-message-ui", "MUSTER-04", [SRC + "ui/*.kt", SRC + "cue/tts/*.kt"],
           [r"\b(e|it|t|ex|err|error|throwable)\.message\b"], level="SOLL"),
     Check("icon-source", "ICON-01", ["*.kts", "gradle/*.toml", SRC + "*.kt"],

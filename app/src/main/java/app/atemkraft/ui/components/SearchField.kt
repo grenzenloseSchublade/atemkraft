@@ -99,7 +99,7 @@ fun SearchField(
                             }
                             inner()
                         }
-                        HorizontalDivider(modifier = Modifier.padding(top = Dimens.GapTiny))
+                        HorizontalDivider(modifier = Modifier.padding(top = Dimens.GapTiny)) // Abweichung KOMP-03: Grundlinie des Suchfelds
                     }
                 },
             )

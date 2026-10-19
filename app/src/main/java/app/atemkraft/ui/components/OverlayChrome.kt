@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.ui.theme.TERTIARY
 
 /**
  * Geteilter Rahmen der Vollbild-Overlays (Atem-Session + Meditation): Hintergrund-Surface mit
@@ -58,7 +59,7 @@ fun OverlayChrome(
                                 if (muted) R.string.action_sound_off else R.string.action_sound_on,
                             ),
                             tint = MaterialTheme.colorScheme.onBackground.copy(
-                                alpha = if (muted) 0.5f else 1f,
+                                alpha = if (muted) TERTIARY else 1f,
                             ),
                         )
                     }

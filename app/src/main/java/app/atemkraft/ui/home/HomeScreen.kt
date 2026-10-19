@@ -34,6 +34,7 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.CautionChip
+import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.PersonalMarkIndicator
 import app.atemkraft.ui.components.ScreenHeader
@@ -42,9 +43,7 @@ import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
-import app.atemkraft.ui.theme.WarnAmber
 
 /** Atmen-Tab: startbare Übungen nach Familien + Abschnitt „Programme & Wissen". */
 @Composable
@@ -82,7 +81,7 @@ fun HomeScreen(
                 // die Karte – deshalb im Kopf, die Karte behält nur ihre eine Aktion (KOMP-02).
                 SectionHeader(
                     title = stringResource(R.string.home_daily_pattern),
-                    color = NeonCyan,
+                    color = MaterialTheme.colorScheme.secondary,
                 ) {
                     AppIconButton(onClick = onRegenerateDaily) {
                         Icon(
@@ -188,7 +187,7 @@ private fun DailyPatternCard(
     onClick: () -> Unit,
     onSavedChange: (Boolean) -> Unit,
 ) {
-    PatternCard(exercise = daily.exercise, spec = daily.spec, activating = daily.activating, onClick = onClick) {
+    PatternCard(exercise = daily.exercise, spec = daily.spec, onClick = onClick) {
         // Gespeicherte Muster erscheinen im Situationen-Tab unter „Meine Muster“ – der
         // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
         // erneutes Tippen nimmt das Muster wieder heraus.
@@ -222,7 +221,6 @@ private fun DailyPatternCard(
 fun PatternCard(
     exercise: Exercise,
     spec: PatternSpec,
-    activating: Boolean,
     onClick: () -> Unit,
     action: @Composable () -> Unit,
 ) {
@@ -245,7 +243,7 @@ fun PatternCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 ) {
-                    CharacterChip(activating = activating)
+                    CharacterChip(intense = false, activating = exercise.activating)
                 }
                 Spacer(Modifier.height(Dimens.GapTiny))
                 // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
@@ -259,24 +257,5 @@ fun PatternCard(
             }
             Box(modifier = Modifier.align(Alignment.TopEnd)) { action() }
         }
-    }
-}
-
-/** Kleiner Charakter-Chip: „ruhig" (cyan) bzw. „sanft aktivierend" (amber). */
-@Composable
-private fun CharacterChip(activating: Boolean) {
-    val color = if (activating) WarnAmber else NeonCyan
-    Surface(
-        color = color.copy(alpha = 0.14f),
-        contentColor = color,
-        shape = MaterialTheme.shapes.small,
-    ) {
-        Text(
-            text = stringResource(
-                if (activating) R.string.daily_pattern_gentle_up else R.string.daily_pattern_calm,
-            ),
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
-        )
     }
 }

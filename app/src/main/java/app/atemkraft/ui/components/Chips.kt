@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,16 +16,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.ui.home.label
+import app.atemkraft.ui.theme.CHIP_FILL
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.EvidenceBest
 import app.atemkraft.ui.theme.EvidenceCaution
 import app.atemkraft.ui.theme.EvidenceLittle
 import app.atemkraft.ui.theme.EvidenceStudied
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.WarnAmber
 
 /** Test-Tag des Chip-Texts: Der ScreenshotTest meldet einen Chip, dessen Text umbricht (LAYOUT-03). */
 const val CHIP_TEXT_TAG = "chip-text"
@@ -43,10 +43,14 @@ fun EvidenceChip(level: EvidenceLevel) {
     Chip(text = text, color = color, spokenText = stringResource(R.string.cd_evidence, text))
 }
 
-/** Vorsichts-Chip „nur gesund & ausgeruht“ (unabhängig von der Studienlage). */
+/**
+ * Vorsichts-Chip „nur gesund & ausgeruht“ (unabhängig von der Studienlage). Umriss statt Fläche:
+ * So hält der Text auch auf der Card 4,5:1, ohne dass `EvidenceCaution` heller und damit dem
+ * Pink von „Beenden“ noch ähnlicher werden müsste (FARBE-03, -04).
+ */
 @Composable
 fun CautionChip() {
-    Chip(text = stringResource(R.string.tag_caution), color = EvidenceCaution)
+    Chip(text = stringResource(R.string.tag_caution), color = EvidenceCaution, outlined = true)
 }
 
 /**
@@ -55,11 +59,28 @@ fun CautionChip() {
  */
 @Composable
 fun InfoChip() {
-    Chip(
-        text = stringResource(R.string.tag_info),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-        outlined = true,
-    )
+    NeutralChip(stringResource(R.string.tag_info))
+}
+
+/**
+ * Charakter einer Übung: „intensiv“ ([intense], Wim Hof, Feueratmung) als einziger gefüllt in
+ * `WarnAmber`; „sanft aktivierend“ ([activating], Tagesmuster) und „ruhig“ neutral umrandet wie
+ * „Programm“. Ein Charakter ist keine Studienlage und keine Warnung (FARBE-04): In Cyan sähe
+ * „ruhig“ aus wie „gut belegt“, in Gelb „sanft aktivierend“ wie eine Warnung.
+ */
+@Composable
+fun CharacterChip(intense: Boolean, activating: Boolean) {
+    when {
+        intense -> Chip(text = stringResource(R.string.detail_intense), color = WarnAmber)
+        activating -> NeutralChip(stringResource(R.string.daily_pattern_gentle_up))
+        else -> NeutralChip(stringResource(R.string.detail_calm))
+    }
+}
+
+/** Neutrale Pille: nur Umriss, Text und Rand in `onSurface` · `SECONDARY`. */
+@Composable
+private fun NeutralChip(text: String) {
+    Chip(text = text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), outlined = true)
 }
 
 /**
@@ -75,11 +96,11 @@ fun Chip(
     spokenText: String? = null,
     outlined: Boolean = false,
 ) {
-    val shape = RoundedCornerShape(8.dp)
+    val shape = MaterialTheme.shapes.extraSmall
     Box(
         modifier = modifier
             .clip(shape)
-            .then(if (outlined) Modifier.border(Dp.Hairline, color, shape) else Modifier.background(color.copy(alpha = 0.16f)))
+            .then(if (outlined) Modifier.border(Dp.Hairline, color, shape) else Modifier.background(color.copy(alpha = CHIP_FILL)))
             .padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
     ) {
         Text(

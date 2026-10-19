@@ -7,22 +7,22 @@
         <error line="21" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/MiniNowPlayingBar.kt">
-        <error line="31" column="5" source="compose:modifier-missing-check" />
+        <error line="32" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/OverlayChrome.kt">
-        <error line="30" column="5" source="compose:modifier-missing-check" />
+        <error line="31" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/ReferenceItem.kt">
         <error line="13" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/SessionAdjustCard.kt">
-        <error line="36" column="5" source="compose:modifier-missing-check" />
+        <error line="37" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/components/SessionControls.kt">
-        <error line="72" column="5" source="compose:param-order-check" />
-        <error line="221" column="5" source="compose:modifier-missing-check" />
+        <error line="73" column="5" source="compose:param-order-check" />
+        <error line="222" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt">
-        <error line="79" column="5" source="compose:parameter-naming" />
+        <error line="78" column="5" source="compose:parameter-naming" />
     </file>
 </baseline>

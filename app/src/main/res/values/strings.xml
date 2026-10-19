@@ -16,8 +16,10 @@
     <!-- Familien (Kategorien) -->
     <string name="family_downregulate">A · Herunterregeln</string>
     <string name="family_upregulate">B · Hochregeln</string>
-    <string name="family_balance">C · Balancieren / Programme</string>
+    <string name="family_balance">C · Balancieren</string>
     <string name="family_functional">D · Funktionell</string>
+    <!-- Statt der Familie auf der Detailseite generierter Muster (Tagesmuster, Meine Muster) -->
+    <string name="family_pattern">Muster</string>
 
     <!-- Tags: Studienlage (EvidenceLevel, TEXT-07), Vorsicht, Programm -->
     <string name="tag_well_supported">gut belegt</string>
@@ -80,7 +82,6 @@
     <!-- Startscreen -->
     <string name="home_programs">Programme &amp; Wissen</string>
     <string name="home_daily_pattern">Muster des Tages</string>
-    <string name="daily_pattern_calm">ruhig</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="cd_pattern_regenerate">Muster neu generieren</string>
     <string name="cd_pattern_save">Muster speichern</string>

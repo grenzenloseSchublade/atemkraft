@@ -25,6 +25,10 @@ package app.atemkraft.domain
  *   yogischen Ursprungs und bei generierten Mustern.
  * @param guided true = getakteter Atemkreis-Ablauf; false = Programm/Gewohnheit
  *   ohne festen Takt (nur Infoseite, kein Start).
+ * @param generated true = generiertes Muster (Muster des Tages, „Meine Muster“): keine
+ *   eingebaute Übung, die Familie ist nur Einordnung für die Farbe, nicht für den Namen.
+ * @param activating Charakter eines generierten Musters: „sanft aktivierend“ statt „ruhig“
+ *   (aus `PatternSpec.activating`; eingebaute Übungen zeigen „intensiv“ über [caution]).
  * @param perRound Hook, um Phasen pro Runde anzupassen (z. B. Wim-Hof-Retention).
  */
 data class Exercise(
@@ -43,5 +47,7 @@ data class Exercise(
     val caution: Boolean = false,
     val lore: YogaLore? = null,
     val guided: Boolean = true,
+    val generated: Boolean = false,
+    val activating: Boolean = false,
     val perRound: (phase: Phase, roundIndex: Int) -> Phase = { phase, _ -> phase },
 )

@@ -2,30 +2,13 @@
 # check<TAB>datei<TAB>anzahl – darf nur sinken. Erzeugt mit scripts/check-style.sh --update-baseline.
 color-source	app/src/main/java/app/atemkraft/MainActivity.kt	1
 color-source	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	4
-color-source	app/src/main/java/app/atemkraft/ui/detail/ExerciseDetailScreen.kt	1
-color-source	app/src/main/java/app/atemkraft/ui/home/HomeScreen.kt	2
 color-source	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1
-color-source	app/src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt	1
 alpha-literal	app/src/main/java/app/atemkraft/MainActivity.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/about/AboutScreen.kt	2
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	2
 alpha-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/Chips.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/ExpanderSection.kt	2
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/MiniNowPlayingBar.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/OverlayChrome.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/SessionAdjustCard.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/SessionControls.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/detail/ExerciseDetailScreen.kt	3
-alpha-literal	app/src/main/java/app/atemkraft/ui/glossary/GlossaryScreen.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/home/HomeScreen.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	5
-alpha-literal	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	2
-theme-tokens	app/src/main/java/app/atemkraft/ui/theme/Color.kt	3
+alpha-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1
 theme-tokens	app/src/main/java/app/atemkraft/ui/theme/Theme.kt	2
 type-literal	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	1
 layout-literal	app/src/main/java/app/atemkraft/MainActivity.kt	2
-layout-literal	app/src/main/java/app/atemkraft/ui/components/Chips.kt	2
 layout-literal	app/src/main/java/app/atemkraft/ui/components/PauseFlash.kt	1
 layout-literal	app/src/main/java/app/atemkraft/ui/components/SectionHeader.kt	3
 layout-literal	app/src/main/java/app/atemkraft/ui/components/SessionControls.kt	1
@@ -35,8 +18,6 @@ layout-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	3
 layout-literal	app/src/main/java/app/atemkraft/ui/meditation/MeditationScreen.kt	1
 layout-literal	app/src/main/java/app/atemkraft/ui/settings/SettingsScreen.kt	2
 card-style	app/src/main/java/app/atemkraft/MainActivity.kt	1
-card-style	app/src/main/java/app/atemkraft/ui/components/ExpanderSection.kt	1
-card-style	app/src/main/java/app/atemkraft/ui/components/SessionAdjustCard.kt	1
 exception-message-ui	app/src/main/java/app/atemkraft/cue/tts/VoiceModelManager.kt	1
 icon-source	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 icon-source	app/src/main/java/app/atemkraft/ui/settings/SettingsScreen.kt	1
@@ -54,6 +35,5 @@ locale	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2
 locale-config	app/build.gradle.kts	1
 locale-config	app/src/main/AndroidManifest.xml	1
 typo-chars-strings	app/src/main/res/values/strings.xml	1
-typo-chars-content	app/src/main/java/app/atemkraft/domain/RandomPatternGenerator.kt	1
 layer-import-data	app/src/main/java/app/atemkraft/data/AppContainer.kt	2
 layer-import-components	app/src/main/java/app/atemkraft/ui/components/Chips.kt	1

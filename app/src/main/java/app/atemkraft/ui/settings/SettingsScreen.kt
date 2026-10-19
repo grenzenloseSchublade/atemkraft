@@ -67,6 +67,7 @@ import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.WarnAmber
@@ -206,9 +207,9 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () 
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             Hint(stringResource(R.string.settings_data_transfer_hint))
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             ClearLogButton(onClearLog)
         }
     }
@@ -268,7 +269,7 @@ private fun TonCard(
             Spacer(Modifier.height(Dimens.GapTiny))
             Hint(stringResource(R.string.volume_hint))
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SubLabel(stringResource(R.string.settings_gong_length))
                 Spacer(Modifier.weight(1f))
@@ -361,14 +362,14 @@ private fun SessionCard(
             CardTitle(stringResource(R.string.settings_session_title))
             Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
             ToggleRow(
                 label = stringResource(R.string.settings_safety),
                 checked = showSafetyWarning,
                 onCheckedChange = onToggleSafety,
                 hint = stringResource(R.string.settings_safety_hint),
             )
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
             ToggleRow(
                 label = stringResource(R.string.settings_next_phase),
                 checked = showNextPhase,
@@ -408,14 +409,14 @@ private fun MeditationCard(
             Spacer(Modifier.height(Dimens.GapTiny))
             Hint(stringResource(R.string.settings_gong_interval_hint))
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             SubLabel(stringResource(R.string.settings_voice))
             Hint(stringResource(R.string.settings_voice_catalog_hint))
             Spacer(Modifier.height(Dimens.GapTiny))
 
             // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
             VoiceCatalog.all.forEachIndexed { index, spec ->
-                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapHairline))
+                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapHairline), color = DividerSubtle)
                 // key: Der Bestätigungszustand des Löschens gehört zur Stimme, nicht zur Position.
                 key(spec.id) {
                     VoiceRow(

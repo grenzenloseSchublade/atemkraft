@@ -72,6 +72,7 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionNoteAmber
 import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
+import app.atemkraft.ui.theme.TERTIARY
 import kotlin.math.ceil
 
 /**
@@ -187,7 +188,7 @@ private fun ActiveContent(
                     // In der Ruhe-Ansicht zuklappen: Aufgeklappt läge der unsichtbare Text über dem
                     // Kreisrand und finge dort den Tipp ab, der pausieren soll.
                     LaunchedEffect(controlsVisible) { if (!controlsVisible) hintVisible = false }
-                    val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                    val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY)
                     val hintState = expandedStateText(hintVisible)
                     Row(
                         modifier = Modifier
@@ -401,7 +402,7 @@ private fun SessionTitle(state: SessionUiState) {
  */
 @Composable
 private fun NextPhaseRow(nextPhaseType: PhaseType?, minHeight: Dp) {
-    val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY)
     Box(
         modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),
         contentAlignment = Alignment.Center,

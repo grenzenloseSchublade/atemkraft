@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
@@ -49,7 +50,7 @@ fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = SECONDARY),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

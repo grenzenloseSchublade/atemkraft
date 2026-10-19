@@ -22,6 +22,7 @@ import app.atemkraft.data.GlossaryTerm
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -67,7 +68,7 @@ private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
                     Text(
                         text = term.definition,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = BODY),
                     )
                 }
             }

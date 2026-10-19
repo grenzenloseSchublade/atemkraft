@@ -49,7 +49,6 @@ import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.WarnAmber
 
@@ -210,7 +209,7 @@ private fun SavedPatternsSection(
     ) {
         SectionHeader(
             title = stringResource(R.string.situations_my_patterns),
-            color = NeonCyan,
+            color = MaterialTheme.colorScheme.secondary,
             expanded = expanded,
             onExpandedChange = onExpandedChange,
             status = expanded?.let { stringResource(R.string.situations_my_patterns_count, patterns.size) },
@@ -301,7 +300,7 @@ private fun SavedPatternCard(
     onDelete: () -> Unit,
 ) {
     val name = pattern.exercise.name
-    PatternCard(exercise = pattern.exercise, spec = pattern.spec, activating = pattern.activating, onClick = onClick) {
+    PatternCard(exercise = pattern.exercise, spec = pattern.spec, onClick = onClick) {
         ConfirmIconButton(
             name = name,
             description = stringResource(R.string.cd_pattern_delete, name),

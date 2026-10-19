@@ -24,7 +24,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.DividerSubtle
+import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Wiederverwendbarer Inline-Expander (Progressive Disclosure): Titel + Appetizer, tippbar zum
@@ -77,10 +80,11 @@ fun ExpanderSection(
                 Text(
                     text = appetizer,
                     // Eine Rolle für beide Zustände (kein Reflow beim Aufklappen); Betonung nur
-                    // über die Deckkraft.
+                    // über die Deckkraft: zugeklappt Sekundärtext wie jeder Teaser, aufgeklappt
+                    // (und ohne Inhalt) Fließtext.
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground
-                        .copy(alpha = if (expanded || !expandable) 0.8f else 0.6f),
+                        .copy(alpha = if (expanded || !expandable) BODY else SECONDARY),
                 )
             }
             if (expandable) {
@@ -91,6 +95,6 @@ fun ExpanderSection(
             content()
             Spacer(Modifier.height(Dimens.GapSmall))
         }
-        if (divider) HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+        if (divider) HorizontalDivider(color = DividerSubtle)
     }
 }

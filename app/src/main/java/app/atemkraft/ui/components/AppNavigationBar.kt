@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.NeonMagenta
 import app.atemkraft.ui.theme.OnNeon
+import app.atemkraft.ui.theme.TERTIARY
 
 /** Ein Tab der unteren Navigationsleiste. */
 class AppNavItem(
@@ -35,8 +36,8 @@ fun AppNavigationBar(items: List<AppNavItem>) {
         selectedIconColor = OnNeon,
         selectedTextColor = NeonMagenta,
         indicatorColor = NeonMagenta,
-        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
+        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
     )
     // Eine Größe für alle Beschriftungen, damit die Leiste ruhig wirkt.
     val config = LocalConfiguration.current

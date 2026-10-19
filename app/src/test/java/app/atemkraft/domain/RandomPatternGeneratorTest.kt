@@ -91,6 +91,24 @@ class RandomPatternGeneratorTest {
         }
     }
 
+    /**
+     * Charakter-Chip („ruhig“ / „sanft aktivierend“) und Familienzeile „Muster“ lesen
+     * [Exercise.activating] und [Exercise.generated] – für das Tagesmuster wie für gespeicherte Muster.
+     */
+    @Test
+    fun `Uebung traegt Charakter und Kennung generiert`() {
+        val patterns = (0L until 200L).map { RandomPatternGenerator.forSeed(it) }
+        val activating = patterns.first { it.activating }
+        val calm = patterns.first { !it.activating }
+        listOf(activating, calm).forEach { daily ->
+            assertTrue(daily.exercise.generated)
+            assertEquals(daily.spec.activating, daily.exercise.activating)
+            val saved = RandomPatternGenerator.exerciseFrom(daily.spec, "muster-1", "Mein Muster")
+            assertTrue(saved.generated)
+            assertEquals(daily.spec.activating, saved.activating)
+        }
+    }
+
     @Test
     fun `Timeline lauffaehig und Vorgabedauer um 5 Minuten`() {
         year.forEach { date ->
