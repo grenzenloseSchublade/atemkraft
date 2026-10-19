@@ -17,7 +17,8 @@ import app.atemkraft.ui.theme.Sizes
 
 /**
  * Einheitlicher Ein-/Ausklapp-Umschalter: animierter Caret + Label. Ersetzt die früher pro
- * Screen handgebauten „▾/▴"-TextButtons und liefert konsistente TalkBack-Semantik.
+ * Screen handgebauten „▾/▴"-TextButtons und liefert konsistente TalkBack-Semantik. Rechts
+ * vom Text steht [Dimens.GapTiny] Rand innerhalb der Pille.
  */
 @Composable
 fun DisclosureToggle(
@@ -32,7 +33,9 @@ fun DisclosureToggle(
         modifier = modifier.heightIn(min = Sizes.ButtonHeight).semantics {
             stateDescription = state
         },
-        contentPadding = PaddingValues(vertical = Dimens.GapTiny),
+        // Endrand: ohne ihn endet der Text genau an der Pillen-Rundung, deren Ecke (Tipp-Echo,
+        // Clip) die letzten Glyphen anschneidet (LAYOUT-03, ZUGESCHNITTEN). Vorne steht der Caret.
+        contentPadding = PaddingValues(top = Dimens.GapTiny, bottom = Dimens.GapTiny, end = Dimens.GapTiny),
     ) {
         ExpandCaret(expanded = expanded, tint = LocalContentColor.current, size = Sizes.IconInButton)
         Spacer(Modifier.width(Dimens.GapTiny))

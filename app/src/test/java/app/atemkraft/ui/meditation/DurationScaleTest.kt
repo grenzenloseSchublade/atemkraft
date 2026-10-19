@@ -2,8 +2,10 @@ package app.atemkraft.ui.meditation
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.roundToInt
 
 /** Reine Umrechnung Zeitring/Skala ↔ Minuten. */
 class DurationScaleTest {
@@ -73,50 +75,120 @@ class DurationScaleTest {
     }
 
     @Test
-    fun `DialDrag haelt den Wert an 60, bis der Finger ueber 12 Uhr zurueckkommt`() {
-        val drag = DialDrag(value = 58, raw = 58)
-        assertEquals(59, drag.move(59))
-        assertEquals(60, drag.move(60))
-        // Weiter im Uhrzeigersinn über 12 Uhr und einmal halb herum: kein Sprung auf 30/31.
-        for (raw in listOf(1, 2, 10, 29, 30, 31, 45, 56)) assertEquals("raw $raw", 60, drag.move(raw))
-        // Noch einmal über 12 Uhr im Uhrzeigersinn (56 → 2): zählt nicht doppelt.
-        assertEquals(60, drag.move(2))
-        // Zurück gegen den Uhrzeigersinn über 12 Uhr: der Wert folgt wieder dem Finger.
-        assertEquals(59, drag.move(59))
-        assertEquals(50, drag.move(50))
+    fun `DialDrag rastet ueber 60 hinaus in ∞ ein und kommt ueber 12 Uhr zurueck auf 60`() {
+        val drag = DialDrag(value = 58, at = 58f)
+        assertEquals(59, drag.move(59f))
+        assertEquals(60, drag.move(60f))
+        // Weiter im Uhrzeigersinn über 12 Uhr und einmal halb herum: ∞, kein Sprung auf 30/31.
+        for (at in listOf(1f, 2f, 10f, 29f, 30f, 31f, 45f, 56f, 58f)) assertNull("at $at", drag.move(at))
+        // Noch einmal über 12 Uhr im Uhrzeigersinn (58 → 2): bleibt ∞.
+        assertNull(drag.move(2f))
+        // Zurück gegen den Uhrzeigersinn über 12 Uhr: wieder 60, dann folgt der Wert dem Finger.
+        assertEquals(60, drag.move(59.8f))
+        assertEquals(50, drag.move(50f))
     }
 
     @Test
-    fun `DialDrag haelt den Wert an 1 gegen den Uhrzeigersinn`() {
-        val drag = DialDrag(value = 2, raw = 2)
-        assertEquals(1, drag.move(1))
-        for (raw in listOf(60, 59, 31, 30, 29, 10, 5)) assertEquals("raw $raw", 1, drag.move(raw))
+    fun `DialDrag ∞ beginnt erst hinter 12 Uhr`() {
+        val drag = DialDrag(value = 60, at = 59.9f)
+        assertEquals(60, drag.move(0.3f)) // noch vor der halben Minute hinter 12 Uhr
+        assertNull(drag.move(0.6f))
+        assertEquals(60, drag.move(0.2f)) // zurück vor 12 Uhr + ½ min: wieder 60
+    }
+
+    @Test
+    fun `DialDrag haelt den Wert an 1 gegen den Uhrzeigersinn, ohne ∞`() {
+        val drag = DialDrag(value = 2, at = 2f)
+        assertEquals(1, drag.move(1f))
+        for (at in listOf(60f, 59f, 31f, 30f, 29f, 10f, 5f)) assertEquals("at $at", 1, drag.move(at))
         // Einmal ganz herum wieder am Knopf: der Wert folgt dem Finger.
-        assertEquals(4, drag.move(4))
-        assertEquals(6, drag.move(6))
+        assertEquals(4, drag.move(4f))
+        assertEquals(6, drag.move(6.4f))
     }
 
     @Test
     fun `DialDrag folgt schnellen Spruengen und erkennt den Uebertritt`() {
-        val drag = DialDrag(value = 50, raw = 50)
-        assertEquals(60, drag.move(10)) // 50 → 10 in einem Schritt: über 12 Uhr
-        assertEquals(60, drag.move(25))
-        assertEquals(58, drag.move(58)) // 25 → 58: zurück über 12 Uhr
-        assertEquals(40, drag.move(40))
+        val drag = DialDrag(value = 50, at = 50f)
+        assertNull(drag.move(10f)) // 50 → 10 in einem Schritt: über 12 Uhr → ∞
+        assertNull(drag.move(25f))
+        assertEquals(58, drag.move(58f)) // 25 → 58: zurück über 12 Uhr
+        assertEquals(40, drag.move(40f))
     }
 
     @Test
     fun `DialDrag am Knopf gegriffen jenseits von 12 Uhr springt nicht`() {
-        // Wert 60, gegriffen rechts von 12 Uhr (unter dem Finger liegt 1).
-        val right = DialDrag(value = 60, raw = 1)
-        assertEquals(60, right.move(2))
-        assertEquals(59, right.move(59))
+        // Wert 60, gegriffen rechts von 12 Uhr (unter dem Finger liegt 1): hängt an 60, kein ∞.
+        val right = DialDrag(value = 60, at = 1f)
+        assertEquals(60, right.move(2f))
+        // Zurück links von 12 Uhr: folgt wieder (die 60-Marke hält bis 1,3 min Abstand).
+        assertEquals(60, right.move(59f))
+        assertEquals(58, right.move(58f))
         // Wert 1, gegriffen links von 12 Uhr (unter dem Finger liegt 60).
-        val left = DialDrag(value = 1, raw = 60)
-        assertEquals(1, left.move(59))
-        assertEquals(2, left.move(2))
+        val left = DialDrag(value = 1, at = 60f)
+        assertEquals(1, left.move(59f))
+        assertEquals(2, left.move(2f))
         // Normal gegriffen: folgt sofort.
-        assertEquals(13, DialDrag(value = 12, raw = 12).move(13))
+        assertEquals(13, DialDrag(value = 12, at = 12f).move(13f))
+    }
+
+    @Test
+    fun `snapMinutes faengt 5er-Marken frueher als die Rundung`() {
+        assertEquals(5, snapMinutes(4.3f, previous = 3)) // gerundet wäre es 4
+        assertEquals(5, snapMinutes(5.7f, previous = 7)) // gerundet wäre es 6
+        assertEquals(60, snapMinutes(59.3f, previous = 58))
+        assertEquals(4, snapMinutes(4.1f, previous = 3)) // außerhalb des Fangs: Rundung
+        assertEquals(6, snapMinutes(6.1f, previous = 7))
+        assertEquals(12, snapMinutes(12.4f, previous = 11))
+    }
+
+    @Test
+    fun `snapMinutes haelt an der Marke bis zum Loesen (Hysterese)`() {
+        assertEquals(5, snapMinutes(6.2f, previous = 5)) // gerundet 6, Fang allein ließe bei 5,8 los
+        assertEquals(5, snapMinutes(3.8f, previous = 5))
+        assertEquals(6, snapMinutes(6.4f, previous = 5))
+        assertEquals(4, snapMinutes(3.6f, previous = 5))
+        assertEquals(60, snapMinutes(58.8f, previous = 60))
+        assertEquals(59, snapMinutes(58.6f, previous = 60))
+    }
+
+    @Test
+    fun `snapMinutes laesst alle Zwischenwerte erreichbar`() {
+        // Langsam aufwärts und abwärts in 0,1-min-Schritten: jede Minute kommt vor.
+        for (path in listOf((10..600).map { it / 10f }, (600 downTo 10).map { it / 10f })) {
+            var value = clampMinutes(path.first().roundToInt())
+            val seen = mutableSetOf(value)
+            for (exact in path) {
+                value = snapMinutes(exact, value)
+                seen += value
+            }
+            assertEquals((1..60).toSet(), seen)
+        }
+    }
+
+    @Test
+    fun `DialDrag rastet beim Ziehen an der 5 ein und meldet die deutliche Raste`() {
+        val state = DurationPickerState(initialMinutes = 3, initialFree = false)
+        val ticks = mutableListOf<Pair<Int, Boolean>>()
+        val drag = DialDrag(state.minutes, at = 3f)
+        for (at in listOf(3.6f, 4.3f, 4.8f, 5.5f, 6.2f, 6.4f)) {
+            state.selectWithTick(drag.move(at)!!) { major -> ticks += state.minutes to major }
+        }
+        // 4 leicht, Fang an 5 deutlich, Halten an 5 ohne Raste, Lösen auf 6 leicht.
+        assertEquals(listOf(4 to false, 5 to true, 6 to false), ticks)
+    }
+
+    @Test
+    fun `∞ und zurueck melden je genau eine deutliche Raste`() {
+        val state = DurationPickerState(initialMinutes = 57, initialFree = false)
+        val ticks = mutableListOf<String>()
+        val onTick = { major: Boolean -> ticks += (if (state.free) "∞" else "${state.minutes}") + (if (major) "!" else "") }
+        val drag = DialDrag(state.minutes, at = 57f)
+        for (at in listOf(58f, 59.3f, 59.9f, 0.6f, 1f, 5f, 4f, 0.9f, 59.6f, 59.2f, 58.6f)) {
+            val next = drag.move(at)
+            if (next == null) state.selectFreeWithTick(onTick) else state.selectWithTick(next, onTick)
+        }
+        // 58 leicht, Fang an 60 deutlich, ∞ deutlich (einmal), zurück auf 60 deutlich, Lösen auf 59.
+        assertEquals(listOf("58", "60!", "∞!", "60!", "59"), ticks)
     }
 
     @Test
@@ -179,6 +251,21 @@ class DurationScaleTest {
         assertEquals(2, RulerScale.minutesAt(step * 0.6f, step)) // rundet zum nächsten Strich
         assertEquals(1, RulerScale.minutesAt(step * 0.4f, step))
         assertEquals(1, RulerScale.minutesAt(50f, 0f)) // ungültige Schrittweite
+    }
+
+    @Test
+    fun `exactMinutesAt liefert ungerundete Minuten`() {
+        assertEquals(0f, DialScale.exactMinutesAt(0f), eps)
+        assertEquals(12.5f, DialScale.exactMinutesAt(75f), eps)
+        assertEquals(59.5f, DialScale.exactMinutesAt(357f), eps)
+        assertEquals(1f, DialScale.exactMinutesAt(366f), eps)
+        assertEquals(59f, DialScale.exactMinutesAt(-6f), eps)
+        val step = 24f
+        assertEquals(1f, RulerScale.exactMinutesAt(0f, step), eps)
+        assertEquals(5.5f, RulerScale.exactMinutesAt(4.5f * step, step), eps)
+        assertEquals(61f, RulerScale.exactMinutesAt(10_000f, step), eps) // ∞-Strich
+        assertEquals(1f, RulerScale.exactMinutesAt(-100f, step), eps)
+        assertEquals(5, snapMinutes(RulerScale.exactMinutesAt(3.3f * step, step), previous = 4)) // 4,3 → Fang
     }
 
     @Test

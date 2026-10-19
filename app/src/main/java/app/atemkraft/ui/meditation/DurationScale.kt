@@ -19,6 +19,12 @@ object DialScale {
         return if (m == 0) DURATION_MAX_MINUTES else clampMinutes(m)
     }
 
+    /**
+     * Winkel → ungerundete Minuten 0..<60 (12 Uhr = 0, 6° je Minute); Grundlage für das
+     * Einrasten an 5er-Marken ([snapMinutes]) beim Ziehen.
+     */
+    fun exactMinutesAt(angleDeg: Float): Float = (((angleDeg % 360f) + 360f) % 360f) / DEG_PER_MINUTE
+
     /** Minuten → Winkel des Bogenendes; 60 ergibt 360° (voller Bogen). */
     fun angleOf(minutes: Int): Float = clampMinutes(minutes) * DEG_PER_MINUTE
 
@@ -47,41 +53,83 @@ object DialScale {
 
 /**
  * Ziehen am Zeitring ohne Sprung über 12 Uhr. Startet mit dem Wert [value] und der Fingerposition
- * [raw] (Minuten unter dem Finger). Überquert der Finger 12 Uhr über die 60 hinaus (bzw. unter
- * die 1), hängt der Wert an der Grenze, bis der Finger über 12 Uhr zurückkommt oder einmal ganz
- * herum wieder beim Knopf ist – egal wie weit er dazwischen wandert. Weitere Runden zählen nicht.
+ * [at] (ungerundete Minuten unter dem Finger, [DialScale.exactMinutesAt]). Dazwischen folgt der
+ * Wert dem Finger und rastet an den 5er-Marken magnetisch ein ([snapMinutes]).
+ *
+ * Über 12 Uhr hinaus:
+ * - im Uhrzeigersinn über die 60 hinaus → offene Sitzung (∞, [move] liefert `null`), bis der
+ *   Finger gegen den Uhrzeigersinn über 12 Uhr zurückkommt (dann wieder 60 bzw. der Wert unter
+ *   dem Finger); weitere Runden ändern nichts;
+ * - gegen den Uhrzeigersinn unter die 1 → der Wert hängt an der 1 (kein ∞), bis der Finger über
+ *   12 Uhr zurückkommt oder einmal ganz herum wieder beim Knopf ist.
+ *
+ * Am Knopf bei 60 knapp rechts von 12 Uhr gegriffen ist noch nichts überquert: der Wert hängt an
+ * der 60 (kein ∞), bis der Finger zurück links von 12 Uhr oder weiter einmal über 12 Uhr ist.
  */
-class DialDrag(value: Int, raw: Int) {
+class DialDrag(value: Int, at: Float) {
 
-    private var lastRaw = clampMinutes(raw)
+    private enum class Zone { FOLLOW, FREE, HELD_MAX, HELD_MIN }
 
-    // +1: über 60 hinaus, −1: unter 1 hinaus, 0: der Wert folgt dem Finger.
-    private var side = when (DialScale.follow(value, lastRaw)) {
-        lastRaw -> 0
-        DURATION_MAX_MINUTES -> 1
-        else -> -1
+    private var lastRaw = rawMinutes(unwrap(at))
+    private var last = clampMinutes(value)
+    private var zone = when (DialScale.follow(value, lastRaw)) {
+        lastRaw -> Zone.FOLLOW
+        DURATION_MAX_MINUTES -> Zone.HELD_MAX
+        else -> Zone.HELD_MIN
     }
 
-    /** Neue Fingerposition [raw] → Wert. */
-    fun move(raw: Int): Int {
-        val next = clampMinutes(raw)
+    /** Neue Fingerposition [at] (ungerundete Minuten) → Wert 1..60, `null` = offene Sitzung (∞). */
+    fun move(at: Float): Int? {
+        val exact = unwrap(at)
+        val next = rawMinutes(exact)
         val delta = next - lastRaw
         // Ein Sprung um mehr als eine halbe Runde heißt: über 12 Uhr (59 → 2 im Uhrzeigersinn).
-        // Ist der Finger einmal ganz herum wieder am hängenden Knopf, folgt der Wert ihm.
-        side = when {
-            delta < -HALF_ROUND -> (side + 1).coerceAtMost(1)
-            delta > HALF_ROUND -> (side - 1).coerceAtLeast(-1)
-            side == 1 && next >= DURATION_MAX_MINUTES - RELEASE_WINDOW -> 0
-            side == -1 && next <= DURATION_MIN_MINUTES + RELEASE_WINDOW -> 0
-            else -> side
+        zone = when {
+            delta < -HALF_ROUND -> if (zone == Zone.HELD_MIN) Zone.FOLLOW else Zone.FREE
+
+            delta > HALF_ROUND -> if (zone == Zone.FREE || zone == Zone.HELD_MAX) Zone.FOLLOW else Zone.HELD_MIN
+
+            // Einmal ganz herum wieder am hängenden Knopf: der Wert folgt dem Finger.
+            zone == Zone.HELD_MAX && next >= DURATION_MAX_MINUTES - RELEASE_WINDOW -> Zone.FOLLOW
+
+            zone == Zone.HELD_MIN && next <= DURATION_MIN_MINUTES + RELEASE_WINDOW -> Zone.FOLLOW
+
+            else -> zone
         }
         lastRaw = next
-        return when (side) {
-            1 -> DURATION_MAX_MINUTES
-            -1 -> DURATION_MIN_MINUTES
-            else -> next
+        last = when (zone) {
+            Zone.FOLLOW -> snapMinutes(exact, last)
+            Zone.FREE, Zone.HELD_MAX -> DURATION_MAX_MINUTES
+            Zone.HELD_MIN -> DURATION_MIN_MINUTES
         }
+        return if (zone == Zone.FREE) null else last
     }
+
+    private companion object {
+        // Ungerundete Minuten auf 0,5..<60,5: knapp rechts von 12 Uhr (unter 0,5) zählt als 60,x,
+        // damit Rundung und Fang an der 60 nicht über 12 Uhr springen.
+        fun unwrap(at: Float): Float {
+            val norm = ((at % DURATION_MAX_MINUTES) + DURATION_MAX_MINUTES) % DURATION_MAX_MINUTES
+            return if (norm < HALF_MINUTE) norm + DURATION_MAX_MINUTES else norm
+        }
+
+        fun rawMinutes(exact: Float): Int = clampMinutes(exact.roundToInt())
+    }
+}
+
+/**
+ * Magnetisches Einrasten an den 5er-Marken (Zeitring und Skala gleich): [exact] ist die
+ * ungerundete Fingerposition in Minuten, [previous] der bisherige Wert.
+ * - Steht der Wert auf einer 5er-Marke, hält er dort, bis der Finger [SNAP_RELEASE] Minuten
+ *   entfernt ist (Hysterese – der Knopf „hängt“ an der Marke).
+ * - Sonst fängt eine 5er-Marke ab [SNAP_CAPTURE] Minuten Abstand, früher als die Rundung.
+ * - Sonst die nächste Minute. Zwischenwerte (4, 6, 9, 11 …) bleiben so erreichbar.
+ */
+fun snapMinutes(exact: Float, previous: Int): Int {
+    if (DialScale.isMajor(previous) && abs(exact - previous) < SNAP_RELEASE) return clampMinutes(previous)
+    val major = (exact / MAJOR_STEP).roundToInt() * MAJOR_STEP
+    if (major >= MAJOR_STEP && abs(exact - major) <= SNAP_CAPTURE) return clampMinutes(major)
+    return clampMinutes(exact.roundToInt())
 }
 
 /**
@@ -108,6 +156,15 @@ object RulerScale {
         return clampMinutes((offsetPx / stepPx).roundToInt() + DURATION_MIN_MINUTES)
     }
 
+    /**
+     * Scroll-Versatz → ungerundete Minuten (1 = erster Strich, ∞-Strich = 61), für das Einrasten
+     * an 5er-Marken über [snapMinutes] wie am Zeitring.
+     */
+    fun exactMinutesAt(offsetPx: Float, stepPx: Float): Float {
+        if (stepPx <= 0f) return DURATION_MIN_MINUTES.toFloat()
+        return (offsetPx / stepPx + DURATION_MIN_MINUTES).coerceIn(DURATION_MIN_MINUTES.toFloat(), (FREE_INDEX + DURATION_MIN_MINUTES).toFloat())
+    }
+
     /** Minuten → Scroll-Versatz, auf dem der Strich unter der Marke steht. */
     fun offsetOf(minutes: Int, stepPx: Float): Float = (clampMinutes(minutes) - DURATION_MIN_MINUTES) * stepPx
 
@@ -123,6 +180,11 @@ private const val HALF_ROUND = DURATION_MAX_MINUTES / 2
 // Minuten vor der hängenden Grenze, ab denen der Finger den Knopf wieder mitnimmt.
 private const val RELEASE_WINDOW = 3
 private const val MAJOR_STEP = 5
+private const val HALF_MINUTE = 0.5f
+
+// Fang an 5er-Marken (Minuten Abstand): fängt ab SNAP_CAPTURE, lässt erst ab SNAP_RELEASE los.
+private const val SNAP_CAPTURE = 0.8f
+private const val SNAP_RELEASE = 1.3f
 
 /** Klemmt auf [DURATION_MIN_MINUTES]..[DURATION_MAX_MINUTES]. */
 internal fun clampMinutes(minutes: Int): Int = minutes.coerceIn(DURATION_MIN_MINUTES, DURATION_MAX_MINUTES)

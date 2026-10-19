@@ -7,6 +7,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 
 /** Maße des Zeitrings (px bei Dichte 1, also dp): Knopf greifen, Band und Mitte, 10er-Zahlen. */
@@ -34,11 +35,11 @@ class TimeDialGeometryTest {
             val right = onTrack(geo, c, 4.0)
             assertEquals(1, DialScale.minutesAt(DialScale.angleOf(right.x, right.y, c.x, c.y)))
             assertTrue("side $side: Knopf greifbar", geo.isOnKnob(right, c, 60))
-            assertEquals(60, DialDrag(value = 60, raw = 1).move(2))
+            assertEquals(60, DialDrag(value = 60, at = DialScale.exactMinutesAt(DialScale.angleOf(right.x, right.y, c.x, c.y))).move(2f))
             // Linke Knopfhälfte bei 1 min: unter dem Finger liegt 60.
             val left = onTrack(geo, c, 2.0)
             assertTrue(geo.isOnKnob(left, c, 1))
-            assertEquals(1, DialDrag(value = 1, raw = 60).move(59))
+            assertEquals(1, DialDrag(value = 1, at = DialScale.exactMinutesAt(DialScale.angleOf(left.x, left.y, c.x, c.y))).move(59f))
             // Weit weg vom Knopf: Tippen setzt den Wert.
             assertFalse(geo.isOnKnob(onTrack(geo, c, 90.0), c, 60))
         }
@@ -65,6 +66,28 @@ class TimeDialGeometryTest {
     fun `kleiner Ring bei grosser Schrift zeigt nur die 10er`() {
         assertEquals(listOf(10, 20, 30, 40, 50), geometry(200f, IntSize(28, 20)).numerals)
         assertEquals((5 until 60 step 5).toList(), geometry(360f, IntSize(14, 10)).numerals)
+    }
+
+    @Test
+    fun `∞-Knopf umfasst das Zeichen und haelt Abstand zu Rand, Strichen und Nachbarzahlen`() {
+        for (side in listOf(200f, 240f, 300f, 360f)) {
+            for (numeral in listOf(IntSize(14, 10), IntSize(28, 20))) {
+                val numerals = (5 until 60 step 5).associateWith { numeral }
+                // ∞ ist breiter als hoch gemessen, die Zeile aber höher als das Zeichen.
+                val mark = IntSize(numeral.height, numeral.height * 3 / 2)
+                val geo = dialGeometry(side, numerals, mark, touch)
+                val where = "side $side, Zahl $numeral"
+                val reach = geo.markRadius + geo.tickWidth / 2f
+                assertTrue("$where: Zeichen im Kreis", geo.markRadius > mark.width / 2f)
+                assertTrue("$where: Kreis im Bild", geo.numeralRadius + reach <= side / 2f)
+                assertTrue("$where: Kreis über den Strichen", geo.numeralRadius - reach >= geo.tickOuter)
+                // Nächste Zahl neben ∞: 5 bzw. 10 (nur 10er), Mitte zu Mitte als Sehne.
+                val step = if (5 in geo.numerals) 30.0 else 60.0
+                val chord = 2f * geo.numeralRadius * sin(Math.toRadians(step / 2)).toFloat()
+                assertTrue("$where: Luft zur Nachbarzahl", chord - reach - hypot(numeral.width / 2f, numeral.height / 2f) > 0f)
+                assertTrue("$where: Tippfläche ≥ 48 dp und um den Kreis", geo.markTouch >= touch && geo.markTouch >= 2f * reach)
+            }
+        }
     }
 
     @Test

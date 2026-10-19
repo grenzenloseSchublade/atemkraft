@@ -4,10 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
@@ -21,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
@@ -49,6 +55,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.components.AdaptiveButtonRow
@@ -82,6 +89,7 @@ import org.robolectric.annotation.GraphicsMode
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Echte Tap-Injektion um jedes zentrale Bedienelement (A11Y-05): Die sichtbare Fläche folgt der
@@ -341,6 +349,34 @@ class ControlTouchTest(private val fontScale: Float) {
     }
 
     @Test
+    fun `Pruefung erkennt Text, den eine Rundung anschneidet`() {
+        // Selbsttest für TextClipFindings: links das Fehlerbild aus v1.6.5 (Rundung eng um die
+        // Anzeige, „Minuten“ unten links in der Ecke), daneben eine runde Scheibe mit Luft um den
+        // Text, rechts zentrierter Text mit Mindestbreite am Ende einer runden Karte wie der
+        // Stepper-Wert (sein Layout ist mit der ganzen Kartenbreite gesetzt – früher Fehlalarm).
+        show {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.size(64.dp, 48.dp).clip(RoundedCornerShape(16.dp))) {
+                    Text("Minuten", maxLines = 1, softWrap = false, modifier = Modifier.align(Alignment.BottomStart))
+                }
+                Box(Modifier.size(160.dp).clip(CircleShape), contentAlignment = Alignment.Center) { Text("Minuten") }
+                Row(Modifier.width(160.dp).clip(RoundedCornerShape(16.dp)), verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.weight(1f))
+                    Text("10", textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 40.dp).padding(vertical = 12.dp))
+                    Spacer(Modifier.width(16.dp))
+                }
+            }
+        }
+        val (tight, roomy, centered) = compose
+            .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .sortedBy { it.positionInRoot.x }
+        assertEquals("enge Rundung nicht erkannt (fs$fontScale)", listOf("Minuten"), TextClipFindings.findings(tight))
+        assertEquals("Scheibe mit Luft fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(roomy))
+        assertEquals("zentrierter Wert fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(centered))
+    }
+
+    @Test
     fun `Zeitring - ∞-Marke 48 dp, Mitte schaltet nur die Feinwahl, Band und Regler stellen den Wert`() {
         val app = RuntimeEnvironment.getApplication()
         for (sideDp in listOf(200, 360)) {
@@ -370,6 +406,35 @@ class ControlTouchTest(private val fontScale: Float) {
                 assertEquals("$where: Wert nach Tipp in die Mitte ($dy dp)", 30, state.minutes)
                 assertTrue("$where: Feinwahl umgeschaltet ($dy dp)", state.fineAdjust != before)
             }
+
+            // Die Tippfläche der Mitte ist die ganze innere Scheibe: rund (schräg knapp innen
+            // trifft, die Ecke ihres Quadrats nicht) und EIN Knopf „Feinwahl“ mit Zustand.
+            val fine = SemanticsMatcher("Feinwahl der Mitte") { it.config.getOrNull(SemanticsActions.OnClick)?.label == app.getString(R.string.cd_meditation_dial_fine) }
+            val disk = compose.onNode(fine, useUnmergedTree = true).fetchSemanticsNode()
+            assertEquals(Role.Button, disk.config.getOrNull(SemanticsProperties.Role))
+            val radius = disk.size.width / 2f
+            val diagonal = Offset(1f, 1f) / sqrt(2f)
+            run {
+                val before = state.fineAdjust
+                tap(c + diagonal * (radius - 3 * density))
+                assertTrue("$where: Rand der Scheibe schaltet die Feinwahl", state.fineAdjust != before)
+                val expected = app.getString(if (state.fineAdjust) R.string.meditation_dial_fine_on else R.string.meditation_dial_fine_off)
+                val said = compose.onNode(fine, useUnmergedTree = true).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
+                assertEquals("$where: Zustand der Feinwahl", expected, said)
+                tap(c + Offset(radius, radius) - Offset(2 * density, 2 * density))
+                assertEquals("$where: Ecke außerhalb der Scheibe schaltet nicht", !before, state.fineAdjust)
+            }
+
+            // Bei offener Feinwahl liegen − und + als eigene Knöpfe über der Scheibe.
+            state.select(30)
+            if (!state.fineAdjust) state.toggleFineAdjust()
+            compose.waitForIdle()
+            val plus = compose.onNodeWithContentDescription(app.getString(R.string.cd_meditation_dial_more), useUnmergedTree = true).fetchSemanticsNode()
+            tap(plus.boundsInRoot.center)
+            assertEquals("$where: + über der Scheibe", 31, state.minutes)
+            assertTrue("$where: + lässt die Feinwahl offen", state.fineAdjust)
+            state.toggleFineAdjust()
+            compose.waitForIdle()
 
             // Ziehen am Rand des Bands von 3 Uhr nach 6 Uhr stellt 15 → 30.
             state.select(40)

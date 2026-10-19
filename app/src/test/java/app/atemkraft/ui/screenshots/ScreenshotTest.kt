@@ -204,11 +204,11 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     private val wordBreaks = mutableListOf<String>()
     private val controlProblems = mutableListOf<String>()
 
-    /** LAYOUT-03: Kein Wort bricht um, kein Text wird gekürzt – auf keiner Breite, bei keiner Schriftgröße. */
+    /** LAYOUT-03: Kein Wort bricht um, kein Text wird gekürzt oder angeschnitten – auf keiner Breite, bei keiner Schriftgröße. */
     @After
     fun noWordBreaks() {
         if (wordBreaks.isNotEmpty()) {
-            fail("Text bricht im Wort um oder wird gekürzt (LAYOUT-03):\n" + wordBreaks.joinToString("\n"))
+            fail("Text bricht im Wort um, wird gekürzt oder angeschnitten (LAYOUT-03):\n" + wordBreaks.joinToString("\n"))
         }
     }
 
@@ -233,7 +233,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      * - `WORTBRUCH`: Umbruch mitten im Wort oder vor Bindestrich/Satzzeichen (`badBreakAt`),
      * - `GETRENNT`: dasselbe mit `Hyphens.Auto` (Trennstrich gesetzt; zur Durchsicht),
      * - `ABGESCHNITTEN`: Text per Ellipse gekürzt oder über maxLines/Höhe hinaus ausgeblendet,
-     * - `CHIP_UMBRUCH`: Chip-Text über mehr als eine Zeile (z. B. zweiter Chip zusammengedrückt).
+     * - `CHIP_UMBRUCH`: Chip-Text über mehr als eine Zeile (z. B. zweiter Chip zusammengedrückt),
+     * - `ZUGESCHNITTEN`: eine runde Form (clip) schneidet Glyphen an ([TextClipFindings]).
      */
     private fun textBreaks(screen: String): List<String> {
         val nodes = compose.onAllNodes(
@@ -262,7 +263,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 // Chips bleiben einzeilig; zu viele Chips brechen zwischen den Chips um (TitleWithChips).
                 val chipWrap = node.config.getOrNull(SemanticsProperties.TestTag) == CHIP_TEXT_TAG && layout.lineCount > 1
                 breaks + clipped + if (chipWrap) listOf("CHIP_UMBRUCH\t$screen\t$text") else emptyList()
-            }
+            } + TextClipFindings.findings(node).map { "ZUGESCHNITTEN\t$screen\t$it" }
         }.map { "${device.name}\tfs${(fontScale * 100).toInt()}\t$it".replace("\n", "⏎") }
     }
 

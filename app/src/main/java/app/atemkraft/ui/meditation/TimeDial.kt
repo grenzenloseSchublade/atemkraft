@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,9 +47,9 @@ import kotlin.math.sin
 /**
  * Zeitring (Variante E der Dauerwahl): ein 60-Minuten-Zifferblatt wie ein Küchenwecker, 12 Uhr
  * oben, im Uhrzeigersinn. Ziehen am Ringband oder Tippen auf Band und Zahlen setzt die Dauer
- * (am Knopf gegriffen ohne Sprung), die ∞-Marke oben die offene Sitzung (Bogen voll, Pink). Ein
- * Tipp auf die Zeit bzw. in die Mitte öffnet die Feinwahl (− / + je Minute), ein zweiter schließt
- * sie.
+ * (am Knopf gegriffen ohne Sprung), die ∞-Marke oben – ein kleiner umrandeter Knopf – die offene
+ * Sitzung (Knopf und Bogen voll Pink). Ein Tipp irgendwo in die innere Scheibe öffnet die Feinwahl
+ * (− / + je Minute), ein zweiter schließt sie.
  *
  * Reine Darstellung: Wert und Regeln (Raste, ∞, Feinwahl) liegen in [DurationPickerState] und
  * [DialScale]/[DialDrag]; Mitte, Texte, TalkBack-Regler und ∞-Marke kommen aus DurationReadout.kt.
@@ -124,13 +125,15 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
                                 return@awaitEachGesture
                             }
                             down.consume()
-                            val raw = minutesAt(down.position, c)
                             // Am Knopf gegriffen bleibt der Wert stehen, bis der Finger zieht;
-                            // sonst springt der Tipp direkt auf den Wert.
-                            if (state.free || !geo.isOnKnob(down.position, c, state.minutes)) state.selectWithTick(raw, currentOnTick)
-                            val follow = DialDrag(state.minutes, raw)
+                            // sonst springt der Tipp direkt auf den gerundeten Wert (ohne Fang,
+                            // damit ein Tipp neben eine 5er-Marke den Zwischenwert trifft).
+                            if (state.free || !geo.isOnKnob(down.position, c, state.minutes)) state.selectWithTick(minutesAt(down.position, c), currentOnTick)
+                            // Ziehen: Fang an 5er-Marken, über 12 Uhr hinaus ∞ bzw. Halt an der 1 (DialDrag).
+                            val follow = DialDrag(state.minutes, exactMinutesAt(down.position, c))
                             drag(down.id) { change ->
-                                state.selectWithTick(follow.move(minutesAt(change.position, c)), currentOnTick)
+                                val next = follow.move(exactMinutesAt(change.position, c))
+                                if (next == null) state.selectFreeWithTick(currentOnTick) else state.selectWithTick(next, currentOnTick)
                                 change.consume()
                             }
                         }
@@ -174,8 +177,14 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
                     val accent = !free && n == minutes
                     drawCentered(layout, c + direction(DialScale.angleOf(n)) * geo.numeralRadius, if (accent) colors.secondary else colors.onSurfaceVariant)
                 }
-                // ∞-Marke oben
-                drawCentered(mark, c + direction(0f) * geo.numeralRadius, if (free) colors.primary else colors.onSurfaceVariant)
+                // ∞-Marke oben als kleiner Knopf: dünn umrandet, gewählt Pink gefüllt.
+                val markAt = c + direction(0f) * geo.numeralRadius
+                if (free) {
+                    drawCircle(colors.primary, radius = geo.markRadius, center = markAt)
+                } else {
+                    drawCircle(colors.outline, radius = geo.markRadius, center = markAt, style = Stroke(geo.tickWidth))
+                }
+                drawCentered(mark, markAt, if (free) colors.onPrimary else colors.onSurfaceVariant)
                 if (!free) {
                     val dir = direction(DialScale.angleOf(minutes))
                     val knob = c + dir * geo.trackRadius
@@ -189,9 +198,9 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
                 }
             }
 
-            // ∞-Marke: runde 48-dp-Tippfläche mittig über dem Zeichen. Sie darf oben über den Ring
-            // hinausragen; als oberste Ebene gewinnt sie gegen das Ringband darunter.
-            val markHalf = touchPx / 2f
+            // ∞-Marke: runde Tippfläche (≥ 48 dp, umfasst den Knopf) mittig über dem Zeichen. Sie
+            // darf oben über den Ring hinausragen; über dem Canvas gewinnt sie gegen das Ringband.
+            val markHalf = geo.markTouch / 2f
             Box(
                 modifier = Modifier
                     .offset {
@@ -200,8 +209,18 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
                             y = (sidePx / 2f - geo.numeralRadius - markHalf).roundToInt(),
                         )
                     }
-                    .size(Dimens.MinTouchTarget)
+                    .size(with(density) { geo.markTouch.toDp() })
                     .freeMark(state, texts, currentOnTick),
+            )
+
+            // Mitte: die ganze innere Scheibe (bis zum Band) schaltet die Feinwahl, mit rundem
+            // Tipp-Echo. Zeit und Einheit liegen darüber, ohne Tippziel und ohne Zuschnitt; − und +
+            // darüber bleiben eigene Knöpfe.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(with(density) { (geo.bandInner * 2f).toDp() })
+                    .fineToggle(state, texts, CircleShape),
             )
 
             DurationReadout(
@@ -218,10 +237,14 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
 /** Minuten unter dem Punkt [p] (Mitte [c]). */
 private fun minutesAt(p: Offset, c: Offset): Int = DialScale.minutesAt(DialScale.angleOf(p.x, p.y, c.x, c.y))
 
+/** Ungerundete Minuten unter dem Punkt [p] (Mitte [c]), 0..<60. */
+private fun exactMinutesAt(p: Offset, c: Offset): Float = DialScale.exactMinutesAt(DialScale.angleOf(p.x, p.y, c.x, c.y))
+
 /**
  * Maße des Zifferblatts in px, alle aus der Kantenlänge [side] abgeleitet; nur die Zahlen
  * bringen ihre gemessene Größe mit (Systemschrift). Von außen nach innen: Zahlen, Striche,
- * Spur mit Knopf, Label am Knopf, Mitte ([contentRadius]).
+ * Spur mit Knopf, Label am Knopf, Mitte ([contentRadius]). [markRadius] ist der Kreis um ∞ (Rand
+ * so dünn wie [tickWidth]), [markTouch] der Durchmesser seiner Tippfläche.
  */
 internal class DialGeometry(
     val numeralRadius: Float,
@@ -238,6 +261,8 @@ internal class DialGeometry(
     val bandInner: Float,
     val knobGrab: Float,
     val capDeg: Float,
+    val markRadius: Float,
+    val markTouch: Float,
     val numerals: List<Int>,
 ) {
     /** Liegt [p] auf dem Knopf bei [minutes] (mindestens 48 dp Durchmesser)? */
@@ -247,8 +272,12 @@ internal class DialGeometry(
 internal fun dialGeometry(side: Float, numerals: Map<Int, IntSize>, mark: IntSize, touch: Float): DialGeometry {
     val half = side / 2f
     val widest = numerals.values.maxOf { it.width }.toFloat()
-    val labelHalf = max(numerals.values.maxOf { max(it.width, it.height) }, max(mark.width, mark.height)) / 2f
     val gap = side * GAP_FRACTION
+    val tickWidth = side * TICK_WIDTH_FRACTION
+    // ∞-Knopf: so hoch wie eine Zahl, das Zeichen mit einer Lücke Luft zum Rand; wächst mit
+    // Schrift und Ring.
+    val markRadius = max(numerals.values.maxOf { it.height } / 2f, mark.width / 2f + gap)
+    val labelHalf = maxOf(numerals.values.maxOf { max(it.width, it.height) } / 2f, max(mark.width, mark.height) / 2f, markRadius + tickWidth / 2f)
     val numeralRadius = half - labelHalf - gap
     val tickOuter = numeralRadius - labelHalf - gap
     val tickMajor = side * TICK_MAJOR_FRACTION
@@ -260,13 +289,13 @@ internal fun dialGeometry(side: Float, numerals: Map<Int, IntSize>, mark: IntSiz
     val contentRadius = trackRadius - knobRadius - gap
     // 5er-Zahlen nur, wenn zwischen zwei Nachbarn reichlich Luft bleibt; sonst nur die 10er.
     val fiveStep = (2f * PI.toFloat() * numeralRadius) / (DURATION_MAX_MINUTES / MAJOR_STEP)
-    val every = if (fiveStep < widest * NUMERAL_SPACING) MAJOR_STEP * 2 else MAJOR_STEP
+    val every = if (fiveStep < max(widest, markRadius * 2f) * NUMERAL_SPACING) MAJOR_STEP * 2 else MAJOR_STEP
     return DialGeometry(
         numeralRadius = numeralRadius,
         tickOuter = tickOuter,
         tickMajor = tickMajor,
         tickMinor = tickMajor * TICK_MINOR_RATIO,
-        tickWidth = side * TICK_WIDTH_FRACTION,
+        tickWidth = tickWidth,
         trackRadius = trackRadius,
         trackWidth = trackWidth,
         knobRadius = knobRadius,
@@ -277,6 +306,9 @@ internal fun dialGeometry(side: Float, numerals: Map<Int, IntSize>, mark: IntSiz
         bandInner = max(trackRadius - max(trackWidth, touch / 2f), contentRadius),
         knobGrab = max(knobRadius + knobOutline, touch / 2f),
         capDeg = Math.toDegrees((trackWidth / 2f / trackRadius).toDouble()).toFloat(),
+        markRadius = markRadius,
+        // Tipp-Echo umfasst den ganzen Knopf samt Rand, mindestens 48 dp.
+        markTouch = max(touch, (markRadius + tickWidth) * 2f),
         numerals = (every until DURATION_MAX_MINUTES step every).toList(),
     )
 }

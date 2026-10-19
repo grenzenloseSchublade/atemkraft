@@ -17,14 +17,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -33,6 +34,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.selected
@@ -51,8 +53,8 @@ import kotlin.math.roundToInt
 
 /*
  * Bausteine, die jede Darstellung der Dauerwahl teilt (Zeitring E, später Skala F): Anzeige in
- * der Mitte mit Feinwahl, Texte, TalkBack-Schieberegler und ∞-Marke. Eine neue Darstellung
- * zeichnet nur Skala und Gesten und setzt diese Teile ein.
+ * der Mitte mit Feinwahl und ihrer Tippfläche, Texte, TalkBack-Schieberegler und ∞-Marke. Eine
+ * neue Darstellung zeichnet nur Skala und Gesten und setzt diese Teile ein.
  */
 
 /** Texte der Dauerwahl zum aktuellen Zustand (Anzeige und TalkBack). */
@@ -94,7 +96,7 @@ internal fun durationUnitSamples(): List<String> = listOf(
     stringResource(R.string.meditation_dial_free_unit),
 )
 
-/** Polster links/rechts von Zahl und Einheit (Rand des Tipp-Echos, Abstand zu − / +). */
+/** Polster links/rechts von Zahl und Einheit (Abstand zu − / +). */
 internal val DurationReadoutPad = Dimens.GapTiny
 
 /** Schrift der Einheit unter der Zahl. */
@@ -119,7 +121,10 @@ internal fun Modifier.durationSlider(state: DurationPickerState, texts: Duration
     }
 }
 
-/** Antippbare ∞-Marke: runde Tippfläche (Größe ≥ 48 dp legt der Aufrufer fest), Name und Auswahl. */
+/**
+ * Antippbare ∞-Marke: runde Tippfläche mit rundem Tipp-Echo, Name und Auswahl. Die Größe legt der
+ * Aufrufer fest – mindestens 48 dp und so groß, dass das Echo die gezeichnete Marke ganz umfasst.
+ */
 internal fun Modifier.freeMark(state: DurationPickerState, texts: DurationTexts, onTick: (major: Boolean) -> Unit): Modifier = this
     .clip(CircleShape)
     .clickable(role = Role.Button, interactionSource = null, indication = ripple()) { state.selectFreeWithTick(onTick) }
@@ -129,9 +134,26 @@ internal fun Modifier.freeMark(state: DurationPickerState, texts: DurationTexts,
     }
 
 /**
- * Zeit + Einheit; ein Tipp öffnet/schließt die Feinwahl, dann stehen − und + (je 1 min,
- * 48-dp-Tippfläche) links und rechts der Zahl. [numberStyle] wählt die Darstellung passend zu
- * ihrem Platz ([fitNumberStyle]); die Zahl ist mindestens so breit wie „60“, damit nichts springt.
+ * Tippfläche der Feinwahl unter der [DurationReadout]: [shape] begrenzt Treffer und Tipp-Echo (beim
+ * Zeitring die ganze innere Scheibe), die Anzeige darüber bleibt ungeschnitten. Die Fläche spricht
+ * für die Anzeige: Wert, „Feinwahl an/aus“, Rolle Button; nur bei offener Feinwahl als
+ * Live-Region, denn sonst sagt der Schieberegler den Wert an.
+ */
+internal fun Modifier.fineToggle(state: DurationPickerState, texts: DurationTexts, shape: Shape): Modifier = this
+    .clip(shape)
+    .clickable(role = Role.Button, onClickLabel = texts.fineAction, interactionSource = null, indication = ripple(), onClick = state::toggleFineAdjust)
+    .semantics {
+        contentDescription = texts.sliderState
+        stateDescription = texts.fineState
+        if (state.fineAdjust) liveRegion = LiveRegionMode.Polite
+    }
+
+/**
+ * Zeit + Einheit; bei offener Feinwahl stehen − und + (je 1 min, 48-dp-Tippfläche) links und
+ * rechts der Zahl. Zahl und Einheit selbst sind nicht antippbar und nie zugeschnitten: Den Tipp
+ * nimmt die Fläche darunter ([fineToggle]), die auch für TalkBack spricht. [numberStyle] wählt die
+ * Darstellung passend zu ihrem Platz ([fitNumberStyle]); die Zahl ist mindestens so breit wie
+ * „60“, damit nichts springt.
  */
 @Composable
 internal fun DurationReadout(
@@ -165,17 +187,8 @@ internal fun DurationReadout(
             }
         }
         Column(
-            modifier = Modifier
-                .minimumInteractiveComponentSize()
-                .clip(MaterialTheme.shapes.large)
-                .clickable(role = Role.Button, onClickLabel = texts.fineAction, interactionSource = null, indication = ripple(), onClick = state::toggleFineAdjust)
-                .semantics {
-                    stateDescription = texts.fineState
-                    // Den Wert sagt der Schieberegler an; nur bei − / + (Fokus auf dem Knopf)
-                    // braucht die Anzeige eine eigene Ansage.
-                    if (fineAdjust) liveRegion = LiveRegionMode.Polite
-                }
-                .padding(horizontal = DurationReadoutPad),
+            // Kein Tippziel, kein Zuschnitt: Taps fallen auf [fineToggle] darunter.
+            modifier = Modifier.padding(horizontal = DurationReadoutPad),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -185,9 +198,9 @@ internal fun DurationReadout(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 softWrap = false,
-                modifier = Modifier.widthIn(min = numberMinWidth),
+                modifier = Modifier.widthIn(min = numberMinWidth).then(SpokenByToggle),
             )
-            Text(text = texts.unit, style = durationUnitStyle, color = colors.onSurfaceVariant, maxLines = 1, softWrap = false)
+            Text(text = texts.unit, style = durationUnitStyle, color = colors.onSurfaceVariant, maxLines = 1, softWrap = false, modifier = SpokenByToggle)
         }
         AnimatedVisibility(
             visible = fineAdjust,
@@ -204,6 +217,14 @@ internal fun DurationReadout(
         }
     }
 }
+
+/**
+ * Zahl und Einheit sind für TalkBack kein eigener Stopp: [fineToggle] sagt Wert und Zustand an.
+ * Nicht `clearAndSetSemantics`, damit die Text-Layouts für die Umbruch- und Zuschnittprüfung im
+ * Screenshot-Test sichtbar bleiben.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+private val SpokenByToggle = Modifier.semantics { invisibleToUser() }
 
 /**
  * Halbe Maße der [DurationReadout] in px: [textHalfWidth]/[textHalfHeight] für Zahl + Einheit,

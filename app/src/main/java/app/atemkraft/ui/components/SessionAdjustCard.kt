@@ -70,7 +70,7 @@ fun SessionAdjustCard(
                             text = "· " + stringResource(R.string.adjust_modified),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                            modifier = Modifier.padding(start = Dimens.GapTiny),
+                            // Abstand zum Umschalter: dessen Endrand (Dimens.GapTiny) in der Pille.
                         )
                     }
                 }

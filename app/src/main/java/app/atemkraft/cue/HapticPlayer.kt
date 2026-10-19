@@ -3,8 +3,11 @@ package app.atemkraft.cue
 import android.content.Context
 import android.media.AudioAttributes
 import android.os.Build
+import android.os.SystemClock
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
+import android.os.VibrationEffect.Composition.PRIMITIVE_CLICK
+import android.os.VibrationEffect.Composition.PRIMITIVE_TICK
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.annotation.RequiresApi
@@ -19,11 +22,16 @@ import androidx.annotation.RequiresApi
  * Alles läuft als Alarm-Vibration, auch der Tipp-Tick, damit es NICHT an der System-Einstellung
  * für Berührungs-Vibration (`Settings.System.HAPTIC_FEEDBACK_ENABLED`) hängt: Ist sie aus,
  * verwerfen manche Geräte (u. a. Samsung) Touch-Vibrationen still, und der Tick wäre trotz
- * eingeschaltetem App-Schalter weg (Nutzerentscheidung 2026-10-08, AUDIO-05). Abschalten lässt
- * sich alles über den App-Schalter. Ab API 33 über [VibrationAttributes], davor über die
- * gleichwertige [AudioAttributes]-Usage.
+ * eingeschaltetem App-Schalter weg (Nutzerentscheidung 2026-10-08, AUDIO-05). Alarm läuft auch im
+ * Energiesparmodus und bei Lautlos; das gilt für jede Effekt-Art (One-Shot, vordefiniert,
+ * Primitive) gleich – die Usage entscheidet über Zulassen und Stärke-Einstellung, nicht der
+ * Effekt (AOSP `VibrationSettings`, Stand 2026-10). Abschalten lässt sich alles über den
+ * App-Schalter. Ab API 33 über [VibrationAttributes], davor über die gleichwertige
+ * [AudioAttributes]-Usage.
+ *
+ * [clock] (Millisekunden, monoton) nur für die Drosselung der Rasten; in Tests injizierbar.
  */
-class HapticPlayer(context: Context) {
+class HapticPlayer(context: Context, private val clock: () -> Long = SystemClock::uptimeMillis) {
 
     private val vibrator: Vibrator? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -33,13 +41,28 @@ class HapticPlayer(context: Context) {
             context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
 
+    // Fähigkeiten des Motors ändern sich nicht: einmal beim ersten Tick ermitteln.
+    private val tickKind: TickKind by lazy { tickKindOf(vibrator) }
+    private val tickGate = TickGate()
+
     /**
-     * Sanftes UI-Tick (Kreis-Tap, Raste des Dauer-Reglers je Minute): kurz und leise –
-     * Bestätigung, kein Cue. [strong]: deutlichere Raste (Dauer-Regler je 5 Minuten).
+     * Raste: sanfter Tick (Kreis-Tap, Dauer-Regler je Minute); [strong]: satter, deutlich
+     * abgesetzter Klick (Dauer-Regler je 5 Minuten, ∞).
+     *
+     * Jeder neue Vibrationsauftrag bricht den laufenden ab (gleiche Usage). Dichte Ticks beim
+     * schnellen Ziehen löschten sich so gegenseitig aus, bevor der Motor anlief – am Galaxy A54
+     * kam gar nichts an. Darum gedrosselt ([TickGate]); ein Klick geht immer durch.
+     *
+     * Effekt nach Gerät, vom satten zum einfachen: Primitive ab API 30, falls der Motor sie kann
+     * (Tick leise, Klick volle Skala); sonst vordefinierte Effekte (ab API 30 nur, wenn der Motor
+     * sie sicher kann – sonst spielt das System eine Ersatz-Wellenform unbekannter Stärke; API 29
+     * kann es nicht abfragen und nimmt sie mit Ersatz); sonst One-Shot mit voller Amplitude, lang
+     * genug, dass auch ein träger Motor anläuft.
      */
     fun tick(enabled: Boolean, strong: Boolean = false) {
         if (!enabled) return
-        vibrate(if (strong) VibrationEffect.createOneShot(40, 255) else VibrationEffect.createOneShot(25, 130))
+        if (!tickGate.admit(strong, clock())) return
+        vibrate(tickEffect(tickKind, strong))
     }
 
     /** Phasen- und End-Haptik; nur bei eingeschaltetem App-Schalter „Vibration“. */
@@ -81,3 +104,76 @@ class HapticPlayer(context: Context) {
             .build()
     }
 }
+
+/**
+ * Drosselung der Rasten: Ein leichter Tick geht nur durch, wenn der vorige ausgeklungen ist
+ * ([TICK_GAP_MS] nach einem Tick, [STRONG_GAP_MS] nach einem Klick); ein Klick ([admit] mit
+ * `strong`) geht immer durch und hat Vorrang. Zeit [now] in Millisekunden, monoton.
+ */
+internal class TickGate {
+
+    private var quietUntil = Long.MIN_VALUE
+
+    /** Darf die Raste jetzt spielen? Merkt sie sich dann als zuletzt gespielte. */
+    fun admit(strong: Boolean, now: Long): Boolean {
+        if (!strong && now < quietUntil) return false
+        quietUntil = now + if (strong) STRONG_GAP_MS else TICK_GAP_MS
+        return true
+    }
+}
+
+/** Effekt-Art der Rasten, nach Fähigkeit des Motors. */
+private enum class TickKind { PRIMITIVES, PREDEFINED, ONE_SHOT }
+
+private fun tickKindOf(v: Vibrator?): TickKind = when {
+    v == null -> TickKind.ONE_SHOT
+
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> when {
+        supportsPrimitives(v) -> TickKind.PRIMITIVES
+        supportsPredefined(v) -> TickKind.PREDEFINED
+        else -> TickKind.ONE_SHOT
+    }
+
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> TickKind.PREDEFINED
+
+    else -> TickKind.ONE_SHOT
+}
+
+// Die Abfragen gehen über den Vibrator-Dienst des Herstellers; scheitert eine, bleibt der
+// sichere One-Shot statt gar keiner Raste.
+@RequiresApi(Build.VERSION_CODES.R)
+private fun supportsPrimitives(v: Vibrator): Boolean = runCatching { v.areAllPrimitivesSupported(PRIMITIVE_TICK, PRIMITIVE_CLICK) }.getOrDefault(false)
+
+@RequiresApi(Build.VERSION_CODES.R)
+private fun supportsPredefined(v: Vibrator): Boolean = runCatching {
+    v.areAllEffectsSupported(VibrationEffect.EFFECT_TICK, VibrationEffect.EFFECT_HEAVY_CLICK) == Vibrator.VIBRATION_EFFECT_SUPPORT_YES
+}.getOrDefault(false)
+
+private fun tickEffect(kind: TickKind, strong: Boolean): VibrationEffect = when {
+    kind == TickKind.PRIMITIVES && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> primitiveTick(strong)
+    kind == TickKind.PREDEFINED && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> predefinedTick(strong)
+    else -> VibrationEffect.createOneShot(if (strong) STRONG_ONE_SHOT_MS else TICK_ONE_SHOT_MS, FULL_AMPLITUDE)
+}
+
+@RequiresApi(Build.VERSION_CODES.R)
+private fun primitiveTick(strong: Boolean): VibrationEffect {
+    val primitive = if (strong) PRIMITIVE_CLICK else PRIMITIVE_TICK
+    val scale = if (strong) STRONG_PRIMITIVE_SCALE else TICK_PRIMITIVE_SCALE
+    return VibrationEffect.startComposition().addPrimitive(primitive, scale).compose()
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+private fun predefinedTick(strong: Boolean): VibrationEffect = VibrationEffect.createPredefined(if (strong) VibrationEffect.EFFECT_HEAVY_CLICK else VibrationEffect.EFFECT_TICK)
+
+// Mindestabstand nach einem Tick bzw. Klick (länger als der One-Shot, damit nichts abreißt).
+internal const val TICK_GAP_MS = 40L
+internal const val STRONG_GAP_MS = 80L
+
+// One-Shot-Rasten: kurz, aber lang genug für träge Motoren (25 ms @130 kam am A54 nicht an).
+internal const val TICK_ONE_SHOT_MS = 30L
+internal const val STRONG_ONE_SHOT_MS = 60L
+private const val FULL_AMPLITUDE = 255
+
+// Primitive: der Tick leise und klar vom Klick abgesetzt, der Klick mit voller Skala.
+internal const val TICK_PRIMITIVE_SCALE = 0.6f
+internal const val STRONG_PRIMITIVE_SCALE = 1f
