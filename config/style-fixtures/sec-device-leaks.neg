@@ -1,0 +1,3 @@
+// Log.d nur zum Debuggen, nie committen
+val catalog = VoiceCatalog.byId(id)
+val dialog = LogbookDialog()

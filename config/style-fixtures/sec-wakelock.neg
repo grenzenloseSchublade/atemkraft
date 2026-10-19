@@ -1,0 +1,2 @@
+pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "atemkraft:meditation")
+acquire(WAKELOCK_TIMEOUT_MS)

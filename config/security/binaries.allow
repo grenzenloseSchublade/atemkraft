@@ -1,0 +1,7 @@
+# Eingecheckte Binärdateien (docs/SECURITY.md SEC-SUP-02, SEC-REPO-01), geprüft von sec-pinned-inputs.
+# <pfad> [sha256] – „sha256“: daneben liegt <pfad>.sha256, und derselbe Hash steht im
+# Herkunftsnachweis von SECURITY.md. Eine neue Zeile nur mit Herkunft und Grund im selben Commit.
+app/libs/sherpa-onnx-1.13.6.aar sha256
+gradle/wrapper/gradle-wrapper.jar sha256
+# Öffentlicher Debug-Keystore (Passwort „android“); signiert nie ein verteiltes Artefakt (SEC-BUILD-01).
+app/debug.keystore

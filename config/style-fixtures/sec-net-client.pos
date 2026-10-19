@@ -1,0 +1,4 @@
+val conn = URL(spec).openConnection()
+import okhttp3.OkHttpClient
+val s = Socket(host, 443)
+implementation("io.ktor:ktor-client-core")

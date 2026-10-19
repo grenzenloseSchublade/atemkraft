@@ -1,0 +1,3 @@
+val base = "http://github.com/x"
+object TrustAll : X509TrustManager {
+conn.hostnameVerifier = HostnameVerifier { _, _ -> true }

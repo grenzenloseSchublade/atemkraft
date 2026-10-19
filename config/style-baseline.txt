@@ -61,4 +61,3 @@ typo-chars-strings	app/src/main/res/values/strings.xml	1
 typo-chars-content	app/src/main/java/app/atemkraft/domain/RandomPatternGenerator.kt	1
 layer-import-data	app/src/main/java/app/atemkraft/data/AppContainer.kt	2
 layer-import-components	app/src/main/java/app/atemkraft/ui/components/Chips.kt	1
-ordinal-persist	app/src/main/java/app/atemkraft/data/SettingsRepository.kt	4

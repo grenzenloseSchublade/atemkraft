@@ -12,16 +12,11 @@ FAST=false
 
 step() { printf '\n== %s ==\n' "$1"; }
 
-step "Stil-Checks (Selbsttest)"
+# Stil- und statische Sicherheits-Checks (sec-*, docs/SECURITY.md) laufen im selben Skript.
+step "Stil- und Sicherheits-Checks (Selbsttest)"
 scripts/check-style.sh --self-test
-step "Stil-Checks"
+step "Stil- und Sicherheits-Checks"
 scripts/check-style.sh
-
-# Sicherheits-Checks laut docs/SECURITY.md, sobald das Skript existiert.
-if [[ -x scripts/check-security.sh ]]; then
-  step "Sicherheits-Checks"
-  scripts/check-security.sh
-fi
 
 TASKS=(ktlintCheck testDebugUnitTest)
 $FAST || TASKS+=(lintDebug)

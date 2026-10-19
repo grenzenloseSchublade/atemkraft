@@ -15,6 +15,18 @@ const val MEDITATION_MIN_MINUTES = 1
 /** Längste wählbare Dauer im [MeditationMode.TIMED] (Minuten) – eine Runde des Zeitrings. */
 const val MEDITATION_MAX_MINUTES = 60
 
+/** Kürzester Abstand des Intervall-Gongs (Minuten); kleinere gespeicherte Werte gelten als ungesetzt. */
+const val GONG_INTERVAL_MIN_MINUTES = 3
+
+/** Abstand des Intervall-Gongs, solange nichts gewählt ist (Minuten). */
+const val GONG_INTERVAL_DEFAULT_MINUTES = 5
+
+/** Längster gespeicherter Abstand des Intervall-Gongs (Minuten) – eine Runde des Zeitrings. */
+const val GONG_INTERVAL_MAX_MINUTES = 60
+
+/** Wählbare Abstände des Intervall-Gongs in den Einstellungen (Minuten). */
+val GONG_INTERVAL_CHOICES = listOf(3, 5, 10, 15)
+
 /**
  * Nutzer-Einstellung für eine Meditations-Sitzung (persistent via DataStore).
  *

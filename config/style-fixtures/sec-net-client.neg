@@ -1,0 +1,3 @@
+val faktor = 0.8f // Pegel-Faktor
+val vektor = Offset(1f, 0f)
+val socketCount = 0

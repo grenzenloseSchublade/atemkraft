@@ -1,0 +1,2 @@
+private const val API = "https://example.com/api"
+val url = "http://tracker.example/" + id

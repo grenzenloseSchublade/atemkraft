@@ -2,7 +2,7 @@
 
 Sicherheits-, Datenschutz-, Lieferketten- und Release-Regeln für Atemkraft (`app.atemkraft`). Zielgruppe: Maintainer und Claude. Gegenstück für Design, Text und Code: [STYLEGUIDE.md](STYLEGUIDE.md).
 
-- **Stand:** 2026-10-07 (v1.5.1 und `main`).
+- **Stand:** 2026-10-19 (v1.6.5 und `main`; statische Sicherheits-Checks seit 2026-10-19 aktiv).
 - **Schlüsselwörter:** MUSS / DARF NICHT / SOLL im Sinne von RFC 2119.
 - **Regelformat** (gemeinsam mit STYLEGUIDE): `ID | Stufe | Regel | Warum | Prüfung`. `auto:` nennt Werkzeug und Check (siehe [Automatische Prüfung](#automatische-pruefung)), `manuell:` nennt Review oder Checklisten-Schritt. In der Check-Tabelle stehen die vollen Regel-IDs.
 - **Grundlage:** OWASP MASVS v2.1.0 (L1 + Privacy), Android Security Checklist, Google-Play-Richtlinien, F-Droid Inclusion Policy.
@@ -90,8 +90,8 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
-| SEC-NET-01 | MUSS | Nur HTTPS: Cleartext per `network_security_config.xml` verboten, nur System-Trust-Anchors. Keine eigenen `X509TrustManager`, `HostnameVerifier` oder `SSLSocketFactory`; kein Zertifikats-Pinning auf Fremd-Hosts (Integrität sichert SEC-NET-03). | Abhören und Manipulation; Fremd-Hosts rotieren Zertifikate. | auto: `sec-tls`, `apk-hardening`; Lint `TrustAllX509TrustManager`, `BadHostnameVerifier` |
-| SEC-NET-02 | MUSS | Downloads nur nach explizitem Tap, nie automatisch oder im Hintergrund. Die URL besteht aus der Konstanten-Basis plus Stimm-ID aus dem Code-Katalog. Quelle und Größe sind vor dem Tap sichtbar. Eigener User-Agent ohne Gerätedaten, Timeouts ≤ 30 s. | F-Droid-Opt-in-Regel, DSGVO Art. 13; keine datengesteuerten Ziele. | auto: `sec-net-endpoints`, `sec-download`; JUnit `VoiceCatalogTest` |
+| SEC-NET-01 | MUSS | Nur HTTPS: Cleartext per `network_security_config.xml` verboten (auch für Android 8, wo er sonst noch erlaubt ist), nur System-Trust-Anchors. Keine eigenen `X509TrustManager`, `HostnameVerifier` oder `SSLSocketFactory`; kein Zertifikats-Pinning auf Fremd-Hosts (Integrität sichert SEC-NET-03). | Abhören und Manipulation; Fremd-Hosts rotieren Zertifikate. | auto: `sec-tls`, `sec-tls-config`, `apk-hardening`; Lint `TrustAllX509TrustManager`, `BadHostnameVerifier` |
+| SEC-NET-02 | MUSS | Downloads nur nach explizitem Tap, nie automatisch oder im Hintergrund. Die URL besteht aus der Konstanten-Basis plus Stimm-ID aus dem Code-Katalog. Quelle und Größe sind vor dem Tap sichtbar. Eigener User-Agent ohne Gerätedaten, Timeouts ≤ 30 s. | F-Droid-Opt-in-Regel, DSGVO Art. 13; keine datengesteuerten Ziele. | auto: `sec-net-endpoints`, `sec-net-client`, `sec-download`; JUnit `VoiceCatalogTest`; manuell: Quelle vor dem Tap (Ist: GitHub steht nur unter *Über → Lizenzen*, nicht bei „Laden“) |
 | SEC-NET-03 | MUSS | Jede Stimme ist im Katalog mit SHA-256 und Größe gepinnt. Der Download wird beim Streamen gehasht und **vor** dem Entpacken verglichen; bei Abweichung wird er gelöscht. Ändert sich ein Asset upstream, ist das ein Katalog-Update im Code. | Modelle werden von nativem Code geparst. | auto: JUnit `VoiceCatalogTest`, `VoiceIntegrityTest` |
 | SEC-NET-04 | MUSS | Archive werden in einen Staging-Ordner je Stimme entpackt. Jeder Zielpfad liegt darin, erlaubt sind nur reguläre Dateien und Ordner, Größe und Eintragszahl sind begrenzt. Installiert wird atomar (Staging-Ordner, dann Umbenennen); Reste werden beim App-Start entfernt. | Path Traversal, Archiv-Bomben, halbe Installationen. | auto: JUnit `VoiceIntegrityTest` |
 
@@ -111,7 +111,7 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 |---|---|---|---|---|
 | SEC-STORE-01 | MUSS | Persistente Daten nur im app-internen Speicher (Room, DataStore, `filesDir`, `cacheDir`); kein externer Speicher, kein `MediaStore`, kein `MODE_WORLD_*`. Ein Export läuft nur über das Storage Access Framework. | App-Sandbox, keine Speicher-Berechtigung. | auto: `sec-storage`; Lint `WorldReadableFiles`, `SdCardPath` |
 | SEC-STORE-02 | MUSS | **Kein Cloud-Backup:** `android:allowBackup="false"` und in `data_extraction_rules.xml` schließt `cloud-backup` jede Domäne aus. Erlaubt ist nur `device-transfer` (lokal, ab Android 12; darunter schaltet `allowBackup="false"` auch sie ab). Ist-Stand: Laut [Android-Doku](https://developer.android.com/guide/topics/manifest/application-element#allowbackup) schaltet `allowBackup="false"` die Übertragung auch ab Android 12 ab, nur auf Geräten mancher Hersteller nicht; ob `device-transfer` greift, hängt also vom Gerät ab, und Nutzertexte sagen „je nach Hersteller“; große oder neu ladbare Daten (`files/tts`) sind dort ausgeschlossen. Persistenz über eine Neuinstallation nur per Export-Datei (SEC-STORE-01); der Import behandelt die Datei als nicht vertrauenswürdig (Größe, Anzahl, Plausibilität begrenzt). | Datenhoheit: gesundheitsnahe Daten verlassen das Gerät nicht ohne ausdrückliche Wahl. | auto: `sec-backup`; Lint `DataExtractionRules`; JUnit `PatternBackupTest` |
-| SEC-STORE-03 | MUSS | Room-Schemaänderungen nur mit expliziter `Migration` und Migrationstest, Schema exportiert nach `app/schemas/`; `fallbackToDestructiveMigration*` ist verboten. DataStore hat einen `corruptionHandler`. | Das Logbuch ist Nutzerhistorie. | auto: `sec-room`; JUnit Migrationstest |
+| SEC-STORE-03 | MUSS | Room-Schemaänderungen nur mit expliziter `Migration` und Migrationstest, Schema exportiert nach `app/schemas/` (ab v2; v1 gab es nur in der nie veröffentlichten v0.2); `fallbackToDestructiveMigration*` ist verboten. DataStore hat einen `corruptionHandler` (beschädigte Datei → Standardwerte plus Marke `settings_reset_at`, kein Absturz); Lesefehler liefern Standardwerte. Enums stehen unter ihrem Namen, nie als `ordinal`. | Das Logbuch ist Nutzerhistorie; ohne Cloud-Backup wäre „App-Speicher löschen“ die einzige Rettung. | auto: `sec-room`, `ordinal-persist`; JUnit `DatabaseMigrationTest`, `SettingsRepositoryTest` |
 
 <a id="lieferkette"></a>
 ## Lieferkette
@@ -122,6 +122,8 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 |---|---|---|---|
 | `app/libs/sherpa-onnx-1.13.6.aar` | `0012d9a28f15bd6fb966b62b70a75da3990512fdccce28b83098248ce4be1698` | Release `v1.13.6` von `k2-fsa/sherpa-onnx`, byte-identisch mit dem GitHub-Asset | sherpa-onnx (Apache-2.0), onnxruntime 1.27.1 (MIT), espeak-ng (GPL-3.0-or-later), piper-phonemize (MIT), OpenFst/Kaldi-Bausteine (Apache-2.0), Eigen (MPL-2.0), hclust-cpp und Darts-clone (BSD-2-Clause), KISS FFT (BSD-3-Clause), Supertonic-Teile und nlohmann/json (MIT); vollständig mit Commits in [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md) |
 | `gradle/wrapper/gradle-wrapper.jar` | `2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046` | offizieller Gradle-8.11.1-Wrapper | – |
+
+Neben jeder Datei liegt `<datei>.sha256` (prüfbar mit `sha256sum -c` im selben Ordner); erlaubte Binärdateien stehen in `config/security/binaries.allow`. Die Gradle-Distribution ist per `distributionSha256Sum` gepinnt (`f397b287…151c6`, veröffentlichter Digest von `gradle-8.11.1-bin.zip`).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -179,37 +181,40 @@ Atemkraft ist eine Wellness-App und **kein Medizinprodukt** (MDR 2017/745, Erwä
 <a id="automatische-pruefung"></a>
 ## Automatische Prüfung
 
-Soll-Setup. Gemeinsame Infrastruktur (`scripts/check.sh`, `lint {}`, `.github/workflows/ci.yml`) spezifiziert der STYLEGUIDE; hier stehen die Sicherheits-Checks. Statische Checks laufen mit Null-Toleranz ohne Baseline; Zeilen, die mit `//`, `/*` oder `*` beginnen, gelten als Kommentar.
+Gemeinsame Infrastruktur (`scripts/check.sh`, `lint {}`, `.github/workflows/ci.yml`) spezifiziert der STYLEGUIDE; hier stehen die Sicherheits-Checks. Die statischen Checks (`sec-*`, Werkzeug **check-style**) stehen seit 2026-10-19 in `scripts/check_style.py` und laufen bei jedem `scripts/check.sh`, also auch im CI: gleiche Engine und Fixtures (`config/style-fixtures/sec-*.{pos,neg}`, `--self-test`) wie die Stil-Checks, aber mit Null-Toleranz ohne Baseline – ein Baseline-Eintrag für einen `sec-*`-Check ist selbst ein Fehler. Zeilen, die mit `//`, `/*` oder `*` beginnen, gelten als Kommentar; die Stil-Marker `// dekorativ:` und `// Abweichung <ID>:` heben einen `sec-*`-Treffer nicht auf (`--self-test` prüft das mit einer Gegenprobe je Fixture). Soll-Setup, noch nicht vorhanden: `verify-apk`, `check-github`, `release-verify` sowie die mit **offen** markierten Checks.
 
 ```bash
-scripts/check.sh                                     # ruft scripts/check-security.sh auf
-scripts/verify-apk.sh <apk> [--tag vX.Y.Z] [--allow-debug-cert]
-scripts/check-github.sh                              # Repo-Einstellungen per gh api
+scripts/check.sh                                     # Stil- und sec-*-Checks, ktlint, Tests, Lint
+scripts/check-style.sh                               # nur Stil- und sec-*-Checks
+scripts/verify-apk.sh <apk> [--tag vX.Y.Z] [--allow-debug-cert]   # Soll
+scripts/check-github.sh                              # Soll: Repo-Einstellungen per gh api
 ```
 
 | Check | Werkzeug | Regel | Logik |
 |---|---|---|---|
-| `sec-deny-deps` | check-security | SEC-PRIV-01 | `firebase\|crashlytics\|play-services\|gms\|admob\|analytics\|sentry\|bugsnag\|appcenter\|facebook` in `gradle/libs.versions.toml`, `**/*.gradle.kts` → 0 |
-| `sec-net-endpoints` | check-security | SEC-PRIV-02, SEC-NET-02 | `https?://` in `app/src/main/java` nur in `VoiceCatalog.kt`, `AboutScreen.kt`; `openConnection\(\|Socket\(\|okhttp\|retrofit\|ktor` nur in `VoiceModelManager.kt` |
-| `sec-device-leaks` | check-security | SEC-PRIV-03 | `ANDROID_ID\|AdvertisingIdClient\|getDeviceId\|getImei\|Build\.SERIAL`, `\bLog\.[vdiwe]\(\|println\(\|printStackTrace\(\|Timber\.`, `ClipboardManager\|setPrimaryClip` in `app/src/main/java` → 0 |
-| `sec-privacy-link` | check-security | SEC-PRIV-05 | `docs/PRIVACY.md` existiert; ihre URL steht in `AboutScreen.kt` |
-| `sec-wakelock` | check-security | SEC-PERM-02 | `newWakeLock\(` nur mit `PARTIAL_WAKE_LOCK`; `\bacquire\(\s*\)` → 0 |
-| `sec-tls` | check-security | SEC-NET-01 | `http://` in `app/src/main` (ohne `xmlns`/`schemas.android.com` und ohne die wortgetreuen Lizenztexte unter `assets/licenses/`) → 0; `X509TrustManager\|HostnameVerifier\|SSLSocketFactory\|setDefaultSSL` → 0; `network_security_config.xml` mit `cleartextTrafficPermitted="false"` existiert und ist im Manifest referenziert |
-| `sec-download` | check-security | SEC-NET-02 | jede Datei mit `openConnection` setzt `connectTimeout`, `readTimeout` und `User-Agent`; `strings.xml` hat `settings_voice_source` mit „GitHub“ |
-| `sec-components` | check-security | SEC-PLAT-01 | `<receiver` im Quell-Manifest → 0; jede Zeile mit `registerReceiver\(` enthält `RECEIVER_NOT_EXPORTED` |
-| `sec-intents` | check-security | SEC-PLAT-02 | `intent\.(data\|extras)\|get\w*Extra\(` → 0; `<data ` im Manifest → 0; `FLAG_MUTABLE` → 0 außer mit `// mutable:`-Begründung |
-| `sec-no-dyncode` | check-security | SEC-PLAT-03 | `WebView\|DexClassLoader\|PathClassLoader\|InMemoryDexClassLoader\|System\.load\(` → 0 |
-| `sec-storage` | check-security | SEC-STORE-01 | `getExternal\w*Dir\|getExternalStorage\|MediaStore\|MODE_WORLD_` → 0 |
-| `sec-backup` | check-security | SEC-STORE-02 | `allowBackup="false"`; `backup_rules.xml` (API < 31) und `cloud-backup` schließen alle Domänen aus; `device-transfer` schließt `files/tts` aus |
-| `sec-room` | check-security | SEC-STORE-03 | `fallbackToDestructiveMigration` → 0; `exportSchema = true`; `app/schemas/` versioniert; `corruptionHandler` gesetzt |
-| `sec-repos` | check-security | SEC-SUP-01 | `settings.gradle.kts`: `mavenLocal\|http://` → 0; jedes Repo hat `content {`; jede `includeGroup` eines Nicht-Standard-Repos hat einen `sha256`-Eintrag in `gradle/verification-metadata.xml` |
-| `sec-pinned-inputs` | check-security | SEC-SUP-02, SEC-DIST-01, SEC-REPO-01 | `distributionSha256Sum=[0-9a-f]{64}`; `git ls-files '*.aar' '*.jar' '*.so' '*.dex' '*.jks' '*.keystore' '*.p12' '*.apk' '*.aab'` ⊆ Allowlist; `sha256sum -c` jeder `.sha256`; Hash steht identisch im Herkunftsnachweis |
-| `sec-gradle-flags` | check-security | SEC-BUILD-03 | `includeInApk = false` in `app/build.gradle.kts` |
-| `sec-secrets` | check-security | SEC-BUILD-02 | im Repo-Baum inkl. ungetrackter Dateien keine Zeile `^(store\|key)Password=`; `.claude/settings.json` verbietet `Read(**/keystore.properties)`, `Read(**/*.keystore)`, `Read(**/*.jks)` |
-| `sec-gitignore` | check-security | SEC-REPO-01 | `git check-ignore -q` greift (per Repo-`.gitignore`) für `x.jks`, `x.p12`, `sub/keystore.properties`, `x.idsig`, `.claude/settings.local.json` |
-| `sec-actions` | check-security | SEC-REPO-03, SEC-SUP-03 | jedes `uses:` in `.github/workflows/*.yml` endet auf `@[0-9a-f]{40}`; `permissions:` auf oberster Ebene; `persist-credentials: false`; `.github/dependabot.yml` hat `package-ecosystem` `gradle` und `github-actions` mit `interval: monthly` und `groups:` |
-| `sec-health-claims` | check-security | SEC-LEGAL-01 | Wortliste `config/health-claims.txt` (ohne Groß-/Kleinschreibung, Wortgrenzen) in `README.md`, `fastlane/metadata/**`, `docs/PRIVACY.md`, `docs/release-notes/*.md` → 0, außer Zeilen aus `config/health-claims.allow` |
-| `sec-store-disclaimer` | check-security | SEC-LEGAL-02 | `full_description.txt` enthält den Disclaimer-Satz aus SEC-LEGAL-02 wörtlich (fester String) |
+| `sec-deny-deps` | check-style | SEC-PRIV-01 | `firebase\|crashlytics\|play-services\|\bgms\b\|admob\|analytics\|sentry\|bugsnag\|appcenter\|facebook` (ohne Groß-/Kleinschreibung) in `gradle/libs.versions.toml`, `**/*.gradle.kts` → 0 |
+| `sec-net-endpoints` | check-style | SEC-PRIV-02, SEC-NET-02 | `https?://` in `app/src/main/java` nur in `VoiceCatalog.kt`, `AboutScreen.kt` |
+| `sec-net-client` | check-style | SEC-NET-02 | `openConnection\(\|\bSocket\(\|\bokhttp\|\bretrofit\|\bktor\b` in `app/src/main/java` nur in `VoiceModelManager.kt` (Wortgrenzen, sonst trifft „Faktor“) |
+| `sec-device-leaks` | check-style | SEC-PRIV-03 | `ANDROID_ID\|AdvertisingIdClient\|getDeviceId\|getImei\|Build\.SERIAL`, `\bLog\.[vdiwe]\(\|println\(\|printStackTrace\(\|Timber\.`, `ClipboardManager\|setPrimaryClip` in `app/src/main/java` → 0 |
+| `sec-privacy-link` | check-style | SEC-PRIV-05 | `docs/PRIVACY.md` existiert; ihre URL steht in `AboutScreen.kt` |
+| `sec-wakelock` | check-style | SEC-PERM-02 | `newWakeLock\(` nur mit `PARTIAL_WAKE_LOCK`; `\bacquire\(\s*\)` → 0 |
+| `sec-tls` | check-style | SEC-NET-01 | `http://` in `app/src/main` (`*.kt`, `*.java`, `*.xml`; ohne `schemas.android.com` und ohne die wortgetreuen Lizenztexte unter `assets/licenses/`) → 0; `X509TrustManager\|HostnameVerifier\|SSLSocketFactory\|setDefaultSSL` → 0 |
+| `sec-tls-config` | check-style | SEC-NET-01 | `res/xml/network_security_config.xml` mit `cleartextTrafficPermitted="false"` existiert und ist im Manifest referenziert |
+| `sec-download` | check-style | SEC-NET-02 | jede Datei mit `openConnection` setzt `connectTimeout`, `readTimeout` und `"User-Agent"`. Die sichtbare Quelle vor dem Tap prüft nur das Review (es gibt keinen eigenen String dafür) |
+| `sec-components` | check-style | SEC-PLAT-01 | `<receiver` im Quell-Manifest → 0; jede Zeile mit `registerReceiver\(` enthält `RECEIVER_NOT_EXPORTED` |
+| `sec-intents` | check-style | SEC-PLAT-02 | `intent\.(data\|extras)\|get\w*Extra\(` → 0; `<data ` im Manifest → 0; `FLAG_MUTABLE` → 0 außer mit `// mutable:`-Begründung |
+| `sec-no-dyncode` | check-style | SEC-PLAT-03 | `WebView\|DexClassLoader\|PathClassLoader\|InMemoryDexClassLoader\|System\.load\(` → 0 |
+| `sec-storage` | check-style | SEC-STORE-01 | `getExternal\w*Dir\|getExternalStorage\|MediaStore\|MODE_WORLD_` → 0 |
+| `sec-backup` | check-style | SEC-STORE-02 | `allowBackup="false"`; `backup_rules.xml` (API < 31) und `cloud-backup` schließen alle Domänen aus; `device-transfer` schließt `files/tts` aus |
+| `sec-room` | check-style | SEC-STORE-03 | `fallbackToDestructiveMigration` → 0; jede `@Database` mit `exportSchema = true`, und `app/schemas/<paket>.<Klasse>/<version>.json` liegt im Repo; jede Datei mit `preferencesDataStore(` setzt `corruptionHandler` |
+| `sec-repos` | check-style | SEC-SUP-01 | `settings.gradle.kts`: `mavenLocal\|http://` → 0; `FAIL_ON_PROJECT_REPOS` gesetzt; gibt es ein Nicht-Standard-Repo (`maven {…}`), dann `content {` und jede `includeGroup` mit `sha256`-Eintrag in `gradle/verification-metadata.xml`. **Offen:** Content-Filter für `mavenCentral()`, `gradlePluginPortal()` und `google()` in `dependencyResolutionManagement` (Ist: nur `google()` bei den Plugins gefiltert) |
+| `sec-pinned-inputs` | check-style | SEC-SUP-02, SEC-DIST-01, SEC-REPO-01 | `distributionSha256Sum=[0-9a-f]{64}`; getrackte und neue `*.aar`, `*.jar`, `*.so`, `*.dex`, `*.jks`, `*.keystore`, `*.p12`, `*.apk`, `*.aab` ⊆ `config/security/binaries.allow`, dort mit `sha256` markierte haben eine `.sha256`-Datei; jede `.sha256` stimmt mit der Datei überein, und ihr Hash steht identisch im Herkunftsnachweis |
+| `sec-gradle-flags` | check-style | SEC-BUILD-03 | `includeInApk = false` in `app/build.gradle.kts` |
+| `sec-secrets` | check-style | SEC-BUILD-02 | in getrackten und neuen, nicht ignorierten Dateien keine Zeile `^(store\|key)Password\s*[=:]`. Ignorierte Dateien (z. B. `keystore.properties` im Root) prüft der Check nicht; dass sie außerhalb des Repo-Baums liegen, sichert Checkliste Schritt 15. **Offen:** `.claude/settings.json` mit Deny-Regeln für `Read(**/keystore.properties)`, `Read(**/*.keystore)`, `Read(**/*.jks)` (liegt nicht im Repo) |
+| `sec-gitignore` | check-style | SEC-REPO-01 | `git check-ignore -q` greift (per Repo-`.gitignore`) für `x.jks`, `x.p12`, `sub/keystore.properties`, `x.idsig`, `.claude/settings.local.json` |
+| `sec-actions` | check-style | SEC-REPO-03, SEC-SUP-03 | jedes `uses:` in `.github/workflows/*.yml` endet auf `@[0-9a-f]{40}`; `permissions:` auf oberster Ebene; `persist-credentials: false`; `.github/dependabot.yml` hat `package-ecosystem` `gradle` und `github-actions` mit `interval: monthly` und `groups:` |
+| `sec-health-claims` | **offen** | SEC-LEGAL-01 | Wortliste `config/health-claims.txt` (ohne Groß-/Kleinschreibung, Wortgrenzen) in `README.md`, `fastlane/metadata/**`, `docs/PRIVACY.md`, `docs/release-notes/*.md` → 0, außer Zeilen aus `config/health-claims.allow` |
+| `sec-store-disclaimer` | **offen** | SEC-LEGAL-02 | `full_description.txt` enthält den Disclaimer-Satz aus SEC-LEGAL-02 wörtlich (fester String) |
 | `apk-cert` | verify-apk | SEC-BUILD-01 | `apksigner verify --print-certs`: Signer = `75022def…1890`; unsigniert ist immer ein Fehler, `CN=Android Debug` ebenso (`--allow-debug-cert` nur für CI-Testbuilds) |
 | `apk-permissions` | verify-apk | SEC-PERM-01 | `aapt2 dump permissions` = `config/security/permissions.allow` |
 | `apk-exported` | verify-apk | SEC-PLAT-01 | Komponenten mit `exported=true` ⊆ `config/security/exported.allow` |
@@ -225,7 +230,7 @@ scripts/check-github.sh                              # Repo-Einstellungen per gh
 <a id="release-checkliste"></a>
 ## Release-Checkliste
 
-**Ist-Stand (2026-10-07):** `scripts/verify-apk.sh`, `scripts/check-security.sh`, `scripts/check-github.sh` und der CI-Job `release-verify` sind Soll-Setup und gibt es noch nicht; die Schritte nennen dafür den manuellen Ersatz. Bis v1.5.1 waren die Tags nicht annotiert, und der Release-Commit enthielt die Versionsänderung selbst.
+**Ist-Stand (2026-10-19):** Die statischen `sec-*`-Checks laufen in `scripts/check.sh` (Schritt 1). `scripts/verify-apk.sh`, `scripts/check-github.sh` und der CI-Job `release-verify` sind Soll-Setup und gibt es noch nicht; die Schritte nennen dafür den manuellen Ersatz. Bis v1.5.1 waren die Tags nicht annotiert, und der Release-Commit enthielt die Versionsänderung selbst.
 
 1. `git status` leer, `main` gepusht, `scripts/check.sh` grün.
 2. `versionCode` +1, `versionName` gesetzt; Release-Notes `docs/release-notes/vX.Y.Z.md` und Changelog `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt` geschrieben (SEC-LEGAL-01). Die Notes-Datei enthält nur die Änderungen; SHA-256 und Fingerprint kommen in Schritt 7 dazu. Versionsangaben nachziehen: „Neueste Version“ im README, „Unterstützte Version“ in diesem Dokument und der Stand in `THIRD_PARTY_LICENSES.md`; Markierungen „ab Version X.Y.Z“ in README und Datenschutzerklärung bleiben gültig.

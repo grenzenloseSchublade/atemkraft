@@ -64,6 +64,7 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
+import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.AboutRoute
@@ -156,7 +157,7 @@ private fun AtemkraftApp() {
     val meditationSpeechAvailable by meditationController.speechAvailable
         .collectAsStateWithLifecycle()
     val gongIntervalMin by container.settingsRepository.gongIntervalMin
-        .collectAsStateWithLifecycle(initialValue = 5)
+        .collectAsStateWithLifecycle(initialValue = GONG_INTERVAL_DEFAULT_MINUTES)
     val gongLong by container.settingsRepository.gongLong
         .collectAsStateWithLifecycle(initialValue = true)
     val voiceStates by container.voiceModelManager.states.collectAsStateWithLifecycle()

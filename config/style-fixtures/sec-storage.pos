@@ -1,0 +1,3 @@
+val dir = context.getExternalFilesDir(null)
+MediaStore.Downloads.EXTERNAL_CONTENT_URI
+openFileOutput("x", MODE_WORLD_READABLE)

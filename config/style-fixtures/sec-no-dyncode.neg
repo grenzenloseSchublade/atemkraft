@@ -1,0 +1,2 @@
+System.loadLibrary("sherpa-onnx-jni")
+val view = LocalView.current

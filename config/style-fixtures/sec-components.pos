@@ -1,0 +1,2 @@
+<receiver android:name=".BootReceiver" android:exported="false" />
+context.registerReceiver(receiver, filter)

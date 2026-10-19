@@ -7,7 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 3, exportSchema = false)
+/**
+ * Logbuch und gespeicherte Muster. Jede Schemaänderung braucht eine explizite [Migration], das
+ * exportierte Schema unter app/schemas/ und einen Fall in DatabaseMigrationTest (SEC-STORE-03).
+ */
+@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 3, exportSchema = true)
 abstract class AtemkraftDatabase : RoomDatabase() {
 
     abstract fun logbookDao(): LogbookDao
@@ -69,10 +73,13 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
+        /** Alle Migrationen in Reihenfolge; App und Migrationstest nutzen dieselbe Liste. */
+        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+
         fun build(context: Context): AtemkraftDatabase = Room.databaseBuilder(
             context.applicationContext,
             AtemkraftDatabase::class.java,
             "atemkraft.db",
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+        ).addMigrations(*MIGRATIONS).build()
     }
 }

@@ -103,6 +103,13 @@ android {
         }
     }
 
+    // Keine verschlüsselten Abhängigkeits-Metadaten in APK/AAB (SEC-BUILD-03): Nur Google kann
+    // sie lesen, und F-Droid lehnt APKs mit diesem Signatur-Block ab.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -125,12 +132,23 @@ android {
         disable += setOf("GradleDependency", "AndroidGradlePluginVersion", "NewerVersionAvailable", "ChromeOsAbiSupport")
     }
 
+    // Exportierte Room-Schemas (app/schemas/) für MigrationTestHelper: Robolectric sieht nur die
+    // Assets der getesteten Variante, nicht die des test-Sourcesets. Deshalb liegen die paar KB
+    // Schema-JSON auch in der Debug-APK, nie im Release.
+    sourceSets.getByName("debug").assets.srcDir("$projectDir/schemas")
+
     // Screenshot-Tests (Robolectric + Roborazzi) brauchen echte Ressourcen statt Stubs.
     testOptions {
         unitTests.isIncludeAndroidResources = true
         // Hohe Screenshots (bis 8000 dp bei fontScale 2,0) brauchen mehr als den Standard-Heap.
         unitTests.all { it.maxHeapSize = "4g" }
     }
+}
+
+// Room schreibt jedes Datenbankschema als JSON nach app/schemas/ (eingecheckt, SEC-STORE-03).
+// Eine neue Version erzeugt dort eine neue Datei; sie gehört in denselben Commit wie die Migration.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 // ktlint mit Compose-Regeln (docs/STYLEGUIDE.md CODE-04, CODE-06); Regeln in .editorconfig,
@@ -194,6 +212,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.room.testing)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     testImplementation(platform(libs.compose.bom))

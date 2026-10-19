@@ -1,0 +1,5 @@
+val id = Settings.Secure.getString(cr, Settings.Secure.ANDROID_ID)
+Log.d("Atemkraft", "Start")
+e.printStackTrace()
+println(state)
+clipboard.setPrimaryClip(clip)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nur HTTPS (docs/SECURITY.md SEC-NET-01): Ab Android 9 ist Cleartext ohnehin gesperrt, diese
+     Datei sperrt ihn auch auf Android 8 (minSdk 26). Vertraut wird nur den System-Zertifikaten,
+     ohne Pinning – der Stimm-Download ist per SHA-256 gesichert (SEC-NET-03). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

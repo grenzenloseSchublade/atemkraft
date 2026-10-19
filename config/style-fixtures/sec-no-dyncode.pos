@@ -1,0 +1,3 @@
+val view = WebView(context)
+val loader = DexClassLoader(path, dir, null, parent)
+System.load(file.absolutePath)

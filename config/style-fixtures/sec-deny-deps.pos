@@ -1,0 +1,3 @@
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom" }
+implementation("com.google.android.gms:play-services-ads:23.0.0")
+sentry = { group = "io.sentry", name = "sentry-android" }

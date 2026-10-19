@@ -53,6 +53,7 @@ import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceGender
 import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.Refs
+import app.atemkraft.domain.GONG_INTERVAL_CHOICES
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -401,7 +402,6 @@ private fun SessionCard(
     }
 }
 
-private val GONG_INTERVALS = listOf(3, 5, 10, 15)
 private const val GONG_COLUMNS = 2
 
 @Composable
@@ -425,7 +425,7 @@ private fun MeditationCard(
             Spacer(Modifier.height(Dimens.GapSmall))
             // 2 × 2 wie das Dauer-Raster im Meditations-Tab: „✓ 15 min“ passt in der Karte nicht
             // in ein Viertel der Breite, sonst stünde hier schon bei normaler Schrift eine Radioliste.
-            SegmentedChoiceRow(GONG_INTERVALS, gongIntervalMin, onGongInterval, columns = GONG_COLUMNS) { m ->
+            SegmentedChoiceRow(GONG_INTERVAL_CHOICES, gongIntervalMin, onGongInterval, columns = GONG_COLUMNS) { m ->
                 stringResource(R.string.meditation_minutes, m)
             }
             Spacer(Modifier.height(Dimens.GapTiny))

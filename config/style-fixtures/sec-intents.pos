@@ -1,0 +1,4 @@
+val id = intent.getStringExtra("exerciseId")
+val uri = intent.data
+<data android:scheme="atemkraft" />
+PendingIntent.FLAG_MUTABLE

@@ -1,0 +1,3 @@
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime" }
+// keine Analytics, kein Firebase (SEC-PRIV-01)
+implementation(libs.androidx.datastore.preferences)
