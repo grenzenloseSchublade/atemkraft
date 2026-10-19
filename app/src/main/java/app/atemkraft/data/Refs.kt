@@ -4,7 +4,7 @@ import app.atemkraft.domain.Reference
 
 /**
  * Verifizierter Quellen-Katalog (Stand der Recherche). Jede Quelle wurde gegen
- * PubMed/PMC/Verlag geprüft; Korrekturen aus der Vorlage F3_Atmung sind hier
+ * PubMed/PMC/Verlag geprüft; Korrekturen aus der Vorlage docs/F3_Atmung.html sind hier
  * bereits eingearbeitet (Autor Resonanz-Paper, PLOS-Jahr, Nadi-Shodhana-Quellen,
  * Wim-Hof-Zuschreibung, Lippenbremse ohne „30 min").
  */

@@ -1,2 +1,6 @@
 Modifier.clickable { open() }
 Modifier.clickable(onClick = open)
+Modifier.clickable(
+    interactionSource = remember { MutableInteractionSource() },
+    onClick = open,
+)

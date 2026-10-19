@@ -53,6 +53,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
@@ -241,22 +242,22 @@ private fun AtemkraftApp(
                                 label = stringResource(R.string.tab_breathe),
                                 selected = selectedTab == TopTab.ATMEN,
                                 onClick = { navController.tapTab(AtmenRoute, selected = selectedTab == TopTab.ATMEN) },
-                            ) { Icon(Icons.Filled.Home, contentDescription = null) },
+                            ) { Icon(Icons.Filled.Home, contentDescription = null) }, // dekorativ: das Label benennt den Tab
                             AppNavItem(
                                 label = stringResource(R.string.tab_situations),
                                 selected = selectedTab == TopTab.SITUATIONEN,
                                 onClick = { navController.tapTab(SituationenRoute, selected = selectedTab == TopTab.SITUATIONEN) },
-                            ) { Icon(Icons.Filled.Search, contentDescription = null) },
+                            ) { Icon(Icons.Filled.Search, contentDescription = null) }, // dekorativ: das Label benennt den Tab
                             AppNavItem(
                                 label = stringResource(R.string.tab_meditation),
                                 selected = selectedTab == TopTab.MEDITATION,
                                 onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
-                            ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) },
+                            ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) }, // dekorativ: das Label benennt den Tab
                             AppNavItem(
                                 label = stringResource(R.string.tab_logbook),
                                 selected = selectedTab == TopTab.LOGBUCH,
                                 onClick = { navController.tapTab(LogbuchRoute, selected = selectedTab == TopTab.LOGBUCH) },
-                            ) { Icon(Icons.Filled.DateRange, contentDescription = null) },
+                            ) { Icon(Icons.Filled.DateRange, contentDescription = null) }, // dekorativ: das Label benennt den Tab
                         ),
                     )
                 }
@@ -547,7 +548,7 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
 private enum class TopTab { ATMEN, SITUATIONEN, MEDITATION, LOGBUCH }
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
-private fun androidx.navigation.NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true
+private fun NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true
 
 /**
  * Fragt ab Android 13 einmalig nach der Benachrichtigungs-Erlaubnis – im Moment, in dem sie Sinn

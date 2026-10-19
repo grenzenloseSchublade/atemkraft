@@ -356,7 +356,6 @@
     <string name="tab_meditation">Meditation</string>
     <string name="meditation_title">Meditation</string>
     <string name="meditation_subtitle">Stille Sitzung mit Gong</string>
-    <string name="meditation_mode_timed">Timer</string>
     <string name="meditation_gong_label">Gong</string>
     <string name="meditation_sound_voice_label">Klang &amp; Stimme</string>
     <string name="meditation_gong_startstop">Start &amp; Ende</string>

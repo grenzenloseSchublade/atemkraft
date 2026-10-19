@@ -2,7 +2,10 @@ package app.atemkraft.ui
 
 import kotlinx.serialization.Serializable
 
-/** Type-safe Navigation-Routen. Top-Level: Atmen, Situationen, Logbuch. Push: Detail, Settings. */
+/**
+ * Type-safe Navigation-Routen. Tabs: Atmen, Situationen, Meditation, Logbuch. Push-Seiten mit
+ * festem Kopf: Detail, Einstellungen, Glossar, Über, Atemlehre.
+ */
 @Serializable
 object AtmenRoute
 

@@ -1,2 +1,7 @@
 Modifier.clickable(role = Role.Button) { open() }
 Modifier.clickable(onClickLabel = l, role = Role.Button, onClick = open)
+Modifier.clickable(
+    interactionSource = remember { MutableInteractionSource() },
+    indication = null,
+    role = Role.Button,
+) { open() }

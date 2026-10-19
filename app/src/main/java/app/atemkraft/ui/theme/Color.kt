@@ -39,7 +39,7 @@ val OutlineVariantIndigo = Color(0xFF453763)
 /** Gedämpfter Sekundärtext (M3 onSurfaceVariant) – Lavendel statt Voll-Weiß. */
 val DarkOnSurfaceVariant = Color(0xFFC3B8DD)
 
-// Familien-Akzentfarben (wie in der Vorlage F3_Atmung): vagal/blau, sympathisch/amber,
+// Familien-Akzentfarben (wie in der Vorlage docs/F3_Atmung.html): vagal/blau, sympathisch/amber,
 // balance/violett, funktionell/grün.
 val FamilyVagal = Color(0xFF60A5FA)
 val FamilySympathetic = Color(0xFFF59E0B)

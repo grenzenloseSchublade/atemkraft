@@ -454,7 +454,10 @@ CHECKS: list[Check] = [
           exclude=[SRC + "ui/theme/*"], level="SOLL"),
     Check("motion-literal-delay", "MOTION-04", [SRC + "ui/components/*.kt"], [r"delay\(\s*\d"], level="SOLL"),
     Check("player-in-composable", "AUDIO-04", [SRC + "ui/*.kt"], [r"remember\s*\{\s*(Haptic|ToneCue|Continuous)\w*Player\("]),
-    Check("semantics-required", "A11Y-01", [SRC + "ui/*.kt"], [r"\.clickable\s*(\((?![^)]*role\s*=)|\{)"]),
+    # Über die ganze Datei mit Klammerausgleich: role darf in einer Folgezeile stehen, auch nach
+    # Argumenten mit eigenen Klammern wie remember { MutableInteractionSource() }.
+    Check("semantics-required", "A11Y-01", [SRC + "ui/*.kt"],
+          [r"\.clickable\s*(?:\((?!(?:[^()]|\([^()]*\))*?\brole\s*=)|\{)"], multiline=True),
     Check("semantics-heading", "A11Y-01", [], custom=section_header_heading),
     Check("a11y-ratchet", "A11Y-02", [SRC + "ui/*.kt"], [r"clearAndSetSemantics", r"indication\s*=\s*null"], skip_imports=True),
     Check("switch-unlabeled", "A11Y-03", [SRC + "ui/*.kt"],

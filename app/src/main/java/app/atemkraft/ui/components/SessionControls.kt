@@ -82,14 +82,13 @@ fun GlowText(
     text: String,
     style: TextStyle,
     modifier: Modifier = Modifier,
-    fill: Color = SessionTextYellow,
 ) {
     // Zentriert und ohne Wortbruch: Session-Texte stehen mittig über dem Kreis (LAYOUT-03).
     WholeWordText(
         text = text,
         style = style.merge(
             TextStyle(
-                color = fill,
+                color = SessionTextYellow,
                 shadow = Shadow(color = SessionTextGlow, offset = Offset.Zero, blurRadius = 18f),
             ),
         ),

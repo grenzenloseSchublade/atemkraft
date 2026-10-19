@@ -20,7 +20,7 @@ import app.atemkraft.ui.theme.SessionButtonCyan
  * damit es zum Glow-Design passt und ohne harte Umrandung aufpoppt. Per Canvas gezeichnet.
  */
 @Composable
-fun PauseFlash(alpha: Float, isPause: Boolean, modifier: Modifier = Modifier, maxSize: Dp = Dp.Infinity) {
+fun PauseFlash(alpha: Float, isPause: Boolean, maxSize: Dp, modifier: Modifier = Modifier) {
     if (alpha <= 0.01f) return
     // Nie größer als der Kreis: Sonst wüchse beim Antippen kurz die Box um den Kreis, und der
     // Kreis spränge (kleiner Kreis im Querformat oder bei großer Schrift).

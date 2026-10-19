@@ -146,6 +146,10 @@ fun crossesMajor(previous: Int, next: Int): Boolean {
 /**
  * Umrechnung wischbare Skala ↔ Minuten (Variante F): Versatz 0 steht auf 1 min, je [stepPx]
  * eine Minute weiter; nach der 60 folgt als letzter Strich ∞ (offene Sitzung).
+ *
+ * Vorrat, Stand v1.6.5: Variante F ist als Reserve zum Zeitring vorbereitet, aber nicht
+ * ausgeliefert – nur `DurationScaleTest` nutzt dieses Objekt. Kein toter Code; entfernen nur nach
+ * Entscheidung gegen Variante F.
  */
 object RulerScale {
 

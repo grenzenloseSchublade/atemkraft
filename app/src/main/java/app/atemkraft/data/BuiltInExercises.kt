@@ -12,7 +12,7 @@ import app.atemkraft.domain.Segment
 import app.atemkraft.domain.YogaLore
 
 /**
- * Die Atemtechniken (Basis: Vorlage F3_Atmung, ergänzt um Sitali und Atmen im Gehen) –
+ * Die Atemtechniken (Basis: Vorlage docs/F3_Atmung.html, ergänzt um Sitali und Atmen im Gehen) –
  * Protokolle und Quellen sind durch Recherche bestätigt bzw. korrigiert. Reihenfolge
  * folgt den vier Familien.
  *

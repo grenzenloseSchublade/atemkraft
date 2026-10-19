@@ -77,9 +77,9 @@ import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.FinishedPanel
+import app.atemkraft.ui.components.LinkChip
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
-import app.atemkraft.ui.components.SelectChip
 import app.atemkraft.ui.components.SessionControlBar
 import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionSecondaryButton
@@ -252,8 +252,8 @@ class ControlTouchTest(private val fontScale: Float) {
 
     @Test
     fun `Chip, Text-Button, Segment und Reset sind 48 dp hoch antippbar`() {
-        show { SelectChip(label = "10 min", selected = false, onClick = { hits += "chip" }) }
-        probe("SelectChip", clickables().single(), "chip", setOf('y'))
+        show { LinkChip(label = "Box-Atmung", onClick = { hits += "chip" }) }
+        probe("LinkChip", clickables().single(), "chip", setOf('y'))
 
         show { AppTextButton(onClick = { hits += "text" }) { Text("Laden") } }
         probe("AppTextButton", clickables().single(), "text", setOf('y'))

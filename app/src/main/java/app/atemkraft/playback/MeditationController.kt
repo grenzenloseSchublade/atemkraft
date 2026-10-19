@@ -213,9 +213,6 @@ class MeditationController(
         }
     }
 
-    /** Vollständiger Abbruch ohne Abschluss (zurück in den Auswahlzustand). */
-    fun stop() = abort()
-
     private fun abort() {
         runnerJob?.cancel()
         finishing = false

@@ -3,7 +3,7 @@ package app.atemkraft.domain
 import kotlinx.serialization.Serializable
 
 /**
- * Die vier Familien aus der Quelle (F3_Atmung): zwei Grundrichtungen plus zwei
+ * Die vier Familien aus der Quelle (Vorlage docs/F3_Atmung.html): zwei Grundrichtungen plus zwei
  * ergänzende Gruppen. Bestimmt Sortierung, Farbe und Überschrift im Startscreen.
  */
 @Serializable

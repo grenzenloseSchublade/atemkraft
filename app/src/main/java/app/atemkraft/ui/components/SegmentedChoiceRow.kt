@@ -47,11 +47,11 @@ import kotlin.math.floor
  * bis [MIN_LABEL_SCALE]. Erst wenn auch das nicht reicht, kommt eine senkrechte Liste mit
  * Radiobuttons. Beschriftungen brechen nie im Wort um (LAYOUT-03).
  *
- * Mehr als vier Optionen nur als Raster über [columns] (Meditations-Dauer 4 × 2): gleich breite
- * Segmente in Reihen à [columns], gemeinsame Auswahl, gemeinsamer Rückfall auf die Radioliste.
- * Die Reihen stehen ohne eigene Lücke übereinander – der Abstand ist der Rest der
+ * Mehr als vier Optionen nur als Raster über [columns] (Gong-Abstand in den Einstellungen):
+ * gleich breite Segmente in Reihen à [columns], gemeinsame Auswahl, gemeinsamer Rückfall auf die
+ * Radioliste. Die Reihen stehen ohne eigene Lücke übereinander – der Abstand ist der Rest der
  * 48-dp-Tippfläche, enger ginge nur mit überlappenden Tippflächen (A11Y-05). Ein [selected], das
- * nicht in [items] liegt (z. B. Stepper-Wert neben Schnellwahl), markiert keines.
+ * nicht in [items] liegt, markiert keines.
  *
  * [groupLabel] verknüpft die sichtbare Überschrift darüber („Lautstärke“) mit der Gruppe (A11Y-03):
  * als Name des Gruppen-Knotens. Der ist für TalkBack ein eigener Halt (Text ohne fokussierbaren

@@ -322,7 +322,7 @@ class ContentRulesTest {
         val files = listOf(repoFile("README.md"), repoFile("docs/PRIVACY.md")) +
             repoFile("docs/release-notes").listFiles { f -> f.extension == "md" }.orEmpty().sorted() +
             repoFile("fastlane/metadata/android/de-DE").walkTopDown().filter { it.isFile && it.extension == "txt" }.sorted()
-        val root = repoFile("README.md").absoluteFile.parentFile
+        val root = checkNotNull(repoFile("README.md").absoluteFile.parentFile)
         files.filter { it.isFile }.flatMap { f ->
             val name = f.absoluteFile.relativeTo(root).path
             f.readLines().mapIndexed { i, line -> Text("$name:${i + 1}", line) }

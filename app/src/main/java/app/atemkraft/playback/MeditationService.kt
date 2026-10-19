@@ -1,5 +1,6 @@
 package app.atemkraft.playback
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -141,7 +142,7 @@ class MeditationService : Service() {
         return if (paused) base + DOT_SEPARATOR + getString(R.string.session_paused) else base
     }
 
-    private fun buildNotification(body: String): android.app.Notification {
+    private fun buildNotification(body: String): Notification {
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
@@ -188,7 +189,13 @@ class MeditationService : Service() {
         internal const val NOTIF_ID = 42
         private const val ACTION_STOP = "app.atemkraft.action.MEDITATION_STOP"
 
-        /** Sicherheits-Timeout des Wakelocks (längste Sitzung 90 min + Reserve). */
+        /**
+         * Sicherheits-Timeout des Wakelocks: Der Timer läuft höchstens 60 min
+         * (MEDITATION_MAX_MINUTES), dazu reichlich Reserve. Die offene Sitzung (∞) hat kein Ende;
+         * für sie ist das eine Obergrenze – nach 3 h läuft der Wakelock still aus, Intervall-Gongs
+         * können im Doze dann verspätet kommen. Ob er dort vor Ablauf erneuert wird, ist offen
+         * (Verhaltensänderung, nur mit Gerätetest).
+         */
         private const val WAKELOCK_TIMEOUT_MS = 3 * 60 * 60 * 1000L
 
         fun startIntent(context: Context): Intent = Intent(context, MeditationService::class.java)

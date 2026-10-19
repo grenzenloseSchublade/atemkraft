@@ -14,5 +14,4 @@ ref-format | refs.nadiBhramari2023 | S-23
 ref-format | refs.respeRate | S-23
 ref-format | refs.respeRate.identifier | S-23
 ref-format | buteyko.effectDetail:Bowler 1998 | S-23
-ref-unused | refs.fincham2023 | S-23
 ref-unused | refs.respeRate | S-23

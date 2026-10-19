@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -69,7 +69,6 @@ import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionNoteAmber
-import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
 import kotlin.math.ceil
@@ -197,7 +196,7 @@ private fun ActiveContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
+                            imageVector = Icons.Filled.Info,
                             contentDescription = null, // dekorativ: „Anleitung“ daneben benennt die Zeile
                             tint = hintColor,
                             modifier = Modifier.size(Sizes.IconSmall),
@@ -283,7 +282,6 @@ private fun ActiveContent(
                     GlowText(
                         text = label,
                         style = if (preparing) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall,
-                        fill = SessionTextYellow,
                         modifier = Modifier
                             .then(if (preparing) Modifier.widthIn(max = breathingDiscDiameter(side, fraction)) else Modifier)
                             .semantics {
@@ -296,7 +294,6 @@ private fun ActiveContent(
                         GlowText(
                             text = secondsText,
                             style = MaterialTheme.typography.displaySmall,
-                            fill = SessionTextYellow,
                         )
                     }
                 }

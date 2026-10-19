@@ -16,8 +16,6 @@ layout-literal	app/src/main/java/app/atemkraft/ui/components/SessionRunningLayou
 layout-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	3
 card-style	app/src/main/java/app/atemkraft/MainActivity.kt	1
 exception-message-ui	app/src/main/java/app/atemkraft/cue/tts/VoiceModelManager.kt	1
-icon-source	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
-cd-style	app/src/main/java/app/atemkraft/MainActivity.kt	4
 motion-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
 a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/CircleTapTarget.kt	1
 a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/HideableSlot.kt	1

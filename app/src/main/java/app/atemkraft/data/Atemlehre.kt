@@ -100,7 +100,9 @@ object Atemlehre {
             typical = "Zum Ankommen, vor der Meditation, wenn man die Mitte sucht.",
             studies = "Der am besten untersuchte Teil: Langsames Atmen um 6 Atemzüge pro Minute erhöht " +
                 "die Herzratenvariabilität, das zeigt eine Auswertung von 223 Studien (Laborde " +
-                "2022). Das Tempo zählt dabei mehr als das Verhältnis.",
+                "2022). Das Tempo zählt dabei mehr als das Verhältnis. Über viele Atemformen hinweg " +
+                "berichteten Übende in 12 Studien etwas weniger Stress als ohne Atemübung, ein " +
+                "kleiner bis mittlerer Effekt (Fincham 2023).",
             exerciseIds = listOf("nadi-shodhana"),
         ),
         LorePattern(
@@ -265,6 +267,7 @@ object Atemlehre {
     /** Studien, auf die sich die „Studien“-Zeilen der Karten stützen. */
     val studyRefs: List<Reference> = listOf(
         Refs.laborde2022,
+        Refs.fincham2023,
         Refs.bae2021,
         Refs.meehan2024,
         Refs.birdee2023,
