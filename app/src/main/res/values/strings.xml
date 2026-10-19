@@ -318,10 +318,6 @@
     <string name="meditation_title">Meditation</string>
     <string name="meditation_subtitle">Stille Sitzung mit Gong</string>
     <string name="meditation_mode_timed">Timer</string>
-    <string name="meditation_duration">Dauer</string>
-    <!-- Stepper unter dem Abschnitt „Dauer“: nur die Einheit, sonst doppelt sich der Titel. -->
-    <string name="meditation_minutes_label">Minuten</string>
-    <string name="meditation_free_hint">Offene Sitzung – die Stoppuhr läuft, bis du beendest.</string>
     <string name="meditation_gong_label">Gong</string>
     <string name="meditation_sound_voice_label">Klang &amp; Stimme</string>
     <string name="meditation_gong_startstop">Start &amp; Ende</string>
@@ -337,6 +333,24 @@
     <string name="meditation_gong_off_short">aus</string>
     <string name="meditation_voice_on">mit Stimme</string>
     <string name="meditation_voice_off">ohne Stimme</string>
+    <!-- Zeitring (Dauer-Regler): Einheit unter der Zeit in der Mitte, TalkBack als Schieberegler. -->
+    <plurals name="meditation_dial_unit">
+        <item quantity="one">Minute</item>
+        <item quantity="other">Minuten</item>
+    </plurals>
+    <string name="meditation_dial_free_unit">offen</string>
+    <string name="cd_meditation_dial">Dauer</string>
+    <plurals name="meditation_dial_state">
+        <item quantity="one">%1$d Minute</item>
+        <item quantity="other">%1$d Minuten</item>
+    </plurals>
+    <string name="meditation_dial_state_free">offene Sitzung</string>
+    <string name="cd_meditation_dial_free">Offene Sitzung</string>
+    <string name="meditation_dial_fine_on">Feinwahl an</string>
+    <string name="meditation_dial_fine_off">Feinwahl aus</string>
+    <string name="cd_meditation_dial_fine">Feinwahl</string>
+    <string name="cd_meditation_dial_less">Eine Minute weniger</string>
+    <string name="cd_meditation_dial_more">Eine Minute mehr</string>
     <string name="meditation_done_title">Sitzung beendet</string>
     <string name="cd_meditation_ring">Meditations-Ring</string>
     <string name="meditation_notification_channel">Meditation</string>

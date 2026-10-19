@@ -1,0 +1,339 @@
+package app.atemkraft.ui.meditation
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.min
+import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.TERTIARY
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.hypot
+import kotlin.math.max
+import kotlin.math.roundToInt
+import kotlin.math.sin
+
+/**
+ * Zeitring (Variante E der Dauerwahl): ein 60-Minuten-Zifferblatt wie ein Küchenwecker, 12 Uhr
+ * oben, im Uhrzeigersinn. Ziehen am Ringband oder Tippen auf Band und Zahlen setzt die Dauer
+ * (am Knopf gegriffen ohne Sprung), die ∞-Marke oben die offene Sitzung (Bogen voll, Pink). Ein
+ * Tipp auf die Zeit bzw. in die Mitte öffnet die Feinwahl (− / + je Minute), ein zweiter schließt
+ * sie.
+ *
+ * Reine Darstellung: Wert und Regeln (Raste, ∞, Feinwahl) liegen in [DurationPickerState] und
+ * [DialScale]/[DialDrag]; Mitte, Texte, TalkBack-Regler und ∞-Marke kommen aus DurationReadout.kt.
+ * Eine andere Darstellung (Variante F, `TimeRuler`) braucht nur dieselbe Signatur, ihre Skala und
+ * ihre Gesten.
+ *
+ * Füllt den gegebenen Platz quadratisch (min(maxWidth, maxHeight)); Spur, Striche und Knopf
+ * wachsen mit der Kantenlänge, Zahlen mit der Schrift. Ist zwischen den 5er-Zahlen zu wenig
+ * Platz, stehen nur die 10er. [onTick] meldet jede Wertänderung (`major` = 5er-Marke) für die
+ * Haptik-Raste; ob vibriert wird, entscheidet der Aufrufer (Einstellung „Haptik“).
+ */
+@Composable
+fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val currentOnTick by rememberUpdatedState(onTick)
+    // Im Body gelesen: Zeichnung und Semantik folgen jeder Änderung über die Recomposition.
+    val minutes = state.minutes
+    val free = state.free
+    val fineAdjust = state.fineAdjust
+
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    val numeralStyle = typography.labelMedium.copy(fontFeatureSettings = TABULAR)
+    val markStyle = typography.titleMedium
+    val texts = durationTexts(state)
+    val unitStyle = durationUnitStyle
+    val units = durationUnitSamples()
+    val numberStyles = durationNumberStyles
+
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        val side: Dp = when {
+            constraints.hasBoundedWidth && constraints.hasBoundedHeight -> min(maxWidth, maxHeight)
+            constraints.hasBoundedWidth -> maxWidth
+            constraints.hasBoundedHeight -> maxHeight
+            else -> Dimens.MinTouchTarget * UNBOUNDED_SIDE_TARGETS
+        }
+        val sidePx = with(density) { side.toPx() }
+        val touchPx = with(density) { Dimens.MinTouchTarget.toPx() }
+        val padPx = with(density) { Dimens.GapSmall.toPx() }
+        val readoutPadPx = with(density) { DurationReadoutPad.toPx() }
+        val numerals = remember(measurer, numeralStyle) {
+            (MAJOR_STEP until DURATION_MAX_MINUTES step MAJOR_STEP).associateWith { measurer.measure(it.toString(), numeralStyle) }
+        }
+        val mark = remember(measurer, markStyle, texts.freeSymbol) { measurer.measure(texts.freeSymbol, markStyle) }
+        val geo = remember(sidePx, numerals, mark, touchPx) { dialGeometry(sidePx, numerals.mapValues { it.value.size }, mark.size, touchPx) }
+        val numberStyle = remember(geo, numberStyles, measurer, unitStyle, units, padPx, readoutPadPx) {
+            // Größte Zahl, bei der „− 60 +“ samt Einheit in die Mitte passt (Ecken der
+            // 48-dp-Knöpfe im Kreis) und ein Polster Luft zur Spur bleibt.
+            val radius = geo.contentRadius - padPx
+            fitNumberStyle(numberStyles) { style ->
+                val r = measureReadout(measurer, style, unitStyle, units, readoutPadPx, touchPx)
+                hypot(r.rowHalfWidth, r.buttonHalf) <= radius && hypot(r.textHalfWidth, r.textHalfHeight) <= radius
+            }
+        }
+
+        Box(Modifier.size(side)) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(state, geo) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            val c = Offset(size.width / 2f, size.height / 2f)
+                            val distance = (down.position - c).getDistance()
+                            if (distance > size.width / 2f) return@awaitEachGesture // Ecken bleiben frei
+                            // Die ganze Mitte gehört zur Zeit: ein Tipp neben die Zahl schaltet
+                            // ebenfalls die Feinwahl und setzt nie einen Wert.
+                            if (distance < geo.bandInner) {
+                                val up = waitForUpOrCancellation() ?: return@awaitEachGesture
+                                up.consume()
+                                state.toggleFineAdjust()
+                                return@awaitEachGesture
+                            }
+                            down.consume()
+                            val raw = minutesAt(down.position, c)
+                            // Am Knopf gegriffen bleibt der Wert stehen, bis der Finger zieht;
+                            // sonst springt der Tipp direkt auf den Wert.
+                            if (state.free || !geo.isOnKnob(down.position, c, state.minutes)) state.selectWithTick(raw, currentOnTick)
+                            val follow = DialDrag(state.minutes, raw)
+                            drag(down.id) { change ->
+                                state.selectWithTick(follow.move(minutesAt(change.position, c)), currentOnTick)
+                                change.consume()
+                            }
+                        }
+                    }
+                    .durationSlider(state, texts, currentOnTick),
+            ) {
+                val c = center
+                // Spur
+                drawCircle(colors.surfaceVariant, radius = geo.trackRadius, center = c, style = Stroke(geo.trackWidth))
+                // Minutenstriche, 5er länger und heller
+                for (m in DURATION_MIN_MINUTES..DURATION_MAX_MINUTES) {
+                    val major = DialScale.isMajor(m)
+                    val dir = direction(DialScale.angleOf(m))
+                    val inner = geo.tickOuter - if (major) geo.tickMajor else geo.tickMinor
+                    drawLine(
+                        color = if (major) colors.onSurfaceVariant.copy(alpha = TERTIARY) else colors.outlineVariant,
+                        start = c + dir * inner,
+                        end = c + dir * geo.tickOuter,
+                        strokeWidth = geo.tickWidth,
+                        cap = StrokeCap.Round,
+                    )
+                }
+                // Bogen: Cyan von 12 Uhr bis zum Wert, bei ∞ voll in Pink. Die runde Kappe am
+                // Anfang beginnt genau am 12-Uhr-Strich, statt in die 55 zu ragen.
+                if (free) {
+                    drawCircle(colors.primary, radius = geo.trackRadius, center = c, style = Stroke(geo.trackWidth))
+                } else {
+                    drawArc(
+                        color = colors.secondary,
+                        startAngle = ARC_START + geo.capDeg,
+                        sweepAngle = (DialScale.angleOf(minutes) - geo.capDeg).coerceAtLeast(0f),
+                        useCenter = false,
+                        topLeft = c - Offset(geo.trackRadius, geo.trackRadius),
+                        size = Size(geo.trackRadius * 2f, geo.trackRadius * 2f),
+                        style = Stroke(geo.trackWidth, cap = StrokeCap.Round),
+                    )
+                }
+                // Zahlen; die Zahl unter dem Knopf trägt den Akzent
+                for (n in geo.numerals) {
+                    val layout = numerals.getValue(n)
+                    val accent = !free && n == minutes
+                    drawCentered(layout, c + direction(DialScale.angleOf(n)) * geo.numeralRadius, if (accent) colors.secondary else colors.onSurfaceVariant)
+                }
+                // ∞-Marke oben
+                drawCentered(mark, c + direction(0f) * geo.numeralRadius, if (free) colors.primary else colors.onSurfaceVariant)
+                if (!free) {
+                    val dir = direction(DialScale.angleOf(minutes))
+                    val knob = c + dir * geo.trackRadius
+                    drawCircle(colors.background, radius = geo.knobRadius + geo.knobOutline, center = knob)
+                    drawCircle(colors.onSurface, radius = geo.knobRadius, center = knob)
+                    // Zwischenwert (z. B. 12): kleines Cyan-Label innen am Knopf. Bei offener
+                    // Feinwahl steht der Wert schon groß in der Mitte.
+                    if (!fineAdjust && minutes !in geo.numerals) {
+                        drawCentered(measurer.measure(minutes.toString(), numeralStyle), c + dir * geo.knobLabelRadius, colors.secondary)
+                    }
+                }
+            }
+
+            // ∞-Marke: runde 48-dp-Tippfläche mittig über dem Zeichen. Sie darf oben über den Ring
+            // hinausragen; als oberste Ebene gewinnt sie gegen das Ringband darunter.
+            val markHalf = touchPx / 2f
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = (sidePx / 2f - markHalf).roundToInt(),
+                            y = (sidePx / 2f - geo.numeralRadius - markHalf).roundToInt(),
+                        )
+                    }
+                    .size(Dimens.MinTouchTarget)
+                    .freeMark(state, texts, currentOnTick),
+            )
+
+            DurationReadout(
+                state = state,
+                texts = texts,
+                onTick = currentOnTick,
+                numberStyle = numberStyle,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+    }
+}
+
+/** Minuten unter dem Punkt [p] (Mitte [c]). */
+private fun minutesAt(p: Offset, c: Offset): Int = DialScale.minutesAt(DialScale.angleOf(p.x, p.y, c.x, c.y))
+
+/**
+ * Maße des Zifferblatts in px, alle aus der Kantenlänge [side] abgeleitet; nur die Zahlen
+ * bringen ihre gemessene Größe mit (Systemschrift). Von außen nach innen: Zahlen, Striche,
+ * Spur mit Knopf, Label am Knopf, Mitte ([contentRadius]).
+ */
+internal class DialGeometry(
+    val numeralRadius: Float,
+    val tickOuter: Float,
+    val tickMajor: Float,
+    val tickMinor: Float,
+    val tickWidth: Float,
+    val trackRadius: Float,
+    val trackWidth: Float,
+    val knobRadius: Float,
+    val knobOutline: Float,
+    val knobLabelRadius: Float,
+    val contentRadius: Float,
+    val bandInner: Float,
+    val knobGrab: Float,
+    val capDeg: Float,
+    val numerals: List<Int>,
+) {
+    /** Liegt [p] auf dem Knopf bei [minutes] (mindestens 48 dp Durchmesser)? */
+    fun isOnKnob(p: Offset, c: Offset, minutes: Int): Boolean = (p - (c + direction(DialScale.angleOf(minutes)) * trackRadius)).getDistance() <= knobGrab
+}
+
+internal fun dialGeometry(side: Float, numerals: Map<Int, IntSize>, mark: IntSize, touch: Float): DialGeometry {
+    val half = side / 2f
+    val widest = numerals.values.maxOf { it.width }.toFloat()
+    val labelHalf = max(numerals.values.maxOf { max(it.width, it.height) }, max(mark.width, mark.height)) / 2f
+    val gap = side * GAP_FRACTION
+    val numeralRadius = half - labelHalf - gap
+    val tickOuter = numeralRadius - labelHalf - gap
+    val tickMajor = side * TICK_MAJOR_FRACTION
+    val trackWidth = side * TRACK_FRACTION
+    val trackRadius = tickOuter - tickMajor - gap - trackWidth / 2f
+    val knobRadius = trackWidth * KNOB_FRACTION
+    val knobOutline = trackWidth * KNOB_OUTLINE_FRACTION
+    val knobLabelRadius = trackRadius - knobRadius - gap - labelHalf
+    val contentRadius = trackRadius - knobRadius - gap
+    // 5er-Zahlen nur, wenn zwischen zwei Nachbarn reichlich Luft bleibt; sonst nur die 10er.
+    val fiveStep = (2f * PI.toFloat() * numeralRadius) / (DURATION_MAX_MINUTES / MAJOR_STEP)
+    val every = if (fiveStep < widest * NUMERAL_SPACING) MAJOR_STEP * 2 else MAJOR_STEP
+    return DialGeometry(
+        numeralRadius = numeralRadius,
+        tickOuter = tickOuter,
+        tickMajor = tickMajor,
+        tickMinor = tickMajor * TICK_MINOR_RATIO,
+        tickWidth = side * TICK_WIDTH_FRACTION,
+        trackRadius = trackRadius,
+        trackWidth = trackWidth,
+        knobRadius = knobRadius,
+        knobOutline = knobOutline,
+        knobLabelRadius = knobLabelRadius,
+        contentRadius = contentRadius,
+        // Das Band beginnt erst außerhalb der Mitte: ein Tipp knapp neben die Zeit setzt keinen Wert.
+        bandInner = max(trackRadius - max(trackWidth, touch / 2f), contentRadius),
+        knobGrab = max(knobRadius + knobOutline, touch / 2f),
+        capDeg = Math.toDegrees((trackWidth / 2f / trackRadius).toDouble()).toFloat(),
+        numerals = (every until DURATION_MAX_MINUTES step every).toList(),
+    )
+}
+
+/** Einheitsvektor zum Winkel (0° = 12 Uhr, im Uhrzeigersinn, y nach unten). */
+private fun direction(angleDeg: Float): Offset {
+    val rad = Math.toRadians(angleDeg.toDouble())
+    return Offset(sin(rad).toFloat(), -cos(rad).toFloat())
+}
+
+/** Zeichnet [layout] mit der Mitte auf [at]. */
+private fun DrawScope.drawCentered(layout: TextLayoutResult, at: Offset, color: Color) {
+    drawText(layout, color = color, topLeft = at - Offset(layout.size.width / 2f, layout.size.height / 2f))
+}
+
+private const val MAJOR_STEP = 5
+private const val ARC_START = -90f
+
+// Anteile an der Kantenlänge (Vorlage dauerwahl.html, Abschnitt E).
+private const val GAP_FRACTION = 0.012f
+private const val TRACK_FRACTION = 0.05f
+private const val TICK_MAJOR_FRACTION = 0.035f
+private const val TICK_MINOR_RATIO = 0.5f
+private const val TICK_WIDTH_FRACTION = 0.006f
+private const val KNOB_FRACTION = 0.85f
+private const val KNOB_OUTLINE_FRACTION = 0.15f
+
+// Mittenabstand zweier 5er-Zahlen in Zahlbreiten, unter dem nur die 10er stehen (ruhiger
+// kleiner Ring bei großer Schrift).
+private const val NUMERAL_SPACING = 3f
+
+// Kantenlänge in Touch-Zielen, falls der Ring ganz ohne Grenzen gemessen wird (Vorschau, Test).
+private const val UNBOUNDED_SIDE_TARGETS = 6
+
+@Preview(widthDp = 360, heightDp = 360)
+@Composable
+private fun TimeDialPreview() {
+    AtemkraftTheme {
+        TimeDial(state = remember { DurationPickerState(initialMinutes = 12, initialFree = false) }, onTick = {})
+    }
+}
+
+@Preview(widthDp = 360, heightDp = 360)
+@Composable
+private fun TimeDialFineAdjustPreview() {
+    AtemkraftTheme {
+        TimeDial(
+            state = remember { DurationPickerState(initialMinutes = 20, initialFree = false).apply { toggleFineAdjust() } },
+            onTick = {},
+        )
+    }
+}
+
+@Preview(widthDp = 200, heightDp = 200)
+@Composable
+private fun TimeDialFreeSmallPreview() {
+    AtemkraftTheme {
+        TimeDial(state = remember { DurationPickerState(initialMinutes = 10, initialFree = true) }, onTick = {})
+    }
+}

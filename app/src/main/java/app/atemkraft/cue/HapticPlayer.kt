@@ -11,7 +11,7 @@ import androidx.annotation.RequiresApi
 
 /**
  * Echte Geräte-Vibration (Vibrator-API, benötigt VIBRATE-Permission): Impuls je Phasenwechsel,
- * Doppel-Muster am Ende und ein sanfter Tick beim Tippen auf den Kreis.
+ * Doppel-Muster am Ende, ein sanfter Tick beim Tippen auf den Kreis und die Rasten des Dauer-Reglers.
  *
  * Jede Vibration folgt dem App-Schalter „Vibration“ (AUDIO-05): Die Einstellung ist Pflicht-
  * Parameter jeder Methode, damit keine Aufrufstelle sie vergessen kann.
@@ -33,10 +33,13 @@ class HapticPlayer(context: Context) {
             context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
 
-    /** Sanftes UI-Tick (Kreis-Tap): kurz und leise – Bestätigung, kein Cue. */
-    fun tick(enabled: Boolean) {
+    /**
+     * Sanftes UI-Tick (Kreis-Tap, Raste des Dauer-Reglers je Minute): kurz und leise –
+     * Bestätigung, kein Cue. [strong]: deutlichere Raste (Dauer-Regler je 5 Minuten).
+     */
+    fun tick(enabled: Boolean, strong: Boolean = false) {
         if (!enabled) return
-        vibrate(VibrationEffect.createOneShot(25, 130))
+        vibrate(if (strong) VibrationEffect.createOneShot(40, 255) else VibrationEffect.createOneShot(25, 130))
     }
 
     /** Phasen- und End-Haptik; nur bei eingeschaltetem App-Schalter „Vibration“. */

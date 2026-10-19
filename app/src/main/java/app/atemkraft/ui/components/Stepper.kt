@@ -1,8 +1,6 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,16 +30,13 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Einheitlicher Zahl-Stepper (−  wert  +) mit Label. Wird von der Übungs-Anpassung und dem
- * Meditations-Tab genutzt. Die Knöpfe sind an [range] gekoppelt, behalten Klick und Rolle für
- * TalkBack; der Wert wird bei jeder Änderung angesagt (A11Y-04).
+ * Einheitlicher Zahl-Stepper (−  wert  +) mit Label, genutzt von der Übungs-Anpassung. Die
+ * Knöpfe sind an [range] gekoppelt, behalten Klick und Rolle für TalkBack; der Wert wird bei
+ * jeder Änderung angesagt (A11Y-04).
  *
- * [inline] = false (Karten): Label links, Knöpfe als rechte Spalte, der sichtbare Kreis bündig
- * an der Inhaltskante. [inline] = true (Meditations-Tab): Knöpfe direkt hinter dem Label,
- * linksbündig wie die Chips darüber; reicht der Platz nicht, rutschen sie als Gruppe in die
- * nächste Zeile (LAYOUT-03). [horizontal]/[vertical] steuern die Innenabstände.
+ * Label links, Knöpfe als rechte Spalte, der sichtbare Kreis bündig an der Inhaltskante.
+ * [horizontal]/[vertical] steuern die Innenabstände.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Stepper(
     label: String,
@@ -49,37 +44,24 @@ fun Stepper(
     range: IntRange,
     onChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    inline: Boolean = false,
     horizontal: Dp = Dimens.CardPadding,
     vertical: Dp = Dimens.CardPadding,
 ) {
-    if (inline) {
-        FlowRow(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = horizontal, vertical = vertical),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-        ) {
-            StepperLabel(label, Modifier.align(Alignment.CenterVertically))
-            StepButtons(label, value, range, onChange, Modifier.align(Alignment.CenterVertically))
-        }
-    } else {
-        // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
-        // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
-        val inset = (Dimens.MinTouchTarget - Sizes.IconButtonSize) / 2
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(start = horizontal, end = (horizontal - inset).coerceAtLeast(0.dp), top = vertical, bottom = vertical),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            // weight: Die Knopfgruppe wird zuerst vermessen und behält ihre volle Breite; bei
-            // wenig Platz (360 dp, große Schrift) bricht das Label zwischen ganzen Wörtern um,
-            // statt „+“ aus der Zeile zu drücken.
-            StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
-            StepButtons(label, value, range, onChange)
-        }
+    // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
+    // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
+    val inset = (Dimens.MinTouchTarget - Sizes.IconButtonSize) / 2
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = horizontal, end = (horizontal - inset).coerceAtLeast(0.dp), top = vertical, bottom = vertical),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        // weight: Die Knopfgruppe wird zuerst vermessen und behält ihre volle Breite; bei
+        // wenig Platz (360 dp, große Schrift) bricht das Label zwischen ganzen Wörtern um,
+        // statt „+“ aus der Zeile zu drücken.
+        StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
+        StepButtons(label, value, range, onChange)
     }
 }
 

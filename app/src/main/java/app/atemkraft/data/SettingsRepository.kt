@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import app.atemkraft.cue.tts.VoiceCatalog
+import app.atemkraft.domain.MEDITATION_MAX_MINUTES
+import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SoundMode
@@ -244,7 +246,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         MeditationConfig(
             mode = prefs[Keys.MED_MODE]?.let { MeditationMode.entries.getOrNull(it) }
                 ?: MeditationMode.TIMED,
-            minutes = (prefs[Keys.MED_MINUTES] ?: 10).coerceIn(1, 180),
+            minutes = (prefs[Keys.MED_MINUTES] ?: 10).coerceIn(MEDITATION_MIN_MINUTES, MEDITATION_MAX_MINUTES),
             startEndGong = prefs[Keys.MED_START_END_GONG] ?: true,
             gongEveryMin = intervalMin.takeIf { intervalOn },
             speech = prefs[Keys.MED_SPEECH] ?: false,

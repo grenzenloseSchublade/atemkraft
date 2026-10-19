@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -61,6 +63,8 @@ import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.ToggleRow
+import app.atemkraft.ui.meditation.DurationPickerState
+import app.atemkraft.ui.meditation.TimeDial
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.ControlSize
 import app.atemkraft.ui.theme.controlScale
@@ -76,6 +80,8 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Echte Tap-Injektion um jedes zentrale Bedienelement (A11Y-05): Die sichtbare Fläche folgt der
@@ -332,6 +338,57 @@ class ControlTouchTest(private val fontScale: Float) {
         val found = ControlFindings.findings(nodes, frame, density, "selbsttest").map { it.substringBefore('\t') }
         assertTrue("OHNE_KLICK nicht erkannt: $found", "OHNE_KLICK" in found)
         assertTrue("TIPPFLAECHE nicht erkannt: $found", "TIPPFLAECHE" in found)
+    }
+
+    @Test
+    fun `Zeitring - ∞-Marke 48 dp, Mitte schaltet nur die Feinwahl, Band und Regler stellen den Wert`() {
+        val app = RuntimeEnvironment.getApplication()
+        for (sideDp in listOf(200, 360)) {
+            val state = DurationPickerState(initialMinutes = 30, initialFree = false)
+            show { Box(Modifier.size(sideDp.dp)) { TimeDial(state = state, onTick = {}, modifier = Modifier.fillMaxSize()) } }
+            val where = "Ring $sideDp dp fs$fontScale"
+
+            // ∞-Marke: ±23 dp um das Zeichen treffen, auch über den Ring hinaus.
+            val mark = compose.onNodeWithContentDescription(app.getString(R.string.cd_meditation_dial_free), useUnmergedTree = true)
+                .fetchSemanticsNode()
+            val markCenter = mark.layoutInfo.coordinates.let { it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f) }
+            for (d in listOf(Offset(-INSIDE_DP, 0f), Offset(INSIDE_DP, 0f), Offset(0f, -INSIDE_DP), Offset(0f, INSIDE_DP))) {
+                state.select(30)
+                compose.waitForIdle()
+                tap(markCenter + d * density)
+                assertTrue("$where: ∞-Marke bei $d dp", state.free)
+            }
+
+            // Mitte: ±20 dp über/unter der Zeit schalten nur die Feinwahl, der Wert bleibt.
+            state.select(30)
+            compose.waitForIdle()
+            val dial = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress)).fetchSemanticsNode()
+            val c = dial.boundsInRoot.center
+            for (dy in listOf(-20f, 20f)) {
+                val before = state.fineAdjust
+                tap(Offset(c.x, c.y + dy * density))
+                assertEquals("$where: Wert nach Tipp in die Mitte ($dy dp)", 30, state.minutes)
+                assertTrue("$where: Feinwahl umgeschaltet ($dy dp)", state.fineAdjust != before)
+            }
+
+            // Ziehen am Rand des Bands von 3 Uhr nach 6 Uhr stellt 15 → 30.
+            state.select(40)
+            compose.waitForIdle()
+            val r = dial.boundsInRoot.width / 2f - 2 * density
+            fun at(angleDeg: Double) = c + Offset(sin(Math.toRadians(angleDeg)).toFloat(), -cos(Math.toRadians(angleDeg)).toFloat()) * r
+            compose.onRoot().performTouchInput {
+                down(at(90.0))
+                for (a in 95..180 step 5) moveTo(at(a.toDouble()))
+                up()
+            }
+            compose.waitForIdle()
+            assertEquals("$where: Ziehen über das Band", 30, state.minutes)
+
+            // TalkBack: der Regler lässt sich über SetProgress stellen.
+            compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress))
+                .performSemanticsAction(SemanticsActions.SetProgress) { it(12f) }
+            assertEquals(12, state.minutes)
+        }
     }
 
     /** Höhe der sichtbaren Fläche: der Klick-Knoten, kleiner als seine 48-dp-Reservierung. */

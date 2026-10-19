@@ -4,8 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +19,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,11 +29,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
@@ -55,21 +57,12 @@ import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.StartSplitButton
-import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SynthTrack
-
-/**
- * Schnellwahl der Dauer (Minuten) in einer Reihe; [FREE] steht als „∞“ am Ende und wählt die
- * offene Sitzung. Andere Längen stellt der Stepper ein.
- */
-private const val FREE = 0
-private val DURATION_CHOICES = listOf(5, 10, 20, 30, FREE)
 
 /** Gong-Wahl im Tab; die Intervall-Länge steht in den Einstellungen. */
 private enum class GongChoice {
@@ -79,8 +72,8 @@ private enum class GongChoice {
 }
 
 /**
- * Meditations-Tab: Auswahl (Dauer samt offener Sitzung „∞“, eingeklappt Gong und Sprachanleitung) und
- * laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
+ * Meditations-Tab: Auswahl (Zeitring für die Dauer samt offener Sitzung „∞“, eingeklappt Gong und
+ * Sprachanleitung) und laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
  * liegt im [MeditationController].
  */
 @Composable
@@ -89,13 +82,14 @@ fun MeditationScreen(
     speechAvailable: Boolean,
     gongIntervalMin: Int,
     onOpenSettings: () -> Unit,
+    onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
 ) {
     // Der Tab zeigt nur die Auswahl; die laufende/abgeschlossene Sitzung liegt als Vollbild-Overlay
     // darüber ([MeditationOverlay]) – so ist sie (wie die Atem-Session) minimierbar und über die
     // Mini-Leiste erreichbar.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onStart)
+        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart)
     }
 }
 
@@ -156,110 +150,66 @@ private fun SelectionContent(
     speechAvailable: Boolean,
     gongIntervalMin: Int,
     onOpenSettings: () -> Unit,
+    onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
 ) {
     // Saveable: Die Auswahl überlebt den Abstecher in die Einstellungen und Tab-Wechsel. Schlüssel
     // ohne die Intervall-LÄNGE (die ist global, s. SettingsRepository) – sonst würde eine Änderung
     // in den Einstellungen die noch nicht gestartete Auswahl zurücksetzen.
     val key = initialConfig.copy(gongEveryMin = initialConfig.gongEveryMin?.let { 0 })
-    var mode by rememberSaveable(key) { mutableStateOf(initialConfig.mode) }
-    var minutes by rememberSaveable(key) { mutableIntStateOf(initialConfig.minutes) }
+    // Dauer samt ∞ liegt im DurationPickerState – die Darstellung (Zeitring) liest und ändert nur ihn.
+    val duration = rememberDurationPickerState(initialConfig.minutes, initialConfig.mode == MeditationMode.FREE, key)
     var startEndGong by rememberSaveable(key) { mutableStateOf(initialConfig.startEndGong) }
     var intervalOn by rememberSaveable(key) { mutableStateOf(initialConfig.gongEveryMin != null) }
     var speech by rememberSaveable(key) { mutableStateOf(initialConfig.speech) }
+    var soundExpanded by rememberSaveable { mutableStateOf(false) }
+    val mode = if (duration.free) MeditationMode.FREE else MeditationMode.TIMED
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Dimens.ScreenPadding),
-        ) {
-            ScreenHeader(
-                title = stringResource(R.string.meditation_title),
-                subtitle = stringResource(R.string.meditation_subtitle),
-                action = { SettingsAction(onClick = onOpenSettings) },
-            )
-
-            // Dauer: eine Reihe Schnellwahl, „∞“ ist die offene Sitzung (kein eigener Timer/Frei-
-            // Schalter). Ein Stepper-Wert außerhalb der Schnellwahl markiert keines.
-            SectionHeader(stringResource(R.string.meditation_duration), NeonCyan)
-            SegmentedChoiceRow(
-                items = DURATION_CHOICES,
-                selected = if (mode == MeditationMode.FREE) FREE else minutes,
-                onSelect = { choice ->
-                    if (choice == FREE) {
-                        mode = MeditationMode.FREE
-                    } else {
-                        mode = MeditationMode.TIMED
-                        minutes = choice
+        // Die Seite scrollt nicht: Der Regler bekommt den Platz zwischen Kopf und „Klang & Stimme“
+        // und wird bei großer Schrift oder aufgeklapptem Klang kleiner. Erst wenn selbst seine
+        // Mindestgröße nicht passt, scrollt die Seite als Notlösung – abgeschnitten wird nie.
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            val viewport = maxHeight
+            FillBetweenLayout(
+                viewportHeight = viewport,
+                minCenterHeight = Dimens.DurationPickerMin + Dimens.GapSmall * 2,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Dimens.ScreenPadding),
+                top = {
+                    ScreenHeader(
+                        title = stringResource(R.string.meditation_title),
+                        subtitle = stringResource(R.string.meditation_subtitle),
+                        action = { SettingsAction(onClick = onOpenSettings) },
+                    )
+                },
+                center = {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(vertical = Dimens.GapSmall),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        DurationPicker(state = duration, onTick = onDurationTick)
                     }
                 },
-            ) { m -> if (m == FREE) stringResource(R.string.meditation_free_symbol) else m.toString() }
-
-            if (mode == MeditationMode.TIMED) {
-                // Frei wählbare Dauer (beliebige Minuten); die Reihe ist nur Schnellwahl. Inline:
-                // Knöpfe direkt hinter dem Label, linksbündig – keine weite Lücke zum rechten
-                // Rand. Kompakt, weil die Segmentreihe darüber schon Touch-Rand mitbringt.
-                Stepper(
-                    label = stringResource(R.string.meditation_minutes_label),
-                    value = minutes,
-                    range = 1..120,
-                    onChange = { minutes = it },
-                    inline = true,
-                    horizontal = 0.dp,
-                    vertical = Dimens.GapTiny,
-                )
-            } else {
-                Spacer(Modifier.height(Dimens.GapTiny))
-                Text(
-                    text = stringResource(R.string.meditation_free_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
-            }
-
-            // Klang & Stimme: zugeklappt nur eine Zeile mit der aktuellen Wahl (MUSTER-03) – eine
-            // schlichte Sitzung braucht nur die Dauer. Aufgeklappt Gong und Sprachanleitung.
-            // Zustand bleibt startEndGong/intervalOn, die Reihe bildet ihn nur auf eine Wahl ab.
-            val gong = when {
-                intervalOn -> GongChoice.INTERVAL
-                startEndGong -> GongChoice.START_END
-                else -> GongChoice.OFF
-            }
-            var soundExpanded by rememberSaveable { mutableStateOf(false) }
-            SectionHeader(
-                title = stringResource(R.string.meditation_sound_voice_label),
-                color = NeonCyan,
-                teaser = stringResource(
-                    R.string.meditation_sound_summary,
-                    when (gong) {
-                        GongChoice.OFF -> stringResource(R.string.meditation_gong_off_short)
-                        GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
-                        GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
-                    },
-                    stringResource(
-                        if (speech && speechAvailable) R.string.meditation_voice_on else R.string.meditation_voice_off,
-                    ),
-                ),
-                expanded = soundExpanded,
-                onExpandedChange = { soundExpanded = it },
+                bottom = {
+                    SoundSection(
+                        startEndGong = startEndGong,
+                        intervalOn = intervalOn,
+                        gongIntervalMin = gongIntervalMin,
+                        speech = speech,
+                        speechAvailable = speechAvailable,
+                        expanded = soundExpanded,
+                        onExpandedChange = { soundExpanded = it },
+                        onGong = { choice ->
+                            startEndGong = choice != GongChoice.OFF
+                            intervalOn = choice == GongChoice.INTERVAL
+                        },
+                        onSpeech = { speech = it },
+                    )
+                },
             )
-            if (soundExpanded) {
-                SoundOptions(
-                    gong = gong,
-                    gongIntervalMin = gongIntervalMin,
-                    speech = speech,
-                    speechAvailable = speechAvailable,
-                    onGong = { choice ->
-                        startEndGong = choice != GongChoice.OFF
-                        intervalOn = choice == GongChoice.INTERVAL
-                    },
-                    onSpeech = { speech = it },
-                )
-            }
-            // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.
-            Spacer(Modifier.height(Dimens.GapSmall))
         }
 
         // Gepinnter Start über der Tab-Leiste (wie auf der Detailseite) – als Split-Button:
@@ -273,14 +223,14 @@ private fun SelectionContent(
                 val defaults = MeditationConfig()
                 StartSplitButton(
                     label = stringResource(R.string.action_start),
-                    resetVisible = mode != defaults.mode || minutes != defaults.minutes ||
+                    resetVisible = mode != defaults.mode || duration.minutes != defaults.minutes ||
                         startEndGong != defaults.startEndGong ||
                         intervalOn != (defaults.gongEveryMin != null) || speech != defaults.speech,
                     onStart = {
                         onStart(
                             MeditationConfig(
                                 mode = mode,
-                                minutes = minutes,
+                                minutes = duration.minutes,
                                 startEndGong = startEndGong,
                                 gongEveryMin = if (intervalOn) gongIntervalMin else null,
                                 speech = speech && speechAvailable,
@@ -288,8 +238,9 @@ private fun SelectionContent(
                         )
                     },
                     onReset = {
-                        mode = defaults.mode
-                        minutes = defaults.minutes
+                        duration.select(defaults.minutes)
+                        if (defaults.mode == MeditationMode.FREE) duration.selectFree()
+                        if (duration.fineAdjust) duration.toggleFineAdjust()
                         startEndGong = defaults.startEndGong
                         intervalOn = defaults.gongEveryMin != null
                         speech = defaults.speech
@@ -297,6 +248,113 @@ private fun SelectionContent(
                 )
             }
         }
+    }
+}
+
+/**
+ * Darstellung der Dauerwahl – die EINZIGE Stelle, die sie kennt. Variante F (wischbare Skala)
+ * tauscht nur `TimeDial` gegen `TimeRuler` mit derselben Signatur; Zustand, Haptik, Start, Reset
+ * und Platzverteilung bleiben unverändert. Beide bekommen den ganzen freien Platz (der Ring nimmt
+ * darin das größte Quadrat, mittig).
+ */
+@Composable
+private fun DurationPicker(state: DurationPickerState, onTick: (major: Boolean) -> Unit) {
+    TimeDial(state = state, onTick = onTick, modifier = Modifier.fillMaxSize())
+}
+
+/**
+ * Kopf oben, [center] im restlichen Platz der Ansichtshöhe [viewportHeight], [bottom] darunter.
+ * [top] und [bottom] behalten ihre natürliche Höhe; [center] bekommt die volle Breite und den
+ * Rest, mindestens [minCenterHeight]. Reicht die Ansicht dafür nicht, wird das Ganze höher als
+ * [viewportHeight] (der Aufrufer scrollt dann) – so wird nie etwas abgeschnitten. Gedacht für
+ * einen Eltern-`verticalScroll`, in dem die Höhe sonst unbegrenzt wäre.
+ */
+@Composable
+private fun FillBetweenLayout(
+    viewportHeight: Dp,
+    minCenterHeight: Dp,
+    top: @Composable () -> Unit,
+    center: @Composable () -> Unit,
+    bottom: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Layout(contents = listOf(top, center, bottom), modifier = modifier) { (topM, centerM, bottomM), constraints ->
+        val w = constraints.maxWidth
+        val loose = Constraints(maxWidth = w)
+        val topP = topM.map { it.measure(loose) }
+        val bottomP = bottomM.map { it.measure(loose) }
+        val topH = topP.sumOf { it.height }
+        val bottomH = bottomP.sumOf { it.height }
+        val centerH = maxOf(viewportHeight.roundToPx() - topH - bottomH, minCenterHeight.roundToPx())
+        val centerP = centerM.map { it.measure(Constraints.fixed(w, centerH)) }
+        layout(w, topH + centerH + bottomH) {
+            var y = 0
+            topP.forEach {
+                it.placeRelative(0, y)
+                y += it.height
+            }
+            centerP.forEach { it.placeRelative(0, y) }
+            y += centerH
+            bottomP.forEach {
+                it.placeRelative(0, y)
+                y += it.height
+            }
+        }
+    }
+}
+
+/**
+ * „Klang & Stimme“: zugeklappt nur eine Zeile mit der aktuellen Wahl (MUSTER-03) – eine schlichte
+ * Sitzung braucht nur die Dauer. Aufgeklappt Gong und Sprachanleitung. Der Zustand bleibt
+ * startEndGong/intervalOn, die Reihe bildet ihn nur auf eine Wahl ab.
+ */
+@Composable
+private fun SoundSection(
+    startEndGong: Boolean,
+    intervalOn: Boolean,
+    gongIntervalMin: Int,
+    speech: Boolean,
+    speechAvailable: Boolean,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onGong: (GongChoice) -> Unit,
+    onSpeech: (Boolean) -> Unit,
+) {
+    val gong = when {
+        intervalOn -> GongChoice.INTERVAL
+        startEndGong -> GongChoice.START_END
+        else -> GongChoice.OFF
+    }
+    Column {
+        SectionHeader(
+            title = stringResource(R.string.meditation_sound_voice_label),
+            color = MaterialTheme.colorScheme.secondary,
+            teaser = stringResource(
+                R.string.meditation_sound_summary,
+                when (gong) {
+                    GongChoice.OFF -> stringResource(R.string.meditation_gong_off_short)
+                    GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
+                    GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
+                },
+                stringResource(
+                    if (speech && speechAvailable) R.string.meditation_voice_on else R.string.meditation_voice_off,
+                ),
+            ),
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
+        )
+        if (expanded) {
+            SoundOptions(
+                gong = gong,
+                gongIntervalMin = gongIntervalMin,
+                speech = speech,
+                speechAvailable = speechAvailable,
+                onGong = onGong,
+                onSpeech = onSpeech,
+            )
+        }
+        // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.
+        Spacer(Modifier.height(Dimens.GapSmall))
     }
 }
 

@@ -352,40 +352,51 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
+    /** Zeitring auf 10 min (Standard): Zahl 10 in Cyan, Seite füllt die Gerätehöhe ohne Scrollen. */
     @Test
-    fun meditation() = snap("03_meditation") {
-        MeditationScreen(
-            initialConfig = MeditationConfig(),
-            speechAvailable = true,
-            gongIntervalMin = 5,
-            onOpenSettings = {},
-            onStart = {},
-        )
+    fun meditation() = snap("03_meditation", heightDp = device.heightDp) {
+        MeditationTab(MeditationConfig())
     }
 
-    /** Auswahl weicht vom Standard ab: Der Reset im Split-Button ist sichtbar (gleiche Höhe wie Start). */
+    /** 12 min (zwischen zwei Zahlen: Cyan-Label am Knopf); Reset im Split-Button sichtbar (gleiche Höhe wie Start). */
     @Test
     fun meditationReset() = snap("03_meditation_reset", heightDp = device.heightDp) {
-        MeditationScreen(
-            initialConfig = MeditationConfig(minutes = 15),
-            speechAvailable = true,
-            gongIntervalMin = 5,
-            onOpenSettings = {},
-            onStart = {},
-        )
+        MeditationTab(MeditationConfig(minutes = 12))
     }
 
-    /** Modus „Frei“ (∞): Hinweis statt Stepper; „Klang & Stimme“ aufgeklappt mit Gong „alle N min“ (längstes Segment). */
+    /** Modus „Frei“ (∞): Bogen voll in Pink; „Klang & Stimme“ aufgeklappt mit Gong „alle N min“ (längstes Segment) – Ring am kleinsten. */
     @Test
-    fun meditationFree() = snap("03_meditation_frei", prepare = {
+    fun meditationFree() = snap("03_meditation_frei", heightDp = device.heightDp, prepare = {
         val app = RuntimeEnvironment.getApplication()
         compose.onNodeWithText(app.getString(R.string.meditation_sound_voice_label)).performClick()
     }) {
+        MeditationTab(MeditationConfig(mode = MeditationMode.FREE, gongEveryMin = 15), gongIntervalMin = 15)
+    }
+
+    /** Feinwahl offen: Tipp auf die Zeit in der Mitte blendet − und + neben der Zahl ein. */
+    @Test
+    fun meditationFine() = snap("03_meditation_fein", heightDp = device.heightDp, prepare = {
+        val app = RuntimeEnvironment.getApplication()
+        // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.
+        val closed = app.getString(R.string.meditation_dial_fine_off)
+        compose.onNode(
+            SemanticsMatcher("Mitte des Zeitrings") { node ->
+                node.config.getOrNull(SemanticsActions.OnClick) != null &&
+                    node.config.getOrNull(SemanticsProperties.StateDescription) == closed
+            },
+        ).performClick()
+    }) {
+        MeditationTab(MeditationConfig(minutes = 25))
+    }
+
+    @Composable
+    private fun MeditationTab(config: MeditationConfig, gongIntervalMin: Int = 5) {
         MeditationScreen(
-            initialConfig = MeditationConfig(mode = MeditationMode.FREE, gongEveryMin = 15),
+            initialConfig = config,
             speechAvailable = true,
-            gongIntervalMin = 15,
+            gongIntervalMin = gongIntervalMin,
             onOpenSettings = {},
+            onDurationTick = {},
             onStart = {},
         )
     }

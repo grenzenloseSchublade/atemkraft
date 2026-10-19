@@ -45,6 +45,12 @@ object Dimens {
     /** Haarlinie: Eyebrow → Titel, Divider (2, Raster-Ausnahme). */
     val GapHairline = 2.dp
 
+    /**
+     * Mindestkante des Dauer-Reglers im Meditations-Tab (Zeitring; Feinwahl − Zeit + muss innen
+     * passen). Kleiner wird er nie – reicht der Platz nicht, scrollt die Seite als Notlösung.
+     */
+    val DurationPickerMin = 200.dp
+
     /** Mindesthöhe eigener klickbarer Flächen (Material-Touch-Ziel), unabhängig vom Padding. */
     val MinTouchTarget = 48.dp
 }

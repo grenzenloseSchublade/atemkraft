@@ -50,6 +50,19 @@ class HapticPlayerTest {
     }
 
     @Test
+    fun `Raste des Dauer-Reglers folgt dem App-Schalter, je 5 Minuten deutlicher`() {
+        player.tick(enabled = false, strong = true)
+        assertFalse(vibrator().isVibrating)
+
+        player.tick(enabled = true)
+        val light = vibrator().milliseconds
+        player.tick(enabled = true, strong = true)
+        val shadow = vibrator()
+        assertEquals(VibrationAttributes.USAGE_ALARM, usage(shadow))
+        assertTrue("deutliche Raste ($light → ${shadow.milliseconds} ms)", shadow.milliseconds > light)
+    }
+
+    @Test
     fun `Phasen-Haptik vibriert nicht, wenn der App-Schalter aus ist`() {
         CueEvent.entries.forEach { player.play(it, enabled = false) }
         assertFalse(vibrator().isVibrating)

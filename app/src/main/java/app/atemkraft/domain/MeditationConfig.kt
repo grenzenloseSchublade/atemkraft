@@ -9,6 +9,12 @@ enum class MeditationMode {
     FREE,
 }
 
+/** Kürzeste wählbare Dauer im [MeditationMode.TIMED] (Minuten). */
+const val MEDITATION_MIN_MINUTES = 1
+
+/** Längste wählbare Dauer im [MeditationMode.TIMED] (Minuten) – eine Runde des Zeitrings. */
+const val MEDITATION_MAX_MINUTES = 60
+
 /**
  * Nutzer-Einstellung für eine Meditations-Sitzung (persistent via DataStore).
  *
@@ -17,7 +23,7 @@ enum class MeditationMode {
  * - Start & Ende: `startEndGong = true`, `gongEveryMin = null`
  * - Alle X min: `startEndGong = true`, `gongEveryMin = X` (plus Start-/End-Gong)
  *
- * @param minutes Dauer im [MeditationMode.TIMED] (im FREE-Modus ignoriert).
+ * @param minutes Dauer im [MeditationMode.TIMED], [MEDITATION_MIN_MINUTES]..[MEDITATION_MAX_MINUTES] (im FREE-Modus ignoriert).
  * @param startEndGong Gong zu Beginn und am Ende der Sitzung.
  * @param gongEveryMin Zusätzlicher Intervall-Gong alle N Minuten; null = kein Intervall.
  * @param speech Gesprochene Kurz-Anleitung (TTS) in unregelmäßigen Abständen an/aus.

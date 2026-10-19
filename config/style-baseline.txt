@@ -5,7 +5,6 @@ color-source	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	4
 color-source	app/src/main/java/app/atemkraft/ui/detail/ExerciseDetailScreen.kt	1
 color-source	app/src/main/java/app/atemkraft/ui/home/HomeScreen.kt	3
 color-source	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1
-color-source	app/src/main/java/app/atemkraft/ui/meditation/MeditationScreen.kt	2
 color-source	app/src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt	2
 alpha-literal	app/src/main/java/app/atemkraft/MainActivity.kt	1
 alpha-literal	app/src/main/java/app/atemkraft/ui/about/AboutScreen.kt	2
