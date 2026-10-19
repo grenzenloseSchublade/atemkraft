@@ -46,15 +46,17 @@ fun HintText(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Titel einer Karte (Einstellungen, Glossar): `titleMedium` in `onSurface`, für TalkBack eine
- * Überschrift, damit sich lange Seiten per Überschriften-Navigation durchspringen lassen (A11Y-01).
+ * Titel einer Karte (Einstellungen, Glossar): `titleMedium`, für TalkBack eine Überschrift, damit
+ * sich lange Seiten per Überschriften-Navigation durchspringen lassen (A11Y-01). [color] ist
+ * `onSurface`, außer die Kartentitel sind die eine farbige Kopf-Ebene des Screens (Einstellungen:
+ * [headingColor], FARBE-07).
  */
 @Composable
-fun CardTitle(text: String, modifier: Modifier = Modifier) {
+fun CardTitle(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {
     WholeWordText(
         text = text,
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = color,
         modifier = modifier.semantics { heading() },
     )
 }

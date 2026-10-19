@@ -53,6 +53,7 @@ import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.choiceGroupHeading
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
@@ -271,7 +272,8 @@ private fun SoundSection(
     Column {
         SectionHeader(
             title = stringResource(R.string.meditation_sound_voice_label),
-            color = MaterialTheme.colorScheme.secondary,
+            // Einziger Abschnittskopf des Tabs: erste Farbe des Rings (FARBE-07).
+            color = headingColor(0),
             teaser = stringResource(
                 R.string.meditation_sound_summary,
                 when (gong) {

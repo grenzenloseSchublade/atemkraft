@@ -79,6 +79,12 @@ class ThemeContrastTest {
             add(Pair("$n auf background", c, background, text))
             add(Pair("$n auf Card", c, card, text))
         }
+        // Kopf-Ring (FARBE-07): Jede Farbe kann jeden Abschnittskopf tragen – auf dem Screen-Grund
+        // (SectionHeader, ExpanderSection) und auf der Karte (Kartentitel der Einstellungen).
+        HeadingRing.forEachIndexed { i, c ->
+            add(Pair("Kopf-Ring $i auf background", c, background, text))
+            add(Pair("Kopf-Ring $i auf Card", c, card, text))
+        }
         add(Pair("EvidenceCaution auf Leiste", EvidenceCaution, bar, text))
         add(Pair("OnNeon auf NeonMagenta", OnNeon, NeonMagenta, text))
         add(Pair("onError OnNeon auf error EvidenceCaution", OnNeon, EvidenceCaution, text))
@@ -128,7 +134,11 @@ class ThemeContrastTest {
         add(Pair("SessionButtonPink auf background", SessionButtonPink, background, text))
     }
 
-    /** FARBE-04: semantische Farben, die gemeinsam auf einem Screen stehen, ΔE76 ≥ 25. */
+    /**
+     * FARBE-04: semantische Farben, die gemeinsam auf einem Screen stehen, ΔE76 ≥ 25. Der Kopf-Ring
+     * ([HeadingRing]) gehört nicht dazu: Köpfe tragen keine Bedeutung und dürfen einer Inhaltsfarbe
+     * gleichen (FARBE-07).
+     */
     private fun deltaEPairs(): List<Triple<String, Color, Color>> {
         // Atmen-Tab und Detailseite: Familien-Akzente, Evidenz-Chips (drei Stufen), Vorsicht,
         // „intensiv“ und ⚠-Zeile (WarnAmber neben Familie B), Marke.
@@ -150,8 +160,8 @@ class ThemeContrastTest {
             Triple("primary ↔ SessionButtonPink", NeonMagenta, SessionButtonPink),
             Triple("EvidenceCaution ↔ SessionButtonPink", EvidenceCaution, SessionButtonPink),
         )
-        // Atemlehre (FARBE-04, -07): Ausatmen gegen Einatmen, die pinken Köpfe, Warnung, Vorsicht und
-        // – weil app-weit belegt – die Familienfarben.
+        // Atemlehre (FARBE-04): Ausatmen gegen Einatmen, Marke, Warnung, Vorsicht und – weil app-weit
+        // belegt – die Familienfarben.
         val lore = listOf(
             "NeonCyan" to NeonCyan,
             "primary" to NeonMagenta,

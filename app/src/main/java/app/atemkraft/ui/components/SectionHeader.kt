@@ -38,11 +38,21 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.HeadingRing
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
+ * Farbe des Kopfes an Stelle [index] eines Screens (FARBE-07): reihum durch [HeadingRing], der
+ * oberste Kopf ist 0. Der Index ist die Lage des Kopfes, ausdrücklich gesetzt, kein Zähler der
+ * Komposition – ein zugeklappter Abschnitt behält seine Farbe. Die Farbe trägt keine Bedeutung.
+ * Nicht im Atmen-Tab: Dort tragen die Köpfe die Familienfarben.
+ */
+fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
+
+/**
  * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen,
- * Situationen, Meditation), damit Sektionsüberschriften überall identisch lesen.
+ * Situationen, Meditation), damit Sektionsüberschriften überall identisch lesen. [color] kommt
+ * außerhalb des Atmen-Tabs aus [headingColor] (FARBE-07).
  *
  * [trailingAction] ist eine optionale Aktion für den ganzen Abschnitt (z. B. „Muster neu
  * generieren“), rechts als `AppIconButton`, ihr Glyph bündig an der Inhaltskante ([flushEnd]).
@@ -210,7 +220,7 @@ private fun SectionHeaderExpandablePreview() {
     AtemkraftTheme {
         SectionHeader(
             title = stringResource(R.string.situations_my_patterns),
-            color = MaterialTheme.colorScheme.primary,
+            color = headingColor(0),
             teaser = stringResource(R.string.situations_subtitle),
             expanded = false,
             status = stringResource(R.string.situations_my_patterns_count, 5),

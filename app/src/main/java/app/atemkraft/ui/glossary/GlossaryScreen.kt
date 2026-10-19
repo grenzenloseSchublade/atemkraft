@@ -22,6 +22,7 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -40,18 +41,21 @@ fun GlossaryScreen(onBack: () -> Unit) {
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 // Abstand über den Gruppen bringt der SectionHeader selbst mit (SectionHeaderTop).
-                TermGroup(stringResource(R.string.glossary_group_body), Glossary.bodyTerms)
-                TermGroup(stringResource(R.string.glossary_group_yoga), Glossary.yogaTerms)
+                TermGroup(0, stringResource(R.string.glossary_group_body), Glossary.bodyTerms)
+                TermGroup(1, stringResource(R.string.glossary_group_yoga), Glossary.yogaTerms)
                 Spacer(Modifier.height(Dimens.ScreenBottom))
             }
         }
     }
 }
 
-/** Eine Begriffsgruppe: farbiger Abschnitts-Header, darunter die Karten mit neutralen Titeln (FARBE-07). */
+/**
+ * Eine Begriffsgruppe: Abschnitts-Header in der Farbe seiner Lage [index] (reihum, FARBE-07),
+ * darunter die Karten mit neutralen Titeln.
+ */
 @Composable
-private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
-    SectionHeader(title = title, color = MaterialTheme.colorScheme.primary)
+private fun TermGroup(index: Int, title: String, terms: List<GlossaryTerm>) {
+    SectionHeader(title = title, color = headingColor(index))
     // Karte ↔ Karte über spacedBy statt Außen-Padding je Karte: exakt ListGap, kein
     // zusätzlicher Rand über der ersten bzw. unter der letzten Karte.
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {

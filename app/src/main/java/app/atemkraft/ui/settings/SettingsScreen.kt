@@ -72,6 +72,7 @@ import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.flushEnd
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
@@ -127,6 +128,8 @@ fun SettingsScreen(
                 NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
 
                 Spacer(Modifier.height(Dimens.SectionGap))
+                // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
+                // Bedeutung (FARBE-07): Ton 0, Atmen 1, Sitzung 2, Meditation 3, Daten 4.
                 TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
 
                 Spacer(Modifier.height(Dimens.ListGap))
@@ -174,7 +177,7 @@ fun SettingsScreen(
 private fun DataCard(transfer: PatternTransfer, onClearLog: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_data_title))
+            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(4))
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_data_hint))
             AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
@@ -239,7 +242,7 @@ private fun TonCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_tone_title))
+            CardTitle(stringResource(R.string.settings_tone_title), color = headingColor(0))
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.volume_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -285,7 +288,7 @@ private fun AtmenCard(
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_breathing_title))
+            CardTitle(stringResource(R.string.settings_breathing_title), color = headingColor(1))
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_sound_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -342,7 +345,7 @@ private fun SessionCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_session_title))
+            CardTitle(stringResource(R.string.settings_session_title), color = headingColor(2))
             Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
@@ -379,7 +382,7 @@ private fun MeditationCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_meditation_title))
+            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(3))
 
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())

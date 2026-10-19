@@ -64,6 +64,7 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
@@ -84,9 +85,9 @@ import kotlinx.coroutines.flow.first
  * sichtbar zusammen).
  *
  * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen [BreathExhale] Koralle,
- * Halten gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe stehen
- * wie im Glossar in `primary` (Pink), die Mustertitel darunter neutral (FARBE-07); Pink heißt hier
- * deshalb nie „Ausatmen“.
+ * Halten gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe gehen
+ * wie auf jedem Screen reihum durch den Kopf-Ring ([headingColor], ohne Bedeutung), die Mustertitel
+ * darunter stehen neutral (FARBE-07).
  *
  * [focus]: Kennung einer Muster-Karte (Sprung aus der Detailseite) – die Karte steht dann
  * aufgeklappt mit ihrem Rhythmusbild oben im Bild.
@@ -94,7 +95,6 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus: String? = null) {
     val scrollState = rememberScrollState()
-    val accent = MaterialTheme.colorScheme.primary
     val focusId = focus?.takeIf { Atemlehre.pattern(it) != null }
     // Einmal zur Karte springen; gemerkt, damit die Rückkehr aus einer Übung die Position hält.
     // Die Lage der Karte wird gegen den Scroll-Inhalt gemessen, nicht gegen ihre direkte Spalte:
@@ -123,14 +123,15 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 Spacer(Modifier.height(Dimens.SectionGap))
                 HintText(Atemlehre.intro)
 
-                SectionHeader(title = stringResource(R.string.atemlehre_phases), color = accent)
+                // Köpfe reihum nach ihrer Lage (FARBE-07): Phasen 0, Grundregeln 1, Muster 2, Einflüsse 3, Quellen 4.
+                SectionHeader(title = stringResource(R.string.atemlehre_phases), color = headingColor(0))
                 PhasesCard(Atemlehre.phases)
 
-                ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, accent) {
+                ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, headingColor(1)) {
                     RulesContent()
                 }
 
-                SectionHeader(title = stringResource(R.string.atemlehre_patterns), color = accent)
+                SectionHeader(title = stringResource(R.string.atemlehre_patterns), color = headingColor(2))
                 // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
                 // Balken zu welchem Titel gehört. Die Karten stehen direkt in der Scroll-Spalte, ihre
                 // Lage dient als Sprungziel.
@@ -151,10 +152,10 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                     }
                 }
 
-                ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, accent) {
+                ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, headingColor(3)) {
                     InfluencesContent(onOpenExercise)
                 }
-                ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, accent) {
+                ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, headingColor(4)) {
                     SourcesContent()
                 }
                 Spacer(Modifier.height(Dimens.ScreenBottom))
@@ -379,7 +380,7 @@ private fun RhythmBar(steps: List<RhythmStep>) {
 /** Ein Phasen-Abschnitt: Einatmen Cyan, Ausatmen Koralle gefüllt; Halten als gestrichelter Umriss. */
 @Composable
 private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: Boolean = false) {
-    // secondary = Cyan (Theme.kt); Ausatmen in eigenem Ton, weil Pink hier die Köpfe trägt.
+    // secondary = Cyan (Theme.kt); Ausatmen in eigenem Ton (Koralle), nie in der Markenfarbe.
     val inhale = MaterialTheme.colorScheme.secondary
     val exhale = BreathExhale
     val base: Color = when (type) {

@@ -42,6 +42,7 @@ import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
@@ -89,7 +90,8 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                 ExpanderSection(
                     title = stringResource(R.string.about_licenses_title),
                     appetizer = stringResource(R.string.about_licenses_teaser),
-                    accent = MaterialTheme.colorScheme.primary,
+                    // Einziger Abschnittskopf der Seite: erste Farbe des Rings (FARBE-07).
+                    accent = headingColor(0),
                     initiallyExpanded = licensesExpanded,
                 ) { LicenseList() }
 

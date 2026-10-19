@@ -108,7 +108,17 @@ const val ALPHA_HEAT_LOW = 0.40f
 const val ALPHA_HEAT_MID = 0.70f
 
 /**
- * Ausatmen in den Rhythmusbildern der Atemlehre (Koralle), Einatmen ist Cyan. Pink trägt dort die
- * Abschnittsköpfe wie im Glossar und kann deshalb nicht zugleich Ausatmen heißen (FARBE-04, -07).
+ * Ausatmen in den Rhythmusbildern der Atemlehre (Koralle), Einatmen ist Cyan (FARBE-04). Derselbe
+ * Ton steht im Ring der Abschnittsköpfe ([HeadingRing]); Köpfe tragen keine Bedeutung (FARBE-07).
  */
 val BreathExhale = Color(0xFFFF9E7A)
+
+/**
+ * Ring der Abschnittsköpfe (FARBE-07, Nutzerentscheidung 2026-10-19): Pink → Koralle → Lila →
+ * Gelb → Grün, reihum nach der Lage des Kopfes auf dem Screen, oben mit Pink beginnend
+ * (`headingColor`). Die Farben tragen **keine Bedeutung** – keine Familie, keine Warnung, kein
+ * Thema –, deshalb dieselben Töne wie Marke, Ausatmen und Familien statt eigener Tokens.
+ * Ausnahme: der Atmen-Tab mit seinen Familienfarben. Alle fünf ≥ 4,5:1 auf Grund und Karte
+ * (ThemeContrastTest).
+ */
+val HeadingRing = listOf(NeonMagenta, BreathExhale, FamilyBalance, FamilySympathetic, FamilyFunctional)

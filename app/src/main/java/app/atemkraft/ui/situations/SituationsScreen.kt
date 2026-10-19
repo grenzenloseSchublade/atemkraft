@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -44,11 +44,11 @@ import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SearchField
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
-import app.atemkraft.ui.theme.WarnAmber
 
 /**
  * Situationen-Tab: „welche Atmung wann“ als Befindens-Übersicht. Gleiche Optik wie der Atmen-Tab
@@ -152,11 +152,13 @@ fun SituationsScreen(
                 }
                 // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der
                 // Übersicht zu überschreiben.
-                items(results, key = { "q-${it.situation.name}" }) { rec ->
-                    SituationSection(rec, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
+                // Köpfe reihum nach ihrer Lage unter den gezeigten Abschnitten (FARBE-07).
+                itemsIndexed(results, key = { _, rec -> "q-${rec.situation.name}" }) { index, rec ->
+                    SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
                 }
             } else {
                 // Vom Nutzer gespeicherte generierte Muster – bewusst hier (nicht im Atmen-Tab).
+                val headOffset = if (savedPatterns.isNotEmpty()) 1 else 0
                 if (savedPatterns.isNotEmpty()) {
                     item(key = "my-patterns") {
                         SavedPatternsSection(
@@ -171,8 +173,16 @@ fun SituationsScreen(
 
                 // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
                 // als langes Scrollen.
-                items(recommendations, key = { "s-${it.situation.name}" }) { rec ->
-                    SituationSection(rec, initiallyExpanded = false, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
+                // Köpfe reihum nach ihrer Lage (FARBE-07): „Meine Muster“ zuerst, dann die Situationen.
+                itemsIndexed(recommendations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
+                    SituationSection(
+                        rec,
+                        headOffset + index,
+                        initiallyExpanded = false,
+                        resolve = resolve,
+                        markedIds = markedIds,
+                        onSelect = onSelect,
+                    )
                 }
             }
 
@@ -205,7 +215,8 @@ private fun SavedPatternsSection(
 ) {
     CollapsibleSection(
         title = stringResource(R.string.situations_my_patterns),
-        color = MaterialTheme.colorScheme.secondary,
+        // Steht es da, ist es der oberste Kopf (FARBE-07).
+        color = headingColor(0),
         expanded = expanded,
         onExpandedChange = onExpandedChange,
         status = expanded?.let { stringResource(R.string.situations_my_patterns_count, patterns.size) },
@@ -232,16 +243,17 @@ private fun SavedPatternsSection(
 @Composable
 private fun SituationSection(
     rec: SituationRecommendation,
+    headIndex: Int,
     initiallyExpanded: Boolean,
     resolve: (String) -> Exercise?,
     markedIds: Set<String>,
     onSelect: (String) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    val accent = if (rec.warn) WarnAmber else MaterialTheme.colorScheme.primary
     CollapsibleSection(
         title = rec.title,
-        color = accent,
+        // Reihum ohne Bedeutung, auch für die Warn-Situation: Die Warnung trägt der Text (FARBE-07).
+        color = headingColor(headIndex),
         expanded = expanded,
         onExpandedChange = { expanded = it },
         teaser = rec.rationale,
