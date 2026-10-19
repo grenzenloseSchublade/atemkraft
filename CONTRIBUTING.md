@@ -41,6 +41,8 @@ scripts/build.sh ktlintFormat   # Formatierung automatisch korrigieren
 
 `scripts/check.sh` ist der einzige Prüf-Einstieg, lokal und im CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)). Dazu gehört ein Screenshot-Test, der alle Screens auf drei Breiten und vier Schriftgrößen rendert und fehlschlägt, wenn ein Wort umbricht, ein Text abgeschnitten wird oder eine Tippfläche kleiner als 48 dp ist. Die Bilder erzeugst du mit `scripts/build.sh recordRoborazziDebug`; sie liegen dann unter `app/build/outputs/roborazzi/`.
 
+Der Release-Build in `scripts/check.sh` ist immer unsigniert. Eine signierte `app-release.apk` unter `app/build/outputs/apk/release/` legt das Skript vorher beiseite und stellt sie danach wieder hin, auch wenn eine Prüfung fehlschlägt.
+
 Altlasten sind in Baselines unter `config/` eingefroren. Eine Baseline darf nur sinken, nie wachsen.
 
 ## Regeln

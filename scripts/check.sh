@@ -22,9 +22,27 @@ scripts/check-style.sh
 # Der Release-Build prüft, was nur dort läuft: R8 samt Keep-Regeln, Ressourcen-Shrinking,
 # lintVitalRelease und das Paketieren. Ob die neuronale Stimme über JNI zur Laufzeit geht, prüft
 # er nicht (das bleibt die Gerätesprobe der Release-Checkliste). Er bleibt immer unsigniert,
-# auch wenn lokal ein Release-Keystore liegt.
+# auch wenn lokal ein Release-Keystore liegt, und lässt eine signierte APK liegen (siehe unten).
 TASKS=(ktlintCheck testDebugUnitTest)
 $FAST || TASKS+=(lintDebug assembleRelease -PunsignedRelease=true)
+
+# Das Paketieren räumt das Ausgabeverzeichnis des Release-Builds; eine dort liegende signierte
+# app-release.apk (scripts/build.sh assembleRelease mit Keystore) wäre danach weg. Deshalb wird
+# das Verzeichnis vorher beiseitegelegt und am Ende – auch bei Fehlern – unverändert
+# zurückgestellt; die unsignierte Prüf-APK wird verworfen.
+RELEASE_OUT="app/build/outputs/apk/release"
+RELEASE_KEEP="app/build/check-release-keep"
+restore_release() {
+  [[ -d "${RELEASE_KEEP}" ]] || return 0
+  rm -rf "${RELEASE_OUT}"
+  mv "${RELEASE_KEEP}" "${RELEASE_OUT}"
+  echo "check.sh: signierte Release-APK in ${RELEASE_OUT} wiederhergestellt"
+}
+if ! $FAST && [[ -f "${RELEASE_OUT}/app-release.apk" ]]; then
+  rm -rf "${RELEASE_KEEP}"
+  mv "${RELEASE_OUT}" "${RELEASE_KEEP}"
+  trap restore_release EXIT
+fi
 step "Gradle: ${TASKS[*]}"
 scripts/build.sh "${TASKS[@]}"
 
