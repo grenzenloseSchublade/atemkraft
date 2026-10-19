@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-19, geprüft gegen Version 1.6.5 und den Quellcode auf `main` an diesem Tag. Wo sich die veröffentlichte Version 1.5.1 davon unterscheidet, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
+- **Stand:** 2026-10-19, geprüft gegen Version 1.6.5 und den Quellcode auf `main` an diesem Tag. Wo sich Versionen bis einschließlich 1.5.1 davon unterscheiden, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
@@ -15,7 +15,7 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 
 | Ort | Inhalt | So löschst du es |
 |---|---|---|
-| Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden *Einstellungen → Daten → „Logbuch leeren“* (ein zweiter Tipp bestätigt); App-Speicher löschen |
+| Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | *Einstellungen → Daten → „Logbuch leeren“* (ein zweiter Tipp bestätigt); App-Speicher löschen |
 | Eigene Muster (Datenbank) | Name, Phasenlängen und Art (aktivierend oder nicht) gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen unter „Meine Muster“ |
 | Einstellungen | Ton, Haptik, Hinweise (auch, ob du den Sicherheitshinweis vor intensiven Übungen bestätigt hast), Meditation, gewählte Stimme, Anpassungen pro Übung, Übungen, die du mit „Tut mir gut“ markiert hast, ob „Meine Muster“ aufgeklappt ist, ob die App schon nach der Benachrichtigung gefragt hat und, falls die Einstellungsdatei einmal beschädigt war, wann die App sie zurückgesetzt hat | Anpassungen pro Übung zurücksetzen; Markierung durch erneutes Antippen aufheben; App-Speicher löschen |
 | Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |

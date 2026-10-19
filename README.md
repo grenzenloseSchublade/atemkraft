@@ -19,13 +19,13 @@ Atemkraft ist eine Wellness-App und kein Medizinprodukt. Sie ersetzt keinen Rat 
 <a id="funktionen"></a>
 ## Funktionen
 
-Beschrieben ist der aktuelle Entwicklungsstand (`main`), Stand Version 1.6.5. Was es erst ab Version 1.6.0 gibt, ist mit *ab Version 1.6.0* markiert.
+Beschrieben ist der aktuelle Entwicklungsstand (`main`), Stand Version 1.6.5. Was es erst ab Version 1.6.0 gibt, ist mit *ab Version 1.6.0* markiert, was es erst ab Version 1.6.5 gibt, mit *ab Version 1.6.5*. Die neueste APK unter Releases ist Version 1.6.4 (siehe [Projektstand](#projektstand)).
 
 - **Atmen:** 18 Atemtechniken in vier Gruppen (Herunterregeln, Hochregeln, Balancieren, Funktionell), z. B. Resonanz-Atmung, 4-7-8, Box-Atmung, Lippenbremse. Jede Übung hat Anleitung, Einordnung der Studienlage, Sicherheitshinweise und Quellenangaben, in der Regel mit DOI oder PMID. Ein Etikett zeigt die Studienlage auf einen Blick: „gut belegt“ (Meta-Analyse oder mehrere unabhängige Studien), „in Studien geprüft“ (Studien gibt es, aber wenige, kleine oder nur in bestimmten Gruppen) oder „kaum untersucht“ (plausibel, aber kaum direkt erforscht). Bei getakteten Übungen lassen sich Ein-, Aus- und Halte-Zeiten anpassen; die Anpassung bleibt pro Übung gespeichert. Vor Wim Hof und Feueratmung erscheint ein Sicherheitshinweis, beim ersten Mal immer. Übungen, die dir guttun, markierst du auf der Detailseite mit dem Atemkreis-Symbol „Tut mir gut“; die Liste zeigt die Markierung.
-- **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen; ein Bogen um den Kreis zeigt, wie weit die Sitzung ist. Ein Tipp neben den Kreis blendet die Bedienelemente aus (Ruhe-Ansicht), ein zweiter holt sie zurück. Am Ende fragt die App „Wie fühlst du dich?“ und zeigt eine kurze Bilanz mit Runden, Dauer und Atemzügen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar. Eine laufende Sitzung lässt sich zu einer Leiste verkleinern.
+- **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen. Am Ende fragt die App „Wie fühlst du dich?“. *Ab Version 1.6.5* zeigt ein Bogen um den Kreis, wie weit die Sitzung ist; ein Tipp neben den Kreis blendet die Bedienelemente aus (Ruhe-Ansicht), ein zweiter holt sie zurück; am Ende steht eine kurze Bilanz mit Runden, Dauer und Atemzügen. Wahlweise Wechseltöne oder ein durchgehender Ton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar. Eine laufende Sitzung lässt sich zu einer Leiste verkleinern.
 - **Muster des Tages:** jeden Tag ein neues, zufällig erzeugtes Atemmuster, gleich für alle am selben Tag. Es bleibt in festen Grenzen und zählt in ganzen Sekunden (ruhige Muster: 9–13 s pro Atemzug, Ausatmen mindestens so lang wie Einatmen, Halten höchstens 4 s; sanft aktivierende: 6–9 s, Einatmen länger als Ausatmen, Halten höchstens 2 s). Seine Einordnung nach der Yoga-Lehre steht auf der Detailseite. Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern; gespeicherte stehen unter „Meine Muster“.
 - **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“ oder „Konzentration & Fokus“, mit passenden Übungen. *Ab Version 1.6.0* mit Suche nach deinem Befinden („Wie fühlst du dich?“): Sie läuft ohne Netz und wird nicht gespeichert.
-- **Meditation:** Die Dauer stellst du an einem Zeitring ein: 1–60 min in Minutenschritten oder ∞ für eine offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer ladbaren deutschen Stimme, die du vorher anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
+- **Meditation:** Die Dauer stellst du *ab Version 1.6.5* an einem Zeitring ein: 1–60 min in Minutenschritten oder ∞ für eine offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer ladbaren deutschen Stimme, die du vorher anhören kannst. Die Meditation läuft auch bei ausgeschaltetem Bildschirm weiter.
 - **Logbuch:** abgeschlossene Sitzungen, gegliedert nach Heute, Gestern, Woche und Monat, dazu Wochenübersicht, Tage in Folge und Minuten gesamt. Leeren lässt es sich in den Einstellungen unter „Daten“.
 - **Begriffe erklärt:** ein Glossar für Fachwörter wie HRV oder Vagus.
 - **Daten sichern** (*ab Version 1.6.0*): gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
@@ -72,7 +72,7 @@ Alle Einzelheiten, auch was bis Version 1.5.1 anders ist: [Datenschutzerklärung
 | Berechtigung | Wofür |
 |---|---|
 | `INTERNET` | nur das Laden einer Stimme |
-| `VIBRATE` | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“, den Tick erst ab Version 1.6.0. Die Rasten des Zeitrings sind Berührungs-Feedback und folgen der Android-Einstellung dafür (ab 1.6.5) |
+| `VIBRATE` | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“, den Tick erst ab Version 1.6.0. Die Rasten des Zeitrings sind Berührungs-Feedback und folgen der Android-Einstellung dafür (ab Version 1.6.5) |
 | `WAKE_LOCK` | hält den Prozessor während einer Meditation wach, damit Gongs pünktlich kommen |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
 | `POST_NOTIFICATIONS` | Benachrichtigung „Meditation läuft“ mit „Beenden“; ohne sie läuft der Timer trotzdem |
@@ -118,7 +118,7 @@ ui/       theme/, components/ und je Screen ein Paket
 <a id="projektstand"></a>
 ## Projektstand
 
-- **Neueste Version:** 1.6.5 (Tag `v1.6.5`); was sich je Version geändert hat, steht in [docs/release-notes](docs/release-notes). Die APKs veröffentlichter Versionen liegen unter [Releases](https://github.com/grenzenloseSchublade/atemkraft/releases).
+- **Neueste veröffentlichte Version:** 1.6.4. Version 1.6.5 gibt es nur als Tag `v1.6.5` ohne APK; wer sie will, baut sie [aus dem Quellcode](#bauen). Was sich je Version geändert hat, steht in [docs/release-notes](docs/release-notes). Die APKs veröffentlichter Versionen liegen unter [Releases](https://github.com/grenzenloseSchublade/atemkraft/releases).
 - **Verteilung:** GitHub-Releases. Wegen der vorkompilierten sherpa-onnx-Bibliothek (`app/libs/*.aar`) passt die App nicht ins Haupt-Repo von F-Droid, das alles aus dem Quellcode baut; IzzyOnDroid wäre ein passender Kanal.
 - **Ideen:** eigene Übungen per Editor, Wear OS, Widgets. Eine eigene Stimme für die Meditationsanleitung: Anleitung in [docs/VOICE_CLONING.md](docs/VOICE_CLONING.md).
 - **iOS:** Recherche und Plan, noch nicht umgesetzt: [docs/IOS_PLAN.md](docs/IOS_PLAN.md).
