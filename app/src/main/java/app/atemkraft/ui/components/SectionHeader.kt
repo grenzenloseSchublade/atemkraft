@@ -100,8 +100,8 @@ fun SectionHeader(
             ) {
                 Box(
                     modifier = Modifier
-                        // Balken so hoch wie die Schrift – folgt TEXT_SCALE und der Systemschriftgröße.
-                        .size(width = 4.dp, height = with(LocalDensity.current) { MaterialTheme.typography.headlineSmall.fontSize.toDp() })
+                        // Balken so hoch wie die Schrift – folgt der Systemschriftgröße.
+                        .size(width = 4.dp, height = with(LocalDensity.current) { MaterialTheme.typography.titleLarge.fontSize.toDp() })
                         .clip(RoundedCornerShape(2.dp))
                         .background(color),
                 )
@@ -110,14 +110,14 @@ fun SectionHeader(
                 FlowRow(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                     WholeWordText(
                         text = title,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                         color = color,
                         modifier = Modifier.alignByBaseline().semantics { heading() },
                     )
                     if (status != null) {
                         Text(
                             text = status,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                             modifier = Modifier.alignByBaseline().semantics {
                                 if (statusDescription != null) contentDescription = statusDescription
@@ -130,7 +130,7 @@ fun SectionHeader(
             if (teaser != null) {
                 Text(
                     text = teaser,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     modifier = Modifier.padding(top = Dimens.GapSmall),
                 )

@@ -218,7 +218,7 @@ CHECKS: list[Check] = [
           [r"\b(ButtonDefaults\.(MinHeight|MinWidth|IconSize)|FilterChipDefaults\.Height|SwitchDefaults\.IconSize|SegmentedButtonDefaults\.IconSize)\b"],
           exclude=[SRC + "ui/theme/*"], skip_imports=True),
     Check("control-scale", "LAYOUT-06", [SRC + "ui/*.kt", SRC + "MainActivity.kt"], [r"\.scale\(|\bscale[XY]\s*="],
-          exclude=[SRC + "ui/theme/*", SRC + "ui/components/Controls.kt"]),
+          exclude=[SRC + "ui/theme/*"]),
     Check("touch-order", "LAYOUT-06", [SRC + "ui/*.kt"],
           [r"\.(size|height|width|requiredSize|requiredHeight|requiredWidth)\((?:[^()]|\([^()]*\))*\)\s*\.minimumInteractiveComponentSize\(\)"],
           multiline=True),

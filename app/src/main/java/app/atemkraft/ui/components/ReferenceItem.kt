@@ -18,7 +18,9 @@ fun ReferenceItem(reference: Reference) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
         )
         reference.identifier?.let {
-            Text(
+            // DOI-Ketten wie „10.17761/2025-D-25-00006“ bieten dem Zeilenumbruch keine Stelle;
+            // WholeWordText verkleinert sie, statt mitten in der Zahl zu brechen (LAYOUT-03).
+            WholeWordText(
                 text = it,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),

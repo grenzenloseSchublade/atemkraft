@@ -69,7 +69,7 @@ fun Stepper(
 private fun StepperLabel(label: String, modifier: Modifier = Modifier) {
     Text(
         text = label,
-        style = MaterialTheme.typography.titleMedium,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier,
     )
@@ -90,7 +90,7 @@ private fun StepButtons(label: String, value: Int, range: IntRange, onChange: (I
         }
         Text(
             text = value.toString(),
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             // Mindestbreite statt fester Breite: bei großer System-Schrift / dreistelligen

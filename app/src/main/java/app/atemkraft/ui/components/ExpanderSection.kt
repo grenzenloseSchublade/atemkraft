@@ -71,14 +71,14 @@ fun ExpanderSection(
             Column(modifier = Modifier.weight(1f)) {
                 WholeWordText(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = accent,
                 )
                 Text(
                     text = appetizer,
                     // Eine Rolle für beide Zustände (kein Reflow beim Aufklappen); Betonung nur
                     // über die Deckkraft.
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground
                         .copy(alpha = if (expanded || !expandable) 0.8f else 0.6f),
                 )

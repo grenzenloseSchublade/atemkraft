@@ -39,6 +39,6 @@ fun DisclosureToggle(
     ) {
         ExpandCaret(expanded = expanded, tint = LocalContentColor.current, size = Sizes.IconInButton)
         Spacer(Modifier.width(Dimens.GapTiny))
-        Text(text, style = MaterialTheme.typography.labelLarge)
+        Text(text, style = MaterialTheme.typography.labelMedium)
     }
 }

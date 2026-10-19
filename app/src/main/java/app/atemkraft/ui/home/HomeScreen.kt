@@ -134,7 +134,7 @@ fun HomeScreen(
 @Composable
 fun ExerciseCard(exercise: Exercise, marked: Boolean = false, onClick: () -> Unit) {
     val accent = exercise.family.color()
-    val titleStyle = MaterialTheme.typography.titleLarge
+    val titleStyle = MaterialTheme.typography.titleMedium
     // Card(onClick) statt Modifier.clickable: Ripple folgt der Kartenform, Tippfläche ≥ 48 dp
     // bringt die M3-Surface selbst mit (KOMP-02).
     Card(
@@ -170,7 +170,7 @@ fun ExerciseCard(exercise: Exercise, marked: Boolean = false, onClick: () -> Uni
             Spacer(Modifier.height(Dimens.GapTiny))
             Text(
                 text = exercise.shortDescription,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
             )
         }
@@ -208,7 +208,7 @@ private fun DailyPatternCard(
             ) {
                 TitleWithChips(
                     title = exercise.name,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 ) {
                     CharacterChip(activating = daily.activating)
@@ -217,7 +217,7 @@ private fun DailyPatternCard(
                 Text(
                     text = RandomPatternGenerator.hintFor(daily.spec) + RandomPatternGenerator.HINT_SEPARATOR +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
             }
@@ -257,7 +257,7 @@ private fun CharacterChip(activating: Boolean) {
             text = stringResource(
                 if (activating) R.string.daily_pattern_gentle_up else R.string.daily_pattern_calm,
             ),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
         )
     }

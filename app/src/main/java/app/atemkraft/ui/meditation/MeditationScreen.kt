@@ -172,7 +172,7 @@ private fun SelectionContent(
             val viewport = maxHeight
             FillBetweenLayout(
                 viewportHeight = viewport,
-                minCenterHeight = Dimens.DurationPickerMin + Dimens.GapSmall * 2,
+                minCenterHeight = durationPickerMinSide() + Dimens.GapSmall * 2,
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
@@ -260,6 +260,13 @@ private fun SelectionContent(
 private fun DurationPicker(state: DurationPickerState, onTick: (major: Boolean) -> Unit) {
     TimeDial(state = state, onTick = onTick, modifier = Modifier.fillMaxSize())
 }
+
+/**
+ * Mindestkante der Dauerwahl: [Dimens.DurationPickerMin], bei großer Schrift so viel mehr, dass die
+ * Mitte ganz im Ring bleibt (LAYOUT-03) – die Seite scrollt dann, abgeschnitten wird nie.
+ */
+@Composable
+private fun durationPickerMinSide(): Dp = timeDialMinSide(Dimens.DurationPickerMin)
 
 /**
  * Kopf oben, [center] im restlichen Platz der Ansichtshöhe [viewportHeight], [bottom] darunter.
@@ -441,7 +448,7 @@ private fun RunningContent(
             // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
             Text(
                 text = stringResource(R.string.meditation_title),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 // Wie der Übungsname der Atem-Session: voll, nicht gedämpft.
                 color = MaterialTheme.colorScheme.onBackground,
                 // liveRegion: TalkBack sagt Zustandswechsel (Vorbereitung/läuft/pausiert) an.
@@ -487,7 +494,7 @@ private fun RunningContent(
                         // großer Schrift im Kreis bleibt (bricht dann zwischen den Wörtern um).
                         GlowText(
                             text = stringResource(R.string.session_get_ready),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.widthIn(max = breathingDiscDiameter(side, 1f)),
                         )
                         Spacer(Modifier.height(Dimens.GapTiny))

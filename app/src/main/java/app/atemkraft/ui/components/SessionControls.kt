@@ -228,19 +228,19 @@ fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit, summar
     ) {
         Text(
             text = "✓ " + stringResource(R.string.session_done_title),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
         Spacer(Modifier.height(Dimens.GapSmall))
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
         if (summary.isNotEmpty()) {
             Spacer(Modifier.height(Dimens.GapSmall))
-            val summaryStyle = MaterialTheme.typography.bodyMedium
+            val summaryStyle = MaterialTheme.typography.bodySmall
             val summaryColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
             // Eine Ansage für TalkBack statt einzelner Teile, mit Pause statt vorgelesenem Trennpunkt.
             val spoken = summary.joinToString(", ")

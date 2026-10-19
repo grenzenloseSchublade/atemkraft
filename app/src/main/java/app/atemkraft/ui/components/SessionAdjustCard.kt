@@ -68,7 +68,7 @@ fun SessionAdjustCard(
                     if (!intervalsExpanded && intervalsModified) {
                         Text(
                             text = "· " + stringResource(R.string.adjust_modified),
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                             // Abstand zum Umschalter: dessen Endrand (Dimens.GapTiny) in der Pille.
                         )

@@ -285,7 +285,7 @@ private fun SearchStatus(count: Int, onShowAll: () -> Unit) {
             } else {
                 pluralStringResource(R.plurals.situations_search_count, count, count)
             },
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             modifier = Modifier
                 .align(Alignment.CenterVertically)
@@ -319,14 +319,14 @@ private fun SavedPatternCard(
             Column(modifier = Modifier.weight(1f)) {
                 WholeWordText(
                     text = exercise.name,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = exercise.instructionHint.orEmpty() + RandomPatternGenerator.HINT_SEPARATOR +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
             }

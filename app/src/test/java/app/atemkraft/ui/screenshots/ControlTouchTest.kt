@@ -76,9 +76,8 @@ import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.meditation.DurationPickerState
 import app.atemkraft.ui.meditation.TimeDial
 import app.atemkraft.ui.theme.AtemkraftTheme
-import app.atemkraft.ui.theme.ControlSize
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.controlScale
+import app.atemkraft.ui.theme.Sizes
 import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -168,15 +167,17 @@ class ControlTouchTest(private val fontScale: Float) {
 
     /**
      * Prüft ein Element: ±23 dp trifft entlang beider Achsen; entlang der [tightAxes] (dort ist die
-     * Optik kleiner als 48 dp) verfehlt ±25 dp.
+     * Optik kleiner als 48 dp) verfehlt ±25 dp. Ist die Optik bei großer Schrift entlang der Achse
+     * selbst über 50 dp gewachsen (Text-Button mit M3-Beschriftung bei fs 2,0), trifft ±25 dp zu Recht.
      */
     private fun probe(name: String, node: SemanticsNode, expected: String, tightAxes: Set<Char>) {
         val c = layoutBounds(node).center
         for (axis in listOf('x', 'y')) {
+            val visible = if (axis == 'x') node.size.width else node.size.height
             for (sign in listOf(-1f, 1f)) {
                 fun at(d: Float) = if (axis == 'x') Offset(c.x + sign * d * density, c.y) else Offset(c.x, c.y + sign * d * density)
                 assertEquals("$name fs$fontScale: ${sign * INSIDE_DP} dp auf $axis muss treffen", listOf(expected), tap(at(INSIDE_DP)))
-                if (axis in tightAxes) {
+                if (axis in tightAxes && visible < 2 * OUTSIDE_DP * density) {
                     assertTrue("$name fs$fontScale: ${sign * OUTSIDE_DP} dp auf $axis darf nicht treffen", expected !in tap(at(OUTSIDE_DP)))
                 }
             }
@@ -521,9 +522,9 @@ class ControlTouchTest(private val fontScale: Float) {
         return node.size.height.toFloat().also { check(it > 0f) { "Knoten ohne Größe: $text" } }
     }
 
-    /** Sichtbar genau die skalierte Mindesthöhe, solange die Beschriftung hineinpasst (fs ≤ 1,3). */
+    /** Sichtbar genau die M3-Mindesthöhe, solange die Beschriftung hineinpasst (fs ≤ 1,3). */
     private fun assertMinHeight(name: String, heightPx: Float) {
-        val expected = ControlSize.BUTTON_HEIGHT.at(controlScale(fontScale)).value * density
+        val expected = Sizes.ButtonHeight.value * density
         if (fontScale <= 1.3f) {
             assertEquals("$name fs$fontScale sichtbar", expected, heightPx, 1f)
         } else {

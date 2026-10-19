@@ -202,7 +202,7 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () 
             if (status.note != null) {
                 Text(
                     text = status.note,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
@@ -342,7 +342,7 @@ private fun AtmenCard(
                 Spacer(Modifier.height(Dimens.GapSmall))
                 Text(
                     text = stringResource(R.string.settings_sources),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
                 Spacer(Modifier.height(Dimens.GapTiny))
@@ -473,7 +473,7 @@ private fun VoiceRow(
         Column(modifier = Modifier.weight(1f)) {
             WholeWordText(
                 text = spec.displayName,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = if (active && engineReady) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -516,7 +516,7 @@ private fun VoiceRow(
                     // wie Highlight/Untertitel → keine widersprüchlichen Signale beim Umschalten).
                     active && engineReady -> Text(
                         text = stringResource(R.string.settings_voice_active),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
 
@@ -577,7 +577,7 @@ private fun voiceSubtitle(
 /** Karten-Titel (einheitlich titleLarge, app-weit). */
 @Composable
 private fun CardTitle(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+    Text(text = text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
 }
 
 /** Dezenter Hinweis-/Beschriftungstext (einheitliche Sekundär-Deckkraft). */
@@ -604,12 +604,12 @@ private fun NavRow(label: String, onClick: () -> Unit) {
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = "›",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
             )
         }

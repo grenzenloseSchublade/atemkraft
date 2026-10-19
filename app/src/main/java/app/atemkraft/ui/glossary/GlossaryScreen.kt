@@ -60,13 +60,13 @@ private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
                 Column(modifier = Modifier.padding(Dimens.CardPadding)) {
                     WholeWordText(
                         text = term.name,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.height(Dimens.GapTiny))
                     Text(
                         text = term.definition,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     )
                 }

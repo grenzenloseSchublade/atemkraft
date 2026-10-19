@@ -87,7 +87,7 @@ Android-Testbuilds gibt es bereits (GitHub-Releases, signiertes APK); Play-Store
 | **1. Gemeinsames Modul** | Code nach `commonMain`/`androidMain`; Tests nach `commonTest`; Schnittstellen für Audio, Stimme, Dateien, Datum, Hintergrund | 4–6 | 0 € | Android baut aus `:shared`, iOS kompiliert in der CI |
 | **2. iOS-Gerüst + Test-Verteilung** | Apple-Konto; Signierung per API-Key; CI-Pipeline mit iOS-Screenshots; erster **TestFlight-Build** (Oberfläche, Logbuch, Muster, noch ohne Ton) | 4–6 | 99 €/Jahr + iPhone | Testnutzer können installieren (§2) |
 | **3. iOS-Technik** | Töne und Gong, Hintergrund + Sperrbildschirm, Systemstimme, Vibration (Vordergrund), Export, Backup-Ausschluss, Display anlassen, Ende per Benachrichtigung/AlarmKit | 15–25 | – | Atem-Session und Meditation laufen auf dem iPhone |
-| **4. Feinschliff + Store** | Textgröße mit `TEXT_SCALE` und Dynamic Type, VoiceOver-Prüfung, Privacy Manifest, Datenschutz- und Support-Seite, Store-Texte ohne Heilversprechen, Alters- und DSA-Angaben, Apple-Prüfung | 5–8 | – | iOS v1 im App Store |
+| **4. Feinschliff + Store** | Textgröße (Material-Typo-Rollen) und Dynamic Type, VoiceOver-Prüfung, Privacy Manifest, Datenschutz- und Support-Seite, Store-Texte ohne Heilversprechen, Alters- und DSA-Angaben, Apple-Prüfung | 5–8 | – | iOS v1 im App Store |
 | **5. optional** | Piper auf iOS (vorgerenderte Ansagen oder sherpa-onnx 2.0), Live Activity, AltStore PAL (EU) | 5–15 | – | |
 
 **Summe Stufen 0–4: ca. 40–60 PT** (plus Machbarkeits-Test). Die Spanne ist breit, weil Ton und Hintergrundbetrieb auf iOS Neuland sind.

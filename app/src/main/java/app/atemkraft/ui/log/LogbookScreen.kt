@@ -108,7 +108,7 @@ fun LogbookScreen(
                 item {
                     Text(
                         text = stringResource(R.string.log_empty),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     )
                 }
@@ -142,14 +142,14 @@ private fun StatsCard(
                     pluralStringResource(R.plurals.log_sessions, entries.size, entries.size) +
                         " · " + stringResource(R.string.log_minutes_total, totalMinutes)
                 },
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             if (streak >= 2) {
                 Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = pluralStringResource(R.plurals.log_streak, streak, streak),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
@@ -276,7 +276,7 @@ private fun LogGroupSection(group: LogGroup, zone: ZoneId) {
 private fun LogEntryRow(entry: SessionLogEntry, time: String) {
     // Der Punkt gehört zum Namen: oben ausgerichtet und mittig zur ersten Namenszeile, nicht zur
     // Höhe des ganzen Eintrags – sonst schwebt er bei umgebrochener Dauer zwischen den Zeilen.
-    val nameStyle = MaterialTheme.typography.titleMedium
+    val nameStyle = MaterialTheme.typography.titleSmall
     val dotTop = with(LocalDensity.current) { (nameStyle.lineHeight.toDp() - FAMILY_DOT) / 2 }
     Row(
         modifier = Modifier

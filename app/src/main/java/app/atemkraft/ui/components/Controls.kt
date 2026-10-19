@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -48,38 +47,16 @@ import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
-import kotlin.math.roundToInt
 
-// Zentrale Bedienelemente: Die SICHTBARE Größe kommt aus Sizes (∝ Schrift, LAYOUT-04), die
-// Tippfläche bleibt ≥ 48 dp (A11Y-05). Bauregeln (LAYOUT-06):
+// Zentrale Bedienelemente: Die SICHTBARE Größe kommt aus Sizes (Material-3-Maße, LAYOUT-04),
+// die Tippfläche bleibt ≥ 48 dp (A11Y-05). Bauregeln (LAYOUT-06):
 // 1. Höhe an M3-Elementen nur als Mindestwert (heightIn) – M3-Surfaces reichen sie per
 //    propagateMinConstraints durch, der Inhalt wächst bei großer Schrift mit; nie height()/size().
 // 2. Eigene feste Größe nur als minimumInteractiveComponentSize().size(x), in dieser Reihenfolge:
 //    Das Layout reserviert 48 dp, sichtbar ist x.
 // 3. Kein Modifier.scale() auf bedienbaren Knoten – der graphicsLayer verkleinert den Hit-Test
-//    mit. Komponenten ohne Größenparameter (Switch, Radio) über scaledLayout, die Tippfläche
-//    trägt ein äußerer toggleable-/selectable-Knoten.
-
-/**
- * Misst den Inhalt in voller Größe, belegt aber nur die [f]-fache Fläche und zeichnet ihn
- * entsprechend verkleinert. Nur für M3-Komponenten ohne Größenparameter, deren Tippfläche ein
- * äußerer Knoten trägt (Bauregel 3).
- */
-internal fun Modifier.scaledLayout(f: Float): Modifier = if (f == 1f) {
-    this
-} else {
-    layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
-        val w = (placeable.width * f).roundToInt()
-        val h = (placeable.height * f).roundToInt()
-        layout(w, h) {
-            placeable.placeWithLayer((w - placeable.width) / 2, (h - placeable.height) / 2) {
-                scaleX = f
-                scaleY = f
-            }
-        }
-    }
-}
+//    mit. Switch und Radio stehen in M3-Größe, die Tippfläche trägt ein äußerer
+//    toggleable-/selectable-Knoten.
 
 /**
  * Runder Icon-Button: sichtbar [Sizes.IconButtonSize] (Ripple nur auf dieser Fläche), Icon in
@@ -148,7 +125,7 @@ fun AppIconToggle(
     }
 }
 
-/** Text-Button mit an die Schrift gekoppelter Mindesthöhe ([Sizes.ButtonHeight]), Tippfläche 48 dp. */
+/** Text-Button mit M3-Mindesthöhe ([Sizes.ButtonHeight]), der bei großer Schrift mitwächst; Tippfläche 48 dp. */
 @Composable
 fun AppTextButton(
     onClick: () -> Unit,
@@ -159,6 +136,9 @@ fun AppTextButton(
     TextButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = Sizes.ButtonHeight),
+        // Ecken = halbe Button-Höhe: einzeilig die M3-Pille, mehrzeilig (lange Ergebnis-Labels,
+        // Atemlehre-Verweise bei großer Schrift) schneidet keine Riesenrundung Glyphen an (LAYOUT-03).
+        shape = MaterialTheme.shapes.large,
         enabled = enabled,
         content = content,
     )
@@ -166,8 +146,8 @@ fun AppTextButton(
 
 /**
  * Schalterzeile (A11Y-03): Die ganze Zeile schaltet um (`Role.Switch`, Name = [label]), der
- * Schalter steht in der Zeile seines Namens, [hint] darunter. Der Switch ist nur Anzeige,
- * verkleinert auf [Sizes.ControlScale] und bündig an der Inhaltskante.
+ * Schalter steht in der Zeile seines Namens, [hint] darunter. Der Switch ist nur Anzeige
+ * und steht bündig an der Inhaltskante.
  */
 @Composable
 fun ToggleRow(
@@ -197,7 +177,7 @@ fun ToggleRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             WholeWordText(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
@@ -205,7 +185,6 @@ fun ToggleRow(
             Switch(
                 checked = checked,
                 onCheckedChange = null,
-                modifier = Modifier.scaledLayout(Sizes.ControlScale),
                 enabled = enabled,
                 interactionSource = interactions,
             )

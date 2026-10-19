@@ -101,7 +101,7 @@ internal val DurationReadoutPad = Dimens.GapTiny
 
 /** Schrift der Einheit unter der Zahl. */
 internal val durationUnitStyle: TextStyle
-    @Composable get() = MaterialTheme.typography.labelLarge
+    @Composable get() = MaterialTheme.typography.labelMedium
 
 /**
  * TalkBack: Die Darstellung ist ein Schieberegler 1..60 – Name „Dauer“, Wert „12 Minuten“ bzw.

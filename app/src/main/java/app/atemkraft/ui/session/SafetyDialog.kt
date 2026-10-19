@@ -31,7 +31,7 @@ fun SafetyDialog(
                 cautions.forEach { caution ->
                     Text(
                         text = "• $caution",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }

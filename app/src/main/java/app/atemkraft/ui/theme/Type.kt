@@ -5,11 +5,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.LineBreak
-import androidx.compose.ui.unit.sp
 
-// Eigene Typo-Skala auf Basis der Material-3-Defaults: nur die Überschrift-Rollen werden
-// kräftiger/größer, damit die Hierarchie klar liest (Screen-Titel > Abschnitts-Header >
-// Kartentitel). Body/Label bleiben Standard – Lesbarkeit im Dunkeln und kein Layout-Bruch.
+// Typo-Skala = Material-3-Defaults (Größe, Zeilenhöhe, Laufweite unverändert, kein eigener
+// Skalierfaktor – Nutzerentscheidung 2026-10-19). Überschrieben werden nur Gewicht und Umbruch
+// der Überschrift-Rollen, damit die Hierarchie klar liest (Screen-Titel > Abschnitts-Header >
+// Kartentitel). Die Systemschriftgröße des Geräts wirkt wie überall in Android darauf.
 private val base = Typography()
 
 // Überschriften und Titel: Umbruch wie bei Überschriften (gleichmäßig lange Zeilen) und
@@ -20,52 +20,17 @@ private fun TextStyle.asHeading() = copy(
     hyphens = Hyphens.None,
 )
 
-/**
- * Zentraler Größenfaktor für ALLE Schriftrollen (Größe, Zeilenhöhe, Laufweite). Eine Stelle,
- * an der sich die Schrift der ganzen App größer oder kleiner stellen lässt; die
- * Systemschriftgröße des Geräts wirkt zusätzlich darauf.
- */
-const val TEXT_SCALE = 0.75f
-
-private fun TextStyle.scaled(): TextStyle = copy(
-    fontSize = fontSize * TEXT_SCALE,
-    lineHeight = lineHeight * TEXT_SCALE,
-    letterSpacing = letterSpacing * TEXT_SCALE,
-)
-
-private fun Typography.scaled(): Typography = Typography(
-    displayLarge = displayLarge.scaled(),
-    displayMedium = displayMedium.scaled(),
-    displaySmall = displaySmall.scaled(),
-    headlineLarge = headlineLarge.scaled(),
-    headlineMedium = headlineMedium.scaled(),
-    headlineSmall = headlineSmall.scaled(),
-    titleLarge = titleLarge.scaled(),
-    titleMedium = titleMedium.scaled(),
-    titleSmall = titleSmall.scaled(),
-    bodyLarge = bodyLarge.scaled(),
-    bodyMedium = bodyMedium.scaled(),
-    bodySmall = bodySmall.scaled(),
-    labelLarge = labelLarge.scaled(),
-    labelMedium = labelMedium.scaled(),
-    labelSmall = labelSmall.scaled(),
-)
-
 val AtemkraftTypography = base.copy(
-    // Screen-Titel der Tabs (Atmen/Situationen/Logbuch): groß & kräftig.
-    headlineLarge = base.headlineLarge.copy(
-        fontSize = 34.sp,
-        lineHeight = 40.sp,
-        fontWeight = FontWeight.Bold,
-    ).asHeading(),
-    // Sub-Screen-Titel (Detail, Glossar, Über): fetter, gleiche Größe.
+    // Derzeit ungenutzt; kräftig und ohne Trennung wie alle Überschriften, falls es später kommt.
+    headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.Bold).asHeading(),
+    // Screen-Titel der Tabs (ScreenHeader) und Markenkopf „Über“: kräftig.
     headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.Bold).asHeading(),
-    // Neue Abschnitts-Header-Ebene (Familien-/Sektionsüberschriften): 24sp statt bisher 16sp.
+    // Titel der Push-Screens, Phasenname im Kreis, Abschluss-Titel der Sitzung.
     headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.SemiBold).asHeading(),
-    // Kartentitel (Übungs-/Log-Namen): 22sp, etwas kräftiger.
+    // Abschnitts-Header (SectionHeader: Familien-/Sektionsüberschriften).
     titleLarge = base.titleLarge.copy(fontWeight = FontWeight.SemiBold).asHeading(),
-    // Kleinere Titel (Stepper-Labels, Streak): gleiche Größe, kräftiger.
+    // Karten- und Expander-Titel, Stepper-Wert: etwas kräftiger.
     titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold).asHeading(),
-    // Derzeit ungenutzt; trennt trotzdem wie alle Titel, falls es später verwendet wird.
+    // Kleine Titel (Stepper-Label, Overlay-Titel, Mini-Leiste, Kennzahlen, Zeitring-Ziffern).
     titleSmall = base.titleSmall.asHeading(),
-).scaled()
+)

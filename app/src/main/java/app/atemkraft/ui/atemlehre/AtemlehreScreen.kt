@@ -119,7 +119,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 Spacer(Modifier.height(Dimens.SectionGap))
                 Text(
                     text = Atemlehre.intro,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
 
@@ -244,12 +244,12 @@ private fun PhasesCard(phases: List<LorePhase>) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = name,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             text = phase.meaning,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = dim,
                         )
                     }
@@ -263,7 +263,7 @@ private fun PhasesCard(phases: List<LorePhase>) {
 @Composable
 private fun RulesContent() {
     // Fett über das Gewicht einer Titel-Rolle (TYPO-01: kein eigenes FontWeight).
-    val bold = SpanStyle(fontWeight = MaterialTheme.typography.titleMedium.fontWeight)
+    val bold = SpanStyle(fontWeight = MaterialTheme.typography.titleSmall.fontWeight)
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
             Atemlehre.rules.forEach { (lead, rest) ->
@@ -295,7 +295,7 @@ private fun PatternContent(pattern: LorePattern, onOpenExercise: (String) -> Uni
                 Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = "⚠ " + warning,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = WarnAmber,
                 )
             }
@@ -444,7 +444,7 @@ private fun Labeled(label: String, content: @Composable () -> Unit) {
 private fun Body(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
@@ -454,7 +454,7 @@ private fun Body(text: String) {
 private fun Dim(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
     )
 }
@@ -465,7 +465,7 @@ private fun Bullet(text: AnnotatedString) {
         Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

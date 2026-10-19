@@ -121,8 +121,12 @@ class ThemeContrastTest {
         }
         add(Pair("Heute-Ring SynthTrack auf Card", SynthTrack, card, graphic))
 
-        // Ausgewähltes Segment (SegmentedButton-Fläche) gegen die Karte.
+        // Tonal-Fläche (FilledTonal-Buttons) gegen die Karte.
         add(Pair("SecondaryContainer auf Card", SecondaryContainer, card, graphic))
+        // Gewähltes Segment: Ohne Häkchen trägt die Fläche allein die Auswahl – gegen das
+        // ungewählte Segment (M3 inactiveContainerColor = surface); Beschriftung darauf.
+        add(Pair("Segment gewählt SegmentSelected auf Segment ungewählt", SegmentSelected, DarkSurface, graphic))
+        add(Pair("Segment-Label onSecondaryContainer auf SegmentSelected", DarkOnBackground, SegmentSelected, text))
 
         // Session: Kreiszentrum ist der kritische Punkt (FARBE-03).
         add(Pair("Phase SessionTextYellow auf Kreiszentrum", SessionTextYellow, circleCenter, large))

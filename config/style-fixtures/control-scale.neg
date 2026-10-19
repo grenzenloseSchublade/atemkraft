@@ -1,2 +1,2 @@
-RadioButton(selected, null, Modifier.scaledLayout(Sizes.ControlScale))
-val scaled = TEXT_SCALE * fontScale
+RadioButton(selected, null)
+val scaled = fontSize * 1.1f

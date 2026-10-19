@@ -12,6 +12,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -23,19 +24,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
+import kotlin.math.floor
 
 /**
  * Einheitliche Einfachauswahl – ersetzt die mehrfach kopierten
  * `SingleChoiceSegmentedButtonRow`-Blöcke in den Einstellungen.
  *
- * Normalfall: SegmentedButtons über die volle Breite. Passt eine Beschriftung (inklusive
- * Häkchen des ausgewählten Segments) nicht einzeilig in ihr gleich breites Segment, wird
- * stattdessen eine senkrechte Liste mit Radiobuttons gezeigt – Beschriftungen brechen nie
- * im Wort um (LAYOUT-03).
+ * Normalfall: SegmentedButtons über die volle Breite, das ausgewählte Segment mit Häkchen. Passt
+ * eine Beschriftung so nicht einzeilig in ihr gleich breites Segment, bleibt die Reihe eine Reihe:
+ * Zuerst entfällt das Häkchen samt seinem Platz (die Fläche [SegmentSelected] zeigt die Auswahl
+ * weiter, ≥ 3:1 gegen das ungewählte Segment), dann werden alle Beschriftungen gemeinsam leicht verkleinert, höchstens
+ * bis [MIN_LABEL_SCALE]. Erst wenn auch das nicht reicht, kommt eine senkrechte Liste mit
+ * Radiobuttons. Beschriftungen brechen nie im Wort um (LAYOUT-03).
  *
  * Mehr als vier Optionen nur als Raster über [columns] (Meditations-Dauer 4 × 2): gleich breite
  * Segmente in Reihen à [columns], gemeinsame Auswahl, gemeinsamer Rückfall auf die Radioliste.
@@ -54,27 +60,50 @@ fun <T> SegmentedChoiceRow(
 ) {
     val rows = items.chunked(columns)
     SubcomposeLayout(modifier.fillMaxWidth()) { constraints ->
-        // Jede Beschriftung einzeln als ausgewähltes Segment messen (breiteste Variante).
-        // Die Zeile misst mit width(IntrinsicSize.Min), also nur das längste Wort – deshalb
-        // in der Probe untrennbar machen, sonst gilt „Start & Ende“ als so breit wie „Start“.
-        val needed = subcompose("probe") {
+        // Jede Beschriftung einzeln als ausgewähltes Segment messen (breiteste Variante), mit und
+        // ohne Häkchen. Die Zeile misst mit width(IntrinsicSize.Min), also nur das längste Wort –
+        // deshalb in der Probe untrennbar machen, sonst gilt „Start & Ende“ als so breit wie „Start“.
+        fun needed(check: Boolean) = subcompose("probe$check") {
             rows.forEach { row ->
                 row.forEachIndexed { index, item ->
                     SingleChoiceSegmentedButtonRow {
-                        Segment(label(item).unbreakable(), selected = true, onClick = {}, index = index, count = row.size)
+                        Segment(label(item).unbreakable(), selected = true, check = check, onClick = {}, index = index, count = row.size)
                     }
                 }
             }
         }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
-        val fits = needed * columns <= constraints.maxWidth
+        val slot = constraints.maxWidth / columns
+        val plain = needed(check = false)
+        // Polster und Rand des Segments bleiben, nur die Schrift wird kleiner: gemeinsamer Faktor,
+        // damit die breiteste Beschriftung gerade ins Segment passt (gleichrangig = gleich groß).
+        // labelLarge ist die Rolle, die M3 in Segmenten setzt.
+        val text = subcompose("text") {
+            items.forEach { Text(label(it).unbreakable(), style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+        }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
+        val fitScale = floor((slot - (plain - text)).toFloat() / text * SCALE_STEPS) / SCALE_STEPS
+        val mode = when {
+            needed(check = true) <= slot -> ChoiceMode.SEGMENTS
+            plain <= slot -> ChoiceMode.SEGMENTS_NO_CHECK
+            fitScale >= MIN_LABEL_SCALE -> ChoiceMode.SEGMENTS_SMALLER
+            else -> ChoiceMode.RADIO_LIST
+        }
+        val labelScale = if (mode == ChoiceMode.SEGMENTS_SMALLER) fitScale else 1f
 
-        val placeables = subcompose(fits) {
-            if (fits) {
+        val placeables = subcompose(mode to labelScale) {
+            if (mode != ChoiceMode.RADIO_LIST) {
                 // Je Reihe ein Placeable; layout() unten stapelt sie.
                 rows.forEach { row ->
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         row.forEachIndexed { index, item ->
-                            Segment(label(item), selected = item == selected, onClick = { onSelect(item) }, index = index, count = row.size)
+                            Segment(
+                                text = label(item),
+                                selected = item == selected,
+                                check = mode == ChoiceMode.SEGMENTS,
+                                labelScale = labelScale,
+                                onClick = { onSelect(item) },
+                                index = index,
+                                count = row.size,
+                            )
                         }
                     }
                 }
@@ -92,16 +121,12 @@ fun <T> SegmentedChoiceRow(
                                 ),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            // Nur Anzeige (Tippfläche trägt die Zeile), deshalb verkleinert wie der Switch.
-                            RadioButton(
-                                selected = item == selected,
-                                onClick = null,
-                                modifier = Modifier.scaledLayout(Sizes.ControlScale),
-                            )
+                            // Nur Anzeige, die Tippfläche trägt die Zeile.
+                            RadioButton(selected = item == selected, onClick = null)
                             Spacer(Modifier.width(Dimens.GapSmall))
                             Text(
                                 text = label(item),
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
@@ -120,32 +145,82 @@ fun <T> SegmentedChoiceRow(
     }
 }
 
+/**
+ * M3 misst das Segment als Icon-Reserve + Beschriftung und setzt die Beschriftung ohne Icon um die
+ * halbe Reserve nach links. Hier meldet sie sich um die Reserve schmaler (nie unter 0) und wird so
+ * platziert, dass sie mittig in der gemeldeten Breite plus Reserve steht.
+ */
+private fun Modifier.withoutIconReserve(): Modifier = layout { measurable, constraints ->
+    val reserve = Sizes.SegmentIconReserve.roundToPx()
+    val placeable = measurable.measure(constraints.copy(minWidth = 0))
+    val reported = (placeable.width - reserve).coerceAtLeast(0)
+    layout(reported, placeable.height) {
+        placeable.place((reported - placeable.width) / 2, 0)
+    }
+}
+
+/** Darstellung je nach Platz, vom vollständigsten zum sparsamsten. */
+private enum class ChoiceMode { SEGMENTS, SEGMENTS_NO_CHECK, SEGMENTS_SMALLER, RADIO_LIST }
+
+/** Untergrenze der gemeinsamen Verkleinerung; darunter ist die Radioliste lesbarer. */
+private const val MIN_LABEL_SCALE = 0.85f
+
+/** Faktor in Hundertsteln abrunden, damit Rundung die Beschriftung nie über das Segment schiebt. */
+private const val SCALE_STEPS = 100f
+
 /** Leerzeichen und Bindestriche geschützt, damit die Mindestbreite die ganze Beschriftung ist. */
 private fun String.unbreakable(): String = replace(' ', '\u00A0').replace('-', '\u2011')
 
-/** Ein Segment; Probe und Anzeige nutzen dasselbe, damit die Breitenmessung stimmt. */
+/**
+ * Ein Segment; Probe und Anzeige nutzen dasselbe, damit die Breitenmessung stimmt. Ohne [check]
+ * gibt die Beschriftung den Platz zurück, den M3 (1.3) auch ohne Icon für das Häkchen reserviert:
+ * Sie meldet sich um [Sizes.SegmentIconReserve] schmaler und zeichnet sich so versetzt, dass sie
+ * mittig im Segment steht. Das Segment ist dann nur so breit wie Beschriftung und Polster.
+ */
 @Composable
 private fun SingleChoiceSegmentedButtonRowScope.Segment(
     text: String,
     selected: Boolean,
+    check: Boolean,
     onClick: () -> Unit,
     index: Int,
     count: Int,
+    labelScale: Float = 1f,
 ) {
     SegmentedButton(
         selected = selected,
         onClick = onClick,
         shape = SegmentedButtonDefaults.itemShape(index, count),
+        // Die Fläche allein trägt die Auswahl, sobald das Häkchen keinen Platz hat – deshalb
+        // heller als secondaryContainer (WCAG 1.4.11), in jeder Stufe gleich.
+        colors = SegmentedButtonDefaults.colors(activeContainerColor = SegmentSelected),
         modifier = Modifier.heightIn(min = Sizes.ButtonHeight),
         icon = {
-            // activeContent benannt: ein nachgestelltes Lambda wäre inactiveContent und setzte
-            // das Häkchen an die NICHT gewählten Segmente.
-            SegmentedButtonDefaults.Icon(
-                active = selected,
-                activeContent = {
-                    Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(Sizes.IconInButton)) // dekorativ: Zustand trägt die Rolle RadioButton
-                },
-            )
+            if (check) {
+                // activeContent benannt: ein nachgestelltes Lambda wäre inactiveContent und setzte
+                // das Häkchen an die NICHT gewählten Segmente.
+                SegmentedButtonDefaults.Icon(
+                    active = selected,
+                    activeContent = {
+                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(Sizes.IconInButton)) // dekorativ: Zustand trägt die Rolle RadioButton
+                    },
+                )
+            }
         },
-    ) { Text(text, maxLines = 1) }
+    ) {
+        val style = LocalTextStyle.current
+        Text(
+            text = text,
+            maxLines = 1,
+            modifier = if (check) Modifier else Modifier.withoutIconReserve(),
+            style = if (labelScale < 1f) {
+                style.copy(
+                    fontSize = style.fontSize * labelScale, // Abweichung TYPO-01: verkleinert die M3-Rolle des Segments
+                    lineHeight = style.lineHeight * labelScale, // Abweichung TYPO-01: verkleinert die M3-Rolle des Segments
+                )
+            } else {
+                style
+            },
+        )
+    }
 }

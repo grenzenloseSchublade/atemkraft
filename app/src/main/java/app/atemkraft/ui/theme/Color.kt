@@ -21,6 +21,13 @@ val SurfaceContainerLowest = Color(0xFF120C26)
 val SurfaceContainerLow = Color(0xFF1B1236)
 val SurfaceContainerHigh = Color(0xFF281B48)
 val SecondaryContainer = Color(0xFF3A2C60)
+
+/**
+ * Fläche des gewählten Segments (`SegmentedChoiceRow`): dasselbe Indigo, so hell, dass die
+ * Auswahl auch ohne Häkchen ≥ 3:1 gegen das ungewählte Segment (surface) steht und die helle
+ * Beschriftung ≥ 4,5:1 behält (FARBE-03, ThemeContrastTest).
+ */
+val SegmentSelected = Color(0xFF715AAF)
 val OutlineVariantIndigo = Color(0xFF453763)
 
 /** Gedämpfter Sekundärtext (M3 onSurfaceVariant) – Lavendel statt Voll-Weiß. */

@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -66,9 +66,10 @@ fun StartSplitButton(
                 modifier = Modifier.heightIn(min = Sizes.ButtonHeight),
                 contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
             ) {
-                // Zeilenhöhe wie Compose sie setzt: bei nichtlinearer Systemschrift (Android 14+)
-                // im Verhältnis zur skalierten Schriftgröße, nicht als eigener sp-Wert.
-                val style = MaterialTheme.typography.labelLarge
+                // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt. Zeilenhöhe
+                // wie Compose sie setzt: bei nichtlinearer Systemschrift (Android 14+) im Verhältnis
+                // zur skalierten Schriftgröße, nicht als eigener sp-Wert.
+                val style = LocalTextStyle.current
                 val labelLine = with(LocalDensity.current) { style.fontSize.toDp() * (style.lineHeight.value / style.fontSize.value) }
                 Box(Modifier.heightIn(min = labelLine), contentAlignment = Alignment.Center) {
                     Icon(

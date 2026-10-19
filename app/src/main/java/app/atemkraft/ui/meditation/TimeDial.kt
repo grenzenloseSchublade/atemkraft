@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.min
+import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.TERTIARY
@@ -73,8 +75,8 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
     val typography = MaterialTheme.typography
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    val numeralStyle = typography.labelMedium.copy(fontFeatureSettings = TABULAR)
-    val markStyle = typography.titleMedium
+    val numeralStyle = typography.labelSmall.copy(fontFeatureSettings = TABULAR)
+    val markStyle = typography.titleSmall
     val texts = durationTexts(state)
     val unitStyle = durationUnitStyle
     val units = durationUnitSamples()
@@ -97,12 +99,10 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
         val mark = remember(measurer, markStyle, texts.freeSymbol) { measurer.measure(texts.freeSymbol, markStyle) }
         val geo = remember(sidePx, numerals, mark, touchPx) { dialGeometry(sidePx, numerals.mapValues { it.value.size }, mark.size, touchPx) }
         val numberStyle = remember(geo, numberStyles, measurer, unitStyle, units, padPx, readoutPadPx) {
-            // Größte Zahl, bei der „− 60 +“ samt Einheit in die Mitte passt (Ecken der
-            // 48-dp-Knöpfe im Kreis) und ein Polster Luft zur Spur bleibt.
-            val radius = geo.contentRadius - padPx
+            // Größte Zahl, bei der „− 60 +“ samt Einheit in die Mitte passt. Passt keine, ist der
+            // Ring kleiner als [timeDialMinSide] – der Aufrufer gibt ihm diese Kante.
             fitNumberStyle(numberStyles) { style ->
-                val r = measureReadout(measurer, style, unitStyle, units, readoutPadPx, touchPx)
-                hypot(r.rowHalfWidth, r.buttonHalf) <= radius && hypot(r.textHalfWidth, r.textHalfHeight) <= radius
+                measureReadout(measurer, style, unitStyle, units, readoutPadPx, touchPx).fitsIn(geo, padPx)
             }
         }
 
@@ -234,6 +234,49 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
     }
 }
 
+/**
+ * Kleinste Kantenlänge des Zeitrings, mindestens [floor], bei der Zahl und breiteste Einheit im
+ * kleinsten Zahlenstil ganz innerhalb der Spur stehen (LAYOUT-03). Bis fontScale 1,3 ist das
+ * [floor]; bei 2,0 wird der Ring größer und die Seite scrollt als Notlösung (LAYOUT-08), statt dass
+ * „Minuten“ über Spur und Striche läuft. − / + der Feinwahl zählen hier nicht: Sie sind eigene
+ * Knöpfe mit Fläche und dürfen auf kleinem Ring über der Spur liegen.
+ */
+@Composable
+internal fun timeDialMinSide(floor: Dp): Dp {
+    val typography = MaterialTheme.typography
+    val density = LocalDensity.current
+    val measurer = rememberTextMeasurer()
+    val numeralStyle = typography.labelSmall.copy(fontFeatureSettings = TABULAR)
+    val markStyle = typography.titleSmall
+    val freeSymbol = stringResource(R.string.meditation_free_symbol)
+    val unitStyle = durationUnitStyle
+    val units = durationUnitSamples()
+    val smallest = durationNumberStyles.last().copy(fontFeatureSettings = TABULAR)
+    return remember(density, measurer, numeralStyle, markStyle, freeSymbol, unitStyle, units, smallest, floor) {
+        with(density) {
+            val touchPx = Dimens.MinTouchTarget.toPx()
+            val padPx = Dimens.GapSmall.toPx()
+            val numerals = (MAJOR_STEP until DURATION_MAX_MINUTES step MAJOR_STEP).associateWith { measurer.measure(it.toString(), numeralStyle).size }
+            val mark = measurer.measure(freeSymbol, markStyle).size
+            val readout = measureReadout(measurer, smallest, unitStyle, units, DurationReadoutPad.toPx(), touchPx)
+            // Die Mitte wächst linear mit der Kante; pixelweise bis zur Obergrenze suchen.
+            val limit = floor.toPx() * MIN_SIDE_SEARCH_LIMIT
+            var side = floor.toPx()
+            while (side < limit && !readout.textFitsIn(dialGeometry(side, numerals, mark, touchPx), padPx)) side += 1f
+            side.toDp()
+        }
+    }
+}
+
+/**
+ * Passt die Anzeige samt − / + in die Mitte von [geo]? Die Ecken der 48-dp-Knöpfe und die Textbox
+ * bleiben im Kreis, mit [padPx] Luft zur Spur.
+ */
+private fun ReadoutSize.fitsIn(geo: DialGeometry, padPx: Float): Boolean = hypot(rowHalfWidth, buttonHalf) <= geo.contentRadius - padPx && textFitsIn(geo, padPx)
+
+/** Passen Zahl und Einheit (ohne − / +) mit [padPx] Luft zur Spur in die Mitte von [geo]? */
+private fun ReadoutSize.textFitsIn(geo: DialGeometry, padPx: Float): Boolean = hypot(textHalfWidth, textHalfHeight) <= geo.contentRadius - padPx
+
 /** Minuten unter dem Punkt [p] (Mitte [c]). */
 private fun minutesAt(p: Offset, c: Offset): Int = DialScale.minutesAt(DialScale.angleOf(p.x, p.y, c.x, c.y))
 
@@ -342,6 +385,10 @@ private const val KNOB_OUTLINE_FRACTION = 0.15f
 // Mittenabstand zweier 5er-Zahlen in Zahlbreiten, unter dem nur die 10er stehen (ruhiger
 // kleiner Ring bei großer Schrift).
 private const val NUMERAL_SPACING = 3f
+
+// Obergrenze der Suche in [timeDialMinSide] als Vielfaches der Mindestkante (Schutz vor endloser
+// Suche; breiter als der Bildschirm wird der Ring ohnehin nicht).
+private const val MIN_SIDE_SEARCH_LIMIT = 3f
 
 // Kantenlänge in Touch-Zielen, falls der Ring ganz ohne Grenzen gemessen wird (Vorschau, Test).
 private const val UNBOUNDED_SIDE_TARGETS = 6

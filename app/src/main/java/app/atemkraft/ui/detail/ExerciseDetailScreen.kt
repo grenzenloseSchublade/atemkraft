@@ -199,7 +199,7 @@ fun ExerciseDetailScreen(
                 ) {
                     WholeWordText(
                         text = exercise.family.title(),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         color = accent,
                         modifier = Modifier.align(Alignment.CenterVertically),
                     )
@@ -217,7 +217,7 @@ fun ExerciseDetailScreen(
                 Spacer(Modifier.height(Dimens.GapSmall))
                 Text(
                     text = exercise.shortDescription,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                 )
 
@@ -244,7 +244,7 @@ fun ExerciseDetailScreen(
                     Spacer(Modifier.height(Dimens.GapSmall))
                     Text(
                         text = "⚠ " + stringResource(R.string.detail_safety_appetizer),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = WarnAmber,
                     )
                 }
@@ -366,7 +366,7 @@ fun ExerciseDetailScreen(
                     Spacer(Modifier.height(Dimens.SectionGap))
                     Text(
                         text = stringResource(R.string.detail_info_only),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     )
                 }
@@ -433,7 +433,7 @@ fun ExerciseDetailScreen(
 private fun Body(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
     )
 }
@@ -444,7 +444,7 @@ private fun Bullet(text: String) {
         Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
         )
     }

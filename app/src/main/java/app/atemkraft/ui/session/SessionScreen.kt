@@ -162,8 +162,8 @@ private fun ActiveContent(
     // springt, wenn Zeilen erscheinen oder wechseln: die Anleitungszeile mit zwei Zeilen ihres
     // Stils, die „Als Nächstes“-Zeile mit einer. Echt gemessen statt lineHeight × n: Ab Android 14
     // wächst große Schrift nichtlinear, die gerenderte Zeile ist dann höher als ihr lineHeight.
-    val guidanceStyle = MaterialTheme.typography.bodyMedium.copy(lineBreak = LineBreak.Heading)
-    val nextStyle = MaterialTheme.typography.labelMedium
+    val guidanceStyle = MaterialTheme.typography.bodySmall.copy(lineBreak = LineBreak.Heading)
+    val nextStyle = MaterialTheme.typography.labelSmall
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val guidanceHeight = with(density) { measurer.measure(TWO_LINES, guidanceStyle).size.height.toDp() }
@@ -213,7 +213,7 @@ private fun ActiveContent(
                         Spacer(Modifier.width(Dimens.GapTiny))
                         Text(
                             text = stringResource(R.string.detail_instruction),
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = hintColor,
                         )
                     }
@@ -224,7 +224,7 @@ private fun ActiveContent(
                     ) {
                         Text(
                             text = hint,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                             modifier = Modifier.padding(top = Dimens.GapHairline),
@@ -294,7 +294,7 @@ private fun ActiveContent(
                     // statt über den Kreis hinauszuragen.
                     GlowText(
                         text = label,
-                        style = if (preparing) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
+                        style = if (preparing) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall,
                         fill = SessionTextYellow,
                         modifier = Modifier
                             .then(if (preparing) Modifier.widthIn(max = breathingDiscDiameter(side, fraction)) else Modifier)
@@ -360,7 +360,7 @@ private fun ActiveContent(
  */
 @Composable
 private fun SessionTitle(state: SessionUiState) {
-    val titleStyle = MaterialTheme.typography.titleMedium
+    val titleStyle = MaterialTheme.typography.titleSmall
     val roundColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
     val name: @Composable () -> Unit = {
         WholeWordText(
@@ -411,7 +411,7 @@ private fun NextPhaseRow(nextPhaseType: PhaseType?, minHeight: Dp) {
             // ganz statt abgeschnitten (LAYOUT-03).
             WholeWordText(
                 text = stringResource(R.string.session_next) + SUMMARY_SEPARATOR + phaseDisplayLabel(nextPhaseType, null),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = hintColor,
                 textAlign = TextAlign.Center,
             )

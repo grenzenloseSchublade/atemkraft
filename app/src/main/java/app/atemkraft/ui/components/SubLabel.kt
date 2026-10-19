@@ -11,7 +11,7 @@ import app.atemkraft.ui.theme.AtemkraftTheme
 /** Unter-Überschrift innerhalb einer Karte oder eines Abschnitts (eine Ebene unter [SectionHeader]). */
 @Composable
 fun SubLabel(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {
-    Text(text = text, style = MaterialTheme.typography.bodyLarge, color = color, modifier = modifier)
+    Text(text = text, style = MaterialTheme.typography.bodyMedium, color = color, modifier = modifier)
 }
 
 @Preview

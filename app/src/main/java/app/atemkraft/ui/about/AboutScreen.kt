@@ -60,25 +60,25 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
             ) {
                 Text(
                     text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
                     text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
                 Spacer(Modifier.height(Dimens.SectionGap))
                 Text(
                     text = stringResource(R.string.about_body),
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                 )
                 Spacer(Modifier.height(Dimens.SectionGap))
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.about_disclaimer),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         modifier = Modifier.padding(Dimens.CardPadding),
                     )
@@ -139,7 +139,7 @@ private fun LicenseEntry(name: String, license: String, holder: String) {
     Column {
         Text(
             text = name,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Note(stringResource(R.string.about_license_line, license, holder))
