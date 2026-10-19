@@ -53,7 +53,7 @@ Atemkraft ist **offline-first**: kein Konto, kein Server, keine Telemetrie, kein
 |---|---|---|---|---|
 | Room `log_entries` | Art (Atemübung/Meditation), Übung, Zeitpunkt, Dauer, Runden | gesundheitsnah, niedrig (Übungs-IDs können auf Erkrankungen hindeuten) | je nach Hersteller (ab Android 12) / nein | „Logbuch leeren“, App-Speicher löschen |
 | Room `saved_patterns` | Name, Phasenlängen, Art (`activating`: aktivierend ja/nein) und Speicherzeitpunkt eigener Muster | niedrig | je nach Hersteller (ab Android 12) / ja (mit Anpassung) | einzeln löschen |
-| DataStore `settings` | Einstellungen (inkl. bestätigter Sicherheitshinweis `safety_acknowledged`), Anpassungen pro Übung, Aufklapp-Zustand „Meine Muster“ (`saved_patterns_expanded`) | niedrig | je nach Hersteller (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
+| DataStore `settings` | Einstellungen (inkl. bestätigter Sicherheitshinweis `safety_acknowledged`), Anpassungen pro Übung, Aufklapp-Zustand „Meine Muster“ (`saved_patterns_expanded`), ob die Benachrichtigungs-Erlaubnis schon erfragt wurde (`notification_asked`) | niedrig | je nach Hersteller (ab Android 12) / nur Anpassungen gespeicherter Muster | zurücksetzen pro Übung, App-Speicher löschen |
 | `files/tts/` | Stimmmodelle (öffentliche Daten, bis ca. 130 MB), beim Entpacken ein Zwischenordner `.<stimme>.staging` | keine | nein / nein | „Stimme löschen“ |
 | `cache/` | Teil-Download | keine | nein / nein | bei Abbruch oder Fehler sofort; nach Prozess-Ende beim nächsten Download-Versuch; Android leert `cache/` bei Speichermangel |
 | Activity-Zustand (flüchtig, `rememberSaveable`) | Suchtext der Befindens-Suche (SEC-PRIV-06) | gesundheitsnah | nein / nein | Suche schließen (X, Zurück, „Alle zeigen“), App beenden |
@@ -71,7 +71,7 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 | `VIBRATE` | Haptik bei Phasenwechseln und Tipp-Tick am Kreis (beides hinter dem Schalter „Vibration“) |
 | `WAKE_LOCK` | Meditations-Timer im Doze-Modus (`PARTIAL_WAKE_LOCK`) |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Meditation läuft bei gesperrtem Bildschirm weiter |
-| `POST_NOTIFICATIONS` | Status der Meditation; bei Ablehnung läuft der Timer weiter |
+| `POST_NOTIFICATIONS` | Status der Meditation; einmal erfragt beim ersten Meditationsstart, bei Ablehnung läuft der Timer weiter |
 | `app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | automatisch von androidx.core, signature-geschützt, nur intern |
 | `<queries>` `TTS_SERVICE` | Sichtbarkeit der System-Sprachausgabe; sie erhält nur feste Ansagetexte |
 

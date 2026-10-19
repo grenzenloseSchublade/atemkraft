@@ -10,8 +10,10 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -48,6 +50,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -61,6 +64,7 @@ import androidx.navigation.toRoute
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
+import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
@@ -103,14 +107,6 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Für die dezente Meditations-Dauer-Notification (ab Android 13 laufzeit-abgefragt;
-        // bei Ablehnung läuft der Timer weiter, nur ohne sichtbare Notification).
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
-        }
         // App ist dark-only: Systemleisten-Icons immer hell, unabhängig vom System-Hell/Dunkel-Modus.
         // Ohne expliziten Style würden sie im hellen System-Modus dunkel auf dunklem Indigo gezeichnet.
         enableEdgeToEdge(
@@ -354,6 +350,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                 composable<MeditationRoute> {
                     // TTS-Engine erst hier vorbereiten (nicht beim App-Start), idempotent.
                     LaunchedEffect(Unit) { meditationController.prepareSpeech() }
+                    val askNotifications = rememberNotificationAsk(container.settingsRepository)
                     MeditationScreen(
                         initialConfig = meditationConfig,
                         speechAvailable = meditationSpeechAvailable,
@@ -366,6 +363,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                             scope.launch { container.settingsRepository.setMeditationConfig(config) }
                             meditationController.start(config)
                             meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
+                            askNotifications()
                         },
                     )
                 }
@@ -376,7 +374,9 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                     popExitTransition = popExit,
                 ) { entry ->
                     val id = entry.toRoute<DetailRoute>().exerciseId
-                    val exercise = container.exerciseRepository.byId(id)
+                    // Einmal auflösen: Seite, Start und „Von vorne“ zeigen dasselbe Muster, auch wenn
+                    // das Tagesmuster um Mitternacht wechselt (ARC-5).
+                    val exercise = remember(id) { container.exerciseRepository.byId(id) }
                     if (exercise == null) {
                         // Unauflösbare Route (z. B. gelöschtes oder noch nicht geladenes Muster):
                         // zurück statt leerer Screen (CODE-05) – nur, solange dieses Ziel oben liegt.
@@ -417,7 +417,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                             scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
                         },
                         onStart = { config ->
-                            sessionViewModel.start(id, config)
+                            sessionViewModel.start(exercise, config)
                             sessionExpanded = true
                             navController.popBackStack()
                         },
@@ -568,6 +568,30 @@ private enum class TopTab { ATMEN, SITUATIONEN, LOGBUCH, MEDITATION }
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
 private fun androidx.navigation.NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true
+
+/**
+ * Fragt ab Android 13 einmalig nach der Benachrichtigungs-Erlaubnis – im Moment, in dem sie Sinn
+ * ergibt: beim ersten Meditationsstart, nicht beim App-Start (ARC-6). Gebraucht wird sie nur für
+ * die Meditations-Benachrichtigung; bei Ablehnung läuft der Timer trotzdem. Danach fragt die App
+ * nie wieder. Bis der gespeicherte Stand geladen ist, gilt „schon gefragt“ – lieber einmal nicht
+ * fragen als doppelt.
+ */
+@Composable
+private fun rememberNotificationAsk(settings: SettingsRepository): () -> Unit {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val asked by settings.notificationAsked.collectAsStateWithLifecycle(initialValue = true)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    return {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !asked &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            scope.launch { settings.setNotificationAsked() }
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+}
 
 @Composable
 private fun KeepScreenOn(enabled: Boolean) {

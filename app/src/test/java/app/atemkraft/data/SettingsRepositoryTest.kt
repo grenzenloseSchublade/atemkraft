@@ -84,6 +84,13 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `die Benachrichtigungs-Frage gilt als gestellt, sobald sie einmal kam`() = runBlocking {
+        assertFalse(SettingsRepository(store).notificationAsked.first())
+        SettingsRepository(store).setNotificationAsked()
+        assertTrue(SettingsRepository(store).notificationAsked.first())
+    }
+
+    @Test
     fun `eine nicht mehr angebotene Stimme gilt als keine Wahl und wird vergessen`() = runBlocking {
         val repo = SettingsRepository(store)
         repo.setNeuralVoiceId("glados") // gespeichert bis 1.5.1

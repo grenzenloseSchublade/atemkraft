@@ -10,7 +10,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.atemkraft.AtemkraftApplication
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.toCueEvent
-import app.atemkraft.data.ExerciseRepository
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.Exercise
@@ -86,7 +85,6 @@ data class SessionUiState(
  * sich kein Drift aufsummiert.
  */
 class SessionViewModel(
-    private val repository: ExerciseRepository,
     private val audio: SessionAudioCoordinator? = null,
     private val logbook: LogbookRepository? = null,
 ) : ViewModel() {
@@ -134,8 +132,8 @@ class SessionViewModel(
     /** Signal zum Beenden einer offenen Phase (Nutzer tippt „weiter"). */
     private var continueSignal: CompletableDeferred<Unit>? = null
 
-    // Für Neustart („Von vorne"): zuletzt gewählte Übung + Anpassung.
-    private var currentExerciseId: String = ""
+    // Für Neustart („Von vorne"): zuletzt gewählte Übung (unangepasst) + Anpassung.
+    private var baseExercise: Exercise? = null
     private var currentConfig: SessionConfig = SessionConfig()
 
     // Logbuch-Metadaten der laufenden Session.
@@ -144,25 +142,30 @@ class SessionViewModel(
     private var activeElapsedMs = 0L
     private var lastTickRealtime = 0L
 
-    fun start(exerciseId: String, config: SessionConfig = SessionConfig()) {
-        val exercise = (repository.byId(exerciseId) ?: return).adjusted(config)
+    /**
+     * Startet [exercise] mit der Anpassung [config]. Die Übung kommt als aufgelöstes Objekt von der
+     * Detailseite – genau das Muster, das dort zu sehen war; „Von vorne“ nimmt dasselbe Objekt
+     * (kein erneutes Nachschlagen per Id, das um Mitternacht ein anderes Tagesmuster liefern könnte).
+     */
+    fun start(exercise: Exercise, config: SessionConfig = SessionConfig()) {
+        val adjusted = exercise.adjusted(config)
         runnerJob?.cancel()
-        currentExerciseId = exerciseId
+        baseExercise = exercise
         currentConfig = config
-        timeline = exercise.buildTimeline()
+        timeline = adjusted.buildTimeline()
         progressTracker = SessionProgress(timeline)
         index = 0
         resumeRemainingMs = null
-        currentExercise = exercise
+        currentExercise = adjusted
         startedAtEpochMs = System.currentTimeMillis()
         activeElapsedMs = 0L
         lastTickRealtime = SystemClock.elapsedRealtime()
         _state.value = SessionUiState(
-            exerciseName = exercise.name,
+            exerciseName = adjusted.name,
             status = SessionStatus.PREPARING,
-            roundCount = exercise.rounds,
+            roundCount = adjusted.rounds,
             countdown = COUNTDOWN_SECONDS,
-            patternHint = exercise.instructionHint,
+            patternHint = adjusted.instructionHint,
         )
         if (timeline.isEmpty()) {
             finish()
@@ -176,7 +179,7 @@ class SessionViewModel(
 
     /** Startet dieselbe Übung mit derselben Anpassung von vorn (inkl. Countdown). */
     fun restart() {
-        if (currentExerciseId.isNotEmpty()) start(currentExerciseId, currentConfig)
+        baseExercise?.let { start(it, currentConfig) }
     }
 
     private suspend fun runCountdown() {
@@ -366,12 +369,11 @@ class SessionViewModel(
     }
 
     companion object {
-        /** DI: zieht Repositories und Audio-Koordinator aus dem AppContainer/der Application. */
+        /** DI: zieht Logbuch und Audio-Koordinator aus dem AppContainer/der Application. */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as AtemkraftApplication
                 SessionViewModel(
-                    repository = app.container.exerciseRepository,
                     audio = SessionAudioCoordinator(app, app.container.settingsRepository.cueSettings),
                     logbook = app.container.logbookRepository,
                 )

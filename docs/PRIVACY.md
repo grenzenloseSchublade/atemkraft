@@ -73,7 +73,7 @@ Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die dire
 | Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides mit dem Schalter „Vibration“ abschaltbar. **Bis einschließlich Version 1.5.1** vibriert der Tick auch bei ausgeschaltetem Schalter |
 | Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation wach, damit Gongs pünktlich kommen |
 | Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
-| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation mit „Beenden“; ab Android 13 fragt die App beim Start danach. Lehnst du ab, läuft der Timer trotzdem |
+| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Meditation. Lehnst du ab, läuft der Timer trotzdem |
 | Sichtbarkeit der Sprachausgabe (`<queries>` für `TTS_SERVICE`) | die Sprachausgabe des Geräts finden |
 
 Hinzu kommt `app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, die Android-Bibliothek AndroidX automatisch einträgt; sie gilt nur innerhalb der App. Die App fragt weder Standort, Kontakte, Kamera, Mikrofon noch Speicher ab.

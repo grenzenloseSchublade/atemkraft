@@ -125,6 +125,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
         val SAVED_PATTERNS_EXPANDED = booleanPreferencesKey("saved_patterns_expanded") // „Meine Muster“ offen
         val MARKED_EXERCISES = stringSetPreferencesKey("marked_exercises") // Atemkreis „tut mir gut“
+        val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked") // einmal gefragt (ab Android 13)
     }
 
     /**
@@ -160,6 +161,16 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             val current = prefs[Keys.MARKED_EXERCISES].orEmpty()
             prefs[Keys.MARKED_EXERCISES] = if (marked) current + exerciseId else current - exerciseId
         }
+    }
+
+    /**
+     * Wurde die Benachrichtigungs-Erlaubnis (ab Android 13) schon einmal erfragt? Die App fragt
+     * genau einmal, beim ersten Meditationsstart – nicht beim App-Start und nie wieder danach.
+     */
+    val notificationAsked: Flow<Boolean> = data.map { it[Keys.NOTIFICATION_ASKED] ?: false }
+
+    suspend fun setNotificationAsked() {
+        store.edit { it[Keys.NOTIFICATION_ASKED] = true }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */
