@@ -1,6 +1,5 @@
 package app.atemkraft.ui.meditation
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -12,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,13 +26,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -41,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
-import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
@@ -51,18 +49,16 @@ import app.atemkraft.ui.components.PauseFlash
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
-import app.atemkraft.ui.components.SessionPrimaryButton
+import app.atemkraft.ui.components.SessionControlBar
 import app.atemkraft.ui.components.SessionRunningLayout
-import app.atemkraft.ui.components.SessionSecondaryButton
-import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
+import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.rememberTapFlash
+import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.SECONDARY
-import app.atemkraft.ui.theme.SynthTrack
 
 /** Gong-Wahl im Tab; die Intervall-Länge steht in den Einstellungen. */
 private enum class GongChoice {
@@ -131,6 +127,9 @@ fun MeditationOverlay(
                 title = stringResource(R.string.meditation_done_title),
                 onAgain = onRestart,
                 onExit = onEnd,
+                // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
+                // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
+                summary = sessionSummaryParts(durationMs = state.elapsedMs),
             )
         } else {
             RunningContent(
@@ -443,7 +442,8 @@ private fun RunningContent(
             Text(
                 text = stringResource(R.string.meditation_title),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                // Wie der Übungsname der Atem-Session: voll, nicht gedämpft.
+                color = MaterialTheme.colorScheme.onBackground,
                 // liveRegion: TalkBack sagt Zustandswechsel (Vorbereitung/läuft/pausiert) an.
                 modifier = Modifier
                     .semantics {
@@ -457,73 +457,65 @@ private fun RunningContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.ListGap) {
-                    SessionPrimaryButton(
-                        text = stringResource(if (paused) R.string.action_resume else R.string.action_pause),
-                        onClick = onTogglePause,
-                        enabled = !preparing,
-                    )
-                    SessionSecondaryButton(
-                        text = stringResource(R.string.action_restart),
-                        onClick = onRestart,
-                        enabled = !preparing,
-                    )
-                    SessionStopButton(
-                        text = stringResource(R.string.action_stop),
-                        onClick = onEnd,
-                    )
-                }
+                // Dieselbe Icon-Steuerung wie die Atem-Session; im Countdown nur „Beenden“.
+                SessionControlBar(
+                    playing = !paused,
+                    onMain = onTogglePause,
+                    onRestart = onRestart,
+                    onStop = onEnd,
+                    preparing = preparing,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         },
     ) { side ->
         Box(contentAlignment = Alignment.Center) {
+            // Fortschrittsbogen wie in der Atem-Session (nur Timer; offen = nur Spur).
+            val progress = if (state.mode == MeditationMode.TIMED && !preparing) {
+                (state.elapsedMs.toFloat() / (state.elapsedMs + state.remainingMs).coerceAtLeast(1L)).coerceIn(0f, 1f)
+            } else {
+                null
+            }
             BreathingCircle(
                 fraction = 1f,
-                modifier = Modifier
-                    .size(side)
-                    .semantics { contentDescription = ringDescription }
-                    // Wie in der Atem-Session: Tippen auf den Kreis pausiert/setzt fort.
-                    .then(
-                        if (!preparing) {
-                            Modifier.clickable(
-                                interactionSource = circleInteraction,
-                                indication = null,
-                            ) { flashToggle() }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                progress = progress,
+                modifier = Modifier.size(side),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (preparing) {
+                        // Kleiner als die Zeit und nie breiter als die Scheibe, damit es auch bei
+                        // großer Schrift im Kreis bleibt (bricht dann zwischen den Wörtern um).
                         GlowText(
                             text = stringResource(R.string.session_get_ready),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.widthIn(max = breathingDiscDiameter(side, 1f)),
                         )
                         Spacer(Modifier.height(Dimens.GapTiny))
                     }
                     GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
                 }
             }
-            // Dezenter Fortschritts-Ring (nur Timer): dünner Bogen entlang der Bahn.
-            if (state.mode == MeditationMode.TIMED && !preparing) {
-                val total = (state.elapsedMs + state.remainingMs).coerceAtLeast(1L)
-                val progress = (state.elapsedMs.toFloat() / total).coerceIn(0f, 1f)
-                Canvas(modifier = Modifier.size(side)) {
-                    val stroke = 2.5.dp.toPx()
-                    drawArc(
-                        color = SynthTrack.copy(alpha = 0.35f),
-                        startAngle = -90f,
-                        sweepAngle = progress * 360f,
-                        useCenter = false,
-                        topLeft = Offset(stroke / 2f, stroke / 2f),
-                        size = Size(size.width - stroke, size.height - stroke),
-                        style = Stroke(width = stroke, cap = StrokeCap.Round),
-                    )
-                }
-            }
+            // Wie in der Atem-Session: Tippen auf den Kreis (bis zur Spur, nicht ins Quadrat
+            // daneben) pausiert/setzt fort; eigene Fläche statt clip am Kreis, damit der Glow bleibt.
+            Box(
+                modifier = Modifier
+                    .size(side)
+                    .clip(CircleShape)
+                    .semantics { contentDescription = ringDescription }
+                    .then(
+                        if (!preparing) {
+                            Modifier.clickable(
+                                interactionSource = circleInteraction,
+                                indication = null,
+                                role = Role.Button,
+                            ) { flashToggle() }
+                        } else {
+                            Modifier
+                        },
+                    ),
+            )
             // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
-            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
+            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause, maxSize = side)
         }
     }
 }

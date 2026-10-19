@@ -126,8 +126,8 @@ class ThemeContrastTest {
 
         // Session: Kreiszentrum ist der kritische Punkt (FARBE-03).
         add(Pair("Phase SessionTextYellow auf Kreiszentrum", SessionTextYellow, circleCenter, large))
-        add(Pair("Notiz SessionNoteAmber auf Kreiszentrum", SessionNoteAmber, circleCenter, text))
-        add(Pair("Notiz SessionNoteAmber auf background", SessionNoteAmber, background, text))
+        // Die Anleitungszeile steht unter dem Kreis auf dem Hintergrund, gedämpft (SessionScreen).
+        add(Pair("Anleitungszeile SessionNoteAmber α SECONDARY auf background", SessionNoteAmber.copy(alpha = SECONDARY), background, text))
         add(Pair("Session-Label SessionTextGlow auf SessionButtonCyan", SessionTextGlow, SessionButtonCyan, text))
         add(Pair("SessionButtonCyan auf background", SessionButtonCyan, background, text))
         add(Pair("SessionButtonPink auf background", SessionButtonPink, background, text))

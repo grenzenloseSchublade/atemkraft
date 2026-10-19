@@ -9,7 +9,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import app.atemkraft.ui.theme.SessionButtonCyan
 
 /**
@@ -18,9 +20,11 @@ import app.atemkraft.ui.theme.SessionButtonCyan
  * damit es zum Glow-Design passt und ohne harte Umrandung aufpoppt. Per Canvas gezeichnet.
  */
 @Composable
-fun PauseFlash(alpha: Float, isPause: Boolean) {
+fun PauseFlash(alpha: Float, isPause: Boolean, modifier: Modifier = Modifier, maxSize: Dp = Dp.Infinity) {
     if (alpha <= 0.01f) return
-    Canvas(modifier = Modifier.size(150.dp)) {
+    // Nie größer als der Kreis: Sonst wüchse beim Antippen kurz die Box um den Kreis, und der
+    // Kreis spränge (kleiner Kreis im Querformat oder bei großer Schrift).
+    Canvas(modifier = modifier.size(min(FLASH_SIZE, maxSize))) {
         val w = size.width
         val h = size.height
 
@@ -55,3 +59,6 @@ fun PauseFlash(alpha: Float, isPause: Boolean) {
         drawSymbol(SessionButtonCyan.copy(alpha = alpha))
     }
 }
+
+/** Kantenlänge des Symbols, solange der Kreis groß genug ist. */
+private val FLASH_SIZE = 150.dp

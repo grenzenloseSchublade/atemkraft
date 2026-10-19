@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -51,6 +52,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performSemanticsAction
@@ -65,6 +67,7 @@ import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SelectChip
+import app.atemkraft.ui.components.SessionControlBar
 import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.StartSplitButton
@@ -74,6 +77,7 @@ import app.atemkraft.ui.meditation.DurationPickerState
 import app.atemkraft.ui.meditation.TimeDial
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.ControlSize
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.controlScale
 import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
@@ -321,14 +325,68 @@ class ControlTouchTest(private val fontScale: Float) {
         show {
             Box(Modifier.width(340.dp)) {
                 AdaptiveButtonRow {
-                    SessionPrimaryButton(text = "Pause", onClick = {})
-                    SessionSecondaryButton(text = "Von vorne", onClick = {})
+                    SessionPrimaryButton(text = "Nochmal", onClick = {})
+                    SessionSecondaryButton(text = "Ende", onClick = {})
                 }
             }
         }
         val (a, b) = clickables().sortedBy { layoutBounds(it).left }
         assertTrue(abs(visibleHeight(a) - visibleHeight(b)) <= 1f)
         assertMinHeight("Session-Button", visibleHeight(a))
+    }
+
+    @Test
+    fun `Session-Steuerung - Icon-Knoepfe mit Namen und 48-dp-Tippflaeche, Vorbereitung nur Beenden`() {
+        val app = RuntimeEnvironment.getApplication()
+        var playing by mutableStateOf(true)
+        var preparing by mutableStateOf(false)
+        show {
+            Box(Modifier.width(340.dp)) {
+                SessionControlBar(
+                    playing = playing,
+                    onMain = { hits += "main" },
+                    onRestart = { hits += "restart" },
+                    onStop = { hits += "stop" },
+                    preparing = preparing,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+        val (restart, main, stop) = clickables().sortedBy { layoutBounds(it).left }
+        // Alle Kreise sind selbst ≥ 48 dp und damit die Tippfläche; feste Größe bei jeder Schrift.
+        probe("Von vorne", restart, "restart", emptySet())
+        probe("Pause/Weiter", main, "main", emptySet())
+        probe("Beenden", stop, "stop", emptySet())
+        assertEquals("Seitenknopf sichtbar (fs$fontScale)", Dimens.SessionSideButton.value * density, restart.size.width.toFloat(), 1f)
+        assertEquals("Hauptknopf sichtbar (fs$fontScale)", Dimens.SessionMainButton.value * density, main.size.width.toFloat(), 1f)
+
+        // TalkBack: drei Knöpfe mit Namen der Aktion; Pause wird pausiert zu „Weiter“.
+        for (name in listOf(R.string.action_restart, R.string.action_pause, R.string.action_stop)) {
+            compose.onNodeWithContentDescription(app.getString(name))
+                .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+                .assertIsEnabled()
+        }
+        playing = false
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription(app.getString(R.string.action_resume)).assertIsEnabled()
+        assertTrue(compose.onAllNodesWithContentDescription(app.getString(R.string.action_pause)).fetchSemanticsNodes().isEmpty())
+
+        // Vorbereitung: nur „Beenden“ – die anderen weder sichtbar ausgegraut noch antippbar oder
+        // für TalkBack da, und „Beenden“ bleibt an seinem Platz (kein Sprung beim Start).
+        val stopBefore = layoutBounds(stop)
+        val restartCenter = layoutBounds(restart).center
+        val mainCenter = layoutBounds(main).center
+        preparing = true
+        compose.waitForIdle()
+        val left = clickables()
+        assertEquals("Vorbereitung: nur Beenden antippbar (fs$fontScale)", 1, left.size)
+        assertEquals(stopBefore, layoutBounds(left.single()))
+        for (name in listOf(R.string.action_restart, R.string.action_resume)) {
+            assertTrue(compose.onAllNodesWithContentDescription(app.getString(name), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        }
+        assertEquals(emptyList<String>(), tap(restartCenter))
+        assertEquals(emptyList<String>(), tap(mainCenter))
+        assertEquals(listOf("stop"), tap(stopBefore.center))
     }
 
     @Test

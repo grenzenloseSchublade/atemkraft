@@ -23,41 +23,45 @@ import app.atemkraft.R
 /**
  * Geteilter Rahmen der Vollbild-Overlays (Atem-Session + Meditation): Hintergrund-Surface mit
  * safeDrawingPadding, oben Minimieren-Chevron (˅) links und In-Session-Stummschalter rechts,
- * darunter der eigentliche Inhalt.
+ * darunter der eigentliche Inhalt. [chromeVisible] = false blendet die Kopfleiste sanft aus
+ * (Ruhe-Ansicht der Atem-Session, [HideableSlot]); ihr Platz bleibt, der Inhalt springt nicht.
  */
 @Composable
 fun OverlayChrome(
     muted: Boolean,
     onMinimize: () -> Unit,
     onToggleMute: () -> Unit,
+    chromeVisible: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                IconButton(onClick = onMinimize) {
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.action_minimize),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
-                // Schneller Ton-Schalter für die laufende Sitzung (Einstellung bleibt unberührt).
-                IconButton(onClick = onToggleMute) {
-                    Icon(
-                        painter = painterResource(
-                            if (muted) R.drawable.ic_sound_off else R.drawable.ic_sound_on,
-                        ),
-                        contentDescription = stringResource(
-                            if (muted) R.string.action_sound_off else R.string.action_sound_on,
-                        ),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(
-                            alpha = if (muted) 0.5f else 1f,
-                        ),
-                    )
+            HideableSlot(visible = chromeVisible) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    IconButton(onClick = onMinimize) {
+                        Icon(
+                            imageVector = Icons.Filled.KeyboardArrowDown,
+                            contentDescription = stringResource(R.string.action_minimize),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
+                    // Schneller Ton-Schalter für die laufende Sitzung (Einstellung bleibt unberührt).
+                    IconButton(onClick = onToggleMute) {
+                        Icon(
+                            painter = painterResource(
+                                if (muted) R.drawable.ic_sound_off else R.drawable.ic_sound_on,
+                            ),
+                            contentDescription = stringResource(
+                                if (muted) R.string.action_sound_off else R.string.action_sound_on,
+                            ),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(
+                                alpha = if (muted) 0.5f else 1f,
+                            ),
+                        )
+                    }
                 }
             }
             Box(modifier = Modifier.weight(1f), content = content)

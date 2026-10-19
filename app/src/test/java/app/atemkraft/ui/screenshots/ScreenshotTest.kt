@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -23,6 +24,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -32,6 +34,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.unit.dp
@@ -69,6 +72,7 @@ import app.atemkraft.ui.meditation.MeditationStatus
 import app.atemkraft.ui.meditation.MeditationUiState
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionStatus
+import app.atemkraft.ui.session.SessionSummary
 import app.atemkraft.ui.session.SessionUiState
 import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
@@ -162,6 +166,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     // Ein setContent pro Test; snap() tauscht nur den Inhalt aus.
     private var current by mutableStateOf<(@Composable () -> Unit)?>(null)
     private var currentHeightDp by mutableIntStateOf(0)
+    private var currentWidthDp by mutableIntStateOf(0)
 
     @Before
     fun setUp() {
@@ -174,7 +179,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 // Breite/Höhe wie auf dem Gerät.
                 Box(
                     Modifier
-                        .requiredSize(device.widthDp.dp, currentHeightDp.dp)
+                        .requiredSize(currentWidthDp.dp, currentHeightDp.dp)
                         .testTag(SHOT),
                 ) { current?.invoke() }
             }
@@ -182,7 +187,14 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /** [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen). */
-    private fun snap(name: String, heightDp: Int = tallDp, prepare: () -> Unit = {}, content: @Composable () -> Unit) {
+    private fun snap(
+        name: String,
+        heightDp: Int = tallDp,
+        widthDp: Int = device.widthDp,
+        prepare: () -> Unit = {},
+        content: @Composable () -> Unit,
+    ) {
+        currentWidthDp = widthDp
         currentHeightDp = heightDp
         current = content
         prepare()
@@ -634,28 +646,41 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         }
     }
 
-    /** Vollbild-Session in echter Gerätehöhe: Vorbereitung, Phase mit Notiz, offene Phase, Ende. */
+    /**
+     * Vollbild-Session in echter Gerätehöhe: Vorbereitung, Phase mit Anleitungszeile, offene Phase,
+     * Ruhe-Ansicht (Tipp neben den Kreis), Ende mit Bilanz.
+     */
     @Test
     fun session() {
         val exercise = BuiltInExercises.all.first { it.guided }
+        val viloma = BuiltInExercises.all.first { it.id == "viloma-ein" }
+        val wimHof = BuiltInExercises.all.first { it.id == "wim-hof" }
         val base = SessionUiState(
             exerciseName = exercise.name,
             status = SessionStatus.RUNNING,
             roundIndex = 2,
             roundCount = 8,
             patternHint = "Einatmen 4 s · Halten 7 s · Ausatmen 8 s",
+            progress = 0.3f,
+        )
+        val inhale = base.copy(
+            phaseType = PhaseType.INHALE,
+            phaseNote = "Durch die Nase, Bauch weitet sich",
+            remainingMs = 2_400,
+            phaseTotalMs = 4_000,
+            nextPhaseType = PhaseType.HOLD_FULL,
         )
         val states = mapOf(
-            "vorbereitung" to base.copy(status = SessionStatus.PREPARING, countdown = 3),
-            "einatmen" to base.copy(
-                phaseType = PhaseType.INHALE,
-                phaseNote = "Durch die Nase, Bauch weitet sich",
-                remainingMs = 2_400,
-                phaseTotalMs = 4_000,
-                nextPhaseType = PhaseType.HOLD_FULL,
-            ),
-            // Viloma: Pause nach der ersten Einatemstufe – Kreis steht bei ⅓.
+            // Im Countdown steht der Bogen noch bei 0 (SessionViewModel).
+            "vorbereitung" to base.copy(status = SessionStatus.PREPARING, countdown = 3, roundIndex = 0, progress = 0f),
+            "einatmen" to inhale,
+            // Viloma: Pause nach der ersten Einatemstufe – Kreis steht bei ⅓. Kopf wie in der App:
+            // Viloma hat keine Runden, also nur der Name.
             "viloma_pause" to base.copy(
+                exerciseName = viloma.name,
+                roundIndex = 0,
+                roundCount = viloma.rounds,
+                patternHint = viloma.instructionHint,
                 phaseType = PhaseType.HOLD_FULL,
                 phaseLevel = BreathLevel.at(1f / 3f),
                 phaseNote = "anhalten",
@@ -663,29 +688,80 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 phaseTotalMs = 2_000,
                 nextPhaseType = PhaseType.INHALE,
             ),
+            // Offener Hold gibt es nur bei Wim Hof (Halten auf leerer Lunge bis zum Atemreiz).
             "warten" to base.copy(
+                exerciseName = wimHof.name,
+                roundIndex = 1,
+                roundCount = wimHof.rounds,
+                patternHint = wimHof.instructionHint,
                 status = SessionStatus.WAITING_FOR_USER,
                 phaseType = PhaseType.HOLD_EMPTY,
                 elapsedMs = 23_000,
             ),
-            "ende" to base.copy(status = SessionStatus.FINISHED),
+            "ende" to base.copy(
+                status = SessionStatus.FINISHED,
+                progress = 1f,
+                summary = SessionSummary(durationMs = 384_000, breaths = 48, rounds = 8),
+            ),
         )
         states.forEach { (name, state) ->
-            snap("09_session_$name", heightDp = device.heightDp) {
-                SessionOverlay(
-                    state = state,
-                    showNextPhase = true,
-                    onMinimize = {},
-                    onToggleMute = {},
-                    onTogglePause = {},
-                    onTapHaptic = {},
-                    onContinue = {},
-                    onRestart = {},
-                    onStop = {},
-                )
-            }
+            snap("09_session_$name", heightDp = device.heightDp) { SessionShot(state) }
+        }
+        // Ruhe-Ansicht: Tipp neben den Kreis (linker Rand, Bildmitte) blendet alle Bedienelemente
+        // aus; Kreis, Wort, Sekunden und Bogen bleiben, nichts springt.
+        snap("09_session_ruhig", heightDp = device.heightDp, prepare = {
+            compose.onNodeWithTag(SHOT).performTouchInput { click(Offset(left + 4.dp.toPx(), centerY)) }
+        }) { SessionShot(inhale) }
+    }
+
+    /**
+     * Querformat (nicht gesperrt): Steuerung rechts neben dem Kreis, Anleitungszeile und „Als
+     * Nächstes“ ohne Überlappung. Nur Testgerät mit Voreinstellung und kleinstes Gerät mit großer
+     * Schrift; Breite und Höhe getauscht (Statusleiste vernachlässigt).
+     */
+    @Test
+    @Config(qualifiers = "w920dp-h8000dp-xhdpi")
+    fun sessionQuer() {
+        assumeTrue((device.name == "a54" && fontScale == 1.1f) || (device.name == "kompakt360" && fontScale == 2.0f))
+        val state = SessionUiState(
+            exerciseName = "Box-Atmung",
+            status = SessionStatus.RUNNING,
+            roundIndex = 2,
+            roundCount = 8,
+            patternHint = "Einatmen 4 s · Halten 4 s · Ausatmen 4 s · Halten 4 s",
+            progress = 0.3f,
+            phaseType = PhaseType.INHALE,
+            phaseNote = "Durch die Nase, Bauch weitet sich",
+            remainingMs = 2_400,
+            phaseTotalMs = 4_000,
+            nextPhaseType = PhaseType.HOLD_FULL,
+        )
+        snap("09_session_quer", heightDp = device.widthDp, widthDp = device.heightDp) { SessionShot(state) }
+        snap("10_meditation_quer", heightDp = device.widthDp, widthDp = device.heightDp) {
+            MeditationOverlay(
+                state = MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
+                onMinimize = {},
+                onToggleMute = {},
+                onTogglePause = {},
+                onTapHaptic = {},
+                onRestart = {},
+                onEnd = {},
+            )
         }
     }
+
+    @Composable
+    private fun SessionShot(state: SessionUiState) = SessionOverlay(
+        state = state,
+        showNextPhase = true,
+        onMinimize = {},
+        onToggleMute = {},
+        onTogglePause = {},
+        onTapHaptic = {},
+        onContinue = {},
+        onRestart = {},
+        onStop = {},
+    )
 
     /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Ende. */
     @Test
@@ -693,7 +769,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val states = mapOf(
             "vorbereitung" to MeditationUiState(status = MeditationStatus.PREPARING, countdown = 3),
             "laeuft" to MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
-            "ende" to MeditationUiState(status = MeditationStatus.FINISHED),
+            "ende" to MeditationUiState(status = MeditationStatus.FINISHED, elapsedMs = 10 * 60_000L),
         )
         states.forEach { (name, state) ->
             snap("10_meditation_$name", heightDp = device.heightDp) {

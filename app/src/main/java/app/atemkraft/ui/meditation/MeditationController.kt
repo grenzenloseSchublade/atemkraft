@@ -30,7 +30,9 @@ enum class MeditationStatus { IDLE, PREPARING, RUNNING, PAUSED, FINISHED }
 
 /**
  * Sichtbarer Zustand einer Meditations-Sitzung. Im [MeditationMode.TIMED] zählt
- * [remainingMs] herunter; im [MeditationMode.FREE] zählt [elapsedMs] hoch.
+ * [remainingMs] herunter; im [MeditationMode.FREE] zählt [elapsedMs] hoch. Bei
+ * [MeditationStatus.FINISHED] ist [elapsedMs] die aktive (pausenbereinigte) Dauer, die auch ins
+ * Logbuch geht.
  */
 data class MeditationUiState(
     val mode: MeditationMode = MeditationMode.TIMED,
@@ -375,7 +377,8 @@ class MeditationController(
                 ),
             )
         }
-        _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L) }
+        // Die Bilanz am Ende zeigt dieselbe aktive Zeit, die ins Logbuch geht (nicht die Sollzeit).
+        _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = activeElapsedMs) }
         // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
         // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
         if (currentConfig.startEndGong) delay(audio.gongTotalMs().toLong() + FINISH_ABANDON_MARGIN_MS)

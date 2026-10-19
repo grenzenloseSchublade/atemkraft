@@ -55,7 +55,7 @@ val SynthGlow = Color(0xFF2A0A2E)
 // passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen". Zusatzinfo dezenter.
 val SessionTextYellow = Color(0xFFEBDCB0)
 
-// Aufgehellt (war #D7C7A0 ≈ 2,7:1 auf dem Magenta-Kreiszentrum – AA-Fail auch für großen Text).
+// Anleitungszeile unter dem Kreis, mit α SECONDARY auf background (früher im Kreis, daher so hell).
 val SessionNoteAmber = Color(0xFFF0E4C0)
 val SessionTextGlow = Color(0xFF160B22)
 

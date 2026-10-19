@@ -73,6 +73,10 @@ data class SessionUiState(
     val patternHint: String? = null,
     /** Transienter In-Session-Stummschalter (übersteuert den Ton, nicht die Einstellung). */
     val muted: Boolean = false,
+    /** Fortschritt der Gesamtsitzung 0..1 (Zeit bzw. Runden, siehe [SessionProgress]); steht in der Pause still. */
+    val progress: Float = 0f,
+    /** Bilanz für den Ende-Bildschirm; nur bei [SessionStatus.FINISHED] gesetzt. */
+    val summary: SessionSummary? = null,
 )
 
 /**
@@ -120,6 +124,7 @@ class SessionViewModel(
     }
 
     private var timeline: List<RuntimePhase> = emptyList()
+    private var progressTracker = SessionProgress(emptyList())
     private var index = 0
     private var runnerJob: Job? = null
 
@@ -145,11 +150,13 @@ class SessionViewModel(
         currentExerciseId = exerciseId
         currentConfig = config
         timeline = exercise.buildTimeline()
+        progressTracker = SessionProgress(timeline)
         index = 0
         resumeRemainingMs = null
         currentExercise = exercise
         startedAtEpochMs = System.currentTimeMillis()
         activeElapsedMs = 0L
+        lastTickRealtime = SystemClock.elapsedRealtime()
         _state.value = SessionUiState(
             exerciseName = exercise.name,
             status = SessionStatus.PREPARING,
@@ -287,6 +294,7 @@ class SessionViewModel(
                     roundIndex = phase.roundIndex,
                     roundCount = phase.roundCount,
                     nextPhaseType = nextPhaseType(),
+                    progress = progressTracker.at(index, totalMs - left),
                 )
             }
             delay(min(left, FRAME_MS))
@@ -311,6 +319,7 @@ class SessionViewModel(
                 roundIndex = phase.roundIndex,
                 roundCount = phase.roundCount,
                 nextPhaseType = nextPhaseType(),
+                progress = progressTracker.at(index, 0L),
             )
         }
         val ticker = launch {
@@ -350,6 +359,8 @@ class SessionViewModel(
                 phaseType = null,
                 remainingMs = 0L,
                 elapsedMs = 0L,
+                progress = 1f,
+                summary = sessionSummary(timeline, activeElapsedMs),
             )
         }
     }

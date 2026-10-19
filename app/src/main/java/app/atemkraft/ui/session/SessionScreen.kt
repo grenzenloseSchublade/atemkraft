@@ -5,16 +5,13 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,71 +19,67 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.BreathingCircle
+import app.atemkraft.ui.components.DotSeparatedFlow
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
+import app.atemkraft.ui.components.HideableSlot
 import app.atemkraft.ui.components.PauseFlash
-import app.atemkraft.ui.components.SessionPrimaryButton
+import app.atemkraft.ui.components.SUMMARY_SEPARATOR
+import app.atemkraft.ui.components.SessionControlBar
 import app.atemkraft.ui.components.SessionRunningLayout
-import app.atemkraft.ui.components.SessionSecondaryButton
-import app.atemkraft.ui.components.SessionStopButton
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.rememberTapFlash
+import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
-import app.atemkraft.ui.theme.SessionButtonCyan
-import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionNoteAmber
-import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
-import kotlinx.coroutines.delay
 import kotlin.math.ceil
 
 /**
- * Zeigt die laufende Session: Start-Countdown, Atemkreis, Phasenname (+ optionale Zusatzinfo),
- * Restzeit/Verstrichen, Steuerung und – optional, dezent – die kommende Phase.
+ * Zeigt die laufende Session: Start-Countdown, Atemkreis mit Fortschrittsbogen, im Kreis nur
+ * Phasenwort und Sekunden, darunter fest die Anleitungszeile, Steuerung und – optional, dezent –
+ * die kommende Phase. Am Ende „✓ Geschafft“, die offene Frage und eine kurze Bilanz.
+ * [controlsVisible] = false ist die Ruhe-Ansicht ([SessionOverlay]): alles außer Kreis, Wort,
+ * Sekunden und Bogen blendet aus, ohne dass der Kreis springt.
  * [onTapHaptic] spielt den Tipp-Tick beim Antippen des Kreises; ob er vibriert, entscheidet
  * der Aufrufer anhand des App-Schalters „Vibration“.
  */
@@ -99,17 +92,24 @@ fun SessionScreen(
     onContinue: () -> Unit,
     onRestart: () -> Unit,
     onStop: () -> Unit,
+    controlsVisible: Boolean = true,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
         if (state.status == SessionStatus.FINISHED) {
-            FinishedPanel(title = stringResource(R.string.session_done_question), onAgain = onRestart, onExit = onStop)
+            FinishedPanel(
+                title = stringResource(R.string.session_done_question),
+                onAgain = onRestart,
+                onExit = onStop,
+                summary = state.summary?.let { sessionSummaryParts(it.durationMs, rounds = it.rounds, breaths = it.breaths) }.orEmpty(),
+            )
         } else {
             ActiveContent(
                 state = state,
                 showNextPhase = showNextPhase,
+                controlsVisible = controlsVisible,
                 onTogglePause = onTogglePause,
                 onTapHaptic = onTapHaptic,
                 onContinue = onContinue,
@@ -124,6 +124,7 @@ fun SessionScreen(
 private fun ActiveContent(
     state: SessionUiState,
     showNextPhase: Boolean,
+    controlsVisible: Boolean,
     onTogglePause: () -> Unit,
     onTapHaptic: () -> Unit,
     onContinue: () -> Unit,
@@ -157,32 +158,35 @@ private fun ActiveContent(
     // Gerüst teilt sich die Atem-Session mit der Meditation: Kopf oben, Kreis im freien Platz
     // dazwischen, Steuerung unten (SessionRunningLayout). Die ausgeklappte Anleitung legt sich
     // über den Kreisrand, statt ihn zu verschieben.
-    // Höhe der „Als Nächstes“-Zeile aus der Zeilenhöhe ihres Stils (wächst mit der Systemschrift);
-    // fest reserviert, damit der Kreis nicht springt, wenn die Zeile erscheint (LAYOUT-03).
-    val nextRowHeight = with(LocalDensity.current) { MaterialTheme.typography.labelMedium.lineHeight.toDp() }
+    // Unter dem Kreis fest reserviert (LAYOUT-03), damit weder der Kreis noch „Als Nächstes“
+    // springt, wenn Zeilen erscheinen oder wechseln: die Anleitungszeile mit zwei Zeilen ihres
+    // Stils, die „Als Nächstes“-Zeile mit einer. Echt gemessen statt lineHeight × n: Ab Android 14
+    // wächst große Schrift nichtlinear, die gerenderte Zeile ist dann höher als ihr lineHeight.
+    val guidanceStyle = MaterialTheme.typography.bodyMedium.copy(lineBreak = LineBreak.Heading)
+    val nextStyle = MaterialTheme.typography.labelMedium
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val guidanceHeight = with(density) { measurer.measure(TWO_LINES, guidanceStyle).size.height.toDp() }
+    val nextRowHeight = with(density) { measurer.measure(ONE_LINE, nextStyle).size.height.toDp() }
+    val nextBlock = if (showNextPhase) Dimens.GapSmall + nextRowHeight else 0.dp
     SessionRunningLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(Dimens.SessionPadding),
-        // „Als Nächstes“-Zeile unter dem Kreis: Abstand (wie der Spacer unten) + eine Zeile.
-        centerExtra = if (showNextPhase) Dimens.GapSmall + nextRowHeight else 0.dp,
+        centerExtra = Dimens.GapSmall + guidanceHeight + nextBlock,
+        chromeVisible = controlsVisible,
         top = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = if (!preparing && state.roundCount > 1) {
-                        stringResource(R.string.session_round, state.roundIndex + 1, state.roundCount)
-                    } else {
-                        state.exerciseName
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
+                SessionTitle(state)
                 // Anleitung auf Abruf: dezente „ⓘ Anleitung"-Zeile unter dem Titel, die den
                 // Pattern-Hint ein-/ausklappt – jederzeit, nicht nur im Countdown.
                 state.patternHint?.let { hint ->
                     var hintVisible by rememberSaveable { mutableStateOf(false) }
+                    // In der Ruhe-Ansicht zuklappen: Aufgeklappt läge der unsichtbare Text über dem
+                    // Kreisrand und finge dort den Tipp ab, der pausieren soll.
+                    LaunchedEffect(controlsVisible) { if (!controlsVisible) hintVisible = false }
                     val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
                     val hintState = expandedStateText(hintVisible)
                     Row(
@@ -234,91 +238,71 @@ private fun ActiveContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Immer gemessen, nur im offenen Hold sichtbar: So bleibt die Höhe der Steuerung
-                // konstant und der Kreis springt nicht, wenn der Hinweis erscheint.
-                Text(
-                    text = stringResource(R.string.session_tap_to_continue),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                    modifier = Modifier
-                        .alpha(if (waiting) 1f else 0f)
-                        .then(if (waiting) Modifier else Modifier.clearAndSetSemantics {}),
+                // Im offenen Hold wird Pause zu „Weiter“ (wie der Kreis-Tap, MUSTER-07); im
+                // Countdown bleibt nur „Beenden“, die anderen halten ihren Platz (kein Sprung).
+                SessionControlBar(
+                    playing = state.status == SessionStatus.RUNNING,
+                    onMain = if (waiting) onContinue else onTogglePause,
+                    onRestart = onRestart,
+                    onStop = onStop,
+                    preparing = preparing,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(Modifier.height(Dimens.SectionGap))
-
-                // Immer alle drei Buttons rendern (im Countdown deaktiviert statt abwesend) –
-                // so springt das Layout beim Übergang Countdown → Übung nicht.
-                AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    SessionPrimaryButton(
-                        text = stringResource(
-                            if (state.status == SessionStatus.PAUSED) {
-                                R.string.action_resume
-                            } else {
-                                R.string.action_pause
-                            },
-                        ),
-                        onClick = onTogglePause,
-                        enabled = !preparing && !waiting,
-                    )
-                    SessionSecondaryButton(
-                        text = stringResource(R.string.action_restart),
-                        onClick = onRestart,
-                        enabled = !preparing,
-                    )
-                    SessionStopButton(
-                        text = stringResource(R.string.action_stop),
-                        onClick = onStop,
-                    )
-                }
             }
         },
     ) { side ->
         val circleDescription = stringResource(R.string.cd_breathing_circle)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(contentAlignment = Alignment.Center) {
-                BreathingCircle(
-                    fraction = fraction,
+                BreathingCircle(fraction = fraction, progress = state.progress, modifier = Modifier.size(side))
+                // Tippfläche ist der Kreis bis zur Spur, nicht das umschließende Quadrat (clip
+                // begrenzt auch die Treffer): Ecken und Rand daneben gehören zur Ruhe-Ansicht
+                // (SessionOverlay). Eigene Fläche statt clip am Kreis, damit dessen Glow bleibt.
+                val tap: (() -> Unit)? = when (state.status) {
+                    // Kreis antippen (ohne Ripple-Kästchen): laufend/pausiert = Pause/Weiter,
+                    // offener Hold = weiter.
+                    SessionStatus.RUNNING, SessionStatus.PAUSED -> ::flashToggle
+
+                    SessionStatus.WAITING_FOR_USER -> onContinue
+
+                    else -> null
+                }
+                Box(
                     modifier = Modifier
                         .size(side)
+                        .clip(CircleShape)
                         .semantics { contentDescription = circleDescription }
                         .then(
-                            when (state.status) {
-                                // Kreis antippen (ohne Ripple-Kästchen): laufend/pausiert = Pause/Weiter,
-                                // offener Hold = weiter.
-                                SessionStatus.RUNNING, SessionStatus.PAUSED ->
-                                    Modifier.clickable(interactionSource = circleInteraction, indication = null) { flashToggle() }
-
-                                SessionStatus.WAITING_FOR_USER ->
-                                    Modifier.clickable(interactionSource = circleInteraction, indication = null) { onContinue() }
-
-                                else -> Modifier
+                            if (tap != null) {
+                                Modifier.clickable(interactionSource = circleInteraction, indication = null, role = Role.Button, onClick = tap)
+                            } else {
+                                // Countdown: Der Tipp auf den Kreis tut nichts – er darf aber auch
+                                // nicht zur Ruhe-Ansicht durchfallen und „Beenden“ ausblenden.
+                                Modifier.pointerInput(Unit) { detectTapGestures { } }
                             },
                         ),
                 )
-                // Texte als Geschwister ÜBER dem Kreis statt in ihm: Sie bekommen die volle Breite
-                // und brechen nie im Wort, auch wenn der Kreis bei großer Schrift klein wird.
-                // Antippen erreicht weiterhin den Kreis (Text hat keinen eigenen Klick).
+                // Im Kreis nur Phasenwort und Sekunden, als Geschwister ÜBER dem Kreis statt in
+                // ihm: Sie bekommen die volle Breite und brechen nie im Wort, auch wenn der Kreis
+                // bei großer Schrift klein wird. Antippen erreicht weiterhin den Kreis.
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // LiveRegion sagt Phasenname + Notiz an (der Kreis selbst hat nur eine
+                    // LiveRegion sagt Phasenname + Anleitung an (der Kreis selbst hat nur eine
                     // statische Beschreibung, sonst liest TalkBack den Phasennamen doppelt).
                     val liveText = note?.let { "$label, $it" } ?: label
+                    // Im Countdown kleiner und nie breiter als die Scheibe: „Gleich geht's los“ ist
+                    // länger als jedes Phasenwort und bricht bei großer Schrift zwischen den Wörtern um,
+                    // statt über den Kreis hinauszuragen.
                     GlowText(
                         text = label,
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = if (preparing) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                         fill = SessionTextYellow,
-                        modifier = Modifier.semantics {
-                            liveRegion = LiveRegionMode.Polite
-                            contentDescription = liveText
-                        },
+                        modifier = Modifier
+                            .then(if (preparing) Modifier.widthIn(max = breathingDiscDiameter(side, fraction)) else Modifier)
+                            .semantics {
+                                liveRegion = LiveRegionMode.Polite
+                                contentDescription = liveText
+                            },
                     )
-                    note?.let {
-                        GlowText(
-                            text = it,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fill = SessionNoteAmber,
-                        )
-                    }
                     if (secondsText.isNotEmpty()) {
                         Spacer(Modifier.height(Dimens.GapTiny))
                         GlowText(
@@ -329,72 +313,115 @@ private fun ActiveContent(
                     }
                 }
                 // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content) → sicher sichtbar.
-                PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause)
+                PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause, maxSize = side)
             }
-            // Dezent direkt unter dem Kreis: die kommende Phase (abschaltbar).
-            // Feste Höhe reservieren, damit der Kreis NICHT springt, wenn die Zeile
-            // erscheint/verschwindet oder der Text (kurz/lang) wechselt.
+            Spacer(Modifier.height(Dimens.GapSmall))
+            // Anleitungszeile fest unter dem Kreis; im offenen Hold steht hier der Hinweis zum
+            // Weiteratmen – der bleibt auch in der Ruhe-Ansicht, sonst wüsste man nicht weiter.
+            HideableSlot(visible = controlsVisible || waiting) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = guidanceHeight),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    val guidance = if (waiting) stringResource(R.string.session_tap_to_continue) else note
+                    guidance?.let {
+                        WholeWordText(
+                            text = it,
+                            style = guidanceStyle,
+                            color = SessionNoteAmber.copy(alpha = SECONDARY),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+            // Dezent darunter: die kommende Phase (abschaltbar). Feste Höhe reservieren, damit
+            // der Kreis NICHT springt, wenn die Zeile erscheint/verschwindet oder der Text wechselt.
             if (showNextPhase) {
                 Spacer(Modifier.height(Dimens.GapSmall))
-                val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                val hintStyle = MaterialTheme.typography.labelMedium
-                val nextLabel = stringResource(R.string.session_next)
-                // Alle möglichen Phasennamen: Die Entscheidung unten gilt für die ganze Session,
-                // die Zeile wechselt also nicht zwischen den Phasen ihr Layout.
-                val phaseLabels = PhaseType.entries.map { phaseDisplayLabel(it, null) }
-                val measurer = rememberTextMeasurer()
-                BoxWithConstraints(
-                    modifier = Modifier.heightIn(min = nextRowHeight),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    val half = with(LocalDensity.current) {
-                        (maxWidth.toPx() - measurer.measure(" · ", hintStyle).size.width) / 2f
-                    }
-                    val splitFits = measurer.measure(nextLabel, hintStyle).size.width <= half &&
-                        phaseLabels.all { measurer.measure(it, hintStyle).size.width <= half }
-                    if (!preparing && state.nextPhaseType != null) {
-                        val phase = phaseDisplayLabel(state.nextPhaseType, null)
-                        if (splitFits) {
-                            // „Als Nächstes" rechtsbündig bis zur Mitte, Phasenname linksbündig ab Mitte
-                            // → der Trennpunkt liegt fest in der Bildmitte, nichts springt bei Längenwechsel.
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = nextLabel,
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.End,
-                                    style = hintStyle,
-                                    color = hintColor,
-                                    maxLines = 1,
-                                )
-                                Text(text = " · ", style = hintStyle, color = hintColor)
-                                Text(
-                                    text = phase,
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.Start,
-                                    style = hintStyle,
-                                    color = hintColor,
-                                    maxLines = 1,
-                                )
-                            }
-                        } else {
-                            // Sehr große Schrift auf schmalem Gerät: eine Hälfte reicht nicht –
-                            // dann als ein zentrierter Text, ganz statt abgeschnitten (LAYOUT-03).
-                            WholeWordText(
-                                text = "$nextLabel · $phase",
-                                style = hintStyle,
-                                color = hintColor,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
+                HideableSlot(visible = controlsVisible) {
+                    NextPhaseRow(
+                        nextPhaseType = if (preparing) null else state.nextPhaseType,
+                        minHeight = nextRowHeight,
+                    )
                 }
             }
         }
     }
 }
+
+/**
+ * Kopf: Übungsname, die Runde als Zusatz dahinter („Resonanz-Atmung · Runde 3 von 8“). Reicht die
+ * Breite nicht, rutscht die Runde als Ganzes in die nächste Zeile, ohne Trennpunkt am Umbruch
+ * ([DotSeparatedFlow], LAYOUT-03). Die Runde steht schon im Countdown und ist so breit wie ihr
+ * längster Wert („Runde 8 von 8“): Der Kopf ändert seine Höhe während der Session nie, sonst
+ * rechnet SessionRunningLayout mit dem niedrigeren Kopf und der Kreis rückt hinein.
+ */
+@Composable
+private fun SessionTitle(state: SessionUiState) {
+    val titleStyle = MaterialTheme.typography.titleMedium
+    val roundColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
+    val name: @Composable () -> Unit = {
+        WholeWordText(
+            text = state.exerciseName,
+            style = titleStyle,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+    }
+    if (state.roundCount <= 1) {
+        name()
+        return
+    }
+    val widest = stringResource(R.string.session_round, state.roundCount, state.roundCount)
+    val widestWidth = with(LocalDensity.current) { rememberTextMeasurer().measure(widest, titleStyle).size.width.toDp() }
+    val round = stringResource(R.string.session_round, state.roundIndex + 1, state.roundCount)
+    DotSeparatedFlow(
+        parts = listOf(
+            name,
+            {
+                WholeWordText(
+                    text = round,
+                    modifier = Modifier.widthIn(min = widestWidth),
+                    style = titleStyle,
+                    color = roundColor,
+                    textAlign = TextAlign.Center,
+                )
+            },
+        ),
+        separator = { Text(text = SUMMARY_SEPARATOR, style = titleStyle, color = roundColor) },
+    )
+}
+
+/**
+ * Dezente „Als Nächstes · Phase“-Zeile unter dem Kreis; leer (mit Höhe), wenn nichts folgt. Als
+ * Ganzes mittig wie die Anleitungszeile darüber; die Höhe steht fest, nur die Breite folgt dem
+ * Phasennamen.
+ */
+@Composable
+private fun NextPhaseRow(nextPhaseType: PhaseType?, minHeight: Dp) {
+    val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    Box(
+        modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (nextPhaseType != null) {
+            // Bei sehr großer Schrift auf schmalem Gerät bricht die Zeile zwischen Wörtern um,
+            // ganz statt abgeschnitten (LAYOUT-03).
+            WholeWordText(
+                text = stringResource(R.string.session_next) + SUMMARY_SEPARATOR + phaseDisplayLabel(nextPhaseType, null),
+                style = MaterialTheme.typography.labelMedium,
+                color = hintColor,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+/** Messtexte für die reservierten Höhen: zwei Zeilen Anleitung (Hinweise sind kurz), eine „Als Nächstes“. */
+private const val TWO_LINES = "A\nA"
+private const val ONE_LINE = "A"
 
 /** Sekundentext: Countdown bei fester Dauer, Hochzählen bei offener Phase. */
 private fun secondsText(state: SessionUiState): String = when {

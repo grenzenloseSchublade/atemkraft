@@ -6,7 +6,6 @@ kontrast | Wochentag auf Card | S-15
 kontrast | WeekRow-Punkt α0.12 auf Card | S-15
 kontrast | WeekRow-Punkt α0.4 auf Card | S-15
 kontrast | SecondaryContainer auf Card | S-18
-kontrast | Notiz SessionNoteAmber auf Kreiszentrum | S-03
 delta-e | primary ↔ EvidenceCaution | S-18
 delta-e | primary ↔ SessionButtonPink | S-18
 delta-e | EvidenceCaution ↔ SessionButtonPink | S-18

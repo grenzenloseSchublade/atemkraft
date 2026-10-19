@@ -53,4 +53,25 @@ object Dimens {
 
     /** Mindesthöhe eigener klickbarer Flächen (Material-Touch-Ziel), unabhängig vom Padding. */
     val MinTouchTarget = 48.dp
+
+    /** Strichstärke von Spur und Fortschrittsbogen um den Atemkreis (3, Raster-Ausnahme). */
+    val SessionRingStroke = 3.dp
+
+    /** Abstand der Knöpfe in der Session-Steuerung (Von vorne · Pause · Beenden). */
+    val SessionControlGap = 40.dp
+
+    // Session-Steuerung: fest wie die OverlayChrome-Icons, nicht mit der Schrift verkleinert –
+    // Bedienung mit halb geschlossenen Augen; Maße wie im Mockup Variante B (Nutzerwunsch 2026-10-19).
+
+    /** Kreis von Pause/Weiter in der Session-Steuerung. */
+    val SessionMainButton = 76.dp
+
+    /** Kreis von „Von vorne“/„Beenden“ neben Pause/Weiter (selbst ≥ 48, also Tippfläche). */
+    val SessionSideButton = 56.dp
+
+    /** Pause-/Play-Symbol im großen Session-Knopf. */
+    val SessionMainIcon = 32.dp
+
+    /** Kreispfeil und Stopp in den Seitenknöpfen. */
+    val SessionSideIcon = 28.dp
 }

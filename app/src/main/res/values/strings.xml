@@ -165,6 +165,17 @@
     <string name="session_done_question">Wie fühlst du dich?</string>
     <string name="session_get_ready">Gleich geht\'s los</string>
     <string name="session_next">Als Nächstes</string>
+    <!-- Bilanz am Ende, Teile mit „ · “ verbunden: „8 Runden · 6:24 min · 60 Atemzüge“.
+         Geschützte Leerzeichen: Zahl und Einheit brechen nie auseinander (TEXT-10). -->
+    <string name="session_summary_duration">%1$d:%2$02d\u00A0min</string>
+    <plurals name="session_summary_rounds">
+        <item quantity="one">%d\u00A0Runde</item>
+        <item quantity="other">%d\u00A0Runden</item>
+    </plurals>
+    <plurals name="session_summary_breaths">
+        <item quantity="one">%d\u00A0Atemzug</item>
+        <item quantity="other">%d\u00A0Atemzüge</item>
+    </plurals>
     <string name="action_restart">Von vorne</string>
     <string name="action_again">Nochmal</string>
     <string name="action_end">Ende</string>
