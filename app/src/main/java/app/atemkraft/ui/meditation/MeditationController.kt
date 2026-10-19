@@ -19,8 +19,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.min
@@ -63,6 +66,10 @@ class MeditationController(
 
     private val _state = MutableStateFlow(MeditationUiState())
     val state: StateFlow<MeditationUiState> = _state.asStateFlow()
+
+    /** Nur der Status, ohne die Frame-Ticks des vollen Zustands – für die App-Wurzel (ARC-3). */
+    val status: StateFlow<MeditationStatus> = _state.map { it.status }
+        .stateIn(scope, SharingStarted.Eagerly, MeditationStatus.IDLE)
 
     /** Verfügbarkeit einer deutschen TTS-Stimme (steuert den Sprach-Schalter im UI). */
     val speechAvailable: StateFlow<Boolean> = audio.speechAvailable

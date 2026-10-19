@@ -28,10 +28,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -91,6 +93,10 @@ class SessionViewModel(
 
     private val _state = MutableStateFlow(SessionUiState())
     val state: StateFlow<SessionUiState> = _state.asStateFlow()
+
+    /** Nur der Status, ohne die Frame-Ticks des vollen Zustands – für die App-Wurzel (ARC-3). */
+    val status: StateFlow<SessionStatus> = _state.map { it.status }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, SessionStatus.IDLE)
 
     private val _cues = MutableSharedFlow<CueEvent>(
         extraBufferCapacity = 8,

@@ -14,9 +14,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -56,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -101,7 +101,9 @@ import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.tapTab
 import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.NeonMagenta
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -128,7 +130,10 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
-    val sessionState by sessionViewModel.state.collectAsStateWithLifecycle()
+    // In der Wurzel nur der Status: Der volle Zustand tickt während einer Sitzung alle 33 ms und
+    // wird erst in [SessionHost] gelesen (Mini-Leiste, Overlay) – sonst setzte die ganze App
+    // rund 30-mal pro Sekunde neu an (ARC-3).
+    val sessionStatus by sessionViewModel.status.collectAsStateWithLifecycle()
     val cueSettings by container.settingsRepository.cueSettings
         .collectAsStateWithLifecycle(initialValue = CueSettings())
     val safetySettings by container.settingsRepository.safetySettings
@@ -145,7 +150,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
         .collectAsStateWithLifecycle(initialValue = emptySet())
 
     val meditationController = container.meditationController
-    val meditationState by meditationController.state.collectAsStateWithLifecycle()
+    val meditationStatus by meditationController.status.collectAsStateWithLifecycle()
     val meditationConfig by container.settingsRepository.meditationSettings
         .collectAsStateWithLifecycle(initialValue = MeditationConfig())
     val meditationSpeechAvailable by meditationController.speechAvailable
@@ -159,18 +164,18 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
         .collectAsStateWithLifecycle(initialValue = null)
     val piperEngineReady by meditationController.piperReady.collectAsStateWithLifecycle()
 
-    val sessionActive = sessionState.status != SessionStatus.IDLE
+    val sessionActive = sessionStatus != SessionStatus.IDLE
     var sessionExpanded by rememberSaveable { mutableStateOf(false) }
 
     // „aktiv" (inkl. FINISHED) steuert Overlay + Mini-Leiste; die Wach-Halten-Logik nur bei RUNNING/PREPARING.
-    val meditationActive = meditationState.status != MeditationStatus.IDLE
+    val meditationActive = meditationStatus != MeditationStatus.IDLE
     var meditationExpanded by rememberSaveable { mutableStateOf(false) }
 
     KeepScreenOn(
-        enabled = sessionState.status == SessionStatus.RUNNING ||
-            sessionState.status == SessionStatus.WAITING_FOR_USER ||
-            meditationState.status == MeditationStatus.RUNNING ||
-            meditationState.status == MeditationStatus.PREPARING,
+        enabled = sessionStatus == SessionStatus.RUNNING ||
+            sessionStatus == SessionStatus.WAITING_FOR_USER ||
+            meditationStatus == MeditationStatus.RUNNING ||
+            meditationStatus == MeditationStatus.PREPARING,
     )
 
     val guidedByFamily = remember {
@@ -201,8 +206,8 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
     // ViewModel hängt an der Activity), obwohl die Mini-Leiste „läuft weiter" signalisiert. Nach
     // dem Ende (FINISHED) gibt es nichts mehr zu retten: Zurück beendet die App wie gewohnt.
     // Auf Push-Seiten (currentTopTab == null) und in Overlays greifen deren eigene Back-Handler.
-    val sessionRunning = sessionActive && sessionState.status != SessionStatus.FINISHED
-    val meditationRunning = meditationActive && meditationState.status != MeditationStatus.FINISHED
+    val sessionRunning = sessionActive && sessionStatus != SessionStatus.FINISHED
+    val meditationRunning = meditationActive && meditationStatus != MeditationStatus.FINISHED
     BackHandler(
         enabled = (sessionRunning || meditationRunning) && currentTopTab != null &&
             !sessionExpanded && !meditationExpanded,
@@ -222,10 +227,14 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
             bottomBar = {
                 Column {
                     if (sessionActive && !sessionExpanded) {
-                        MiniSessionBar(state = sessionState, onClick = { sessionExpanded = true })
+                        SessionHost(sessionViewModel.state) { state ->
+                            MiniSessionBar(state = state, onClick = { sessionExpanded = true })
+                        }
                     }
                     if (meditationActive && !meditationExpanded) {
-                        MiniMeditationBar(state = meditationState, onClick = { meditationExpanded = true })
+                        SessionHost(meditationController.state) { state ->
+                            MiniMeditationBar(state = state, onClick = { meditationExpanded = true })
+                        }
                     }
                     HorizontalDivider(thickness = 1.dp, color = NeonMagenta.copy(alpha = 0.22f))
                     AppNavigationBar(
@@ -255,25 +264,8 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                 }
             },
         ) { innerPadding ->
-            // Push-Ziele (Detail/Settings/…) gleiten hierarchisch herein/heraus; Tab-Wechsel
-            // blenden nur dezent – kein Ghosting mehr.
-            val dur = 300
-            val pushEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(dur)) +
-                    fadeIn(tween(dur))
-            }
-            val pushExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(dur)) +
-                    fadeOut(tween(dur))
-            }
-            val popEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(dur)) +
-                    fadeIn(tween(dur))
-            }
-            val popExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(dur)) +
-                    fadeOut(tween(dur))
-            }
+            // Push-Ziele (Detail/Settings/…) gleiten hierarchisch herein/heraus ([pushComposable]);
+            // Tab-Wechsel blenden nur dezent – kein Ghosting mehr.
             NavHost(
                 navController = navController,
                 startDestination = AtmenRoute,
@@ -284,10 +276,10 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .widthIn(max = 600.dp),
-                enterTransition = { fadeIn(tween(180)) },
-                exitTransition = { fadeOut(tween(180)) },
-                popEnterTransition = { fadeIn(tween(180)) },
-                popExitTransition = { fadeOut(tween(180)) },
+                enterTransition = { fadeIn(tween(Motion.NavTab)) },
+                exitTransition = { fadeOut(tween(Motion.NavTab)) },
+                popEnterTransition = { fadeIn(tween(Motion.NavTab)) },
+                popExitTransition = { fadeOut(tween(Motion.NavTab)) },
             ) {
                 composable<AtmenRoute> {
                     var dailyPattern by remember {
@@ -367,12 +359,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                         },
                     )
                 }
-                composable<DetailRoute>(
-                    enterTransition = pushEnter,
-                    exitTransition = pushExit,
-                    popEnterTransition = popEnter,
-                    popExitTransition = popExit,
-                ) { entry ->
+                pushComposable<DetailRoute> { entry ->
                     val id = entry.toRoute<DetailRoute>().exerciseId
                     // Einmal auflösen: Seite, Start und „Von vorne“ zeigen dasselbe Muster, auch wenn
                     // das Tagesmuster um Mitternacht wechselt (ARC-5).
@@ -383,7 +370,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                         LaunchedEffect(entry.id) {
                             if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
                         }
-                        return@composable
+                        return@pushComposable
                     }
                     val requireSafety = exercise.caution &&
                         (!safetySettings.acknowledged || safetySettings.showWarning)
@@ -431,12 +418,7 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                         },
                     )
                 }
-                composable<SettingsRoute>(
-                    enterTransition = pushEnter,
-                    exitTransition = pushExit,
-                    popEnterTransition = popEnter,
-                    popExitTransition = popExit,
-                ) { entry ->
+                pushComposable<SettingsRoute> { entry ->
                     // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
                     LaunchedEffect(Unit) { meditationController.prepareSpeech() }
                     val patternTransfer = rememberPatternTransfer(
@@ -482,32 +464,17 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                         focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )
                 }
-                composable<GlossaryRoute>(
-                    enterTransition = pushEnter,
-                    exitTransition = pushExit,
-                    popEnterTransition = popEnter,
-                    popExitTransition = popExit,
-                ) {
+                pushComposable<GlossaryRoute> {
                     GlossaryScreen(onBack = { navController.popBackStack() })
                 }
-                composable<AtemlehreRoute>(
-                    enterTransition = pushEnter,
-                    exitTransition = pushExit,
-                    popEnterTransition = popEnter,
-                    popExitTransition = popExit,
-                ) { entry ->
+                pushComposable<AtemlehreRoute> { entry ->
                     AtemlehreScreen(
                         onBack = { navController.popBackStack() },
                         onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
                         focus = entry.toRoute<AtemlehreRoute>().focus,
                     )
                 }
-                composable<AboutRoute>(
-                    enterTransition = pushEnter,
-                    exitTransition = pushExit,
-                    popEnterTransition = popEnter,
-                    popExitTransition = popExit,
-                ) {
+                pushComposable<AboutRoute> {
                     AboutScreen(onBack = { navController.popBackStack() })
                 }
             }
@@ -516,51 +483,93 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
         // Vollbild-Session über allem; System-Zurück regelt das Overlay selbst (minimieren, am
         // Ende-Screen wie „Ende“).
         if (sessionActive && sessionExpanded) {
-            SessionOverlay(
-                state = sessionState,
-                showNextPhase = showNextPhase,
-                onMinimize = { sessionExpanded = false },
-                onToggleMute = sessionViewModel::toggleMute,
-                onTogglePause = {
-                    if (sessionState.status == SessionStatus.PAUSED) {
-                        sessionViewModel.resume()
-                    } else {
-                        sessionViewModel.pause()
-                    }
-                },
-                // Tipp-Tick nur bei eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
-                onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
-                onContinue = sessionViewModel::continueFromUserPaced,
-                onRestart = sessionViewModel::restart,
-                onStop = {
-                    sessionViewModel.stop()
-                    sessionExpanded = false
-                },
-            )
+            SessionHost(sessionViewModel.state) { state ->
+                SessionOverlay(
+                    state = state,
+                    showNextPhase = showNextPhase,
+                    onMinimize = { sessionExpanded = false },
+                    onToggleMute = sessionViewModel::toggleMute,
+                    onTogglePause = {
+                        if (state.status == SessionStatus.PAUSED) {
+                            sessionViewModel.resume()
+                        } else {
+                            sessionViewModel.pause()
+                        }
+                    },
+                    // Tipp-Tick nur bei eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
+                    onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
+                    onContinue = sessionViewModel::continueFromUserPaced,
+                    onRestart = sessionViewModel::restart,
+                    onStop = {
+                        sessionViewModel.stop()
+                        sessionExpanded = false
+                    },
+                )
+            }
         }
 
         // Vollbild-Meditation über allem (gespiegelt von der Session): minimierbar zur Mini-Leiste.
         if (meditationActive && meditationExpanded) {
-            MeditationOverlay(
-                state = meditationState,
-                onMinimize = { meditationExpanded = false },
-                onToggleMute = meditationController::toggleMute,
-                onTogglePause = {
-                    if (meditationState.status == MeditationStatus.PAUSED) {
-                        meditationController.resume()
-                    } else {
-                        meditationController.pause()
-                    }
-                },
-                onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
-                onRestart = meditationController::restart,
-                onEnd = {
-                    meditationController.end()
-                    meditationExpanded = false
-                },
-            )
+            SessionHost(meditationController.state) { state ->
+                MeditationOverlay(
+                    state = state,
+                    onMinimize = { meditationExpanded = false },
+                    onToggleMute = meditationController::toggleMute,
+                    onTogglePause = {
+                        if (state.status == MeditationStatus.PAUSED) {
+                            meditationController.resume()
+                        } else {
+                            meditationController.pause()
+                        }
+                    },
+                    onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
+                    onRestart = meditationController::restart,
+                    onEnd = {
+                        meditationController.end()
+                        meditationExpanded = false
+                    },
+                )
+            }
         }
     }
+}
+
+/**
+ * Sammelt den vollen Sitzungszustand erst hier: Nur dieser Teilbaum (Mini-Leiste oder Overlay)
+ * setzt bei jedem Frame-Tick neu an, nicht die App-Wurzel (ARC-3).
+ */
+@Composable
+private fun <T> SessionHost(state: StateFlow<T>, content: @Composable (T) -> Unit) {
+    val current by state.collectAsStateWithLifecycle()
+    content(current)
+}
+
+/**
+ * Push-Ziel (Detail, Einstellungen, …): gleitet hierarchisch herein und beim Zurück wieder hinaus,
+ * jeweils mit Blende. Ein Ort für die vier Übergänge statt fünf Kopien (S-29).
+ */
+private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
+    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) {
+    composable<T>(
+        enterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(Motion.NavPush)) +
+                fadeIn(tween(Motion.NavPush))
+        },
+        exitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(Motion.NavPush)) +
+                fadeOut(tween(Motion.NavPush))
+        },
+        popEnterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(Motion.NavPush)) +
+                fadeIn(tween(Motion.NavPush))
+        },
+        popExitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(Motion.NavPush)) +
+                fadeOut(tween(Motion.NavPush))
+        },
+        content = content,
+    )
 }
 
 /** Die vier Top-Level-Tabs (für die Markierung der Leiste, auch auf Push-Zielen). */

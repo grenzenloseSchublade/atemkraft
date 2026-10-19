@@ -268,7 +268,7 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay`. Die Wrap
 
 ## <a id="bewegung"></a>8 Bewegung
 
-**Tokens** (`src/ui/theme/Motion.kt`, Werte = Ist): angelegt sind `TapFlashHold` 220 ms, `TapFlashFadeStep` × `TapFlashFadeSteps` 34 ms × 16 und `TapFlashStatic` 500 ms (bei Animator-Skala 0, `ValueAnimator.areAnimatorsEnabled()`). *Geplant*, heute noch inline: `NavPush` `tween(300)` Slide + Fade · `NavTab` `tween(180)` Fade · `Disclosure`/`Reveal` Default-Spring · `AmbientShimmer` `tween(8000, EaseInOutSine)` reverse, Glow-α ≤ 0,16 · `PacerFrame`/`ClockTick` 33 / 200 ms · `Pacer.ScaleMin`/`ScaleMax` 0,42 / 1,0.
+**Tokens** (`src/ui/theme/Motion.kt`, Werte = Ist): angelegt sind `TapFlashHold` 220 ms, `TapFlashFadeStep` × `TapFlashFadeSteps` 34 ms × 16 und `TapFlashStatic` 500 ms (bei Animator-Skala 0, `ValueAnimator.areAnimatorsEnabled()`), `NavPush` 300 ms Slide + Fade (einmal in `pushComposable<T>()`, `MainActivity.kt`) und `NavTab` 180 ms Fade. *Geplant*, heute noch inline: `Disclosure`/`Reveal` Default-Spring · `AmbientShimmer` `tween(8000, EaseInOutSine)` reverse, Glow-α ≤ 0,16 · `PacerFrame`/`ClockTick` 33 / 200 ms · `Pacer.ScaleMin`/`ScaleMax` 0,42 / 1,0.
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -508,7 +508,7 @@ Nur Design- und Code-Qualität. Sicherheitsbefunde werden nicht öffentlich gef�
 
 | ID | Regel | Befund (Ort) | Aufwand |
 |---|---|---|---|
-| S-29 | LAYOUT-01, FARBE-02, MOTION-04 | Literale abbauen (~~Größen der Bedienelemente~~ erledigt 2026-10-05, `Sizes.kt`): 160 `.dp` (36 off-grid), 39 Alpha, 2 Shapes, Dauern inline; Tokens aus §2.2, §4 und `Motion.kt` anlegen (~~`ProgressStroke`, `PinnedBarElevation`~~ erledigt 2026-10-19); Kartenabstand 12/16/6+6; Transition-Zuweisung 4× dupliziert | L |
+| S-29 | LAYOUT-01, FARBE-02, MOTION-04 | Literale abbauen (~~Größen der Bedienelemente~~ erledigt 2026-10-05, `Sizes.kt`): 160 `.dp` (36 off-grid), 39 Alpha, 2 Shapes, Dauern inline; Tokens aus §2.2, §4 und `Motion.kt` anlegen (~~`ProgressStroke`, `PinnedBarElevation`~~ erledigt 2026-10-19); Kartenabstand 12/16/6+6; ~~Transition-Zuweisung 4× dupliziert~~ (erledigt 2026-10-19: `pushComposable<T>()`, `Motion.NavPush`/`NavTab`) | L |
 | S-30 | FARBE-01, -06, KOMP-03 | ~~Ungenutzte Tokens~~ (erledigt 2026-10-19: `SynthText`, `SynthGlow`, `PauseGlyphCreme` gelöscht); KDoc-Drift (Dauerton „Quarte“ statt Quinte, „150 ms“, „bewusst dezent“); Launcher #1A0B2E nicht aus der Palette; ~~drei Trenner-Varianten~~ (erledigt 2026-10-19: `DividerSubtle`) | S |
 | S-31 | CODE-01, -02 | `AppContainer.kt:8` → `ui.meditation`, `Chips.kt:17` → `ui.home`; `SettingsScreen` 27 Parameter, 13 Flows in der Root | M |
 | S-32 | CODE-04, -06 | 13 Komponenten ohne `modifier` (~~`OverlayChrome`, `FinishedPanel`~~ erledigt 2026-10-19), ~~`GlowText`-Reihenfolge~~ (erledigt 2026-10-19), 0 Previews; Imports und voll qualifizierte Namen (A-03); 67 Kommentarzeilen mit ASCII-Schlusszeichen | M |

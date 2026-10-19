@@ -1,10 +1,16 @@
 package app.atemkraft.ui.theme
 
 /**
- * Zentrale Bewegungs-Tokens (MOTION-04): Dauern in ms. Bisher nur der Tap-Flash; weitere
- * Dauern (Navigation, Schimmer) ziehen nach, wenn ihre Stelle angefasst wird.
+ * Zentrale Bewegungs-Tokens (MOTION-04): Dauern in ms. Tap-Flash und Navigation; weitere
+ * Dauern (Schimmer) ziehen nach, wenn ihre Stelle angefasst wird.
  */
 object Motion {
+    /** Push-Ziele (Detail, Einstellungen, …): Hinein-/Hinausgleiten samt Blende. */
+    val NavPush = 300
+
+    /** Tab-Wechsel: nur dezentes Überblenden, kein Gleiten. */
+    val NavTab = 180
+
     /** Tap-Flash: Halt in voller Deckkraft, bevor das Symbol ausblendet. */
     val TapFlashHold = 220L
 
