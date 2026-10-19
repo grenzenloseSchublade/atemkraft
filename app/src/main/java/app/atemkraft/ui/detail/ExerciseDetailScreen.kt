@@ -55,7 +55,7 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
-import app.atemkraft.ui.components.TitleWithChips
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.home.title
 import app.atemkraft.ui.session.SafetyDialog
@@ -67,9 +67,9 @@ import app.atemkraft.ui.theme.WarnAmber
 import kotlin.math.roundToInt
 
 /**
- * Detail-/Infoseite einer Übung. Progressive Disclosure: oben das Wesentliche (Titel, 1-Zeiler,
- * Meta, ggf. Sicherheits-Appetizer), darunter aus-/einklappbare Abschnitte; der Starten-Button
- * ist unten **gepinnt** und ohne Scrollen erreichbar.
+ * Detail-/Infoseite einer Übung. Progressive Disclosure: oben das Wesentliche (Name fest im Kopf,
+ * Familie mit Chips, 1-Zeiler, Meta, ggf. Sicherheits-Appetizer), darunter aus-/einklappbare
+ * Abschnitte; der Starten-Button ist unten **gepinnt** und ohne Scrollen erreichbar.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -177,9 +177,11 @@ fun ExerciseDetailScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Nur Pfeil und Markierung stehen fest; Familie, Titel und Chips gehören zum Inhalt.
+            // Name und Markierung stehen fest wie der Titel jeder anderen Seite; lange Namen
+            // („Nadi Shodhana (Wechselatmung)“) werden im Kopf zweizeilig, nie im Wort.
             PushHeader(
                 onBack = onBack,
+                title = exercise.name,
                 action = onMarkedChange?.let { onChange -> { PersonalMarkToggle(marked = marked, onMarkedChange = onChange) } },
             )
             Column(
@@ -188,25 +190,30 @@ fun ExerciseDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
-                Text(
-                    text = exercise.family.title(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = accent,
-                )
-                Spacer(Modifier.height(Dimens.GapHairline))
-                TitleWithChips(
-                    title = exercise.name,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    chips = if (exercise.evidence == null && !exercise.caution) {
-                        null
-                    } else {
-                        {
+                Spacer(Modifier.height(Dimens.SectionGap))
+                // Erste Inhaltszeile: Familie und Chips. Passen die Chips nicht neben die Familie,
+                // rutschen sie gemeinsam darunter und brechen nur zwischen den Chips um.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                ) {
+                    WholeWordText(
+                        text = exercise.family.title(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = accent,
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                    )
+                    if (exercise.evidence != null || exercise.caution) {
+                        FlowRow(
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                            verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                        ) {
                             exercise.evidence?.let { EvidenceChip(it) }
                             if (exercise.caution) CautionChip()
                         }
-                    },
-                )
+                    }
+                }
                 Spacer(Modifier.height(Dimens.GapSmall))
                 Text(
                     text = exercise.shortDescription,

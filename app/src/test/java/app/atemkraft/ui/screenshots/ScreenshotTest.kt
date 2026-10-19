@@ -488,7 +488,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun aboutLicenses() = snap("07_ueber_lizenzen") { AboutScreen(onBack = {}, licensesExpanded = true) }
 
-    /** Jede eingebaute Übung plus Muster des Tages: Detail-Kopf mit großem Titel und Chips. */
+    /**
+     * Jede eingebaute Übung plus Muster des Tages: Name im festen Kopf (neben der Markierung wie
+     * in der App, beim Muster ohne), darunter Familie und Chips.
+     */
     @Test
     fun details() {
         assumeTrue(detailConfig)
@@ -504,6 +507,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     onStart = {},
                     onBack = {},
                     onOpenLore = {},
+                    onMarkedChange = if (exercise in BuiltInExercises.all) ({ _: Boolean -> }) else null,
                 )
             }
         }

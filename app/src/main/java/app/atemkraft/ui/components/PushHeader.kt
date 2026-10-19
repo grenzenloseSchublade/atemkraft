@@ -28,10 +28,11 @@ import app.atemkraft.ui.theme.Sizes
  *
  * Keine eigene Fläche, keine Erhöhung: Der Kopf liegt auf dem Hintergrund des Screens (PRIN-03).
  * Ohne [title] steht nur der Pfeil fest – für Seiten, deren Kopf zum Inhalt gehört (Markenkopf
- * auf „Über“, Titel mit Chips auf der Detailseite). Rand (`ScreenPadding`) und Abstand oben
- * (`ScreenTopSub`) bringt er selbst mit, weil er neben und nicht in der Scroll-Spalte steht.
- * Der Titel bricht nie im Wort um ([WholeWordText]); wird er zweizeilig, wächst die Zeile mit.
- * [action] steht rechts außen, ihr Icon bündig zur Inhaltskante wie der Pfeil links.
+ * auf „Über“). Rand (`ScreenPadding`) und Abstand oben (`ScreenTopSub`) bringt er selbst mit,
+ * weil er neben und nicht in der Scroll-Spalte steht.
+ * Der Titel bricht nie im Wort um ([WholeWordText]); wird er zweizeilig (lange Übungsnamen auf
+ * der Detailseite), wächst die Zeile mit. [action] steht rechts außen, ihr Icon bündig zur
+ * Inhaltskante wie der Pfeil links; der Titel nimmt nur die Breite dazwischen (`weight`).
  */
 @Composable
 fun PushHeader(
