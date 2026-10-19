@@ -91,6 +91,7 @@ class ThemeContrastTest {
         }
         add(Pair("EvidenceCaution auf Leiste", EvidenceCaution, bar, text))
         add(Pair("OnNeon auf NeonMagenta", OnNeon, NeonMagenta, text))
+        add(Pair("onError OnNeon auf error EvidenceCaution", OnNeon, EvidenceCaution, text))
 
         // Chips: Text in Chipfarbe auf der eigenen, über den Grund gemischten Fläche – Karte im
         // Atmen-Tab, Screen-Grund im Detail-Kopf. Studienlage (drei Stufen) und Vorsicht.

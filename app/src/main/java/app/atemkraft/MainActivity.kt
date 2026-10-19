@@ -467,6 +467,7 @@ private fun AtemkraftApp() {
                         onBack = { navController.popBackStack() },
                         onExportPatterns = patternTransfer.export,
                         onImportPatterns = patternTransfer.import,
+                        onClearLog = { scope.launch { container.logbookRepository.clear() } },
                         dataStatus = DataStatus(patternTransfer.exportLabel, patternTransfer.importLabel, patternTransfer.note),
                         focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )

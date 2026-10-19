@@ -449,6 +449,19 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
+    /**
+     * „Logbuch leeren“ nach dem ersten Tipp (MUSTER-05): Label „Wirklich leeren?“ in error. Die
+     * Uhr steht nach dem Tipp, sonst liefe der 4-s-Rückfall vor der Aufnahme ab.
+     */
+    @Test
+    fun settingsClearLogArmed() = snap("05_einstellungen_logbuch_leeren", prepare = {
+        compose.waitForIdle()
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.settings_data_clear_log)).performClick()
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeByFrame()
+    }) { Settings() }
+
     @Composable
     private fun Settings(focusMeditation: Boolean = false, dataStatus: DataStatus = DataStatus()) {
         val voices = VoiceCatalog.all.mapIndexed { i, v ->
@@ -489,6 +502,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onBack = {},
             onExportPatterns = {},
             onImportPatterns = {},
+            onClearLog = {},
             dataStatus = dataStatus,
             focusMeditation = focusMeditation,
         )

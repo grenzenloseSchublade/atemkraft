@@ -25,7 +25,7 @@ alpha-literal	app/src/main/java/app/atemkraft/ui/meditation/MeditationScreen.kt	
 alpha-literal	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	2
 alpha-literal	app/src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt	1
 theme-tokens	app/src/main/java/app/atemkraft/ui/theme/Color.kt	3
-theme-tokens	app/src/main/java/app/atemkraft/ui/theme/Theme.kt	4
+theme-tokens	app/src/main/java/app/atemkraft/ui/theme/Theme.kt	2
 type-literal	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	1
 layout-literal	app/src/main/java/app/atemkraft/MainActivity.kt	2
 layout-literal	app/src/main/java/app/atemkraft/ui/components/Chips.kt	2

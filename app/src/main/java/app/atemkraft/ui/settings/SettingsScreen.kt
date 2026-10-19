@@ -1,5 +1,6 @@
 package app.atemkraft.ui.settings
 
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,8 +36,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -67,9 +70,13 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.WarnAmber
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
-/** Einstellungen: Ton (Atmen), Sitzung & Sicherheit, Meditation, Quellen/Über. */
+/**
+ * Einstellungen: oben das Wissen (Atemlehre, Glossar), dann Ton, Atmen, Sitzung & Sicherheit,
+ * Meditation und Daten, unten Über.
+ */
 @Composable
 fun SettingsScreen(
     soundMode: SoundMode,
@@ -102,6 +109,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onExportPatterns: () -> Unit,
     onImportPatterns: () -> Unit,
+    onClearLog: () -> Unit,
     dataStatus: DataStatus = DataStatus(),
     focusMeditation: Boolean = false,
 ) {
@@ -131,6 +139,12 @@ fun SettingsScreen(
             ) {
                 Spacer(Modifier.height(Dimens.SectionGap))
 
+                // Wissen zuerst: Atemlehre und Glossar sollen nicht unter den Karten verschwinden.
+                NavRow(stringResource(R.string.settings_atemlehre), onOpenAtemlehre)
+                Spacer(Modifier.height(Dimens.ListGap))
+                NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
+
+                Spacer(Modifier.height(Dimens.SectionGap))
                 TonCard(volume, onVolume, gongLong, onGongLong, onPreviewGong)
 
                 Spacer(Modifier.height(Dimens.ListGap))
@@ -150,12 +164,8 @@ fun SettingsScreen(
                 }
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                DataCard(onExportPatterns, onImportPatterns, dataStatus)
+                DataCard(onExportPatterns, onImportPatterns, onClearLog, dataStatus)
 
-                Spacer(Modifier.height(Dimens.ListGap))
-                NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
-                Spacer(Modifier.height(Dimens.ListGap))
-                NavRow(stringResource(R.string.settings_atemlehre), onOpenAtemlehre)
                 Spacer(Modifier.height(Dimens.ListGap))
                 NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
 
@@ -176,10 +186,10 @@ data class DataStatus(val exportLabel: String? = null, val importLabel: String? 
 
 /**
  * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
- * keine Berechtigung, keine Cloud).
+ * keine Berechtigung, keine Cloud); darunter das Logbuch leeren, zweistufig (MUSTER-05).
  */
 @Composable
-private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, status: DataStatus) {
+private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () -> Unit, status: DataStatus) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_data_title))
@@ -199,7 +209,51 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, status: DataSta
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
             Hint(stringResource(R.string.settings_data_transfer_hint))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall))
+            ClearLogButton(onClearLog)
         }
+    }
+}
+
+/** Rückfall aus „Wirklich leeren?“ in den Ausgangszustand (MUSTER-05). */
+private const val CONFIRM_TIMEOUT_MS = 4_000L
+
+/**
+ * „Logbuch leeren“ zweistufig im selben Element (MUSTER-05): Der erste Tipp morpht das Label zu
+ * „Wirklich leeren?“ (angesagt), erst der zweite löscht. Ohne zweiten Tipp fällt es nach 4 s
+ * zurück – nicht, solange ein Bedienungshilfe-Dienst läuft (TalkBack, Switch Access brauchen
+ * länger) oder das Element Fokus hat. Bewusst `remember`: Wer die Seite verlässt, kommt
+ * entschärft zurück. Beide Zustände in `error`, damit es nie wie eine gewöhnliche Aktion aussieht.
+ */
+@Composable
+private fun ClearLogButton(onClearLog: () -> Unit) {
+    var armed by remember { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val a11yActive = remember(context) { context.getSystemService(AccessibilityManager::class.java)?.isEnabled == true }
+    LaunchedEffect(armed, focused, a11yActive) {
+        if (armed && !focused && !a11yActive) {
+            delay(CONFIRM_TIMEOUT_MS)
+            armed = false
+        }
+    }
+    AppTextButton(
+        onClick = {
+            if (armed) {
+                armed = false
+                onClearLog()
+            } else {
+                armed = true
+            }
+        },
+        modifier = Modifier
+            .onFocusChanged { focused = it.hasFocus }
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    ) {
+        Text(
+            text = stringResource(if (armed) R.string.settings_data_clear_log_confirm else R.string.settings_data_clear_log),
+            color = MaterialTheme.colorScheme.error,
+        )
     }
 }
 
@@ -348,6 +402,7 @@ private fun SessionCard(
 }
 
 private val GONG_INTERVALS = listOf(3, 5, 10, 15)
+private const val GONG_COLUMNS = 2
 
 @Composable
 private fun MeditationCard(
@@ -368,7 +423,9 @@ private fun MeditationCard(
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval))
             Spacer(Modifier.height(Dimens.GapSmall))
-            SegmentedChoiceRow(GONG_INTERVALS, gongIntervalMin, onGongInterval) { m ->
+            // 2 × 2 wie das Dauer-Raster im Meditations-Tab: „✓ 15 min“ passt in der Karte nicht
+            // in ein Viertel der Breite, sonst stünde hier schon bei normaler Schrift eine Radioliste.
+            SegmentedChoiceRow(GONG_INTERVALS, gongIntervalMin, onGongInterval, columns = GONG_COLUMNS) { m ->
                 stringResource(R.string.meditation_minutes, m)
             }
             Spacer(Modifier.height(Dimens.GapTiny))

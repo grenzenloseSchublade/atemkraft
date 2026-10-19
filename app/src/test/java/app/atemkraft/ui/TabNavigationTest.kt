@@ -207,6 +207,7 @@ class TabNavigationTest {
             onBack = { nav.popBackStack() },
             onExportPatterns = {},
             onImportPatterns = {},
+            onClearLog = {},
             focusMeditation = focusMeditation,
         )
     }
