@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +26,7 @@ import app.atemkraft.ui.theme.SECONDARY
  * Einheitlicher Kopf der Top-Level-Tabs: Screen-Titel, optionaler Untertitel und rechts
  * höchstens eine Icon-Aktion ([action], ein `AppIconButton`), immer an derselben Stelle –
  * das Zahnrad ([SettingsAction]) bei Tabs mit eigenen Einstellungen, die Lupe im
- * Situationen-Tab.
+ * Situationen-Tab. Ihr Icon steht bündig an der Inhaltskante ([flushEnd]).
  *
  * [subtitleContent] ersetzt den Untertitel (z. B. durch das [SearchField]): Der Kopf wechselt
  * nur seinen Zustand, es entsteht keine neue Fläche (PRIN-03).
@@ -60,7 +61,9 @@ fun ScreenHeader(
                 )
             }
         }
-        action?.invoke()
+        // Glyph an der Inhaltskante wie der Caret der Abschnittsköpfe darunter; die Tippfläche
+        // ragt in den Screen-Rand (LAYOUT-07).
+        if (action != null) Box(Modifier.flushEnd()) { action() }
     }
 }
 

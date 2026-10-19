@@ -33,6 +33,16 @@ object Sizes {
     /** Inline-Fortschrittskreis neben einer Zeile (20). */
     val ProgressInline = 20.dp
 
+    /** Strichstärke des Inline-Fortschrittskreises ([ProgressInline]) (2). */
+    val ProgressStroke = 2.dp
+
+    /**
+     * Überstand der 48-dp-Tippfläche über ein [IconDefault]-Icon auf jeder Seite (12): Um ihn
+     * melden `Modifier.flushStart()`/`flushEnd()` einen Icon-Button schmaler, damit sein Glyph an
+     * der Inhaltskante steht und die Tippfläche in den Rand ragt (LAYOUT-07).
+     */
+    val TouchOverhang = (Dimens.MinTouchTarget - IconDefault) / 2
+
     /** Mindestbreite des Stepper-Werts, damit „−“/„+“ bei 1–3 Ziffern nicht springen (48). */
     val StepperValueMinWidth = 48.dp
 

@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.annotation.PluralsRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +33,8 @@ data class PhaseAdjust(
  * Eingeklappt markiert „· angepasst" abweichende Intervalle; der Hinweis verschwindet von
  * selbst, sobald die Werte – auch manuell zurückgesteppt – wieder den Defaults entsprechen.
  * Das Zurücksetzen selbst sitzt beim Start-Button (Split-Button im Detail-Screen).
+ * [durationSpokenLabel]/[durationUnit]: Wortlaut für TalkBack wie beim [Stepper]
+ * („Dauer: 10 Minuten“).
  */
 @Composable
 fun SessionAdjustCard(
@@ -45,12 +48,23 @@ fun SessionAdjustCard(
     exhale: PhaseAdjust?,
     intervalsExpanded: Boolean,
     onToggleIntervals: () -> Unit,
+    modifier: Modifier = Modifier,
+    durationSpokenLabel: String = durationLabel,
+    @PluralsRes durationUnit: Int? = null,
 ) {
     val intervalsModified = listOfNotNull(inhale, hold, exhale).any { it.value != it.default }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = Dimens.GapTiny)) {
-            Stepper(durationLabel, duration, durationRange, vertical = Dimens.GapSmall, onChange = onDuration)
+            Stepper(
+                label = durationLabel,
+                value = duration,
+                range = durationRange,
+                onChange = onDuration,
+                vertical = Dimens.GapSmall,
+                spokenLabel = durationSpokenLabel,
+                valueUnit = durationUnit,
+            )
 
             if (inhale != null || hold != null || exhale != null) {
                 HorizontalDivider(
@@ -77,13 +91,37 @@ fun SessionAdjustCard(
                 }
                 if (intervalsExpanded) {
                     inhale?.let {
-                        Stepper(stringResource(R.string.adjust_inhale), it.value, it.range, vertical = Dimens.GapTiny, onChange = it.onChange)
+                        Stepper(
+                            label = stringResource(R.string.adjust_inhale),
+                            value = it.value,
+                            range = it.range,
+                            onChange = it.onChange,
+                            vertical = Dimens.GapTiny,
+                            spokenLabel = stringResource(R.string.phase_inhale),
+                            valueUnit = R.plurals.cd_duration_seconds,
+                        )
                     }
                     hold?.let {
-                        Stepper(stringResource(R.string.adjust_hold), it.value, it.range, vertical = Dimens.GapTiny, onChange = it.onChange)
+                        Stepper(
+                            label = stringResource(R.string.adjust_hold),
+                            value = it.value,
+                            range = it.range,
+                            onChange = it.onChange,
+                            vertical = Dimens.GapTiny,
+                            spokenLabel = stringResource(R.string.phase_hold_full),
+                            valueUnit = R.plurals.cd_duration_seconds,
+                        )
                     }
                     exhale?.let {
-                        Stepper(stringResource(R.string.adjust_exhale), it.value, it.range, vertical = Dimens.GapTiny, onChange = it.onChange)
+                        Stepper(
+                            label = stringResource(R.string.adjust_exhale),
+                            value = it.value,
+                            range = it.range,
+                            onChange = it.onChange,
+                            vertical = Dimens.GapTiny,
+                            spokenLabel = stringResource(R.string.phase_exhale),
+                            valueUnit = R.plurals.cd_duration_seconds,
+                        )
                     }
                     Spacer(Modifier.height(Dimens.GapHairline))
                 }

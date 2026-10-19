@@ -42,7 +42,8 @@ import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Einzeiliges Suchfeld ohne eigene Fläche: Text in `bodyLarge` auf einer Grundlinie
- * (`HorizontalDivider`), daneben das X ([onClear]) als `AppIconButton`. Es ersetzt im
+ * (`HorizontalDivider`), daneben das X ([onClear]) als `AppIconButton`, bündig an der
+ * Inhaltskante ([flushEnd]) wie die Lupe, die es ablöst. Es ersetzt im
  * [ScreenHeader] den Untertitel (Zustandswechsel statt neuer Fläche, PRIN-03).
  *
  * Datenschutz (SEC-PRIV-03): Eingaben zum Befinden sind gesundheitsnah. Die Tastatur bekommt
@@ -103,12 +104,15 @@ fun SearchField(
                     }
                 },
             )
-            AppIconButton(onClick = onClear) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = clearDescription,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
+            // Bündig wie die Lupe im ScreenHeader: Das X steht an derselben Stelle (PRIN-03).
+            Box(Modifier.flushEnd()) {
+                AppIconButton(onClick = onClear) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = clearDescription,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
             }
         }
     }

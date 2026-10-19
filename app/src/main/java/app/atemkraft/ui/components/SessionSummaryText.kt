@@ -24,6 +24,24 @@ fun sessionSummaryParts(durationMs: Long, rounds: Int? = null, breaths: Int? = n
 }
 
 /**
+ * Dauer für TalkBack ausgeschrieben: „6 Minuten 5 Sekunden“, „10 Minuten“, „45 Sekunden“ – statt
+ * „sechs Doppelpunkt null fünf“ (A11Y-06). Sichtbar bleibt die kurze Form „6:05 min“.
+ */
+@Composable
+fun spokenDuration(durationMs: Long): String {
+    val totalSeconds = (durationMs / 1000L).coerceAtLeast(0L)
+    val minutes = (totalSeconds / 60L).toInt()
+    val seconds = (totalSeconds % 60L).toInt()
+    val min = pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes)
+    val sec = pluralStringResource(R.plurals.cd_duration_seconds, seconds, seconds)
+    return when {
+        seconds == 0 && minutes > 0 -> min
+        minutes == 0 -> sec
+        else -> stringResource(R.string.cd_duration_min_sec, min, sec)
+    }
+}
+
+/**
  * Teile nebeneinander, getrennt durch [separator] („·“), jede Zeile für sich zentriert. Passt ein
  * Teil nicht mehr in die Zeile, beginnt er die nächste – und der Trenner entfällt an dieser
  * Stelle: Er steht nur zwischen zwei Teilen derselben Zeile, keine Zeile beginnt oder endet mit

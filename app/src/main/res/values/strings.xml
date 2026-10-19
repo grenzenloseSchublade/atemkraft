@@ -150,6 +150,9 @@
     <string name="adjust_inhale">Einatmen (s)</string>
     <string name="adjust_hold">Halten (s)</string>
     <string name="adjust_exhale">Ausatmen (s)</string>
+    <!-- TalkBack-Wert des Steppers: „Einatmen: 4 Sekunden“ – das sichtbare Label behält „(s)“. -->
+    <string name="cd_stepper_value">%1$s: %2$s</string>
+    <string name="cd_adjust_duration">Dauer</string>
     <string name="adjust_reset">Zurücksetzen</string>
     <string name="adjust_modified">angepasst</string>
 
@@ -179,6 +182,17 @@
         <item quantity="one">%d\u00A0Atemzug</item>
         <item quantity="other">%d\u00A0Atemzüge</item>
     </plurals>
+    <!-- TalkBack: Dauer ausgeschrieben („6 Minuten 5 Sekunden“) statt „sechs Doppelpunkt null fünf“
+         (A11Y-06); dieselben Wörter sagt der Stepper zu seinem Wert. -->
+    <plurals name="cd_duration_minutes">
+        <item quantity="one">%d Minute</item>
+        <item quantity="other">%d Minuten</item>
+    </plurals>
+    <plurals name="cd_duration_seconds">
+        <item quantity="one">%d Sekunde</item>
+        <item quantity="other">%d Sekunden</item>
+    </plurals>
+    <string name="cd_duration_min_sec">%1$s %2$s</string>
     <string name="action_restart">Von vorne</string>
     <string name="action_again">Nochmal</string>
     <string name="action_end">Ende</string>
@@ -235,7 +249,6 @@
     <string name="settings_sound_appetizer">Durchgehend: ein leiser Ton führt deinen Atem – höher beim Einatmen, tiefer beim Ausatmen.</string>
     <string name="settings_sound_more">Wie funktioniert das?</string>
     <string name="settings_sound_hint">Der Ton steigt beim Einatmen und fällt beim Ausatmen, mit einer kurzen Zäsur am Wechsel. Dieses Prinzip nutzen auch klinische Atemtrainer (z. B. RESPeRATE); langsames, gleichmäßiges Atmen erhöht in Studien die HRV (Zaccaro 2018). Keine esoterischen Heilfrequenzen.</string>
-    <string name="settings_sources">Quellen</string>
     <string name="emphasis_title">Wechsel-Betonung</string>
     <string name="emphasis_soft">Sanft</string>
     <string name="emphasis_medium">Mittel</string>
@@ -313,6 +326,7 @@
     <!-- Herkunft, Lizenzen, Datenschutz (Über-Screen) -->
     <string name="about_author">von grenzenloseSchublade · MIT-Lizenz</string>
     <string name="about_source_prefix">Quellcode:\u0020</string>
+    <string name="about_source_link">GitHub</string>
     <string name="about_privacy_link">Datenschutzerklärung</string>
     <string name="about_open_link">im Browser öffnen</string>
     <string name="about_licenses_title">Lizenzen</string>

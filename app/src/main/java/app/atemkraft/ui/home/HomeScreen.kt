@@ -3,6 +3,7 @@ package app.atemkraft.ui.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,9 +64,11 @@ fun HomeScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = Dimens.ScreenPadding),
+            modifier = Modifier.fillMaxSize(),
+            // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+            // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+            // Listen-Clip sie anschneidet.
+            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {

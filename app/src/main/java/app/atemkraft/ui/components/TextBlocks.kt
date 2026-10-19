@@ -9,11 +9,55 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+
+// Textbausteine für die vier Textrollen außerhalb der Köpfe: Fließtext, Hinweis, Aufzählung und
+// Kartentitel. Die Farbe folgt der Fläche (`LocalContentColor`: onBackground auf dem Screen,
+// onSurface in der Karte), die Deckkraft kommt aus den Text-Tokens (§2.2).
+
+/**
+ * Fließtext: Beschreibungen, Detail- und Expander-Text, Glossar, Über – `bodySmall` in `BODY`.
+ * [style] nur für die Kurzbeschreibung eine Stufe größer (`bodyMedium`).
+ */
+@Composable
+fun BodyText(text: String, modifier: Modifier = Modifier, style: TextStyle = MaterialTheme.typography.bodySmall) {
+    Text(text = text, style = style, color = LocalContentColor.current.copy(alpha = BODY), modifier = modifier)
+}
+
+/**
+ * Hinweis: zurückgenommener Zusatz unter einer Kontrolle, Quellenzeile, Zitat, Fußzeile –
+ * `bodySmall` in `SECONDARY`, nie im Wort umbrochen ([WholeWordText]).
+ */
+@Composable
+fun HintText(text: String, modifier: Modifier = Modifier) {
+    WholeWordText(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = LocalContentColor.current.copy(alpha = SECONDARY),
+        modifier = modifier,
+    )
+}
+
+/**
+ * Titel einer Karte (Einstellungen, Glossar): `titleMedium` in `onSurface`, für TalkBack eine
+ * Überschrift, damit sich lange Seiten per Überschriften-Navigation durchspringen lassen (A11Y-01).
+ */
+@Composable
+fun CardTitle(text: String, modifier: Modifier = Modifier) {
+    WholeWordText(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier.semantics { heading() },
+    )
+}
 
 /**
  * Aufzählungspunkt: Glyph „•“ und [text] in einer Zeile, der Text bricht neben dem Glyph um.

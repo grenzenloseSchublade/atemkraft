@@ -10,32 +10,41 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.data.ThirdParty
+import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SubLabel
-import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 
 // Konstante https-Ziele, die der Browser öffnet (SEC-PRIV-02); kein App-Traffic.
 private const val REPO_URL = "https://github.com/grenzenloseSchublade/atemkraft"
@@ -70,19 +79,10 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                 )
                 Spacer(Modifier.height(Dimens.SectionGap))
-                Text(
-                    text = stringResource(R.string.about_body),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
-                )
+                BodyText(stringResource(R.string.about_body), style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(Dimens.SectionGap))
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.about_disclaimer),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = BODY),
-                        modifier = Modifier.padding(Dimens.CardPadding),
-                    )
+                    BodyText(stringResource(R.string.about_disclaimer), modifier = Modifier.padding(Dimens.CardPadding))
                 }
 
                 Spacer(Modifier.height(Dimens.ListGap))
@@ -95,15 +95,13 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
 
                 Spacer(Modifier.height(Dimens.SectionGap))
                 // Autor + Lizenz + offizielle Quelle: gerade bei manuell geteilten APKs die einzige
-                // Stelle, an der Empfänger Herkunft und Original-Repo der App sehen.
-                Text(
-                    text = stringResource(R.string.about_author),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
+                // Stelle, an der Empfänger die Herkunft sehen und zum Original-Repo gelangen.
+                HintText(stringResource(R.string.about_author))
                 LinkRow(
                     prefix = stringResource(R.string.about_source_prefix),
-                    label = REPO_URL.removePrefix("https://"),
+                    // Kurz statt der vollen Adresse: Die URL ist ein einziges langes Wort und
+                    // passt bei großer Schrift samt Symbol nicht in die Zeile (LAYOUT-03).
+                    label = stringResource(R.string.about_source_link),
                     url = REPO_URL,
                 )
                 LinkRow(label = stringResource(R.string.about_privacy_link), url = PRIVACY_URL)
@@ -119,7 +117,7 @@ private fun LicenseList() {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
         SubLabel(stringResource(R.string.about_licenses_app), color = MaterialTheme.colorScheme.onBackground)
         ThirdParty.components.forEach { LicenseEntry(it.name, it.license, it.holder) }
-        Note(stringResource(R.string.about_licenses_gpl))
+        HintText(stringResource(R.string.about_licenses_gpl))
 
         Spacer(Modifier.height(Dimens.GapTiny))
         SubLabel(stringResource(R.string.about_licenses_voices), color = MaterialTheme.colorScheme.onBackground)
@@ -128,7 +126,7 @@ private fun LicenseList() {
             val license = if (spec.nonCommercialOnly) "${spec.license}, $nonCommercial" else spec.license
             LicenseEntry(spec.displayName, license, spec.rightsHolder)
         }
-        Note(stringResource(R.string.about_licenses_voices_note))
+        HintText(stringResource(R.string.about_licenses_voices_note))
 
         LinkRow(label = stringResource(R.string.about_licenses_link), url = LICENSES_URL)
     }
@@ -143,26 +141,22 @@ private fun LicenseEntry(name: String, license: String, holder: String) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Note(stringResource(R.string.about_license_line, license, holder))
+        HintText(stringResource(R.string.about_license_line, license, holder))
     }
-}
-
-@Composable
-private fun Note(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-    )
 }
 
 /**
  * Externer Link als eigene Zeile: Die ganze Zeile ist die Tippfläche, mindestens 48 dp hoch
- * (A11Y-05), die Optik bleibt ein unterstrichener Text. Öffnet [url] im Browser.
+ * (A11Y-05). Das Ziel steht in `primary`, dahinter das Symbol „öffnet im Browser“ – ohne
+ * Unterstreichung, wie die übrigen Verweise der App. Öffnet [url] im Browser.
  */
 @Composable
 private fun LinkRow(label: String, url: String, prefix: String? = null) {
     val uriHandler = LocalUriHandler.current
+    val linkColor = MaterialTheme.colorScheme.primary
+    // Platzhalter = Abstand + Symbol; das Symbol sitzt an seinem Ende.
+    val iconWidthSp = with(LocalDensity.current) { (Dimens.GapTiny + Sizes.IconSmall).toSp() }
+    val iconHeightSp = with(LocalDensity.current) { Sizes.IconSmall.toSp() }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -173,12 +167,28 @@ private fun LinkRow(label: String, url: String, prefix: String? = null) {
         Text(
             text = buildAnnotatedString {
                 if (prefix != null) append(prefix)
-                withStyle(
-                    SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline),
-                ) { append(label) }
+                withStyle(SpanStyle(color = linkColor)) { append(label) }
+                // Das Symbol ersetzt ein geschütztes Leerzeichen: Es bleibt beim letzten Wort (kein
+                // Umbruch davor), und TalkBack liest nichts dafür.
+                appendInlineContent(EXTERNAL_ICON, NBSP)
             },
+            inlineContent = mapOf(
+                EXTERNAL_ICON to InlineTextContent(Placeholder(iconWidthSp, iconHeightSp, PlaceholderVerticalAlign.TextCenter)) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_open_in_new),
+                            contentDescription = null, // dekorativ: Name und Hinweis „im Browser öffnen“ trägt die Zeile
+                            tint = linkColor,
+                            modifier = Modifier.size(Sizes.IconSmall),
+                        )
+                    }
+                },
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
         )
     }
 }
+
+private const val EXTERNAL_ICON = "extern"
+private const val NBSP = "\u00A0"

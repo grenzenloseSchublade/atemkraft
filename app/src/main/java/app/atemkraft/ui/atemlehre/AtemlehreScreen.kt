@@ -1,6 +1,5 @@
 package app.atemkraft.ui.atemlehre
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,14 +52,18 @@ import app.atemkraft.domain.LorePhase
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.RhythmStep
+import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
+import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.LinkChip
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -117,11 +120,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 Spacer(Modifier.height(Dimens.SectionGap))
-                Text(
-                    text = Atemlehre.intro,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
+                HintText(Atemlehre.intro)
 
                 SectionHeader(title = stringResource(R.string.atemlehre_phases), color = accent)
                 PhasesCard(Atemlehre.phases)
@@ -170,22 +169,14 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
 @Composable
 private fun ExpandableSection(title: String, teaser: String, accent: Color, content: @Composable () -> Unit) {
     var expanded by rememberSaveable(title) { mutableStateOf(false) }
-    Column(modifier = Modifier.animateContentSize()) {
-        SectionHeader(
-            title = title,
-            color = accent,
-            // Der aufklappbare Kopf polstert selbst 2 × GapSmall; ergänzt auf SectionHeaderTop, damit
-            // er so weit vom Abschnitt darüber steht wie die festen Köpfe.
-            modifier = Modifier.padding(top = Dimens.SectionHeaderTop - Dimens.GapSmall * 2),
-            teaser = teaser,
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-        )
-        if (expanded) {
-            Spacer(Modifier.height(Dimens.GapSmall))
-            content()
-        }
-    }
+    CollapsibleSection(
+        title = title,
+        color = accent,
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        teaser = teaser,
+        contentSpacing = Dimens.GapSmall,
+    ) { content() }
 }
 
 /**
@@ -203,11 +194,7 @@ private fun PatternCard(
         Column(modifier = Modifier.padding(start = Dimens.CardPadding, end = Dimens.CardPadding, top = Dimens.CardPadding)) {
             RhythmBar(pattern.rhythm)
             Spacer(Modifier.height(Dimens.GapTiny))
-            Text(
-                text = pattern.counts,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-            )
+            HintText(pattern.counts)
             ExpanderSection(
                 title = pattern.title,
                 appetizer = pattern.teaser,
@@ -272,12 +259,12 @@ private fun RulesContent() {
                         withStyle(bold) { append(lead) }
                         append(rest)
                     },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
                 )
             }
         }
-        Body(Atemlehre.samanaNote)
-        Dim(Atemlehre.rulesCheck)
+        BodyText(Atemlehre.samanaNote)
+        HintText(Atemlehre.rulesCheck)
     }
 }
 
@@ -285,9 +272,9 @@ private fun RulesContent() {
 @Composable
 private fun PatternContent(pattern: LorePattern, onOpenExercise: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-        Labeled(stringResource(R.string.atemlehre_label_teaching)) { Body(pattern.teaching) }
+        Labeled(stringResource(R.string.atemlehre_label_teaching)) { BodyText(pattern.teaching) }
         Labeled(stringResource(R.string.atemlehre_label_typical)) {
-            Body(pattern.typical)
+            BodyText(pattern.typical)
             if (pattern.caution) {
                 Spacer(Modifier.height(Dimens.GapTiny))
                 CautionChip()
@@ -301,19 +288,15 @@ private fun PatternContent(pattern: LorePattern, onOpenExercise: (String) -> Uni
                 )
             }
         }
-        Labeled(stringResource(R.string.atemlehre_label_studies)) { Body(pattern.studies) }
+        Labeled(stringResource(R.string.atemlehre_label_studies)) { BodyText(pattern.studies) }
         if (pattern.exerciseIds.isNotEmpty() || pattern.appNote != null) {
             Labeled(stringResource(R.string.atemlehre_label_app)) {
                 ExerciseChips(pattern.exerciseIds, onOpenExercise)
-                pattern.appNote?.let { Dim(it) }
+                pattern.appNote?.let { HintText(it) }
             }
         }
         pattern.origin?.let { origin ->
-            Text(
-                text = origin,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-            )
+            HintText(origin)
         }
     }
 }
@@ -324,11 +307,11 @@ private fun InfluencesContent(onOpenExercise: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
         Atemlehre.influences.forEach { influence ->
             Labeled(influence.label) {
-                Body(influence.text)
+                BodyText(influence.text)
                 ExerciseChips(influence.exerciseIds, onOpenExercise)
             }
         }
-        Dim(Atemlehre.influencesQuote)
+        HintText(Atemlehre.influencesQuote)
     }
 }
 
@@ -339,11 +322,7 @@ private fun SourcesContent() {
         Labeled(stringResource(R.string.atemlehre_sources_texts)) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                 Atemlehre.textSources.forEach { source ->
-                    Text(
-                        text = source,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                    )
+                    HintText(source)
                 }
             }
         }
@@ -438,24 +417,4 @@ private fun Labeled(label: String, content: @Composable () -> Unit) {
         Spacer(Modifier.height(Dimens.GapHairline))
         content()
     }
-}
-
-/** Fließtext in Expandern; onSurfaceVariant entspricht dem gedämpften Text der Detailseite. */
-@Composable
-private fun Body(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-/** Zurückgenommener Zusatz (Prüfstein, Zitat, App-Hinweis). */
-@Composable
-private fun Dim(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-    )
 }

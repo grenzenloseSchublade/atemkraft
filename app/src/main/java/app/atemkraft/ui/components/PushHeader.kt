@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -18,7 +17,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.Sizes
 
 /**
  * Fester Kopf weitergeführter Seiten (Push): Zurück-Pfeil und optional der Seitentitel in einer
@@ -41,8 +39,6 @@ fun PushHeader(
     title: String? = null,
     action: (@Composable () -> Unit)? = null,
 ) {
-    // Um diesen Rand rückt BackButton den Pfeil an die Inhaltskante (Tippfläche 48 − Icon, halbiert).
-    val inset = (Dimens.MinTouchTarget - Sizes.IconDefault) / 2
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -50,18 +46,10 @@ fun PushHeader(
             .heightIn(min = Dimens.MinTouchTarget),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Die Tippfläche des Pfeils steht links um [inset] über; rechts melden wir sie um
-        // denselben Betrag schmaler. So folgt der Titel dem Pfeil im Abstand [inset] statt
-        // doppelt so weit („weit versetzt“). Die Tippfläche selbst bleibt 48 dp (A11Y-05).
-        Box(
-            Modifier.layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                val width = (placeable.width - inset.roundToPx()).coerceAtLeast(0)
-                layout(width, placeable.height) { placeable.place(0, 0) }
-            },
-        ) {
-            BackButton(onClick = onBack)
-        }
+        // Die Tippfläche des Pfeils ragt links in den Rand ([flushStart]); so steht der Pfeil an
+        // der Inhaltskante, und der Titel folgt ihm im Abstand des Überstands statt doppelt so
+        // weit („weit versetzt“). Die Tippfläche selbst bleibt 48 dp (A11Y-05).
+        Box(Modifier.flushStart()) { BackButton(onClick = onBack) }
         if (title != null) {
             WholeWordText(
                 text = title,
@@ -74,14 +62,8 @@ fun PushHeader(
         }
         if (action != null) {
             if (title == null) Spacer(Modifier.weight(1f))
-            // Spiegelbild zum Pfeil: um [inset] schmaler melden, die Tippfläche steht rechts über.
-            Box(
-                Modifier.layout { measurable, constraints ->
-                    val placeable = measurable.measure(constraints)
-                    val width = (placeable.width - inset.roundToPx()).coerceAtLeast(0)
-                    layout(width, placeable.height) { placeable.place(0, 0) }
-                },
-            ) { action() }
+            // Spiegelbild zum Pfeil: Die Tippfläche ragt rechts in den Rand.
+            Box(Modifier.flushEnd()) { action() }
         }
     }
 }

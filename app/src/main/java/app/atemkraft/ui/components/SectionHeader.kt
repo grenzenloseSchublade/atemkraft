@@ -1,10 +1,12 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -31,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -42,15 +45,16 @@ import app.atemkraft.ui.theme.SECONDARY
  * Situationen, Meditation), damit Sektionsüberschriften überall identisch lesen.
  *
  * [trailingAction] ist eine optionale Aktion für den ganzen Abschnitt (z. B. „Muster neu
- * generieren“), rechts bündig als `AppIconButton`. Sie steht unten bündig neben dem Kopf samt
- * Abstand darüber: So belegt die 48-dp-Tippfläche den Platz, den der Kopf ohnehin hat, und
- * der Abschnitt rückt nicht nach unten.
+ * generieren“), rechts als `AppIconButton`, ihr Glyph bündig an der Inhaltskante ([flushEnd]).
+ * Sie steht unten bündig neben dem Kopf samt Abstand darüber: So belegt die 48-dp-Tippfläche
+ * den Platz, den der Kopf ohnehin hat, und der Abschnitt rückt nicht nach unten.
  *
  * [teaser] steht als ganzer Satz unter dem Titel (nie gekürzt, LAYOUT-03). Mit [expanded]
  * wird der Kopf zur aufklappbaren Zeile (MUSTER-03): Caret am Titel, die ganze Zeile samt
  * Teaser ist die Tippfläche (≥ 48 dp, Rolle Button, Ausgeklappt/Eingeklappt), den Inhalt
- * zeigt der Aufrufer darunter. So bleibt ein langer Tab eine kurze Übersicht, ohne neue
- * Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt: nicht aufklappbar.
+ * zeigt der Aufrufer darunter (in Listen über [CollapsibleSection]). So bleibt ein langer Tab
+ * eine kurze Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand.
+ * `null` heißt: nicht aufklappbar.
  *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Meine Muster · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
@@ -136,7 +140,54 @@ fun SectionHeader(
                 )
             }
         }
-        trailingAction?.invoke()
+        // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).
+        if (trailingAction != null) Box(Modifier.flushEnd()) { trailingAction() }
+    }
+}
+
+/**
+ * Aufklappbarer Abschnitt einer Liste (MUSTER-03): [SectionHeader] mit [expanded] und darunter
+ * [content], in einer Spalte mit `animateContentSize`, damit das Auf- und Zuklappen die Höhe
+ * animiert. `expanded = null` heißt nicht aufklappbar: fester Kopf, Inhalt immer sichtbar.
+ *
+ * Höhenausgleich: Der aufklappbare Kopf polstert sich selbst nur 2 × `GapSmall` (Tippfläche
+ * ohne Leerraum darüber); bis `SectionHeaderTop` fehlt der Rest, abzüglich [spacingAbove], den
+ * die umgebende Liste schon setzt (`spacedBy`). So steht er so weit vom Abschnitt darüber wie
+ * ein fester Kopf. [contentSpacing] trennt Kopf und Inhalt sowie die Inhaltsteile.
+ *
+ * Für die Atemlehre und den Situationen-Tab. Nicht im Meditations-Tab: Dort kostete jede
+ * Höhenänderung den Zeitring Platz (LAYOUT-08).
+ */
+@Composable
+fun CollapsibleSection(
+    title: String,
+    color: Color,
+    expanded: Boolean?,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    teaser: String? = null,
+    status: String? = null,
+    statusDescription: String? = null,
+    spacingAbove: Dp = 0.dp,
+    contentSpacing: Dp = Dimens.ListGap,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val topFill = if (expanded == null) 0.dp else (Dimens.SectionHeaderTop - Dimens.GapSmall * 2 - spacingAbove).coerceAtLeast(0.dp)
+    Column(
+        modifier = modifier.animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(contentSpacing),
+    ) {
+        SectionHeader(
+            title = title,
+            color = color,
+            modifier = Modifier.padding(top = topFill),
+            teaser = teaser,
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
+            status = status,
+            statusDescription = statusDescription,
+        )
+        if (expanded != false) content()
     }
 }
 

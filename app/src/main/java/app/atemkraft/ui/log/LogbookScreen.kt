@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,6 +45,7 @@ import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.spokenDuration
 import app.atemkraft.ui.home.color
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
@@ -93,9 +95,11 @@ fun LogbookScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = Dimens.ScreenPadding),
+            modifier = Modifier.fillMaxSize(),
+            // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+            // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+            // Listen-Clip sie anschneidet.
+            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
@@ -283,9 +287,11 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
     // Höhe des ganzen Eintrags – sonst schwebt er bei umgebrochener Dauer zwischen den Zeilen.
     val nameStyle = MaterialTheme.typography.titleSmall
     val dotTop = with(LocalDensity.current) { (nameStyle.lineHeight.toDp() - FAMILY_DOT) / 2 }
+    // Ein Eintrag ist ein Fokus-Stopp (A11Y-06): Name, Uhrzeit, Dauer und Runden in einer Ansage.
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .semantics(mergeDescendants = true) {}
             .padding(vertical = Dimens.CardPadding),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
@@ -326,10 +332,14 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Column(modifier = Modifier.width(IntrinsicSize.Max), horizontalAlignment = Alignment.End) {
+                    // Sichtbar „6:05 min“ wie die Bilanz am Sitzungsende (Zahl und Einheit geschützt
+                    // verbunden), TalkBack hört „6 Minuten 5 Sekunden“.
+                    val spoken = spokenDuration(entry.durationMs)
                     Text(
                         text = formatDuration(entry.durationMs),
                         style = nameStyle,
                         color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.semantics { contentDescription = spoken },
                     )
                     // „Runden" nur für Atemübungen; Meditationen zeigen nur die Dauer.
                     if (entry.kind == SessionKind.BREATHING) {
@@ -364,7 +374,8 @@ private fun currentStreak(activeDays: Set<Long>, today: LocalDate): Int {
     return streak
 }
 
+@Composable
 private fun formatDuration(durationMs: Long): String {
-    val totalSeconds = durationMs / 1000L
-    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
+    val totalSeconds = (durationMs / 1000L).coerceAtLeast(0L)
+    return stringResource(R.string.session_summary_duration, totalSeconds / 60L, totalSeconds % 60L)
 }

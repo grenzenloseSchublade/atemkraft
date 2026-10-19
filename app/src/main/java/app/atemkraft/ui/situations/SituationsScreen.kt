@@ -1,15 +1,13 @@
 package app.atemkraft.ui.situations
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -42,10 +40,10 @@ import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SearchField
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.Dimens
@@ -95,9 +93,11 @@ fun SituationsScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = Dimens.ScreenPadding),
+            modifier = Modifier.fillMaxSize(),
+            // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+            // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+            // Listen-Clip sie anschneidet.
+            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
         ) {
             item {
@@ -192,8 +192,8 @@ const val SAVED_PATTERNS_FOLD_FROM = 3
 fun savedPatternsShownExpanded(count: Int, stored: Boolean): Boolean? = if (count < SAVED_PATTERNS_FOLD_FROM) null else stored
 
 /**
- * „Meine Muster“: Kopf und Karten in einer Spalte, damit das Ein- und Ausklappen die Höhe
- * animiert wie bei den Situationen. [expanded] siehe [savedPatternsShownExpanded].
+ * „Meine Muster“ als [CollapsibleSection] wie die Situationen. [expanded] siehe
+ * [savedPatternsShownExpanded].
  */
 @Composable
 private fun SavedPatternsSection(
@@ -203,27 +203,22 @@ private fun SavedPatternsSection(
     onSelect: (String) -> Unit,
     onDelete: (Long) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.animateContentSize(),
-        verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+    CollapsibleSection(
+        title = stringResource(R.string.situations_my_patterns),
+        color = MaterialTheme.colorScheme.secondary,
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        status = expanded?.let { stringResource(R.string.situations_my_patterns_count, patterns.size) },
+        statusDescription = expanded?.let { pluralStringResource(R.plurals.cd_situations_my_patterns_count, patterns.size, patterns.size) },
+        spacingAbove = Dimens.ListGap,
     ) {
-        SectionHeader(
-            title = stringResource(R.string.situations_my_patterns),
-            color = MaterialTheme.colorScheme.secondary,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
-            status = expanded?.let { stringResource(R.string.situations_my_patterns_count, patterns.size) },
-            statusDescription = expanded?.let { pluralStringResource(R.plurals.cd_situations_my_patterns_count, patterns.size, patterns.size) },
-        )
-        if (expanded != false) {
-            patterns.forEach { pattern ->
-                key(pattern.id) {
-                    SavedPatternCard(
-                        pattern = pattern,
-                        onClick = { onSelect(pattern.exercise.id) },
-                        onDelete = { onDelete(pattern.id) },
-                    )
-                }
+        patterns.forEach { pattern ->
+            key(pattern.id) {
+                SavedPatternCard(
+                    pattern = pattern,
+                    onClick = { onSelect(pattern.exercise.id) },
+                    onDelete = { onDelete(pattern.id) },
+                )
             }
         }
     }
@@ -244,21 +239,16 @@ private fun SituationSection(
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
     val accent = if (rec.warn) WarnAmber else MaterialTheme.colorScheme.primary
-    Column(
-        modifier = Modifier.animateContentSize(),
-        verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+    CollapsibleSection(
+        title = rec.title,
+        color = accent,
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        teaser = rec.rationale,
+        spacingAbove = Dimens.ListGap,
     ) {
-        SectionHeader(
-            title = rec.title,
-            color = accent,
-            teaser = rec.rationale,
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-        )
-        if (expanded) {
-            rec.exerciseIds.mapNotNull(resolve).forEach { exercise ->
-                ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
-            }
+        rec.exerciseIds.mapNotNull(resolve).forEach { exercise ->
+            ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
         }
     }
 }

@@ -284,6 +284,17 @@ class TapFlashState internal constructor() {
         this.isPause = isPause
         trigger++
     }
+
+    /**
+     * Kreis-Tipp beider Sitzungsarten: kurzes, weiches Haptik-Tick ([haptic], folgt dem
+     * App-Schalter „Vibration“), Flash mit dem Symbol des neuen Zustands ([running] → Pause),
+     * dann [toggle].
+     */
+    fun toggle(running: Boolean, haptic: () -> Unit, toggle: () -> Unit) {
+        haptic()
+        flash(isPause = running)
+        toggle()
+    }
 }
 
 /**

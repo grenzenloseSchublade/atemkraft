@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.annotation.PluralsRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -36,6 +38,10 @@ import app.atemkraft.ui.theme.Sizes
  *
  * Label links, Knöpfe als rechte Spalte, der sichtbare Kreis bündig an der Inhaltskante.
  * [horizontal]/[vertical] steuern die Innenabstände.
+ *
+ * TalkBack hört Name und Einheit ausgeschrieben (A11Y-06): [spokenLabel] ist das Label ohne
+ * sichtbare Einheit („Einatmen“ statt „Einatmen (s)“), [valueUnit] ein Plural für den Wert
+ * („4 Sekunden“); ohne ihn die blanke Zahl.
  */
 @Composable
 fun Stepper(
@@ -46,6 +52,8 @@ fun Stepper(
     modifier: Modifier = Modifier,
     horizontal: Dp = Dimens.CardPadding,
     vertical: Dp = Dimens.CardPadding,
+    spokenLabel: String = label,
+    @PluralsRes valueUnit: Int? = null,
 ) {
     // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
     // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
@@ -61,7 +69,8 @@ fun Stepper(
         // wenig Platz (360 dp, große Schrift) bricht das Label zwischen ganzen Wörtern um,
         // statt „+“ aus der Zeile zu drücken.
         StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
-        StepButtons(label, value, range, onChange)
+        val spokenValue = valueUnit?.let { pluralStringResource(it, value, value) } ?: value.toString()
+        StepButtons(spokenLabel, stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue), value, range, onChange)
     }
 }
 
@@ -77,7 +86,14 @@ private fun StepperLabel(label: String, modifier: Modifier = Modifier) {
 
 /** „−  wert  +“: Knöpfe als gefüllte [AppIconButton] (Tippfläche 48 dp), Wert dazwischen. */
 @Composable
-private fun StepButtons(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
+private fun StepButtons(
+    label: String,
+    valueDescription: String,
+    value: Int,
+    range: IntRange,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val decreaseLabel = stringResource(R.string.adjust_decrease)
     val increaseLabel = stringResource(R.string.adjust_increase)
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -98,7 +114,7 @@ private fun StepButtons(label: String, value: Int, range: IntRange, onChange: (I
             modifier = Modifier
                 .widthIn(min = Sizes.StepperValueMinWidth)
                 .semantics {
-                    contentDescription = "$label: $value"
+                    contentDescription = valueDescription
                     liveRegion = LiveRegionMode.Polite
                 },
         )

@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
@@ -36,8 +34,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -54,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.ui.components.BreathingCircle
+import app.atemkraft.ui.components.CircleTapTarget
 import app.atemkraft.ui.components.DotSeparatedFlow
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
@@ -143,18 +140,10 @@ private fun ActiveContent(
     val fraction = circleFraction(state)
     val secondsText = if (preparing) state.countdown.toString() else secondsText(state)
     val note = if (preparing) null else state.phaseNote
-    val circleInteraction = remember { MutableInteractionSource() }
 
-    // Tap-Flash (geteilt mit der Meditation): großes Pause/Play-Symbol beim Antippen.
+    // Tap-Flash (geteilt mit der Meditation): großes Pause/Play-Symbol beim Antippen; die
+    // UI-Haptik spielt der Player im AppContainer (AUDIO-04, -05).
     val tapFlash = rememberTapFlash()
-
-    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap; der Player liegt im AppContainer und
-    // folgt dem App-Schalter „Vibration“ (AUDIO-04, -05).
-    fun flashToggle() {
-        onTapHaptic()
-        tapFlash.flash(isPause = state.status == SessionStatus.RUNNING) // läuft → wird pausiert
-        onTogglePause()
-    }
 
     // Gerüst teilt sich die Atem-Session mit der Meditation: Kopf oben, Kreis im freien Platz
     // dazwischen, Steuerung unten (SessionRunningLayout). Die ausgeklappte Anleitung legt sich
@@ -235,53 +224,39 @@ private fun ActiveContent(
             }
         },
         bottom = {
-            Column(
+            // Im offenen Hold wird Pause zu „Weiter“ (wie der Kreis-Tap, MUSTER-07); im
+            // Countdown bleibt nur „Beenden“, die anderen halten ihren Platz (kein Sprung).
+            SessionControlBar(
+                playing = state.status == SessionStatus.RUNNING,
+                onMain = if (waiting) onContinue else onTogglePause,
+                onRestart = onRestart,
+                onStop = onStop,
+                preparing = preparing,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                // Im offenen Hold wird Pause zu „Weiter“ (wie der Kreis-Tap, MUSTER-07); im
-                // Countdown bleibt nur „Beenden“, die anderen halten ihren Platz (kein Sprung).
-                SessionControlBar(
-                    playing = state.status == SessionStatus.RUNNING,
-                    onMain = if (waiting) onContinue else onTogglePause,
-                    onRestart = onRestart,
-                    onStop = onStop,
-                    preparing = preparing,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            )
         },
     ) { side ->
         val circleDescription = stringResource(R.string.cd_breathing_circle)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(contentAlignment = Alignment.Center) {
                 BreathingCircle(fraction = fraction, progress = state.progress, modifier = Modifier.size(side))
-                // Tippfläche ist der Kreis bis zur Spur, nicht das umschließende Quadrat (clip
-                // begrenzt auch die Treffer): Ecken und Rand daneben gehören zur Ruhe-Ansicht
-                // (SessionOverlay). Eigene Fläche statt clip am Kreis, damit dessen Glow bleibt.
-                val tap: (() -> Unit)? = when (state.status) {
-                    // Kreis antippen (ohne Ripple-Kästchen): laufend/pausiert = Pause/Weiter,
-                    // offener Hold = weiter.
-                    SessionStatus.RUNNING, SessionStatus.PAUSED -> ::flashToggle
+                // Tippfläche ist der Kreis bis zur Spur: Ecken und Rand daneben gehören zur
+                // Ruhe-Ansicht (SessionOverlay). Laufend/pausiert = Pause/Weiter, offener Hold =
+                // weiter; im Countdown tut der Tipp nichts, fällt aber auch nicht zur Ruhe-Ansicht
+                // durch und blendet „Beenden“ nicht aus.
+                CircleTapTarget(
+                    side = side,
+                    description = circleDescription,
+                    onTap = when (state.status) {
+                        SessionStatus.RUNNING, SessionStatus.PAUSED -> {
+                            { tapFlash.toggle(running = state.status == SessionStatus.RUNNING, haptic = onTapHaptic, toggle = onTogglePause) }
+                        }
 
-                    SessionStatus.WAITING_FOR_USER -> onContinue
+                        SessionStatus.WAITING_FOR_USER -> onContinue
 
-                    else -> null
-                }
-                Box(
-                    modifier = Modifier
-                        .size(side)
-                        .clip(CircleShape)
-                        .semantics { contentDescription = circleDescription }
-                        .then(
-                            if (tap != null) {
-                                Modifier.clickable(interactionSource = circleInteraction, indication = null, role = Role.Button, onClick = tap)
-                            } else {
-                                // Countdown: Der Tipp auf den Kreis tut nichts – er darf aber auch
-                                // nicht zur Ruhe-Ansicht durchfallen und „Beenden“ ausblenden.
-                                Modifier.pointerInput(Unit) { detectTapGestures { } }
-                            },
-                        ),
+                        else -> null
+                    },
+                    swallowWhenIdle = true,
                 )
                 // Im Kreis nur Phasenwort und Sekunden, als Geschwister ÜBER dem Kreis statt in
                 // ihm: Sie bekommen die volle Breite und brechen nie im Wort, auch wenn der Kreis

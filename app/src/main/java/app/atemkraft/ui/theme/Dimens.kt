@@ -56,6 +56,12 @@ object Dimens {
     /** Rand navigierender Inhaltskarten (KOMP-03, `accentBorder`). */
     val BorderThin = 1.dp
 
+    /**
+     * Tonale Erhöhung der gepinnten Start-Leiste (`PinnedActionBar`, M3-Stufe 2): hebt sie über
+     * den scrollenden Inhalt, ohne Schatten.
+     */
+    val PinnedBarElevation = 3.dp
+
     /** Mindesthöhe eigener klickbarer Flächen (Material-Touch-Ziel), unabhängig vom Padding. */
     val MinTouchTarget = 48.dp
 

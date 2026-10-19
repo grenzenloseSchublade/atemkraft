@@ -1,7 +1,5 @@
 package app.atemkraft.ui.meditation
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,31 +18,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.ui.components.BreathingCircle
+import app.atemkraft.ui.components.CircleTapTarget
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.OverlayChrome
 import app.atemkraft.ui.components.PauseFlash
+import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
@@ -213,39 +208,33 @@ private fun SelectionContent(
 
         // Gepinnter Start über der Tab-Leiste (wie auf der Detailseite) – als Split-Button:
         // weicht die Auswahl von den App-Standards ab, gleitet rechts der Kreispfeil herein.
-        Surface(tonalElevation = 3.dp, color = MaterialTheme.colorScheme.surface) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.ListGap),
-            ) {
-                val defaults = MeditationConfig()
-                StartSplitButton(
-                    label = stringResource(R.string.action_start),
-                    resetVisible = mode != defaults.mode || duration.minutes != defaults.minutes ||
-                        startEndGong != defaults.startEndGong ||
-                        intervalOn != (defaults.gongEveryMin != null) || speech != defaults.speech,
-                    onStart = {
-                        onStart(
-                            MeditationConfig(
-                                mode = mode,
-                                minutes = duration.minutes,
-                                startEndGong = startEndGong,
-                                gongEveryMin = if (intervalOn) gongIntervalMin else null,
-                                speech = speech && speechAvailable,
-                            ),
-                        )
-                    },
-                    onReset = {
-                        duration.select(defaults.minutes)
-                        if (defaults.mode == MeditationMode.FREE) duration.selectFree()
-                        if (duration.fineAdjust) duration.toggleFineAdjust()
-                        startEndGong = defaults.startEndGong
-                        intervalOn = defaults.gongEveryMin != null
-                        speech = defaults.speech
-                    },
-                )
-            }
+        PinnedActionBar {
+            val defaults = MeditationConfig()
+            StartSplitButton(
+                label = stringResource(R.string.action_start),
+                resetVisible = mode != defaults.mode || duration.minutes != defaults.minutes ||
+                    startEndGong != defaults.startEndGong ||
+                    intervalOn != (defaults.gongEveryMin != null) || speech != defaults.speech,
+                onStart = {
+                    onStart(
+                        MeditationConfig(
+                            mode = mode,
+                            minutes = duration.minutes,
+                            startEndGong = startEndGong,
+                            gongEveryMin = if (intervalOn) gongIntervalMin else null,
+                            speech = speech && speechAvailable,
+                        ),
+                    )
+                },
+                onReset = {
+                    duration.select(defaults.minutes)
+                    if (defaults.mode == MeditationMode.FREE) duration.selectFree()
+                    if (duration.fineAdjust) duration.toggleFineAdjust()
+                    startEndGong = defaults.startEndGong
+                    intervalOn = defaults.gongEveryMin != null
+                    speech = defaults.speech
+                },
+            )
         }
     }
 }
@@ -427,18 +416,10 @@ private fun RunningContent(
         state.mode == MeditationMode.TIMED -> formatMeditationTime(state.remainingMs)
         else -> formatMeditationTime(state.elapsedMs)
     }
-    val circleInteraction = remember { MutableInteractionSource() }
 
-    // Tap-Flash (geteilt mit der Atem-Session).
+    // Tap-Flash (geteilt mit der Atem-Session); die UI-Haptik spielt der Player im AppContainer
+    // (AUDIO-04, -05).
     val tapFlash = rememberTapFlash()
-
-    // UI-Haptik: kurzes, weiches Tick beim Kreis-Tap; der Player liegt im AppContainer und
-    // folgt dem App-Schalter „Vibration“ (AUDIO-04, -05).
-    fun flashToggle() {
-        onTapHaptic()
-        tapFlash.flash(isPause = state.status == MeditationStatus.RUNNING) // läuft → wird pausiert
-        onTogglePause()
-    }
 
     // Gleiches Gerüst wie die Atem-Session (SessionRunningLayout): Titel oben, Kreis im freien
     // Platz, Steuerung unten – nichts überlappt, auch bei großer Schrift.
@@ -460,20 +441,15 @@ private fun RunningContent(
             )
         },
         bottom = {
-            Column(
+            // Dieselbe Icon-Steuerung wie die Atem-Session; im Countdown nur „Beenden“.
+            SessionControlBar(
+                playing = !paused,
+                onMain = onTogglePause,
+                onRestart = onRestart,
+                onStop = onEnd,
+                preparing = preparing,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                // Dieselbe Icon-Steuerung wie die Atem-Session; im Countdown nur „Beenden“.
-                SessionControlBar(
-                    playing = !paused,
-                    onMain = onTogglePause,
-                    onRestart = onRestart,
-                    onStop = onEnd,
-                    preparing = preparing,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            )
         },
     ) { side ->
         Box(contentAlignment = Alignment.Center) {
@@ -503,23 +479,15 @@ private fun RunningContent(
                 }
             }
             // Wie in der Atem-Session: Tippen auf den Kreis (bis zur Spur, nicht ins Quadrat
-            // daneben) pausiert/setzt fort; eigene Fläche statt clip am Kreis, damit der Glow bleibt.
-            Box(
-                modifier = Modifier
-                    .size(side)
-                    .clip(CircleShape)
-                    .semantics { contentDescription = ringDescription }
-                    .then(
-                        if (!preparing) {
-                            Modifier.clickable(
-                                interactionSource = circleInteraction,
-                                indication = null,
-                                role = Role.Button,
-                            ) { flashToggle() }
-                        } else {
-                            Modifier
-                        },
-                    ),
+            // daneben) pausiert/setzt fort; im Countdown tut er nichts.
+            CircleTapTarget(
+                side = side,
+                description = ringDescription,
+                onTap = if (preparing) {
+                    null
+                } else {
+                    { tapFlash.toggle(running = state.status == MeditationStatus.RUNNING, haptic = onTapHaptic, toggle = onTogglePause) }
+                },
             )
             // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
             PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause, maxSize = side)

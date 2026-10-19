@@ -12,17 +12,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.data.Glossary
 import app.atemkraft.data.GlossaryTerm
+import app.atemkraft.ui.components.BodyText
+import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.WholeWordText
-import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -59,17 +58,10 @@ private fun TermGroup(title: String, terms: List<GlossaryTerm>) {
         terms.forEach { term ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-                    WholeWordText(
-                        text = term.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
+                    // Begriff als Überschrift: Die lange Liste lässt sich per TalkBack durchspringen.
+                    CardTitle(term.name)
                     Spacer(Modifier.height(Dimens.GapTiny))
-                    Text(
-                        text = term.definition,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = BODY),
-                    )
+                    BodyText(term.definition)
                 }
             }
         }

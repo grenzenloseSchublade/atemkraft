@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
@@ -34,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -125,21 +128,32 @@ fun AppIconToggle(
     }
 }
 
-/** Text-Button mit M3-Mindesthöhe ([Sizes.ButtonHeight]), der bei großer Schrift mitwächst; Tippfläche 48 dp. */
+/**
+ * Text-Button mit M3-Mindesthöhe ([Sizes.ButtonHeight]), der bei großer Schrift mitwächst;
+ * Tippfläche 48 dp. [flushStart]: Die Beschriftung steht an der Inhaltskante statt um das
+ * Innenpolster eingerückt – für eine einzelne Text-Aktion unter Text in einer Karte (VIS-12:
+ * „Logbuch leeren“); das Polster samt Tipp-Echo ragt in den Kartenrand ([Modifier.flushStart]).
+ * Nicht in clippenden Behältern (Expander mit Höhenanimation): Dort würde der Überstand
+ * abgeschnitten.
+ */
 @Composable
 fun AppTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    flushStart: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val padding = ButtonDefaults.TextButtonContentPadding
+    val flush = if (flushStart) Modifier.flushStart(padding.calculateStartPadding(LocalLayoutDirection.current)) else Modifier
     TextButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = Sizes.ButtonHeight),
+        modifier = modifier.then(flush).heightIn(min = Sizes.ButtonHeight),
         // Ecken = halbe Button-Höhe: einzeilig die M3-Pille, mehrzeilig (lange Ergebnis-Labels,
         // Atemlehre-Verweise bei großer Schrift) schneidet keine Riesenrundung Glyphen an (LAYOUT-03).
         shape = MaterialTheme.shapes.large,
         enabled = enabled,
+        contentPadding = padding,
         content = content,
     )
 }

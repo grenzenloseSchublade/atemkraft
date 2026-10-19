@@ -74,6 +74,7 @@ import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
+import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
@@ -990,4 +991,17 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     /** Untere Navigationsleiste (liegt in MainActivity, hier einzeln): Beschriftungen ganz. */
     @Test
     fun navigationBar() = snap("11_navigation", heightDp = 120) { TabNavigation(Tab.SITUATIONEN) }
+
+    /**
+     * Mini-Leiste mit dem längsten Übungsnamen und dem längsten Phasenwort: Der Name bricht an
+     * Wortgrenzen um, nichts wird gekürzt (LAYOUT-03, früher Ellipse).
+     */
+    @Test
+    fun miniBar() = snap("11_mini_leiste", heightDp = 160) {
+        val app = RuntimeEnvironment.getApplication()
+        val longestPhase = listOf(R.string.phase_inhale, R.string.phase_exhale, R.string.phase_hold_full, R.string.session_paused)
+            .map(app::getString)
+            .maxBy { it.length }
+        MiniNowPlayingBar(title = BuiltInExercises.all.maxBy { it.name.length }.name, statusText = longestPhase, onClick = {})
+    }
 }

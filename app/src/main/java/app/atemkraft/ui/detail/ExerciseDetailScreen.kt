@@ -1,17 +1,16 @@
 package app.atemkraft.ui.detail
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,11 +24,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.IntervalOverrides
@@ -44,14 +40,18 @@ import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.ForwardLinkText
+import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PersonalMarkToggle
 import app.atemkraft.ui.components.PhaseAdjust
+import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
@@ -62,7 +62,6 @@ import app.atemkraft.ui.home.title
 import app.atemkraft.ui.session.SafetyDialog
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
 import kotlin.math.roundToInt
@@ -218,11 +217,7 @@ fun ExerciseDetailScreen(
                     }
                 }
                 Spacer(Modifier.height(Dimens.GapSmall))
-                Text(
-                    text = exercise.shortDescription,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
-                )
+                BodyText(exercise.shortDescription, style = MaterialTheme.typography.bodyMedium)
 
                 Spacer(Modifier.height(Dimens.GapSmall))
                 FlowRow(
@@ -257,7 +252,7 @@ fun ExerciseDetailScreen(
                     title = stringResource(R.string.detail_effect),
                     appetizer = exercise.effect,
                     accent = accent,
-                    content = exercise.effectDetail?.let { detail -> { Body(detail) } },
+                    content = exercise.effectDetail?.let { detail -> { BodyText(detail) } },
                 )
                 // Deutung der Tradition, getrennt von „Wirkung“ (keine Studienlage, TEXT-13).
                 exercise.lore?.let { lore ->
@@ -269,7 +264,7 @@ fun ExerciseDetailScreen(
                         accent = accent,
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                            Body(lore.detail)
+                            BodyText(lore.detail)
                             lore.source?.let { source ->
                                 Text(
                                     text = source,
@@ -279,9 +274,11 @@ fun ExerciseDetailScreen(
                             }
                             if (onOpenLore != null) {
                                 patterns.forEach { pattern ->
+                                    // Der Chevron zeigt „führt weiter“ (ICON-01). Nicht bündig (flushStart): Die
+                                    // Höhenanimation des Expanders schneidet alles außerhalb ab.
                                     AppTextButton(onClick = { onOpenLore(pattern.id) }) {
-                                        Text(
-                                            text = stringResource(R.string.detail_lore_link, pattern.linkName) + " ›",
+                                        ForwardLinkText(
+                                            text = stringResource(R.string.detail_lore_link, pattern.linkName),
                                             color = accent,
                                         )
                                     }
@@ -302,7 +299,7 @@ fun ExerciseDetailScreen(
                         } else {
                             {
                                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                                    moreCautions.forEach { Bullet(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY)) }
+                                    moreCautions.forEach { Bullet(it, color = LocalContentColor.current.copy(alpha = BODY)) }
                                 }
                             }
                         },
@@ -361,56 +358,49 @@ fun ExerciseDetailScreen(
                         },
                         intervalsExpanded = intervalsExpanded,
                         onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
+                        // Runden sagt TalkBack als „Runden: 4“, Minuten ausgeschrieben.
+                        durationSpokenLabel = if (roundBased) stringResource(R.string.adjust_rounds) else stringResource(R.string.cd_adjust_duration),
+                        durationUnit = if (roundBased) null else R.plurals.cd_duration_minutes,
                     )
                 } else {
                     Spacer(Modifier.height(Dimens.SectionGap))
-                    Text(
-                        text = stringResource(R.string.detail_info_only),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                    )
+                    HintText(stringResource(R.string.detail_info_only))
                 }
                 Spacer(Modifier.height(Dimens.ScreenBottom))
             }
 
             // Gepinnter Start (immer sichtbar) – nur bei getakteten Übungen.
             if (exercise.guided) {
-                Surface(tonalElevation = 3.dp, color = MaterialTheme.colorScheme.surface) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.CardPadding),
-                    ) {
-                        // Gesamtdauer direkt am Start: „Starten · ca. 10 min".
-                        val start = stringResource(R.string.action_start)
-                        val startLabel = when {
-                            estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
+                PinnedActionBar {
+                    // Gesamtdauer direkt am Start: „Starten · ca. 10 min".
+                    val start = stringResource(R.string.action_start)
+                    val startLabel = when {
+                        estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
 
-                            exercise.hasOpenPhases -> stringResource(
-                                R.string.action_start_duration,
-                                start,
-                                stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
-                            )
+                        exercise.hasOpenPhases -> stringResource(
+                            R.string.action_start_duration,
+                            start,
+                            stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
+                        )
 
-                            else -> stringResource(
-                                R.string.action_start_duration,
-                                start,
-                                stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
-                            )
-                        }
-                        StartSplitButton(
-                            label = startLabel,
-                            resetVisible = modifiedNow(),
-                            onStart = { launch() },
-                            onReset = {
-                                value = valueDefault
-                                inhaleSec = inhaleDefault
-                                exhaleSec = exhaleDefault
-                                holdSec = holdDefault
-                                onIntervalsReset()
-                            },
+                        else -> stringResource(
+                            R.string.action_start_duration,
+                            start,
+                            stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
                         )
                     }
+                    StartSplitButton(
+                        label = startLabel,
+                        resetVisible = modifiedNow(),
+                        onStart = { launch() },
+                        onReset = {
+                            value = valueDefault
+                            inhaleSec = inhaleDefault
+                            exhaleSec = exhaleDefault
+                            holdSec = holdDefault
+                            onIntervalsReset()
+                        },
+                    )
                 }
             }
         }
@@ -427,13 +417,4 @@ fun ExerciseDetailScreen(
             onDismiss = { showSafety = false },
         )
     }
-}
-
-@Composable
-private fun Body(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
-    )
 }

@@ -43,7 +43,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
@@ -57,14 +56,19 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.BodyText
+import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
+import app.atemkraft.ui.components.ForwardChevron
+import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
@@ -170,11 +174,7 @@ fun SettingsScreen(
                 NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
 
                 Spacer(Modifier.height(Dimens.SectionGap))
-                Text(
-                    text = stringResource(R.string.settings_about),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
+                HintText(stringResource(R.string.settings_about))
                 Spacer(Modifier.height(Dimens.ScreenBottom))
             }
         }
@@ -194,7 +194,7 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () 
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_data_title))
             Spacer(Modifier.height(Dimens.GapTiny))
-            Hint(stringResource(R.string.settings_data_hint))
+            HintText(stringResource(R.string.settings_data_hint))
             AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
                 DataButton(status.exportLabel ?: stringResource(R.string.settings_data_export), onExport)
                 DataButton(status.importLabel ?: stringResource(R.string.settings_data_import), onImport)
@@ -208,7 +208,7 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () 
                 )
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            Hint(stringResource(R.string.settings_data_transfer_hint))
+            HintText(stringResource(R.string.settings_data_transfer_hint))
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             ClearLogButton(onClearLog)
         }
@@ -225,6 +225,8 @@ private fun ClearLogButton(onClearLog: () -> Unit) {
     val confirm = rememberArmedConfirm()
     AppTextButton(
         onClick = { confirm.tap(onClearLog) },
+        // Bündig an der Kartenkante wie die Hinweise darüber, nicht um das Innenpolster eingerückt.
+        flushStart = true,
         modifier = Modifier
             .then(confirm.focusModifier)
             .semantics { liveRegion = LiveRegionMode.Polite },
@@ -267,22 +269,25 @@ private fun TonCard(
                 }
             }
             Spacer(Modifier.height(Dimens.GapTiny))
-            Hint(stringResource(R.string.volume_hint))
+            HintText(stringResource(R.string.volume_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SubLabel(stringResource(R.string.settings_gong_length))
                 Spacer(Modifier.weight(1f))
                 // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut tippen).
-                AppIconButton(onClick = onPreviewGong) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_gong_preview))
+                // Glyph bündig an der Kartenkante wie die Segmente darunter (LAYOUT-07).
+                Box(Modifier.flushEnd(inCard = true)) {
+                    AppIconButton(onClick = onPreviewGong) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_gong_preview))
+                    }
                 }
             }
             SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong) { long ->
                 stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
             }
             Spacer(Modifier.height(Dimens.GapTiny))
-            Hint(stringResource(R.string.settings_gong_length_hint))
+            HintText(stringResource(R.string.settings_gong_length_hint))
         }
     }
 }
@@ -310,21 +315,17 @@ private fun AtmenCard(
                 }
             }
             Spacer(Modifier.height(Dimens.GapTiny))
-            Hint(stringResource(R.string.settings_sound_appetizer))
+            HintText(stringResource(R.string.settings_sound_appetizer))
             DisclosureToggle(
                 text = stringResource(R.string.settings_sound_more),
                 expanded = soundInfoExpanded,
                 onToggle = { soundInfoExpanded = !soundInfoExpanded },
             )
             if (soundInfoExpanded) {
-                Hint(stringResource(R.string.settings_sound_hint))
+                // Aufgeklappt Fließtext wie im Expander; die Quellen folgen ohne Zwischenzeile –
+                // der Umschalter benennt den Inhalt schon (wie die Detailseite).
+                BodyText(stringResource(R.string.settings_sound_hint))
                 Spacer(Modifier.height(Dimens.GapSmall))
-                Text(
-                    text = stringResource(R.string.settings_sources),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
-                Spacer(Modifier.height(Dimens.GapTiny))
                 listOf(Refs.respeRate, Refs.shaffer2020, Refs.zaccaro2018).forEach { ref ->
                     ReferenceItem(ref)
                     Spacer(Modifier.height(Dimens.GapTiny))
@@ -342,7 +343,7 @@ private fun AtmenCard(
                     }
                 }
                 Spacer(Modifier.height(Dimens.GapTiny))
-                Hint(stringResource(R.string.emphasis_hint))
+                HintText(stringResource(R.string.emphasis_hint))
             }
         }
     }
@@ -407,11 +408,11 @@ private fun MeditationCard(
                 stringResource(R.string.meditation_minutes, m)
             }
             Spacer(Modifier.height(Dimens.GapTiny))
-            Hint(stringResource(R.string.settings_gong_interval_hint))
+            HintText(stringResource(R.string.settings_gong_interval_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             SubLabel(stringResource(R.string.settings_voice))
-            Hint(stringResource(R.string.settings_voice_catalog_hint))
+            HintText(stringResource(R.string.settings_voice_catalog_hint))
             Spacer(Modifier.height(Dimens.GapTiny))
 
             // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
@@ -461,7 +462,7 @@ private fun VoiceRow(
                     MaterialTheme.colorScheme.onSurface
                 },
             )
-            Hint(voiceSubtitle(spec, state, active, engineReady))
+            HintText(voiceSubtitle(spec, state, active, engineReady))
             if (spec.nonCommercialOnly) {
                 // Eigene Zeile in Warnfarbe statt im grauen Untertitel: Die Einschränkung soll vor
                 // dem Laden auffallen (SEC-LEGAL-03), ohne die Zeile breiter zu machen (LAYOUT-03).
@@ -480,7 +481,17 @@ private fun VoiceRow(
 
         when (state) {
             is VoiceDownloadState.Downloading -> {
-                CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = 2.dp)
+                // Mit bekannter Größe zeigt der Kreis den Fortschritt (dazu „40 %“ im Untertitel für
+                // TalkBack); beim Entpacken oder ohne Größe dreht er unbestimmt.
+                if (state.extracting || state.indeterminate) {
+                    CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
+                } else {
+                    CircularProgressIndicator(
+                        progress = { state.fraction },
+                        modifier = Modifier.size(Sizes.ProgressInline),
+                        strokeWidth = Sizes.ProgressStroke,
+                    )
+                }
                 // Abbrechen: delete() bricht den laufenden Download-Job ab und räumt Reste weg.
                 AppIconButton(onClick = onDelete) {
                     Icon(
@@ -502,7 +513,7 @@ private fun VoiceRow(
                     )
 
                     active && !engineReady ->
-                        CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
 
                     else ->
                         AppTextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
@@ -554,22 +565,6 @@ private fun voiceSubtitle(
     return if (extra != null) "$base · $extra" else base
 }
 
-/** Karten-Titel (einheitlich titleLarge, app-weit). */
-@Composable
-private fun CardTitle(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-}
-
-/** Dezenter Hinweis-/Beschriftungstext (einheitliche Sekundär-Deckkraft). */
-@Composable
-private fun Hint(text: String) {
-    WholeWordText(
-        text = text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-    )
-}
-
 @Composable
 private fun NavRow(label: String, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
@@ -580,18 +575,15 @@ private fun NavRow(label: String, onClick: () -> Unit) {
                 .heightIn(min = Dimens.MinTouchTarget)
                 .padding(Dimens.CardPadding),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
         ) {
-            Text(
+            WholeWordText(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
             )
-            Text(
-                text = "›",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-            )
+            ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
         }
     }
 }
