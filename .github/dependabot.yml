@@ -1,18 +1,52 @@
 # Abhängigkeits-Updates (docs/SECURITY.md, Lieferkette): monatlich, gruppiert, damit
 # wenige, gut prüfbare PRs entstehen. Jeder PR läuft durch scripts/check.sh.
+#
+# - Präfix „build“ ohne Scope ergibt „build: Bump …“; „build(deps):“ lehnt CODE-08 ab.
+# - Vier Gruppen statt einer: Ein Sammel-PR mit mehreren Major-Sprüngen wird nie grün.
+#   Was in keine Gruppe fällt (z. B. commons-compress), kommt als einzelner PR.
+# - Major-Sprünge von AGP und Gradle zieht der Maintainer von Hand, mit Bildvergleich.
 version: 2
 updates:
   - package-ecosystem: gradle
     directory: /
     schedule:
       interval: monthly
+    commit-message:
+      prefix: "build"
     groups:
-      gradle:
-        patterns: ["*"]
+      androidx:
+        patterns: ["androidx.*"]
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.kotlinx*"
+          - "com.google.devtools.ksp*"
+      test:
+        patterns:
+          - "junit*"
+          - "org.robolectric*"
+          - "io.github.takahirom.roborazzi*"
+      tooling:
+        patterns:
+          - "com.android.application*"
+          - "com.android.tools.build*"
+          - "gradle-wrapper"
+          - "org.jlleitschuh.gradle.ktlint*"
+          - "com.pinterest*"
+          - "io.nlopez.compose.rules*"
+    ignore:
+      - dependency-name: "com.android.application*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.android.tools.build*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "gradle-wrapper"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    commit-message:
+      prefix: "build"
     groups:
       actions:
         patterns: ["*"]

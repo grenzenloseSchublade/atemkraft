@@ -34,8 +34,8 @@ scripts/build.sh installDebug    # bauen und auf Gerät/Emulator installieren
 Vor jedem Pull Request:
 
 ```bash
-scripts/check.sh          # Stil-Checks, ktlint, Unit-Tests, Android Lint – muss grün sein
-scripts/check.sh --fast   # dasselbe ohne Android Lint, für zwischendurch
+scripts/check.sh          # Stil-Checks, ktlint, Unit-Tests, Android Lint, Release-Build – muss grün sein
+scripts/check.sh --fast   # dasselbe ohne Android Lint und Release-Build, für zwischendurch
 scripts/build.sh ktlintFormat   # Formatierung automatisch korrigieren
 ```
 
@@ -98,6 +98,7 @@ Danach `scripts/check.sh`: Der `ContentRulesTest` prüft u. a. Teaser-Länge, An
 ## Commits und Pull Requests
 
 - **Commit-Betreff** (CODE-08, im CI geprüft): `fix: …`, `docs: …` oder `build: …`, Releases `vX.Y.Z: …`. Deutsch, mit echten Umlauten, als kurze Zusammenfassung. Beispiel: `fix: Tipp-Tick am Kreis folgt dem Schalter „Vibration“`.
+- **Git-Hooks** (empfohlen, einmal je Klon): `git config core.hooksPath .githooks`. Dann prüft `commit-msg` den Betreff schon beim Commit und `pre-push` Betreffs und Styleguide-Pflicht aller neuen Commits wie der CI-Job „conventions“; ein falscher Betreff lässt sich so noch ohne Force-Push ändern.
 - **Commit-Text** erklärt das Warum, nicht nur das Was.
 - Ändert ein Commit ein Token in `ui/theme/` oder die Signatur einer öffentlichen Funktion in `ui/components/`, ändert er auch den Styleguide (META-01).
 - Bei sichtbaren Änderungen bitte Screenshots vorher und nachher in den Pull Request.

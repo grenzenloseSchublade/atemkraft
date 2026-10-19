@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Vor dem Push: Commit-Betreffs und guide-sync (CODE-08, META-01) über alle neuen Commits, wie der
+# CI-Job „conventions“. Danach lässt sich ein falscher Betreff noch ohne Force-Push ändern.
+# Die vollen Prüfungen (scripts/check.sh) laufen im CI; lokal vorher von Hand.
+# Einrichten (einmal je Klon): git config core.hooksPath .githooks
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+# Ohne Upstream (neuer Branch) gegen origin/main prüfen.
+if UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"; then
+  RANGE="${UPSTREAM}..HEAD"
+else
+  RANGE="origin/main..HEAD"
+fi
+exec "${ROOT}/scripts/check-style.sh" --ci-range "${RANGE}"

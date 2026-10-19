@@ -27,3 +27,7 @@
 
 # Private Sicherheitsnotizen (offene Befunde) – nie committen
 /docs/private/
+
+# Python-Bytecode der Prüfskripte
+__pycache__/
+*.pyc

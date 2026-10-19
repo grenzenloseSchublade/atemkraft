@@ -33,6 +33,9 @@ val keystoreProps = keystorePropsFile
 // Nur für lokale Tests minifizierter Builds ohne Release-Key: -PallowDebugSignedRelease=true.
 // Bewusst Opt-in, damit eine debug-signierte APK nie versehentlich als Release rausgeht.
 val allowDebugSignedRelease = providers.gradleProperty("allowDebugSignedRelease").orNull == "true"
+// Prüf-Build in scripts/check.sh: Release bauen (R8, Shrinking, lintVital), aber nie signieren –
+// auch wenn lokal ein Release-Keystore liegt. Der Key wird nur für echte Releases benutzt.
+val unsignedRelease = providers.gradleProperty("unsignedRelease").orNull == "true"
 
 android {
     namespace = "app.atemkraft"
@@ -92,6 +95,7 @@ android {
             // Genau das erwartet F-Droid, das selbst signiert. Ein stiller Debug-Key-Fallback
             // würde Release-Artefakte mit öffentlich bekanntem Schlüssel erzeugen.
             signingConfig = when {
+                unsignedRelease -> null
                 signingConfigs.findByName("release") != null -> signingConfigs.getByName("release")
                 allowDebugSignedRelease -> signingConfigs.getByName("debug")
                 else -> null
@@ -177,14 +181,19 @@ tasks.withType<Test>().configureEach {
 
 // Deutliche Warnung beim Paketieren statt beim Konfigurieren: So erscheint sie nur bei
 // Release-Builds (nicht bei jedem assembleDebug) und auch bei Configuration-Cache-Treffern.
-if (keystoreProps == null) {
-    val releaseSigningWarning = if (allowDebugSignedRelease) {
-        "WARNUNG: Release wird mit dem DEBUG-Key signiert (-PallowDebugSignedRelease=true). " +
-            "Nur für lokale Tests, nicht verteilen."
-    } else {
-        "WARNUNG: Kein Release-Keystore gefunden (ATEMKRAFT_KEYSTORE_PROPERTIES / keystore.properties). " +
-            "Release wird UNSIGNIERT gebaut (app-release-unsigned.apk) – passend für F-Droid, " +
-            "nicht installierbar. Für einen debug-signierten Test-Build: -PallowDebugSignedRelease=true."
+if (keystoreProps == null || unsignedRelease) {
+    val releaseSigningWarning = when {
+        unsignedRelease ->
+            "HINWEIS: Prüf-Build, Release bewusst UNSIGNIERT (-PunsignedRelease=true). Nicht verteilen."
+
+        allowDebugSignedRelease ->
+            "WARNUNG: Release wird mit dem DEBUG-Key signiert (-PallowDebugSignedRelease=true). " +
+                "Nur für lokale Tests, nicht verteilen."
+
+        else ->
+            "WARNUNG: Kein Release-Keystore gefunden (ATEMKRAFT_KEYSTORE_PROPERTIES / keystore.properties). " +
+                "Release wird UNSIGNIERT gebaut (app-release-unsigned.apk) – passend für F-Droid, " +
+                "nicht installierbar. Für einen debug-signierten Test-Build: -PallowDebugSignedRelease=true."
     }
     tasks.matching { it.name == "packageRelease" || it.name == "bundleRelease" }.configureEach {
         doFirst { logger.warn(releaseSigningWarning) }

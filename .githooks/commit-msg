@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Prüft den Commit-Betreff wie das CI (CODE-08): fix:, docs:, build: oder vX.Y.Z:, nie feat:.
+# Einrichten (einmal je Klon): git config core.hooksPath .githooks
+set -euo pipefail
+exec "$(git rev-parse --show-toplevel)/scripts/check-style.sh" --commit-msg "$1"

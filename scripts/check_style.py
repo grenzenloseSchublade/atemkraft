@@ -618,6 +618,23 @@ def self_test() -> int:
     return 1 if failed else 0
 
 
+def commit_subject_ok(subject: str) -> bool:
+    """CODE-08: Betreff beginnt mit vX.Y.Z:, build:, docs: oder fix: (kein feat:, kein Scope)."""
+    return re.match(r"^(v\d+\.\d+\.\d+|build|docs|fix): \S", subject) is not None
+
+
+def commit_msg(path: str) -> int:
+    """commit-msg-Hook (.githooks/commit-msg): prüft den Betreff vor dem Commit wie das CI."""
+    lines = [ln for ln in Path(path).read_text(encoding="utf-8").splitlines() if not ln.startswith("#")]
+    subject = next((ln.strip() for ln in lines if ln.strip()), "")
+    # Von Git selbst erzeugte Betreffs (fixup!/squash! beim Umbauen) gehen durch; sie werden
+    # vor dem Push zusammengelegt, und dann prüft --ci-range den echten Betreff.
+    if commit_subject_ok(subject) or subject.startswith(("fixup! ", "squash! ", "amend! ")):
+        return 0
+    print(f"FEHLER  commit-msg (CODE-08): „{subject}“ – erlaubt sind fix:, docs:, build: und vX.Y.Z:")
+    return 1
+
+
 def ci_range(rev_range: str) -> int:
     """guide-sync und commit-msg (META-01, CODE-08) über einen Push-Bereich."""
     errors = []
@@ -625,7 +642,7 @@ def ci_range(rev_range: str) -> int:
                          cwd=ROOT, capture_output=True, text=True, check=True).stdout
     for entry in filter(None, (e.strip("\n") for e in log.split("\x01"))):
         sha, subject, body = entry.split("\x00", 2)
-        if not re.match(r"^(v\d+\.\d+\.\d+|build|docs|fix): \S", subject):
+        if not commit_subject_ok(subject):
             errors.append(f"commit-msg (CODE-08) {sha[:8]}: „{subject}“")
         files = subprocess.run(["git", "diff-tree", "--no-commit-id", "-r", "-U0", "-p", sha],
                                cwd=ROOT, capture_output=True, text=True, check=True).stdout
@@ -647,6 +664,7 @@ def main() -> int:
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--update-baseline", action="store_true")
     ap.add_argument("--ci-range")
+    ap.add_argument("--commit-msg", metavar="DATEI")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
@@ -654,6 +672,8 @@ def main() -> int:
         return update_baseline()
     if a.ci_range:
         return ci_range(a.ci_range)
+    if a.commit_msg:
+        return commit_msg(a.commit_msg)
     return check_all()
 
 
