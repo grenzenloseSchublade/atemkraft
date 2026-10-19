@@ -95,8 +95,8 @@ import app.atemkraft.ui.meditation.MiniMeditationBar
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionViewModel
-import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
+import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.tapTab
@@ -124,7 +124,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory)) {
+private fun AtemkraftApp(
+    sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory),
+    // An der Activity und ab App-Start gesammelt: Beim Öffnen springt kein Schalter (ARC-3).
+    settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
+) {
     val context = LocalContext.current
     val container = (context.applicationContext as AtemkraftApplication).container
     val scope = rememberCoroutineScope()
@@ -157,12 +161,6 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
         .collectAsStateWithLifecycle()
     val gongIntervalMin by container.settingsRepository.gongIntervalMin
         .collectAsStateWithLifecycle(initialValue = GONG_INTERVAL_DEFAULT_MINUTES)
-    val gongLong by container.settingsRepository.gongLong
-        .collectAsStateWithLifecycle(initialValue = true)
-    val voiceStates by container.voiceModelManager.states.collectAsStateWithLifecycle()
-    val activeVoiceId by container.settingsRepository.neuralVoiceId
-        .collectAsStateWithLifecycle(initialValue = null)
-    val piperEngineReady by meditationController.piperReady.collectAsStateWithLifecycle()
 
     val sessionActive = sessionStatus != SessionStatus.IDLE
     var sessionExpanded by rememberSaveable { mutableStateOf(false) }
@@ -425,42 +423,15 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
                         container.savedPatternsRepository,
                         container.settingsRepository,
                     )
+                    val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
                     SettingsScreen(
-                        soundMode = cueSettings.soundMode,
-                        transition = cueSettings.transition,
-                        volume = cueSettings.volume,
-                        haptics = cueSettings.haptics,
-                        showSafetyWarning = safetySettings.showWarning,
-                        showNextPhase = showNextPhase,
-                        onSoundMode = { scope.launch { container.settingsRepository.setSoundMode(it) } },
-                        onTransition = { scope.launch { container.settingsRepository.setTransitionEmphasis(it) } },
-                        onVolume = { scope.launch { container.settingsRepository.setToneVolume(it) } },
-                        onToggleHaptics = { scope.launch { container.settingsRepository.setHaptics(it) } },
-                        onToggleSafety = { scope.launch { container.settingsRepository.setShowSafetyWarning(it) } },
-                        onToggleNextPhase = { scope.launch { container.settingsRepository.setShowNextPhase(it) } },
-                        gongIntervalMin = gongIntervalMin,
-                        onGongInterval = { scope.launch { container.settingsRepository.setGongIntervalMin(it) } },
-                        gongLong = gongLong,
-                        onGongLong = { scope.launch { container.settingsRepository.setGongLong(it) } },
-                        onPreviewGong = {
-                            container.gongPreviewPlayer.setVolume(cueSettings.volume)
-                            container.gongPreviewPlayer.previewGong(gongLong)
-                        },
-                        voiceStates = voiceStates,
-                        activeVoiceId = activeVoiceId,
-                        piperEngineReady = piperEngineReady,
-                        onSampleVoice = { spec -> container.voiceSamplePlayer.play(spec.sampleAsset) },
-                        onDownloadVoice = { container.voiceModelManager.download(it) },
-                        onSelectVoice = meditationController::selectNeuralVoice,
-                        onDeleteVoice = { id -> meditationController.deleteNeuralVoice(id) },
+                        state = settingsState,
+                        actions = settingsViewModel.actions,
                         onOpenGlossary = { navController.navigate(GlossaryRoute) },
                         onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
-                        onExportPatterns = patternTransfer.export,
-                        onImportPatterns = patternTransfer.import,
-                        onClearLog = { scope.launch { container.logbookRepository.clear() } },
-                        dataStatus = DataStatus(patternTransfer.exportLabel, patternTransfer.importLabel, patternTransfer.note),
+                        transfer = patternTransfer,
                         focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )
                 }

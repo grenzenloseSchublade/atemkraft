@@ -90,8 +90,10 @@ import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionUiState
-import app.atemkraft.ui.settings.DataStatus
+import app.atemkraft.ui.settings.NoOpSettingsActions
+import app.atemkraft.ui.settings.PatternTransfer
 import app.atemkraft.ui.settings.SettingsScreen
+import app.atemkraft.ui.settings.SettingsUiState
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
@@ -628,7 +630,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun settingsDataStatus() = snap("05_einstellungen_daten") {
         Settings(
-            dataStatus = DataStatus(
+            transfer = PatternTransfer(
                 exportLabel = pluralStringResource(R.plurals.data_export_done, 120, 120),
                 importLabel = pluralStringResource(R.plurals.data_import_done, 120, 120, 380),
                 note = stringResource(R.string.data_import_not_backup),
@@ -650,7 +652,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }) { Settings() }
 
     @Composable
-    private fun Settings(focusMeditation: Boolean = false, dataStatus: DataStatus = DataStatus()) {
+    private fun Settings(focusMeditation: Boolean = false, transfer: PatternTransfer = PatternTransfer.Idle) {
         val voices = VoiceCatalog.all.mapIndexed { i, v ->
             v.id to when (i) {
                 0 -> VoiceDownloadState.Downloaded
@@ -659,38 +661,25 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             }
         }.toMap()
         SettingsScreen(
-            soundMode = SoundMode.entries.first(),
-            transition = TransitionEmphasis.entries.first(),
-            volume = ToneVolume.entries.first(),
-            haptics = true,
-            showSafetyWarning = true,
-            showNextPhase = true,
-            onSoundMode = {},
-            onTransition = {},
-            onVolume = {},
-            onToggleHaptics = {},
-            onToggleSafety = {},
-            onToggleNextPhase = {},
-            gongIntervalMin = 5,
-            onGongInterval = {},
-            gongLong = false,
-            onGongLong = {},
-            onPreviewGong = {},
-            voiceStates = voices,
-            activeVoiceId = VoiceCatalog.all.first().id,
-            piperEngineReady = true,
-            onSampleVoice = {},
-            onDownloadVoice = {},
-            onSelectVoice = {},
-            onDeleteVoice = {},
+            state = SettingsUiState(
+                soundMode = SoundMode.entries.first(),
+                transition = TransitionEmphasis.entries.first(),
+                volume = ToneVolume.entries.first(),
+                haptics = true,
+                showSafetyWarning = true,
+                showNextPhase = true,
+                gongIntervalMin = 5,
+                gongLong = false,
+                voiceStates = voices,
+                activeVoiceId = VoiceCatalog.all.first().id,
+                piperEngineReady = true,
+            ),
+            actions = NoOpSettingsActions,
             onOpenGlossary = {},
             onOpenAtemlehre = {},
             onOpenAbout = {},
             onBack = {},
-            onExportPatterns = {},
-            onImportPatterns = {},
-            onClearLog = {},
-            dataStatus = dataStatus,
+            transfer = transfer,
             focusMeditation = focusMeditation,
         )
     }

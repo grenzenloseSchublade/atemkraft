@@ -86,38 +86,13 @@ import kotlinx.coroutines.flow.first
  */
 @Composable
 fun SettingsScreen(
-    soundMode: SoundMode,
-    transition: TransitionEmphasis,
-    volume: ToneVolume,
-    haptics: Boolean,
-    showSafetyWarning: Boolean,
-    showNextPhase: Boolean,
-    onSoundMode: (SoundMode) -> Unit,
-    onTransition: (TransitionEmphasis) -> Unit,
-    onVolume: (ToneVolume) -> Unit,
-    onToggleHaptics: (Boolean) -> Unit,
-    onToggleSafety: (Boolean) -> Unit,
-    onToggleNextPhase: (Boolean) -> Unit,
-    gongIntervalMin: Int,
-    onGongInterval: (Int) -> Unit,
-    gongLong: Boolean,
-    onGongLong: (Boolean) -> Unit,
-    onPreviewGong: () -> Unit,
-    voiceStates: Map<String, VoiceDownloadState>,
-    activeVoiceId: String?,
-    piperEngineReady: Boolean,
-    onSampleVoice: (VoiceSpec) -> Unit,
-    onDownloadVoice: (String) -> Unit,
-    onSelectVoice: (String?) -> Unit,
-    onDeleteVoice: (String) -> Unit,
+    state: SettingsUiState,
+    actions: SettingsActions,
     onOpenGlossary: () -> Unit,
     onOpenAtemlehre: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
-    onExportPatterns: () -> Unit,
-    onImportPatterns: () -> Unit,
-    onClearLog: () -> Unit,
-    dataStatus: DataStatus = DataStatus(),
+    transfer: PatternTransfer = PatternTransfer.Idle,
     focusMeditation: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
@@ -152,26 +127,33 @@ fun SettingsScreen(
                 NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
 
                 Spacer(Modifier.height(Dimens.SectionGap))
-                TonCard(volume, onVolume, gongLong, onGongLong, onPreviewGong)
+                TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                AtmenCard(soundMode, transition, onSoundMode, onTransition)
+                AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                SessionCard(haptics, showSafetyWarning, showNextPhase, onToggleHaptics, onToggleSafety, onToggleNextPhase)
+                SessionCard(
+                    state.haptics,
+                    state.showSafetyWarning,
+                    state.showNextPhase,
+                    actions::setHaptics,
+                    actions::setShowSafetyWarning,
+                    actions::setShowNextPhase,
+                )
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
                 Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
                     MeditationCard(
-                        gongIntervalMin, onGongInterval,
-                        voiceStates, activeVoiceId, piperEngineReady,
-                        onSampleVoice, onDownloadVoice, onSelectVoice, onDeleteVoice,
+                        state.gongIntervalMin, actions::setGongInterval,
+                        state.voiceStates, state.activeVoiceId, state.piperEngineReady,
+                        actions::sampleVoice, actions::downloadVoice, actions::selectVoice, actions::deleteVoice,
                     )
                 }
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                DataCard(onExportPatterns, onImportPatterns, onClearLog, dataStatus)
+                DataCard(transfer, actions::clearLog)
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
@@ -184,27 +166,24 @@ fun SettingsScreen(
     }
 }
 
-/** Rückmeldung der Daten-Karte: Erfolg als Button-Label (MUSTER-02), sonst eine Hinweiszeile. */
-data class DataStatus(val exportLabel: String? = null, val importLabel: String? = null, val note: String? = null)
-
 /**
  * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
  * keine Berechtigung, keine Cloud); darunter das Logbuch leeren, zweistufig (MUSTER-05).
  */
 @Composable
-private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () -> Unit, status: DataStatus) {
+private fun DataCard(transfer: PatternTransfer, onClearLog: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_data_title))
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_data_hint))
             AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
-                DataButton(status.exportLabel ?: stringResource(R.string.settings_data_export), onExport)
-                DataButton(status.importLabel ?: stringResource(R.string.settings_data_import), onImport)
+                DataButton(transfer.exportLabel ?: stringResource(R.string.settings_data_export), transfer.export)
+                DataButton(transfer.importLabel ?: stringResource(R.string.settings_data_import), transfer.import)
             }
-            if (status.note != null) {
+            if (transfer.note != null) {
                 Text(
-                    text = status.note,
+                    text = transfer.note,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },

@@ -35,13 +35,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import app.atemkraft.R
-import app.atemkraft.domain.SoundMode
-import app.atemkraft.domain.ToneVolume
-import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.glossary.GlossaryScreen
+import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.SettingsScreen
+import app.atemkraft.ui.settings.SettingsUiState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -268,37 +267,12 @@ class TabNavigationTest {
     @Composable
     private fun Settings(focusMeditation: Boolean) {
         SettingsScreen(
-            soundMode = SoundMode.entries.first(),
-            transition = TransitionEmphasis.entries.first(),
-            volume = ToneVolume.entries.first(),
-            haptics = true,
-            showSafetyWarning = true,
-            showNextPhase = true,
-            onSoundMode = {},
-            onTransition = {},
-            onVolume = {},
-            onToggleHaptics = {},
-            onToggleSafety = {},
-            onToggleNextPhase = {},
-            gongIntervalMin = 5,
-            onGongInterval = {},
-            gongLong = false,
-            onGongLong = {},
-            onPreviewGong = {},
-            voiceStates = emptyMap(),
-            activeVoiceId = null,
-            piperEngineReady = true,
-            onSampleVoice = {},
-            onDownloadVoice = {},
-            onSelectVoice = {},
-            onDeleteVoice = {},
+            state = SettingsUiState(gongIntervalMin = 5, gongLong = false, piperEngineReady = true),
+            actions = NoOpSettingsActions,
             onOpenGlossary = { nav.navigate(GlossaryRoute) },
             onOpenAtemlehre = {},
             onOpenAbout = { nav.navigate(AboutRoute) },
             onBack = { nav.popBackStack() },
-            onExportPatterns = {},
-            onImportPatterns = {},
-            onClearLog = {},
             focusMeditation = focusMeditation,
         )
     }

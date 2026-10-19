@@ -29,12 +29,17 @@ import java.time.LocalDate
  * des auslösenden Buttons (MUSTER-02), Hinweise und Fehler als Zeile in der Karte (MUSTER-04).
  */
 class PatternTransfer(
-    val exportLabel: String?,
-    val importLabel: String?,
-    val note: String?,
-    val export: () -> Unit,
-    val import: () -> Unit,
-)
+    val exportLabel: String? = null,
+    val importLabel: String? = null,
+    val note: String? = null,
+    val export: () -> Unit = {},
+    val import: () -> Unit = {},
+) {
+    companion object {
+        /** Ohne Rückmeldung und ohne Wirkung (Vorschau, Tests). */
+        val Idle = PatternTransfer()
+    }
+}
 
 /** Ergebnis eines Vorgangs: neues Button-Label (nur bei Erfolg) und/oder Hinweiszeile. */
 private data class Outcome(val label: String? = null, val note: String? = null)
