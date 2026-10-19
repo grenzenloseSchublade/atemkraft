@@ -67,7 +67,7 @@ private enum class GongChoice {
 /**
  * Meditations-Tab: Auswahl (Zeitring für die Dauer samt offener Sitzung „∞“, eingeklappt Gong und
  * Sprachanleitung) und laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
- * liegt im [MeditationController].
+ * liegt im [app.atemkraft.playback.MeditationController].
  */
 @Composable
 fun MeditationScreen(
@@ -83,68 +83,6 @@ fun MeditationScreen(
     // Mini-Leiste erreichbar.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart)
-    }
-}
-
-/** „Now-Playing"-Leiste der Meditation (Titel + Zeit/Status); tippen öffnet das Vollbild-Overlay. */
-@Composable
-fun MiniMeditationBar(state: MeditationUiState, onClick: () -> Unit) {
-    val title = stringResource(R.string.meditation_title)
-    val statusText = when (state.status) {
-        MeditationStatus.FINISHED -> stringResource(R.string.meditation_done_title)
-
-        MeditationStatus.PAUSED -> stringResource(R.string.session_paused)
-
-        else -> if (state.mode == MeditationMode.TIMED) {
-            formatMeditationTime(state.remainingMs)
-        } else {
-            formatMeditationTime(state.elapsedMs)
-        }
-    }
-    MiniNowPlayingBar(title = title, statusText = statusText, onClick = onClick)
-}
-
-/**
- * Vollbild-Overlay der laufenden/abgeschlossenen Meditation – identischer Rahmen wie die
- * Atem-Session ([app.atemkraft.ui.session.SessionOverlay]) über das geteilte [OverlayChrome].
- * Am Ende dieselbe Frage samt Bilanz wie dort; System-Zurück minimiert, am Ende-Screen wirkt es
- * wie „Ende“ (Nutzerentscheidung 2026-10-19).
- */
-@Composable
-fun MeditationOverlay(
-    state: MeditationUiState,
-    onMinimize: () -> Unit,
-    onToggleMute: () -> Unit,
-    onTogglePause: () -> Unit,
-    onTapHaptic: () -> Unit,
-    onRestart: () -> Unit,
-    onEnd: () -> Unit,
-) {
-    BackHandler { if (state.status == MeditationStatus.FINISHED) onEnd() else onMinimize() }
-    OverlayChrome(
-        title = stringResource(R.string.meditation_title),
-        muted = state.muted,
-        onMinimize = onMinimize,
-        onToggleMute = onToggleMute,
-    ) {
-        if (state.status == MeditationStatus.FINISHED) {
-            FinishedPanel(
-                title = stringResource(R.string.session_done_question),
-                onAgain = onRestart,
-                onExit = onEnd,
-                // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
-                // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
-                summary = sessionSummaryParts(durationMs = state.elapsedMs),
-            )
-        } else {
-            RunningContent(
-                state = state,
-                onTogglePause = onTogglePause,
-                onTapHaptic = onTapHaptic,
-                onRestart = onRestart,
-                onEnd = onEnd,
-            )
-        }
     }
 }
 
@@ -399,111 +337,5 @@ private fun SoundOptions(
             },
             enabled = speechAvailable,
         )
-    }
-}
-
-@Composable
-private fun RunningContent(
-    state: MeditationUiState,
-    onTogglePause: () -> Unit,
-    onTapHaptic: () -> Unit,
-    onRestart: () -> Unit,
-    onEnd: () -> Unit,
-) {
-    val preparing = state.status == MeditationStatus.PREPARING
-    val paused = state.status == MeditationStatus.PAUSED
-    val ringDescription = stringResource(R.string.cd_meditation_ring)
-    val ringAction = stringResource(if (paused) R.string.circle_action_resume else R.string.circle_action_pause)
-    // TalkBack-Ansage der Zustandswechsel (wie die Atem-Session ihren Phasennamen ansagt): als
-    // Zustand am Titel („Meditation, Pausiert“), der sichtbare Name bleibt der gesprochene.
-    val stateAnnounce = when {
-        preparing -> stringResource(R.string.session_get_ready)
-        paused -> stringResource(R.string.session_paused)
-        else -> null
-    }
-
-    // Ruhiger, VOLL gefüllter Kreis (kein Wachstum); der Fortschritt steht in der Zahl.
-    val timeText = when {
-        preparing -> state.countdown.toString()
-        state.mode == MeditationMode.TIMED -> formatMeditationTime(state.remainingMs)
-        else -> formatMeditationTime(state.elapsedMs)
-    }
-
-    // Tap-Flash (geteilt mit der Atem-Session); die UI-Haptik spielt der Player im AppContainer
-    // (AUDIO-04, -05).
-    val tapFlash = rememberTapFlash()
-
-    // Gleiches Gerüst wie die Atem-Session (SessionRunningLayout): Titel oben, Kreis im freien
-    // Platz, Steuerung unten – nichts überlappt, auch bei großer Schrift.
-    SessionRunningLayout(
-        modifier = Modifier.fillMaxSize().padding(Dimens.SessionPadding),
-        top = {
-            // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
-            Text(
-                text = stringResource(R.string.meditation_title),
-                style = MaterialTheme.typography.titleSmall,
-                // Wie der Übungsname der Atem-Session: voll, nicht gedämpft.
-                color = MaterialTheme.colorScheme.onBackground,
-                // liveRegion: TalkBack sagt Zustandswechsel (Vorbereitung/läuft/pausiert) an.
-                modifier = Modifier
-                    .semantics {
-                        liveRegion = LiveRegionMode.Polite
-                        stateAnnounce?.let { stateDescription = it }
-                    },
-            )
-        },
-        bottom = {
-            // Dieselbe Icon-Steuerung wie die Atem-Session; im Countdown nur „Beenden“.
-            SessionControlBar(
-                playing = !paused,
-                onMain = onTogglePause,
-                onRestart = onRestart,
-                onStop = onEnd,
-                preparing = preparing,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-    ) { side ->
-        Box(contentAlignment = Alignment.Center) {
-            // Fortschrittsbogen wie in der Atem-Session (nur Timer; offen = nur Spur).
-            val progress = if (state.mode == MeditationMode.TIMED && !preparing) {
-                (state.elapsedMs.toFloat() / (state.elapsedMs + state.remainingMs).coerceAtLeast(1L)).coerceIn(0f, 1f)
-            } else {
-                null
-            }
-            BreathingCircle(
-                fraction = 1f,
-                progress = progress,
-                modifier = Modifier.size(side),
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (preparing) {
-                        // Kleiner als die Zeit und nie breiter als die Scheibe, damit es auch bei
-                        // großer Schrift im Kreis bleibt (bricht dann zwischen den Wörtern um).
-                        GlowText(
-                            text = stringResource(R.string.session_get_ready),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.widthIn(max = breathingDiscDiameter(side, 1f)),
-                        )
-                        Spacer(Modifier.height(Dimens.GapTiny))
-                    }
-                    GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
-                }
-            }
-            // Wie in der Atem-Session: Tippen auf den Kreis (bis zur Spur, nicht ins Quadrat
-            // daneben) pausiert/setzt fort; im Countdown tut er nichts.
-            CircleTapTarget(
-                side = side,
-                description = ringDescription,
-                clickLabel = ringAction,
-                onTap = if (preparing) {
-                    null
-                } else {
-                    { tapFlash.toggle(running = state.status == MeditationStatus.RUNNING, haptic = onTapHaptic, toggle = onTogglePause) }
-                },
-            )
-            // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
-            PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause, maxSize = side)
-        }
     }
 }

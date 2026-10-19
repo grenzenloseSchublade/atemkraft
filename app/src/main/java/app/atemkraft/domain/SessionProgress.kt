@@ -1,8 +1,4 @@
-package app.atemkraft.ui.session
-
-import app.atemkraft.domain.PhaseDuration
-import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RuntimePhase
+package app.atemkraft.domain
 
 /**
  * Bilanz einer abgeschlossenen Sitzung – nur echte Werte. [durationMs] ist die aktive Atemzeit

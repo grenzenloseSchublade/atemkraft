@@ -46,6 +46,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import app.atemkraft.R
+import app.atemkraft.domain.MEDITATION_MAX_MINUTES
+import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.theme.Dimens
 import kotlin.math.max
@@ -93,8 +95,8 @@ internal fun durationTexts(state: DurationPickerState): DurationTexts {
 /** Alle Einheiten, die unter der Zahl stehen können – zum Ausmessen der breitesten. */
 @Composable
 internal fun durationUnitSamples(): List<String> = listOf(
-    pluralStringResource(R.plurals.meditation_dial_unit, DURATION_MIN_MINUTES),
-    pluralStringResource(R.plurals.meditation_dial_unit, DURATION_MAX_MINUTES),
+    pluralStringResource(R.plurals.meditation_dial_unit, MEDITATION_MIN_MINUTES),
+    pluralStringResource(R.plurals.meditation_dial_unit, MEDITATION_MAX_MINUTES),
     stringResource(R.string.meditation_dial_free_unit),
 )
 
@@ -114,8 +116,8 @@ internal fun Modifier.durationSlider(state: DurationPickerState, texts: Duration
     stateDescription = texts.sliderState
     progressBarRangeInfo = ProgressBarRangeInfo(
         current = state.minutes.toFloat(),
-        range = DURATION_MIN_MINUTES.toFloat()..DURATION_MAX_MINUTES.toFloat(),
-        steps = DURATION_MAX_MINUTES - DURATION_MIN_MINUTES - 1,
+        range = MEDITATION_MIN_MINUTES.toFloat()..MEDITATION_MAX_MINUTES.toFloat(),
+        steps = MEDITATION_MAX_MINUTES - MEDITATION_MIN_MINUTES - 1,
     )
     setProgress { target ->
         state.selectWithTick(target.roundToInt(), onTick)
@@ -184,7 +186,7 @@ internal fun DurationReadout(
         ) {
             AppIconButton(
                 onClick = { state.stepWithTick(-1, onTick) },
-                enabled = free || minutes > DURATION_MIN_MINUTES,
+                enabled = free || minutes > MEDITATION_MIN_MINUTES,
                 colors = IconButtonDefaults.filledTonalIconButtonColors(),
             ) {
                 Icon(painterResource(R.drawable.ic_remove), contentDescription = texts.less)
@@ -213,7 +215,7 @@ internal fun DurationReadout(
         ) {
             AppIconButton(
                 onClick = { state.stepWithTick(1, onTick) },
-                enabled = free || minutes < DURATION_MAX_MINUTES,
+                enabled = free || minutes < MEDITATION_MAX_MINUTES,
                 colors = IconButtonDefaults.filledTonalIconButtonColors(),
             ) {
                 Icon(Icons.Filled.Add, contentDescription = texts.more)

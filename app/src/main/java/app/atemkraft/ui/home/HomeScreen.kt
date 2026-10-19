@@ -44,6 +44,8 @@ import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.components.accentBorder
+import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 

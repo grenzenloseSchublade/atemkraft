@@ -69,6 +69,8 @@ import app.atemkraft.data.Situations
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.playback.MeditationStatus
+import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.AboutRoute
 import app.atemkraft.ui.AtemlehreRoute
 import app.atemkraft.ui.AtmenRoute
@@ -89,11 +91,9 @@ import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
-import app.atemkraft.ui.meditation.MeditationStatus
 import app.atemkraft.ui.meditation.MiniMeditationBar
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
-import app.atemkraft.ui.session.SessionStatus
 import app.atemkraft.ui.session.SessionViewModel
 import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
@@ -194,8 +194,8 @@ private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory 
     val currentTopTab = when {
         currentDestination.isOn(AtmenRoute) -> TopTab.ATMEN
         currentDestination.isOn(SituationenRoute) -> TopTab.SITUATIONEN
-        currentDestination.isOn(LogbuchRoute) -> TopTab.LOGBUCH
         currentDestination.isOn(MeditationRoute) -> TopTab.MEDITATION
+        currentDestination.isOn(LogbuchRoute) -> TopTab.LOGBUCH
         else -> null
     }
     var selectedTab by rememberSaveable { mutableStateOf(TopTab.ATMEN) }
@@ -572,8 +572,8 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
     )
 }
 
-/** Die vier Top-Level-Tabs (für die Markierung der Leiste, auch auf Push-Zielen). */
-private enum class TopTab { ATMEN, SITUATIONEN, LOGBUCH, MEDITATION }
+/** Die vier Top-Level-Tabs in Leisten-Reihenfolge (für die Markierung, auch auf Push-Zielen). */
+private enum class TopTab { ATMEN, SITUATIONEN, MEDITATION, LOGBUCH }
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
 private fun androidx.navigation.NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true

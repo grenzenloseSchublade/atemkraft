@@ -4,9 +4,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import app.atemkraft.R
+import app.atemkraft.playback.MeditationStatus
+import app.atemkraft.playback.MeditationUiState
+import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.meditation.MeditationOverlay
-import app.atemkraft.ui.meditation.MeditationStatus
-import app.atemkraft.ui.meditation.MeditationUiState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule

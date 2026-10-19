@@ -1,4 +1,4 @@
-package app.atemkraft.ui.home
+package app.atemkraft.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color

@@ -18,7 +18,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceLevel
-import app.atemkraft.ui.home.label
 import app.atemkraft.ui.theme.CHIP_FILL
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.EvidenceBest

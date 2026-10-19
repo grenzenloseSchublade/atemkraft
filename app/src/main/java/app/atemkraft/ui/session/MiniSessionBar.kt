@@ -3,6 +3,7 @@ package app.atemkraft.ui.session
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.components.MiniNowPlayingBar
 
 /** „Now-Playing"-Leiste für die Atem-Session; tippen öffnet die Vollbild-Session. */

@@ -1,4 +1,4 @@
-package app.atemkraft.ui.session
+package app.atemkraft.ui.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

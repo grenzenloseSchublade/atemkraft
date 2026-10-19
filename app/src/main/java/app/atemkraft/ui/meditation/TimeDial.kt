@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.min
 import app.atemkraft.R
+import app.atemkraft.domain.MEDITATION_MAX_MINUTES
+import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.TERTIARY
@@ -94,7 +96,7 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
         val padPx = with(density) { Dimens.GapSmall.toPx() }
         val readoutPadPx = with(density) { DurationReadoutPad.toPx() }
         val numerals = remember(measurer, numeralStyle) {
-            (MAJOR_STEP until DURATION_MAX_MINUTES step MAJOR_STEP).associateWith { measurer.measure(it.toString(), numeralStyle) }
+            (MAJOR_STEP until MEDITATION_MAX_MINUTES step MAJOR_STEP).associateWith { measurer.measure(it.toString(), numeralStyle) }
         }
         val mark = remember(measurer, markStyle, texts.freeSymbol) { measurer.measure(texts.freeSymbol, markStyle) }
         val geo = remember(sidePx, numerals, mark, touchPx) { dialGeometry(sidePx, numerals.mapValues { it.value.size }, mark.size, touchPx) }
@@ -144,7 +146,7 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
                 // Spur
                 drawCircle(colors.surfaceVariant, radius = geo.trackRadius, center = c, style = Stroke(geo.trackWidth))
                 // Minutenstriche, 5er länger und heller
-                for (m in DURATION_MIN_MINUTES..DURATION_MAX_MINUTES) {
+                for (m in MEDITATION_MIN_MINUTES..MEDITATION_MAX_MINUTES) {
                     val major = DialScale.isMajor(m)
                     val dir = direction(DialScale.angleOf(m))
                     val inner = geo.tickOuter - if (major) geo.tickMajor else geo.tickMinor
@@ -256,7 +258,7 @@ internal fun timeDialMinSide(floor: Dp): Dp {
         with(density) {
             val touchPx = Dimens.MinTouchTarget.toPx()
             val padPx = Dimens.GapSmall.toPx()
-            val numerals = (MAJOR_STEP until DURATION_MAX_MINUTES step MAJOR_STEP).associateWith { measurer.measure(it.toString(), numeralStyle).size }
+            val numerals = (MAJOR_STEP until MEDITATION_MAX_MINUTES step MAJOR_STEP).associateWith { measurer.measure(it.toString(), numeralStyle).size }
             val mark = measurer.measure(freeSymbol, markStyle).size
             val readout = measureReadout(measurer, smallest, unitStyle, units, DurationReadoutPad.toPx(), touchPx)
             // Die Mitte wächst linear mit der Kante; pixelweise bis zur Obergrenze suchen.
@@ -331,7 +333,7 @@ internal fun dialGeometry(side: Float, numerals: Map<Int, IntSize>, mark: IntSiz
     val knobLabelRadius = trackRadius - knobRadius - gap - labelHalf
     val contentRadius = trackRadius - knobRadius - gap
     // 5er-Zahlen nur, wenn zwischen zwei Nachbarn reichlich Luft bleibt; sonst nur die 10er.
-    val fiveStep = (2f * PI.toFloat() * numeralRadius) / (DURATION_MAX_MINUTES / MAJOR_STEP)
+    val fiveStep = (2f * PI.toFloat() * numeralRadius) / (MEDITATION_MAX_MINUTES / MAJOR_STEP)
     val every = if (fiveStep < max(widest, markRadius * 2f) * NUMERAL_SPACING) MAJOR_STEP * 2 else MAJOR_STEP
     return DialGeometry(
         numeralRadius = numeralRadius,
@@ -352,7 +354,7 @@ internal fun dialGeometry(side: Float, numerals: Map<Int, IntSize>, mark: IntSiz
         markRadius = markRadius,
         // Tipp-Echo umfasst den ganzen Knopf samt Rand, mindestens 48 dp.
         markTouch = max(touch, (markRadius + tickWidth) * 2f),
-        numerals = (every until DURATION_MAX_MINUTES step every).toList(),
+        numerals = (every until MEDITATION_MAX_MINUTES step every).toList(),
     )
 }
 

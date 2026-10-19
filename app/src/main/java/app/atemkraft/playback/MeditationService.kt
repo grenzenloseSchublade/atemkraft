@@ -1,4 +1,4 @@
-package app.atemkraft.ui.meditation
+package app.atemkraft.playback
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,6 +16,7 @@ import app.atemkraft.MainActivity
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.formatClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -131,9 +132,9 @@ class MeditationService : Service() {
             state.status == MeditationStatus.PREPARING -> getString(R.string.session_get_ready)
 
             state.mode == MeditationMode.TIMED ->
-                getString(R.string.meditation_notification_remaining, formatMeditationTime(state.remainingMs))
+                getString(R.string.meditation_notification_remaining, formatClock(state.remainingMs))
 
-            else -> formatMeditationTime(state.elapsedMs)
+            else -> formatClock(state.elapsedMs)
         }
         return if (paused) base + DOT_SEPARATOR + getString(R.string.session_paused) else base
     }

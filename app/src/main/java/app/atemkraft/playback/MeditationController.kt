@@ -1,4 +1,4 @@
-package app.atemkraft.ui.meditation
+package app.atemkraft.playback
 
 import android.app.NotificationManager
 import android.content.Context
@@ -428,10 +428,4 @@ class MeditationController(
          */
         private const val FINISH_ABANDON_MARGIN_MS = 500L
     }
-}
-
-/** m:ss-Format der Meditations-Zeiten (geteilt von Screen, Mini-Leiste und Service). */
-internal fun formatMeditationTime(ms: Long): String {
-    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
-    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
 }

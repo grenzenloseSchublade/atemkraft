@@ -1,15 +1,11 @@
-package app.atemkraft.ui.session
+package app.atemkraft.domain
 
-import app.atemkraft.domain.BreathSide
-import app.atemkraft.domain.PhaseDuration
-import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.PhaseType.EXHALE
 import app.atemkraft.domain.PhaseType.HOLD_EMPTY
 import app.atemkraft.domain.PhaseType.HOLD_FULL
 import app.atemkraft.domain.PhaseType.INHALE
 import app.atemkraft.domain.PhaseType.INHALE_TOP_UP
 import app.atemkraft.domain.PhaseType.REST
-import app.atemkraft.domain.RuntimePhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

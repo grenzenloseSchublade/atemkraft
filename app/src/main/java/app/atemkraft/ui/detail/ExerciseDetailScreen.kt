@@ -57,9 +57,8 @@ import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.WholeWordText
-import app.atemkraft.ui.home.color
-import app.atemkraft.ui.home.title
-import app.atemkraft.ui.session.SafetyDialog
+import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.TERTIARY

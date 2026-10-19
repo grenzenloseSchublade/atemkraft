@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.PhaseType
+import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.CircleTapTarget
 import app.atemkraft.ui.components.DotSeparatedFlow

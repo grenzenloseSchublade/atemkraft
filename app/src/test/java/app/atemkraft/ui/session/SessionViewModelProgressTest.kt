@@ -5,6 +5,7 @@ import app.atemkraft.data.ExerciseRepository
 import app.atemkraft.data.FakeSavedPatternDao
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.domain.SessionConfig
+import app.atemkraft.playback.SessionStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

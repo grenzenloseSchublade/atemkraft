@@ -6,8 +6,8 @@ import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.data.local.AtemkraftDatabase
-import app.atemkraft.ui.meditation.MeditationAudioCoordinator
-import app.atemkraft.ui.meditation.MeditationController
+import app.atemkraft.playback.MeditationAudioCoordinator
+import app.atemkraft.playback.MeditationController
 
 /**
  * Manuelles DI: hält die Repositories einmalig (keine Instanziierung in Composables).

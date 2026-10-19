@@ -46,8 +46,9 @@ import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.durationClockText
 import app.atemkraft.ui.components.spokenDuration
-import app.atemkraft.ui.home.color
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
 import app.atemkraft.ui.theme.ALPHA_HEAT_NONE
@@ -327,7 +328,7 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
                     // verbunden), TalkBack hört „6 Minuten 5 Sekunden“.
                     val spoken = spokenDuration(entry.durationMs)
                     Text(
-                        text = formatDuration(entry.durationMs),
+                        text = durationClockText(entry.durationMs),
                         style = nameStyle,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.semantics { contentDescription = spoken },
@@ -363,10 +364,4 @@ private fun currentStreak(activeDays: Set<Long>, today: LocalDate): Int {
         day--
     }
     return streak
-}
-
-@Composable
-private fun formatDuration(durationMs: Long): String {
-    val totalSeconds = (durationMs / 1000L).coerceAtLeast(0L)
-    return stringResource(R.string.session_summary_duration, totalSeconds / 60L, totalSeconds % 60L)
 }

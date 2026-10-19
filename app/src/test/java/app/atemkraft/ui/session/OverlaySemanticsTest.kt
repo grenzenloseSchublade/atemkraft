@@ -18,9 +18,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
 import app.atemkraft.R
 import app.atemkraft.domain.PhaseType
+import app.atemkraft.playback.MeditationStatus
+import app.atemkraft.playback.MeditationUiState
+import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.meditation.MeditationOverlay
-import app.atemkraft.ui.meditation.MeditationStatus
-import app.atemkraft.ui.meditation.MeditationUiState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

@@ -6,6 +6,7 @@ import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.RuntimePhase
 import app.atemkraft.domain.buildTimeline
+import app.atemkraft.playback.SessionStatus
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs

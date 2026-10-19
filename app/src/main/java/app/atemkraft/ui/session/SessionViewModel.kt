@@ -18,8 +18,14 @@ import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RuntimePhase
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.domain.SessionProgress
+import app.atemkraft.domain.SessionSummary
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.buildTimeline
+import app.atemkraft.domain.sessionSummary
+import app.atemkraft.playback.PhaseAudio
+import app.atemkraft.playback.SessionAudioCoordinator
+import app.atemkraft.playback.SessionStatus
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -38,11 +44,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.min
-
-enum class SessionStatus { IDLE, PREPARING, RUNNING, PAUSED, WAITING_FOR_USER, FINISHED }
-
-/** Audio-Info zum Phasenbeginn für den durchgehenden Ton (Typ + Dauer; open = ohne feste Dauer). */
-data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean, val level: BreathLevel? = null)
 
 /**
  * Sichtbarer Zustand der laufenden Session. Die UI ist eine reine Funktion davon –

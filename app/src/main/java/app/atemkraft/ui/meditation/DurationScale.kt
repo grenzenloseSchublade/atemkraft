@@ -1,5 +1,7 @@
 package app.atemkraft.ui.meditation
 
+import app.atemkraft.domain.MEDITATION_MAX_MINUTES
+import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.roundToInt
@@ -10,13 +12,13 @@ import kotlin.math.roundToInt
  */
 object DialScale {
 
-    private const val DEG_PER_MINUTE = 360f / DURATION_MAX_MINUTES
+    private const val DEG_PER_MINUTE = 360f / MEDITATION_MAX_MINUTES
 
     /** Winkel (0..360, gerundet auf die nächste Minute) → 1..60; 12 Uhr (0° bzw. 360°) ist 60. */
     fun minutesAt(angleDeg: Float): Int {
         val norm = ((angleDeg % 360f) + 360f) % 360f
         val m = (norm / DEG_PER_MINUTE).roundToInt()
-        return if (m == 0) DURATION_MAX_MINUTES else clampMinutes(m)
+        return if (m == 0) MEDITATION_MAX_MINUTES else clampMinutes(m)
     }
 
     /**
@@ -44,7 +46,7 @@ object DialScale {
         val prev = clampMinutes(previous)
         val next = clampMinutes(raw)
         if (abs(next - prev) <= HALF_ROUND) return next
-        return if (prev <= HALF_ROUND) DURATION_MIN_MINUTES else DURATION_MAX_MINUTES
+        return if (prev <= HALF_ROUND) MEDITATION_MIN_MINUTES else MEDITATION_MAX_MINUTES
     }
 
     /** 5er-Marke (längerer Strich, Zahl, deutlichere Haptik-Raste). */
@@ -74,7 +76,7 @@ class DialDrag(value: Int, at: Float) {
     private var last = clampMinutes(value)
     private var zone = when (DialScale.follow(value, lastRaw)) {
         lastRaw -> Zone.FOLLOW
-        DURATION_MAX_MINUTES -> Zone.HELD_MAX
+        MEDITATION_MAX_MINUTES -> Zone.HELD_MAX
         else -> Zone.HELD_MIN
     }
 
@@ -90,17 +92,17 @@ class DialDrag(value: Int, at: Float) {
             delta > HALF_ROUND -> if (zone == Zone.FREE || zone == Zone.HELD_MAX) Zone.FOLLOW else Zone.HELD_MIN
 
             // Einmal ganz herum wieder am hängenden Knopf: der Wert folgt dem Finger.
-            zone == Zone.HELD_MAX && next >= DURATION_MAX_MINUTES - RELEASE_WINDOW -> Zone.FOLLOW
+            zone == Zone.HELD_MAX && next >= MEDITATION_MAX_MINUTES - RELEASE_WINDOW -> Zone.FOLLOW
 
-            zone == Zone.HELD_MIN && next <= DURATION_MIN_MINUTES + RELEASE_WINDOW -> Zone.FOLLOW
+            zone == Zone.HELD_MIN && next <= MEDITATION_MIN_MINUTES + RELEASE_WINDOW -> Zone.FOLLOW
 
             else -> zone
         }
         lastRaw = next
         last = when (zone) {
             Zone.FOLLOW -> snapMinutes(exact, last)
-            Zone.FREE, Zone.HELD_MAX -> DURATION_MAX_MINUTES
-            Zone.HELD_MIN -> DURATION_MIN_MINUTES
+            Zone.FREE, Zone.HELD_MAX -> MEDITATION_MAX_MINUTES
+            Zone.HELD_MIN -> MEDITATION_MIN_MINUTES
         }
         return if (zone == Zone.FREE) null else last
     }
@@ -109,8 +111,8 @@ class DialDrag(value: Int, at: Float) {
         // Ungerundete Minuten auf 0,5..<60,5: knapp rechts von 12 Uhr (unter 0,5) zählt als 60,x,
         // damit Rundung und Fang an der 60 nicht über 12 Uhr springen.
         fun unwrap(at: Float): Float {
-            val norm = ((at % DURATION_MAX_MINUTES) + DURATION_MAX_MINUTES) % DURATION_MAX_MINUTES
-            return if (norm < HALF_MINUTE) norm + DURATION_MAX_MINUTES else norm
+            val norm = ((at % MEDITATION_MAX_MINUTES) + MEDITATION_MAX_MINUTES) % MEDITATION_MAX_MINUTES
+            return if (norm < HALF_MINUTE) norm + MEDITATION_MAX_MINUTES else norm
         }
 
         fun rawMinutes(exact: Float): Int = clampMinutes(exact.roundToInt())
@@ -148,12 +150,12 @@ fun crossesMajor(previous: Int, next: Int): Boolean {
 object RulerScale {
 
     // Strich-Index von ∞: direkt hinter der 60.
-    private const val FREE_INDEX = DURATION_MAX_MINUTES - DURATION_MIN_MINUTES + 1
+    private const val FREE_INDEX = MEDITATION_MAX_MINUTES - MEDITATION_MIN_MINUTES + 1
 
     /** Scroll-Versatz → 1..60 (gerundet auf den nächsten Strich; auf ∞ steht 60). */
     fun minutesAt(offsetPx: Float, stepPx: Float): Int {
-        if (stepPx <= 0f) return DURATION_MIN_MINUTES
-        return clampMinutes((offsetPx / stepPx).roundToInt() + DURATION_MIN_MINUTES)
+        if (stepPx <= 0f) return MEDITATION_MIN_MINUTES
+        return clampMinutes((offsetPx / stepPx).roundToInt() + MEDITATION_MIN_MINUTES)
     }
 
     /**
@@ -161,12 +163,12 @@ object RulerScale {
      * an 5er-Marken über [snapMinutes] wie am Zeitring.
      */
     fun exactMinutesAt(offsetPx: Float, stepPx: Float): Float {
-        if (stepPx <= 0f) return DURATION_MIN_MINUTES.toFloat()
-        return (offsetPx / stepPx + DURATION_MIN_MINUTES).coerceIn(DURATION_MIN_MINUTES.toFloat(), (FREE_INDEX + DURATION_MIN_MINUTES).toFloat())
+        if (stepPx <= 0f) return MEDITATION_MIN_MINUTES.toFloat()
+        return (offsetPx / stepPx + MEDITATION_MIN_MINUTES).coerceIn(MEDITATION_MIN_MINUTES.toFloat(), (FREE_INDEX + MEDITATION_MIN_MINUTES).toFloat())
     }
 
     /** Minuten → Scroll-Versatz, auf dem der Strich unter der Marke steht. */
-    fun offsetOf(minutes: Int, stepPx: Float): Float = (clampMinutes(minutes) - DURATION_MIN_MINUTES) * stepPx
+    fun offsetOf(minutes: Int, stepPx: Float): Float = (clampMinutes(minutes) - MEDITATION_MIN_MINUTES) * stepPx
 
     /** Steht der Versatz (gerundet) auf dem ∞-Strich? */
     fun isFreeAt(offsetPx: Float, stepPx: Float): Boolean = stepPx > 0f && (offsetPx / stepPx).roundToInt() >= FREE_INDEX
@@ -175,7 +177,7 @@ object RulerScale {
     fun offsetOfFree(stepPx: Float): Float = FREE_INDEX * stepPx
 }
 
-private const val HALF_ROUND = DURATION_MAX_MINUTES / 2
+private const val HALF_ROUND = MEDITATION_MAX_MINUTES / 2
 
 // Minuten vor der hängenden Grenze, ab denen der Finger den Knopf wieder mitnimmt.
 private const val RELEASE_WINDOW = 3
@@ -186,5 +188,5 @@ private const val HALF_MINUTE = 0.5f
 private const val SNAP_CAPTURE = 0.8f
 private const val SNAP_RELEASE = 1.3f
 
-/** Klemmt auf [DURATION_MIN_MINUTES]..[DURATION_MAX_MINUTES]. */
-internal fun clampMinutes(minutes: Int): Int = minutes.coerceIn(DURATION_MIN_MINUTES, DURATION_MAX_MINUTES)
+/** Klemmt auf [MEDITATION_MIN_MINUTES]..[MEDITATION_MAX_MINUTES]. */
+internal fun clampMinutes(minutes: Int): Int = minutes.coerceIn(MEDITATION_MIN_MINUTES, MEDITATION_MAX_MINUTES)

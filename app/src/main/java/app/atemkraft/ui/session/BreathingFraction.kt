@@ -1,6 +1,7 @@
 package app.atemkraft.ui.session
 
 import app.atemkraft.domain.PhaseType
+import app.atemkraft.playback.SessionStatus
 
 /** Skala des Kreises im Start-Countdown (Vorbereitung): halb gefüllt. */
 internal const val PREPARE_FRACTION = 0.5f

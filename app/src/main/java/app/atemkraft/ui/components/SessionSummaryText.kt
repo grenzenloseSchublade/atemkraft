@@ -14,13 +14,21 @@ import app.atemkraft.R
  * Zusammengesetzt werden sie mit [DotSeparatedFlow].
  */
 @Composable
-fun sessionSummaryParts(durationMs: Long, rounds: Int? = null, breaths: Int? = null): List<String> {
+fun sessionSummaryParts(durationMs: Long, rounds: Int? = null, breaths: Int? = null): List<String> = listOfNotNull(
+    rounds?.let { pluralStringResource(R.plurals.session_summary_rounds, it, it) },
+    durationClockText(durationMs),
+    breaths?.let { pluralStringResource(R.plurals.session_summary_breaths, it, it) },
+)
+
+/**
+ * Sichtbare Dauer „6:05 min“ (abgerundet auf volle Sekunden, negativ = 0:00) – für Bilanz und
+ * Logbuch dieselbe Form. Über die String-Ressource, nicht [app.atemkraft.domain.formatClock]: Die
+ * Einheit gehört in die Übersetzung (TEXT-03).
+ */
+@Composable
+fun durationClockText(durationMs: Long): String {
     val totalSeconds = (durationMs / 1000L).coerceAtLeast(0L)
-    return listOfNotNull(
-        rounds?.let { pluralStringResource(R.plurals.session_summary_rounds, it, it) },
-        stringResource(R.string.session_summary_duration, totalSeconds / 60L, totalSeconds % 60L),
-        breaths?.let { pluralStringResource(R.plurals.session_summary_breaths, it, it) },
-    )
+    return stringResource(R.string.session_summary_duration, totalSeconds / 60L, totalSeconds % 60L)
 }
 
 /**

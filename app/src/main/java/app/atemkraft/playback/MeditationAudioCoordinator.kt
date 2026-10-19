@@ -1,4 +1,4 @@
-package app.atemkraft.ui.meditation
+package app.atemkraft.playback
 
 import android.content.Context
 import app.atemkraft.cue.AudioFocusController

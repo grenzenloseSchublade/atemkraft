@@ -471,6 +471,7 @@ CHECKS: list[Check] = [
     Check("layer-import-domain", "CODE-01", [SRC + "domain/*.kt"], [r"^import app\.atemkraft\.(ui|data)\b"]),
     Check("layer-import-data", "CODE-01", [SRC + "data/*.kt"], [r"^import app\.atemkraft\.ui\b"]),
     Check("layer-import-components", "CODE-01", [SRC + "ui/components/*.kt"], [r"^import app\.atemkraft\.ui\.(?!theme\b|components\b)"]),
+    Check("layer-import-playback", "CODE-01", [SRC + "playback/*.kt"], [r"^import app\.atemkraft\.ui\b"]),
     Check("ordinal-persist", "CODE-05", [SRC + "data/*.kt"], [r"\.ordinal\b"]),
     Check("todo-unlinked", "CODE-06", [SRC + "*.kt"], [r"//\s*TODO(?!\((S|A)-\d+\))"], skip_comments=False),
     # Sicherheit (docs/SECURITY.md, Automatische Prüfung): Null-Toleranz, ohne Baseline.

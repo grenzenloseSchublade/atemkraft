@@ -12,12 +12,6 @@ import androidx.compose.runtime.setValue
 import app.atemkraft.domain.MEDITATION_MAX_MINUTES
 import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 
-/** Kürzeste wählbare Dauer (Minuten). */
-const val DURATION_MIN_MINUTES = MEDITATION_MIN_MINUTES
-
-/** Längste wählbare Dauer (Minuten) – eine Runde des Zeitrings. */
-const val DURATION_MAX_MINUTES = MEDITATION_MAX_MINUTES
-
 /**
  * Zustand der Dauerwahl, getrennt von der Darstellung: Zeitring (Variante E) und wischbare
  * Skala (Variante F) lesen und ändern nur diesen Zustand – über die `…WithTick`-Funktionen unten,
