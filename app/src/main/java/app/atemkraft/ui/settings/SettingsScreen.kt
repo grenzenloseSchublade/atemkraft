@@ -47,8 +47,10 @@ import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceGender
+import app.atemkraft.cue.tts.VoiceQuality
 import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.Refs
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.GONG_INTERVAL_CHOICES
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
@@ -247,7 +249,7 @@ private fun DataButton(label: String, onClick: () -> Unit) {
     }
 }
 
-/** Allgemeine Ton-Karte: gilt app-weit (Atem-Cues, Sitzungs- und Meditations-Gong). */
+/** Allgemeine Klang-Karte: gilt app-weit (Atem-Cues, Schluss-Gong der Atemübungen, Meditations-Gongs). */
 @Composable
 private fun TonCard(
     volume: ToneVolume,
@@ -460,14 +462,11 @@ private fun VoiceRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
+            // Name immer in onSurface: Den Zustand trägt allein „✓ Aktiv“ (FARBE-05).
             WholeWordText(
                 text = spec.displayName,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (active && engineReady) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
+                color = MaterialTheme.colorScheme.onSurface,
             )
             HintText(voiceSubtitle(spec, state, active, engineReady))
             if (spec.nonCommercialOnly) {
@@ -512,7 +511,7 @@ private fun VoiceRow(
             is VoiceDownloadState.Downloaded -> {
                 when {
                     // Aktiv-Label erst zeigen, wenn die Engine wirklich bereit ist (gleiche Quelle
-                    // wie Highlight/Untertitel → keine widersprüchlichen Signale beim Umschalten).
+                    // wie der Untertitel → keine widersprüchlichen Signale beim Umschalten).
                     active && engineReady -> Text(
                         text = stringResource(R.string.settings_voice_active),
                         style = MaterialTheme.typography.labelMedium,
@@ -551,7 +550,15 @@ private fun voiceSubtitle(
         VoiceGender.MALE -> stringResource(R.string.voice_gender_male)
         VoiceGender.FEMALE -> stringResource(R.string.voice_gender_female)
     }
-    val base = "$gender · ${spec.qualityLabel} · ${spec.license}"
+    val quality = stringResource(
+        when (spec.quality) {
+            VoiceQuality.STUDIO_CLEAR -> R.string.voice_quality_studio_clear
+            VoiceQuality.STUDIO -> R.string.voice_quality_studio
+            VoiceQuality.SIMPLE -> R.string.voice_quality_simple
+            VoiceQuality.SIMPLE_COMPACT -> R.string.voice_quality_simple_compact
+        },
+    )
+    val base = listOf(gender, quality, spec.license).joinToString(DOT_SEPARATOR)
     val extra = when (state) {
         is VoiceDownloadState.NotDownloaded -> stringResource(R.string.voice_size_mb, spec.approxMb)
 
@@ -569,7 +576,7 @@ private fun voiceSubtitle(
         is VoiceDownloadState.Downloaded ->
             if (active && !engineReady) stringResource(R.string.settings_speech_pack_preparing) else null
     }
-    return if (extra != null) "$base · $extra" else base
+    return if (extra != null) base + DOT_SEPARATOR + extra else base
 }
 
 @Composable

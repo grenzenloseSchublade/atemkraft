@@ -53,7 +53,7 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
  *   Halten ≤ 2 s – nie Hyperventilation.
  *
  * Alle Phasen in ganzen Sekunden: So zählt man mit, der Countdown der Session stimmt mit der
- * Angabe überein, „Intervalle anpassen“ (ganze Sekunden) zeigt dieselben Werte, und die
+ * Angabe überein, „Phasen anpassen“ (ganze Sekunden) zeigt dieselben Werte, und die
  * Verhältnisse sind ganzzahlig wie in der Atemlehre (4 : 6, 4 : 8). Halbe Sekunden spürt man
  * beim Atmen kaum, und für die Studienlage zählt das Tempo, nicht das genaue Verhältnis.
  */
@@ -149,20 +149,14 @@ object RandomPatternGenerator {
     /**
      * Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s". Zwischen Zahl und „s"
      * steht ein geschütztes Leerzeichen ([NBSP]): Bei großer Schrift bricht die Zeile sonst
-     * zwischen „1" und „s" um (TEXT-10). Teile werden mit [HINT_SEPARATOR] verbunden.
+     * zwischen „1" und „s" um (TEXT-10). Teile werden mit [DOT_SEPARATOR] verbunden.
      */
     fun hintFor(spec: PatternSpec): String = buildList {
         add("Einatmen ${spec.inhale.fmt()}${NBSP}s")
         spec.holdFull?.let { add("Halten ${it.fmt()}${NBSP}s") }
         add("Ausatmen ${spec.exhale.fmt()}${NBSP}s")
         spec.holdEmpty?.let { add("Halten ${it.fmt()}${NBSP}s") }
-    }.joinToString(HINT_SEPARATOR)
-
-    /**
-     * Trenner zwischen Teilen einer Hinweiszeile („… 6,5 s · ca. 4 min“). Das geschützte
-     * Leerzeichen vor dem Punkt hält ihn am Zeilenende – eine Zeile beginnt nie mit „·“.
-     */
-    const val HINT_SEPARATOR = "\u00A0· "
+    }.joinToString(DOT_SEPARATOR)
 
     /** Geschütztes Leerzeichen zwischen Zahl und Einheit. */
     private const val NBSP = '\u00A0'
@@ -171,9 +165,11 @@ object RandomPatternGenerator {
     fun exerciseFrom(spec: PatternSpec, id: String, name: String): Exercise {
         val phases = buildList {
             add(Phase(PhaseType.INHALE, secs(spec.inhale)))
-            spec.holdFull?.let { add(Phase(PhaseType.HOLD_FULL, secs(it))) }
+            // Notiz wie bei Box und 4-7-8: Beide Haltephasen heißen „Halten“, erst „voll“/„leer“
+            // darunter unterscheidet sie (TEXT-02).
+            spec.holdFull?.let { add(Phase(PhaseType.HOLD_FULL, secs(it), note = "voll")) }
             add(Phase(PhaseType.EXHALE, secs(spec.exhale)))
-            spec.holdEmpty?.let { add(Phase(PhaseType.HOLD_EMPTY, secs(it))) }
+            spec.holdEmpty?.let { add(Phase(PhaseType.HOLD_EMPTY, secs(it), note = "leer")) }
         }
         val cycleSeconds = spec.inhale + (spec.holdFull ?: 0.0) + spec.exhale + (spec.holdEmpty ?: 0.0)
         val repeat = (TARGET_SECONDS / cycleSeconds).roundToInt().coerceAtLeast(1)
@@ -197,7 +193,7 @@ object RandomPatternGenerator {
                 "ohne spezifisches Wirkversprechen.",
             effectDetail = "Das Muster entsteht deterministisch aus dem Datum: Stil und " +
                 "Phasenlängen werden zufällig gewählt, aber in Grenzen gehalten, die der " +
-                "Forschung zu langsamem Atmen entsprechen (ruhig: 4,6–6,7 Atemzüge/min, " +
+                "Forschung zu langsamem Atmen entsprechen (ruhig: 4,6–6,7 Atemzüge pro Minute, " +
                 "Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: Einatmen länger, nie forciert). " +
                 "Für regelmäßiges Üben ist ein konstantes Muster – etwa die Resonanz-Atmung – " +
                 "die besser belegte Wahl; das Tagesmuster ist die Einladung, Neues zu entdecken.",

@@ -55,7 +55,7 @@ class RandomPatternGeneratorTest {
             }
     }
 
-    /** Ganze Sekunden: Countdown, „Intervalle anpassen“ und Atemlehre-Verhältnisse passen zusammen. */
+    /** Ganze Sekunden: Countdown, „Phasen anpassen“ und Atemlehre-Verhältnisse passen zusammen. */
     @Test
     fun `alle Phasen in ganzen Sekunden`() {
         (0L until 5000L).map { RandomPatternGenerator.forSeed(it).spec }.forEach { spec ->

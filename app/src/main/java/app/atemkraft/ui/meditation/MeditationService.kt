@@ -14,6 +14,7 @@ import androidx.core.app.ServiceCompat
 import app.atemkraft.AtemkraftApplication
 import app.atemkraft.MainActivity
 import app.atemkraft.R
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.MeditationMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -134,7 +135,7 @@ class MeditationService : Service() {
 
             else -> formatMeditationTime(state.elapsedMs)
         }
-        return if (paused) "$base · ${getString(R.string.session_paused)}" else base
+        return if (paused) base + DOT_SEPARATOR + getString(R.string.session_paused) else base
     }
 
     private fun buildNotification(body: String): android.app.Notification {

@@ -462,9 +462,12 @@ CHECKS: list[Check] = [
     Check("ui-literal", "TEXT-01", [SRC + "ui/*.kt"], custom=ui_literal),
     Check("locale", "TEXT-03", [SRC + "ui/*.kt"], [r"Locale\.(getDefault|GERMAN|GERMANY)\b|SimpleDateFormat"], skip_imports=True),
     Check("locale-config", "TEXT-03", [], custom=locale_config),
-    Check("typo-chars-strings", "TEXT-10", [RES + "values*/strings.xml"], [r"„[^“<]*\"", r"\\'", r"”", r"—"]),
+    Check("typo-chars-strings", "TEXT-10", [RES + "values*/strings.xml"], [r"„[^“<]*\"", r"\\'", r"”", r"—", r"~"]),
     Check("typo-chars-src", "TEXT-10", [SRC + "*.kt"], [r'\\"', r"”"]),
-    Check("typo-chars-content", "TEXT-10", [SRC + "data/*.kt", SRC + "domain/*.kt"], [r"—"]),
+    # „~“ nur innerhalb eines String-Literals (gerade Zahl von " davor, dann ein offenes "):
+    # Code-Kommentare hinter einer Anweisung („repeat = 60, // ~10 min“) bleiben erlaubt.
+    Check("typo-chars-content", "TEXT-10", [SRC + "data/*.kt", SRC + "domain/*.kt"],
+          [r"—", r'^(?:[^"\n]*"[^"\n]*")*[^"\n]*"[^"\n]*~']),
     Check("layer-import-domain", "CODE-01", [SRC + "domain/*.kt"], [r"^import app\.atemkraft\.(ui|data)\b"]),
     Check("layer-import-data", "CODE-01", [SRC + "data/*.kt"], [r"^import app\.atemkraft\.ui\b"]),
     Check("layer-import-components", "CODE-01", [SRC + "ui/components/*.kt"], [r"^import app\.atemkraft\.ui\.(?!theme\b|components\b)"]),

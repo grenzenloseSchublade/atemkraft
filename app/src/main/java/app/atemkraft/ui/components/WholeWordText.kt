@@ -84,7 +84,9 @@ private fun TextUnit.scaled(factor: Float): TextUnit = if (isSpecified) this * f
  * Zeilenumbruch an einer Stelle, an der kein Wort endet: zwischen zwei Buchstaben/Ziffern
  * („Resonan|z“) oder vor einem Bindestrich bzw. Satzzeichen, das dann eine Zeile beginnt
  * („Resonanz|-Atmung“, „Sigh|)“). Ein Umbruch nach Leerzeichen oder nach einem Bindestrich
- * („Resonanz-|Atmung“) ist erlaubt. Gemeinsame Regel für [WholeWordText] und ScreenshotTest.
+ * („Resonanz-|Atmung“) ist erlaubt – nur nicht vor „·“: Der Trennpunkt beginnt nie eine Zeile,
+ * auch nach einem Leerzeichen nicht (TEXT-10, geschütztes Leerzeichen davor). Gemeinsame Regel
+ * für [WholeWordText] und ScreenshotTest.
  */
 fun breaksInsideWord(layout: TextLayoutResult): Boolean = (0 until layout.lineCount - 1).any { badBreakAt(layout.layoutInput.text.text, layout.getLineEnd(it)) }
 
@@ -93,8 +95,10 @@ fun badBreakAt(text: String, end: Int): Boolean {
     if (end !in 1 until text.length) return false
     val before = text[end - 1]
     val after = text[end]
+    if (after == DOT) return true
     if (before.isWhitespace()) return false
     return (before.isLetterOrDigit() && after.isLetterOrDigit()) || after in NO_LINE_START
 }
 
-private const val NO_LINE_START = "-‐‑–—)]}.,;:!?…“”\"'»«/·%" // Abweichung TEXT-10: Zeichenliste, kein UI-Text
+private const val NO_LINE_START = "-‐‑–—)]}.,;:!?…“”\"'»«/%" // Abweichung TEXT-10: Zeichenliste, kein UI-Text
+private const val DOT = '·'

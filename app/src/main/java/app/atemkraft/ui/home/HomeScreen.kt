@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternSpec
@@ -252,7 +253,7 @@ fun PatternCard(
                 // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
                 // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
                 Text(
-                    text = RandomPatternGenerator.hintFor(spec) + RandomPatternGenerator.HINT_SEPARATOR +
+                    text = RandomPatternGenerator.hintFor(spec) + DOT_SEPARATOR +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),

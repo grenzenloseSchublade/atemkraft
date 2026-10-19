@@ -324,6 +324,29 @@ class ContentRulesTest {
     }
 
     /**
+     * Pflichtbegriffe (TEXT-05): Jeder Fachbegriff aus den Detailtexten steht in „Begriffe
+     * erklärt“. Ein neuer Fachbegriff im Inhalt kommt in diese Liste und ins Glossar; kommt einer
+     * im Inhalt nicht mehr vor, fällt er aus der Liste. Ohne Baseline.
+     */
+    private val requiredGlossaryTerms = listOf(
+        "Meta-Analyse", "RCT", "verblindet", "HRV", "Vagus", "Parasympathikus", "Baroreflex", "RSA",
+        "CO₂-Toleranz", "Hyperventilation", "Hormese", "COPD",
+    )
+
+    @Test
+    fun `glossary-terms`() {
+        val names = (Glossary.bodyTerms + Glossary.yogaTerms).map { it.name }
+        val content = (exerciseTexts + atemlehreTexts + situationTexts).joinToString("\n") { it.value }
+        val findings = requiredGlossaryTerms.flatMap { term ->
+            listOfNotNull(
+                if (names.none { term in it }) "„$term“ fehlt in „Begriffe erklärt“ (Glossary.kt)" else null,
+                if (term !in content) "„$term“ kommt im Inhalt nicht mehr vor, aus der Liste streichen" else null,
+            )
+        }
+        if (findings.isNotEmpty()) fail("ContentRulesTest glossary-terms:\n" + findings.joinToString("\n") { "  $it" })
+    }
+
+    /**
      * Suchbegriffe sind neu und ohne Altlasten: Heilversprechen und Jargon sind hier sofort
      * ein Fehler, ohne Baseline (TEXT-05, TEXT-09, MUSTER-09).
      */
@@ -379,13 +402,26 @@ class ContentRulesTest {
         assertAgainstBaseline("quotes", findings)
     }
 
+    /**
+     * Trennpunkt mit geschütztem Leerzeichen davor („Ein 4\u00A0· Aus 6“, wie `DOT_SEPARATOR`):
+     * Nach einem normalen Leerzeichen könnte der Umbruch „·“ an den Zeilenanfang setzen.
+     */
+    @Test
+    fun `dot-separator`() {
+        val identifiers = refs.mapNotNull { (name, ref) -> ref.identifier?.let { Text("refs.$name.identifier", it) } }
+        val findings = (contentTexts + strings + identifiers).mapNotNull { t ->
+            if (Regex("""\s·""").containsMatchIn(t.value.replace("\u00A0·", ""))) Finding(t.id, "„ ·“ ohne geschütztes Leerzeichen") else null
+        }
+        assertAgainstBaseline("dot-separator", findings)
+    }
+
     // ---- TEXT-12: Quellen ---------------------------------------------------------------
 
     private val citationFormat = Regex(
         """^\p{Lu}[\p{L}'-]+(?: [\p{Lu}][\p{L}'-]+)* (?:\p{Lu}\. ?)+(?:et al\.|& \p{Lu}[\p{L}'-]+ (?:\p{Lu}\. ?)+)? """ +
             """\(\d{4}\): .+\. .+""",
     )
-    private val identifierFormat = Regex("""^(doi:10\.\S+|PMID \d+|PMC\d+)( · (PMID \d+|PMC\d+))*$""")
+    private val identifierFormat = Regex("""^(doi:10\.\S+|PMID \d+|PMC\d+)(\u00A0· (PMID \d+|PMC\d+))*$""")
 
     /** Zitierformat und Kennung jeder Quelle; jede „(Name Jahr)“-Nennung im Text hat eine Quelle. */
     @Test

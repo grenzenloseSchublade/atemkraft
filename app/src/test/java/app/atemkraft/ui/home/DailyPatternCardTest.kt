@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.atemkraft.R
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -121,6 +122,6 @@ class DailyPatternCardTest {
     fun `Dauer haelt Zahl und Einheit mit geschuetztem Leerzeichen zusammen`() {
         val duration = app.getString(R.string.duration_approx, daily.exercise.defaultMinutes())
         assertEquals("ca. ${daily.exercise.defaultMinutes()} min", duration)
-        compose.onNodeWithText(RandomPatternGenerator.HINT_SEPARATOR + duration, substring = true).assertExists()
+        compose.onNodeWithText(DOT_SEPARATOR + duration, substring = true).assertExists()
     }
 }

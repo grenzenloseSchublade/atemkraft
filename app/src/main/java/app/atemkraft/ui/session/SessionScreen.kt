@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.CircleTapTarget
@@ -57,7 +58,6 @@ import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.HideableSlot
 import app.atemkraft.ui.components.PauseFlash
-import app.atemkraft.ui.components.SUMMARY_SEPARATOR
 import app.atemkraft.ui.components.SessionControlBar
 import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.WholeWordText
@@ -377,7 +377,7 @@ private fun SessionTitle(state: SessionUiState) {
                 )
             },
         ),
-        separator = { Text(text = SUMMARY_SEPARATOR, style = titleStyle, color = roundColor) },
+        separator = { Text(text = DOT_SEPARATOR, style = titleStyle, color = roundColor) },
     )
 }
 
@@ -397,7 +397,7 @@ private fun NextPhaseRow(nextPhaseType: PhaseType?, minHeight: Dp) {
             // Bei sehr großer Schrift auf schmalem Gerät bricht die Zeile zwischen Wörtern um,
             // ganz statt abgeschnitten (LAYOUT-03).
             WholeWordText(
-                text = stringResource(R.string.session_next) + SUMMARY_SEPARATOR + phaseDisplayLabel(nextPhaseType, null),
+                text = stringResource(R.string.session_next) + DOT_SEPARATOR + phaseDisplayLabel(nextPhaseType, null),
                 style = MaterialTheme.typography.labelSmall,
                 color = hintColor,
                 textAlign = TextAlign.Center,

@@ -20,14 +20,30 @@ object Glossary {
                 "Wissen ist, nicht wie stark eine Technik wirkt.",
         ),
         GlossaryTerm(
+            "Meta-Analyse",
+            "Eine Auswertung, die die Ergebnisse mehrerer Studien zur selben Frage zusammenrechnet. " +
+                "Sie ist nur so verlässlich wie die Studien, die sie einschließt.",
+        ),
+        GlossaryTerm(
+            "RCT – randomisierte kontrollierte Studie",
+            "Eine Studie, in der das Los entscheidet, wer die Übung macht und wer zum Vergleich etwas " +
+                "anderes oder nichts. So lässt sich ein Unterschied am ehesten der Übung zuschreiben.",
+        ),
+        GlossaryTerm(
+            "verblindet / unverblindet",
+            "Verblindet heißt: Die Teilnehmenden, oft auch die Auswertenden, wissen nicht, wer zu " +
+                "welcher Gruppe gehört. Bei Atemübungen ist das kaum möglich; in unverblindeten Studien " +
+                "kann die Erwartung das Ergebnis mitprägen.",
+        ),
+        GlossaryTerm(
             "HRV – Herzratenvariabilität",
             "Die natürliche Schwankung der Zeit zwischen zwei Herzschlägen. Eine höhere HRV gilt als " +
                 "Zeichen für Erholung, Stressresistenz und einen aktiven Vagus.",
         ),
         GlossaryTerm(
             "Vagus / Vagustonus",
-            "Der Vagusnerv ist der Hauptnerv des Ruhe-Systems (Parasympathikus). Hoher Vagustonus " +
-                "bedeutet bessere Beruhigung, Erholung und HRV.",
+            "Der Vagusnerv ist der Hauptnerv des Ruhe-Systems (Parasympathikus). Ein hoher " +
+                "Vagustonus gilt als Zeichen guter Erholungsfähigkeit.",
         ),
         GlossaryTerm(
             "Parasympathikus / Sympathikus",
@@ -36,8 +52,9 @@ object Glossary {
         ),
         GlossaryTerm(
             "Baroreflex",
-            "Ein Regelkreis, der den Blutdruck stabil hält. Langsames Atmen (~6/min) bringt ihn in " +
-                "Resonanz und trainiert ihn.",
+            "Ein Regelkreis, der den Blutdruck stabil hält. Langsames Atmen um 6 Atemzüge pro Minute " +
+                "bringt ihn in Resonanz; ob er dadurch auf Dauer trainiert wird, ist nur in kleinen " +
+                "Studien untersucht.",
         ),
         GlossaryTerm(
             "RSA – Respiratorische Sinusarrhythmie",
@@ -46,13 +63,25 @@ object Glossary {
         ),
         GlossaryTerm(
             "CO₂-Toleranz",
-            "Wie gut der Körper einen leichten Anstieg von Kohlendioxid verträgt. Höhere Toleranz " +
-                "ermöglicht ruhigeres, effizienteres Atmen.",
+            "Wie gut der Körper einen leichten Anstieg von Kohlendioxid verträgt. Die Buteyko-Lehre " +
+                "nimmt an, dass eine höhere Toleranz ruhigeres Atmen ermöglicht; Studien bestätigen " +
+                "das bisher nicht.",
+        ),
+        GlossaryTerm(
+            "Hyperventilation",
+            "Mehr atmen, als der Körper gerade braucht. Dabei sinkt das Kohlendioxid im Blut; das " +
+                "kann Kribbeln, Schwindel und Benommenheit auslösen. Wim Hof und die Feueratmung nutzen " +
+                "das bewusst, bei ruhigen Übungen ist es unerwünscht.",
         ),
         GlossaryTerm(
             "Hormese",
             "Die Idee, dass kleine, dosierte Belastungsreize (z. B. Wim Hof) den Körper zur Anpassung " +
                 "anregen. Für Atemtechniken ist das kaum untersucht.",
+        ),
+        GlossaryTerm(
+            "COPD",
+            "Chronisch obstruktive Lungenerkrankung: dauerhaft verengte Atemwege, häufig nach langem " +
+                "Rauchen. Die Studien zur Lippenbremse untersuchen vor allem Menschen mit COPD.",
         ),
         GlossaryTerm(
             "PEM – Post-Exertional Malaise",
@@ -69,28 +98,28 @@ object Glossary {
                 "(Ausdehnung). Bei Patanjali die vierte Stufe des Yoga-Wegs.",
         ),
         GlossaryTerm(
-            "Puraka · Rechaka · Kumbhaka",
+            "Puraka\u00A0· Rechaka\u00A0· Kumbhaka",
             "Einatmen, Ausatmen und Anhalten. Antara Kumbhaka ist das Halten mit voller, Bahya " +
                 "Kumbhaka das Halten mit leerer Lunge.",
         ),
         GlossaryTerm(
-            "Brmhana · Langhana · Samana",
+            "Brmhana\u00A0· Langhana\u00A0· Samana",
             "Längeres Einatmen gilt als nährend und belebend (Brmhana), längeres Ausatmen als " +
                 "beruhigend und kühlend (Langhana), gleich langes als ausgleichend (Samana). Begriffe " +
                 "aus der Lehre von Krishnamacharya und Desikachar.",
         ),
         GlossaryTerm(
-            "Prana · Apana",
+            "Prana\u00A0· Apana",
             "Zwei Strömungen der Lebenskraft: Prana nimmt auf und gehört zum Einatmen, Apana lässt " +
                 "los und gehört zum Ausatmen.",
         ),
         GlossaryTerm(
-            "Ida · Pingala",
+            "Ida\u00A0· Pingala",
             "Zwei Hauptkanäle der Lebenskraft: Ida links, Mond, kühlend; Pingala rechts, Sonne, " +
                 "wärmend. Die Wechselatmung soll sie ausgleichen.",
         ),
         GlossaryTerm(
-            "Sama Vritti · Vishama Vritti",
+            "Sama Vritti\u00A0· Vishama Vritti",
             "Atmen in gleich langen Phasen (Sama Vritti) oder in ungleichen Verhältnissen " +
                 "(Vishama Vritti).",
         ),

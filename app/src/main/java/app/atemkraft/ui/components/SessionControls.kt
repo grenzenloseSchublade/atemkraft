@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
@@ -272,7 +273,7 @@ fun FinishedPanel(
                 parts = summary.map { part ->
                     { WholeWordText(text = part, style = summaryStyle, color = summaryColor, textAlign = TextAlign.Center) }
                 },
-                separator = { Text(text = SUMMARY_SEPARATOR, style = summaryStyle, color = summaryColor) },
+                separator = { Text(text = DOT_SEPARATOR, style = summaryStyle, color = summaryColor) },
                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
             )
         }
@@ -290,9 +291,6 @@ fun FinishedPanel(
         }
     }
 }
-
-/** Trenner zwischen den Teilen der Bilanz und des Session-Kopfs ([DotSeparatedFlow]). */
-const val SUMMARY_SEPARATOR = " · "
 
 /** Zustand des Tap-Flashs (großes Pause/Play-Symbol beim Antippen des Kreises). */
 @Stable

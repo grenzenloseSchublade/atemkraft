@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.ScreenHeader
@@ -113,16 +114,6 @@ fun LogbookScreen(
                 StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, today = today)
             }
 
-            if (entries.isEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.log_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                    )
-                }
-            }
-
             items(groups, key = { "group-${it.period}" }) { group -> LogGroupSection(group, zone) }
             item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
         }
@@ -149,7 +140,7 @@ private fun StatsCard(
                     stringResource(R.string.log_sessions_none)
                 } else {
                     pluralStringResource(R.plurals.log_sessions, entries.size, entries.size) +
-                        " · " + stringResource(R.string.log_minutes_total, totalMinutes)
+                        DOT_SEPARATOR + stringResource(R.string.log_minutes_total, totalMinutes)
                 },
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,

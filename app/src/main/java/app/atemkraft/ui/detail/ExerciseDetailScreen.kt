@@ -97,7 +97,7 @@ fun ExerciseDetailScreen(
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
     var showSafety by rememberSaveable { mutableStateOf(false) }
 
-    // Optionale Feineinstellung der Phasenlängen (dezent hinter „Intervalle anpassen").
+    // Optionale Feineinstellung der Phasenlängen (dezent hinter „Phasen anpassen“).
     val cyclePhases = remember(exercise.id) { exercise.segments.flatMap { it.phases } }
     fun defaultSec(type: PhaseType): Int? = (
         cyclePhases.firstOrNull { it.type == type && it.duration is PhaseDuration.Fixed }
@@ -228,7 +228,7 @@ fun ExerciseDetailScreen(
                         text = if (roundBased) {
                             pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
                         } else {
-                            stringResource(R.string.detail_meta_minutes, exercise.defaultMinutes())
+                            stringResource(R.string.duration_approx, exercise.defaultMinutes())
                         },
                         color = accent,
                     )

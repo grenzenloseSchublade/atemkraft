@@ -14,10 +14,10 @@
     <string name="phase_rest">Locker atmen</string>
 
     <!-- Familien (Kategorien) -->
-    <string name="family_downregulate">A · Herunterregeln</string>
-    <string name="family_upregulate">B · Hochregeln</string>
-    <string name="family_balance">C · Balancieren</string>
-    <string name="family_functional">D · Funktionell</string>
+    <string name="family_downregulate">A\u00A0· Herunterregeln</string>
+    <string name="family_upregulate">B\u00A0· Hochregeln</string>
+    <string name="family_balance">C\u00A0· Balancieren</string>
+    <string name="family_functional">D\u00A0· Funktionell</string>
     <!-- Statt der Familie auf der Detailseite generierter Muster (Tagesmuster, Meine Muster) -->
     <string name="family_pattern">Muster</string>
 
@@ -40,7 +40,6 @@
         <item quantity="one">%1$d Runde</item>
         <item quantity="other">%1$d Runden</item>
     </plurals>
-    <string name="detail_meta_minutes">~%1$d min</string>
     <string name="detail_intense">intensiv</string>
     <string name="detail_calm">ruhig</string>
     <plurals name="detail_sources_count">
@@ -50,8 +49,9 @@
     <!-- Geschützte Leerzeichen: „ca. 4 min“ bricht nie zwischen Zahl und Einheit um (TEXT-10). -->
     <string name="duration_approx">ca.\u00A0%1$d\u00A0min</string>
     <string name="duration_approx_from">ab ca.\u00A0%1$d\u00A0min</string>
-    <!-- „Starten · ca. 10 min“ – Gesamtdauer direkt am Start. -->
-    <string name="action_start_duration">%1$s · %2$s</string>
+    <!-- „Starten · ca. 10 min“ – Gesamtdauer direkt am Start. Geschütztes Leerzeichen vor „·“:
+         Eine Zeile beginnt nie mit dem Trennpunkt (LAYOUT-03). -->
+    <string name="action_start_duration">%1$s\u00A0· %2$s</string>
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
@@ -109,7 +109,7 @@
 
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
-    <string name="settings_safety_hint">Wird vor Wim Hof und Feueratmung gezeigt. Beim ersten Mal immer.</string>
+    <string name="settings_safety_hint">Wird vor intensiven Übungen gezeigt, beim ersten Mal immer.</string>
     <string name="settings_glossary">Begriffe erklärt</string>
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>
@@ -132,11 +132,11 @@
     <string name="glossary_group_yoga">Aus der Yoga-Lehre</string>
     <string name="settings_about_entry">Über Atemkraft</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_body">18 Atemtechniken mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</string>
-    <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe im Glossar. Bei Erkrankungen vorher ärztlich abklären.</string>
+    <string name="about_body">Atemtechniken mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</string>
+    <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe unter „Begriffe erklärt“. Bei Erkrankungen vorher ärztlich abklären.</string>
     <string name="settings_next_phase">Nächste Phase anzeigen</string>
-    <string name="settings_next_phase_hint">Blendet während der Session dezent die kommende Phase ein – hilfreich für den Anfang.</string>
-    <string name="settings_about">Atemkraft · keine ärztliche Empfehlung. Quellen stehen je Übung im Detail.</string>
+    <string name="settings_next_phase_hint">Blendet während der Atemübung dezent die kommende Phase ein – hilfreich für den Anfang.</string>
+    <string name="settings_about">Mit Quellen, aber keine ärztliche Empfehlung.</string>
 
     <!-- Sicherheits-Dialog -->
     <string name="safety_title">Intensive Übung</string>
@@ -145,10 +145,10 @@
 
     <!-- Anpassung -->
     <string name="adjust_rounds">Runden</string>
-    <string name="adjust_minutes">Dauer (Minuten)</string>
+    <string name="adjust_minutes">Dauer (min)</string>
     <string name="adjust_decrease">Verringern</string>
     <string name="adjust_increase">Erhöhen</string>
-    <string name="adjust_intervals">Intervalle anpassen</string>
+    <string name="adjust_intervals">Phasen anpassen</string>
     <string name="adjust_inhale">Einatmen (s)</string>
     <string name="adjust_hold">Halten (s)</string>
     <string name="adjust_exhale">Ausatmen (s)</string>
@@ -171,7 +171,7 @@
     <string name="session_tap_to_continue">Tippen, wenn du weiteratmen willst</string>
     <string name="session_done_title">Geschafft</string>
     <string name="session_done_question">Wie fühlst du dich?</string>
-    <string name="session_get_ready">Gleich geht\'s los</string>
+    <string name="session_get_ready">Gleich geht’s los</string>
     <string name="session_next">Als Nächstes</string>
     <!-- Bilanz am Ende, Teile mit „ · “ verbunden: „8 Runden · 6:24 min · 60 Atemzüge“.
          Geschützte Leerzeichen: Zahl und Einheit brechen nie auseinander (TEXT-10). -->
@@ -200,7 +200,6 @@
     <string name="action_end">Ende</string>
 
     <!-- Logbuch -->
-    <string name="log_empty">Noch keine abgeschlossenen Sessions.</string>
     <plurals name="log_sessions">
         <item quantity="one">%d Sitzung</item>
         <item quantity="other">%d Sitzungen</item>
@@ -264,7 +263,7 @@
     <string name="settings_haptics">Vibration</string>
 
     <!-- Einstellungen · Abschnitts-Titel -->
-    <string name="settings_tone_title">Ton</string>
+    <string name="settings_tone_title">Klang</string>
     <string name="settings_breathing_title">Atmen</string>
     <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
     <string name="settings_meditation_title">Meditation</string>
@@ -279,10 +278,10 @@
         <item quantity="one">✓ %1$d exportiert</item>
         <item quantity="other">✓ %1$d exportiert</item>
     </plurals>
-    <string name="data_export_empty">Noch keine gespeicherten Muster – speichere unter Atmen ein Muster des Tages.</string>
+    <string name="data_export_empty">Noch keine gespeicherten Muster – speichere im Tab „Atmen“ das Muster des Tages.</string>
     <plurals name="data_import_done">
-        <item quantity="one">✓ %1$d neu · %2$d vorhanden</item>
-        <item quantity="other">✓ %1$d neu · %2$d vorhanden</item>
+        <item quantity="one">✓ %1$d neu\u00A0· %2$d vorhanden</item>
+        <item quantity="other">✓ %1$d neu\u00A0· %2$d vorhanden</item>
     </plurals>
     <string name="data_import_nothing">In der Datei war kein Muster, das sich übernehmen lässt.</string>
     <plurals name="data_import_invalid_entries">
@@ -299,34 +298,40 @@
     <string name="cd_voice_preview">Stimme %1$s anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
-    <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min“ gewählt ist.</string>
+    <string name="settings_gong_interval_hint">Abstand der Zwischen-Gongs, wenn in der Meditation „alle … min“ gewählt ist.</string>
     <string name="settings_gong_length">Gong-Ausklang</string>
     <string name="gong_length_short">Kurz</string>
     <string name="gong_length_long">Lang</string>
-    <string name="settings_gong_length_hint">Gilt für Sitzungs- und Meditations-Gong. Beide klingen natürlich bis zur Stille aus – „Lang“ hallt voller nach.</string>
+    <string name="settings_gong_length_hint">Gilt für den Schluss-Gong der Atemübungen und die Meditations-Gongs. Beide klingen natürlich bis zur Stille aus – „Lang“ hallt voller nach.</string>
     <string name="settings_voice">Stimme</string>
 
-    <!-- Zustände beim Nachladen einer Katalog-Stimme -->
-    <string name="settings_speech_pack_downloading">Lädt … %1$d %%</string>
-    <string name="settings_speech_pack_extracting">Wird entpackt …</string>
-    <string name="settings_speech_pack_preparing">Geladen – wird vorbereitet …</string>
+    <!-- Zustände beim Nachladen einer Katalog-Stimme: klein wie jeder Status (§11.1), geschützte
+         Leerzeichen halten „lädt … 40 %“ in einer Zeile zusammen. -->
+    <string name="settings_speech_pack_downloading">lädt …\u00A0%1$d\u00A0%%</string>
+    <string name="settings_speech_pack_extracting">wird entpackt …</string>
+    <string name="settings_speech_pack_preparing">wird vorbereitet …</string>
 
     <!-- Stimmen-Katalog -->
     <string name="settings_voice_catalog_hint">Erst anhören, dann laden. Mehrere Stimmen möglich; die gewählte wird in der Anleitung gesprochen.</string>
-    <string name="settings_voice_active">Aktiv ✓</string>
+    <string name="settings_voice_active">✓ Aktiv</string>
     <string name="settings_voice_choose">Wählen</string>
     <string name="settings_voice_download">Laden</string>
     <string name="cd_voice_delete">Stimme %1$s löschen</string>
-    <string name="cd_voice_cancel">Download abbrechen</string>
+    <string name="cd_voice_cancel">Laden abbrechen</string>
     <string name="voice_gender_male">männlich</string>
     <string name="voice_gender_female">weiblich</string>
-    <string name="voice_size_mb">~%1$d MB</string>
+    <string name="voice_size_mb">ca.\u00A0%1$d\u00A0MB</string>
     <string name="voice_loading">lädt …</string>
     <string name="voice_non_commercial">nur nicht kommerziell</string>
-    <string name="voice_failed_short">Fehler – erneut versuchen</string>
+    <string name="voice_failed_short">fehlgeschlagen – erneut laden</string>
+    <!-- Qualität einer Katalog-Stimme (VoiceQuality), klein wie der übrige Untertitel. -->
+    <string name="voice_quality_studio_clear">Studio, sehr klar</string>
+    <string name="voice_quality_studio">Studio</string>
+    <string name="voice_quality_simple">einfach</string>
+    <string name="voice_quality_simple_compact">einfach, kompakt</string>
 
     <!-- Herkunft, Lizenzen, Datenschutz (Über-Screen) -->
-    <string name="about_author">von grenzenloseSchublade · MIT-Lizenz</string>
+    <string name="about_author">von grenzenloseSchublade\u00A0· MIT-Lizenz</string>
     <string name="about_source_prefix">Quellcode:\u0020</string>
     <string name="about_source_link">GitHub</string>
     <string name="about_privacy_link">Datenschutzerklärung</string>
@@ -337,7 +342,7 @@
     <string name="about_licenses_gpl">Über sherpa-onnx enthält die App eSpeak NG (GPL-3.0); für die Weitergabe der App gelten daher auch deren Bedingungen. Den Quellcode aller Bestandteile nennt die vollständige Liste.</string>
     <string name="about_licenses_voices">Stimmen</string>
     <string name="about_licenses_voices_note">Die Stimmen lädst du auf Wunsch direkt von GitHub (Projekt sherpa-onnx); Atemkraft enthält nur kurze Hörproben. Stimmen mit dem Hinweis „nur nicht kommerziell“ sind nur für nicht kommerzielle Nutzung freigegeben.</string>
-    <string name="about_license_line">%1$s · %2$s</string>
+    <string name="about_license_line">%1$s\u00A0· %2$s</string>
     <string name="about_licenses_link">Vollständige Liste und Lizenztexte</string>
 
     <!-- Barrierefreiheit -->
@@ -363,7 +368,7 @@
     <string name="meditation_minutes">%1$d min</string>
     <string name="meditation_free_symbol">∞</string>
     <!-- Zusammenfassung unter dem zugeklappten Kopf „Klang & Stimme“: Gong-Wahl · Stimme. -->
-    <string name="meditation_sound_summary">Gong %1$s · %2$s</string>
+    <string name="meditation_sound_summary">Gong %1$s\u00A0· %2$s</string>
     <string name="meditation_gong_off_short">aus</string>
     <string name="meditation_voice_on">mit Stimme</string>
     <string name="meditation_voice_off">ohne Stimme</string>

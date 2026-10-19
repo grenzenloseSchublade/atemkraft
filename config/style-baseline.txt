@@ -25,6 +25,5 @@ a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/HideableSlot.kt	1
 locale	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2
 locale-config	app/build.gradle.kts	1
 locale-config	app/src/main/AndroidManifest.xml	1
-typo-chars-strings	app/src/main/res/values/strings.xml	1
 layer-import-data	app/src/main/java/app/atemkraft/data/AppContainer.kt	2
 layer-import-components	app/src/main/java/app/atemkraft/ui/components/Chips.kt	1

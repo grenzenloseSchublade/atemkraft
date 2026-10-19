@@ -3,6 +3,9 @@ package app.atemkraft.cue.tts
 /** Geschlecht/Charakter einer Stimme – steuert Icon/Label im UI. */
 enum class VoiceGender { MALE, FEMALE }
 
+/** Klangqualität einer Stimme; das UI zeigt sie als Text aus `strings.xml` (TEXT-01). */
+enum class VoiceQuality { STUDIO_CLEAR, STUDIO, SIMPLE, SIMPLE_COMPACT }
+
 /**
  * Beschreibung einer neuronalen deutschen Stimme (Piper via sherpa-onnx). Alle Modelle stammen
  * aus der offiziellen sherpa-onnx `tts-models`-Release; Atemkraft verbreitet sie nicht selbst.
@@ -17,8 +20,8 @@ data class VoiceSpec(
     val id: String,
     val displayName: String,
     val gender: VoiceGender,
-    /** Kurzes Qualitäts-/Charakter-Label fürs UI (deutsch). */
-    val qualityLabel: String,
+    /** Qualität bzw. Charakter fürs UI (Label in `strings.xml`). */
+    val quality: VoiceQuality,
     /** Ordnername im Tarball (= Zielordner). */
     val dirName: String,
     /** Asset-Pfad des Vorhör-Clips (funktioniert vor dem Download). */
@@ -63,7 +66,7 @@ object VoiceCatalog {
             "thorsten",
             "Thorsten",
             VoiceGender.MALE,
-            "Studio · sehr klar",
+            VoiceQuality.STUDIO_CLEAR,
             "vits-piper-de_DE-thorsten-high",
             "voice_samples/thorsten.mp3",
             sizeBytes = 115_591_546L,
@@ -75,7 +78,7 @@ object VoiceCatalog {
             "miro",
             "Miro",
             VoiceGender.MALE,
-            "Studio",
+            VoiceQuality.STUDIO,
             "vits-piper-de_DE-miro-high",
             "voice_samples/miro.mp3",
             sizeBytes = 67_160_790L,
@@ -89,7 +92,7 @@ object VoiceCatalog {
             // Weiblich laut Modellkarte (OpenVoiceOS/pipertts_de-DE_dii); Grundfrequenz der
             // Hörprobe ca. 186 Hz, wie Kerstin, Ramona und Eva.
             VoiceGender.FEMALE,
-            "Studio",
+            VoiceQuality.STUDIO,
             "vits-piper-de_DE-dii-high",
             "voice_samples/dii.mp3",
             sizeBytes = 67_200_058L,
@@ -101,7 +104,7 @@ object VoiceCatalog {
             "kerstin",
             "Kerstin",
             VoiceGender.FEMALE,
-            "Einfach",
+            VoiceQuality.SIMPLE,
             "vits-piper-de_DE-kerstin-low",
             "voice_samples/kerstin.mp3",
             sizeBytes = 67_107_768L,
@@ -113,7 +116,7 @@ object VoiceCatalog {
             "ramona",
             "Ramona",
             VoiceGender.FEMALE,
-            "Einfach",
+            VoiceQuality.SIMPLE,
             "vits-piper-de_DE-ramona-low",
             "voice_samples/ramona.mp3",
             sizeBytes = 67_084_795L,
@@ -125,7 +128,7 @@ object VoiceCatalog {
             "eva",
             "Eva",
             VoiceGender.FEMALE,
-            "Einfach · kompakt",
+            VoiceQuality.SIMPLE_COMPACT,
             "vits-piper-de_DE-eva_k-x_low",
             "voice_samples/eva.mp3",
             sizeBytes = 26_521_242L,

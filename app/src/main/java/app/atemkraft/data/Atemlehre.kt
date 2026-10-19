@@ -57,7 +57,7 @@ object Atemlehre {
             title = "Ein kurz, Aus lang",
             linkName = "Langhana",
             rhythm = listOf(inhale(4.0), exhale(6.0)),
-            counts = "z. B. Ein 4 · Aus 6",
+            counts = "z. B. Ein 4\u00A0· Aus 6",
             teaser = "Langhana: Längeres Ausatmen gilt in der Yoga-Lehre als beruhigend und kühlend.",
             teaching = "Der Schwerpunkt liegt beim Loslassen (Apana). Langhana heißt „leicht " +
                 "machen, reduzieren“. Die Lehre setzt es ein, wenn zu viel da ist: Hitze, Unruhe, " +
@@ -75,7 +75,7 @@ object Atemlehre {
             title = "Ein lang, Aus kurz",
             linkName = "Brmhana",
             rhythm = listOf(inhale(6.0), exhale(3.0)),
-            counts = "z. B. Ein 6 · Aus 3",
+            counts = "z. B. Ein 6\u00A0· Aus 3",
             teaser = "Brmhana: Längeres Einatmen gilt in der Yoga-Lehre als belebend und wärmend.",
             teaching = "Der Schwerpunkt liegt beim Aufnehmen (Prana). Brmhana heißt „nähren, " +
                 "ausdehnen“. Die Lehre setzt es ein, wenn zu wenig da ist: Müdigkeit, Schwere, " +
@@ -91,14 +91,14 @@ object Atemlehre {
             title = "Ein gleich Aus, langsam",
             linkName = "Samana",
             rhythm = listOf(inhale(5.0), exhale(5.0)),
-            counts = "z. B. Ein 5 · Aus 5",
+            counts = "z. B. Ein 5\u00A0· Aus 5",
             teaser = "Samana: Gleich langes, langsames Atmen gilt als ausgleichend und sammelnd.",
             teaching = "Weder aufbauen noch reduzieren: Ein- und Ausatmen halten sich die Waage. " +
                 "Patanjali beschreibt das Ziel als Atem, der „lang und fein“ wird (Yoga-Sutra " +
                 "2,50). Gilt als Grundlage, bevor man Verhältnisse verschiebt, und als Vorbereitung " +
                 "auf Meditation.",
             typical = "Zum Ankommen, vor der Meditation, wenn man die Mitte sucht.",
-            studies = "Der am besten untersuchte Teil: Langsames Atmen um 6 Züge pro Minute erhöht " +
+            studies = "Der am besten untersuchte Teil: Langsames Atmen um 6 Atemzüge pro Minute erhöht " +
                 "die Herzratenvariabilität, das zeigt eine Auswertung von 223 Studien (Laborde " +
                 "2022). Das Tempo zählt dabei mehr als das Verhältnis.",
             exerciseIds = listOf("nadi-shodhana"),
@@ -143,7 +143,7 @@ object Atemlehre {
             title = "Mit Halten nach dem Einatmen",
             linkName = "Halten voll",
             rhythm = listOf(inhale(4.0), holdFull(4.0), exhale(6.0)),
-            counts = "z. B. Ein 4 · Halten 4 · Aus 6",
+            counts = "z. B. Ein 4\u00A0· Halten 4\u00A0· Aus 6",
             teaser = "Halten nach dem Einatmen vertieft Brmhana: Fülle bewahren, Kraft sammeln.",
             teaching = "Antara Kumbhaka hält Prana im Körper. Die Hatha-Lehre sieht im Halten den " +
                 "Kern des Pranayama: „Bewegt sich der Atem, bewegt sich der Geist; ist der Atem " +
@@ -161,7 +161,7 @@ object Atemlehre {
             title = "Mit Halten nach dem Ausatmen",
             linkName = "Halten leer",
             rhythm = listOf(inhale(4.0), exhale(6.0), holdEmpty(3.0)),
-            counts = "z. B. Ein 4 · Aus 6 · Halten 3",
+            counts = "z. B. Ein 4\u00A0· Aus 6\u00A0· Halten 3",
             teaser = "Halten nach dem Ausatmen vertieft Langhana: Leere zulassen, still werden.",
             teaching = "Bahya Kumbhaka gilt als feiner und anspruchsvoller als das Halten mit " +
                 "voller Lunge. Patanjali nennt Ausatmen und Anhalten als Weg zu einem klaren Geist " +
@@ -180,7 +180,7 @@ object Atemlehre {
             title = "Alle vier Phasen gleich",
             linkName = "Sama Vritti",
             rhythm = listOf(inhale(4.0), holdFull(4.0), exhale(4.0), holdEmpty(4.0)),
-            counts = "z. B. 4 · 4 · 4 · 4",
+            counts = "z. B. 4\u00A0· 4\u00A0· 4\u00A0· 4",
             teaser = "Alle vier Phasen gleich lang heißt Sama Vritti: Ordnung und Gleichmaß.",
             teaching = "Sama Vritti, der gleichmäßige Atem, in der Form mit Pausen: Fülle und Leere " +
                 "bekommen gleich viel Raum. B. K. S. Iyengar stellt ihm Vishama Vritti gegenüber, " +
@@ -188,7 +188,7 @@ object Atemlehre {
                 "den Geist ordnet.",
             typical = "Zum Fokussieren, wenn es drunter und drüber geht.",
             studies = "In einer Studie hob täglich 5 Minuten Box-Atmung die Stimmung, aber weniger " +
-                "als das ausatem-betonte zyklische Seufzen (Balban 2023).",
+                "als Cyclic Sighing (Balban 2023).",
             exerciseIds = listOf("box-4-4-4-4"),
         ),
         LorePattern(
@@ -196,7 +196,7 @@ object Atemlehre {
             title = "Das klassische Maß 1 : 4 : 2",
             linkName = "1 : 4 : 2",
             rhythm = listOf(inhale(4.0), holdFull(16.0), exhale(8.0)),
-            counts = "z. B. Ein 4 · Halten 16 · Aus 8",
+            counts = "z. B. Ein 4\u00A0· Halten 16\u00A0· Aus 8",
             teaser = "1 : 4 : 2 gilt als klassisches Maß: kurz aufnehmen, lange halten, doppelt so lang lösen.",
             teaching = "Gezählt wird in Matras, einer traditionellen Zeiteinheit. Kuvalayananda " +
                 "nennt 1 : 4 : 2 das „meistbevorzugte“ Maß und rät Anfängern zu 1 : 2 : 2. Geübt " +
@@ -213,7 +213,7 @@ object Atemlehre {
             title = "In Stufen (Viloma)",
             linkName = "Viloma",
             rhythm = listOf(inhale(1.5), holdFull(0.8), inhale(1.5), holdFull(0.8), inhale(1.5), exhale(6.0)),
-            counts = "z. B. Ein in drei Stufen · Aus 6",
+            counts = "z. B. Ein in drei Stufen\u00A0· Aus 6",
             teaser = "In Stufen atmen (Viloma) baut Brmhana oder Langhana sanft auf.",
             teaching = "Viloma heißt „gegen den Strich“: Das Einatmen oder das Ausatmen wird in " +
                 "kleine Abschnitte mit kurzen Pausen geteilt. Stufen beim Einatmen gelten als " +

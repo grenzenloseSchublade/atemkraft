@@ -47,6 +47,7 @@ import androidx.compose.ui.text.withStyle
 import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.BuiltInExercises
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.LorePattern
 import app.atemkraft.domain.LorePhase
 import app.atemkraft.domain.PhaseType
@@ -220,7 +221,7 @@ private fun PhasesCard(phases: List<LorePhase>) {
             phases.forEach { phase ->
                 val name = buildAnnotatedString {
                     append(phase.name)
-                    withStyle(SpanStyle(color = dim)) { append(" · " + phase.sanskrit) }
+                    withStyle(SpanStyle(color = dim)) { append(DOT_SEPARATOR + phase.sanskrit) }
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

@@ -800,7 +800,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /**
-     * Detailseite mit gespeicherter Anpassung: Reset sichtbar, Intervalle aufgeklappt – Stepper
+     * Detailseite mit gespeicherter Anpassung: Reset sichtbar, Phasen aufgeklappt – Stepper
      * in der Karte und Split-Button auf jeder Breite und Schriftgröße.
      */
     @Test

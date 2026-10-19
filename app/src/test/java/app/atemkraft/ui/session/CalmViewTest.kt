@@ -87,7 +87,7 @@ class CalmViewTest {
     fun `Im Countdown bewirkt der Tipp auf den Kreis nichts`() {
         show(SessionStatus.PREPARING)
         // Im Countdown hat der Kreis keinen Namen (kein leerer TalkBack-Halt): getippt wird mitten
-        // auf „Gleich geht's los“, das über dem Kreis liegt und den Tipp durchlässt.
+        // auf „Gleich geht’s los“, das über dem Kreis liegt und den Tipp durchlässt.
         circle.assertDoesNotExist()
         compose.onNodeWithText(app.getString(R.string.session_get_ready)).performTouchInput { click(center) }
         stop.assertExists()
