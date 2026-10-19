@@ -1,0 +1,5 @@
+- Meditation schlichter: Dauer in einer Reihe (∞ = offen), Klang & Stimme eingeklappt
+- Logbuch nach Heute, Gestern, Woche und Monat, Sitzungen je Tag gebündelt
+- Logbuch leeren nur noch in den Einstellungen und mit Bestätigung
+- Atemlehre und Glossar oben in den Einstellungen, Übungsname fest im Kopf
+- Atemlehre: Überschriften Pink, Ausatmen Koralle
