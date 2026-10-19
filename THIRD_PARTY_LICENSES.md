@@ -73,7 +73,7 @@ Der vollständige Quellstand des AAR ist der Tag [`v1.13.6` von k2-fsa/sherpa-on
 | Teil | Herkunft | Lizenz |
 |---|---|---|
 | Symbole `Icons.*` | Material Icons aus `material-icons-core` (Google) | Apache-2.0 |
-| `ic_bookmark`, `ic_bookmark_filled`, `ic_remove`, `ic_reset`, `ic_meditation` (Material „Timer“), `ic_sound_on`/`ic_sound_off` (Material „Volume Up/Off“) | Pfade aus den Material Icons/Symbols von Google | Apache-2.0 |
+| `ic_bookmark`, `ic_bookmark_filled`, `ic_delete_forever` (Material „Delete Forever“), `ic_remove`, `ic_reset`, `ic_meditation` (Material „Timer“), `ic_sound_on`/`ic_sound_off` (Material „Volume Up/Off“) | Pfade aus den Material Icons/Symbols von Google | Apache-2.0 |
 | App-Symbol (`ic_launcher_foreground`) | eigene Gestaltung (konzentrische Atemringe) | MIT wie die App |
 | Töne und Gong | zur Laufzeit im Code synthetisiert (`ToneCuePlayer`, `ContinuousTonePlayer`); keine Audiodateien | MIT wie die App |
 | Schriften | keine gebündelt; die App nutzt die Systemschrift | – |

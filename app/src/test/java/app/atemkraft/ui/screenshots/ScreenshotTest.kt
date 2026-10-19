@@ -83,6 +83,7 @@ import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MeditationStatus
 import app.atemkraft.ui.meditation.MeditationUiState
+import app.atemkraft.ui.session.SafetyDialog
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionProgress
 import app.atemkraft.ui.session.SessionStatus
@@ -94,7 +95,9 @@ import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.NeonMagenta
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
 import kotlinx.coroutines.awaitCancellation
 import org.junit.After
@@ -103,6 +106,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -201,8 +205,20 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     private var currentHeightDp by mutableIntStateOf(0)
     private var currentWidthDp by mutableIntStateOf(0)
 
+    @get:Rule
+    val testName = TestName()
+
+    /** Fenster (Breite, Höhe in dp) der Dialog-Aufnahmen: Gerätegröße, quer getauscht. */
+    private val windowDp get() =
+        if (testName.methodName.startsWith("safetyDialogQuer")) device.heightDp to device.widthDp else device.widthDp to device.heightDp
+
     @Before
     fun setUp() {
+        // Dialoge messen sich am Fenster, nicht am Testknoten: Für sie Gerätegröße statt des
+        // hohen Testfensters. Vor setContent, weil der Wechsel die Activity neu erzeugt.
+        if (testName.methodName.startsWith("safetyDialog")) {
+            RuntimeEnvironment.setQualifiers("w${windowDp.first}dp-h${windowDp.second}dp-xhdpi")
+        }
         // Schriftgröße wie in den Android-Einstellungen, über die echte Konfiguration: Ab
         // Android 14 skaliert das System nichtlinear (große Schrift wächst weniger), das bildet
         // nur der FontScaleConverter der Plattform ab, nicht ein linearer Density-Override.
@@ -229,7 +245,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt. [openScroll] misst denselben Weg für einen
      * bekannten, noch nicht entschiedenen Verstoß (S-40): Befund `SCROLLT_OFFEN` in der `.tsv`,
      * der Test schlägt nicht fehl – so bleibt der Verstoß sichtbar, bis er behoben ist.
+     * [screen] nimmt den ganzen Bildschirm samt eigener Fenster auf (Dialoge); das Fenster muss
+     * dafür Gerätegröße haben ([deviceWindow]).
      */
+    @OptIn(ExperimentalRoborazziApi::class)
     private fun snap(
         name: String,
         heightDp: Int = tallDp,
@@ -237,6 +256,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         tab: Tab? = null,
         noScroll: Boolean = false,
         openScroll: Boolean = false,
+        screen: Boolean = false,
         prepare: () -> Unit = {},
         content: @Composable () -> Unit,
     ) {
@@ -246,7 +266,12 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         prepare()
         val scale = (fontScale * 100).toInt()
         val dir = "${roborazziSystemPropertyOutputDirectory()}/${device.name}/fs$scale"
-        compose.onNodeWithTag(SHOT).captureRoboImage("$dir/$name.png")
+        if (screen) {
+            compose.waitForIdle()
+            captureScreenRoboImage("$dir/$name.png")
+        } else {
+            compose.onNodeWithTag(SHOT).captureRoboImage("$dir/$name.png")
+        }
         // Befunde neben dem Bild ablegen (überschreibt den letzten Lauf); Übersicht per
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)
@@ -421,6 +446,20 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     fun situationsPatternsExpanded() = snap("02_situationen_muster_auf", tab = Tab.SITUATIONEN) {
         SituationsContent(patterns = 3, patternsExpanded = true)
     }
+
+    /**
+     * Muster löschen nach dem ersten Tipp (MUSTER-05): Icon mit Kreuz in error, Karte gleich hoch.
+     * Die Uhr steht nach dem Tipp, sonst liefe der 4-s-Rückfall vor der Aufnahme ab.
+     */
+    @Test
+    fun situationsPatternDeleteArmed() = snap("02_situationen_muster_loeschen", tab = Tab.SITUATIONEN, prepare = {
+        compose.waitForIdle()
+        compose.mainClock.autoAdvance = false
+        val first = saved.first().exercise.name
+        compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.cd_pattern_delete, first)).performClick()
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeByFrame()
+    }) { SituationsContent() }
 
     /** Eine Situation aufgeklappt – die mit den meisten Übungen, Caret zeigt nach oben. */
     @Test
@@ -735,6 +774,31 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /**
+     * Sicherheitsdialog (MUSTER-06) für beide Übungen mit `caution`. Der Dialog ist ein eigenes
+     * Fenster und misst sich daran: Fenster in Gerätegröße ([setUp]), Aufnahme des ganzen
+     * Bildschirms; Text- und Bedienprüfung laufen über alle Roots, also auch über das
+     * Dialogfenster. Bei großer Schrift scrollt die Hinweisliste, statt still abzuschneiden.
+     */
+    @Test
+    fun safetyDialog() = safetyDialogs("")
+
+    /** Dasselbe quer, nur Testgerät mit Voreinstellung und kleinstes Gerät mit größter Schrift. */
+    @Test
+    fun safetyDialogQuer() {
+        assumeTrue((device.name == "a54" && fontScale == 1.1f) || (device.name == "kompakt360" && fontScale == 2.0f))
+        safetyDialogs("_quer")
+    }
+
+    private fun safetyDialogs(suffix: String) {
+        BuiltInExercises.all.filter { it.caution }.forEach { exercise ->
+            snap("08_sicherheitsdialog_${exercise.id}$suffix", heightDp = windowDp.second, widthDp = windowDp.first, screen = true) {
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                SafetyDialog(cautions = exercise.cautions, onConfirm = {}, onDismiss = {})
+            }
+        }
+    }
+
+    /**
      * Detailseite mit gespeicherter Anpassung: Reset sichtbar, Intervalle aufgeklappt – Stepper
      * in der Karte und Split-Button auf jeder Breite und Schriftgröße.
      */
@@ -759,7 +823,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Vollbild-Session in echter Gerätehöhe: Vorbereitung, Phase mit Anleitungszeile, offene Phase,
-     * Ruhe-Ansicht (Tipp neben den Kreis), Ende mit Bilanz. Alle Zustände kommen aus den Daten der
+     * Pause, Ruhe-Ansicht (Tipp neben den Kreis), Ende mit Bilanz (mit und ohne Runden). Alle Zustände kommen aus den Daten der
      * Übung ([sessionAt]), so wie das SessionViewModel sie setzt – keine Kombination, die es nicht gibt.
      */
     @Test
@@ -767,6 +831,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val exercise = BuiltInExercises.all.first { it.id == "4-7-8" }
         val viloma = BuiltInExercises.all.first { it.id == "viloma-ein" }
         val wimHof = BuiltInExercises.all.first { it.id == "wim-hof" }
+        // Resonanz: eine Runde nach Minuten – die Bilanz steht ohne Runden da.
+        val resonance = BuiltInExercises.all.first { it.id == "resonanz" }
         // 4-7-8 in Runde 3 von 4, Einatmen nach 1,6 s.
         val inhale = sessionAt(exercise, elapsedMs = 1_600) { it.roundIndex == 2 && it.type == PhaseType.INHALE }
         val states = mapOf(
@@ -790,6 +856,15 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 remainingMs = 0L,
                 progress = 1f,
                 summary = sessionSummary(exercise.buildTimeline(), exercise.estimatedTotalSeconds() * 1_000L),
+            ),
+            // Pause: Kreis steht, der Hauptknopf heißt „Weiter“.
+            "pause" to inhale.copy(status = SessionStatus.PAUSED),
+            "ende_ohne_runden" to sessionAt(resonance, elapsedMs = 0) { it.type == PhaseType.INHALE }.copy(
+                status = SessionStatus.FINISHED,
+                phaseType = null,
+                remainingMs = 0L,
+                progress = 1f,
+                summary = sessionSummary(resonance.buildTimeline(), 5 * 60_000L + 24_000L),
             ),
         )
         states.forEach { (name, state) ->
@@ -869,12 +944,13 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         onStop = {},
     )
 
-    /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Ende. */
+    /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Pause, Ende. */
     @Test
     fun meditationSession() {
         val states = mapOf(
             "vorbereitung" to MeditationUiState(status = MeditationStatus.PREPARING, countdown = 3),
             "laeuft" to MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
+            "pause" to MeditationUiState(status = MeditationStatus.PAUSED, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
             "ende" to MeditationUiState(status = MeditationStatus.FINISHED, elapsedMs = 10 * 60_000L),
         )
         states.forEach { (name, state) ->

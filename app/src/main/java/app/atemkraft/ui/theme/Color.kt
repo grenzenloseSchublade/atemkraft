@@ -77,6 +77,9 @@ const val SECONDARY = 0.7f
 /** Noch dezentere Ebene (z. B. Quellen-Kennungen, Zeitstempel) – app-weit. */
 const val TERTIARY = 0.5f
 
+/** Deckkraft des Akzent-Rands navigierender Inhaltskarten (KOMP-03, `accentBorder`). */
+const val ALPHA_BORDER = 0.35f
+
 /** Creme-Ton des Pause-/Play-Symbols (PauseFlash) – zentral statt Inline-Hex. */
 val PauseGlyphCreme = Color(0xFFFFF3D6)
 

@@ -100,7 +100,9 @@
         <item quantity="one">%1$d gespeichert</item>
         <item quantity="other">%1$d gespeichert</item>
     </plurals>
-    <string name="cd_pattern_delete">Muster löschen</string>
+    <string name="cd_pattern_delete">Muster %1$s löschen</string>
+    <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
+    <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
 
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
@@ -278,7 +280,7 @@
     <string name="data_import_not_backup">Das ist keine Atemkraft-Musterdatei. Bitte eine exportierte .json-Datei wählen.</string>
     <string name="data_import_too_large">Die Datei ist zu groß für eine Atemkraft-Musterdatei.</string>
     <string name="data_io_error">Die Datei ließ sich nicht lesen oder schreiben. Bitte einen anderen Speicherort wählen.</string>
-    <string name="cd_voice_preview">Stimme anhören</string>
+    <string name="cd_voice_preview">Stimme %1$s anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>
     <string name="settings_gong_interval">Gong-Intervall</string>
     <string name="settings_gong_interval_hint">Länge zwischen den Zwischen-Gongs, wenn im Meditations-Tab „alle X min“ gewählt ist.</string>
@@ -298,7 +300,7 @@
     <string name="settings_voice_active">Aktiv ✓</string>
     <string name="settings_voice_choose">Wählen</string>
     <string name="settings_voice_download">Laden</string>
-    <string name="cd_voice_delete">Stimme löschen</string>
+    <string name="cd_voice_delete">Stimme %1$s löschen</string>
     <string name="cd_voice_cancel">Download abbrechen</string>
     <string name="voice_gender_male">männlich</string>
     <string name="voice_gender_female">weiblich</string>

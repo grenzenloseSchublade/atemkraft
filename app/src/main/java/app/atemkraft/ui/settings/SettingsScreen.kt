@@ -1,6 +1,5 @@
 package app.atemkraft.ui.settings
 
-import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -60,6 +57,7 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
@@ -67,11 +65,11 @@ import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.WarnAmber
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 /**
@@ -216,43 +214,22 @@ private fun DataCard(onExport: () -> Unit, onImport: () -> Unit, onClearLog: () 
     }
 }
 
-/** Rückfall aus „Wirklich leeren?“ in den Ausgangszustand (MUSTER-05). */
-private const val CONFIRM_TIMEOUT_MS = 4_000L
-
 /**
- * „Logbuch leeren“ zweistufig im selben Element (MUSTER-05): Der erste Tipp morpht das Label zu
- * „Wirklich leeren?“ (angesagt), erst der zweite löscht. Ohne zweiten Tipp fällt es nach 4 s
- * zurück – nicht, solange ein Bedienungshilfe-Dienst läuft (TalkBack, Switch Access brauchen
- * länger) oder das Element Fokus hat. Bewusst `remember`: Wer die Seite verlässt, kommt
- * entschärft zurück. Beide Zustände in `error`, damit es nie wie eine gewöhnliche Aktion aussieht.
+ * „Logbuch leeren“ zweistufig im selben Element (MUSTER-05, [rememberArmedConfirm]): Der erste
+ * Tipp morpht das Label zu „Wirklich leeren?“ (angesagt), erst der zweite löscht. Beide
+ * Zustände in `error`, damit es nie wie eine gewöhnliche Aktion aussieht.
  */
 @Composable
 private fun ClearLogButton(onClearLog: () -> Unit) {
-    var armed by remember { mutableStateOf(false) }
-    var focused by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val a11yActive = remember(context) { context.getSystemService(AccessibilityManager::class.java)?.isEnabled == true }
-    LaunchedEffect(armed, focused, a11yActive) {
-        if (armed && !focused && !a11yActive) {
-            delay(CONFIRM_TIMEOUT_MS)
-            armed = false
-        }
-    }
+    val confirm = rememberArmedConfirm()
     AppTextButton(
-        onClick = {
-            if (armed) {
-                armed = false
-                onClearLog()
-            } else {
-                armed = true
-            }
-        },
+        onClick = { confirm.tap(onClearLog) },
         modifier = Modifier
-            .onFocusChanged { focused = it.hasFocus }
+            .then(confirm.focusModifier)
             .semantics { liveRegion = LiveRegionMode.Polite },
     ) {
         Text(
-            text = stringResource(if (armed) R.string.settings_data_clear_log_confirm else R.string.settings_data_clear_log),
+            text = stringResource(if (confirm.armed) R.string.settings_data_clear_log_confirm else R.string.settings_data_clear_log),
             color = MaterialTheme.colorScheme.error,
         )
     }
@@ -439,16 +416,19 @@ private fun MeditationCard(
             // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
             VoiceCatalog.all.forEachIndexed { index, spec ->
                 if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapHairline))
-                VoiceRow(
-                    spec = spec,
-                    state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
-                    active = spec.id == activeVoiceId,
-                    engineReady = piperEngineReady,
-                    onSample = { onSampleVoice(spec) },
-                    onDownload = { onDownloadVoice(spec.id) },
-                    onSelect = { onSelectVoice(spec.id) },
-                    onDelete = { onDeleteVoice(spec.id) },
-                )
+                // key: Der Bestätigungszustand des Löschens gehört zur Stimme, nicht zur Position.
+                key(spec.id) {
+                    VoiceRow(
+                        spec = spec,
+                        state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
+                        active = spec.id == activeVoiceId,
+                        engineReady = piperEngineReady,
+                        onSample = { onSampleVoice(spec) },
+                        onDownload = { onDownloadVoice(spec.id) },
+                        onSelect = { onSelectVoice(spec.id) },
+                        onDelete = { onDeleteVoice(spec.id) },
+                    )
+                }
             }
         }
     }
@@ -494,7 +474,7 @@ private fun VoiceRow(
 
         // Vorhören (funktioniert immer, auch vor dem Download).
         AppIconButton(onClick = onSample) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_voice_preview))
+            Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_voice_preview, spec.displayName))
         }
 
         when (state) {
@@ -526,13 +506,12 @@ private fun VoiceRow(
                     else ->
                         AppTextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
                 }
-                AppIconButton(onClick = onDelete) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = stringResource(R.string.cd_voice_delete),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                    )
-                }
+                // Zweistufig (MUSTER-05): Eine Stimme neu zu laden kostet bis zu 60 MB.
+                ConfirmIconButton(
+                    name = spec.displayName,
+                    description = stringResource(R.string.cd_voice_delete, spec.displayName),
+                    onConfirm = onDelete,
+                )
             }
 
             else -> // NotDownloaded / Failed

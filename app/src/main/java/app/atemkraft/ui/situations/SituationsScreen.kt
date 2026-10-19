@@ -2,23 +2,18 @@ package app.atemkraft.ui.situations
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,21 +35,19 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
-import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.home.ExerciseCard
+import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
@@ -297,46 +290,22 @@ private fun SearchStatus(count: Int, onShowAll: () -> Unit) {
     }
 }
 
-/** Karte eines gespeicherten Musters: Name, Muster-Zeile, Löschen. */
+/**
+ * Karte eines gespeicherten Musters: aufgebaut wie das Muster des Tages ([PatternCard]), in der
+ * Ecke Löschen – zweistufig, ein Fehltipp löscht nichts (MUSTER-05).
+ */
 @Composable
 private fun SavedPatternCard(
     pattern: SavedPattern,
     onClick: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val exercise = pattern.exercise
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimens.CardPadding),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                WholeWordText(
-                    text = exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(Modifier.height(Dimens.GapTiny))
-                Text(
-                    text = exercise.instructionHint.orEmpty() + RandomPatternGenerator.HINT_SEPARATOR +
-                        stringResource(R.string.duration_approx, exercise.defaultMinutes()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
-            }
-            AppIconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = stringResource(R.string.cd_pattern_delete),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
-            }
-        }
+    val name = pattern.exercise.name
+    PatternCard(exercise = pattern.exercise, spec = pattern.spec, activating = pattern.activating, onClick = onClick) {
+        ConfirmIconButton(
+            name = name,
+            description = stringResource(R.string.cd_pattern_delete, name),
+            onConfirm = onDelete,
+        )
     }
 }

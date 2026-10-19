@@ -53,6 +53,9 @@ object Dimens {
      */
     val DurationPickerMin = 200.dp
 
+    /** Rand navigierender Inhaltskarten (KOMP-03, `accentBorder`). */
+    val BorderThin = 1.dp
+
     /** Mindesthöhe eigener klickbarer Flächen (Material-Touch-Ziel), unabhängig vom Padding. */
     val MinTouchTarget = 48.dp
 

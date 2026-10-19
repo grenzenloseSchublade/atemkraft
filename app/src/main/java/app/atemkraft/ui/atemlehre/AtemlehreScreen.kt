@@ -42,7 +42,6 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -54,6 +53,7 @@ import app.atemkraft.domain.LorePhase
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.RhythmStep
+import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.LinkChip
@@ -272,6 +272,7 @@ private fun RulesContent() {
                         withStyle(bold) { append(lead) }
                         append(rest)
                     },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -457,16 +458,4 @@ private fun Dim(text: String) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
     )
-}
-
-@Composable
-private fun Bullet(text: AnnotatedString) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-        Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
 }

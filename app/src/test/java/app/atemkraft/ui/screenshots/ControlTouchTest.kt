@@ -3,6 +3,7 @@ package app.atemkraft.ui.screenshots
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,8 +13,10 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
@@ -433,6 +436,24 @@ class ControlTouchTest(private val fontScale: Float) {
         assertEquals("enge Rundung nicht erkannt (fs$fontScale)", listOf("Minuten"), TextClipFindings.findings(tight))
         assertEquals("Scheibe mit Luft fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(roomy))
         assertEquals("zentrierter Wert fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(centered))
+    }
+
+    @Test
+    fun `Pruefung uebergeht weggescrollten Text in einer runden Flaeche`() {
+        // Wie die Hinweisliste im Sicherheitsdialog: Die Scrollfläche liegt in einer runden
+        // Fläche, ein Hinweis steht weit unten außerhalb – unsichtbar, also kein Befund.
+        show {
+            Box(Modifier.size(160.dp, 64.dp).clip(RoundedCornerShape(16.dp))) {
+                Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+                    Text("Oben")
+                    Text("Weggescrollt", modifier = Modifier.padding(top = 120.dp))
+                }
+            }
+        }
+        val texts = compose
+            .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+        assertEquals("weggescrollter Text fälschlich gemeldet (fs$fontScale)", emptyList<String>(), texts.flatMap { TextClipFindings.findings(it) })
     }
 
     @Test

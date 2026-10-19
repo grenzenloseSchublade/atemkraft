@@ -1,6 +1,5 @@
 package app.atemkraft.ui.home
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,11 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
@@ -41,6 +40,7 @@ import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TitleWithChips
+import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
@@ -140,7 +140,7 @@ fun ExerciseCard(exercise: Exercise, marked: Boolean = false, onClick: () -> Uni
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.35f)),
+        border = accentBorder(accent),
     ) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
@@ -178,8 +178,8 @@ fun ExerciseCard(exercise: Exercise, marked: Boolean = false, onClick: () -> Uni
 }
 
 /**
- * Karte für das generierte „Muster des Tages": Name, Charakter-Chip, Muster + Dauer und als
- * einzige weitere Aktion das Lesezeichen (Speichern ↔ wieder entfernen).
+ * Karte für das generierte „Muster des Tages": [PatternCard] mit dem Lesezeichen als einziger
+ * weiterer Aktion (Speichern ↔ wieder entfernen).
  */
 @Composable
 private fun DailyPatternCard(
@@ -188,15 +188,49 @@ private fun DailyPatternCard(
     onClick: () -> Unit,
     onSavedChange: (Boolean) -> Unit,
 ) {
-    val exercise = daily.exercise
+    PatternCard(exercise = daily.exercise, spec = daily.spec, activating = daily.activating, onClick = onClick) {
+        // Gespeicherte Muster erscheinen im Situationen-Tab unter „Meine Muster“ – der
+        // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
+        // erneutes Tippen nimmt das Muster wieder heraus.
+        AppIconToggle(
+            checked = saved,
+            onCheckedChange = onSavedChange,
+            stateDescription = stringResource(if (saved) R.string.state_saved else R.string.state_not_saved),
+        ) {
+            Icon(
+                painterResource(if (saved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
+                contentDescription = stringResource(R.string.cd_pattern_save),
+                tint = if (saved) {
+                    MaterialTheme.colorScheme.secondary
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)
+                },
+            )
+        }
+    }
+}
+
+/**
+ * Karte eines generierten Musters – Muster des Tages und „Meine Muster“ sehen gleich aus: Name
+ * mit Charakter-Chip, darunter die kurze Musterzeile mit Dauer, Rand in Cyan (eigene Muster).
+ * [action] ist die eine weitere Aktion (KOMP-02) und liegt als Overlay in der Kartenecke statt
+ * in der Titelzeile: Die volle 48-dp-Tippfläche liegt über dem Karten-Padding, die Karte wird
+ * nicht höher als ihr Text. Der Text hält rechts die Breite der Tippfläche frei, damit nichts
+ * darunter liegt.
+ */
+@Composable
+fun PatternCard(
+    exercise: Exercise,
+    spec: PatternSpec,
+    activating: Boolean,
+    onClick: () -> Unit,
+    action: @Composable () -> Unit,
+) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.35f)),
+        border = accentBorder(MaterialTheme.colorScheme.secondary),
     ) {
-        // Lesezeichen als Overlay in der Kartenecke statt in der Titelzeile: Die volle
-        // 48-dp-Tippfläche liegt über dem Karten-Padding, die Karte wird nicht höher als ihr
-        // Text. Der Text hält rechts die Breite der Tippfläche frei, damit nichts darunter liegt.
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(
@@ -211,35 +245,19 @@ private fun DailyPatternCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 ) {
-                    CharacterChip(activating = daily.activating)
+                    CharacterChip(activating = activating)
                 }
                 Spacer(Modifier.height(Dimens.GapTiny))
+                // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
+                // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
                 Text(
-                    text = RandomPatternGenerator.hintFor(daily.spec) + RandomPatternGenerator.HINT_SEPARATOR +
+                    text = RandomPatternGenerator.hintFor(spec) + RandomPatternGenerator.HINT_SEPARATOR +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
                 )
             }
-            // Gespeicherte Muster erscheinen im Situationen-Tab unter „Meine Muster“ – der
-            // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
-            // erneutes Tippen nimmt das Muster wieder heraus.
-            AppIconToggle(
-                checked = saved,
-                onCheckedChange = onSavedChange,
-                stateDescription = stringResource(if (saved) R.string.state_saved else R.string.state_not_saved),
-                modifier = Modifier.align(Alignment.TopEnd),
-            ) {
-                Icon(
-                    painterResource(if (saved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
-                    contentDescription = stringResource(R.string.cd_pattern_save),
-                    tint = if (saved) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)
-                    },
-                )
-            }
+            Box(modifier = Modifier.align(Alignment.TopEnd)) { action() }
         }
     }
 }

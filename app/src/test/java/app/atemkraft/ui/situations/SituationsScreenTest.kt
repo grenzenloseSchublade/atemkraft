@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
@@ -21,7 +22,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -74,13 +74,16 @@ class SituationsScreenTest {
     private var storedExpanded by mutableStateOf(false)
     private val expandedChanges = mutableListOf<Boolean>()
 
+    // Gelöschte Muster verschwinden wie in MainActivity aus der Liste (Room → Flow).
+    private var deletedIds by mutableStateOf(emptySet<Long>())
+
     @Before
     fun setUp() {
         compose.setContent {
             AtemkraftTheme {
                 SituationsScreen(
                     recommendations = Situations.all,
-                    savedPatterns = savedAll.take(patternCount),
+                    savedPatterns = savedAll.take(patternCount).filter { it.id !in deletedIds },
                     savedPatternsExpanded = storedExpanded,
                     onSavedPatternsExpandedChange = {
                         expandedChanges += it
@@ -88,7 +91,7 @@ class SituationsScreenTest {
                     },
                     resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
                     onSelect = { started += it },
-                    onDeleteSaved = {},
+                    onDeleteSaved = { deletedIds = deletedIds + it },
                 )
             }
         }
@@ -204,7 +207,16 @@ class SituationsScreenTest {
 
     private fun myPatterns() = compose.onNode(hasText(str(R.string.situations_my_patterns)) and hasClickAction())
 
-    private fun patternCards() = compose.onAllNodesWithContentDescription(str(R.string.cd_pattern_delete))
+    /** Löschen-Knopf von [pattern]: Name in der Beschreibung (A11Y-06). */
+    private fun deleteButton(pattern: SavedPattern) = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_delete, pattern.exercise.name))
+
+    /** Ein Löschen-Knopf je sichtbarer Karte. */
+    private fun patternCards() = compose.onAllNodes(
+        SemanticsMatcher("Löschen-Knopf eines Musters") { node ->
+            val cds = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
+            savedAll.any { app.getString(R.string.cd_pattern_delete, it.exercise.name) in cds }
+        },
+    )
 
     private fun countSuffix(n: Int) = app.getString(R.string.situations_my_patterns_count, n)
 
@@ -271,6 +283,23 @@ class SituationsScreenTest {
         assertEquals(false, savedPatternsShownExpanded(3, stored = false))
         assertEquals(true, savedPatternsShownExpanded(3, stored = true))
         assertEquals(true, savedPatternsShownExpanded(12, stored = true))
+    }
+
+    @Test
+    fun `Löschen ist zweistufig, angesagt und bleibt beim Muster, nicht bei der Position`() {
+        patternCount = 2
+        val (first, second) = savedAll.take(2)
+        deleteButton(first).performClick()
+        assertEquals(emptySet<Long>(), deletedIds)
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_delete_confirm, first.exercise.name))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+            .performClick()
+        assertEquals(setOf(first.id), deletedIds)
+        assertEquals(emptyList<String>(), started)
+        // Das nachrückende Muster ist nicht scharf: ein Tipp löscht es nicht.
+        patternCards().assertCountEquals(1)
+        deleteButton(second).performClick()
+        assertEquals(setOf(first.id), deletedIds)
     }
 
     @Test

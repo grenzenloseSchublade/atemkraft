@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +44,7 @@ import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.Chip
 import app.atemkraft.ui.components.EvidenceChip
@@ -302,7 +302,7 @@ fun ExerciseDetailScreen(
                         } else {
                             {
                                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                                    moreCautions.forEach { Bullet(it) }
+                                    moreCautions.forEach { Bullet(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)) }
                                 }
                             }
                         },
@@ -436,16 +436,4 @@ private fun Body(text: String) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
     )
-}
-
-@Composable
-private fun Bullet(text: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-        Text("•", color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
-        )
-    }
 }

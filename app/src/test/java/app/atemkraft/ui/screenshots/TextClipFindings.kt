@@ -28,7 +28,9 @@ import androidx.compose.ui.unit.toSize
  * (Grundlinie − [INK_ASCENT] … + [INK_DESCENT] Schriftgrößen). Die leeren Ecken der Zeilenbox
  * darf eine Rundung schneiden (Pillen-Buttons). Das Band gilt für jede Zeile ganz, auch wenn
  * ihr letztes Zeichen keine Unterlänge hat: Text, der ohne Rand bis an eine Pillen-Rundung
- * reicht, wird gemeldet (Abhilfe: Endrand, siehe `DisclosureToggle`). Nicht geprüft: eckige Clips (Scrollflächen),
+ * reicht, wird gemeldet (Abhilfe: Endrand, siehe `DisclosureToggle`). In einer senkrechten
+ * Scrollfläche zählen nur Ecken im sichtbaren Ausschnitt – was weggescrollt ist, schneidet die
+ * Scrollfläche selbst ab (Hinweisliste im Sicherheitsdialog). Nicht geprüft: eckige Clips (Scrollflächen),
  * eigene Pfad-Formen, `graphicsLayer { clip = true }` mit Block, Eingabefelder (ihr Text liegt
  * nicht am Ursprung des Knotens).
  */
@@ -53,8 +55,12 @@ internal object TextClipFindings {
         node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
         val origin = node.layoutInfo.coordinates.positionInRoot()
         val inset = node.layoutInfo.density.density * TOLERANCE_DP
+        val viewport = generateSequence(node.parent) { it.parent }
+            .firstOrNull { SemanticsProperties.VerticalScrollAxisRange in it.config }?.boundsInRoot
         return layouts.mapNotNull { layout ->
-            val cut = inkCorners(layout, inset).any { corner -> clips.any { !it.contains(origin + corner) } }
+            val cut = inkCorners(layout, inset).map { origin + it }
+                .filter { viewport == null || viewport.contains(it) }
+                .any { corner -> clips.any { !it.contains(corner) } }
             if (cut) layout.layoutInput.text.text else null
         }
     }
