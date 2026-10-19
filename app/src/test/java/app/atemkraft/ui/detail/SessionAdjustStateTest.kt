@@ -1,0 +1,93 @@
+package app.atemkraft.ui.detail
+
+import app.atemkraft.data.BuiltInExercises
+import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.domain.AdjustLimits
+import app.atemkraft.domain.SessionConfig
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** Anpassung auf der Detailseite ohne Compose: Vorgaben, „angepasst“, Klemmen, einmalige Übernahme. */
+class SessionAdjustStateTest {
+
+    private fun exercise(id: String) = BuiltInExercises.all.first { it.id == id }
+
+    private val box = AdjustDefaults.of(exercise("box-4-4-4-4"))
+
+    @Test
+    fun `Vorgaben kommen aus den festen Phasen, fehlende Phasen haben keinen Stepper`() {
+        assertEquals(AdjustDefaults(roundBased = true, duration = 8, inhale = 4, hold = 4, exhale = 4), box)
+        // Wim Hof: Halten leer bis zum Atemreiz ist offen, das feste Halten voll zählt.
+        val wimHof = AdjustDefaults.of(exercise("wim-hof"))
+        assertEquals(15, wimHof.hold)
+        val resonance = AdjustDefaults.of(exercise("resonanz"))
+        assertFalse(resonance.roundBased)
+        assertNull(resonance.hold)
+        assertEquals(AdjustLimits.MINUTES, resonance.durationRange)
+    }
+
+    @Test
+    fun `zurück auf die Vorgabe gilt wieder als unangepasst`() {
+        val state = SessionAdjustState(box)
+        assertFalse(state.modified)
+        assertNull(state.overrides)
+
+        state.inhale = 5
+        assertTrue(state.intervalsModified)
+        assertEquals(IntervalOverrides(duration = 8, inhale = 5, hold = 4, exhale = 4), state.overrides)
+
+        state.inhale = 4
+        assertFalse(state.modified)
+        assertNull(state.overrides)
+    }
+
+    @Test
+    fun `Start nimmt Phasenlängen nur mit, wenn sie abweichen`() {
+        val state = SessionAdjustState(box)
+        state.duration = 3
+        assertEquals(SessionConfig(rounds = 3), state.config())
+
+        state.exhale = 6
+        assertEquals(SessionConfig(rounds = 3, inhaleSeconds = 4.0, exhaleSeconds = 6.0, holdSeconds = 4.0), state.config())
+
+        state.reset()
+        assertEquals(SessionConfig(rounds = 8), state.config())
+    }
+
+    @Test
+    fun `gespeicherte Werte werden einmal übernommen und auf die Grenzen geklemmt`() {
+        val state = SessionAdjustState(box)
+        state.applyStored(IntervalOverrides(duration = 99, inhale = 1, hold = 50, exhale = 6))
+        assertEquals(AdjustLimits.ROUNDS.last, state.duration)
+        assertEquals(AdjustLimits.INHALE_S.first, state.inhale)
+        assertEquals(AdjustLimits.HOLD_S.last, state.hold)
+        assertEquals(6, state.exhale)
+
+        // Spätere Werte (das eigene Zurückschreiben) überschreiben nichts mehr.
+        state.exhale = 7
+        state.applyStored(IntervalOverrides(duration = 2, exhale = 3))
+        assertEquals(7, state.exhale)
+        assertEquals(AdjustLimits.ROUNDS.last, state.duration)
+    }
+
+    @Test
+    fun `hat der Nutzer schon verstellt, bleibt seine Wahl vor der gespeicherten`() {
+        val state = SessionAdjustState(box)
+        state.duration = 5
+        state.applyStored(IntervalOverrides(duration = 2, inhale = 6))
+        assertEquals(5, state.duration)
+        assertEquals(4, state.inhale)
+        assertTrue(state.storedApplied)
+    }
+
+    @Test
+    fun `gespeicherte Phase, die die Übung nicht hat, bleibt ohne Wirkung`() {
+        val resonance = SessionAdjustState(AdjustDefaults.of(exercise("resonanz")))
+        resonance.applyStored(IntervalOverrides(hold = 10))
+        assertNull(resonance.hold)
+        assertFalse(resonance.modified)
+    }
+}

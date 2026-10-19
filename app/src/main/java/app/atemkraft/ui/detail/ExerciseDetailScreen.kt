@@ -89,89 +89,36 @@ fun ExerciseDetailScreen(
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
-    val range = if (roundBased) AdjustLimits.ROUNDS else AdjustLimits.MINUTES
     val isIntense = exercise.caution
-    val valueDefault = if (roundBased) exercise.rounds else exercise.defaultMinutes()
-    var value by rememberSaveable(exercise.id) { mutableIntStateOf(valueDefault) }
+    // Anpassung (Dauer, optional Phasenlängen hinter „Phasen anpassen“) liegt im SessionAdjustState –
+    // die Seite liest und ändert nur ihn (ARC-7).
+    val adjust = rememberSessionAdjustState(exercise)
+    val defaults = adjust.defaults
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
     var showSafety by rememberSaveable { mutableStateOf(false) }
-
-    // Optionale Feineinstellung der Phasenlängen (dezent hinter „Phasen anpassen“).
-    val cyclePhases = remember(exercise.id) { exercise.segments.flatMap { it.phases } }
-    fun defaultSec(type: PhaseType): Int? = (
-        cyclePhases.firstOrNull { it.type == type && it.duration is PhaseDuration.Fixed }
-            ?.duration as? PhaseDuration.Fixed
-        )?.let { (it.millis / 1000.0).roundToInt() }
-    val hasInhale = cyclePhases.any { it.type == PhaseType.INHALE }
-    val hasExhale = cyclePhases.any { it.type == PhaseType.EXHALE }
-    val inhaleDefault = defaultSec(PhaseType.INHALE) ?: 4
-    val exhaleDefault = defaultSec(PhaseType.EXHALE) ?: 6
-    val holdDefault = defaultSec(PhaseType.HOLD_FULL) ?: defaultSec(PhaseType.HOLD_EMPTY) ?: 4
-    val hasHold = defaultSec(PhaseType.HOLD_FULL) != null || defaultSec(PhaseType.HOLD_EMPTY) != null
-    var inhaleSec by rememberSaveable(exercise.id) { mutableIntStateOf(inhaleDefault) }
-    var exhaleSec by rememberSaveable(exercise.id) { mutableIntStateOf(exhaleDefault) }
-    var holdSec by rememberSaveable(exercise.id) { mutableIntStateOf(holdDefault) }
     var intervalsExpanded by rememberSaveable(exercise.id) { mutableStateOf(false) }
 
-    // „Angepasst" ist kein Merker, sondern der Wertvergleich mit den Übungs-Defaults: wer
-    // manuell auf die Defaults zurücksteppt, gilt wieder als unangepasst (Override wird gelöscht).
-    fun intervalsModifiedNow(): Boolean = (hasInhale && inhaleSec != inhaleDefault) ||
-        (hasHold && holdSec != holdDefault) ||
-        (hasExhale && exhaleSec != exhaleDefault)
-
-    fun modifiedNow(): Boolean = value != valueDefault || intervalsModifiedNow()
-
     fun persistAdjustments() {
-        if (modifiedNow()) {
-            onIntervalsChange(
-                value,
-                inhaleSec.takeIf { hasInhale },
-                holdSec.takeIf { hasHold },
-                exhaleSec.takeIf { hasExhale },
-            )
+        val overrides = adjust.overrides
+        if (overrides != null) {
+            onIntervalsChange(overrides.duration ?: defaults.duration, overrides.inhale, overrides.hold, overrides.exhale)
         } else {
             onIntervalsReset()
         }
     }
 
-    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore); danach
-    // hat der lokale State Vorrang, damit Write-throughs nicht zurückschwappen.
-    var storedApplied by rememberSaveable(exercise.id) { mutableStateOf(false) }
+    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore).
     LaunchedEffect(savedIntervals) {
-        val stored = savedIntervals ?: return@LaunchedEffect
-        if (storedApplied || modifiedNow()) {
-            storedApplied = true
-            return@LaunchedEffect
-        }
-        storedApplied = true
-        stored.duration?.let { value = it.coerceIn(range) }
-        // Geklemmt: Gespeichertes (auch Importiertes) darf die Grenzen der Stepper nicht umgehen.
-        if (hasInhale) stored.inhale?.let { inhaleSec = it.coerceIn(AdjustLimits.INHALE_S) }
-        if (hasHold) stored.hold?.let { holdSec = it.coerceIn(AdjustLimits.HOLD_S) }
-        if (hasExhale) stored.exhale?.let { exhaleSec = it.coerceIn(AdjustLimits.EXHALE_S) }
-    }
-
-    fun currentConfig(): SessionConfig {
-        val base = if (roundBased) SessionConfig(rounds = value) else SessionConfig(minutes = value)
-        return if (intervalsModifiedNow()) {
-            base.copy(
-                inhaleSeconds = if (hasInhale) inhaleSec.toDouble() else null,
-                exhaleSeconds = if (hasExhale) exhaleSec.toDouble() else null,
-                holdSeconds = if (hasHold) holdSec.toDouble() else null,
-            )
-        } else {
-            base
-        }
+        savedIntervals?.let(adjust::applyStored)
     }
 
     // Grobe Gesamtdauer der aktuell eingestellten Session (Runden/Minuten + Intervalle) –
     // live neu berechnet, wenn sich einer der Anpassungswerte ändert.
-    val estimatedSeconds = remember(value, inhaleSec, exhaleSec, holdSec) {
-        exercise.adjusted(currentConfig()).estimatedTotalSeconds()
-    }
+    val config = adjust.config()
+    val estimatedSeconds = remember(config) { exercise.adjusted(config).estimatedTotalSeconds() }
 
     fun launch() {
-        if (requireSafetyConfirm) showSafety = true else onStart(currentConfig())
+        if (requireSafetyConfirm) showSafety = true else onStart(adjust.config())
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -324,36 +271,30 @@ fun ExerciseDetailScreen(
                         } else {
                             stringResource(R.string.adjust_minutes)
                         },
-                        duration = value,
-                        durationDefault = valueDefault,
-                        durationRange = range,
+                        duration = adjust.duration,
+                        durationDefault = defaults.duration,
+                        durationRange = defaults.durationRange,
                         onDuration = {
-                            value = it
+                            adjust.duration = it
                             persistAdjustments()
                         },
-                        inhale = if (hasInhale) {
-                            PhaseAdjust(inhaleSec, inhaleDefault, AdjustLimits.INHALE_S) {
-                                inhaleSec = it
+                        inhale = defaults.inhale?.let { default ->
+                            PhaseAdjust(adjust.inhale ?: default, default, AdjustLimits.INHALE_S) {
+                                adjust.inhale = it
                                 persistAdjustments()
                             }
-                        } else {
-                            null
                         },
-                        hold = if (hasHold) {
-                            PhaseAdjust(holdSec, holdDefault, AdjustLimits.HOLD_S) {
-                                holdSec = it
+                        hold = defaults.hold?.let { default ->
+                            PhaseAdjust(adjust.hold ?: default, default, AdjustLimits.HOLD_S) {
+                                adjust.hold = it
                                 persistAdjustments()
                             }
-                        } else {
-                            null
                         },
-                        exhale = if (hasExhale) {
-                            PhaseAdjust(exhaleSec, exhaleDefault, AdjustLimits.EXHALE_S) {
-                                exhaleSec = it
+                        exhale = defaults.exhale?.let { default ->
+                            PhaseAdjust(adjust.exhale ?: default, default, AdjustLimits.EXHALE_S) {
+                                adjust.exhale = it
                                 persistAdjustments()
                             }
-                        } else {
-                            null
                         },
                         intervalsExpanded = intervalsExpanded,
                         onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
@@ -390,13 +331,10 @@ fun ExerciseDetailScreen(
                     }
                     StartSplitButton(
                         label = startLabel,
-                        resetVisible = modifiedNow(),
+                        resetVisible = adjust.modified,
                         onStart = { launch() },
                         onReset = {
-                            value = valueDefault
-                            inhaleSec = inhaleDefault
-                            exhaleSec = exhaleDefault
-                            holdSec = holdDefault
+                            adjust.reset()
                             onIntervalsReset()
                         },
                     )
@@ -411,7 +349,7 @@ fun ExerciseDetailScreen(
             onConfirm = {
                 showSafety = false
                 onConfirmedSafety()
-                onStart(currentConfig())
+                onStart(adjust.config())
             },
             onDismiss = { showSafety = false },
         )
