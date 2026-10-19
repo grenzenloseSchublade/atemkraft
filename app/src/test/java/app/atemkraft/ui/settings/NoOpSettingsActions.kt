@@ -21,4 +21,5 @@ object NoOpSettingsActions : SettingsActions {
     override fun selectVoice(voiceId: String?) = Unit
     override fun deleteVoice(voiceId: String) = Unit
     override fun clearLog() = Unit
+    override fun acknowledgeSettingsReset() = Unit
 }

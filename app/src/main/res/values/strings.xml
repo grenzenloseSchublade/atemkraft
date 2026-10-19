@@ -272,11 +272,12 @@
     <string name="settings_breathing_title">Atmen</string>
     <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
     <string name="settings_meditation_title">Meditation</string>
+    <string name="settings_reset_notice">Einstellungen wurden zurückgesetzt, weil ihre Datei beschädigt war. Logbuch, Muster und geladene Stimmen sind noch da; wähle hier neu, was du anders hattest.</string>
     <string name="settings_data_title">Daten</string>
     <string name="settings_data_hint">Gespeicherte Muster als Datei sichern und wieder einlesen. Den Speicherort wählst du selbst – die App hat kein Konto und keine Cloud.</string>
-    <string name="settings_data_export">Muster exportieren</string>
-    <string name="settings_data_import">Muster importieren</string>
-    <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) je nach Hersteller Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Sicher geht es mit „Muster exportieren“.</string>
+    <string name="settings_data_export">Exportieren</string>
+    <string name="settings_data_import">Importieren</string>
+    <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) je nach Hersteller Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Die Muster sichert „Exportieren“ in jedem Fall.</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
     <string name="settings_data_clear_log_confirm">Wirklich leeren?</string>
     <plurals name="data_export_done">
@@ -317,7 +318,9 @@
     <string name="settings_speech_pack_preparing">wird vorbereitet …</string>
 
     <!-- Stimmen-Katalog -->
-    <string name="settings_voice_catalog_hint">Erst anhören, dann laden. Mehrere Stimmen möglich; die gewählte wird in der Anleitung gesprochen.</string>
+    <string name="settings_voice_catalog_hint">Erst anhören, dann laden. Mehrere Stimmen möglich; die gewählte wird in der Anleitung gesprochen. Stimmen kommen von GitHub (sherpa-onnx).</string>
+    <string name="settings_voice_none_installed">Noch keine Stimme geladen</string>
+    <string name="settings_voice_none_chosen">Keine Stimme gewählt</string>
     <string name="settings_voice_active">✓ Aktiv</string>
     <string name="settings_voice_choose">Wählen</string>
     <string name="settings_voice_download">Laden</string>

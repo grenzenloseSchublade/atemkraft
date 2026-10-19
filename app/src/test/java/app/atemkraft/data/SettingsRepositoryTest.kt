@@ -24,6 +24,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -173,5 +174,38 @@ class SettingsRepositoryTest {
         // Danach ist die Datei wieder beschreibbar.
         repo.setSoundMode(SoundMode.OFF)
         assertEquals(SoundMode.OFF, repo.cueSettings.first().soundMode)
+    }
+
+    @Test
+    fun `das Zurücksetzen wird genau einmal gemeldet`() = runBlocking {
+        val file = File(folder.root, "kaputt.preferences_pb")
+        file.writeBytes(byteArrayOf(0x7f, 0x13, 0x00, 0x42, 0x55)) // kein gültiges Protobuf
+        val broken = PreferenceDataStoreFactory.create(corruptionHandler = settingsCorruptionHandler, scope = scope) { file }
+
+        val repo = SettingsRepository(broken)
+        assertTrue(repo.settingsResetPending.first())
+        repo.acknowledgeSettingsReset()
+        assertFalse(repo.settingsResetPending.first())
+        // Die Marke bleibt als Vermerk; ein zweites Bestätigen ändert nichts.
+        assertNotNull(repo.resetAfterCorruptionAt.first())
+        repo.acknowledgeSettingsReset()
+        assertFalse(repo.settingsResetPending.first())
+    }
+
+    @Test
+    fun `ohne Zurücksetzen gibt es nichts zu melden`() = runBlocking {
+        val repo = SettingsRepository(store)
+        assertFalse(repo.settingsResetPending.first())
+        repo.acknowledgeSettingsReset()
+        assertFalse(repo.settingsResetPending.first())
+        assertNull(repo.resetAfterCorruptionAt.first())
+    }
+
+    @Test
+    fun `ein neues Zurücksetzen nach einem gemeldeten wird wieder gemeldet`() {
+        assertFalse(resetNoticePending(resetAt = null, seenAt = null))
+        assertTrue(resetNoticePending(resetAt = 1_000L, seenAt = null))
+        assertFalse(resetNoticePending(resetAt = 1_000L, seenAt = 1_000L))
+        assertTrue(resetNoticePending(resetAt = 2_000L, seenAt = 1_000L))
     }
 }

@@ -635,12 +635,41 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         compose.mainClock.advanceTimeByFrame()
     }) { Settings() }
 
+    /** Stimmen-Katalog zugeklappt (keine lädt): nur „Stimme“ mit der aktiven Stimme und Caret. */
+    @Test
+    fun settingsVoicesCollapsed() = snap("05_einstellungen_stimmen_zu") { Settings(downloading = false) }
+
+    /** Stimmen-Katalog nach Tipp auf die Kopfzeile: Hinweis mit Quelle (SEC-NET-02) und alle Stimmen. */
+    @Test
+    fun settingsVoicesExpanded() = snap("05_einstellungen_stimmen_auf", prepare = {
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.settings_voice)).performClick()
+    }) { Settings(downloading = false) }
+
+    /**
+     * Nach einer beschädigten Einstellungsdatei: einmaliger Hinweis oben; die Stimme ist nicht mehr
+     * gewählt, die geladene noch da („Keine Stimme gewählt“).
+     */
+    @Test
+    fun settingsResetNotice() = snap("05_einstellungen_zurueckgesetzt") {
+        Settings(downloading = false, voiceActive = false, resetPending = true)
+    }
+
+    /**
+     * Einstellungen mit einer geladenen Stimme (die erste); [downloading] lädt die zweite (der
+     * Katalog bleibt dann offen), [voiceActive] = die geladene ist gewählt.
+     */
     @Composable
-    private fun Settings(focusMeditation: Boolean = false, transfer: PatternTransfer = PatternTransfer.Idle) {
+    private fun Settings(
+        focusMeditation: Boolean = false,
+        transfer: PatternTransfer = PatternTransfer.Idle,
+        downloading: Boolean = true,
+        voiceActive: Boolean = true,
+        resetPending: Boolean = false,
+    ) {
         val voices = VoiceCatalog.all.mapIndexed { i, v ->
-            v.id to when (i) {
-                0 -> VoiceDownloadState.Downloaded
-                1 -> VoiceDownloadState.Downloading(fraction = 0.4f)
+            v.id to when {
+                i == 0 -> VoiceDownloadState.Downloaded
+                i == 1 && downloading -> VoiceDownloadState.Downloading(fraction = 0.4f)
                 else -> VoiceDownloadState.NotDownloaded
             }
         }.toMap()
@@ -655,8 +684,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 gongIntervalMin = 5,
                 gongLong = false,
                 voiceStates = voices,
-                activeVoiceId = VoiceCatalog.all.first().id,
+                activeVoiceId = if (voiceActive) VoiceCatalog.all.first().id else null,
                 piperEngineReady = true,
+                settingsResetPending = resetPending,
             ),
             actions = NoOpSettingsActions,
             onOpenGlossary = {},

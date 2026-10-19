@@ -43,6 +43,8 @@ data class SettingsUiState(
     val voiceStates: Map<String, VoiceDownloadState> = emptyMap(),
     val activeVoiceId: String? = null,
     val piperEngineReady: Boolean = false,
+    /** Die Einstellungen wurden wegen einer beschädigten Datei zurückgesetzt und das ist noch nicht gemeldet. */
+    val settingsResetPending: Boolean = false,
 )
 
 /** Was die Einstellungen auslösen (ohne Navigation und Datei-Auswahl, die bleiben im UI). */
@@ -61,6 +63,9 @@ interface SettingsActions {
     fun selectVoice(voiceId: String?)
     fun deleteVoice(voiceId: String)
     fun clearLog()
+
+    /** Der Hinweis „Einstellungen wurden zurückgesetzt“ wurde gezeigt; er kommt nicht wieder. */
+    fun acknowledgeSettingsReset()
 }
 
 /**
@@ -94,8 +99,9 @@ class SettingsViewModel(
         voices.states,
         settings.neuralVoiceId,
         meditation.piperReady,
-    ) { base, voiceStates, voiceId, piperReady ->
-        base.copy(voiceStates = voiceStates, activeVoiceId = voiceId, piperEngineReady = piperReady)
+        settings.settingsResetPending,
+    ) { base, voiceStates, voiceId, piperReady, resetPending ->
+        base.copy(voiceStates = voiceStates, activeVoiceId = voiceId, piperEngineReady = piperReady, settingsResetPending = resetPending)
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
@@ -135,6 +141,8 @@ class SettingsViewModel(
         override fun deleteVoice(voiceId: String) = meditation.deleteNeuralVoice(voiceId)
 
         override fun clearLog() = write { logbook.clear() }
+
+        override fun acknowledgeSettingsReset() = write { settings.acknowledgeSettingsReset() }
     }
 
     private fun write(block: suspend () -> Unit) {

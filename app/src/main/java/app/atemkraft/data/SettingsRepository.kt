@@ -62,6 +62,15 @@ data class IntervalOverrides(
  */
 private val CORRUPTION_RESET_AT = longPreferencesKey("settings_reset_at")
 
+/** [CORRUPTION_RESET_AT] des Zurücksetzens, das die Einstellungen schon einmal gemeldet haben. */
+private val CORRUPTION_RESET_SEEN = longPreferencesKey("settings_reset_seen_at")
+
+/**
+ * Ein Zurücksetzen ist zu melden, solange es noch nicht gemeldet wurde: Die Marke bleibt als
+ * Vermerk stehen, gemeldet wird sie nur einmal (je beschädigter Datei).
+ */
+internal fun resetNoticePending(resetAt: Long?, seenAt: Long?): Boolean = resetAt != null && resetAt != seenAt
+
 /**
  * Beschädigte settings.preferences_pb (CorruptionException): Statt bei jedem Start abzustürzen,
  * beginnt die App mit Standardwerten und vermerkt das ([CORRUPTION_RESET_AT]). Logbuch und
@@ -138,6 +147,14 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     /** Wann die Einstellungen zuletzt wegen einer beschädigten Datei zurückgesetzt wurden; null = nie. */
     val resetAfterCorruptionAt: Flow<Long?> = data.map { it[CORRUPTION_RESET_AT] }
+
+    /** true, solange das letzte Zurücksetzen noch nicht gemeldet ist ([acknowledgeSettingsReset]). */
+    val settingsResetPending: Flow<Boolean> = data.map { resetNoticePending(it[CORRUPTION_RESET_AT], it[CORRUPTION_RESET_SEEN]) }
+
+    /** Das Zurücksetzen ist gemeldet; die Marke selbst bleibt als Vermerk stehen. */
+    suspend fun acknowledgeSettingsReset() {
+        store.edit { prefs -> prefs[CORRUPTION_RESET_AT]?.let { prefs[CORRUPTION_RESET_SEEN] = it } }
+    }
 
     /**
      * Zuletzt gewählter Aufklapp-Zustand von „Meine Muster“ im Situationen-Tab. Gilt erst ab

@@ -1,5 +1,6 @@
 package app.atemkraft.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,9 +41,11 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
@@ -62,6 +65,7 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
+import app.atemkraft.ui.components.ExpandCaret
 import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
@@ -71,6 +75,7 @@ import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.choiceGroupHeading
+import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberArmedConfirm
@@ -109,6 +114,15 @@ fun SettingsScreen(
         scrollState.scrollTo((y - topMarginPx).coerceAtLeast(0))
         focusDone = true
     }
+    // Nach einer beschädigten Einstellungsdatei einmal melden: Der Hinweis bleibt für diesen
+    // Besuch der Seite stehen (auch beim Drehen), die Marke gilt sofort als gemeldet.
+    var showResetNotice by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.settingsResetPending) {
+        if (state.settingsResetPending) {
+            showResetNotice = true
+            actions.acknowledgeSettingsReset()
+        }
+    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Fest über der Scroll-Fläche: Nach dem Sprung zur Meditations-Karte bliebe der
@@ -121,6 +135,12 @@ fun SettingsScreen(
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 Spacer(Modifier.height(Dimens.SectionGap))
+                if (showResetNotice) {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        BodyText(stringResource(R.string.settings_reset_notice), modifier = Modifier.padding(Dimens.CardPadding))
+                    }
+                    Spacer(Modifier.height(Dimens.SectionGap))
+                }
 
                 // Wissen zuerst: Atemlehre und Glossar sollen nicht unter den Karten verschwinden.
                 NavRow(stringResource(R.string.settings_atemlehre), onOpenAtemlehre)
@@ -180,6 +200,8 @@ private fun DataCard(transfer: PatternTransfer, onClearLog: () -> Unit) {
             CardTitle(stringResource(R.string.settings_data_title), color = headingColor(4))
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_data_hint))
+            // Kurze Labels, damit beide gleich breit nebeneinander passen; dass es um Muster geht,
+            // sagt der Hinweis darüber. Passen sie nicht, stehen sie untereinander (LAYOUT-03).
             AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
                 DataButton(transfer.exportLabel ?: stringResource(R.string.settings_data_export), transfer.export)
                 DataButton(transfer.importLabel ?: stringResource(R.string.settings_data_import), transfer.import)
@@ -402,28 +424,95 @@ private fun MeditationCard(
             HintText(stringResource(R.string.settings_gong_interval_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            SubLabel(stringResource(R.string.settings_voice))
-            HintText(stringResource(R.string.settings_voice_catalog_hint))
-            Spacer(Modifier.height(Dimens.GapTiny))
+            // Zugeklappt nur die aktive Stimme; der Katalog klappt darunter auf. Solange eine Stimme
+            // lädt, bleibt er offen, damit Fortschritt und Abbrechen im Bild bleiben.
+            var catalogExpanded by rememberSaveable { mutableStateOf(false) }
+            val downloading = voiceStates.values.any { it is VoiceDownloadState.Downloading }
+            val showCatalog = catalogExpanded || downloading
+            val active = VoiceCatalog.all.firstOrNull { it.id == activeVoiceId && voiceStates[it.id] is VoiceDownloadState.Downloaded }
+            VoiceSummaryRow(
+                active = active,
+                anyInstalled = voiceStates.values.any { it is VoiceDownloadState.Downloaded },
+                engineReady = piperEngineReady,
+                expanded = showCatalog,
+                enabled = !downloading,
+                onToggle = { catalogExpanded = !showCatalog },
+            )
+            if (showCatalog) {
+                // Quelle vor dem ersten „Laden“ (SECURITY SEC-NET-02).
+                HintText(stringResource(R.string.settings_voice_catalog_hint))
+                Spacer(Modifier.height(Dimens.GapTiny))
 
-            // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
-            VoiceCatalog.all.forEachIndexed { index, spec ->
-                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapHairline), color = DividerSubtle)
-                // key: Der Bestätigungszustand des Löschens gehört zur Stimme, nicht zur Position.
-                key(spec.id) {
-                    VoiceRow(
-                        spec = spec,
-                        state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
-                        active = spec.id == activeVoiceId,
-                        engineReady = piperEngineReady,
-                        onSample = { onSampleVoice(spec) },
-                        onDownload = { onDownloadVoice(spec.id) },
-                        onSelect = { onSelectVoice(spec.id) },
-                        onDelete = { onDeleteVoice(spec.id) },
-                    )
+                // Stimmen-Katalog: pro Stimme Vorhören → Laden → Wählen/Löschen. Mehrere behaltbar.
+                VoiceCatalog.all.forEachIndexed { index, spec ->
+                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapHairline), color = DividerSubtle)
+                    // key: Der Bestätigungszustand des Löschens gehört zur Stimme, nicht zur Position.
+                    key(spec.id) {
+                        VoiceRow(
+                            spec = spec,
+                            state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
+                            active = spec.id == activeVoiceId,
+                            engineReady = piperEngineReady,
+                            onSample = { onSampleVoice(spec) },
+                            onDownload = { onDownloadVoice(spec.id) },
+                            onSelect = { onSelectVoice(spec.id) },
+                            onDelete = { onDeleteVoice(spec.id) },
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+/**
+ * Kopf des Stimmen-Katalogs: „Stimme“, zugeklappt darunter die aktive Stimme mit „✓ Aktiv“ (bzw.
+ * dem Kreis, solange die Engine sie vorbereitet) oder ein Hinweis, dass keine geladen oder gewählt
+ * ist. Die ganze Zeile klappt den Katalog auf und zu (Caret wie [DisclosureToggle] und
+ * `ExpanderSection`); [enabled] = false, solange eine Stimme lädt.
+ */
+@Composable
+private fun VoiceSummaryRow(
+    active: VoiceSpec?,
+    anyInstalled: Boolean,
+    engineReady: Boolean,
+    expanded: Boolean,
+    enabled: Boolean,
+    onToggle: () -> Unit,
+) {
+    val state = expandedStateText(expanded)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onToggle)
+            .semantics { stateDescription = state }
+            .padding(vertical = Dimens.GapTiny),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            SubLabel(stringResource(R.string.settings_voice))
+            // Aufgeklappt zeigt der Katalog die aktive Stimme selbst; hier stünde sie doppelt.
+            when {
+                expanded -> Unit
+                active != null -> HintText(active.displayName)
+                else -> HintText(stringResource(if (anyInstalled) R.string.settings_voice_none_chosen else R.string.settings_voice_none_installed))
+            }
+        }
+        when {
+            expanded -> Unit
+
+            active != null && engineReady -> Text(
+                text = stringResource(R.string.settings_voice_active),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
+            active != null ->
+                CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
+        }
+        ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
     }
 }
 
