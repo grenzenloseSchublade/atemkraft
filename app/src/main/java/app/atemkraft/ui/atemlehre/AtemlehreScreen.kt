@@ -61,8 +61,8 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.LoreAccent
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
@@ -79,10 +79,10 @@ import kotlinx.coroutines.flow.first
  * „Die Muster“, jedes in einer eigenen Karte mit `ExpanderSection` (Rhythmusbild und Titel gehören
  * sichtbar zusammen).
  *
- * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen Magenta, Halten
- * gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe tragen deshalb
- * einen eigenen Ton, [LoreAccent] (Koralle), die Mustertitel darunter sind neutral (FARBE-07):
- * Pink stünde sonst zugleich für „Überschrift“ und „Ausatmen“.
+ * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen [BreathExhale] Koralle,
+ * Halten gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe stehen
+ * wie im Glossar in `primary` (Pink), die Mustertitel darunter neutral (FARBE-07); Pink heißt hier
+ * deshalb nie „Ausatmen“.
  *
  * [focus]: Kennung einer Muster-Karte (Sprung aus der Detailseite) – die Karte steht dann
  * aufgeklappt mit ihrem Rhythmusbild oben im Bild.
@@ -90,7 +90,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus: String? = null) {
     val scrollState = rememberScrollState()
-    val accent = LoreAccent
+    val accent = MaterialTheme.colorScheme.primary
     val focusId = focus?.takeIf { Atemlehre.pattern(it) != null }
     // Einmal zur Karte springen; gemerkt, damit die Rückkehr aus einer Übung die Position hält.
     // Die Lage der Karte wird gegen den Scroll-Inhalt gemessen, nicht gegen ihre direkte Spalte:
@@ -395,12 +395,12 @@ private fun RhythmBar(steps: List<RhythmStep>) {
     }
 }
 
-/** Ein Phasen-Abschnitt: Einatmen Cyan, Ausatmen Magenta gefüllt; Halten als gestrichelter Umriss. */
+/** Ein Phasen-Abschnitt: Einatmen Cyan, Ausatmen Koralle gefüllt; Halten als gestrichelter Umriss. */
 @Composable
 private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: Boolean = false) {
-    // secondary = Cyan, primary = Magenta (Theme.kt): die beiden Grundfarben der App.
+    // secondary = Cyan (Theme.kt); Ausatmen in eigenem Ton, weil Pink hier die Köpfe trägt.
     val inhale = MaterialTheme.colorScheme.secondary
-    val exhale = MaterialTheme.colorScheme.primary
+    val exhale = BreathExhale
     val base: Color = when (type) {
         PhaseType.INHALE, PhaseType.INHALE_TOP_UP, PhaseType.HOLD_FULL -> inhale
         PhaseType.EXHALE, PhaseType.HOLD_EMPTY -> exhale

@@ -74,7 +74,7 @@ const val TERTIARY = 0.5f
 val PauseGlyphCreme = Color(0xFFFFF3D6)
 
 /**
- * Überschriften der Atemlehre. Cyan und Magenta stehen dort für Ein- und Ausatmen, Gelb für Warnung,
- * Familienfarben für Familien – die Abschnittsköpfe brauchen deshalb einen eigenen Ton (FARBE-04, -07).
+ * Ausatmen in den Rhythmusbildern der Atemlehre (Koralle), Einatmen ist Cyan. Pink trägt dort die
+ * Abschnittsköpfe wie im Glossar und kann deshalb nicht zugleich Ausatmen heißen (FARBE-04, -07).
  */
-val LoreAccent = Color(0xFFFF9E7A)
+val BreathExhale = Color(0xFFFF9E7A)
