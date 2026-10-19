@@ -68,6 +68,7 @@ import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
@@ -259,9 +260,9 @@ private fun TonCard(
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_tone_title))
             Spacer(Modifier.height(Dimens.GapSmall))
-            SubLabel(stringResource(R.string.volume_title))
+            SubLabel(stringResource(R.string.volume_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
-            SegmentedChoiceRow(ToneVolume.entries, volume, onVolume) { v ->
+            SegmentedChoiceRow(ToneVolume.entries, volume, onVolume, groupLabel = stringResource(R.string.volume_title)) { v ->
                 when (v) {
                     ToneVolume.QUIET -> stringResource(R.string.volume_quiet)
                     ToneVolume.MEDIUM -> stringResource(R.string.volume_medium)
@@ -273,7 +274,7 @@ private fun TonCard(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SubLabel(stringResource(R.string.settings_gong_length))
+                SubLabel(stringResource(R.string.settings_gong_length), Modifier.choiceGroupHeading())
                 Spacer(Modifier.weight(1f))
                 // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut tippen).
                 // Glyph bündig an der Kartenkante wie die Segmente darunter (LAYOUT-07).
@@ -283,7 +284,7 @@ private fun TonCard(
                     }
                 }
             }
-            SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong) { long ->
+            SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong, groupLabel = stringResource(R.string.settings_gong_length)) { long ->
                 stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
             }
             Spacer(Modifier.height(Dimens.GapTiny))
@@ -305,9 +306,9 @@ private fun AtmenCard(
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(stringResource(R.string.settings_breathing_title))
             Spacer(Modifier.height(Dimens.GapSmall))
-            SubLabel(stringResource(R.string.settings_sound_title))
+            SubLabel(stringResource(R.string.settings_sound_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
-            SegmentedChoiceRow(SoundMode.entries, soundMode, onSoundMode) { mode ->
+            SegmentedChoiceRow(SoundMode.entries, soundMode, onSoundMode, groupLabel = stringResource(R.string.settings_sound_title)) { mode ->
                 when (mode) {
                     SoundMode.OFF -> stringResource(R.string.sound_mode_off)
                     SoundMode.CUES -> stringResource(R.string.sound_mode_cues)
@@ -333,9 +334,9 @@ private fun AtmenCard(
             }
             if (soundMode == SoundMode.CONTINUOUS) {
                 Spacer(Modifier.height(Dimens.GapSmall))
-                SubLabel(stringResource(R.string.emphasis_title))
+                SubLabel(stringResource(R.string.emphasis_title), Modifier.choiceGroupHeading())
                 Spacer(Modifier.height(Dimens.GapSmall))
-                SegmentedChoiceRow(TransitionEmphasis.entries, transition, onTransition) { emphasis ->
+                SegmentedChoiceRow(TransitionEmphasis.entries, transition, onTransition, groupLabel = stringResource(R.string.emphasis_title)) { emphasis ->
                     when (emphasis) {
                         TransitionEmphasis.SOFT -> stringResource(R.string.emphasis_soft)
                         TransitionEmphasis.MEDIUM -> stringResource(R.string.emphasis_medium)
@@ -400,11 +401,17 @@ private fun MeditationCard(
             CardTitle(stringResource(R.string.settings_meditation_title))
 
             Spacer(Modifier.height(Dimens.GapSmall))
-            SubLabel(stringResource(R.string.settings_gong_interval))
+            SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
             // 2 × 2 wie das Dauer-Raster im Meditations-Tab: „✓ 15 min“ passt in der Karte nicht
             // in ein Viertel der Breite, sonst stünde hier schon bei normaler Schrift eine Radioliste.
-            SegmentedChoiceRow(GONG_INTERVAL_CHOICES, gongIntervalMin, onGongInterval, columns = GONG_COLUMNS) { m ->
+            SegmentedChoiceRow(
+                GONG_INTERVAL_CHOICES,
+                gongIntervalMin,
+                onGongInterval,
+                columns = GONG_COLUMNS,
+                groupLabel = stringResource(R.string.settings_gong_interval),
+            ) { m ->
                 stringResource(R.string.meditation_minutes, m)
             }
             Spacer(Modifier.height(Dimens.GapTiny))

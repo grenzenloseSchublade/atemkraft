@@ -74,8 +74,10 @@
 
     <!-- Mini-Player / Overlay -->
     <string name="action_minimize">Minimieren</string>
-    <string name="action_sound_on">Ton an</string>
-    <string name="action_sound_off">Ton aus</string>
+    <string name="action_sound">Ton</string>
+    <!-- Zustand von Schaltern ohne Zeilentext (Ton im Overlay, ∞-Marke am Zeitring). -->
+    <string name="state_switch_on">An</string>
+    <string name="state_switch_off">Aus</string>
     <string name="mini_open">Öffnen</string>
     <string name="session_paused">Pausiert</string>
 
@@ -340,6 +342,10 @@
 
     <!-- Barrierefreiheit -->
     <string name="cd_breathing_circle">Atemkreis</string>
+    <!-- Was ein Doppeltipp auf Atemkreis bzw. Meditationsring tut (TalkBack: „Zum … doppeltippen“). -->
+    <string name="circle_action_pause">Pausieren</string>
+    <string name="circle_action_resume">Fortsetzen</string>
+    <string name="circle_action_continue">Weiteratmen</string>
 
     <!-- Meditation -->
     <string name="tab_meditation">Meditation</string>

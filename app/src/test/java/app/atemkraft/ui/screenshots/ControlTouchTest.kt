@@ -29,14 +29,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
@@ -48,15 +51,20 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
@@ -67,6 +75,7 @@ import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SelectChip
@@ -75,7 +84,9 @@ import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
+import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
+import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.meditation.DurationPickerState
 import app.atemkraft.ui.meditation.TimeDial
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -125,6 +136,7 @@ class ControlTouchTest(private val fontScale: Float) {
     }
 
     private var current by mutableStateOf<(@Composable () -> Unit)?>(null)
+    private lateinit var inputMode: InputModeManager
     private val hits = mutableListOf<String>()
     private val density get() = compose.density.density
 
@@ -132,6 +144,7 @@ class ControlTouchTest(private val fontScale: Float) {
     fun setUp() {
         RuntimeEnvironment.setFontScale(fontScale)
         compose.setContent {
+            inputMode = LocalInputModeManager.current
             AtemkraftTheme {
                 Box(Modifier.requiredSize(360.dp, 400.dp), contentAlignment = Alignment.Center) { current?.invoke() }
             }
@@ -140,6 +153,13 @@ class ControlTouchTest(private val fontScale: Float) {
 
     private fun show(content: @Composable () -> Unit) {
         current = content
+        compose.waitForIdle()
+    }
+
+    /** Bedienung per Tastatur/D-Pad: Erst dann sind Knöpfe fokussierbar (Compose 1.7). */
+    @OptIn(ExperimentalComposeUiApi::class)
+    private fun keyboardMode() {
+        compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
         compose.waitForIdle()
     }
 
@@ -297,6 +317,77 @@ class ControlTouchTest(private val fontScale: Float) {
 
         show { Box(Modifier.width(340.dp)) { ToggleRow(label = "Sprachanleitung", checked = false, onCheckedChange = {}, enabled = false) } }
         compose.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch)).assertIsNotEnabled()
+    }
+
+    @Test
+    fun `Reset per Tastatur gibt den Fokus an Starten, statt ihn mit dem Knopf zu verlieren`() {
+        val app = RuntimeEnvironment.getApplication()
+        var resetVisible by mutableStateOf(true)
+        show {
+            Box(Modifier.width(340.dp)) {
+                StartSplitButton("Starten", resetVisible = resetVisible, onStart = {}, onReset = { resetVisible = false })
+            }
+        }
+        keyboardMode()
+        val reset = compose.onNodeWithContentDescription(app.getString(R.string.adjust_reset))
+        reset.performSemanticsAction(SemanticsActions.RequestFocus)
+        reset.assertIsFocused()
+        reset.performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithText("Starten").assertIsFocused()
+    }
+
+    @Test
+    fun `Ende-Screen legt den Fokus nur bei Tastatur auf Nochmal`() {
+        val app = RuntimeEnvironment.getApplication()
+        val again = app.getString(R.string.action_again)
+        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
+        compose.onNodeWithText(again).assertIsNotFocused()
+        show {}
+        keyboardMode()
+        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
+        compose.onNodeWithText(again).assertIsFocused()
+    }
+
+    @Test
+    fun `Stepper am Anschlag gibt den Fokus an den Gegenknopf`() {
+        val app = RuntimeEnvironment.getApplication()
+        var value by mutableIntStateOf(2)
+        show { Box(Modifier.width(340.dp)) { Stepper(label = "Dauer", value = value, range = 1..3, onChange = { value = it }) } }
+        val minus = compose.onNodeWithContentDescription("Dauer, ${app.getString(R.string.adjust_decrease)}")
+        val plus = compose.onNodeWithContentDescription("Dauer, ${app.getString(R.string.adjust_increase)}")
+        keyboardMode()
+        minus.performSemanticsAction(SemanticsActions.RequestFocus)
+        minus.assertIsFocused()
+        minus.performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(1, value)
+        minus.assertIsNotEnabled()
+        plus.assertIsFocused()
+        // Ohne Anschlag bleibt der Fokus, wo er ist.
+        plus.performSemanticsAction(SemanticsActions.OnClick)
+        plus.assertIsFocused()
+        plus.performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(3, value)
+        minus.assertIsFocused()
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
+    @Test
+    fun `Segment-Gruppe traegt ihre Ueberschrift als Namen, TalkBack liest sie einmal`() {
+        show {
+            Column(Modifier.width(340.dp)) {
+                SubLabel("Lautstärke", Modifier.choiceGroupHeading())
+                SegmentedChoiceRow(listOf(1, 2), 1, {}, groupLabel = "Lautstärke") { "Stufe $it" }
+            }
+        }
+        val group = compose.onNodeWithContentDescription("Lautstärke", useUnmergedTree = true).fetchSemanticsNode()
+        assertTrue("Gruppe enthält die Segmente", group.children.isNotEmpty())
+        assertTrue("Gruppe fasst nicht zusammen", !group.config.isMergingSemanticsOfDescendants)
+        // Die Gruppe ist für TalkBack ein Halt (Name ohne fokussierbaren Vorfahren); die sichtbare
+        // Überschrift darf den Text deshalb nicht noch einmal ansagen.
+        val spoken = (hasText("Lautstärke") or hasContentDescription("Lautstärke")) and
+            !SemanticsMatcher.keyIsDefined(SemanticsProperties.InvisibleToUser)
+        compose.onAllNodes(spoken, useUnmergedTree = true).assertCountEquals(1)
+        assertEquals("Segmente bleiben einzeln antippbar", 2, clickables().size)
     }
 
     @Test
@@ -467,6 +558,9 @@ class ControlTouchTest(private val fontScale: Float) {
             // ∞-Marke: ±23 dp um das Zeichen treffen, auch über den Ring hinaus.
             val mark = compose.onNodeWithContentDescription(app.getString(R.string.cd_meditation_dial_free), useUnmergedTree = true)
                 .fetchSemanticsNode()
+            // Ein Schalter wie Lesezeichen und „Tut mir gut“: Rolle Switch, Zustand „Aus“.
+            assertEquals("$where: ∞ als Schalter", Role.Switch, mark.config.getOrNull(SemanticsProperties.Role))
+            assertEquals(app.getString(R.string.state_switch_off), mark.config.getOrNull(SemanticsProperties.StateDescription))
             val markCenter = mark.layoutInfo.coordinates.let { it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f) }
             for (d in listOf(Offset(-INSIDE_DP, 0f), Offset(INSIDE_DP, 0f), Offset(0f, -INSIDE_DP), Offset(0f, INSIDE_DP))) {
                 state.select(30)

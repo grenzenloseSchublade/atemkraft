@@ -13,8 +13,15 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -84,7 +91,11 @@ private fun StepperLabel(label: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** „−  wert  +“: Knöpfe als gefüllte [AppIconButton] (Tippfläche 48 dp), Wert dazwischen. */
+/**
+ * „−  wert  +“: Knöpfe als gefüllte [AppIconButton] (Tippfläche 48 dp), Wert dazwischen. Am
+ * Anschlag wird der Knopf deaktiviert; hatte er den Fokus (Tastatur, D-Pad), geht der Fokus auf
+ * den Gegenknopf statt ins Leere (A11Y-07).
+ */
 @Composable
 private fun StepButtons(
     label: String,
@@ -96,9 +107,18 @@ private fun StepButtons(
 ) {
     val decreaseLabel = stringResource(R.string.adjust_decrease)
     val increaseLabel = stringResource(R.string.adjust_increase)
+    val minusFocus = remember { FocusRequester() }
+    val plusFocus = remember { FocusRequester() }
+    var minusFocused by remember { mutableStateOf(false) }
+    var plusFocused by remember { mutableStateOf(false) }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         AppIconButton(
-            onClick = { onChange((value - 1).coerceIn(range)) },
+            onClick = {
+                val next = (value - 1).coerceIn(range)
+                if (minusFocused && next == range.first) plusFocus.requestFocus()
+                onChange(next)
+            },
+            modifier = Modifier.focusRequester(minusFocus).onFocusChanged { minusFocused = it.hasFocus },
             enabled = value > range.first,
             colors = IconButtonDefaults.filledTonalIconButtonColors(),
         ) {
@@ -119,7 +139,12 @@ private fun StepButtons(
                 },
         )
         AppIconButton(
-            onClick = { onChange((value + 1).coerceIn(range)) },
+            onClick = {
+                val next = (value + 1).coerceIn(range)
+                if (plusFocused && next == range.last) minusFocus.requestFocus()
+                onChange(next)
+            },
+            modifier = Modifier.focusRequester(plusFocus).onFocusChanged { plusFocused = it.hasFocus },
             enabled = value < range.last,
             colors = IconButtonDefaults.filledTonalIconButtonColors(),
         ) {

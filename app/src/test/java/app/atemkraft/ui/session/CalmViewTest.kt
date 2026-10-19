@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import app.atemkraft.R
@@ -85,7 +86,10 @@ class CalmViewTest {
     @Test
     fun `Im Countdown bewirkt der Tipp auf den Kreis nichts`() {
         show(SessionStatus.PREPARING)
-        circle.performTouchInput { click(center) }
+        // Im Countdown hat der Kreis keinen Namen (kein leerer TalkBack-Halt): getippt wird mitten
+        // auf „Gleich geht's los“, das über dem Kreis liegt und den Tipp durchlässt.
+        circle.assertDoesNotExist()
+        compose.onNodeWithText(app.getString(R.string.session_get_ready)).performTouchInput { click(center) }
         stop.assertExists()
         assertEquals(emptyList<String>(), events)
     }

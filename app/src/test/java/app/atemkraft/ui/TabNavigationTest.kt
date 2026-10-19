@@ -1,12 +1,29 @@
 package app.atemkraft.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -22,10 +39,13 @@ import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.about.AboutScreen
+import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,6 +58,8 @@ import org.robolectric.annotation.Config
  * ([tapTab]), Tab-Wechsel ([switchTab]) und Zurück über den festen Kopf ([PushHeader]).
  * Der NavHost hat dieselben Routen wie MainActivity; Einstellungen, Glossar und Über sind die
  * echten Screens, damit der Test auch den festen Zurück-Pfeil prüft. Gerätegröße wie das A54.
+ * Darüber liegt wie in MainActivity bei Bedarf ein Session-Overlay; die App darunter ist dann
+ * per [inertWhen] für TalkBack und Tastatur nicht da.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "w384dp-h832dp-xxhdpi")
@@ -50,26 +72,90 @@ class TabNavigationTest {
 
     private val tabs = listOf(AtmenRoute, SituationenRoute, MeditationRoute, LogbuchRoute)
 
+    private var overlayOpen by mutableStateOf(false)
+    private lateinit var focusManager: FocusManager
+    private val tabFocus = FocusRequester()
+    private var tabFocused = false
+    private val focusedEver = mutableSetOf<String>()
+
     @Before
     fun setUp() {
         rule.setContent {
             nav = rememberNavController()
+            focusManager = LocalFocusManager.current
             AtemkraftTheme {
-                NavHost(nav, startDestination = AtmenRoute) {
-                    composable<AtmenRoute> { Text("Atmen") }
-                    composable<SituationenRoute> { Text("Situationen") }
-                    composable<LogbuchRoute> { Text("Logbuch") }
-                    composable<MeditationRoute> { Text("Meditation") }
-                    composable<SettingsRoute> { entry ->
-                        Settings(focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation)
+                Box(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize().inertWhen(overlayOpen)) {
+                        Box(Modifier.weight(1f)) { Routes() }
+                        // Stellvertreter der Tab-Leiste: ein Knopf, der sich merkt, ob er Fokus bekam.
+                        Text(
+                            TAB_BAR,
+                            Modifier
+                                .focusRequester(tabFocus)
+                                .onFocusChanged {
+                                    tabFocused = it.isFocused
+                                    if (it.isFocused) focusedEver += TAB_BAR
+                                }
+                                .clickable(role = Role.Button) {},
+                        )
                     }
-                    composable<GlossaryRoute> { GlossaryScreen(onBack = { nav.popBackStack() }) }
-                    composable<AboutRoute> { AboutScreen(onBack = { nav.popBackStack() }) }
-                    composable<DetailRoute> { Text("Detail") }
+                    if (overlayOpen) {
+                        Column(Modifier.fillMaxSize()) {
+                            Text(
+                                OVERLAY_STOP,
+                                Modifier
+                                    .onFocusChanged { if (it.isFocused) focusedEver += OVERLAY_STOP }
+                                    .clickable(role = Role.Button) {},
+                            )
+                        }
+                    }
                 }
             }
         }
         rule.waitForIdle()
+    }
+
+    @Composable
+    private fun Routes() {
+        NavHost(nav, startDestination = AtmenRoute) {
+            composable<AtmenRoute> { Text("Atmen") }
+            composable<SituationenRoute> { Text("Situationen") }
+            composable<LogbuchRoute> { Text("Logbuch") }
+            composable<MeditationRoute> { Text("Meditation") }
+            composable<SettingsRoute> { entry ->
+                Settings(focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation)
+            }
+            composable<GlossaryRoute> { GlossaryScreen(onBack = { nav.popBackStack() }) }
+            composable<AboutRoute> { AboutScreen(onBack = { nav.popBackStack() }) }
+            composable<DetailRoute> { Text("Detail") }
+        }
+    }
+
+    @Test
+    fun `offenes Overlay blendet die App darunter fuer TalkBack und Tastatur aus, geschlossen ist sie wieder da`() {
+        rule.onAllNodesWithText(TAB_BAR).assertCountEquals(1)
+        // Fokus liegt in der App (Tastatur), dann öffnet sich die Session darüber.
+        rule.runOnIdle { tabFocus.requestFocus() }
+        rule.waitForIdle()
+        assertTrue(tabFocused)
+
+        step { overlayOpen = true }
+        rule.onAllNodesWithText(TAB_BAR).assertCountEquals(0)
+        rule.onAllNodesWithText("Atmen").assertCountEquals(0)
+        rule.onAllNodesWithText(OVERLAY_STOP).assertCountEquals(1)
+        assertFalse("Fokus bleibt nicht unsichtbar unter dem Overlay", tabFocused)
+        focusedEver.clear()
+        repeat(3) { rule.runOnIdle { focusManager.moveFocus(FocusDirection.Next) } }
+        rule.waitForIdle()
+        assertEquals("Tab läuft nur durch das Overlay", setOf(OVERLAY_STOP), focusedEver)
+
+        step { overlayOpen = false }
+        rule.onAllNodesWithText(TAB_BAR).assertCountEquals(1)
+        rule.onAllNodesWithText("Atmen").assertCountEquals(1)
+        rule.runOnIdle { focusManager.clearFocus() }
+        repeat(2) { rule.runOnIdle { focusManager.moveFocus(FocusDirection.Next) } }
+        rule.waitForIdle()
+        assertTrue("Tab erreicht die App wieder", TAB_BAR in focusedEver)
     }
 
     @Test
@@ -171,6 +257,11 @@ class TabNavigationTest {
     }
 
     private fun string(id: Int) = rule.activity.getString(id)
+
+    private companion object {
+        const val TAB_BAR = "Tab-Leiste"
+        const val OVERLAY_STOP = "Beenden"
+    }
 
     private fun backArrow() = rule.onNodeWithContentDescription(string(R.string.action_back))
 

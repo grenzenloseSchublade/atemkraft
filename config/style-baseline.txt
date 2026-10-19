@@ -18,14 +18,10 @@ card-style	app/src/main/java/app/atemkraft/MainActivity.kt	1
 exception-message-ui	app/src/main/java/app/atemkraft/cue/tts/VoiceModelManager.kt	1
 icon-source	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 cd-style	app/src/main/java/app/atemkraft/MainActivity.kt	4
-cd-style	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 motion-literal	app/src/main/java/app/atemkraft/MainActivity.kt	5
 motion-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
-motion-literal-delay	app/src/main/java/app/atemkraft/ui/components/SessionControls.kt	2
-semantics-required	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/CircleTapTarget.kt	1
 a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/HideableSlot.kt	1
-a11y-ratchet	app/src/main/java/app/atemkraft/ui/session/SessionScreen.kt	1
 locale	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2
 locale-config	app/build.gradle.kts	1
 locale-config	app/src/main/AndroidManifest.xml	1

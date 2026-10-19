@@ -18,8 +18,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,6 +42,10 @@ import app.atemkraft.ui.theme.Sizes
  * contentDescription). Beide Knöpfe sind gleich hoch – auch bei großer Schrift, wenn „Starten“
  * über [Sizes.ButtonHeight] hinauswächst. Überall verwenden, wo eine konfigurierbare Session
  * gestartet wird.
+ *
+ * Löst man „Zurücksetzen“ per Tastatur oder D-Pad aus, verschwindet der Knopf unter dem Fokus:
+ * Der Fokus geht dann auf „Starten“ statt ins Leere (A11Y-07). Bei Touch hat der Knopf keinen
+ * Fokus, dort ändert sich nichts.
  */
 @Composable
 fun StartSplitButton(
@@ -44,12 +55,14 @@ fun StartSplitButton(
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val startFocus = remember { FocusRequester() }
+    var resetFocused by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {
-        Button(onClick = onStart, modifier = Modifier.weight(1f).heightIn(min = Sizes.ButtonHeight)) {
+        Button(onClick = onStart, modifier = Modifier.weight(1f).heightIn(min = Sizes.ButtonHeight).focusRequester(startFocus)) {
             Text(label)
         }
         AnimatedVisibility(
@@ -62,8 +75,11 @@ fun StartSplitButton(
             // senkrechte Polster wie „Starten“ (M3: 8 dp) und ein Icon-Feld so hoch wie dessen
             // Textzeile – damit wachsen beide bei großer Schrift gleich mit.
             FilledTonalButton(
-                onClick = onReset,
-                modifier = Modifier.heightIn(min = Sizes.ButtonHeight),
+                onClick = {
+                    if (resetFocused) startFocus.requestFocus()
+                    onReset()
+                },
+                modifier = Modifier.heightIn(min = Sizes.ButtonHeight).onFocusChanged { resetFocused = it.hasFocus },
                 contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
             ) {
                 // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt. Zeilenhöhe

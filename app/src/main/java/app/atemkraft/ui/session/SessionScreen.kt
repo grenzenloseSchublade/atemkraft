@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,21 +18,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -131,6 +132,8 @@ private fun ActiveContent(
 ) {
     val preparing = state.status == SessionStatus.PREPARING
     val waiting = state.status == SessionStatus.WAITING_FOR_USER
+    val paused = state.status == SessionStatus.PAUSED
+    val pausedText = stringResource(R.string.session_paused)
 
     val label = if (preparing) {
         stringResource(R.string.session_get_ready)
@@ -179,13 +182,11 @@ private fun ActiveContent(
                     LaunchedEffect(controlsVisible) { if (!controlsVisible) hintVisible = false }
                     val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY)
                     val hintState = expandedStateText(hintVisible)
+                    // Optisch leise wie bisher; die Ripple (Pillenform) zeigt Tipp und Tastatur-Fokus.
                     Row(
                         modifier = Modifier
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                role = Role.Button,
-                            ) { hintVisible = !hintVisible }
+                            .clip(CircleShape)
+                            .clickable(role = Role.Button, interactionSource = null, indication = ripple()) { hintVisible = !hintVisible }
                             .semantics {
                                 stateDescription = hintState
                             }
@@ -196,7 +197,7 @@ private fun ActiveContent(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Info,
-                            contentDescription = null,
+                            contentDescription = null, // dekorativ: „Anleitung“ daneben benennt die Zeile
                             tint = hintColor,
                             modifier = Modifier.size(Sizes.IconSmall),
                         )
@@ -237,6 +238,12 @@ private fun ActiveContent(
         },
     ) { side ->
         val circleDescription = stringResource(R.string.cd_breathing_circle)
+        val circleAction = when (state.status) {
+            SessionStatus.RUNNING -> stringResource(R.string.circle_action_pause)
+            SessionStatus.PAUSED -> stringResource(R.string.circle_action_resume)
+            SessionStatus.WAITING_FOR_USER -> stringResource(R.string.circle_action_continue)
+            else -> null
+        }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(contentAlignment = Alignment.Center) {
                 BreathingCircle(fraction = fraction, progress = state.progress, modifier = Modifier.size(side))
@@ -247,6 +254,7 @@ private fun ActiveContent(
                 CircleTapTarget(
                     side = side,
                     description = circleDescription,
+                    clickLabel = circleAction,
                     onTap = when (state.status) {
                         SessionStatus.RUNNING, SessionStatus.PAUSED -> {
                             { tapFlash.toggle(running = state.status == SessionStatus.RUNNING, haptic = onTapHaptic, toggle = onTogglePause) }
@@ -263,8 +271,11 @@ private fun ActiveContent(
                 // bei großer Schrift klein wird. Antippen erreicht weiterhin den Kreis.
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     // LiveRegion sagt Phasenname + Anleitung an (der Kreis selbst hat nur eine
-                    // statische Beschreibung, sonst liest TalkBack den Phasennamen doppelt).
-                    val liveText = note?.let { "$label, $it" } ?: label
+                    // statische Beschreibung, sonst liest TalkBack den Phasennamen doppelt). Die
+                    // Pause steht davor („Pausiert, Einatmen“): Auch ein Doppeltipp auf den Kreis
+                    // wird so angesagt, ohne eine zweite Live-Region (A11Y-04).
+                    val phaseText = note?.let { "$label, $it" } ?: label
+                    val liveText = if (paused) "$pausedText, $phaseText" else phaseText
                     // Im Countdown kleiner und nie breiter als die Scheibe: „Gleich geht's los“ ist
                     // länger als jedes Phasenwort und bricht bei großer Schrift zwischen den Wörtern um,
                     // statt über den Kreis hinauszuragen.

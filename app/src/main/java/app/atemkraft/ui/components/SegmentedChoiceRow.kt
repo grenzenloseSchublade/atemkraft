@@ -22,10 +22,14 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRowScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
@@ -48,6 +52,11 @@ import kotlin.math.floor
  * Die Reihen stehen ohne eigene Lücke übereinander – der Abstand ist der Rest der
  * 48-dp-Tippfläche, enger ginge nur mit überlappenden Tippflächen (A11Y-05). Ein [selected], das
  * nicht in [items] liegt (z. B. Stepper-Wert neben Schnellwahl), markiert keines.
+ *
+ * [groupLabel] verknüpft die sichtbare Überschrift darüber („Lautstärke“) mit der Gruppe (A11Y-03):
+ * als Name des Gruppen-Knotens. Der ist für TalkBack ein eigener Halt (Text ohne fokussierbaren
+ * Vorfahren), deshalb trägt die sichtbare Überschrift [choiceGroupHeading] – sonst käme der Name
+ * zweimal hintereinander.
  */
 @Composable
 fun <T> SegmentedChoiceRow(
@@ -56,10 +65,12 @@ fun <T> SegmentedChoiceRow(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     columns: Int = items.size,
+    groupLabel: String? = null,
     label: @Composable (T) -> String,
 ) {
     val rows = items.chunked(columns)
-    SubcomposeLayout(modifier.fillMaxWidth()) { constraints ->
+    val group = if (groupLabel != null) Modifier.semantics { contentDescription = groupLabel } else Modifier
+    SubcomposeLayout(modifier.fillMaxWidth().then(group)) { constraints ->
         // Jede Beschriftung einzeln als ausgewähltes Segment messen (breiteste Variante), mit und
         // ohne Häkchen. Die Zeile misst mit width(IntrinsicSize.Min), also nur das längste Wort –
         // deshalb in der Probe untrennbar machen, sonst gilt „Start & Ende“ als so breit wie „Start“.
@@ -158,6 +169,14 @@ private fun Modifier.withoutIconReserve(): Modifier = layout { measurable, const
         placeable.place((reported - placeable.width) / 2, 0)
     }
 }
+
+/**
+ * Für die sichtbare Überschrift über einer [SegmentedChoiceRow] mit `groupLabel`: Sie ist nur Optik,
+ * TalkBack liest denselben Text als Namen der Gruppe direkt darunter. Nicht `clearAndSetSemantics`,
+ * damit das Text-Layout für die Umbruch- und Zuschnittprüfung im Screenshot-Test sichtbar bleibt.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+fun Modifier.choiceGroupHeading(): Modifier = semantics { invisibleToUser() }
 
 /** Darstellung je nach Platz, vom vollständigsten zum sparsamsten. */
 private enum class ChoiceMode { SEGMENTS, SEGMENTS_NO_CHECK, SEGMENTS_SMALLER, RADIO_LIST }

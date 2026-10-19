@@ -1,5 +1,6 @@
 package app.atemkraft.ui.meditation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -25,9 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
@@ -51,6 +52,7 @@ import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.breathingDiscDiameter
+import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
@@ -105,6 +107,8 @@ fun MiniMeditationBar(state: MeditationUiState, onClick: () -> Unit) {
 /**
  * Vollbild-Overlay der laufenden/abgeschlossenen Meditation – identischer Rahmen wie die
  * Atem-Session ([app.atemkraft.ui.session.SessionOverlay]) über das geteilte [OverlayChrome].
+ * Am Ende dieselbe Frage samt Bilanz wie dort; System-Zurück minimiert, am Ende-Screen wirkt es
+ * wie „Ende“ (Nutzerentscheidung 2026-10-19).
  */
 @Composable
 fun MeditationOverlay(
@@ -116,10 +120,16 @@ fun MeditationOverlay(
     onRestart: () -> Unit,
     onEnd: () -> Unit,
 ) {
-    OverlayChrome(muted = state.muted, onMinimize = onMinimize, onToggleMute = onToggleMute) {
+    BackHandler { if (state.status == MeditationStatus.FINISHED) onEnd() else onMinimize() }
+    OverlayChrome(
+        title = stringResource(R.string.meditation_title),
+        muted = state.muted,
+        onMinimize = onMinimize,
+        onToggleMute = onToggleMute,
+    ) {
         if (state.status == MeditationStatus.FINISHED) {
             FinishedPanel(
-                title = stringResource(R.string.meditation_done_title),
+                title = stringResource(R.string.session_done_question),
                 onAgain = onRestart,
                 onExit = onEnd,
                 // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
@@ -365,10 +375,10 @@ private fun SoundOptions(
 ) {
     Column {
         Spacer(Modifier.height(Dimens.GapSmall))
-        SubLabel(stringResource(R.string.meditation_gong_label), color = MaterialTheme.colorScheme.onBackground)
+        SubLabel(stringResource(R.string.meditation_gong_label), Modifier.choiceGroupHeading(), color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(Dimens.GapSmall))
         // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
-        SegmentedChoiceRow(GongChoice.entries, gong, onGong) { choice ->
+        SegmentedChoiceRow(GongChoice.entries, gong, onGong, groupLabel = stringResource(R.string.meditation_gong_label)) { choice ->
             when (choice) {
                 GongChoice.OFF -> stringResource(R.string.meditation_off)
                 GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
@@ -403,11 +413,13 @@ private fun RunningContent(
     val preparing = state.status == MeditationStatus.PREPARING
     val paused = state.status == MeditationStatus.PAUSED
     val ringDescription = stringResource(R.string.cd_meditation_ring)
-    // TalkBack-Ansage der Zustandswechsel (wie die Atem-Session ihren Phasennamen ansagt).
+    val ringAction = stringResource(if (paused) R.string.circle_action_resume else R.string.circle_action_pause)
+    // TalkBack-Ansage der Zustandswechsel (wie die Atem-Session ihren Phasennamen ansagt): als
+    // Zustand am Titel („Meditation, Pausiert“), der sichtbare Name bleibt der gesprochene.
     val stateAnnounce = when {
         preparing -> stringResource(R.string.session_get_ready)
         paused -> stringResource(R.string.session_paused)
-        else -> stringResource(R.string.meditation_title)
+        else -> null
     }
 
     // Ruhiger, VOLL gefüllter Kreis (kein Wachstum); der Fortschritt steht in der Zahl.
@@ -436,7 +448,7 @@ private fun RunningContent(
                 modifier = Modifier
                     .semantics {
                         liveRegion = LiveRegionMode.Polite
-                        contentDescription = stateAnnounce
+                        stateAnnounce?.let { stateDescription = it }
                     },
             )
         },
@@ -483,6 +495,7 @@ private fun RunningContent(
             CircleTapTarget(
                 side = side,
                 description = ringDescription,
+                clickLabel = ringAction,
                 onTap = if (preparing) {
                     null
                 } else {

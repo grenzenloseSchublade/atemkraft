@@ -31,9 +31,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -80,6 +78,7 @@ import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
+import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
@@ -127,13 +126,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AtemkraftApp() {
+private fun AtemkraftApp(sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory)) {
     val context = LocalContext.current
     val container = (context.applicationContext as AtemkraftApplication).container
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
-    val sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory)
     val sessionState by sessionViewModel.state.collectAsStateWithLifecycle()
     val cueSettings by container.settingsRepository.cueSettings
         .collectAsStateWithLifecycle(initialValue = CueSettings())
@@ -204,19 +202,27 @@ private fun AtemkraftApp() {
 
     // System-Zurück auf einem Top-Level-Tab bei minimierter Session/Meditation: App nur in den
     // Hintergrund schieben statt die Activity zu beenden – sonst stirbt die Atem-Session (ihr
-    // ViewModel hängt an der Activity), obwohl die Mini-Leiste „läuft weiter" signalisiert.
+    // ViewModel hängt an der Activity), obwohl die Mini-Leiste „läuft weiter" signalisiert. Nach
+    // dem Ende (FINISHED) gibt es nichts mehr zu retten: Zurück beendet die App wie gewohnt.
     // Auf Push-Seiten (currentTopTab == null) und in Overlays greifen deren eigene Back-Handler.
+    val sessionRunning = sessionActive && sessionState.status != SessionStatus.FINISHED
+    val meditationRunning = meditationActive && meditationState.status != MeditationStatus.FINISHED
     BackHandler(
-        enabled = (sessionActive || meditationActive) && currentTopTab != null &&
+        enabled = (sessionRunning || meditationRunning) && currentTopTab != null &&
             !sessionExpanded && !meditationExpanded,
     ) {
         (context as? Activity)?.moveTaskToBack(false)
     }
 
+    // Liegt ein Overlay über allem, ist die App darunter für TalkBack und Tastatur nicht da
+    // (A11Y-07, MUSTER-07): Sonst führte Wischen hinter „Beenden“ auf unsichtbare Karten und Tabs.
+    val overlayOpen = (sessionActive && sessionExpanded) || (meditationActive && meditationExpanded)
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
         // minimiert erscheinen sie als „Now-Playing"-Mini-Leiste über der Tab-Leiste.
         Scaffold(
+            modifier = Modifier.inertWhen(overlayOpen),
             bottomBar = {
                 Column {
                     if (sessionActive && !sessionExpanded) {
@@ -507,7 +513,8 @@ private fun AtemkraftApp() {
             }
         }
 
-        // Vollbild-Session über allem.
+        // Vollbild-Session über allem; System-Zurück regelt das Overlay selbst (minimieren, am
+        // Ende-Screen wie „Ende“).
         if (sessionActive && sessionExpanded) {
             SessionOverlay(
                 state = sessionState,
@@ -530,9 +537,6 @@ private fun AtemkraftApp() {
                     sessionExpanded = false
                 },
             )
-            // System-Zurück minimiert zur Mini-Leiste (Session läuft weiter, App bleibt offen) –
-            // konsistent mit dem Minimieren-Chevron.
-            BackHandler { sessionExpanded = false }
         }
 
         // Vollbild-Meditation über allem (gespiegelt von der Session): minimierbar zur Mini-Leiste.
@@ -555,7 +559,6 @@ private fun AtemkraftApp() {
                     meditationExpanded = false
                 },
             )
-            BackHandler { meditationExpanded = false }
         }
     }
 }

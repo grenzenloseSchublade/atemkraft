@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -37,7 +38,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
@@ -65,6 +65,7 @@ internal class DurationTexts(
     val sliderLabel: String,
     val sliderState: String,
     val freeLabel: String,
+    val freeState: String,
     val fineState: String,
     val fineAction: String,
     val less: String,
@@ -81,6 +82,7 @@ internal fun durationTexts(state: DurationPickerState): DurationTexts {
         sliderLabel = stringResource(R.string.cd_meditation_dial),
         sliderState = if (free) stringResource(R.string.meditation_dial_state_free) else pluralStringResource(R.plurals.meditation_dial_state, minutes, minutes),
         freeLabel = stringResource(R.string.cd_meditation_dial_free),
+        freeState = stringResource(if (free) R.string.state_switch_on else R.string.state_switch_off),
         fineState = stringResource(if (state.fineAdjust) R.string.meditation_dial_fine_on else R.string.meditation_dial_fine_off),
         fineAction = stringResource(R.string.cd_meditation_dial_fine),
         less = stringResource(R.string.cd_meditation_dial_less),
@@ -122,15 +124,17 @@ internal fun Modifier.durationSlider(state: DurationPickerState, texts: Duration
 }
 
 /**
- * Antippbare ∞-Marke: runde Tippfläche mit rundem Tipp-Echo, Name und Auswahl. Die Größe legt der
- * Aufrufer fest – mindestens 48 dp und so groß, dass das Echo die gezeichnete Marke ganz umfasst.
+ * Antippbare ∞-Marke: runde Tippfläche mit rundem Tipp-Echo. Für TalkBack ein Schalter wie
+ * Lesezeichen und „Tut mir gut“: Name „Offene Sitzung“, Rolle Switch, Zustand „An“/„Aus“. Die
+ * Größe legt der Aufrufer fest – mindestens 48 dp und so groß, dass das Echo die gezeichnete
+ * Marke ganz umfasst.
  */
 internal fun Modifier.freeMark(state: DurationPickerState, texts: DurationTexts, onTick: (major: Boolean) -> Unit): Modifier = this
     .clip(CircleShape)
-    .clickable(role = Role.Button, interactionSource = null, indication = ripple()) { state.toggleFreeWithTick(onTick) }
+    .toggleable(value = state.free, interactionSource = null, indication = ripple(), role = Role.Switch) { state.toggleFreeWithTick(onTick) }
     .semantics {
         contentDescription = texts.freeLabel
-        selected = state.free
+        stateDescription = texts.freeState
     }
 
 /**

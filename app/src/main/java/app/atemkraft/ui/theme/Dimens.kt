@@ -85,4 +85,16 @@ object Dimens {
 
     /** Kreispfeil und Stopp in den Seitenknöpfen. */
     val SessionSideIcon = 28.dp
+
+    /**
+     * Kreis der Kopfleisten-Knöpfe im Session-Overlay (Minimieren, Ton): der M3-`IconButton`, fest
+     * wie die Session-Steuerung. Der Ton-Schalter baut ihn nach, weil er `Role.Switch` braucht.
+     */
+    val OverlayIconButton = 40.dp
+
+    /**
+     * Fokusring um Atemkreis und Meditationsring (nur bei Tastatur/D-Pad sichtbar, A11Y-07):
+     * Strichstärke (2, Raster-Ausnahme); er liegt [GapTiny] außerhalb der Spur.
+     */
+    val FocusRing = 2.dp
 }

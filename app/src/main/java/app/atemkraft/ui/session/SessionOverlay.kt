@@ -1,5 +1,6 @@
 package app.atemkraft.ui.session
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,9 @@ import app.atemkraft.ui.components.rememberTouchExplorationEnabled
  * Neustart („Von vorne“, „Nochmal“) beginnt wieder mit allem. Mit TalkBack wird nie ausgeblendet;
  * ein Tastendruck (Hardware-Tastatur, D-Pad) blendet wieder ein. Der Tipp auf den Kreis bleibt
  * Pause/Weiter: Der Kreis verbraucht ihn selbst, hier kommen nur Tipps auf freie Fläche an.
+ *
+ * System-Zurück minimiert zur Mini-Leiste wie der Chevron; am Ende-Screen wirkt es wie „Ende“
+ * (Nutzerentscheidung 2026-10-19) – dann läuft nichts mehr, das weiterlaufen müsste.
  */
 @Composable
 fun SessionOverlay(
@@ -50,6 +54,7 @@ fun SessionOverlay(
     // Ende und Neustart (Countdown) beginnen wieder mit allen Bedienelementen.
     val restarted = state.status == SessionStatus.FINISHED || state.status == SessionStatus.PREPARING
     LaunchedEffect(restarted) { if (restarted) calm = false }
+    BackHandler { if (state.status == SessionStatus.FINISHED) onStop() else onMinimize() }
 
     Box(
         modifier = modifier
@@ -63,6 +68,7 @@ fun SessionOverlay(
             },
     ) {
         OverlayChrome(
+            title = state.exerciseName,
             muted = state.muted,
             onMinimize = onMinimize,
             onToggleMute = onToggleMute,

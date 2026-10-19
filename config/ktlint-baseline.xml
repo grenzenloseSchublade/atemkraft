@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <baseline version="1.0">
-    <file name="src/main/java/app/atemkraft/MainActivity.kt">
-        <error line="136" column="9" source="compose:vm-injection-check" />
-    </file>
-    <file name="src/main/java/app/atemkraft/ui/components/OverlayChrome.kt">
-        <error line="31" column="5" source="compose:modifier-missing-check" />
-    </file>
     <file name="src/main/java/app/atemkraft/ui/components/ReferenceItem.kt">
         <error line="13" column="5" source="compose:modifier-missing-check" />
-    </file>
-    <file name="src/main/java/app/atemkraft/ui/components/SessionControls.kt">
-        <error line="73" column="5" source="compose:param-order-check" />
-        <error line="222" column="5" source="compose:modifier-missing-check" />
     </file>
     <file name="src/main/java/app/atemkraft/ui/situations/SituationsScreen.kt">
         <error line="76" column="5" source="compose:parameter-naming" />

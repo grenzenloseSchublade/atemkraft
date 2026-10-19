@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import android.animation.ValueAnimator
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -40,14 +41,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +61,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
 import app.atemkraft.ui.theme.SessionButtonPink
@@ -73,8 +80,8 @@ import kotlinx.coroutines.delay
 fun GlowText(
     text: String,
     style: TextStyle,
-    fill: Color = SessionTextYellow,
     modifier: Modifier = Modifier,
+    fill: Color = SessionTextYellow,
 ) {
     // Zentriert und ohne Wortbruch: Session-Texte stehen mittig über dem Kreis (LAYOUT-03).
     WholeWordText(
@@ -217,12 +224,28 @@ private fun SessionRoundButton(
 /**
  * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft"-Eyebrow, [title], optional eine kurze
  * Bilanz aus den Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), Nochmal/Ende.
+ *
+ * Für TalkBack ein eigener Bereich („Geschafft“ als `paneTitle`, beim Erscheinen angesagt). Wer
+ * per Tastatur oder D-Pad bedient, landet auf „Nochmal“ – der zuletzt fokussierte Pause-Knopf
+ * ist mit dem Ende verschwunden (A11Y-07). Bei Touch bleibt der Fokus unberührt, sonst zeigte
+ * „Nochmal“ eine Fokusfläche.
  */
 @Composable
-fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit, summary: List<String> = emptyList()) {
+fun FinishedPanel(
+    title: String,
+    onAgain: () -> Unit,
+    onExit: () -> Unit,
+    modifier: Modifier = Modifier,
+    summary: List<String> = emptyList(),
+) {
+    val pane = stringResource(R.string.session_done_title)
+    val againFocus = remember { FocusRequester() }
+    val inputMode = LocalInputModeManager.current
+    LaunchedEffect(Unit) { if (inputMode.inputMode == InputMode.Keyboard) againFocus.requestFocus() }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
+            .semantics { paneTitle = pane }
             .padding(Dimens.SessionPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -258,6 +281,7 @@ fun FinishedPanel(title: String, onAgain: () -> Unit, onExit: () -> Unit, summar
             SessionPrimaryButton(
                 text = stringResource(R.string.action_again),
                 onClick = onAgain,
+                modifier = Modifier.focusRequester(againFocus),
             )
             SessionSecondaryButton(
                 text = stringResource(R.string.action_end),
@@ -301,7 +325,8 @@ class TapFlashState internal constructor() {
  * Tap-Flash-Logik (geteilt von Session + Meditation). Alpha wird per delay-Schleife animiert,
  * NICHT per Animatable.animateTo: animateTo respektiert animator_duration_scale – ist die
  * System-Animation aus (Entwickleroptionen/Energiesparen), spränge es sofort auf den Zielwert
- * und der Flash bliebe unsichtbar. delay() ist davon unabhängig.
+ * und der Flash bliebe unsichtbar. delay() ist davon unabhängig. Sind Animationen aus, steht das
+ * Symbol still ([Motion.TapFlashStatic]) und verschwindet ohne Ausblenden (MOTION-02).
  */
 @Composable
 fun rememberTapFlash(): TapFlashState {
@@ -309,11 +334,15 @@ fun rememberTapFlash(): TapFlashState {
     LaunchedEffect(state.trigger) {
         if (state.trigger > 0) {
             state.alpha = 1f
-            delay(220) // kurzer Halt
-            val steps = 16
-            for (i in 1..steps) {
-                delay(34)
-                state.alpha = (1f - i.toFloat() / steps).coerceAtLeast(0f)
+            if (ValueAnimator.areAnimatorsEnabled()) {
+                delay(Motion.TapFlashHold) // kurzer Halt
+                val steps = Motion.TapFlashFadeSteps
+                for (i in 1..steps) {
+                    delay(Motion.TapFlashFadeStep)
+                    state.alpha = (1f - i.toFloat() / steps).coerceAtLeast(0f)
+                }
+            } else {
+                delay(Motion.TapFlashStatic)
             }
             state.alpha = 0f
         }
