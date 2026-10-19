@@ -341,7 +341,7 @@ private fun AtemkraftApp() {
                 composable<LogbuchRoute> {
                     LogbookScreen(
                         entries = logEntries,
-                        onClear = { scope.launch { container.logbookRepository.clear() } },
+                        onOpenSettings = { navController.navigate(SettingsRoute()) },
                     )
                 }
                 composable<MeditationRoute> {

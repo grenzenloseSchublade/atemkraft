@@ -90,7 +90,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
@@ -393,14 +392,17 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     @Test
     fun logbook() = snap("04_logbuch") {
-        val start = LocalDateTime.of(2026, 10, 2, 7, 30).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        // Relativ zum festen DAY, damit jede Gruppe vorkommt: Heute, Gestern, Diese Woche, zwei Monate;
+        // ein Tag mit zwei Sitzungen.
+        fun at(daysAgo: Long, hour: Int, minute: Int): Long = DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val daysAgo = listOf(0L, 1L, 3L, 5L, 12L, 40L)
         val entries = BuiltInExercises.all.take(6).mapIndexed { i, e ->
             SessionLogEntry(
                 id = i + 1L,
                 exerciseId = e.id,
                 exerciseName = e.name,
                 family = e.family,
-                startedAtEpochMs = start - i * 86_400_000L,
+                startedAtEpochMs = at(daysAgo[i], 7, 30),
                 durationMs = (5 + i) * 60_000L + 5_000L,
                 roundsCompleted = 4 + i,
             )
@@ -409,17 +411,27 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             exerciseId = "meditation",
             exerciseName = "Meditation",
             family = null,
-            startedAtEpochMs = start - 7 * 86_400_000L,
+            startedAtEpochMs = at(1, 21, 15),
             durationMs = 20 * 60_000L,
             roundsCompleted = 0,
             kind = SessionKind.MEDITATION,
+        ) + SessionLogEntry(
+            // Zweite Sitzung am Tag vor 12 Tagen: zeigt die Bündelung je Tag in einer Monatsgruppe.
+            id = 98,
+            exerciseId = "meditation",
+            exerciseName = "Meditation",
+            family = null,
+            startedAtEpochMs = at(12, 20, 45),
+            durationMs = 15 * 60_000L,
+            roundsCompleted = 0,
+            kind = SessionKind.MEDITATION,
         )
-        LogbookScreen(entries = entries, onClear = {})
+        LogbookScreen(entries = entries, onOpenSettings = {}, today = DAY)
     }
 
     @Test
     fun logbookEmpty() = snap("04_logbuch_leer", heightDp = device.heightDp) {
-        LogbookScreen(entries = emptyList(), onClear = {})
+        LogbookScreen(entries = emptyList(), onOpenSettings = {}, today = DAY)
     }
 
     @Test
