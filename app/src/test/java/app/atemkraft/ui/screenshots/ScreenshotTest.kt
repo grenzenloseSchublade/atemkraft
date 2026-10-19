@@ -1,13 +1,20 @@
 package app.atemkraft.ui.screenshots
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -15,8 +22,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsActions
@@ -45,17 +54,21 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.Situations
-import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.RuntimePhase
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.domain.buildTimeline
+import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
@@ -71,13 +84,16 @@ import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MeditationStatus
 import app.atemkraft.ui.meditation.MeditationUiState
 import app.atemkraft.ui.session.SessionOverlay
+import app.atemkraft.ui.session.SessionProgress
 import app.atemkraft.ui.session.SessionStatus
-import app.atemkraft.ui.session.SessionSummary
 import app.atemkraft.ui.session.SessionUiState
+import app.atemkraft.ui.session.sessionSummary
 import app.atemkraft.ui.settings.DataStatus
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.DarkSurface
+import app.atemkraft.ui.theme.NeonMagenta
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
 import kotlinx.coroutines.awaitCancellation
@@ -100,7 +116,12 @@ import java.time.ZoneId
  * Screenshots aller Screens auf typischen Gerätebreiten und Schriftgrößen (A-12, LAYOUT-03).
  * Läuft auf der JVM (Robolectric), kein Gerät nötig. Listen-Screens werden mit großer Höhe
  * gerendert, damit der gesamte Scroll-Inhalt auf einem Bild steht; Vollbild-Sessions in
- * echter Gerätehöhe.
+ * echter Gerätehöhe. Screens in Gerätehöhe, die in der App im Scaffold liegen, bekommen die
+ * Leisten der App mit ([TabFrame]): Statusleiste, Tab-Leiste und Systemnavigation – sonst
+ * überschätzt das Bild den Platz um rund 150 dp.
+ *
+ * Der Meditations-Tab scrollt bis fontScale 1,3 nicht (LAYOUT-08, `SCROLLT`); aufgeklappt ist das
+ * ein offener Verstoß (S-40), der nur gemessen wird (`SCROLLT_OFFEN`).
  *
  * Endlos-Animationen stehen still (FrozenInfiniteAnimations).
  *
@@ -138,6 +159,18 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
         /** Höhe für Listen-Screens bei fontScale 1,0; wächst mit der Schrift. */
         private const val TALL_DP = 4000
+
+        // Leisten um den Scaffold-Inhalt (Robolectric liefert keine echten Insets, daher Annahmen
+        // für den ungünstigen Fall): Statusleiste und 3-Tasten-Navigation, wie oft bei Samsung.
+        // Tab-Leiste (80 dp) und Trennlinie rendert TabFrame echt.
+        private const val STATUS_BAR_DP = 24
+        private const val SYSTEM_NAV_DP = 48
+
+        /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
+        private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
+
+        /** Befund für einen bekannten, offenen Scroll-Verstoß (S-40): gemessen, nicht als Fehler gewertet. */
+        private const val OPEN_SCROLL = "SCROLLT_OFFEN"
 
         // Feste Werte statt „heute“, damit die Bilder reproduzierbar sind.
         private val DAY = LocalDate.of(2026, 10, 3)
@@ -186,17 +219,30 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         }
     }
 
-    /** [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen). */
+    /** Tabs der unteren Leiste, in der Reihenfolge der App (MainActivity). */
+    private enum class Tab { ATMEN, SITUATIONEN, MEDITATION, LOGBUCH }
+
+    /**
+     * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
+     * Mit [tab] liegt der Inhalt wie in der App über Tab-Leiste und Systemleisten ([TabFrame],
+     * dann immer in Gerätehöhe); [noScroll] prüft, dass die Seite bis
+     * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt. [openScroll] misst denselben Weg für einen
+     * bekannten, noch nicht entschiedenen Verstoß (S-40): Befund `SCROLLT_OFFEN` in der `.tsv`,
+     * der Test schlägt nicht fehl – so bleibt der Verstoß sichtbar, bis er behoben ist.
+     */
     private fun snap(
         name: String,
         heightDp: Int = tallDp,
         widthDp: Int = device.widthDp,
+        tab: Tab? = null,
+        noScroll: Boolean = false,
+        openScroll: Boolean = false,
         prepare: () -> Unit = {},
         content: @Composable () -> Unit,
     ) {
         currentWidthDp = widthDp
-        currentHeightDp = heightDp
-        current = content
+        currentHeightDp = if (tab == null) heightDp else device.heightDp
+        current = if (tab == null) content else ({ TabFrame(tab, content) })
         prepare()
         val scale = (fontScale * 100).toInt()
         val dir = "${roborazziSystemPropertyOutputDirectory()}/${device.name}/fs$scale"
@@ -205,16 +251,74 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)
         val controls = controlFindings(name)
+        val checked = fontScale <= NO_SCROLL_MAX_FONT_SCALE
+        val scrolls = if (noScroll && checked) scrollFindings(name) else emptyList()
+        val openScrolls = if (openScroll && checked) scrollFindings(name, OPEN_SCROLL) else emptyList()
         // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
         File(dir).mkdirs()
-        File("$dir/$name.tsv").writeText((findings + controls).joinToString("") { "$it\n" })
+        File("$dir/$name.tsv").writeText((findings + controls + scrolls + openScrolls).joinToString("") { "$it\n" })
         wordBreaks += findings
         controlProblems += controls
+        scrollProblems += scrolls
         current = null
+    }
+
+    /**
+     * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
+     * Trennlinie und [AppNavigationBar] mit [selected] markiert, darunter die Systemnavigation
+     * (in der App reicht die Leistenfläche bis dorthin).
+     */
+    @Composable
+    private fun TabFrame(selected: Tab, content: @Composable () -> Unit) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Spacer(Modifier.height(STATUS_BAR_DP.dp))
+            Box(Modifier.weight(1f).fillMaxWidth()) { content() }
+            // Wie MainActivity (Scaffold-bottomBar).
+            HorizontalDivider(thickness = 1.dp, color = NeonMagenta.copy(alpha = 0.22f))
+            TabNavigation(selected)
+            Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
+        }
+    }
+
+    /** Die vier Tabs wie in MainActivity (Icons und Beschriftungen). */
+    @Composable
+    private fun TabNavigation(selected: Tab) {
+        AppNavigationBar(
+            Tab.entries.map { tab ->
+                val (label, icon) = when (tab) {
+                    Tab.ATMEN -> R.string.tab_breathe to rememberVectorPainter(Icons.Filled.Home)
+                    Tab.SITUATIONEN -> R.string.tab_situations to rememberVectorPainter(Icons.Filled.Search)
+                    Tab.MEDITATION -> R.string.tab_meditation to painterResource(R.drawable.ic_meditation)
+                    Tab.LOGBUCH -> R.string.tab_logbook to rememberVectorPainter(Icons.Filled.DateRange)
+                }
+                AppNavItem(label = stringResource(label), selected = tab == selected, onClick = {}) {
+                    Icon(icon, contentDescription = null)
+                }
+            },
+        )
     }
 
     private val wordBreaks = mutableListOf<String>()
     private val controlProblems = mutableListOf<String>()
+    private val scrollProblems = mutableListOf<String>()
+
+    /** LAYOUT-08: Der Meditations-Tab scrollt bis fontScale 1,3 nicht. */
+    @After
+    fun noScroll() {
+        if (scrollProblems.isNotEmpty()) {
+            fail("Seite scrollt, obwohl sie in die Gerätehöhe passen muss (LAYOUT-08):\n" + scrollProblems.joinToString("\n"))
+        }
+    }
+
+    /** Jede senkrechte Scroll-Fläche im Bild mit Scroll-Weg > 0 ([kind], Weg in dp). */
+    private fun scrollFindings(screen: String, kind: String = "SCROLLT"): List<String> {
+        val nodes = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+            .fetchSemanticsNodes()
+        return nodes.mapNotNull { node ->
+            val max = node.config[SemanticsProperties.VerticalScrollAxisRange].maxValue()
+            if (max <= 0f) null else "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\t${(max / compose.density.density).toInt()} dp"
+        }
+    }
 
     /** LAYOUT-03: Kein Wort bricht um, kein Text wird gekürzt oder angeschnitten – auf keiner Breite, bei keiner Schriftgröße. */
     @After
@@ -284,7 +388,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Lesezeichen im Zustand „gespeichert“: gefüllt im Akzent, Kartenhöhe unverändert. */
     @Test
-    fun homeDailySaved() = snap("01_atmen_gespeichert", heightDp = device.heightDp) { Home(dailySaved = true) }
+    fun homeDailySaved() = snap("01_atmen_gespeichert", tab = Tab.ATMEN) { Home(dailySaved = true) }
 
     @Composable
     private fun Home(dailySaved: Boolean) {
@@ -308,13 +412,13 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Drei Muster: „Meine Muster · 3“ einklappbar, Standard zu. */
     @Test
-    fun situationsPatternsCollapsed() = snap("02_situationen_muster_zu", heightDp = device.heightDp) {
+    fun situationsPatternsCollapsed() = snap("02_situationen_muster_zu", tab = Tab.SITUATIONEN) {
         SituationsContent(patterns = 3)
     }
 
     /** Drei Muster, vom Nutzer aufgeklappt: Caret nach oben, Karten darunter. */
     @Test
-    fun situationsPatternsExpanded() = snap("02_situationen_muster_auf", heightDp = device.heightDp) {
+    fun situationsPatternsExpanded() = snap("02_situationen_muster_auf", tab = Tab.SITUATIONEN) {
         SituationsContent(patterns = 3, patternsExpanded = true)
     }
 
@@ -329,7 +433,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Befindens-Suche offen, noch leer: Feld mit Platzhalter statt Untertitel, X rechts. */
     @Test
-    fun situationsSearchEmpty() = snap("02_situationen_suche", heightDp = device.heightDp, prepare = { openSearch() }) { SituationsContent() }
+    fun situationsSearchEmpty() = snap("02_situationen_suche", tab = Tab.SITUATIONEN, prepare = { openSearch() }) { SituationsContent() }
 
     /** Suche mit zwei Treffern: aufgeklappt, beste zuerst, Trefferzahl darüber. */
     @Test
@@ -340,7 +444,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Suche ohne Treffer: „Nichts gefunden“ mit „Alle zeigen“. */
     @Test
-    fun situationsSearchNone() = snap("02_situationen_suche_leer", heightDp = device.heightDp, prepare = {
+    fun situationsSearchNone() = snap("02_situationen_suche_leer", tab = Tab.SITUATIONEN, prepare = {
         openSearch()
         compose.onNode(hasSetTextAction()).performTextInput("Asthma")
     }) { SituationsContent() }
@@ -365,21 +469,26 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
-    /** Zeitring auf 10 min (Standard): Zahl 10 in Cyan, Seite füllt die Gerätehöhe ohne Scrollen. */
+    /** Zeitring auf 10 min (Standard): Zahl 10 in Cyan, Seite füllt die Höhe über der Tab-Leiste ohne Scrollen. */
     @Test
-    fun meditation() = snap("03_meditation", heightDp = device.heightDp) {
+    fun meditation() = snap("03_meditation", tab = Tab.MEDITATION, noScroll = true) {
         MeditationTab(MeditationConfig())
     }
 
     /** 12 min (zwischen zwei Zahlen: Cyan-Label am Knopf); Reset im Split-Button sichtbar (gleiche Höhe wie Start). */
     @Test
-    fun meditationReset() = snap("03_meditation_reset", heightDp = device.heightDp) {
+    fun meditationReset() = snap("03_meditation_reset", tab = Tab.MEDITATION, noScroll = true) {
         MeditationTab(MeditationConfig(minutes = 12))
     }
 
-    /** Modus „Frei“ (∞): Bogen voll in Pink; „Klang & Stimme“ aufgeklappt mit Gong „alle N min“ (längstes Segment) – Ring am kleinsten. */
+    /**
+     * Modus „Frei“ (∞): Bogen voll in Pink; „Klang & Stimme“ aufgeklappt mit Gong „alle N min“
+     * (längstes Segment) – Ring am kleinsten. Aufgeklappt scrollt die Seite auf 360 dp schon bei
+     * fontScale 1,0 – ein Verstoß gegen LAYOUT-08, keine Ausnahme; bis zur Entscheidung des
+     * Eigentümers (S-40) nur gemessen (`SCROLLT_OFFEN`), nicht als Fehler gewertet.
+     */
     @Test
-    fun meditationFree() = snap("03_meditation_frei", heightDp = device.heightDp, prepare = {
+    fun meditationFree() = snap("03_meditation_frei", tab = Tab.MEDITATION, openScroll = true, prepare = {
         val app = RuntimeEnvironment.getApplication()
         compose.onNodeWithText(app.getString(R.string.meditation_sound_voice_label)).performClick()
     }) {
@@ -388,7 +497,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Feinwahl offen: Tipp auf die Zeit in der Mitte blendet − und + neben der Zahl ein. */
     @Test
-    fun meditationFine() = snap("03_meditation_fein", heightDp = device.heightDp, prepare = {
+    fun meditationFine() = snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, prepare = {
         val app = RuntimeEnvironment.getApplication()
         // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.
         val closed = app.getString(R.string.meditation_dial_fine_off)
@@ -420,6 +529,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         // ein Tag mit zwei Sitzungen.
         fun at(daysAgo: Long, hour: Int, minute: Int): Long = DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val daysAgo = listOf(0L, 1L, 3L, 5L, 12L, 40L)
+        // Runden und Dauer wie vom SessionViewModel geloggt: Runden = die der Übung, rundenbasierte
+        // dauern ihren Ablauf, die übrigen die gewählten Minuten.
         val entries = BuiltInExercises.all.take(6).mapIndexed { i, e ->
             SessionLogEntry(
                 id = i + 1L,
@@ -427,8 +538,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 exerciseName = e.name,
                 family = e.family,
                 startedAtEpochMs = at(daysAgo[i], 7, 30),
-                durationMs = (5 + i) * 60_000L + 5_000L,
-                roundsCompleted = 4 + i,
+                durationMs = if (e.rounds > 1) e.estimatedTotalSeconds() * 1_000L else (5 + i) * 60_000L + 5_000L,
+                roundsCompleted = e.rounds,
             )
         } + SessionLogEntry(
             id = 99,
@@ -454,7 +565,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     @Test
-    fun logbookEmpty() = snap("04_logbuch_leer", heightDp = device.heightDp) {
+    fun logbookEmpty() = snap("04_logbuch_leer", tab = Tab.LOGBUCH) {
         LogbookScreen(entries = emptyList(), onOpenSettings = {}, today = DAY)
     }
 
@@ -463,13 +574,13 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Vom Meditations-Tab geöffnet (Zahnrad): in Gerätehöhe, direkt bei der Meditations-Karte. */
     @Test
-    fun settingsFromMeditation() = snap("05_einstellungen_meditation", heightDp = device.heightDp) {
+    fun settingsFromMeditation() = snap("05_einstellungen_meditation", tab = Tab.MEDITATION) {
         Settings(focusMeditation = true)
     }
 
     /** In Gerätehöhe ganz nach unten gescrollt: Pfeil und Titel stehen fest im Kopf (PushHeader). */
     @Test
-    fun settingsScrolled() = snap("05_einstellungen_gescrollt", heightDp = device.heightDp, prepare = {
+    fun settingsScrolled() = snap("05_einstellungen_gescrollt", tab = Tab.ATMEN, prepare = {
         compose.onNode(hasScrollAction()).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, Float.MAX_VALUE) }
     }) { Settings() }
 
@@ -648,60 +759,37 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Vollbild-Session in echter Gerätehöhe: Vorbereitung, Phase mit Anleitungszeile, offene Phase,
-     * Ruhe-Ansicht (Tipp neben den Kreis), Ende mit Bilanz.
+     * Ruhe-Ansicht (Tipp neben den Kreis), Ende mit Bilanz. Alle Zustände kommen aus den Daten der
+     * Übung ([sessionAt]), so wie das SessionViewModel sie setzt – keine Kombination, die es nicht gibt.
      */
     @Test
     fun session() {
-        val exercise = BuiltInExercises.all.first { it.guided }
+        val exercise = BuiltInExercises.all.first { it.id == "4-7-8" }
         val viloma = BuiltInExercises.all.first { it.id == "viloma-ein" }
         val wimHof = BuiltInExercises.all.first { it.id == "wim-hof" }
-        val base = SessionUiState(
-            exerciseName = exercise.name,
-            status = SessionStatus.RUNNING,
-            roundIndex = 2,
-            roundCount = 8,
-            patternHint = "Einatmen 4 s · Halten 7 s · Ausatmen 8 s",
-            progress = 0.3f,
-        )
-        val inhale = base.copy(
-            phaseType = PhaseType.INHALE,
-            phaseNote = "Durch die Nase, Bauch weitet sich",
-            remainingMs = 2_400,
-            phaseTotalMs = 4_000,
-            nextPhaseType = PhaseType.HOLD_FULL,
-        )
+        // 4-7-8 in Runde 3 von 4, Einatmen nach 1,6 s.
+        val inhale = sessionAt(exercise, elapsedMs = 1_600) { it.roundIndex == 2 && it.type == PhaseType.INHALE }
         val states = mapOf(
-            // Im Countdown steht der Bogen noch bei 0 (SessionViewModel).
-            "vorbereitung" to base.copy(status = SessionStatus.PREPARING, countdown = 3, roundIndex = 0, progress = 0f),
+            // Im Countdown steht der Bogen noch bei 0 (SessionViewModel.start).
+            "vorbereitung" to SessionUiState(
+                exerciseName = exercise.name,
+                status = SessionStatus.PREPARING,
+                roundCount = exercise.rounds,
+                countdown = 3,
+                patternHint = exercise.instructionHint,
+            ),
             "einatmen" to inhale,
-            // Viloma: Pause nach der ersten Einatemstufe – Kreis steht bei ⅓. Kopf wie in der App:
-            // Viloma hat keine Runden, also nur der Name.
-            "viloma_pause" to base.copy(
-                exerciseName = viloma.name,
-                roundIndex = 0,
-                roundCount = viloma.rounds,
-                patternHint = viloma.instructionHint,
-                phaseType = PhaseType.HOLD_FULL,
-                phaseLevel = BreathLevel.at(1f / 3f),
-                phaseNote = "anhalten",
-                remainingMs = 1_200,
-                phaseTotalMs = 2_000,
-                nextPhaseType = PhaseType.INHALE,
-            ),
+            // Viloma: Pause nach der ersten Einatemstufe – Kreis steht bei ⅓. Viloma hat keine
+            // Runden, der Kopf zeigt also nur den Namen.
+            "viloma_pause" to sessionAt(viloma, elapsedMs = 800) { it.type == PhaseType.HOLD_FULL },
             // Offener Hold gibt es nur bei Wim Hof (Halten auf leerer Lunge bis zum Atemreiz).
-            "warten" to base.copy(
-                exerciseName = wimHof.name,
-                roundIndex = 1,
-                roundCount = wimHof.rounds,
-                patternHint = wimHof.instructionHint,
-                status = SessionStatus.WAITING_FOR_USER,
-                phaseType = PhaseType.HOLD_EMPTY,
-                elapsedMs = 23_000,
-            ),
-            "ende" to base.copy(
+            "warten" to sessionAt(wimHof, elapsedMs = 23_000) { it.roundIndex == 1 && it.duration !is PhaseDuration.Fixed },
+            "ende" to inhale.copy(
                 status = SessionStatus.FINISHED,
+                phaseType = null,
+                remainingMs = 0L,
                 progress = 1f,
-                summary = SessionSummary(durationMs = 384_000, breaths = 48, rounds = 8),
+                summary = sessionSummary(exercise.buildTimeline(), exercise.estimatedTotalSeconds() * 1_000L),
             ),
         )
         states.forEach { (name, state) ->
@@ -715,6 +803,34 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /**
+     * Zustand der laufenden Session wie im SessionViewModel (runFixedPhase/runUserPacedPhase): die
+     * erste Phase des Ablaufs von [exercise], auf die [phase] zutrifft, davon [elapsedMs] verstrichen
+     * (bei offenen Phasen hochgezählt).
+     */
+    private fun sessionAt(exercise: Exercise, elapsedMs: Long, phase: (RuntimePhase) -> Boolean): SessionUiState {
+        val timeline = exercise.buildTimeline()
+        val index = timeline.indexOfFirst(phase)
+        val current = timeline[index]
+        val totalMs = (current.duration as? PhaseDuration.Fixed)?.millis
+        return SessionUiState(
+            exerciseName = exercise.name,
+            status = if (totalMs != null) SessionStatus.RUNNING else SessionStatus.WAITING_FOR_USER,
+            phaseType = current.type,
+            phaseLevel = current.level,
+            phaseLabel = current.label,
+            phaseNote = current.note,
+            remainingMs = totalMs?.let { it - elapsedMs } ?: 0L,
+            phaseTotalMs = totalMs ?: 0L,
+            elapsedMs = if (totalMs != null) 0L else elapsedMs,
+            roundIndex = current.roundIndex,
+            roundCount = current.roundCount,
+            nextPhaseType = timeline.getOrNull(index + 1)?.type,
+            patternHint = exercise.instructionHint,
+            progress = SessionProgress(timeline).at(index, if (totalMs != null) elapsedMs else 0L),
+        )
+    }
+
+    /**
      * Querformat (nicht gesperrt): Steuerung rechts neben dem Kreis, Anleitungszeile und „Als
      * Nächstes“ ohne Überlappung. Nur Testgerät mit Voreinstellung und kleinstes Gerät mit großer
      * Schrift; Breite und Höhe getauscht (Statusleiste vernachlässigt).
@@ -723,19 +839,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Config(qualifiers = "w920dp-h8000dp-xhdpi")
     fun sessionQuer() {
         assumeTrue((device.name == "a54" && fontScale == 1.1f) || (device.name == "kompakt360" && fontScale == 2.0f))
-        val state = SessionUiState(
-            exerciseName = "Box-Atmung",
-            status = SessionStatus.RUNNING,
-            roundIndex = 2,
-            roundCount = 8,
-            patternHint = "Einatmen 4 s · Halten 4 s · Ausatmen 4 s · Halten 4 s",
-            progress = 0.3f,
-            phaseType = PhaseType.INHALE,
-            phaseNote = "Durch die Nase, Bauch weitet sich",
-            remainingMs = 2_400,
-            phaseTotalMs = 4_000,
-            nextPhaseType = PhaseType.HOLD_FULL,
-        )
+        // Box-Atmung in Runde 3 von 8, Einatmen nach 1,6 s.
+        val box = BuiltInExercises.all.first { it.id == "box-4-4-4-4" }
+        val state = sessionAt(box, elapsedMs = 1_600) { it.roundIndex == 2 && it.type == PhaseType.INHALE }
         snap("09_session_quer", heightDp = device.widthDp, widthDp = device.heightDp) { SessionShot(state) }
         snap("10_meditation_quer", heightDp = device.widthDp, widthDp = device.heightDp) {
             MeditationOverlay(
@@ -807,18 +913,5 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /** Untere Navigationsleiste (liegt in MainActivity, hier einzeln): Beschriftungen ganz. */
     @Test
-    fun navigationBar() = snap("11_navigation", heightDp = 120) {
-        AppNavigationBar(
-            listOf(
-                R.string.tab_breathe to Icons.Filled.Home,
-                R.string.tab_situations to Icons.Filled.Search,
-                R.string.tab_meditation to Icons.Filled.Favorite,
-                R.string.tab_logbook to Icons.Filled.DateRange,
-            ).mapIndexed { i, (label, icon) ->
-                AppNavItem(label = stringResource(label), selected = i == 1, onClick = {}) {
-                    Icon(icon, contentDescription = null)
-                }
-            },
-        )
-    }
+    fun navigationBar() = snap("11_navigation", heightDp = 120) { TabNavigation(Tab.SITUATIONEN) }
 }

@@ -23,11 +23,11 @@ Für alle Beiträge gilt der [Verhaltenskodex](CODE_OF_CONDUCT.md).
 - Ein Gerät oder Emulator ab Android 8.0 (API 26)
 
 ```bash
-scripts/build.sh                 # Debug-APK bauen (sucht ein JDK und setzt JAVA_HOME)
+scripts/build.sh                 # Debug-APK bauen (sucht JDK 17 und setzt JAVA_HOME)
 scripts/build.sh installDebug    # bauen und auf Gerät/Emulator installieren
 ```
 
-`scripts/build.sh` reicht alle Argumente an `./gradlew` durch. Für eine Release-APK brauchst du keinen Schlüssel: Ohne Release-Keystore entsteht eine unsignierte APK. Signiert werden offizielle Releases nur vom Maintainer.
+`scripts/build.sh` reicht alle Argumente an `./gradlew` durch. Es nimmt bevorzugt JDK 17 wie CI und Release-Builds; ein anderes JDK baut mit Warnung weiter. Für eine Release-APK brauchst du keinen Schlüssel: Ohne Release-Keystore entsteht eine unsignierte APK. Signiert werden offizielle Releases nur vom Maintainer.
 
 ## Prüfen
 
