@@ -1,0 +1,5 @@
+- Überschriften bunt im Wechsel, Schrift nach Material-Standard
+- Meditation: Zeitring bleibt oben stehen, „Klang & Stimme“ klappt sanft auf
+- Auswahlreihen einheitlich ohne Häkchen; Ton: Aus · Töne · Dauerton
+- Löschen in zwei Schritten, Export und Import nebeneinander, Stimmen aufklappbar
+- Besser mit TalkBack und Tastatur, Einstellungen robust gegen beschädigte Dateien
