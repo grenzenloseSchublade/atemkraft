@@ -104,8 +104,9 @@ fun rememberAccessibilityActive(): Boolean {
  * (Papierkorb → Papierkorb mit Kreuz, Farbe `error`) und die Beschreibung zu „‚[name]‘ wirklich
  * löschen?“, die Live-Region sagt das an, ohne dass der Fokus springt (A11Y-04). Erst der zweite
  * Tipp ruft [onConfirm]. [description] nennt Art und Namen („Muster Ruhiger Fluss löschen“), damit
- * TalkBack und Voice Access die Knöpfe einer Liste unterscheiden (A11Y-06). Gleich groß in beiden
- * Zuständen, die Karte springt nicht.
+ * TalkBack und Voice Access die Knöpfe einer Liste unterscheiden (A11Y-06). [confirmDescription]
+ * ersetzt die Bestätigungsfrage, wenn „löschen“ nicht passt („Logbuch wirklich leeren?“). Gleich
+ * groß in beiden Zuständen, die Karte springt nicht.
  */
 @Composable
 fun ConfirmIconButton(
@@ -113,6 +114,7 @@ fun ConfirmIconButton(
     description: String,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
+    confirmDescription: String = stringResource(R.string.cd_delete_confirm, name),
 ) {
     val confirm = rememberArmedConfirm()
     AppIconButton(
@@ -124,7 +126,7 @@ fun ConfirmIconButton(
         if (confirm.armed) {
             Icon(
                 painterResource(R.drawable.ic_delete_forever),
-                contentDescription = stringResource(R.string.cd_delete_confirm, name),
+                contentDescription = confirmDescription,
                 tint = MaterialTheme.colorScheme.error,
             )
         } else {

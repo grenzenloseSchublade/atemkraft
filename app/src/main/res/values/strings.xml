@@ -110,9 +110,13 @@
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
     <string name="settings_safety_hint">Wird vor intensiven Übungen gezeigt, beim ersten Mal immer.</string>
+    <string name="settings_knowledge_title">Wissen</string>
     <string name="settings_glossary">Begriffe erklärt</string>
+    <!-- Untertitel der Wissen-Zeilen: nennen, was dort steht (Abschnitte der Atemlehre, Gruppen des Glossars). -->
+    <string name="settings_glossary_hint">Studien, HRV, Yoga-Begriffe</string>
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>
+    <string name="settings_atemlehre_hint">Phasen, Regeln, Muster</string>
     <string name="atemlehre_title">Atemlehre</string>
     <string name="atemlehre_phases">Die vier Phasen</string>
     <string name="atemlehre_rules">Die Grundregeln</string>
@@ -277,9 +281,13 @@
     <string name="settings_data_hint">Gespeicherte Muster als Datei sichern und wieder einlesen. Den Speicherort wählst du selbst – die App hat kein Konto und keine Cloud.</string>
     <string name="settings_data_export">Exportieren</string>
     <string name="settings_data_import">Importieren</string>
+    <string name="settings_data_transfer_more">Beim Handywechsel?</string>
     <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) je nach Hersteller Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Die Muster sichert „Exportieren“ in jedem Fall.</string>
+    <string name="settings_log_title">Logbuch</string>
+    <string name="settings_log_empty">Noch keine Sitzung</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
-    <string name="settings_data_clear_log_confirm">Wirklich leeren?</string>
+    <!-- Bestätigungszustand von „Logbuch leeren“ (MUSTER-05), per liveRegion angesagt. -->
+    <string name="cd_log_clear_confirm">Logbuch wirklich leeren?</string>
     <plurals name="data_export_done">
         <item quantity="one">✓ %1$d exportiert</item>
         <item quantity="other">✓ %1$d exportiert</item>
@@ -313,7 +321,7 @@
 
     <!-- Zustände beim Nachladen einer Katalog-Stimme: klein wie jeder Status (§11.1), geschützte
          Leerzeichen halten „lädt … 40 %“ in einer Zeile zusammen. -->
-    <string name="settings_speech_pack_downloading">lädt …\u00A0%1$d\u00A0%%</string>
+    <string name="settings_speech_pack_downloading">lädt\u00A0…\u00A0%1$d\u00A0%%</string>
     <string name="settings_speech_pack_extracting">wird entpackt …</string>
     <string name="settings_speech_pack_preparing">wird vorbereitet …</string>
 
@@ -321,6 +329,8 @@
     <string name="settings_voice_catalog_hint">Erst anhören, dann laden. Mehrere Stimmen möglich; die gewählte wird in der Anleitung gesprochen. Stimmen kommen von GitHub (sherpa-onnx).</string>
     <string name="settings_voice_none_installed">Noch keine Stimme geladen</string>
     <string name="settings_voice_none_chosen">Keine Stimme gewählt</string>
+    <string name="settings_voice_show">Stimmen zeigen</string>
+    <string name="settings_voice_hide">Stimmen ausblenden</string>
     <string name="settings_voice_active">✓ Aktiv</string>
     <string name="settings_voice_choose">Wählen</string>
     <string name="settings_voice_download">Laden</string>

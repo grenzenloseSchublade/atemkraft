@@ -610,10 +610,14 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         compose.onNode(hasScrollAction()).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, Float.MAX_VALUE) }
     }) { Settings() }
 
-    /** Daten-Karte mit den längsten Rückmeldungen (Button-Labels + Hinweis) – LAYOUT-03. */
+    /**
+     * Daten-Karte mit den längsten Rückmeldungen (Button-Labels + Hinweis) – LAYOUT-03; dazu ein
+     * leeres Logbuch („Noch keine Sitzung“, ohne Papierkorb).
+     */
     @Test
     fun settingsDataStatus() = snap("05_einstellungen_daten") {
         Settings(
+            logCount = 0,
             transfer = PatternTransfer(
                 exportLabel = pluralStringResource(R.plurals.data_export_done, 120, 120),
                 importLabel = pluralStringResource(R.plurals.data_import_done, 120, 120, 380),
@@ -623,26 +627,33 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /**
-     * „Logbuch leeren“ nach dem ersten Tipp (MUSTER-05): Label „Wirklich leeren?“ in error. Die
-     * Uhr steht nach dem Tipp, sonst liefe der 4-s-Rückfall vor der Aufnahme ab.
+     * Papierkorb der Zeile „Logbuch“ nach dem ersten Tipp (MUSTER-05): Bestätigungs-Icon in error,
+     * cd „Logbuch wirklich leeren?“. Die Uhr steht nach dem Tipp, sonst liefe der 4-s-Rückfall vor
+     * der Aufnahme ab.
      */
     @Test
     fun settingsClearLogArmed() = snap("05_einstellungen_logbuch_leeren", prepare = {
         compose.waitForIdle()
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.settings_data_clear_log)).performClick()
+        compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.settings_data_clear_log)).performClick()
         compose.mainClock.advanceTimeByFrame()
         compose.mainClock.advanceTimeByFrame()
     }) { Settings() }
 
-    /** Stimmen-Katalog zugeklappt (keine lädt): nur „Stimme“ mit der aktiven Stimme und Caret. */
+    /** Stimmen-Katalog zugeklappt (keine lädt): „Stimme“, die aktive Stimme und „Stimmen zeigen“. */
     @Test
     fun settingsVoicesCollapsed() = snap("05_einstellungen_stimmen_zu") { Settings(downloading = false) }
 
-    /** Stimmen-Katalog nach Tipp auf die Kopfzeile: Hinweis mit Quelle (SEC-NET-02) und alle Stimmen. */
+    /** Stimmen-Katalog nach Tipp auf „Stimmen zeigen“: Hinweis mit Quelle (SEC-NET-02) und alle Stimmen. */
     @Test
     fun settingsVoicesExpanded() = snap("05_einstellungen_stimmen_auf", prepare = {
-        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.settings_voice)).performClick()
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.settings_voice_show)).performClick()
+    }) { Settings(downloading = false) }
+
+    /** Daten-Karte mit aufgeklapptem „Beim Handywechsel?“ (Hinweis zur Geräte-Übertragung). */
+    @Test
+    fun settingsTransferExpanded() = snap("05_einstellungen_handywechsel", prepare = {
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.settings_data_transfer_more)).performClick()
     }) { Settings(downloading = false) }
 
     /**
@@ -656,7 +667,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Einstellungen mit einer geladenen Stimme (die erste); [downloading] lädt die zweite (der
-     * Katalog bleibt dann offen), [voiceActive] = die geladene ist gewählt.
+     * Katalog bleibt dann offen), [voiceActive] = die geladene ist gewählt; [logCount] Einträge
+     * im Logbuch.
      */
     @Composable
     private fun Settings(
@@ -665,6 +677,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         downloading: Boolean = true,
         voiceActive: Boolean = true,
         resetPending: Boolean = false,
+        logCount: Int = 12,
     ) {
         val voices = VoiceCatalog.all.mapIndexed { i, v ->
             v.id to when {
@@ -687,6 +700,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 activeVoiceId = if (voiceActive) VoiceCatalog.all.first().id else null,
                 piperEngineReady = true,
                 settingsResetPending = resetPending,
+                logCount = logCount,
             ),
             actions = NoOpSettingsActions,
             onOpenGlossary = {},

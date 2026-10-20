@@ -45,6 +45,8 @@ data class SettingsUiState(
     val piperEngineReady: Boolean = false,
     /** Die Einstellungen wurden wegen einer beschädigten Datei zurückgesetzt und das ist noch nicht gemeldet. */
     val settingsResetPending: Boolean = false,
+    /** Einträge im Logbuch; bei 0 bietet die Daten-Karte kein Leeren an. */
+    val logCount: Int = 0,
 )
 
 /** Was die Einstellungen auslösen (ohne Navigation und Datei-Auswahl, die bleiben im UI). */
@@ -99,9 +101,15 @@ class SettingsViewModel(
         voices.states,
         settings.neuralVoiceId,
         meditation.piperReady,
-        settings.settingsResetPending,
-    ) { base, voiceStates, voiceId, piperReady, resetPending ->
-        base.copy(voiceStates = voiceStates, activeVoiceId = voiceId, piperEngineReady = piperReady, settingsResetPending = resetPending)
+        combine(settings.settingsResetPending, logbook.count, ::Pair),
+    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount) ->
+        base.copy(
+            voiceStates = voiceStates,
+            activeVoiceId = voiceId,
+            piperEngineReady = piperReady,
+            settingsResetPending = resetPending,
+            logCount = logCount,
+        )
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,

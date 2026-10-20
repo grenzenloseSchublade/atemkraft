@@ -6,17 +6,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -25,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -36,16 +41,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
@@ -60,12 +70,12 @@ import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
+import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
-import app.atemkraft.ui.components.ExpandCaret
 import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
@@ -75,10 +85,8 @@ import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.choiceGroupHeading
-import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
@@ -102,6 +110,7 @@ fun SettingsScreen(
     focusMeditation: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
+    val columns = rememberTrailingColumns()
     // Vom Meditations-Tab aus geöffnet: einmal direkt zur Meditations-Karte springen. Gemerkt
     // (rememberSaveable), damit die Rückkehr aus Glossar/Über die Scroll-Position nicht überschreibt.
     var meditationCardY by remember { mutableIntStateOf(-1) }
@@ -142,15 +151,13 @@ fun SettingsScreen(
                     Spacer(Modifier.height(Dimens.SectionGap))
                 }
 
-                // Wissen zuerst: Atemlehre und Glossar sollen nicht unter den Karten verschwinden.
-                NavRow(stringResource(R.string.settings_atemlehre), onOpenAtemlehre)
-                Spacer(Modifier.height(Dimens.ListGap))
-                NavRow(stringResource(R.string.settings_glossary), onOpenGlossary)
-
-                Spacer(Modifier.height(Dimens.SectionGap))
                 // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
-                // Bedeutung (FARBE-07): Ton 0, Atmen 1, Sitzung 2, Meditation 3, Daten 4.
-                TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
+                // Bedeutung (FARBE-07): Wissen 0, Klang 1, Atmen 2, Sitzung 3, Meditation 4, Daten 5.
+                // Wissen zuerst: Atemlehre und Glossar sollen nicht unter den Karten verschwinden.
+                KnowledgeCard(onOpenAtemlehre = onOpenAtemlehre, onOpenGlossary = onOpenGlossary)
+
+                Spacer(Modifier.height(Dimens.ListGap))
+                TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong, columns)
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
@@ -172,11 +179,12 @@ fun SettingsScreen(
                         state.gongIntervalMin, actions::setGongInterval,
                         state.voiceStates, state.activeVoiceId, state.piperEngineReady,
                         actions::sampleVoice, actions::downloadVoice, actions::selectVoice, actions::deleteVoice,
+                        columns,
                     )
                 }
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                DataCard(transfer, actions::clearLog)
+                DataCard(transfer, state.logCount, actions::clearLog)
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
@@ -189,17 +197,69 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
- * keine Berechtigung, keine Cloud); darunter das Logbuch leeren, zweistufig (MUSTER-05).
- */
+/** Wissen: Atemlehre und Glossar als Verweise in einer Karte, je mit kurzem Untertitel. */
 @Composable
-private fun DataCard(transfer: PatternTransfer, onClearLog: () -> Unit) {
+private fun KnowledgeCard(onOpenAtemlehre: () -> Unit, onOpenGlossary: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(4))
+            CardTitle(stringResource(R.string.settings_knowledge_title), color = headingColor(0))
+            Spacer(Modifier.height(Dimens.GapTiny))
+            KnowledgeRow(
+                title = stringResource(R.string.settings_atemlehre),
+                hint = stringResource(R.string.settings_atemlehre_hint),
+                onClick = onOpenAtemlehre,
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+            KnowledgeRow(
+                title = stringResource(R.string.settings_glossary),
+                hint = stringResource(R.string.settings_glossary_hint),
+                onClick = onOpenGlossary,
+            )
+        }
+    }
+}
+
+/**
+ * Verweis in der Wissen-Karte: Titel, Untertitel, Chevron. Die ganze Zeile ist ein Button
+ * (TalkBack liest Titel und Untertitel als einen Namen), mindestens Touch-Ziel-hoch.
+ */
+@Composable
+private fun KnowledgeRow(title: String, hint: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = Dimens.GapTiny),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            WholeWordText(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            HintText(hint)
+        }
+        ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
+    }
+}
+
+/**
+ * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
+ * keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten das Logbuch als Zeile
+ * mit Papierkorb, zweistufig (MUSTER-05).
+ */
+@Composable
+private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () -> Unit) {
+    var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(5))
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_data_hint))
+            Spacer(Modifier.height(Dimens.GapSmall))
             // Kurze Labels, damit beide gleich breit nebeneinander passen; dass es um Muster geht,
             // sagt der Hinweis darüber. Passen sie nicht, stehen sie untereinander (LAYOUT-03).
             AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
@@ -207,6 +267,7 @@ private fun DataCard(transfer: PatternTransfer, onClearLog: () -> Unit) {
                 DataButton(transfer.importLabel ?: stringResource(R.string.settings_data_import), transfer.import)
             }
             if (transfer.note != null) {
+                Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
                     text = transfer.note,
                     style = MaterialTheme.typography.bodySmall,
@@ -214,41 +275,61 @@ private fun DataCard(transfer: PatternTransfer, onClearLog: () -> Unit) {
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
+            // Wie „Wie funktioniert das?“ in der Atmen-Karte: Der lange Hinweis steht erst auf Wunsch da.
+            DisclosureToggle(
+                text = stringResource(R.string.settings_data_transfer_more),
+                expanded = transferInfoExpanded,
+                onToggle = { transferInfoExpanded = !transferInfoExpanded },
+            )
+            if (transferInfoExpanded) BodyText(stringResource(R.string.settings_data_transfer_hint))
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            HintText(stringResource(R.string.settings_data_transfer_hint))
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            ClearLogButton(onClearLog)
+            LogRow(logCount, onClearLog)
         }
     }
 }
 
 /**
- * „Logbuch leeren“ zweistufig im selben Element (MUSTER-05, [rememberArmedConfirm]): Der erste
- * Tipp morpht das Label zu „Wirklich leeren?“ (angesagt), erst der zweite löscht. Beide
- * Zustände in `error`, damit es nie wie eine gewöhnliche Aktion aussieht.
+ * Zeile „Logbuch“, gebaut wie eine Stimmen-Zeile: links Titel und Zahl der Sitzungen, rechts der
+ * Papierkorb in derselben Icon-Spalte. Leeren zweistufig im selben Element (MUSTER-05,
+ * [ConfirmIconButton]: „Logbuch wirklich leeren?“). Ohne Einträge gibt es nichts zu leeren – dann
+ * fehlt der Papierkorb, die Zeile behält ihre Höhe.
  */
 @Composable
-private fun ClearLogButton(onClearLog: () -> Unit) {
-    val confirm = rememberArmedConfirm()
-    AppTextButton(
-        onClick = { confirm.tap(onClearLog) },
-        // Bündig an der Kartenkante wie die Hinweise darüber, nicht um das Innenpolster eingerückt.
-        flushStart = true,
+private fun LogRow(count: Int, onClear: () -> Unit) {
+    Row(
         modifier = Modifier
-            .then(confirm.focusModifier)
-            .semantics { liveRegion = LiveRegionMode.Polite },
+            .fillMaxWidth()
+            .padding(vertical = Dimens.GapTiny)
+            .heightIn(min = Dimens.MinTouchTarget),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = stringResource(if (confirm.armed) R.string.settings_data_clear_log_confirm else R.string.settings_data_clear_log),
-            color = MaterialTheme.colorScheme.error,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            WholeWordText(
+                text = stringResource(R.string.settings_log_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            HintText(
+                if (count > 0) pluralStringResource(R.plurals.log_sessions, count, count) else stringResource(R.string.settings_log_empty),
+            )
+        }
+        if (count > 0) {
+            TrailingIconCell {
+                ConfirmIconButton(
+                    name = stringResource(R.string.settings_log_title),
+                    description = stringResource(R.string.settings_data_clear_log),
+                    onConfirm = onClear,
+                    confirmDescription = stringResource(R.string.cd_log_clear_confirm),
+                )
+            }
+        }
     }
 }
 
-/** Button der Daten-Karte; das Label wechselt zum Ergebnis und wird angesagt. */
+/** Umrandeter Button der Daten-Karte; das Label wechselt zum Ergebnis und wird angesagt. */
 @Composable
 private fun DataButton(label: String, onClick: () -> Unit) {
-    AppTextButton(onClick = onClick, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+    AppOutlinedButton(onClick = onClick, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
         Text(label)
     }
 }
@@ -261,10 +342,11 @@ private fun TonCard(
     gongLong: Boolean,
     onGongLong: (Boolean) -> Unit,
     onPreviewGong: () -> Unit,
+    columns: TrailingColumns,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_tone_title), color = headingColor(0))
+            CardTitle(stringResource(R.string.settings_tone_title), color = headingColor(1))
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.volume_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -279,16 +361,11 @@ private fun TonCard(
             HintText(stringResource(R.string.volume_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut
+            // tippen). Steht in der Vorhören-Spalte der Stimmenliste, damit alle Play-Knöpfe der
+            // Seite untereinander liegen (S-38).
+            TrailingRow(columns, play = { PreviewButton(stringResource(R.string.cd_gong_preview), onPreviewGong) }) {
                 SubLabel(stringResource(R.string.settings_gong_length), Modifier.choiceGroupHeading())
-                Spacer(Modifier.weight(1f))
-                // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut tippen).
-                // Glyph bündig an der Kartenkante wie die Segmente darunter (LAYOUT-07).
-                Box(Modifier.flushEnd(inCard = true)) {
-                    AppIconButton(onClick = onPreviewGong) {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_gong_preview))
-                    }
-                }
             }
             SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong, groupLabel = stringResource(R.string.settings_gong_length)) { long ->
                 stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
@@ -310,7 +387,7 @@ private fun AtmenCard(
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_breathing_title), color = headingColor(1))
+            CardTitle(stringResource(R.string.settings_breathing_title), color = headingColor(2))
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_sound_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -367,7 +444,7 @@ private fun SessionCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_session_title), color = headingColor(2))
+            CardTitle(stringResource(R.string.settings_session_title), color = headingColor(3))
             Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
@@ -401,10 +478,11 @@ private fun MeditationCard(
     onDownloadVoice: (String) -> Unit,
     onSelectVoice: (String?) -> Unit,
     onDeleteVoice: (String) -> Unit,
+    columns: TrailingColumns,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(3))
+            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(4))
 
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())
@@ -424,19 +502,37 @@ private fun MeditationCard(
             HintText(stringResource(R.string.settings_gong_interval_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            // Zugeklappt nur die aktive Stimme; der Katalog klappt darunter auf. Solange eine Stimme
-            // lädt, bleibt er offen, damit Fortschritt und Abbrechen im Bild bleiben.
+            // Zugeklappt nur die aktive Stimme; der Katalog klappt darunter auf (Umschalter wie „Wie
+            // funktioniert das?“). Solange eine Stimme lädt, bleibt er offen, damit Fortschritt und
+            // Abbrechen im Bild bleiben.
             var catalogExpanded by rememberSaveable { mutableStateOf(false) }
             val downloading = voiceStates.values.any { it is VoiceDownloadState.Downloading }
             val showCatalog = catalogExpanded || downloading
             val active = VoiceCatalog.all.firstOrNull { it.id == activeVoiceId && voiceStates[it.id] is VoiceDownloadState.Downloaded }
-            VoiceSummaryRow(
-                active = active,
-                anyInstalled = voiceStates.values.any { it is VoiceDownloadState.Downloaded },
-                engineReady = piperEngineReady,
+            SubLabel(stringResource(R.string.settings_voice))
+            // Aufgeklappt zeigt der Katalog die aktive Stimme selbst; hier stünde sie doppelt.
+            if (!showCatalog) {
+                HintText(
+                    when {
+                        active != null && piperEngineReady -> active.displayName
+
+                        active != null -> active.displayName + DOT_SEPARATOR + stringResource(R.string.settings_speech_pack_preparing)
+
+                        else -> stringResource(
+                            if (voiceStates.values.any { it is VoiceDownloadState.Downloaded }) {
+                                R.string.settings_voice_none_chosen
+                            } else {
+                                R.string.settings_voice_none_installed
+                            },
+                        )
+                    },
+                )
+            }
+            DisclosureToggle(
+                text = stringResource(if (showCatalog) R.string.settings_voice_hide else R.string.settings_voice_show),
                 expanded = showCatalog,
-                enabled = !downloading,
                 onToggle = { catalogExpanded = !showCatalog },
+                enabled = !downloading,
             )
             if (showCatalog) {
                 // Quelle vor dem ersten „Laden“ (SECURITY SEC-NET-02).
@@ -453,6 +549,7 @@ private fun MeditationCard(
                             state = voiceStates[spec.id] ?: VoiceDownloadState.NotDownloaded,
                             active = spec.id == activeVoiceId,
                             engineReady = piperEngineReady,
+                            columns = columns,
                             onSample = { onSampleVoice(spec) },
                             onDownload = { onDownloadVoice(spec.id) },
                             onSelect = { onSelectVoice(spec.id) },
@@ -466,73 +563,50 @@ private fun MeditationCard(
 }
 
 /**
- * Kopf des Stimmen-Katalogs: „Stimme“, zugeklappt darunter die aktive Stimme mit „✓ Aktiv“ (bzw.
- * dem Kreis, solange die Engine sie vorbereitet) oder ein Hinweis, dass keine geladen oder gewählt
- * ist. Die ganze Zeile klappt den Katalog auf und zu (Caret wie [DisclosureToggle] und
- * `ExpanderSection`); [enabled] = false, solange eine Stimme lädt.
+ * Eine Zeile im Stimmen-Katalog: Name/Info links, rechts die festen Spalten ([TrailingCells]):
+ * Vorhören, Zustands-Aktion (Laden · Wählen · „✓ Aktiv“ · Fortschritt), Löschen bzw. Abbrechen.
  */
-@Composable
-private fun VoiceSummaryRow(
-    active: VoiceSpec?,
-    anyInstalled: Boolean,
-    engineReady: Boolean,
-    expanded: Boolean,
-    enabled: Boolean,
-    onToggle: () -> Unit,
-) {
-    val state = expandedStateText(expanded)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onToggle)
-            .semantics { stateDescription = state }
-            .padding(vertical = Dimens.GapTiny),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            SubLabel(stringResource(R.string.settings_voice))
-            // Aufgeklappt zeigt der Katalog die aktive Stimme selbst; hier stünde sie doppelt.
-            when {
-                expanded -> Unit
-                active != null -> HintText(active.displayName)
-                else -> HintText(stringResource(if (anyInstalled) R.string.settings_voice_none_chosen else R.string.settings_voice_none_installed))
-            }
-        }
-        when {
-            expanded -> Unit
-
-            active != null && engineReady -> Text(
-                text = stringResource(R.string.settings_voice_active),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            active != null ->
-                CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
-        }
-        ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
-    }
-}
-
-/** Eine Zeile im Stimmen-Katalog: Name/Info + Vorhören + Zustands-Aktion + Löschen. */
 @Composable
 private fun VoiceRow(
     spec: VoiceSpec,
     state: VoiceDownloadState,
     active: Boolean,
     engineReady: Boolean,
+    columns: TrailingColumns,
     onSample: () -> Unit,
     onDownload: () -> Unit,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.GapTiny),
-        verticalAlignment = Alignment.CenterVertically,
+    TrailingRow(
+        columns,
+        modifier = Modifier.padding(vertical = Dimens.GapTiny),
+        // Vorhören (funktioniert immer, auch vor dem Download).
+        play = { PreviewButton(stringResource(R.string.cd_voice_preview, spec.displayName), onSample) },
+        label = { VoiceStateAction(state, active, engineReady, onDownload, onSelect) },
+        icon = {
+            when (state) {
+                // Abbrechen: delete() bricht den laufenden Download-Job ab und räumt Reste weg.
+                is VoiceDownloadState.Downloading -> AppIconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.cd_voice_cancel),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                    )
+                }
+
+                // Zweistufig (MUSTER-05): Eine Stimme neu zu laden kostet bis zu 60 MB.
+                is VoiceDownloadState.Downloaded -> ConfirmIconButton(
+                    name = spec.displayName,
+                    description = stringResource(R.string.cd_voice_delete, spec.displayName),
+                    onConfirm = onDelete,
+                )
+
+                else -> Unit
+            }
+        },
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column {
             // Name immer in onSurface: Den Zustand trägt allein „✓ Aktiv“ (FARBE-05).
             WholeWordText(
                 text = spec.displayName,
@@ -550,62 +624,173 @@ private fun VoiceRow(
                 )
             }
         }
+    }
+}
 
-        // Vorhören (funktioniert immer, auch vor dem Download).
-        AppIconButton(onClick = onSample) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_voice_preview, spec.displayName))
-        }
-
-        when (state) {
-            is VoiceDownloadState.Downloading -> {
-                // Mit bekannter Größe zeigt der Kreis den Fortschritt (dazu „40 %“ im Untertitel für
-                // TalkBack); beim Entpacken oder ohne Größe dreht er unbestimmt.
-                if (state.extracting || state.indeterminate) {
-                    CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
-                } else {
-                    CircularProgressIndicator(
-                        progress = { state.fraction },
-                        modifier = Modifier.size(Sizes.ProgressInline),
-                        strokeWidth = Sizes.ProgressStroke,
-                    )
-                }
-                // Abbrechen: delete() bricht den laufenden Download-Job ab und räumt Reste weg.
-                AppIconButton(onClick = onDelete) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.cd_voice_cancel),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                    )
-                }
-            }
-
-            is VoiceDownloadState.Downloaded -> {
-                when {
-                    // Aktiv-Label erst zeigen, wenn die Engine wirklich bereit ist (gleiche Quelle
-                    // wie der Untertitel → keine widersprüchlichen Signale beim Umschalten).
-                    active && engineReady -> Text(
-                        text = stringResource(R.string.settings_voice_active),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-
-                    active && !engineReady ->
-                        CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
-
-                    else ->
-                        AppTextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose)) }
-                }
-                // Zweistufig (MUSTER-05): Eine Stimme neu zu laden kostet bis zu 60 MB.
-                ConfirmIconButton(
-                    name = spec.displayName,
-                    description = stringResource(R.string.cd_voice_delete, spec.displayName),
-                    onConfirm = onDelete,
+/** Mittlere Spalte einer Stimmen-Zeile: was mit der Stimme gerade geht oder ist. */
+@Composable
+private fun VoiceStateAction(
+    state: VoiceDownloadState,
+    active: Boolean,
+    engineReady: Boolean,
+    onDownload: () -> Unit,
+    onSelect: () -> Unit,
+) {
+    when (state) {
+        // Mit bekannter Größe zeigt der Kreis den Fortschritt (dazu „40 %“ im Untertitel für
+        // TalkBack); beim Entpacken oder ohne Größe dreht er unbestimmt.
+        is VoiceDownloadState.Downloading ->
+            if (state.extracting || state.indeterminate) {
+                CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
+            } else {
+                CircularProgressIndicator(
+                    progress = { state.fraction },
+                    modifier = Modifier.size(Sizes.ProgressInline),
+                    strokeWidth = Sizes.ProgressStroke,
                 )
             }
 
-            else -> // NotDownloaded / Failed
-                AppTextButton(onClick = onDownload) { Text(stringResource(R.string.settings_voice_download)) }
+        is VoiceDownloadState.Downloaded -> when {
+            // Aktiv-Label erst zeigen, wenn die Engine wirklich bereit ist (gleiche Quelle
+            // wie der Untertitel → keine widersprüchlichen Signale beim Umschalten).
+            active && engineReady -> Text(
+                text = stringResource(R.string.settings_voice_active),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
+            active -> CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
+
+            else -> AppTextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose), maxLines = 1) }
         }
+
+        else -> // NotDownloaded / Failed
+            AppTextButton(onClick = onDownload) { Text(stringResource(R.string.settings_voice_download), maxLines = 1) }
+    }
+}
+
+/**
+ * Feste Endspalten der Einstellungs-Zeilen (S-38): [labelWidth] ist die Breite der mittleren
+ * Spalte, gemessen an der breitesten Zustands-Beschriftung ([rememberTrailingColumns]).
+ */
+@Immutable
+private class TrailingColumns(val labelWidth: Dp)
+
+/**
+ * Misst die breiteste Beschriftung der Zustands-Spalte („Laden“, „Wählen“ im Text-Button,
+ * „✓ Aktiv“) in der aktuellen Schriftgröße, plus Innenpolster des Text-Buttons. So passt jede
+ * einzeilig hinein (LAYOUT-03), und die Spalten stehen in allen Zeilen gleich.
+ */
+@Composable
+private fun rememberTrailingColumns(): TrailingColumns {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val direction = LocalLayoutDirection.current
+    val button = MaterialTheme.typography.labelLarge
+    val status = MaterialTheme.typography.labelMedium
+    val labels = listOf(
+        stringResource(R.string.settings_voice_download) to button,
+        stringResource(R.string.settings_voice_choose) to button,
+        stringResource(R.string.settings_voice_active) to status,
+    )
+    return remember(measurer, density, direction, labels) {
+        val padding = ButtonDefaults.TextButtonContentPadding
+        with(density) {
+            val text = labels.maxOf { (label, style) -> measurer.measure(label, style, maxLines = 1).size.width }
+            // Polster wie im Button pro Seite gerundet; dazu eine Haarlinie Luft gegen Rundung.
+            val px = text + padding.calculateStartPadding(direction).roundToPx() + padding.calculateEndPadding(direction).roundToPx() +
+                Dimens.GapHairline.roundToPx()
+            TrailingColumns(labelWidth = px.toDp())
+        }
+    }
+}
+
+/**
+ * Zeile mit festen rechten Spalten (S-38): [lead] links, dann Vorhören ([play], 48 dp), Zustand
+ * ([label], [TrailingColumns.labelWidth]) und Icon-Aktion ([icon], [TrailingIconCell]). Leere
+ * Fächer behalten ihre Breite, damit Play-Knöpfe und Aktionen über alle Zeilen der Seite
+ * untereinander stehen – auch die Gong-Zeile, die nur [play] hat ([label] = null).
+ *
+ * Passt [lead] nicht daneben (große Schrift auf schmalen Geräten), bricht kein Wort um (LAYOUT-03):
+ * Zeilen mit Aktionen brauchen dafür nur ihr längstes Wort, und reicht das nicht, stehen die
+ * Spalten unter dem Text, weiter rechtsbündig untereinander. Die Gong-Zeile hält ihr Label
+ * einzeilig; ihr Play rückt dafür erst ans Zeilenende, bevor es unter das Label geht.
+ */
+@Composable
+private fun TrailingRow(
+    columns: TrailingColumns,
+    play: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    label: (@Composable () -> Unit)? = null,
+    icon: @Composable () -> Unit = {},
+    lead: @Composable () -> Unit,
+) {
+    val cells: @Composable () -> Unit = {
+        if (label != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.width(columns.labelWidth), contentAlignment = Alignment.Center) { label() }
+                TrailingIconCell(icon)
+            }
+        }
+    }
+    Layout(
+        contents = listOf(lead, { Box(Modifier.width(Dimens.MinTouchTarget), contentAlignment = Alignment.Center) { play() } }, cells),
+        modifier = modifier.fillMaxWidth(),
+    ) { (leadMeasurables, playMeasurables, cellMeasurables), constraints ->
+        val width = constraints.maxWidth
+        val loose = Constraints()
+        val playCell = playMeasurables.single().measure(loose)
+        val cellsPlaced = cellMeasurables.singleOrNull()?.measure(loose)
+        // Breite der Fächer rechts vom Play, auch wenn die Zeile selbst keine hat (Gong).
+        val restWidth = cellsPlaced?.width ?: (columns.labelWidth + Dimens.MinTouchTarget - Sizes.TouchOverhang).roundToPx()
+        val leadMeasurable = leadMeasurables.single()
+        val needed = if (label != null) {
+            leadMeasurable.minIntrinsicWidth(Constraints.Infinity)
+        } else {
+            leadMeasurable.maxIntrinsicWidth(Constraints.Infinity)
+        }
+        val beside = width - playCell.width - restWidth
+        val playEnd = width - playCell.width
+        when {
+            needed <= beside || (label == null && needed <= playEnd) -> {
+                val leadWidth = if (needed <= beside) beside else playEnd
+                val leadPlaced = leadMeasurable.measure(Constraints(maxWidth = leadWidth))
+                val height = maxOf(leadPlaced.height, playCell.height, cellsPlaced?.height ?: 0)
+                layout(width, height) {
+                    leadPlaced.placeRelative(0, (height - leadPlaced.height) / 2)
+                    playCell.placeRelative(leadWidth, (height - playCell.height) / 2)
+                    cellsPlaced?.placeRelative(leadWidth + playCell.width, (height - cellsPlaced.height) / 2)
+                }
+            }
+
+            else -> {
+                val leadPlaced = leadMeasurable.measure(Constraints(maxWidth = width))
+                val cellsHeight = maxOf(playCell.height, cellsPlaced?.height ?: 0)
+                val playX = (width - restWidth - playCell.width).coerceAtLeast(0)
+                layout(width, leadPlaced.height + cellsHeight) {
+                    leadPlaced.placeRelative(0, 0)
+                    playCell.placeRelative(playX, leadPlaced.height + (cellsHeight - playCell.height) / 2)
+                    cellsPlaced?.placeRelative(playX + playCell.width, leadPlaced.height + (cellsHeight - cellsPlaced.height) / 2)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Icon-Spalte am Zeilenende: 48 dp breit, um den Touch-Rand schmaler gemeldet ([flushEnd]), damit
+ * der Glyph an der Inhaltskante steht (LAYOUT-07) – Papierkorb von Stimmen und Logbuch untereinander.
+ */
+@Composable
+private fun TrailingIconCell(content: @Composable () -> Unit) {
+    Box(Modifier.flushEnd(inCard = true).width(Dimens.MinTouchTarget), contentAlignment = Alignment.Center) { content() }
+}
+
+/** Vorhören (Gong, Stimmen): Play in voller Deckkraft, überall derselbe Knopf. */
+@Composable
+private fun PreviewButton(description: String, onClick: () -> Unit) {
+    AppIconButton(onClick = onClick) {
+        Icon(Icons.Filled.PlayArrow, contentDescription = description, tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 
