@@ -1,6 +1,12 @@
 package app.atemkraft.ui.meditation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -57,6 +63,7 @@ import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 
 /** Gong-Wahl im Tab; die Intervall-Länge steht in den Einstellungen. */
 private enum class GongChoice {
@@ -111,7 +118,8 @@ private fun SelectionContent(
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Die Seite scrollt nicht: Der Regler bekommt den Platz zwischen Kopf und „Klang & Stimme“
-        // und wird bei großer Schrift oder aufgeklapptem Klang kleiner. Erst wenn selbst seine
+        // und wird bei großer Schrift oder aufgeklapptem Klang kleiner. Er hängt oben unter dem Kopf,
+        // damit er beim Aufklappen nur schrumpft und nicht wandert. Erst wenn selbst seine
         // Mindestgröße nicht passt, scrollt die Seite als Notlösung – abgeschnitten wird nie.
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
             val viewport = maxHeight
@@ -132,7 +140,7 @@ private fun SelectionContent(
                 center = {
                     Box(
                         modifier = Modifier.fillMaxSize().padding(vertical = Dimens.GapSmall),
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.TopCenter,
                     ) {
                         DurationPicker(state = duration, onTick = onDurationTick)
                     }
@@ -193,11 +201,11 @@ private fun SelectionContent(
  * Darstellung der Dauerwahl – die EINZIGE Stelle, die sie kennt. Variante F (wischbare Skala)
  * tauscht nur `TimeDial` gegen `TimeRuler` mit derselben Signatur; Zustand, Haptik, Start, Reset
  * und Platzverteilung bleiben unverändert. Beide bekommen den ganzen freien Platz (der Ring nimmt
- * darin das größte Quadrat, mittig).
+ * darin das größte Quadrat, oben bündig).
  */
 @Composable
 private fun DurationPicker(state: DurationPickerState, onTick: (major: Boolean) -> Unit) {
-    TimeDial(state = state, onTick = onTick, modifier = Modifier.fillMaxSize())
+    TimeDial(state = state, onTick = onTick, modifier = Modifier.fillMaxSize(), alignment = Alignment.TopCenter)
 }
 
 /**
@@ -289,7 +297,13 @@ private fun SoundSection(
             expanded = expanded,
             onExpandedChange = onExpandedChange,
         )
-        if (expanded) {
+        // Zügig auf- und zuklappen: Der Ring darüber folgt der Höhe Bild für Bild und schrumpft
+        // stetig statt zu springen. Bei Animator-Skala 0 springt beides ohne Übergang (MOTION-02).
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(tween(Motion.Expand)) + fadeIn(tween(Motion.Expand)),
+            exit = shrinkVertically(tween(Motion.Expand)) + fadeOut(tween(Motion.Expand)),
+        ) {
             SoundOptions(
                 gong = gong,
                 gongIntervalMin = gongIntervalMin,

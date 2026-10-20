@@ -60,13 +60,18 @@ import kotlin.math.sin
  * Eine andere Darstellung (Variante F, `TimeRuler`) braucht nur dieselbe Signatur, ihre Skala und
  * ihre Gesten.
  *
- * Füllt den gegebenen Platz quadratisch (min(maxWidth, maxHeight)); Spur, Striche und Knopf
- * wachsen mit der Kantenlänge, Zahlen mit der Schrift. Ist zwischen den 5er-Zahlen zu wenig
- * Platz, stehen nur die 10er. [onTick] meldet jede Wertänderung (`major` = 5er-Marke) für die
+ * Füllt den gegebenen Platz quadratisch (min(maxWidth, maxHeight)), ausgerichtet nach [alignment];
+ * Spur, Striche und Knopf wachsen mit der Kantenlänge, Zahlen mit der Schrift. Ist zwischen den
+ * 5er-Zahlen zu wenig Platz, stehen nur die 10er. [onTick] meldet jede Wertänderung (`major` = 5er-Marke) für die
  * Haptik-Raste; ob vibriert wird, entscheidet der Aufrufer (Einstellung „Haptik“).
  */
 @Composable
-fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun TimeDial(
+    state: DurationPickerState,
+    onTick: (major: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    alignment: Alignment = Alignment.Center,
+) {
     val currentOnTick by rememberUpdatedState(onTick)
     // Im Body gelesen: Zeichnung und Semantik folgen jeder Änderung über die Recomposition.
     val minutes = state.minutes
@@ -84,7 +89,7 @@ fun TimeDial(state: DurationPickerState, onTick: (major: Boolean) -> Unit, modif
     val units = durationUnitSamples()
     val numberStyles = durationNumberStyles
 
-    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier = modifier, contentAlignment = alignment) {
         val side: Dp = when {
             constraints.hasBoundedWidth && constraints.hasBoundedHeight -> min(maxWidth, maxHeight)
             constraints.hasBoundedWidth -> maxWidth
