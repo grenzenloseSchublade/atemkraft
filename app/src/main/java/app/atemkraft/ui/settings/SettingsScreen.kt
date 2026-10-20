@@ -157,7 +157,7 @@ fun SettingsScreen(
                 KnowledgeCard(onOpenAtemlehre = onOpenAtemlehre, onOpenGlossary = onOpenGlossary)
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong, columns)
+                TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
@@ -342,7 +342,6 @@ private fun TonCard(
     gongLong: Boolean,
     onGongLong: (Boolean) -> Unit,
     onPreviewGong: () -> Unit,
-    columns: TrailingColumns,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
@@ -362,10 +361,11 @@ private fun TonCard(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut
-            // tippen). Steht in der Vorhören-Spalte der Stimmenliste, damit alle Play-Knöpfe der
-            // Seite untereinander liegen (S-38).
-            TrailingRow(columns, play = { PreviewButton(stringResource(R.string.cd_gong_preview), onPreviewGong) }) {
-                SubLabel(stringResource(R.string.settings_gong_length), Modifier.choiceGroupHeading())
+            // tippen). Steht an der Kartenkante wie die Icons der übrigen Zeilen – in der Spalte der
+            // Stimmenliste schwebte er allein mitten in der Zeile (Nutzer 2026-10-20).
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SubLabel(stringResource(R.string.settings_gong_length), Modifier.weight(1f).choiceGroupHeading())
+                TrailingIconCell { PreviewButton(stringResource(R.string.cd_gong_preview), onPreviewGong) }
             }
             SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong, groupLabel = stringResource(R.string.settings_gong_length)) { long ->
                 stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
