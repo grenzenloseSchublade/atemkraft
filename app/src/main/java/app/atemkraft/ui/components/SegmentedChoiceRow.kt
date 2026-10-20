@@ -5,13 +5,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -30,6 +26,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
@@ -40,11 +37,12 @@ import kotlin.math.floor
  * Einheitliche Einfachauswahl – ersetzt die mehrfach kopierten
  * `SingleChoiceSegmentedButtonRow`-Blöcke in den Einstellungen.
  *
- * Normalfall: SegmentedButtons über die volle Breite, das ausgewählte Segment mit Häkchen. Passt
- * eine Beschriftung so nicht einzeilig in ihr gleich breites Segment, bleibt die Reihe eine Reihe:
- * Zuerst entfällt das Häkchen samt seinem Platz (die Fläche [SegmentSelected] zeigt die Auswahl
- * weiter, ≥ 3:1 gegen das ungewählte Segment), dann werden alle Beschriftungen gemeinsam leicht verkleinert, höchstens
- * bis [MIN_LABEL_SCALE]. Erst wenn auch das nicht reicht, kommt eine senkrechte Liste mit
+ * Normalfall: SegmentedButtons über die volle Breite. Die Auswahl zeigen überall gleich die helle
+ * Fläche [SegmentSelected] (≥ 3:1 gegen das ungewählte Segment) und die fettere Beschriftung – nie
+ * ein Häkchen, damit alle Reihen gleich aussehen und lange Beschriftungen Platz haben (Nutzer
+ * 2026-10-20). Passt eine Beschriftung nicht einzeilig in ihr gleich breites Segment, bleibt die
+ * Reihe eine Reihe: Alle Beschriftungen werden gemeinsam leicht verkleinert, höchstens bis
+ * [MIN_LABEL_SCALE]. Erst wenn auch das nicht reicht, kommt eine senkrechte Liste mit
  * Radiobuttons. Beschriftungen brechen nie im Wort um (LAYOUT-03).
  *
  * Mehr als vier Optionen nur als Raster über [columns] (Gong-Abstand in den Einstellungen):
@@ -71,30 +69,30 @@ fun <T> SegmentedChoiceRow(
     val rows = items.chunked(columns)
     val group = if (groupLabel != null) Modifier.semantics { contentDescription = groupLabel } else Modifier
     SubcomposeLayout(modifier.fillMaxWidth().then(group)) { constraints ->
-        // Jede Beschriftung einzeln als ausgewähltes Segment messen (breiteste Variante), mit und
-        // ohne Häkchen. Die Zeile misst mit width(IntrinsicSize.Min), also nur das längste Wort –
+        // Jede Beschriftung einzeln als ausgewähltes Segment messen (fett = breiteste Variante).
+        // Die Zeile misst mit width(IntrinsicSize.Min), also nur das längste Wort –
         // deshalb in der Probe untrennbar machen, sonst gilt „Start & Ende“ als so breit wie „Start“.
-        fun needed(check: Boolean) = subcompose("probe$check") {
+        val plain = subcompose("probe") {
             rows.forEach { row ->
                 row.forEachIndexed { index, item ->
                     SingleChoiceSegmentedButtonRow {
-                        Segment(label(item).unbreakable(), selected = true, check = check, onClick = {}, index = index, count = row.size)
+                        Segment(label(item).unbreakable(), selected = true, onClick = {}, index = index, count = row.size)
                     }
                 }
             }
         }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
         val slot = constraints.maxWidth / columns
-        val plain = needed(check = false)
         // Polster und Rand des Segments bleiben, nur die Schrift wird kleiner: gemeinsamer Faktor,
         // damit die breiteste Beschriftung gerade ins Segment passt (gleichrangig = gleich groß).
         // labelLarge ist die Rolle, die M3 in Segmenten setzt.
         val text = subcompose("text") {
-            items.forEach { Text(label(it).unbreakable(), style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+            items.forEach {
+                Text(label(it).unbreakable(), style = MaterialTheme.typography.labelLarge.copy(fontWeight = SELECTED_WEIGHT), maxLines = 1)
+            }
         }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
         val fitScale = floor((slot - (plain - text)).toFloat() / text * SCALE_STEPS) / SCALE_STEPS
         val mode = when {
-            needed(check = true) <= slot -> ChoiceMode.SEGMENTS
-            plain <= slot -> ChoiceMode.SEGMENTS_NO_CHECK
+            plain <= slot -> ChoiceMode.SEGMENTS
             fitScale >= MIN_LABEL_SCALE -> ChoiceMode.SEGMENTS_SMALLER
             else -> ChoiceMode.RADIO_LIST
         }
@@ -109,7 +107,6 @@ fun <T> SegmentedChoiceRow(
                             Segment(
                                 text = label(item),
                                 selected = item == selected,
-                                check = mode == ChoiceMode.SEGMENTS,
                                 labelScale = labelScale,
                                 onClick = { onSelect(item) },
                                 index = index,
@@ -179,7 +176,10 @@ private fun Modifier.withoutIconReserve(): Modifier = layout { measurable, const
 fun Modifier.choiceGroupHeading(): Modifier = semantics { invisibleToUser() }
 
 /** Darstellung je nach Platz, vom vollständigsten zum sparsamsten. */
-private enum class ChoiceMode { SEGMENTS, SEGMENTS_NO_CHECK, SEGMENTS_SMALLER, RADIO_LIST }
+private enum class ChoiceMode { SEGMENTS, SEGMENTS_SMALLER, RADIO_LIST }
+
+/** Beschriftung des gewählten Segments: zweites Merkmal neben der Fläche, nicht nur Farbe (A11Y). */
+private val SELECTED_WEIGHT = FontWeight.SemiBold // Abweichung TYPO-01: Auswahl-Merkmal neben der Fläche (FARBE-05)
 
 /** Untergrenze der gemeinsamen Verkleinerung; darunter ist die Radioliste lesbarer. */
 private const val MIN_LABEL_SCALE = 0.85f
@@ -191,16 +191,15 @@ private const val SCALE_STEPS = 100f
 private fun String.unbreakable(): String = replace(' ', '\u00A0').replace('-', '\u2011')
 
 /**
- * Ein Segment; Probe und Anzeige nutzen dasselbe, damit die Breitenmessung stimmt. Ohne [check]
- * gibt die Beschriftung den Platz zurück, den M3 (1.3) auch ohne Icon für das Häkchen reserviert:
- * Sie meldet sich um [Sizes.SegmentIconReserve] schmaler und zeichnet sich so versetzt, dass sie
- * mittig im Segment steht. Das Segment ist dann nur so breit wie Beschriftung und Polster.
+ * Ein Segment; Probe und Anzeige nutzen dasselbe, damit die Breitenmessung stimmt. Ohne Häkchen
+ * gibt die Beschriftung den Platz zurück, den M3 (1.3) auch ohne Icon dafür reserviert: Sie meldet
+ * sich um [Sizes.SegmentIconReserve] schmaler und zeichnet sich so versetzt, dass sie mittig im
+ * Segment steht. Das Segment ist dann nur so breit wie Beschriftung und Polster.
  */
 @Composable
 private fun SingleChoiceSegmentedButtonRowScope.Segment(
     text: String,
     selected: Boolean,
-    check: Boolean,
     onClick: () -> Unit,
     index: Int,
     count: Int,
@@ -214,24 +213,14 @@ private fun SingleChoiceSegmentedButtonRowScope.Segment(
         // heller als secondaryContainer (WCAG 1.4.11), in jeder Stufe gleich.
         colors = SegmentedButtonDefaults.colors(activeContainerColor = SegmentSelected),
         modifier = Modifier.heightIn(min = Sizes.ButtonHeight),
-        icon = {
-            if (check) {
-                // activeContent benannt: ein nachgestelltes Lambda wäre inactiveContent und setzte
-                // das Häkchen an die NICHT gewählten Segmente.
-                SegmentedButtonDefaults.Icon(
-                    active = selected,
-                    activeContent = {
-                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(Sizes.IconInButton)) // dekorativ: Zustand trägt die Rolle RadioButton
-                    },
-                )
-            }
-        },
+        // Kein Häkchen (s. o.): Fläche und Schriftstärke tragen die Auswahl.
+        icon = {},
     ) {
-        val style = LocalTextStyle.current
+        val style = LocalTextStyle.current.let { if (selected) it.copy(fontWeight = SELECTED_WEIGHT) else it }
         Text(
             text = text,
             maxLines = 1,
-            modifier = if (check) Modifier else Modifier.withoutIconReserve(),
+            modifier = Modifier.withoutIconReserve(),
             style = if (labelScale < 1f) {
                 style.copy(
                     fontSize = style.fontSize * labelScale, // Abweichung TYPO-01: verkleinert die M3-Rolle des Segments

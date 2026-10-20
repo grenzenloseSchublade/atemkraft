@@ -24,7 +24,7 @@ object Sizes {
     /** Standard-Icon: Icon-Buttons, Zurück, Zahnrad, Expander-Caret, Mini-Leiste (M3 24). */
     val IconDefault = 24.dp
 
-    /** Icon neben einer Beschriftung im Button: Reset, Segment-Häkchen, Ausklapp-Caret (M3 18). */
+    /** Icon neben einer Beschriftung im Button: Reset, Ausklapp-Caret (M3 18). */
     val IconInButton = 18.dp
 
     /** Kleines Inline-Icon neben `label*`-Text (16). */
@@ -48,7 +48,7 @@ object Sizes {
 
     /**
      * Platz, den M3-`SegmentedButton` (1.3) für das Häkchen immer reserviert, auch ohne Icon:
-     * Icon 18 + Abstand 8. `SegmentedChoiceRow` gibt ihn ohne Häkchen an die Beschriftung zurück.
+     * Icon 18 + Abstand 8. `SegmentedChoiceRow` (ohne Häkchen) gibt ihn an die Beschriftung zurück.
      */
     val SegmentIconReserve = 26.dp
 }
