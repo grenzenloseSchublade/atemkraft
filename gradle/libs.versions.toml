@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.1"
+agp = "8.13.2"
 kotlin = "2.1.0"
 coreKtx = "1.15.0"
 activityCompose = "1.9.3"
@@ -18,7 +18,7 @@ robolectric = "4.17"
 roborazzi = "1.60.0"
 ktlintGradle = "14.2.0"
 ktlint = "1.8.0"
-composeRules = "0.5.8"
+composeRules = "0.6.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
