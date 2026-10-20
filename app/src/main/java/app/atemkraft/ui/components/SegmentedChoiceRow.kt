@@ -45,7 +45,7 @@ import kotlin.math.floor
  * [MIN_LABEL_SCALE]. Erst wenn auch das nicht reicht, kommt eine senkrechte Liste mit
  * Radiobuttons. Beschriftungen brechen nie im Wort um (LAYOUT-03).
  *
- * Mehr als vier Optionen nur als Raster über [columns] (Gong-Abstand in den Einstellungen):
+ * Mehr als vier Optionen nur als Raster über [columns]:
  * gleich breite Segmente in Reihen à [columns], gemeinsame Auswahl, gemeinsamer Rückfall auf die
  * Radioliste. Die Reihen stehen ohne eigene Lücke übereinander – der Abstand ist der Rest der
  * 48-dp-Tippfläche, enger ginge nur mit überlappenden Tippflächen (A11Y-05). Ein [selected], das

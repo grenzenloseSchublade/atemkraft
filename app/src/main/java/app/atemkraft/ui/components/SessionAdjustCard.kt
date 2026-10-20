@@ -2,23 +2,18 @@ package app.atemkraft.ui.components
 
 import androidx.annotation.PluralsRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
-import app.atemkraft.ui.theme.SECONDARY
 
 /** Ein anpassbarer Intervall-Wert in der Einstell-Karte; als Parameter null = Phase fehlt. */
 data class PhaseAdjust(
@@ -71,24 +66,15 @@ fun SessionAdjustCard(
                     modifier = Modifier.padding(horizontal = Dimens.CardPadding),
                     color = DividerSubtle,
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    DisclosureToggle(
-                        text = stringResource(R.string.adjust_intervals),
-                        expanded = intervalsExpanded,
-                        onToggle = onToggleIntervals,
-                        // Das Caret-Glyph (knapp ein Drittel Innenrand im Icon) steht so etwa an
-                        // der Stepper-Label-Kante (CardPadding).
-                        modifier = Modifier.padding(start = Dimens.GapSmall),
-                    )
-                    if (!intervalsExpanded && intervalsModified) {
-                        Text(
-                            text = "· " + stringResource(R.string.adjust_modified),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                            // Abstand zum Umschalter: dessen Endrand (Dimens.GapTiny) in der Pille.
-                        )
-                    }
-                }
+                DisclosureToggle(
+                    text = stringResource(R.string.adjust_intervals),
+                    expanded = intervalsExpanded,
+                    onToggle = onToggleIntervals,
+                    // Das Caret-Glyph (knapp ein Drittel Innenrand im Icon) steht so etwa an
+                    // der Stepper-Label-Kante (CardPadding).
+                    modifier = Modifier.padding(start = Dimens.GapSmall),
+                    note = if (!intervalsExpanded && intervalsModified) "· " + stringResource(R.string.adjust_modified) else null,
+                )
                 if (intervalsExpanded) {
                     inhale?.let {
                         Stepper(

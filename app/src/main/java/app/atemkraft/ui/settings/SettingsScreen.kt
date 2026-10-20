@@ -360,15 +360,24 @@ private fun TonCard(
             HintText(stringResource(R.string.volume_hint))
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            // Vorhören: spielt den Gong im aktuell gewählten Profil (Kurz/Lang umschalten → erneut
-            // tippen). Steht an der Kartenkante wie die Icons der übrigen Zeilen – in der Spalte der
-            // Stimmenliste schwebte er allein mitten in der Zeile (Nutzer 2026-10-20).
+            SubLabel(stringResource(R.string.settings_gong_length), Modifier.choiceGroupHeading())
+            Spacer(Modifier.height(Dimens.GapSmall))
+            // Drittel-Raster wie die übrigen Auswahlreihen: Kurz/Lang belegen zwei Drittel, das
+            // Vorhören steht im freien dritten Platz auf Höhe der Felder (Nutzer 2026-10-20).
+            // Spielt den Gong im aktuell gewählten Profil.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SubLabel(stringResource(R.string.settings_gong_length), Modifier.weight(1f).choiceGroupHeading())
-                TrailingIconCell { PreviewButton(stringResource(R.string.cd_gong_preview), onPreviewGong) }
-            }
-            SegmentedChoiceRow(listOf(false, true), gongLong, onGongLong, groupLabel = stringResource(R.string.settings_gong_length)) { long ->
-                stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
+                SegmentedChoiceRow(
+                    listOf(false, true),
+                    gongLong,
+                    onGongLong,
+                    modifier = Modifier.weight(2f),
+                    groupLabel = stringResource(R.string.settings_gong_length),
+                ) { long ->
+                    stringResource(if (long) R.string.gong_length_long else R.string.gong_length_short)
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    PreviewButton(stringResource(R.string.cd_gong_preview), onPreviewGong)
+                }
             }
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_gong_length_hint))
@@ -465,8 +474,6 @@ private fun SessionCard(
     }
 }
 
-private const val GONG_COLUMNS = 2
-
 @Composable
 private fun MeditationCard(
     gongIntervalMin: Int,
@@ -487,13 +494,11 @@ private fun MeditationCard(
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
-            // 2 × 2 wie das Dauer-Raster im Meditations-Tab: „✓ 15 min“ passt in der Karte nicht
-            // in ein Viertel der Breite, sonst stünde hier schon bei normaler Schrift eine Radioliste.
+            // Eine Reihe à vier: ohne Häkchen passt „15 min“ in ein Viertel der Kartenbreite.
             SegmentedChoiceRow(
                 GONG_INTERVAL_CHOICES,
                 gongIntervalMin,
                 onGongInterval,
-                columns = GONG_COLUMNS,
                 groupLabel = stringResource(R.string.settings_gong_interval),
             ) { m ->
                 stringResource(R.string.meditation_minutes, m)
