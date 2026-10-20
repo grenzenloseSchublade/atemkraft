@@ -29,6 +29,20 @@ scripts/build.sh installDebug    # bauen und auf Gerät/Emulator installieren
 
 `scripts/build.sh` reicht alle Argumente an `./gradlew` durch. Es nimmt bevorzugt JDK 17 wie CI und Release-Builds; ein anderes JDK baut mit Warnung weiter. Für eine Release-APK brauchst du keinen Schlüssel: Ohne Release-Keystore entsteht eine unsignierte APK. Signiert werden offizielle Releases nur vom Maintainer.
 
+### Aufbau
+
+Toolchain: Gradle 8.11.1, Android Gradle Plugin 8.9.1, Kotlin 2.1.0, Jetpack Compose (BOM 2025.01.00) mit Material 3, compileSdk und targetSdk 36, minSdk 26.
+
+```
+domain/   reines Modell: Phase, Segment, Exercise, Zeitplan, Muster-Generator, Befindens-Suche
+data/     Übungen, Situationen und Quellen (Refs.kt), Room (Logbuch, Muster), DataStore (Einstellungen)
+cue/      Töne, Gong, Vibration, Sprachausgabe (System oder Piper-Stimmen über sherpa-onnx)
+playback/ Abläufe ohne UI: Sitzungsstatus, Meditations-Controller, Foreground-Service, Audio-Koordinatoren
+ui/       theme/, components/ und je Screen ein Paket
+```
+
+Eine selbst gebaute Release-APK ohne eigenen Schlüssel ist unsigniert (so erwartet es z. B. F-Droid) und lässt sich nicht über die offizielle installieren, weil die Signatur abweicht.
+
 ## Prüfen
 
 Vor jedem Pull Request:
@@ -55,7 +69,7 @@ Die verbindlichen Regeln stehen in zwei Dokumenten. Jede Regel hat eine ID und n
 Das Wichtigste in Kürze:
 
 - **Kein Tracking:** keine Analyse-, Absturz-, Werbe- oder Tracking-Bibliotheken, keine Google Play Services, kein Firebase, auch nicht über Abhängigkeiten (SEC-PRIV-01).
-- **Offline:** Die einzige Netzverbindung ist der Stimm-Download, den die Person selbst antippt. Eine neue Verbindung, eine neue Berechtigung oder ein neues gespeichertes Feld braucht im selben Commit die Einträge in SECURITY.md, README und [Datenschutzerklärung](docs/PRIVACY.md) (SEC-PRIV-02, SEC-PRIV-04, SEC-PERM-01).
+- **Offline:** Die einzige Netzverbindung ist der Stimm-Download, den die Person selbst antippt. Eine neue Verbindung, eine neue Berechtigung oder ein neues gespeichertes Feld braucht im selben Commit die Einträge in SECURITY.md und [Datenschutzerklärung](docs/PRIVACY.md), eine neue Verbindung auch den Satz im README (SEC-PRIV-02, SEC-PRIV-04, SEC-PERM-01).
 - **Nur freie Software:** Neue Abhängigkeiten brauchen eine FLOSS-Lizenz und einen Eintrag in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) (SEC-LEGAL-03).
 - **Oberfläche:** nur dunkles Design, vorhandene Komponenten aus `ui/components/`, Farben und Maße als Tokens aus `ui/theme/`, kein Wortumbruch und keine gekürzten Texte, Tippflächen mindestens 48 dp.
 - **Texte:** Deutsch, Anrede „du“, Laiensprache, deutsche Anführungszeichen „…“. Begriffe nach der Begriffsliste (STYLEGUIDE §11.1, z. B. „Sitzung“ statt „Session“).
