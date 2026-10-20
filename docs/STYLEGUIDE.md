@@ -287,7 +287,7 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/sess
 
 ## <a id="audio"></a>9 Audio und Haptik
 
-**Ist-Werte** (`src/cue/`): Synthese 44,1 kHz PCM16 mono zur Laufzeit. Wechselton 528/396/440 Hz (Ein/Aus/Halten), 180 ms, Attack 12, Release 60 ms. Gong Teiltöne 330/331,6/894/1698 Hz, „Lang“ 11,5 s + 1,5 s Stille, „Kurz“ 6 + 1,5 s. Durchgehend 196 ↔ 294 Hz. Lautstärke Ton/Gong 0,9/1,4/1,85, Dauerton 1,2/2,0/3,2. Sprache System-TTS de-DE (Rate 0,85, Pitch 0,9) oder Piper (Speed 0,9). Haptik-Raste (Kreis-Tipp; Zeitring je Minute bzw. je 5 min/∞, als Berührungs-Vibration ohne App-Schalter): Primitive `TICK` Skala 0,6 bzw. `CLICK` 1,0, falls der Motor sie kann; sonst vordefiniert `EFFECT_TICK`/`EFFECT_HEAVY_CLICK` (ab API 30 nur bei sicherer Unterstützung, API 29 immer); sonst One-Shot 30 bzw. 60 ms bei voller Amplitude. Gedrosselt: Tick frühestens 40 ms nach einem Tick bzw. 80 ms nach einem Klick, ein Klick geht immer durch (jeder neue Auftrag bricht den laufenden ab – dichte Ticks löschten sich am A54 aus). Ein/Aus 110 ms, Halten 70 ms. Fokus `GAIN_TRANSIENT_MAY_DUCK`, `USAGE_MEDIA`. Defaults: Wechseltöne, Haptik an, Zäsur MEDIUM, Lautstärke LOUD, Gong lang.
+**Ist-Werte** (`src/cue/`): Synthese 44,1 kHz PCM16 mono zur Laufzeit. Wechselton 528/396/440 Hz (Ein/Aus/Halten), 180 ms, Attack 12, Release 60 ms. Gong Teiltöne 330/331,6/894/1698 Hz, „Lang“ 11,5 s + 1,5 s Stille, „Kurz“ 6 + 1,5 s. Durchgehend 196 ↔ 294 Hz. Lautstärke Ton/Gong 0,9/1,4/1,85, Dauerton 1,2/2,0/3,2. Sprache System-TTS de-DE (Rate 0,85, Pitch 0,9) oder Piper (Speed 0,9). Haptik-Raste (Kreis-Tipp; Zeitring je Minute bzw. je 5 min/∞, als Berührungs-Vibration ohne App-Schalter): Primitive `TICK` Skala 0,6 bzw. `CLICK` 1,0, falls der Motor sie kann; sonst vordefiniert `EFFECT_TICK`/`EFFECT_HEAVY_CLICK` (ab API 30 nur bei sicherer Unterstützung, API 29 immer); sonst One-Shot 30 bzw. 60 ms bei voller Amplitude. Gedrosselt: Tick frühestens 40 ms nach einem Tick bzw. 80 ms nach einem Klick, ein Klick geht immer durch (jeder neue Auftrag bricht den laufenden ab – dichte Ticks löschten sich am A54 aus). Ein/Aus 110 ms, Halten 70 ms. Fokus `GAIN_TRANSIENT_MAY_DUCK`, `USAGE_MEDIA`. Defaults: Töne (Wechselton), Haptik an, Zäsur MEDIUM, Lautstärke LOUD, Gong lang.
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -349,7 +349,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | Atempause (Substantiv), halten (Verb), „Pause“ (Notiz bei Viloma) | Retention, Atemanhalten, Halte-Pause |
 | Runde (gezählte Wiederholung), Atemzug (einmal ein und aus), Phase (Einatmen, Halten, Ausatmen) | Zyklus (nur in Code-Kommentaren), Intervall für Phasenlängen |
 | 6 Atemzüge pro Minute, danach im selben Text kurz 6/min | Atemzüge/Minute, Züge pro Minute |
-| Klang (Karte mit Lautstärke und Gong), Ton (Tonart beim Atmen: Aus, Wechseltöne, Durchgehend) | Ton für beides |
+| Klang (Karte mit Lautstärke und Gong), Ton (Tonart beim Atmen: Aus, Töne, Dauerton – kurz, damit die Reihe in voller Schriftgröße steht) | Ton für beides |
 | ca. (Anleitung, UI), etwa (Fließtext) | ~ |
 
 ## <a id="code"></a>12 Code (Compose und Kotlin)

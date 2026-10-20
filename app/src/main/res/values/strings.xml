@@ -250,9 +250,9 @@
     <string name="settings_title">Einstellungen</string>
     <string name="settings_sound_title">Ton</string>
     <string name="sound_mode_off">Aus</string>
-    <string name="sound_mode_cues">Wechseltöne</string>
-    <string name="sound_mode_continuous">Durchgehend</string>
-    <string name="settings_sound_appetizer">Durchgehend: ein leiser Ton führt deinen Atem – höher beim Einatmen, tiefer beim Ausatmen.</string>
+    <string name="sound_mode_cues">Töne</string>
+    <string name="sound_mode_continuous">Dauerton</string>
+    <string name="settings_sound_appetizer">Töne: ein kurzer Ton bei jedem Phasenwechsel. Dauerton: ein leiser Ton führt deinen Atem – höher beim Einatmen, tiefer beim Ausatmen.</string>
     <string name="settings_sound_more">Wie funktioniert das?</string>
     <string name="settings_sound_hint">Der Ton steigt beim Einatmen und fällt beim Ausatmen, mit einer kurzen Zäsur am Wechsel. Dieses Prinzip nutzen auch klinische Atemtrainer (z. B. RESPeRATE); langsames, gleichmäßiges Atmen erhöht in Studien die HRV (Zaccaro 2018). Keine esoterischen Heilfrequenzen.</string>
     <string name="emphasis_title">Wechsel-Betonung</string>
