@@ -1,0 +1,6 @@
+- Einstellungen: Karte „Wissen“, gleich breite Auswahlfelder, Gong-Vorhören neben Kurz/Lang
+- Stimmen in festen Spalten, Logbuch löschen in eigener Zeile
+- Ausklappen über die ganze Zeile tippbar
+- Meditation: mehr Luft über dem Zeitring
+- Atemlehre: Viloma I und II je mit eigener Karte, vergleichbare Balken
+- Über-Seite mit Link-Karte
