@@ -441,7 +441,7 @@ object BuiltInExercises {
                 "Iyengar beschreibt als erste Stufe das Einatmen in Abschnitten von 2–3 s mit ebenso langen " +
                 "Pausen, danach langsam und tief aus; für Anfänger und im Liegen. Nach der Atemlehre betont " +
                 "das schrittweise Einatmen das Aufnehmende (Brmhana). Die Hatha Yoga Pradipika kennt Viloma nicht.",
-            patternId = "viloma",
+            patternId = "viloma-ein",
             source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
             morePatternIds = listOf("brmhana"),
         ),
@@ -478,7 +478,7 @@ object BuiltInExercises {
             detail = "Bei der zweiten Stufe des Viloma atmet man in einem Zug ein und in Abschnitten mit kurzen " +
                 "Pausen aus. Iyengar beschreibt sie für Anfänger im Liegen und nennt als Erfahrung „Leichtigkeit“. " +
                 "Nach der Atemlehre betont das schrittweise Ausatmen das Loslassen (Langhana).",
-            patternId = "viloma",
+            patternId = "viloma-aus",
             source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
             morePatternIds = listOf("langhana"),
         ),

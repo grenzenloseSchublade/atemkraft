@@ -210,21 +210,39 @@ object Atemlehre {
             appNote = "In der App ohne Halten.",
             origin = "Wo das Maß zuerst steht, ist unklar; genannt wird die Shandilya-Upanishad, nicht geprüft.",
         ),
+        // Viloma I und II je als eigene Karte wie die beiden Halten-Karten: gegensätzliche
+        // Richtung, eigener Rhythmus (Nutzer 2026-10-21). Werte wie die Übungen in der App.
         LorePattern(
-            id = "viloma",
-            title = "In Stufen (Viloma)",
-            linkName = "Viloma",
-            rhythm = listOf(inhale(1.5), holdFull(0.8), inhale(1.5), holdFull(0.8), inhale(1.5), exhale(6.0)),
-            counts = "z. B. Ein in drei Stufen\u00A0· Aus 6",
-            teaser = "In Stufen atmen (Viloma) baut Brmhana oder Langhana sanft auf.",
-            teaching = "Viloma heißt „gegen den Strich“: Das Einatmen oder das Ausatmen wird in " +
-                "kleine Abschnitte mit kurzen Pausen geteilt. Stufen beim Einatmen gelten als " +
-                "aufbauend, Stufen beim Ausatmen als lösend. Iyengar teilt in Abschnitte von 2–3 s " +
-                "mit ebenso langen Pausen, bis die Lunge voll oder leer ist.",
+            id = "viloma-ein",
+            title = "Einatmen in Stufen (Viloma I)",
+            linkName = "Viloma I",
+            rhythm = listOf(inhale(2.0), holdFull(2.0), inhale(2.0), holdFull(2.0), inhale(2.0), exhale(8.0)),
+            counts = "z. B. Ein in drei Stufen\u00A0· Aus 8",
+            teaser = "Einatmen in Stufen gilt als sanftes Brmhana: aufbauen, ohne zu drängen.",
+            teaching = "Viloma heißt „gegen den Strich“: Das Einatmen wird in kleine Abschnitte mit " +
+                "kurzen Pausen geteilt, danach fließt das Ausatmen in einem Zug. Stufen beim " +
+                "Einatmen gelten als aufbauend (Brmhana). Iyengar teilt in Abschnitte von 2–3 s " +
+                "mit ebenso langen Pausen, bis die Lunge voll ist.",
             typical = "Zum Einstieg, im Liegen, wenn lange Phasen noch nicht gehen.",
             studies = "Nicht untersucht; die Studien zu „Anuloma Viloma“ betreffen die Wechselatmung.",
-            exerciseIds = listOf("viloma-ein", "viloma-aus"),
-            appNote = "In der App mit drei Stufen; der Atemkreis bleibt in den Pausen stehen.",
+            exerciseIds = listOf("viloma-ein"),
+            appNote = "In der App mit drei Stufen; der Atemkreis wächst stufenweise und bleibt in den Pausen stehen.",
+        ),
+        LorePattern(
+            id = "viloma-aus",
+            title = "Ausatmen in Stufen (Viloma II)",
+            linkName = "Viloma II",
+            rhythm = listOf(inhale(6.0), exhale(2.0), holdEmpty(2.0), exhale(2.0), holdEmpty(2.0), exhale(2.0)),
+            counts = "z. B. Ein 6\u00A0· Aus in drei Stufen",
+            teaser = "Ausatmen in Stufen gilt als sanftes Langhana: loslassen, leicht werden.",
+            teaching = "Umgekehrt zu Viloma I: Das Einatmen fließt in einem Zug, das Ausatmen wird in " +
+                "Abschnitte mit kurzen Pausen geteilt, bis die Lunge leer ist. Stufen beim " +
+                "Ausatmen gelten als lösend (Langhana). Iyengar beschreibt die Übung für Anfänger " +
+                "im Liegen und nennt als Erfahrung „Leichtigkeit“.",
+            typical = "Zum Einstieg, im Liegen, zum Loslassen.",
+            studies = "Nicht untersucht; die Studien zu „Anuloma Viloma“ betreffen die Wechselatmung.",
+            exerciseIds = listOf("viloma-aus"),
+            appNote = "In der App mit drei Stufen; der Atemkreis schrumpft stufenweise und bleibt in den Pausen stehen.",
         ),
     )
 
