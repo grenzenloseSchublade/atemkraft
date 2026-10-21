@@ -10,7 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.NeonMagenta
@@ -31,7 +33,7 @@ class AppNavItem(
  * ([WholeWordText], bis 50 %).
  */
 @Composable
-fun AppNavigationBar(items: List<AppNavItem>) {
+fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
     val colors = NavigationBarItemDefaults.colors(
         selectedIconColor = OnNeon,
         selectedTextColor = NeonMagenta,
@@ -41,8 +43,9 @@ fun AppNavigationBar(items: List<AppNavItem>) {
     )
     // Eine Größe für alle Beschriftungen, damit die Leiste ruhig wirkt.
     val config = LocalConfiguration.current
-    var labelScale by remember(items.map { it.label }, config.fontScale, config.screenWidthDp) { mutableFloatStateOf(1f) }
-    NavigationBar(containerColor = DarkSurface) {
+    val windowWidth = LocalWindowInfo.current.containerSize.width
+    var labelScale by remember(items.map { it.label }, config.fontScale, windowWidth) { mutableFloatStateOf(1f) }
+    NavigationBar(modifier = modifier, containerColor = DarkSurface) {
         items.forEach { item ->
             NavigationBarItem(
                 selected = item.selected,

@@ -436,16 +436,16 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Muster löschen nach dem ersten Tipp (MUSTER-05): Icon mit Kreuz in error, Karte gleich hoch.
-     * Die Uhr steht nach dem Tipp, sonst liefe der 4-s-Rückfall vor der Aufnahme ab.
+     * Die Uhr steht ab dem Tipp, sonst liefe der 4-s-Rückfall vor der Aufnahme ab.
      */
     @Test
     fun situationsPatternDeleteArmed() = snap("02_situationen_muster_loeschen", tab = Tab.SITUATIONEN, prepare = {
         compose.waitForIdle()
-        compose.mainClock.autoAdvance = false
         val first = saved.first().exercise.name
         compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.cd_pattern_delete, first)).performClick()
-        compose.mainClock.advanceTimeByFrame()
-        compose.mainClock.advanceTimeByFrame()
+        // Erst nach dem Klick anhalten: Bei stehender Uhr verarbeitet Compose 1.12 den Klick nicht.
+        compose.waitForIdle()
+        compose.mainClock.autoAdvance = false
     }) { SituationsContent() }
 
     /** Eine Situation aufgeklappt – die mit den meisten Übungen, Caret zeigt nach oben. */
@@ -628,16 +628,16 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Papierkorb der Zeile „Logbuch“ nach dem ersten Tipp (MUSTER-05): Bestätigungs-Icon in error,
-     * cd „Logbuch wirklich leeren?“. Die Uhr steht nach dem Tipp, sonst liefe der 4-s-Rückfall vor
+     * cd „Logbuch wirklich leeren?“. Die Uhr steht ab dem Tipp, sonst liefe der 4-s-Rückfall vor
      * der Aufnahme ab.
      */
     @Test
     fun settingsClearLogArmed() = snap("05_einstellungen_logbuch_leeren", prepare = {
         compose.waitForIdle()
-        compose.mainClock.autoAdvance = false
         compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.settings_data_clear_log)).performClick()
-        compose.mainClock.advanceTimeByFrame()
-        compose.mainClock.advanceTimeByFrame()
+        // Erst nach dem Klick anhalten: Bei stehender Uhr verarbeitet Compose 1.12 den Klick nicht.
+        compose.waitForIdle()
+        compose.mainClock.autoAdvance = false
     }) { Settings() }
 
     /** Stimmen-Katalog zugeklappt (keine lädt): „Stimme“, die aktive Stimme und „Stimmen zeigen“. */

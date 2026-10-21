@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -39,7 +38,7 @@ val unsignedRelease = providers.gradleProperty("unsignedRelease").orNull == "tru
 
 android {
     namespace = "app.atemkraft"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.atemkraft"
@@ -114,13 +113,10 @@ android {
         includeInBundle = false
     }
 
+    // Kotlin übernimmt das JVM-Ziel aus targetCompatibility (eingebautes Kotlin seit AGP 9).
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     buildFeatures {
@@ -129,17 +125,24 @@ android {
     }
 
     // Android Lint als Gate (docs/STYLEGUIDE.md §13.1): jede Warnung ist ein Fehler. Aus sind
-    // nur Versions-Hinweise (Updates laufen über Dependabot) und ChromeOS-ABIs (bewusst nur ARM).
+    // nur Versions-Hinweise (Updates laufen über Dependabot, targetSdk zieht der Maintainer von Hand)
+    // und ChromeOS-ABIs (bewusst nur ARM).
     lint {
         abortOnError = true
         warningsAsErrors = true
-        disable += setOf("GradleDependency", "AndroidGradlePluginVersion", "NewerVersionAvailable", "ChromeOsAbiSupport")
+        disable += setOf(
+            "GradleDependency",
+            "AndroidGradlePluginVersion",
+            "NewerVersionAvailable",
+            "OldTargetApi",
+            "ChromeOsAbiSupport",
+        )
     }
 
     // Exportierte Room-Schemas (app/schemas/) für MigrationTestHelper: Robolectric sieht nur die
     // Assets der getesteten Variante, nicht die des test-Sourcesets. Deshalb liegen die paar KB
     // Schema-JSON auch in der Debug-APK, nie im Release.
-    sourceSets.getByName("debug").assets.srcDir("$projectDir/schemas")
+    sourceSets.getByName("debug").assets.directories += "$projectDir/schemas"
 
     // Screenshot-Tests (Robolectric + Roborazzi) brauchen echte Ressourcen statt Stubs.
     testOptions {

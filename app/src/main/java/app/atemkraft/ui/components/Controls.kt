@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -169,9 +170,19 @@ fun AppOutlinedButton(
         modifier = modifier.heightIn(min = Sizes.ButtonHeight),
         shape = MaterialTheme.shapes.large,
         enabled = enabled,
+        // Rand und Beschriftung ausdrücklich: M3 1.4 nimmt sonst outlineVariant und onSurfaceVariant,
+        // dann sähe der Button aus wie ein ungewähltes Segment. Deaktiviert wie M3 (12 %).
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+        border = BorderStroke(
+            Dimens.BorderThin,
+            if (enabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface.copy(alpha = OUTLINE_DISABLED),
+        ),
         content = content,
     )
 }
+
+/** Deckkraft des Rands eines deaktivierten [AppOutlinedButton] (M3-Wert). */
+private const val OUTLINE_DISABLED = 0.12f
 
 /**
  * Schalterzeile (A11Y-03): Die ganze Zeile schaltet um (`Role.Switch`, Name = [label]), der

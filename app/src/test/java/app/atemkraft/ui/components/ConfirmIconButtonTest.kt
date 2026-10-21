@@ -67,6 +67,9 @@ class ConfirmIconButtonTest {
     @Test
     fun `ohne zweiten Tipp fällt der Zustand nach 4 s zurück`() {
         idle.performClick()
+        // Seit Compose 1.12 startet der Rückfall-Effekt erst, wenn die Testumgebung nach dem Klick
+        // zur Ruhe kommt; ohne das läuft die virtuelle Uhr davon, bevor der Timer zählt.
+        compose.waitForIdle()
         compose.mainClock.advanceTimeBy(3_500)
         armed.assertExists()
         compose.mainClock.advanceTimeBy(1_000)

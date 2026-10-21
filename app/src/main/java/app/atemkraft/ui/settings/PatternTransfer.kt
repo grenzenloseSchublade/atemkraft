@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
 import app.atemkraft.data.SavedPatternsRepository
@@ -54,6 +55,7 @@ private data class Outcome(val label: String? = null, val note: String? = null)
 fun rememberPatternTransfer(saved: SavedPatternsRepository, settings: SettingsRepository): PatternTransfer {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val emptyNote = stringResource(R.string.data_export_empty)
     var exportLabel by rememberSaveable { mutableStateOf<String?>(null) }
     var importLabel by rememberSaveable { mutableStateOf<String?>(null) }
     var note by rememberSaveable { mutableStateOf<String?>(null) }
@@ -81,7 +83,7 @@ fun rememberPatternTransfer(saved: SavedPatternsRepository, settings: SettingsRe
         export = {
             scope.launch {
                 if (saved.isEmpty()) {
-                    show(isExport = true, Outcome(note = context.getString(R.string.data_export_empty)))
+                    show(isExport = true, Outcome(note = emptyNote))
                 } else {
                     createLauncher.launch("atemkraft-muster-${LocalDate.now()}.json")
                 }

@@ -31,7 +31,7 @@ scripts/build.sh installDebug    # bauen und auf Gerät/Emulator installieren
 
 ### Aufbau
 
-Toolchain: Gradle 8.11.1, Android Gradle Plugin 8.9.1, Kotlin 2.1.0, Jetpack Compose (BOM 2025.01.00) mit Material 3, compileSdk und targetSdk 36, minSdk 26.
+Toolchain: Gradle 9.8.2, Android Gradle Plugin 9.4.1 (mit eingebautem Kotlin), Kotlin 2.4.21, Jetpack Compose (BOM 2026.09.00) mit Material 3, compileSdk 37, targetSdk 36, minSdk 26.
 
 ```
 domain/   reines Modell: Phase, Segment, Exercise, Zeitplan, Muster-Generator, Befindens-Suche

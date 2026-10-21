@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -46,9 +47,10 @@ fun WholeWordText(
 ) {
     // Neu messen, wenn sich Text, Stil, Schriftgröße oder Bildschirmbreite ändern.
     val config = LocalConfiguration.current
-    var ownScale by remember(text, style, config.fontScale, config.screenWidthDp) { mutableFloatStateOf(1f) }
+    val windowWidth = LocalWindowInfo.current.containerSize.width
+    var ownScale by remember(text, style, config.fontScale, windowWidth) { mutableFloatStateOf(1f) }
     val scale = sharedScale ?: ownScale
-    var ready by remember(text, style, config.fontScale, config.screenWidthDp) { mutableStateOf(false) }
+    var ready by remember(text, style, config.fontScale, windowWidth) { mutableStateOf(false) }
 
     Text(
         text = text,

@@ -121,9 +121,9 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 | Datei | SHA-256 | Herkunft | Enthaltene Komponenten |
 |---|---|---|---|
 | `app/libs/sherpa-onnx-1.13.6.aar` | `0012d9a28f15bd6fb966b62b70a75da3990512fdccce28b83098248ce4be1698` | Release `v1.13.6` von `k2-fsa/sherpa-onnx`, byte-identisch mit dem GitHub-Asset | sherpa-onnx (Apache-2.0), onnxruntime 1.27.1 (MIT), espeak-ng (GPL-3.0-or-later), piper-phonemize (MIT), OpenFst/Kaldi-Bausteine (Apache-2.0), Eigen (MPL-2.0), hclust-cpp und Darts-clone (BSD-2-Clause), KISS FFT (BSD-3-Clause), Supertonic-Teile und nlohmann/json (MIT); vollständig mit Commits in [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md) |
-| `gradle/wrapper/gradle-wrapper.jar` | `2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046` | offizieller Gradle-8.11.1-Wrapper | – |
+| `gradle/wrapper/gradle-wrapper.jar` | `3b8a25775a69158b5ad2b1d17a80a88dc7b40a352a73eb27d06c612a7ce68e98` | offizieller Gradle-9.8.2-Wrapper | – |
 
-Neben jeder Datei liegt `<datei>.sha256` (prüfbar mit `sha256sum -c` im selben Ordner); erlaubte Binärdateien stehen in `config/security/binaries.allow`. Die Gradle-Distribution ist per `distributionSha256Sum` gepinnt (`f397b287…151c6`, veröffentlichter Digest von `gradle-8.11.1-bin.zip`).
+Neben jeder Datei liegt `<datei>.sha256` (prüfbar mit `sha256sum -c` im selben Ordner); erlaubte Binärdateien stehen in `config/security/binaries.allow`. Die Gradle-Distribution ist per `distributionSha256Sum` gepinnt (`21bd5da2…89607`, veröffentlichter Digest von `gradle-9.8.2-bin.zip`).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|

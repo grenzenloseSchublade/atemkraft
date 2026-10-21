@@ -210,8 +210,12 @@ private fun SingleChoiceSegmentedButtonRowScope.Segment(
         onClick = onClick,
         shape = SegmentedButtonDefaults.itemShape(index, count),
         // Die Fläche allein trägt die Auswahl, sobald das Häkchen keinen Platz hat – deshalb
-        // heller als secondaryContainer (WCAG 1.4.11), in jeder Stufe gleich.
-        colors = SegmentedButtonDefaults.colors(activeContainerColor = SegmentSelected),
+        // heller als secondaryContainer (WCAG 1.4.11), in jeder Stufe gleich. Die übrigen Segmente
+        // ausdrücklich auf surface: M3 1.4 lässt sie sonst durchsichtig, auf Karten fehlt dann die Fläche.
+        colors = SegmentedButtonDefaults.colors(
+            activeContainerColor = SegmentSelected,
+            inactiveContainerColor = MaterialTheme.colorScheme.surface,
+        ),
         modifier = Modifier.heightIn(min = Sizes.ButtonHeight),
         // Kein Häkchen (s. o.): Fläche und Schriftstärke tragen die Auswahl.
         icon = {},
