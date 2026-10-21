@@ -515,24 +515,24 @@ private fun MeditationCard(
             val showCatalog = catalogExpanded || downloading
             val active = VoiceCatalog.all.firstOrNull { it.id == activeVoiceId && voiceStates[it.id] is VoiceDownloadState.Downloaded }
             SubLabel(stringResource(R.string.settings_voice))
-            // Aufgeklappt zeigt der Katalog die aktive Stimme selbst; hier stünde sie doppelt.
-            if (!showCatalog) {
-                HintText(
-                    when {
-                        active != null && piperEngineReady -> active.displayName
+            // Bleibt auch aufgeklappt stehen: Verschwände die Zeile, spränge der Umschalter beim
+            // Tippen eine Zeile nach oben, weg vom Finger (Nutzer 2026-10-20) – wie der Teaser von
+            // „Klang & Stimme“ in der Meditation.
+            HintText(
+                when {
+                    active != null && piperEngineReady -> active.displayName
 
-                        active != null -> active.displayName + DOT_SEPARATOR + stringResource(R.string.settings_speech_pack_preparing)
+                    active != null -> active.displayName + DOT_SEPARATOR + stringResource(R.string.settings_speech_pack_preparing)
 
-                        else -> stringResource(
-                            if (voiceStates.values.any { it is VoiceDownloadState.Downloaded }) {
-                                R.string.settings_voice_none_chosen
-                            } else {
-                                R.string.settings_voice_none_installed
-                            },
-                        )
-                    },
-                )
-            }
+                    else -> stringResource(
+                        if (voiceStates.values.any { it is VoiceDownloadState.Downloaded }) {
+                            R.string.settings_voice_none_chosen
+                        } else {
+                            R.string.settings_voice_none_installed
+                        },
+                    )
+                },
+            )
             DisclosureToggle(
                 text = stringResource(if (showCatalog) R.string.settings_voice_hide else R.string.settings_voice_show),
                 expanded = showCatalog,

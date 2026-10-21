@@ -138,11 +138,15 @@ private fun SelectionContent(
                     )
                 },
                 center = {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(vertical = Dimens.GapSmall),
-                        contentAlignment = Alignment.TopCenter,
-                    ) {
-                        DurationPicker(state = duration, onTick = onDurationTick)
+                    // Oben Luft wie über einem Abschnittskopf: Mit nur GapSmall klebte die ∞-Marke am
+                    // Untertitel, während unter dem Ring viel Platz frei blieb (Nutzer 2026-10-20). Wird
+                    // es knapp, gibt zuerst diese Luft nach – erst dann scrollt die Seite (LAYOUT-08).
+                    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                        val top = (maxHeight - durationPickerMinSide() - Dimens.GapSmall)
+                            .coerceIn(Dimens.GapSmall, Dimens.SectionHeaderTop + Dimens.SectionGap)
+                        Box(Modifier.fillMaxSize().padding(top = top, bottom = Dimens.GapSmall), contentAlignment = Alignment.TopCenter) {
+                            DurationPicker(state = duration, onTick = onDurationTick)
+                        }
                     }
                 },
                 bottom = {
