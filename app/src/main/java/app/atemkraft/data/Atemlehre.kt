@@ -74,8 +74,10 @@ object Atemlehre {
             id = "brmhana",
             title = "Ein lang, Aus kurz",
             linkName = "Brmhana",
-            rhythm = listOf(inhale(6.0), exhale(3.0)),
-            counts = "z. B. Ein 6\u00A0· Aus 3",
+            // Spiegelbild von Langhana (Ein 4 · Aus 6), gleich lang wie Samana (5 · 5): Die drei
+            // Balken dauern je 10 s, Ein und Aus lassen sich direkt vergleichen (Nutzer 2026-10-21).
+            rhythm = listOf(inhale(6.0), exhale(4.0)),
+            counts = "z. B. Ein 6\u00A0· Aus 4",
             teaser = "Brmhana: Längeres Einatmen gilt in der Yoga-Lehre als belebend und wärmend.",
             teaching = "Der Schwerpunkt liegt beim Aufnehmen (Prana). Brmhana heißt „nähren, " +
                 "ausdehnen“. Die Lehre setzt es ein, wenn zu wenig da ist: Müdigkeit, Schwere, " +

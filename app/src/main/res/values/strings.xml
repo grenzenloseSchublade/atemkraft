@@ -135,7 +135,8 @@
     <string name="glossary_group_body">Körper &amp; Studien</string>
     <string name="glossary_group_yoga">Aus der Yoga-Lehre</string>
     <string name="settings_about_entry">Über Atemkraft</string>
-    <string name="about_version">Version %1$s</string>
+    <string name="about_title">Über</string>
+    <string name="about_version">Version %1$s\u00A0· von grenzenloseSchublade</string>
     <!-- Die Zahl kommt aus dem Übungskatalog (BuiltInExercises.all), nie fest im Text. -->
     <plurals name="about_body">
         <item quantity="one">%1$d Atemtechnik mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
@@ -349,10 +350,9 @@
     <string name="voice_quality_simple_compact">einfach, kompakt</string>
 
     <!-- Herkunft, Lizenzen, Datenschutz (Über-Screen) -->
-    <string name="about_author">von grenzenloseSchublade\u00A0· MIT-Lizenz</string>
-    <string name="about_source_prefix">Quellcode:\u0020</string>
-    <string name="about_source_link">GitHub</string>
+    <string name="about_source_title">Quellcode</string>
     <string name="about_privacy_link">Datenschutzerklärung</string>
+    <string name="about_privacy_hint">Was die App speichert und was nicht</string>
     <string name="about_open_link">im Browser öffnen</string>
     <string name="about_licenses_title">Lizenzen</string>
     <string name="about_licenses_teaser">Atemkraft steht unter MIT-Lizenz und nutzt freie Bausteine; Stimmen haben eigene Lizenzen.</string>

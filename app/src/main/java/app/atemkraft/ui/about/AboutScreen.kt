@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,6 +49,7 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
@@ -64,9 +67,9 @@ private const val LICENSES_URL = "https://github.com/grenzenloseSchublade/atemkr
 fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Titel fest im Kopf wie auf allen Unterseiten, gleich lautend mit der Zeile in den
-            // Einstellungen (Nutzer 2026-10-21); Markenkopf (App-Name, Version) gehört zum Inhalt.
-            PushHeader(onBack = onBack, title = stringResource(R.string.settings_about_entry))
+            // Titel fest im Kopf wie auf allen Unterseiten (Nutzer 2026-10-21). Nur „Über“: Der
+            // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander.
+            PushHeader(onBack = onBack, title = stringResource(R.string.about_title))
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -78,6 +81,7 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
+                // Autor gleich bei der Version: gerade bei manuell geteilten APKs sieht man hier die Herkunft.
                 Text(
                     text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.titleSmall,
@@ -102,19 +106,24 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
                 ) { LicenseList() }
 
                 Spacer(Modifier.height(Dimens.SectionGap))
-                // Autor + Lizenz + offizielle Quelle: gerade bei manuell geteilten APKs die einzige
-                // Stelle, an der Empfänger die Herkunft sehen und zum Original-Repo gelangen.
-                HintText(stringResource(R.string.about_author))
-                LinkRow(
-                    prefix = stringResource(R.string.about_source_prefix),
-                    // Kurz statt der vollen Adresse: Die URL ist ein einziges langes Wort und
-                    // passt bei großer Schrift samt Symbol nicht in die Zeile (LAYOUT-03). Die
-                    // Adresse steht darunter ohne Symbol, damit die Herkunft lesbar bleibt.
-                    label = stringResource(R.string.about_source_link),
-                    url = REPO_URL,
-                    address = REPO_URL.removePrefix(HTTPS),
-                )
-                LinkRow(label = stringResource(R.string.about_privacy_link), url = PRIVACY_URL)
+                // Quellcode und Datenschutz als Karte mit Zeilen wie in den Einstellungen (Wissen):
+                // Titel, Untertitel, Symbol an der Kante; die ganze Zeile öffnet den Browser.
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall)) {
+                        ExternalLinkRow(
+                            title = stringResource(R.string.about_source_title),
+                            // Die Adresse darf nur nach „/“ umbrechen; sie ist ein einziges langes Wort (LAYOUT-03).
+                            hint = breakAfterSlashes(REPO_URL.removePrefix(HTTPS)),
+                            url = REPO_URL,
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+                        ExternalLinkRow(
+                            title = stringResource(R.string.about_privacy_link),
+                            hint = stringResource(R.string.about_privacy_hint),
+                            url = PRIVACY_URL,
+                        )
+                    }
+                }
                 Spacer(Modifier.height(Dimens.ScreenBottom))
             }
         }
@@ -158,11 +167,10 @@ private fun LicenseEntry(name: String, license: String, holder: String) {
 /**
  * Externer Link als eigene Zeile: Die ganze Zeile ist die Tippfläche, mindestens 48 dp hoch
  * (A11Y-05). Das Ziel steht in `primary`, dahinter das Symbol „öffnet im Browser“ – ohne
- * Unterstreichung, wie die übrigen Verweise der App. Öffnet [url] im Browser. [address] steht
- * als Hinweiszeile ohne Symbol darunter und darf nur nach „/“ umbrechen ([breakAfterSlashes]).
+ * Unterstreichung, wie die übrigen Verweise der App. Öffnet [url] im Browser.
  */
 @Composable
-private fun LinkRow(label: String, url: String, prefix: String? = null, address: String? = null) {
+private fun LinkRow(label: String, url: String) {
     val uriHandler = LocalUriHandler.current
     Box(
         modifier = Modifier
@@ -171,22 +179,52 @@ private fun LinkRow(label: String, url: String, prefix: String? = null, address:
             .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link)) { uriHandler.openUri(url) },
         contentAlignment = Alignment.CenterStart,
     ) {
-        Column {
-            LinkText(label, prefix, MaterialTheme.colorScheme.primary)
-            if (address != null) HintText(breakAfterSlashes(address))
-        }
+        LinkText(label, MaterialTheme.colorScheme.primary)
     }
 }
 
-/** Beschriftung einer [LinkRow]: [prefix] neutral, [label] in [linkColor], dahinter das Symbol. */
+/**
+ * Verweis nach außen in einer Karte: Titel, Untertitel, Symbol „öffnet im Browser“ an der
+ * Kartenkante – gebaut wie die Zeilen der Wissen-Karte in den Einstellungen. Die ganze Zeile ist
+ * ein Button (TalkBack liest Titel und Untertitel als einen Namen).
+ */
 @Composable
-private fun LinkText(label: String, prefix: String?, linkColor: Color) {
+private fun ExternalLinkRow(title: String, hint: String, url: String) {
+    val uriHandler = LocalUriHandler.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link)) { uriHandler.openUri(url) }
+            .padding(vertical = Dimens.GapTiny),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            HintText(hint)
+        }
+        Icon(
+            painter = painterResource(R.drawable.ic_open_in_new),
+            contentDescription = null, // dekorativ: Name und Hinweis „im Browser öffnen“ trägt die Zeile
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+            modifier = Modifier.size(Sizes.IconSmall),
+        )
+    }
+}
+
+/** Beschriftung einer [LinkRow]: [label] in [linkColor], dahinter das Symbol. */
+@Composable
+private fun LinkText(label: String, linkColor: Color) {
     // Platzhalter = Abstand + Symbol; das Symbol sitzt an seinem Ende.
     val iconWidthSp = with(LocalDensity.current) { (Dimens.GapTiny + Sizes.IconSmall).toSp() }
     val iconHeightSp = with(LocalDensity.current) { Sizes.IconSmall.toSp() }
     Text(
         text = buildAnnotatedString {
-            if (prefix != null) append(prefix)
             withStyle(SpanStyle(color = linkColor)) { append(label) }
             // Das Symbol ersetzt ein geschütztes Leerzeichen: Es bleibt beim letzten Wort (kein
             // Umbruch davor), und TalkBack liest nichts dafür.
