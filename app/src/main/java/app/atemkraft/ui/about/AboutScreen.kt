@@ -64,8 +64,9 @@ private const val LICENSES_URL = "https://github.com/grenzenloseSchublade/atemkr
 fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Nur der Pfeil steht fest; der Markenkopf (App-Name, Version) gehört zum Inhalt.
-            PushHeader(onBack = onBack)
+            // Titel fest im Kopf wie auf allen Unterseiten, gleich lautend mit der Zeile in den
+            // Einstellungen (Nutzer 2026-10-21); Markenkopf (App-Name, Version) gehört zum Inhalt.
+            PushHeader(onBack = onBack, title = stringResource(R.string.settings_about_entry))
             Column(
                 modifier = Modifier
                     .weight(1f)

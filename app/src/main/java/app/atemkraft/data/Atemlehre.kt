@@ -162,8 +162,10 @@ object Atemlehre {
             id = "halten-leer",
             title = "Mit Halten nach dem Ausatmen",
             linkName = "Halten leer",
-            rhythm = listOf(inhale(4.0), exhale(6.0), holdEmpty(3.0)),
-            counts = "z. B. Ein 4\u00A0· Aus 6\u00A0· Halten 3",
+            // Dieselben Werte wie „Mit Halten nach dem Einatmen“: Beide Balken sind 14 s lang, Ein
+            // und Aus stehen untereinander, nur der Ort des Haltens unterscheidet sich (Nutzer 2026-10-21).
+            rhythm = listOf(inhale(4.0), exhale(6.0), holdEmpty(4.0)),
+            counts = "z. B. Ein 4\u00A0· Aus 6\u00A0· Halten 4",
             teaser = "Halten nach dem Ausatmen vertieft Langhana: Leere zulassen, still werden.",
             teaching = "Bahya Kumbhaka gilt als feiner und anspruchsvoller als das Halten mit " +
                 "voller Lunge. Patanjali nennt Ausatmen und Anhalten als Weg zu einem klaren Geist " +
@@ -222,7 +224,8 @@ object Atemlehre {
             teaching = "Viloma heißt „gegen den Strich“: Das Einatmen wird in kleine Abschnitte mit " +
                 "kurzen Pausen geteilt, danach fließt das Ausatmen in einem Zug. Stufen beim " +
                 "Einatmen gelten als aufbauend (Brmhana). Iyengar teilt in Abschnitte von 2–3 s " +
-                "mit ebenso langen Pausen, bis die Lunge voll ist.",
+                "mit ebenso langen Pausen, bis die Lunge voll ist. Die Pausen sind kurzes Halten, " +
+                "aber mitten im Einatmen statt nach dem vollen Atemzug.",
             typical = "Zum Einstieg, im Liegen, wenn lange Phasen noch nicht gehen.",
             studies = "Nicht untersucht; die Studien zu „Anuloma Viloma“ betreffen die Wechselatmung.",
             exerciseIds = listOf("viloma-ein"),
@@ -238,7 +241,8 @@ object Atemlehre {
             teaching = "Umgekehrt zu Viloma I: Das Einatmen fließt in einem Zug, das Ausatmen wird in " +
                 "Abschnitte mit kurzen Pausen geteilt, bis die Lunge leer ist. Stufen beim " +
                 "Ausatmen gelten als lösend (Langhana). Iyengar beschreibt die Übung für Anfänger " +
-                "im Liegen und nennt als Erfahrung „Leichtigkeit“.",
+                "im Liegen und nennt als Erfahrung „Leichtigkeit“. Die Pausen sind kurzes Halten, " +
+                "aber mitten im Ausatmen statt nach dem leeren Atemzug.",
             typical = "Zum Einstieg, im Liegen, zum Loslassen.",
             studies = "Nicht untersucht; die Studien zu „Anuloma Viloma“ betreffen die Wechselatmung.",
             exerciseIds = listOf("viloma-aus"),
