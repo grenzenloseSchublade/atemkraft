@@ -37,6 +37,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -399,7 +400,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      * so hoch wie der freie Platz erlaubt (geklemmt auf ihre Spanne). Ohne [hard] ist es immer noch
      * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Überall
      * ein Fehler: Die Tab-Leiste ist ausgeblendet, obwohl Kurve (Mindesthöhe) und Werkzeugleiste mit
-     * ihr gepasst hätten, oder umgekehrt; dazu, wo [expectTabBar] gesetzt ist, eine andere Sichtbarkeit.
+     * ihr gepasst hätten, oder umgekehrt; dazu, wo [expectTabBar] gesetzt ist, eine andere Sichtbarkeit,
+     * und auf dem A54 bis Schrift 1,1 ein Status unter statt hinter „Atemzug“ (Nachtrag 7).
      * Alle Werte ab Oberkante der Scroll-Fläche, in dp.
      */
     private fun editorFit(
@@ -419,6 +421,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val play = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).fetchSemanticsNode().unclipped()
         val durationPlus = compose.onNodeWithContentDescription("${app.getString(R.string.cd_adjust_duration)}, ${app.getString(R.string.adjust_increase)}").fetchSemanticsNode().unclipped()
         val barOneLine = abs(play.center.y - durationPlus.center.y) <= 1f
+        // Status „· 11 s · 5,5/min“ in der Zeile von „Atemzug“ (Nachtrag 7)?
+        val breathTitle = compose.onNode(hasText(app.getString(R.string.pattern_editor_breath)), useUnmergedTree = true).fetchSemanticsNode().unclipped()
+        val status = compose.onNode(hasText("\u00A0s\u00A0·", substring = true), useUnmergedTree = true).fetchSemanticsNode().unclipped()
+        val statusInline = status.top < breathTitle.bottom - 1f
         val density = compose.density.density
         fun dp(px: Float) = (px / density).roundToInt()
         // Platz für die Kurve: sichtbare Höhe minus alles darüber und Werkzeugleiste darunter.
@@ -433,6 +439,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val tabBarRight = tabBarHidden == (free - gained < range.start - 0.5f) && (expectTabBar == null || expectTabBar != tabBarHidden)
         val kind = when {
             !tabBarRight -> "KOMPAKT_FEHLT"
+            device == TestMatrix.A54 && fontScale <= TestMatrix.A54_FONT_SCALE && !statusInline -> "KOMPAKT_FEHLT"
             hard && !barOneLine -> "KOMPAKT_FEHLT"
             fits && heightRight -> "KOMPAKT"
             (minWouldFit && !fits) || !heightRight -> "KOMPAKT_FEHLT"
@@ -443,7 +450,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tTab-Leiste $tabBar, Kurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
             "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
             "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp), " +
-            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}"
+            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Status ${if (statusInline) "in der Zeile von „Atemzug“" else "darunter"}"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)
     }

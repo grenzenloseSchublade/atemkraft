@@ -40,3 +40,14 @@ internal fun NavController.switchTab(route: Any) {
  * (MUSTER-10, Nutzer 2026-10-22). Folgt dem Stapel sofort – zurück oder weiter, ist sie wieder da.
  */
 internal fun NavDestination?.mayHideTabBar(): Boolean = this?.hierarchy?.any { it.hasRoute(PatternEditorRoute::class) } == true
+
+/**
+ * Der Tab, zu dessen Stapel die aktuelle Seite gehört – auch auf Push-Seiten und nach einem
+ * wiederhergestellten Stapel (`switchTab`, `restoreState`: Eigene › Editor liegt dann sofort oben,
+ * ohne dass „Eigene“ selbst je aktuell war). Atmen ist Startziel und liegt immer unten; die
+ * anderen Tabs stehen nur in ihrem eigenen Stapel. Für die Markierung der Tab-Leiste.
+ */
+internal fun NavController.tabOnStack(): Any = listOf(SituationenRoute, EigeneRoute, MeditationRoute)
+    // getBackStackEntry wirft, wenn das Ziel nicht im Stapel liegt; die öffentliche API kennt
+    // keine Abfrage ohne Ausnahme (currentBackStack ist bibliotheksintern).
+    .firstOrNull { route -> runCatching { getBackStackEntry(route) }.isSuccess } ?: AtmenRoute

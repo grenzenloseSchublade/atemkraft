@@ -183,6 +183,8 @@
     <!-- Name frei wählbar (höchstens 80 Zeichen), vorausgefüllt mit dem Vorschlagsnamen. -->
     <string name="pattern_editor_name">Name</string>
     <string name="pattern_editor_name_label">Name des Musters</string>
+    <string name="pattern_editor_name_done">Fertig</string>
+    <string name="cd_pattern_name_rename">Name: %1$s, umbenennen</string>
 
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>

@@ -109,6 +109,7 @@ import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
+import app.atemkraft.ui.tabOnStack
 import app.atemkraft.ui.tapTab
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Motion
@@ -193,9 +194,7 @@ private fun AtemkraftApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // Aktueller Top-Level-Tab (null auf Push-Zielen wie Detail/Settings). Der zuletzt
-    // gewählte Tab bleibt markiert, während man in einer daraus geöffneten Seite ist; ein
-    // erneuter Tipp darauf führt zu seiner Startseite zurück (tapTab).
+    // Aktueller Top-Level-Tab (null auf Push-Zielen wie Detail/Settings).
     val currentTopTab = when {
         currentDestination.isOn(AtmenRoute) -> TopTab.ATMEN
         currentDestination.isOn(SituationenRoute) -> TopTab.SITUATIONEN
@@ -203,8 +202,17 @@ private fun AtemkraftApp(
         currentDestination.isOn(MeditationRoute) -> TopTab.MEDITATION
         else -> null
     }
-    var selectedTab by rememberSaveable { mutableStateOf(TopTab.ATMEN) }
-    LaunchedEffect(currentTopTab) { if (currentTopTab != null) selectedTab = currentTopTab }
+    // Markiert ist der Tab, zu dessen Stapel die Seite gehört – auch auf Push-Seiten und nach
+    // einem wiederhergestellten Stapel (Eigene › Editor, dann Meditation und zurück); ein erneuter
+    // Tipp darauf führt zu seiner Startseite zurück (tapTab).
+    val selectedTab = remember(navBackStackEntry) {
+        when (navController.tabOnStack()) {
+            SituationenRoute -> TopTab.SITUATIONEN
+            EigeneRoute -> TopTab.EIGENE
+            MeditationRoute -> TopTab.MEDITATION
+            else -> TopTab.ATMEN
+        }
+    }
 
     // System-Zurück auf einem Top-Level-Tab bei minimierter Session/Meditation: App nur in den
     // Hintergrund schieben statt die Activity zu beenden – sonst stirbt die Atem-Session (ihr

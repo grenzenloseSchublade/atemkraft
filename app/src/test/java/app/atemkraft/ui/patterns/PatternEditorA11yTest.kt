@@ -133,7 +133,6 @@ class PatternEditorA11yTest {
             string(R.string.cd_pattern_add_in),
             string(R.string.cd_pattern_add_out),
             string(R.string.pattern_editor_sequence),
-            string(R.string.pattern_editor_name_label),
             string(R.string.detail_lore),
             // Feste Leiste unten (Nachtrag 6): Startpunkt, Dauer, Start.
             app.getString(R.string.cd_pattern_editor_start, "Box"),

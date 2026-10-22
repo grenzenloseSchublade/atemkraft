@@ -8,21 +8,17 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.performTextReplacement
 import app.atemkraft.R
 import app.atemkraft.cue.FakePreviewSoundOutput
 import app.atemkraft.data.CueSettings
@@ -381,29 +377,6 @@ class PatternEditorScreenTest {
     }
 
     // ---- Name ----
-
-    @Test
-    fun `Namensfeld folgt den Zahlen, traegt sein Label und nimmt keine Emoji an`() {
-        val state = show(PatternEditorState.new(prefix))
-        val field = compose.onNode(hasSetTextAction())
-        field.performScrollTo()
-            .assert(hasText(string(R.string.pattern_editor_name_label), substring = true))
-            .assert(hasText("$prefix 4·6", substring = true))
-
-        field.performTextReplacement("Abend😀ruhe\nkurz")
-        assertEquals("Abendruhe kurz", state.name)
-        assertTrue(state.nameEdited)
-    }
-
-    @Test
-    fun `Fertig im Namensfeld behaelt den Fokus fuer Tastatur und D-Pad`() {
-        show(PatternEditorState.new(prefix))
-        val field = compose.onNode(hasSetTextAction())
-        field.performScrollTo().performClick()
-        field.assertIsFocused()
-        field.performImeAction()
-        field.assertIsFocused()
-    }
 
     @Test
     fun `Eingabefilter entspricht der Namensbereinigung des Imports`() {

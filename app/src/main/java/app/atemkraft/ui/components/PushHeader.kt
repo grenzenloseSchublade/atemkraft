@@ -31,12 +31,15 @@ import app.atemkraft.ui.theme.Dimens
  * Der Titel bricht nie im Wort um ([WholeWordText]); wird er zweizeilig (lange Übungsnamen auf
  * der Detailseite), wächst die Zeile mit. [action] steht rechts außen, ihr Icon bündig zur
  * Inhaltskante wie der Pfeil links; der Titel nimmt nur die Breite dazwischen (`weight`).
+ * [titleContent] ersetzt [title] durch einen eigenen Titelbereich in derselben Breite (Muster-Editor:
+ * Name des Musters, zum Umbenennen antippbar, Nachtrag 7).
  */
 @Composable
 fun PushHeader(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
+    titleContent: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -50,7 +53,9 @@ fun PushHeader(
         // der Inhaltskante, und der Titel folgt ihm im Abstand des Überstands statt doppelt so
         // weit („weit versetzt“). Die Tippfläche selbst bleibt 48 dp (A11Y-05).
         Box(Modifier.flushStart()) { BackButton(onClick = onBack) }
-        if (title != null) {
+        if (titleContent != null) {
+            Box(Modifier.weight(1f)) { titleContent() }
+        } else if (title != null) {
             WholeWordText(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -61,7 +66,7 @@ fun PushHeader(
             )
         }
         if (action != null) {
-            if (title == null) Spacer(Modifier.weight(1f))
+            if (title == null && titleContent == null) Spacer(Modifier.weight(1f))
             // Spiegelbild zum Pfeil: Die Tippfläche ragt rechts in den Rand.
             Box(Modifier.flushEnd()) { action() }
         }

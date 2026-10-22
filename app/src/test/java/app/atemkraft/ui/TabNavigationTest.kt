@@ -311,6 +311,21 @@ class TabNavigationTest {
     }
 
     @Test
+    fun `markiert ist der Tab des Stapels, auch wenn er seinen Editor wiederherstellt`() {
+        step { nav.tapTab(EigeneRoute, selected = false) }
+        step { nav.navigate(PatternEditorRoute()) }
+        assertEquals(EigeneRoute, nav.tabOnStack())
+        step { nav.tapTab(MeditationRoute, selected = false) }
+        assertEquals(MeditationRoute, nav.tabOnStack())
+        // Zurück zu „Eigene“: Der Editor liegt sofort oben, „Eigene“ war nie aktuell.
+        assertEquals("AtmenRoute > EigeneRoute > PatternEditorRoute", step { nav.tapTab(EigeneRoute, selected = false) })
+        assertEquals(EigeneRoute, nav.tabOnStack())
+        step { nav.tapTab(AtmenRoute, selected = false) }
+        step { nav.navigate(DetailRoute("box")) }
+        assertEquals(AtmenRoute, nav.tabOnStack())
+    }
+
+    @Test
     fun `erneuter Tipp auf der Tab-Startseite lässt den Stapel unverändert`() {
         tabs.forEach { tab ->
             val before = step { nav.tapTab(tab, selected = false) }

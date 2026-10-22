@@ -9,6 +9,8 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,6 +35,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +58,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -85,6 +89,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
@@ -133,6 +139,7 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.StartPlayButton
 import app.atemkraft.ui.components.TabBarSpace
+import app.atemkraft.ui.components.TonalPillButton
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
@@ -219,6 +226,7 @@ fun PatternEditorScreen(
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
     var showSafety by rememberSaveable { mutableStateOf(false) }
     var showTemplates by rememberSaveable { mutableStateOf(false) }
+    var showRename by rememberSaveable { mutableStateOf(false) }
     val toolbarFocus = remember { ToolbarFocus() }
     val startFocus = remember { StartFocus() }
     val start = {
@@ -230,7 +238,7 @@ fun PatternEditorScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             PushHeader(
                 onBack = onBack,
-                title = stringResource(R.string.pattern_editor_title),
+                titleContent = { NameTitle(state, onRename = { showRename = true }) },
                 action = { SaveToggle(state, onSavedChange) },
             )
             // Sichtbare Höhe der Scroll-Fläche: Danach richtet sich die Höhe der Kurve ([FirstScreen]).
@@ -264,7 +272,6 @@ fun PatternEditorScreen(
                     )
                     pattern.intensityNote()?.let { IntenseNote(it) }
                     Sequence(state)
-                    NameSection(state)
                     Lore(exercise, onOpenLore)
                     Spacer(Modifier.height(Dimens.ScreenBottom))
                 }
@@ -291,6 +298,8 @@ fun PatternEditorScreen(
             onDismiss = { showTemplates = false },
         )
     }
+
+    if (showRename) RenameDialog(state, onDismiss = { showRename = false })
 
     if (showSafety) {
         SafetyDialog(
@@ -374,17 +383,17 @@ private class Decision {
 }
 
 /**
- * Feste Leiste unten (Nachtrag 6), eine Zeile: links das Startpunkt-Symbol ([onPickStart] öffnet
- * die Vorlagen, [TemplateSheet]; gesprochen „Startpunkt wählen, aktuell: Box“ bzw. „angepasst“),
- * daneben die Dauer „− 5 min +“ ([CompactStepper], 1–30 min, ändert nie die Folge); rechts, nur
- * wenn geändert, Zurücksetzen auf den Stand beim Öffnen (Kreispfeil, tonal) und der große Play-
- * Knopf ([StartPlayButton]): startet die Übung ([onStart], gesprochen „Übung starten, ca. 5
- * Minuten“). Passt das nicht in eine Zeile (erst über Schrift 1,3), stehen Zurücksetzen und Play
- * rechtsbündig darunter ([LeadingAndEnd]) – entschieden für „30 min“ und mit Zurücksetzen, damit
- * die Leiste beim Bearbeiten nicht umspringt.
+ * Feste Leiste unten (Nachtrag 6 und 7), eine Zeile, alle Bedienelemente sichtbar gleich hoch
+ * ([Sizes.IconButtonSize], ein Größentoken je Leiste, LAYOUT-04): links der Startpunkt als tonale
+ * Pille „▦ Box“ bzw. „▦ angepasst“ ([TonalPillButton]; [onPickStart] öffnet die Vorlagen,
+ * [TemplateSheet]; gesprochen „Startpunkt wählen, aktuell: Box“), mittig die Dauer „− 5 min +“
+ * ([CompactStepper], 1–30 min, ändert nie die Folge); rechts, nur wenn geändert, Zurücksetzen auf
+ * den Stand beim Öffnen (Kreispfeil, tonal) und Play ([StartPlayButton], hervorgehoben nur durch die
+ * Füllung in `primary`): startet die Übung ([onStart], gesprochen „Übung starten, ca. 5 Minuten“).
+ * Aufteilung mit gleichen Lücken und ohne Springen: [StartBar].
  *
  * Fokus (A11Y-07): Löst man Zurücksetzen per Tastatur aus, verschwindet der Knopf, der Fokus geht
- * auf Play. Nach der Wahl einer Vorlage geht er auf das Startpunkt-Symbol, das einmal ansagt, was
+ * auf Play. Nach der Wahl einer Vorlage geht er auf das Startpunkt-Pille, das einmal ansagt, was
  * jetzt gilt („Startpunkt wählen, aktuell: Viloma I“) – bis sich die Folge ändert.
  */
 @Composable
@@ -407,29 +416,24 @@ private fun ActionBar(
     }
     var resetFocused by remember { mutableStateOf(false) }
     val playDescription = stringResource(R.string.cd_pattern_editor_play, pluralStringResource(R.plurals.cd_duration_minutes, approxMinutes, approxMinutes))
-    LeadingAndEnd(
-        leading = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                // Glyph bündig an der Inhaltskante links (LAYOUT-07).
-                Box(Modifier.flushStart()) {
-                    AppIconButton(
-                        onClick = onPickStart,
-                        modifier = Modifier
-                            .focusRequester(focus.start)
-                            .semantics { if (announce) liveRegion = LiveRegionMode.Polite },
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_grid_view),
-                            contentDescription = startDescription,
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                        )
-                    }
-                }
-                DurationStepper(state.minutes) { state.minutes = it }
-            }
+    val grid = painterResource(R.drawable.ic_grid_view)
+    // Alles, was die Pille zeigen kann: jede Vorlage und „angepasst“.
+    val labels = FreePatternTemplates.all.map { it.label } + stringResource(R.string.adjust_modified)
+    StartBar(
+        pill = { showLabel ->
+            TonalPillButton(
+                onClick = onPickStart,
+                icon = grid,
+                label = current.takeIf { showLabel },
+                description = startDescription,
+                modifier = Modifier
+                    .focusRequester(focus.start)
+                    .semantics { if (announce) liveRegion = LiveRegionMode.Polite },
+            )
         },
+        stepper = { DurationStepper(state.minutes) { state.minutes = it } },
         end = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+            Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                 AnimatedVisibility(
                     visible = state.modified,
                     enter = expandHorizontally(expandFrom = Alignment.End) + fadeIn(),
@@ -446,23 +450,74 @@ private fun ActionBar(
                 StartPlayButton(onClick = onStart, description = playDescription, modifier = Modifier.focusRequester(focus.play))
             }
         },
-        // Ein- oder zweizeilig nach „30 min“ und mit Zurücksetzen: Die Leiste springt nicht um.
-        leadingReserve = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                Box(Modifier.flushStart()) {
-                    AppIconButton(onClick = {}) { Icon(painterResource(R.drawable.ic_grid_view), contentDescription = null) } // dekorativ: Platzhalter, nur gemessen
-                }
-                DurationStepper(AdjustLimits.MINUTES.last) {}
-            }
-        },
+        // Entschieden für die breiteste Beschriftung, „30 min“ und mit Zurücksetzen: Die Leiste
+        // springt beim Bearbeiten nicht um.
+        pillLabelReserve = { Box { labels.forEach { TonalPillButton(onClick = {}, icon = grid, label = it, description = "") } } },
+        pillIconReserve = { TonalPillButton(onClick = {}, icon = grid, label = null, description = "") },
+        stepperReserve = { DurationStepper(AdjustLimits.MINUTES.last) {} },
         endReserve = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+            Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                 ResetButton(onClick = {})
                 StartPlayButton(onClick = {}, description = "")
             }
         },
     )
 }
+
+/**
+ * Aufteilung der Leiste unten (Nachtrag 7): [pill] links, [stepper] mittig, [end] rechtsbündig,
+ * die beiden Lücken gleich groß. Gerechnet wird mit den Reserven ([pillLabelReserve] mit,
+ * [pillIconReserve] ohne Beschriftung, [stepperReserve], [endReserve]; nur gemessen, nie gezeigt oder vorgelesen), damit
+ * nichts springt, wenn sich Vorlage, Dauer oder „Zurücksetzen“ ändern. Passt die Pille mit
+ * Beschriftung nicht, zeigt sie nur das Symbol (`showLabel` = false, nie ein Wortbruch); passt
+ * auch das nicht (erst über Schrift 1,3), steht [end] rechtsbündig in einer zweiten Zeile.
+ */
+@Composable
+private fun StartBar(
+    pill: @Composable (showLabel: Boolean) -> Unit,
+    stepper: @Composable () -> Unit,
+    end: @Composable () -> Unit,
+    pillLabelReserve: @Composable () -> Unit,
+    pillIconReserve: @Composable () -> Unit,
+    stepperReserve: @Composable () -> Unit,
+    endReserve: @Composable () -> Unit,
+) {
+    // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
+    val unseen = Modifier.inertWhen(true)
+    SubcomposeLayout(Modifier.fillMaxWidth()) { constraints ->
+        val width = constraints.maxWidth
+        fun reserve(slot: BarSlot, content: @Composable () -> Unit) = subcompose(slot) { Box(unseen) { content() } }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
+        val gap = Dimens.GapSmall.roundToPx()
+        val stepWidth = reserve(BarSlot.STEPPER_RESERVE, stepperReserve)
+        val endWidth = reserve(BarSlot.END_RESERVE, endReserve)
+        val withLabel = reserve(BarSlot.PILL_LABEL_RESERVE, pillLabelReserve)
+        val showLabel = withLabel + stepWidth + endWidth + 2 * gap <= width
+        val pillWidth = if (showLabel) withLabel else reserve(BarSlot.PILL_ICON_RESERVE, pillIconReserve)
+        val loose = Constraints(maxWidth = width)
+        val pillPlaceable = subcompose(BarSlot.PILL) { pill(showLabel) }.single().measure(loose)
+        val stepPlaceable = subcompose(BarSlot.STEPPER, stepper).single().measure(loose)
+        val endPlaceable = subcompose(BarSlot.END, end).single().measure(loose)
+        if (pillWidth + stepWidth + endWidth + 2 * gap <= width) {
+            val free = (width - pillWidth - stepWidth - endWidth) / 2
+            val height = maxOf(pillPlaceable.height, stepPlaceable.height, endPlaceable.height)
+            layout(width, height) {
+                pillPlaceable.placeRelative(0, (height - pillPlaceable.height) / 2)
+                stepPlaceable.placeRelative(pillWidth + free + (stepWidth - stepPlaceable.width) / 2, (height - stepPlaceable.height) / 2)
+                endPlaceable.placeRelative(width - endPlaceable.width, (height - endPlaceable.height) / 2)
+            }
+        } else {
+            val first = maxOf(pillPlaceable.height, stepPlaceable.height)
+            layout(width, first + endPlaceable.height) {
+                pillPlaceable.placeRelative(0, (first - pillPlaceable.height) / 2)
+                stepPlaceable.placeRelative(pillWidth + gap, (first - stepPlaceable.height) / 2)
+                endPlaceable.placeRelative(width - endPlaceable.width, first)
+            }
+        }
+    }
+}
+
+/** Slots von [StartBar]. */
+private enum class BarSlot { PILL, STEPPER, END, PILL_LABEL_RESERVE, PILL_ICON_RESERVE, STEPPER_RESERVE, END_RESERVE }
 
 /** Dauer „− 5 min +“ der Leiste (1–30 min, gesprochen „Dauer, 5 Minuten“). */
 @Composable
@@ -513,7 +568,7 @@ private fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDismi
                         state.applyTemplate(template)
                         scope.launch { sheetState.hide() }.invokeOnCompletion {
                             onDismiss()
-                            // Erst nach dem Schließen: Der Fokus geht zurück auf das Startpunkt-Symbol.
+                            // Erst nach dem Schließen: Der Fokus geht zurück auf das Startpunkt-Pille.
                             onPick()
                         }
                     }
@@ -578,9 +633,9 @@ private fun MiniCurve(pattern: FreePattern, inhale: Color) {
 }
 
 /**
- * Fokus und Ansage der Leiste (A11Y-04, A11Y-07): [start] (Startpunkt-Symbol) und [play] sind
+ * Fokus und Ansage der Leiste (A11Y-04, A11Y-07): [start] (Startpunkt-Pille) und [play] sind
  * Fokusziele, [pending] fokussiert nach der nächsten Komposition. Nach der Wahl einer Vorlage
- * ([picked]) bekommt das Startpunkt-Symbol den Fokus und sagt einmal an, was gilt – nur solange
+ * ([picked]) bekommt das Startpunkt-Pille den Fokus und sagt einmal an, was gilt – nur solange
  * die Folge so bleibt ([announces]).
  */
 @Stable
@@ -655,12 +710,12 @@ private fun LeadingAndEnd(
 }
 
 /**
- * „Atemzug“: Länge eines Durchlaufs und Atemzüge pro Minute als kurzer Status am Kopf
- * („· 10 s · 6/min“, TalkBack in Worten), bei einem intensiven Muster dazu „intensiv“
- * (`CharacterChip`). Läuft die Vorschau, steht statt des Status die Phase [phase] in ihrer Farbe
- * (ohne Live-Region, sie wechselt im Takt). Rechts die Knöpfe der Vorschau ([controls]), mittig
- * auf der Titelzeile wie der Chip. Der Kopf behält seine Höhe: Lage des Status und Platz des Chips
- * sind für alle Texte und beide Zustände reserviert.
+ * „Atemzug“: Länge eines Durchlaufs und Atemzüge pro Minute als kurzer Status in der Zeile des
+ * Titels („· 10 s · 6/min“, TalkBack in Worten). Läuft die Vorschau, steht statt des Status die
+ * Phase [phase] in ihrer Farbe (ohne Live-Region, sie wechselt im Takt). Rechts die Knöpfe der
+ * Vorschau ([controls]), mittig auf der Titelzeile. Der Kopf behält seine Höhe: Die Lage des
+ * Status ist für alle Texte und beide Zustände reserviert. „intensiv“ steht seit Nachtrag 7 im
+ * Seitentitel ([NameTitle]), damit der Status hier in die Zeile passt.
  */
 @Composable
 private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable () -> Unit) {
@@ -692,20 +747,10 @@ private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable
         statusDescription = statusDescription,
         smallStatus = true,
         statusColor = running?.let { phaseColor(pattern, it, inhale = MaterialTheme.colorScheme.secondary) },
-        // Der Chip steht neben der Titelzeile, mit Abstand zum Status (auch wenn der umbricht).
-        // Sein Platz bleibt auch ohne ihn frei (unsichtbar, nicht vorgelesen): Kippt das Muster
-        // ins Intensive, rutscht der Status nicht unter den Titel und Kurve und Werkzeugleiste
-        // rücken nicht unter dem Finger weg.
-        chip = {
-            val intense = pattern.isIntense
-            Box(Modifier.alpha(if (intense) 1f else 0f).inertWhen(!intense)) {
-                CharacterChip(intense = true, activating = false)
-            }
-        },
         // Eng unter der Startzeile: Kurve und Werkzeugleiste sollen ohne Scrollen ganz dastehen (Nachtrag 5).
         top = Dimens.GapSmall,
         statusReserve = reserve,
-        // Play und Ton mittig auf der Titelzeile, auf einer Linie mit dem Chip.
+        // Play und Ton mittig auf der Titelzeile.
         trailingOnTitle = true,
         trailingAction = controls,
     )
@@ -1211,69 +1256,125 @@ private fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Un
 }
 
 /**
- * Name: einzeilig, scrollt waagrecht, höchstens [PatternEditorState.NAME_MAX] Zeichen. Leer steht
- * der Vorschlagsname als Platzhalter da – so wird auch gespeichert. Zeichen, die der Import nicht
- * annimmt (Steuer- und Formatzeichen, Emoji außerhalb der Grundebene), nimmt das Feld gar nicht
- * erst an; Zeilenumbrüche aus der Zwischenablage werden Leerzeichen ([nameInput]).
+ * Seitentitel (Nachtrag 7): der Name des Musters groß (`headlineSmall`), darunter klein „Eigenes
+ * Muster“ als Einordnung, bei intensiven Mustern rechts „intensiv“ (`CharacterChip`, Platz immer
+ * reserviert). Der Name
+ * steht in einer Zeile und scrollt waagrecht, wenn er nicht passt – nie umbrochen: Der Kopf behält
+ * seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Antippen benennt um
+ * ([onRename]); TalkBack: „Name: …, umbenennen“ als Überschrift.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun NameSection(state: PatternEditorState) {
-    Column(Modifier.fillMaxWidth()) {
-        SectionHeader(title = stringResource(R.string.pattern_editor_name), color = headingColor(2))
-        val keyboard = LocalSoftwareKeyboardController.current
-        var focused by remember { mutableStateOf(false) }
-        val colors = MaterialTheme.colorScheme
-        // Wie das Suchfeld: Die Tastatur lernt den Namen nicht (SEC-PRIV-06).
-        NoPersonalizedLearning {
-            BasicTextField(
-                value = state.name,
-                onValueChange = { state.updateName(nameInput(it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { focused = it.hasFocus },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.onBackground),
-                cursorBrush = SolidColor(colors.primary),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    autoCorrectEnabled = false,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done,
-                ),
-                // Wie das Suchfeld: nur die Tastatur ausblenden, der Fokus bleibt im Feld – Tastatur-
-                // und D-Pad-Nutzer machen dort weiter, wo sie waren (A11Y-07).
-                keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
-                decorationBox = { inner ->
-                    // Label im Feld: So liest TalkBack es mit dem Inhalt als einen Knoten.
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = Dimens.MinTouchTarget)
-                            .border(Dimens.BorderThin, if (focused) colors.primary else colors.outline, MaterialTheme.shapes.extraSmall)
-                            .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
-                        verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.pattern_editor_name_label),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onBackground.copy(alpha = SECONDARY),
-                        )
-                        Box {
-                            if (state.name.isEmpty()) {
-                                Text(
-                                    text = state.suggestedName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.onBackground.copy(alpha = SECONDARY),
-                                    maxLines = 1,
-                                )
-                            }
-                            inner()
-                        }
-                    }
-                },
+private fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
+    val name = state.savedName
+    val description = stringResource(R.string.cd_pattern_name_rename, name)
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Dimens.MinTouchTarget)
+            .semantics {
+                heading()
+                contentDescription = description
+            }
+            .clickable(role = Role.Button, onClick = onRename),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        // Für TalkBack unsichtbar (der Titel sagt „Name: …, umbenennen“); nicht clearAndSetSemantics,
+        // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
+        Column(Modifier.weight(1f).semantics { invisibleToUser() }) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.onBackground,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+            )
+            Text(
+                text = stringResource(R.string.pattern_editor_title),
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onBackground.copy(alpha = SECONDARY),
             )
         }
+        // Sein Platz bleibt auch ohne ihn frei (unsichtbar, nicht vorgelesen): Kippt das Muster ins
+        // Intensive, bricht „Eigenes Muster“ nicht neu um, und Kurve und Werkzeugleiste rücken nicht.
+        val intense = state.pattern.isIntense
+        Box(Modifier.alpha(if (intense) 1f else 0f).inertWhen(!intense)) { CharacterChip(intense = true, activating = false) }
     }
+}
+
+/**
+ * Umbenennen (Nachtrag 7, Tipp auf den Seitentitel): ein Feld, einzeilig, scrollt waagrecht,
+ * höchstens [PatternEditorState.NAME_MAX] Zeichen; es ändert den Namen sofort (das Lesezeichen
+ * leert sich wie bei jeder Änderung). Leer steht der Vorschlagsname als Platzhalter da – so wird
+ * auch gespeichert. Zeichen, die der Import nicht annimmt (Steuer- und Formatzeichen, Emoji
+ * außerhalb der Grundebene), nimmt das Feld gar nicht erst an; Zeilenumbrüche aus der
+ * Zwischenablage werden Leerzeichen ([nameInput]). „Fertig“ auf der Tastatur oder im Dialog schließt.
+ */
+@Composable
+private fun RenameDialog(state: PatternEditorState, onDismiss: () -> Unit) {
+    val focus = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.pattern_editor_name)) },
+        text = {
+            // Wie das Suchfeld: Die Tastatur lernt den Namen nicht (SEC-PRIV-06).
+            NoPersonalizedLearning {
+                BasicTextField(
+                    value = state.name,
+                    onValueChange = { state.updateName(nameInput(it)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus)
+                        .onFocusChanged { focused = it.hasFocus },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurface),
+                    cursorBrush = SolidColor(colors.primary),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { onDismiss() }),
+                    decorationBox = { inner ->
+                        // Label im Feld: So liest TalkBack es mit dem Inhalt als einen Knoten.
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = Dimens.MinTouchTarget)
+                                .border(Dimens.BorderThin, if (focused) colors.primary else colors.outline, MaterialTheme.shapes.extraSmall)
+                                .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
+                            verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.pattern_editor_name_label),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurface.copy(alpha = SECONDARY),
+                            )
+                            Box {
+                                if (state.name.isEmpty()) {
+                                    Text(
+                                        text = state.suggestedName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = colors.onSurface.copy(alpha = SECONDARY),
+                                        maxLines = 1,
+                                    )
+                                }
+                                inner()
+                            }
+                        }
+                    },
+                )
+            }
+        },
+        confirmButton = { AppTextButton(onClick = onDismiss) { Text(stringResource(R.string.pattern_editor_name_done)) } },
+    )
+    LaunchedEffect(Unit) { focus.requestFocus() }
 }
 
 /**
