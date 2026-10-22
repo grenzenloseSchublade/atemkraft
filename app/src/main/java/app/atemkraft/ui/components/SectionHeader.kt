@@ -203,8 +203,9 @@ fun CollapsibleSection(
  * Titel eines [SectionHeader] mit optionalem [status] dahinter. Passt der Status in einer Zeile
  * hinter den einzeiligen Titel, steht er dort auf dessen Grundlinie; sonst steht er unter dem
  * Titel und verliert seinen führenden Punkt („· angepasst“ → „angepasst“), damit keine Zeile mit
- * einem Satzzeichen beginnt (LAYOUT-03). Gemessen wird vorab mit dem [rememberTextMeasurer], so
- * entsteht nur die gezeigte Variante (ein Knoten für TalkBack).
+ * einem Satzzeichen beginnt (LAYOUT-03); passt er auch dort nicht in eine Zeile, steht jeder Teil
+ * zwischen den Punkten in einer eigenen Zeile, ohne Punkt. Gemessen wird vorab mit dem
+ * [rememberTextMeasurer], so entsteht nur die gezeigte Variante (ein Knoten für TalkBack).
  */
 @Composable
 private fun TitleWithStatus(
@@ -247,17 +248,26 @@ private fun TitleWithStatus(
                 statusPlaceable.place(titlePlaceable.width + gap, statusTop)
             }
         } else {
-            val bare = status.trimStart().removePrefix("·").trimStart()
+            val single = status.trimStart().removePrefix("·").trimStart()
+            // Passt auch darunter nicht alles in eine Zeile, steht jeder Teil („24 s“, „2,5
+            // Atemzüge/min“) in einer eigenen Zeile – sonst endete eine Zeile auf „·“.
+            val fits = measurer.measure(single, statusStyle, softWrap = false, maxLines = 1).size.width <= constraints.maxWidth
+            val bare = if (fits) single else single.split(STATUS_SEPARATOR).joinToString("\n")
             val statusPlaceable = subcompose(StatusSlot.BELOW) {
                 WholeWordText(text = bare, style = statusStyle, color = statusColor, modifier = statusSemantics)
             }.first().measure(loose)
-            layout(maxOf(titlePlaceable.width, statusPlaceable.width), titlePlaceable.height + statusPlaceable.height) {
+            // Breite in den Grenzen melden: Unter der Mindestbreite (weight) zentrierte das Layout
+            // den Block sonst, und Titel und Status rückten vom Balken ab.
+            layout(constraints.constrainWidth(maxOf(titlePlaceable.width, statusPlaceable.width)), titlePlaceable.height + statusPlaceable.height) {
                 titlePlaceable.place(0, 0)
                 statusPlaceable.place(0, titlePlaceable.height)
             }
         }
     }
 }
+
+/** Trennpunkt zwischen Teilen eines Status, mit (auch geschützten) Leerzeichen drumherum. */
+private val STATUS_SEPARATOR = Regex("[\\s\u00A0]*·[\\s\u00A0]*")
 
 /** Slots von [TitleWithStatus]: nur die gezeigte Status-Variante wird komponiert. */
 private enum class StatusSlot { TITLE, INLINE, BELOW }

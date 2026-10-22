@@ -16,7 +16,7 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 | Ort | Inhalt | So löschst du es |
 |---|---|---|
 | Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | *Einstellungen → Daten → „Logbuch leeren“* (ein zweiter Tipp bestätigt); App-Speicher löschen |
-| Eigene Muster (Datenbank) | Name (bei selbst zusammengestellten Mustern frei wählbar, höchstens 80 Zeichen), Phasenlängen, Art (aktivierend oder nicht), Herkunft (Muster des Tages oder selbst zusammengestellt) und Dauer gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen unter „Meine Muster“ |
+| Eigene Muster (Datenbank) | Name (bei selbst zusammengestellten Mustern frei wählbar, höchstens 80 Zeichen), Phasenlängen (bei selbst zusammengestellten Mustern die ganze Folge aus Ein, Halten und Aus), Art (aktivierend oder nicht), Herkunft (Muster des Tages oder selbst zusammengestellt) und Dauer gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen unter „Meine Muster“ |
 | Einstellungen | Ton, Haptik, Hinweise (auch, ob du den Sicherheitshinweis vor intensiven Übungen bestätigt hast), Meditation, gewählte Stimme, Anpassungen pro Übung, Übungen, die du mit „Tut mir gut“ markiert hast, ob die App schon nach der Benachrichtigung gefragt hat und, falls die Einstellungsdatei einmal beschädigt war, wann die App sie zurückgesetzt hat und ob du den Hinweis dazu gesehen hast | Anpassungen pro Übung zurücksetzen; Markierung durch erneutes Antippen aufheben; App-Speicher löschen |
 | Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |
 | Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Versuch. Den Download-Cache leert Android auch bei Speichermangel |
@@ -53,7 +53,7 @@ Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läu
 
 ## Export und Import
 
-Ab Version 1.6.0 kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Art, Herkunft (Muster des Tages oder eigenes Muster), Dauer, Zeitpunkt des Speicherns und die Anpassungen dieser Muster sowie den Zeitpunkt des Exports, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
+Ab Version 1.6.0 kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen (bei eigenen Mustern die ganze Phasenfolge), Art, Herkunft (Muster des Tages oder eigenes Muster), Dauer, Zeitpunkt des Speicherns und die Anpassungen dieser Muster sowie den Zeitpunkt des Exports, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
 
 Mit „Muster importieren“ liest die App eine Datei, die du in der Dateiauswahl wählst, einmal ein und übernimmt daraus nur gültige Muster und deren Anpassungen. Auch hier behält sie keinen Zugriff auf die Datei.
 

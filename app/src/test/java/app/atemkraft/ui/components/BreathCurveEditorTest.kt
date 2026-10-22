@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -25,6 +27,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.ui.TestMatrix
@@ -344,6 +347,38 @@ class BreathCurveEditorTest {
         preview.toggle()
         assertTrue(preview.playing)
         assertEquals("Start am Anfang", 0f, preview.time, 0f)
+    }
+
+    @Test
+    fun `Phasen-Beschriftungen ueberlappen weder Griffe noch einander, kurze Folgen tragen alle`() {
+        show(BOX, Modifier.width(TestMatrix.COMPACT.widthDp.dp))
+        listOf(
+            BOX to 1,
+            FreePatternTemplates.all.single { it.label == "Viloma I" }.pattern to null,
+            // Zwölf kurze Phasen: Was keinen Platz hat, entfällt.
+            FreePattern(List(6) { listOf(FreePhase(FreePhaseType.IN, 1), FreePhase(FreePhaseType.OUT, 1)) }.flatten()) to 3,
+        ).forEach { (p, sel) ->
+            pattern = p
+            selected = sel
+            compose.waitForIdle()
+            val layout = layoutNow()
+            val width = curve().fetchSemanticsNode().size.width.toFloat()
+            val sizes = p.phases.map { phase ->
+                val size = layout.measurer.measure("${phase.seconds}${layout.secondsSuffix}", layout.phaseStyle).size
+                Size(size.width.toFloat(), size.height.toFloat())
+            }
+            val spots = curveLabelSpots(p, sel, layout, width, sizes)
+            val placed = spots.filterNotNull()
+            placed.forEachIndexed { i, a ->
+                placed.drop(i + 1).forEach { b -> assertFalse("Beschriftungen überlappen: $a / $b", a.overlaps(b)) }
+                curveHandles(p, layout).forEach { h ->
+                    assertFalse("Beschriftung $a über Griff ${h.index}", a.overlaps(Rect(h.center, layout.handle / 2f)))
+                }
+                assertTrue("in der Fläche über dem Band", a.left >= 0f && a.right <= width && a.top >= 0f && a.bottom <= layout.bandTop)
+            }
+            if (p == BOX) assertEquals("Box: alle vier", 4, placed.size)
+            sel?.let { assertTrue("die gewählte Phase ist beschriftet", spots[it] != null) }
+        }
     }
 
     private fun assertLabelsApart(layout: CurveLayout) {

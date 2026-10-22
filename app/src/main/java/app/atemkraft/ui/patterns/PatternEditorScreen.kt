@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -61,6 +63,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
@@ -469,37 +472,54 @@ private fun PhaseMark(color: Color, dashed: Boolean) {
     )
 }
 
-/** Gelb gestrichelte Einfügemarke „neue Phase kommt hierhin“, eingerückt bis zum Strich der Zeilen. */
+/**
+ * Gelb gestrichelte Einfügemarke „neue Phase kommt hierhin“, eingerückt bis zum Strich der Zeilen.
+ * Bleibt neben dem Text weniger als [Dimens.MinTouchTarget] für die Striche (große Schrift), steht
+ * die Linie über die ganze Breite und der Text darunter, rechtsbündig.
+ */
 @Composable
 private fun InsertMarker() {
-    Row(
+    val text = stringResource(R.string.pattern_editor_insert_here)
+    val style = MaterialTheme.typography.labelSmall
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = Dimens.GapSmall * 2 + Sizes.IconDefault, end = Dimens.GapSmall, top = Dimens.GapHairline, bottom = Dimens.GapHairline),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
     ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(Dimens.GapHairline)
-                .drawBehind {
-                    val dash = Dimens.GapTiny.toPx()
-                    drawLine(
-                        color = WarnAmber,
-                        start = Offset(0f, size.height / 2),
-                        end = Offset(size.width, size.height / 2),
-                        strokeWidth = size.height,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
-                    )
-                },
-        )
-        WholeWordText(
-            text = stringResource(R.string.pattern_editor_insert_here),
-            style = MaterialTheme.typography.labelSmall,
-            color = WarnAmber,
-        )
+        val textWidth = with(LocalDensity.current) { measurer.measure(text, style, softWrap = false, maxLines = 1).size.width.toDp() }
+        val label: @Composable () -> Unit = { WholeWordText(text = text, style = style, color = WarnAmber) }
+        if (maxWidth - textWidth - Dimens.GapSmall >= Dimens.MinTouchTarget) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+                DashedMark(Modifier.weight(1f))
+                label()
+            }
+        } else {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+                DashedMark(Modifier.fillMaxWidth())
+                label()
+            }
+        }
     }
+}
+
+/** Die gelb gestrichelte Linie der Einfügemarke. */
+@Composable
+private fun DashedMark(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .height(Dimens.GapHairline)
+            .drawBehind {
+                val dash = Dimens.GapTiny.toPx()
+                drawLine(
+                    color = WarnAmber,
+                    start = Offset(0f, size.height / 2),
+                    end = Offset(size.width, size.height / 2),
+                    strokeWidth = size.height,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
+                )
+            },
+    )
 }
 
 /**
@@ -527,15 +547,26 @@ private fun AddPhase(state: PatternEditorState) {
             .padding(Dimens.ListGap),
         verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
     ) {
-        // Der Trennpunkt hängt am Titel (geschütztes Leerzeichen): Keine Zeile beginnt mit „·“.
-        Text(
-            text = buildAnnotatedString {
-                append("$title · ")
-                withStyle(statusStyle.toSpanStyle().copy(color = colors.onBackground.copy(alpha = SECONDARY))) { append(where) }
-            },
-            style = MaterialTheme.typography.titleSmall,
-            color = colors.onBackground,
-        )
+        // Passt „Titel · Ort“ in eine Zeile, steht der Ort dahinter; sonst darunter und ohne Punkt,
+        // damit keine Zeile mit „·“ beginnt oder endet (LAYOUT-03).
+        val titleStyle = MaterialTheme.typography.titleSmall
+        val whereColor = colors.onBackground.copy(alpha = SECONDARY)
+        val measurer = rememberTextMeasurer()
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val oneLine = buildAnnotatedString {
+                append("$title\u00A0· ")
+                withStyle(statusStyle.toSpanStyle().copy(color = whereColor)) { append(where) }
+            }
+            val width = measurer.measure(oneLine, titleStyle, softWrap = false, maxLines = 1).size.width
+            if (width <= constraints.maxWidth) {
+                Text(text = oneLine, style = titleStyle, color = colors.onBackground, maxLines = 1, softWrap = false)
+            } else {
+                Column {
+                    WholeWordText(text = title, style = titleStyle, color = colors.onBackground)
+                    WholeWordText(text = where, style = statusStyle, color = whereColor)
+                }
+            }
+        }
         val enabled = state.canAdd
         AdaptiveButtonRow(spacing = Dimens.GapSmall) {
             AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled) { state.add(FreePhaseType.IN) }

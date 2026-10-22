@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -420,6 +421,7 @@ internal class CurveMetrics(
     private val span: Float,
     private val holdOffset: Float,
     private val handle: Float,
+    private val handleSelected: Float,
     private val touch: Float,
     private val labelSpacing: Float,
     private val tickSpacing: Float,
@@ -455,6 +457,7 @@ internal class CurveMetrics(
             yEmpty = yEmpty,
             holdOffset = holdOffset,
             handle = handle,
+            handleSelected = handleSelected,
             touchRadius = touch / 2f,
             bandTop = bandTop,
             bandHeight = bandHeight,
@@ -488,6 +491,8 @@ internal class CurveLayout(
     val yEmpty: Float,
     val holdOffset: Float,
     val handle: Float,
+    /** Durchmesser des gewählten Griffs. */
+    val handleSelected: Float,
     val touchRadius: Float,
     val bandTop: Float,
     val bandHeight: Float,
@@ -542,6 +547,7 @@ internal fun rememberCurveMetrics(): CurveMetrics {
                 span = Sizes.CurveSpan.toPx(),
                 holdOffset = Sizes.CurveHoldHandleOffset.toPx(),
                 handle = Sizes.CurveHandle.toPx(),
+                handleSelected = Sizes.CurveHandleSelected.toPx(),
                 touch = Dimens.MinTouchTarget.toPx(),
                 labelSpacing = Sizes.CurveLabelMinSpacing.toPx(),
                 tickSpacing = Sizes.CurveTickMinSpacing.toPx(),
@@ -635,7 +641,12 @@ private fun DrawScope.drawCurve(
             else -> stroke
         }
         drawLine(color, from, to, width, StrokeCap.Round, if (hold) dashed else null)
-        drawPhaseLabel(phase, from, to, layout, color, upper = levels[i].from >= HALF)
+    }
+    // „4 s“ je Phase, nur wo frei (siehe [curveLabelSpots]); die Ablauf-Liste trägt alle Werte.
+    val texts = pattern.phases.map { layout.measurer.measure("${it.seconds}${layout.secondsSuffix}", layout.phaseStyle) }
+    val spots = curveLabelSpots(pattern, selected, layout, size.width, texts.map { Size(it.size.width.toFloat(), it.size.height.toFloat()) })
+    spots.forEachIndexed { i, spot ->
+        if (spot != null) drawText(texts[i], palette.colorOf(pattern, i), spot.topLeft)
     }
 
     // Zeitleiste: feine Striche, längere an den Zahlen; „s“ nur an der letzten Zahl.
@@ -654,27 +665,75 @@ private fun DrawScope.drawCurve(
     }
 }
 
-/** „4 s“ an einer Phase: Ein/Aus neben der Schräge, Halten über (obere Hälfte) bzw. unter seinem Griff. */
-private fun DrawScope.drawPhaseLabel(
-    phase: FreePhase,
-    from: Offset,
-    to: Offset,
-    layout: CurveLayout,
-    color: Color,
-    upper: Boolean,
-) {
-    val text = layout.measurer.measure("${phase.seconds}${layout.secondsSuffix}", layout.phaseStyle)
-    val w = text.size.width
-    val h = text.size.height
-    val midX = (from.x + to.x) / 2f
-    val midY = (from.y + to.y) / 2f
+/**
+ * Wo die Beschriftung „4 s“ jeder Phase steht ([sizes] je Phase in px), `null` = weggelassen.
+ * Ein/Aus stehen bevorzugt außen neben der Schräge (Ein links oben, Aus rechts oben), sonst innen
+ * auf der anderen Seite, notfalls über bzw. unter dem Griff am Ende; ein Halten über (obere
+ * Hälfte) bzw. unter seinem Griff, sonst auf der anderen Seite seiner Linie, notfalls seitlich
+ * versetzt. Eine Beschriftung darf keinen Griff (mit Rand), keine andere Beschriftung, nicht die
+ * Wörter „voll“/„leer“ und nicht das Band darunter berühren und nicht aus der Fläche ragen – passt keine Stelle (viele sehr kurze Phasen), entfällt sie, statt zu überlappen.
+ * Die gewählte Phase kommt zuerst dran. Die Werte stehen ohnehin in der Ablauf-Liste und in der
+ * Beschreibung für TalkBack.
+ */
+internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: CurveLayout, width: Float, sizes: List<Size>): List<Rect?> {
+    val levels = pattern.levels()
+    val handles = curveHandles(pattern, layout)
+    val margin = layout.hairline * 2
+    val blocked = handles.map { h ->
+        val r = (if (h.index == selected) layout.handleSelected else layout.handle) / 2f + margin
+        Rect(h.center, r)
+    }.toMutableList()
+    // Die Wörter „voll“ und „leer“ an den Linien bleiben frei.
+    val full = layout.measurer.measure(layout.fullLabel, layout.smallStyle).size
+    val empty = layout.measurer.measure(layout.emptyLabel, layout.smallStyle).size
+    blocked += Rect(Offset(layout.gapSmall, layout.yFull - layout.hairline - full.height), Size(full.width.toFloat(), full.height.toFloat()))
+    blocked += Rect(Offset(layout.gapSmall, layout.yEmpty + layout.hairline), Size(empty.width.toFloat(), empty.height.toFloat()))
+    val area = Rect(0f, 0f, width, layout.bandTop)
+    val spots = arrayOfNulls<Rect>(pattern.phases.size)
+    val order = pattern.phases.indices.sortedBy { it != selected }
     val reach = layout.holdOffset + layout.handle / 2f + layout.hairline
-    val topLeft = when (phase.type) {
-        FreePhaseType.IN -> Offset(midX - layout.gapSmall - w, midY - h)
-        FreePhaseType.OUT -> Offset(midX + layout.gapSmall, midY - h)
-        FreePhaseType.HOLD -> if (upper) Offset(midX - w / 2f, from.y - reach - h) else Offset(midX - w / 2f, from.y + reach)
+    val gap = layout.gapSmall
+    val clear = layout.handleSelected / 2f + margin
+    for (i in order) {
+        val (w, h) = sizes[i]
+        val start = pattern.startOf(i)
+        val from = Offset(layout.xAt(start.toFloat()), layout.yAt(levels[i].from))
+        val to = Offset(layout.xAt((start + pattern.phases[i].seconds).toFloat()), layout.yAt(levels[i].to))
+        val midX = (from.x + to.x) / 2f
+        val midY = (from.y + to.y) / 2f
+        val candidates = when (pattern.phases[i].type) {
+            // Notfalls über bzw. unter dem Griff am Ende der Schräge.
+            FreePhaseType.IN -> listOf(
+                Offset(midX - gap - w, midY - h),
+                Offset(midX + gap, midY),
+                Offset(to.x - w / 2f, to.y - clear - h),
+            )
+
+            FreePhaseType.OUT -> listOf(
+                Offset(midX + gap, midY - h),
+                Offset(midX - gap - w, midY),
+                Offset(to.x - w / 2f, to.y + clear),
+            )
+
+            FreePhaseType.HOLD -> {
+                val above = from.y - reach - h
+                val below = from.y + reach
+                val inner = if (levels[i].from >= HALF) from.y + gap else from.y - gap - h
+                val outer = if (levels[i].from >= HALF) above else below
+                // Seitlich: links neben dem Griff am Ende, auf Höhe der Griffe.
+                val beside = to.x - layout.handle / 2f - margin - gap - w
+                listOf(Offset(midX - w / 2f, outer), Offset(midX - w / 2f, inner), Offset(beside, outer), Offset(beside, inner))
+            }
+        }
+        val spot = candidates
+            .map { Rect(it, Size(w, h)) }
+            .firstOrNull { r -> r.left >= area.left && r.right <= area.right && r.top >= area.top && r.bottom <= area.bottom && blocked.none { it.overlaps(r) } }
+        if (spot != null) {
+            spots[i] = spot
+            blocked += spot
+        }
     }
-    drawText(text, color, topLeft)
+    return spots.toList()
 }
 
 /** Gelbes Band über der Zeitleiste: erlaubter Bereich der gezogenen Phase (Ende = Start + 1 bis 30 s). */

@@ -453,18 +453,33 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
-    /**
-     * Muster-Editor mit der Vorlage „Box“, zweite Phase gewählt: Startpunkt zu, Kurve, Ablauf mit
-     * Stepper „Sekunden“, Papierkorb und Einfügemarke, „Phase hinzufügen · nach 2 · Halten voll“.
-     */
+    /** Muster-Editor wie beim ersten Öffnen: 4·6, Startpunkt zu, keine Phase gewählt, Einfügemarke am Ende. */
     @Test
     fun patternEditor() = snap("14_muster_editor") {
+        Editor { PatternEditorState.new(it) }
+    }
+
+    /**
+     * Vorlage „Box“, zweite Phase gewählt: Zeile mit Stepper „Sekunden“ und Papierkorb, Griff
+     * dicker, Einfügemarke darunter, „Phase hinzufügen · nach 2 · Halten voll“.
+     */
+    @Test
+    fun patternEditorSelection() = snap("14_muster_editor_auswahl") {
         Editor { PatternEditorState.new(it, template("Box")).apply { select(1) } }
     }
 
-    /** Startpunkt aufgeklappt: die sechs Vorlagen in zwei Reihen, „Box“ gewählt. */
+    /**
+     * Vorlage „Viloma I“: drei Stufen Ein mit Halten dazwischen, sieben Phasen – Stufen in der
+     * Kurve, kurze Phasen mit enger Beschriftung, Ablauf mit „Halten“ statt „Halten voll“.
+     */
     @Test
-    fun patternEditorTemplates() = snap("14_muster_editor_startpunkt", prepare = {
+    fun patternEditorViloma() = snap("14_muster_editor_viloma") {
+        Editor { PatternEditorState.new(it, template("Viloma I")) }
+    }
+
+    /** Startpunkt aufgeklappt: die sechs Vorlagen in zwei Spalten, „Box“ gewählt. */
+    @Test
+    fun patternEditorTemplates() = snap("14_muster_editor_startpunkt_offen", prepare = {
         compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.pattern_editor_start)).performClick()
     }) {
         Editor { PatternEditorState.new(it, template("Box")) }
@@ -855,6 +870,23 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     onEditPattern = if (exercise in BuiltInExercises.all) null else ({}),
                 )
             }
+        }
+    }
+
+    /**
+     * Detailseiten eigener Muster mit Stift im Kopf: frei gewählter langer Name, die Folge im Text
+     * und nur die Dauer in der Karte; dazu ein intensives mit Stufen (Viloma I, letztes Halten
+     * 12 s): Chip „intensiv“, Sicherheitshinweise offen.
+     */
+    @Test
+    fun detailsCustom() {
+        assumeTrue(detailConfig)
+        val intense = template("Viloma I").let { p -> FreePattern(p.phases.mapIndexed { i, phase -> if (i == 5) phase.copy(seconds = 12) else phase }) }
+        listOf(
+            "08_detail_eigenes_muster" to saved.last().exercise,
+            "08_detail_eigenes_muster_intensiv" to RandomPatternGenerator.exerciseFrom(intense, "muster-5", "Stufen mit langem Halten", minutes = 5),
+        ).forEach { (name, exercise) ->
+            snap(name) { TestDetail(exercise = exercise, onOpenLore = {}, onEditPattern = {}) }
         }
     }
 
