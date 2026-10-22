@@ -1,6 +1,9 @@
 package app.atemkraft.data
 
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.PatternComposer
+import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
@@ -14,7 +17,7 @@ import java.io.File
 /**
  * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -13), MUSTER-03, -09 und
  * MOTION-02, geprüft über alle Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages
- * (Seeds 0–6), Atemlehre, Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die
+ * (Seeds 0–6), eigene und gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die
  * öffentlichen Texte (README, Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen.
  *
  * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Testfall | Datensatz | S-nn`).
@@ -28,30 +31,70 @@ class ContentRulesTest {
     /** Ein Text mit stabilem Namen für Baseline und Meldung, z. B. `buteyko.effect`. */
     private data class Text(val id: String, val value: String)
 
-    private val exercises: List<Exercise> =
-        BuiltInExercises.all + (0L..6L).map { RandomPatternGenerator.forSeed(it).exercise }
+    /** Muster des Tages, Seeds 0–6. */
+    private val daily: List<Exercise> = (0L..6L).map { RandomPatternGenerator.forSeed(it).exercise }
 
-    /** Name eines Übungs-Datensatzes; die generierten Muster teilen sich eine Id, daher mit Seed. */
+    /** Alle Vorschläge des Muster-Editors: jedes Muster, das ein eigenes Muster werden kann. */
+    private val composerSpecs = listOf(false, true).flatMap { activating ->
+        listOf(false, true).flatMap { PatternComposer.candidates(PatternWish(activating, it)) }
+    }
+
+    /** Eigene Muster (Herkunft CUSTOM) über alle Composer-Kandidaten. */
+    private val custom: List<Exercise> = composerSpecs.map { spec ->
+        RandomPatternGenerator.exerciseFrom(
+            spec,
+            "muster-1",
+            "Eigenes Muster ${RandomPatternGenerator.numbersOf(spec)}",
+            PatternOrigin.CUSTOM,
+            5,
+        )
+    }
+
+    /** Gespeicherte Muster des Tages (Herkunft SAVED_DAILY) über dieselben Specs. */
+    private val savedDaily: List<Exercise> = composerSpecs.map { spec ->
+        RandomPatternGenerator.exerciseFrom(
+            spec,
+            "muster-1",
+            "Tagesmuster ${RandomPatternGenerator.numbersOf(spec)}",
+            PatternOrigin.SAVED_DAILY,
+            5,
+        )
+    }
+
+    private val exercises: List<Exercise> = BuiltInExercises.all + daily + custom + savedDaily
+
+    /**
+     * Name eines Übungs-Datensatzes; generierte Muster teilen sich ihre Id, daher mit Nummer
+     * (`#seedN`, beim Zusammenfassen der Funde entfernt): `muster-des-tages`, `muster-eigen`
+     * (Herkunft CUSTOM) und `muster-gespeichert` (SAVED_DAILY).
+     */
     private fun Exercise.key(): String {
         val i = exercises.indexOf(this)
-        return if (id == RandomPatternGenerator.ID) "$id#seed${i - BuiltInExercises.all.size}" else id
+        val first = BuiltInExercises.all.size
+        return when {
+            i < first -> id
+            i < first + daily.size -> "$id#seed${i - first}"
+            i < first + daily.size + custom.size -> "muster-eigen#seed${i - first - daily.size}"
+            else -> "muster-gespeichert#seed${i - first - daily.size - custom.size}"
+        }
     }
 
     private fun Exercise.texts(): List<Text> = buildList {
-        add(Text("${key()}.name", name))
-        add(Text("${key()}.shortDescription", shortDescription))
-        add(Text("${key()}.effect", effect))
-        effectDetail?.let { add(Text("${key()}.effectDetail", it)) }
-        instructionHint?.let { add(Text("${key()}.instructionHint", it)) }
-        cautions.forEachIndexed { i, c -> add(Text("${key()}.cautions[$i]", c)) }
+        val k = key()
+        add(Text("$k.name", name))
+        add(Text("$k.shortDescription", shortDescription))
+        add(Text("$k.effect", effect))
+        effectDetail?.let { add(Text("$k.effectDetail", it)) }
+        instructionHint?.let { add(Text("$k.instructionHint", it)) }
+        cautions.forEachIndexed { i, c -> add(Text("$k.cautions[$i]", c)) }
         segments.flatMap { it.phases }.forEachIndexed { i, p ->
-            p.label?.let { add(Text("${key()}.phase[$i].label", it)) }
-            p.note?.let { add(Text("${key()}.phase[$i].note", it)) }
+            p.label?.let { add(Text("$k.phase[$i].label", it)) }
+            p.note?.let { add(Text("$k.phase[$i].note", it)) }
         }
         lore?.let { l ->
-            add(Text("${key()}.lore.teaser", l.teaser))
-            add(Text("${key()}.lore.detail", l.detail))
-            l.source?.let { add(Text("${key()}.lore.source", it)) }
+            add(Text("$k.lore.teaser", l.teaser))
+            add(Text("$k.lore.detail", l.detail))
+            l.source?.let { add(Text("$k.lore.source", it)) }
         }
     }
 
@@ -249,6 +292,22 @@ class ContentRulesTest {
         val collapsed = findings.collapseSeeds()
         if (collapsed.isNotEmpty()) {
             fail("ContentRulesTest lore-teaser:\n" + collapsed.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
+        }
+    }
+
+    /**
+     * Eigene und gespeicherte Muster sind weder „heute“ noch „zufällig“ noch „aus dem Datum“
+     * entstanden, und ihre Texte sprechen nicht über Wirkversprechen (Plan Konfigurator §5).
+     * Neue Texte ohne Altlasten: jeder Fund ist ein Fehler, keine Baseline.
+     */
+    @Test
+    fun `origin-wording`() {
+        val banned = Regex("""heute|zufällig|Datum|Wirkversprechen""", RegexOption.IGNORE_CASE)
+        val findings = (custom + savedDaily).flatMap { it.texts() }.mapNotNull { t ->
+            banned.find(t.value)?.let { Finding(t.id, "„${it.value}“ in „${t.value}“") }
+        }.collapseSeeds()
+        if (findings.isNotEmpty()) {
+            fail("ContentRulesTest origin-wording:\n" + findings.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
         }
     }
 

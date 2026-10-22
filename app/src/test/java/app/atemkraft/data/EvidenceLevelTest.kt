@@ -4,9 +4,13 @@ import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.domain.EvidenceLevel.LITTLE_STUDIED
 import app.atemkraft.domain.EvidenceLevel.STUDIED
 import app.atemkraft.domain.EvidenceLevel.WELL_SUPPORTED
+import app.atemkraft.domain.PatternComposer
+import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.RandomPatternGenerator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -56,6 +60,22 @@ class EvidenceLevelTest {
         (0L..20L).map { RandomPatternGenerator.forSeed(it).exercise }.forEach {
             assertNull("Muster ${it.name} mit Studienlage", it.evidence)
             assertEquals("Muster ${it.name} mit Vorsicht", false, it.caution)
+        }
+    }
+
+    /** Eigene und gespeicherte Muster sind nicht untersucht (TEXT-07, MUSTER-06). */
+    @Test
+    fun `eigene und gespeicherte Muster haben keine Studienlage und keine Vorsicht`() {
+        val specs = listOf(false, true).flatMap { activating ->
+            listOf(false, true).flatMap { PatternComposer.candidates(PatternWish(activating, it)) }
+        }
+        specs.forEach { spec ->
+            listOf(PatternOrigin.CUSTOM, PatternOrigin.SAVED_DAILY).forEach { origin ->
+                val e = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin, 5)
+                assertNull("$origin $spec mit Studienlage", e.evidence)
+                assertEquals("$origin $spec mit Vorsicht", false, e.caution)
+                assertTrue("$origin $spec mit Quellen", e.references.isEmpty())
+            }
         }
     }
 }

@@ -135,6 +135,111 @@ class RandomPatternGeneratorTest {
         }
     }
 
+    /** Alle Wunsch-Vorschläge des Editors: jedes Muster, das ein eigenes Muster werden kann. */
+    private val composerSpecs: List<PatternSpec> = listOf(false, true).flatMap { activating ->
+        listOf(false, true).flatMap { PatternComposer.candidates(PatternWish(activating, it)) }
+    }
+
+    /** Die Dauer eines eigenen Musters steckt in `repeat`, nicht in einem Override (sonst „angepasst“). */
+    @Test
+    fun `minutes steuert Wiederholung und Vorgabedauer`() {
+        val specs = composerSpecs + (0L until 50L).map { RandomPatternGenerator.forSeed(it).spec }
+        listOf(1, 3, 5, 10, 30).forEach { minutes ->
+            specs.forEach { spec ->
+                PatternOrigin.entries.forEach { origin ->
+                    val exercise = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin, minutes)
+                    assertTrue("$spec $minutes min", exercise.buildTimeline().isNotEmpty())
+                    // Ein Atemzug ist höchstens 13 s lang, die Rundung bleibt also unter einer halben Minute.
+                    assertEquals("$spec $minutes min", minutes, exercise.defaultMinutes())
+                    assertEquals(1, exercise.rounds)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `ohne minutes bleibt die Vorgabe um 5 Minuten`() {
+        composerSpecs.forEach { spec ->
+            val exercise = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", PatternOrigin.CUSTOM)
+            assertTrue("$spec", exercise.defaultMinutes() in 4..6)
+        }
+    }
+
+    /** Ohne Herkunft entsteht das Muster des Tages: Standardwerte = heutiges Verhalten. */
+    @Test
+    fun `Standard-Herkunft ist das Muster des Tages`() {
+        (0L until 50L).map { RandomPatternGenerator.forSeed(it) }.forEach { daily ->
+            val explicit = RandomPatternGenerator.exerciseFrom(
+                daily.spec,
+                RandomPatternGenerator.ID,
+                daily.exercise.name,
+                PatternOrigin.TODAY,
+                null,
+            )
+            assertEquals(daily.exercise, explicit)
+        }
+    }
+
+    @Test
+    fun `Herkunft aendert nur Texte, nicht Phasen und Charakter`() {
+        composerSpecs.forEach { spec ->
+            val today = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster")
+            PatternOrigin.entries.forEach { origin ->
+                val e = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin)
+                assertEquals("$spec $origin", today.segments, e.segments)
+                assertEquals(today.instructionHint, e.instructionHint)
+                assertEquals(today.lore?.teaser, e.lore?.teaser)
+                assertEquals(today.lore?.patternId, e.lore?.patternId)
+                assertEquals(today.lore?.morePatternIds, e.lore?.morePatternIds)
+                assertTrue(e.generated)
+                assertEquals(spec.activating, e.activating)
+            }
+        }
+    }
+
+    /** Bauchatmung nur bei ruhigen Mustern und nur als Einladung, nie als Muss (Content-Linie). */
+    @Test
+    fun `eigene und gespeicherte Muster laden nur bei ruhig zur Bauchatmung ein`() {
+        composerSpecs.forEach { spec ->
+            listOf(PatternOrigin.CUSTOM, PatternOrigin.SAVED_DAILY).forEach { origin ->
+                val e = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin)
+                assertEquals("$spec $origin", !spec.activating, e.shortDescription.contains("Bauch"))
+                assertEquals("$spec $origin", !spec.activating, e.instructionHint!!.contains("Bauch"))
+                assertTrue("$spec $origin", !e.shortDescription.contains("empfohlen"))
+                assertTrue("$spec $origin", e.shortDescription.startsWith(RandomPatternGenerator.hintFor(spec)))
+            }
+        }
+    }
+
+    @Test
+    fun `Texte je Herkunft`() {
+        val spec = PatternComposer.propose(PatternWish(activating = false, withHold = true), 0)
+        val custom = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Eigenes Muster", PatternOrigin.CUSTOM, 5)
+        val saved = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Tagesmuster", PatternOrigin.SAVED_DAILY, 5)
+        assertEquals("Dieses Muster hast du selbst zusammengestellt – in den Leitplanken der App.", custom.effect)
+        assertEquals(
+            "Dieses Muster stammt aus einem Muster des Tages und liegt in den Leitplanken der App.",
+            saved.effect,
+        )
+        listOf(custom, saved).forEach { e ->
+            assertTrue(e.effectDetail!!.contains("Eine Studienlage zu genau diesem Muster gibt es nicht."))
+            assertTrue(!e.effectDetail!!.contains("Wirkversprechen"))
+            assertTrue(!e.effect.contains("Wirkversprechen"))
+        }
+        assertTrue(custom.lore!!.detail.startsWith("Du hast das Muster selbst zusammengestellt;"))
+        assertTrue(saved.lore!!.detail.startsWith("Das Muster stammt aus einem Muster des Tages;"))
+        // Die Regelzeile nennt die Zahlen der Erzeugungsregeln.
+        assertTrue(custom.effectDetail!!, custom.effectDetail!!.contains("4,6 bis 6,7 Atemzügen pro Minute"))
+        val active = PatternComposer.propose(PatternWish(activating = true, withHold = false), 0)
+        val customActive = RandomPatternGenerator.exerciseFrom(active, "muster-1", "Eigenes Muster", PatternOrigin.CUSTOM)
+        assertTrue(customActive.effectDetail!!, customActive.effectDetail!!.contains("6,7 bis 10 Atemzügen pro Minute"))
+    }
+
+    @Test
+    fun `Entwurf hat eine feste Id`() {
+        assertEquals("muster-entwurf", RandomPatternGenerator.DRAFT_ID)
+    }
+
     @Test
     fun `Hinweis bricht nie zwischen Zahl und Einheit oder vor dem Trennpunkt um`() {
         year.forEach { date ->

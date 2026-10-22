@@ -21,7 +21,9 @@ data class PatternSpec(
  *
  * Bewusst weiter als der heutige Generator: 0,5-s-Werte und aktivierende Muster mit gleich
  * langem Ein- und Ausatmen erzeugte er bis Version 1.6.2; gespeicherte und exportierte Muster
- * aus dieser Zeit bleiben gültig.
+ * aus dieser Zeit bleiben gültig. Leitplanken (Import) ⊇ Erzeugungsregeln
+ * ([withinCreationRules], Generator und Muster-Editor): ruhig hier Atemzug 8,5–13 s, bei der
+ * Erzeugung 9–13 s.
  */
 fun PatternSpec.withinGuardrails(): Boolean {
     val phases = listOfNotNull(inhale, holdFull, exhale, holdEmpty)
@@ -35,6 +37,13 @@ fun PatternSpec.withinGuardrails(): Boolean {
     }
 }
 
+/**
+ * Einordnung eines Musters in die Atemlehre ([RandomPatternGenerator.atemlehreRefs]):
+ * [patternId] ist die Hauptkarte (Brmhana, Langhana oder Samana), [morePatternIds] die Karten
+ * der Haltephasen („halten-voll“, „halten-leer“) in dieser Reihenfolge.
+ */
+data class AtemlehreRefs(val patternId: String, val morePatternIds: List<String>)
+
 /** Das Tagesmuster: die generierte Übung + ihre Parameter (für Chip + Speichern). */
 data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
     val activating: Boolean get() = spec.activating
@@ -46,7 +55,9 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
  * Abwechslung positioniert – ohne Wirkversprechen (die Studienlage favorisiert für regelmäßiges
  * Üben EIN konstantes langsames Muster, siehe effectDetail-Text).
  *
- * Leitplanken (Russo 2017, Zaccaro 2018, Pranayama-Konventionen):
+ * Erzeugungsregeln ([PatternRules], [withinCreationRules]; Russo 2017, Zaccaro 2018,
+ * Pranayama-Konventionen). Sie sind strenger als die Import-Leitplanken [withinGuardrails]:
+ * Leitplanken (Import) ⊇ Erzeugungsregeln.
  * - ruhig: Zyklus 9–13 s (≈ 4,6–6,7 Atemzüge/min), Ausatmen ≥ Einatmen, Halten ≤ 4 s
  *   (nach dem Ausatmen ≤ 2 s);
  * - sanft aktivierend: Einatmen länger als Ausatmen (Brmhana der Atemlehre), Zyklus 6–9 s,
@@ -60,6 +71,9 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
 object RandomPatternGenerator {
 
     const val ID = "muster-des-tages"
+
+    /** Übungs-Id des noch nicht gespeicherten Entwurfs im Muster-Editor („Starten“ ohne Speichern). */
+    const val DRAFT_ID = "muster-entwurf"
 
     fun forDate(date: LocalDate): DailyPattern = forSeed(date.toEpochDay())
 
@@ -161,8 +175,22 @@ object RandomPatternGenerator {
     /** Geschütztes Leerzeichen zwischen Zahl und Einheit. */
     private const val NBSP = '\u00A0'
 
-    /** Baut aus [spec] eine lauffähige Übung – für das Tagesmuster UND gespeicherte Muster. */
-    fun exerciseFrom(spec: PatternSpec, id: String, name: String): Exercise {
+    /**
+     * Baut aus [spec] eine lauffähige Übung – für das Tagesmuster, gespeicherte Tagesmuster und
+     * eigene Muster. [origin] wählt die Texte (siehe [PatternOrigin]); die Texte von
+     * [PatternOrigin.TODAY] sind bytegleich mit Version 1.6.8 (DailyPatternGoldenTest).
+     *
+     * [minutes] legt die Vorgabedauer fest (1–30 min, eigene Muster): Die Wiederholungszahl wird
+     * daraus berechnet, sodass `defaultMinutes()` genau diese Dauer liefert und die Detailseite
+     * kein „angepasst“ zeigt. `null` heißt ≈ 5 min wie beim Muster des Tages.
+     */
+    fun exerciseFrom(
+        spec: PatternSpec,
+        id: String,
+        name: String,
+        origin: PatternOrigin = PatternOrigin.TODAY,
+        minutes: Int? = null,
+    ): Exercise {
         val phases = buildList {
             add(Phase(PhaseType.INHALE, secs(spec.inhale)))
             // Notiz wie bei Box und 4-7-8: Beide Haltephasen heißen „Halten“, erst „voll“/„leer“
@@ -172,7 +200,8 @@ object RandomPatternGenerator {
             spec.holdEmpty?.let { add(Phase(PhaseType.HOLD_EMPTY, secs(it), note = "leer")) }
         }
         val cycleSeconds = spec.inhale + (spec.holdFull ?: 0.0) + spec.exhale + (spec.holdEmpty ?: 0.0)
-        val repeat = (TARGET_SECONDS / cycleSeconds).roundToInt().coerceAtLeast(1)
+        val targetSeconds = minutes?.let { it * 60.0 } ?: TARGET_SECONDS
+        val repeat = (targetSeconds / cycleSeconds).roundToInt().coerceAtLeast(1)
         val hint = hintFor(spec)
         // Gleichlautend mit dem Charakter-Chip (strings.xml daily_pattern_gentle_up / detail_calm);
         // domain/ kennt keine Ressourcen.
@@ -181,12 +210,35 @@ object RandomPatternGenerator {
         // bewusst NICHT randomisiert – und als Einladung formuliert, nicht als Muss.
         // Punkt nach der Phasenzeile: Sonst liest sich „Ausatmen 5 s Wenn du magst …" als ein Satz.
         val fullHint = if (spec.activating) hint else "$hint. $BELLY_GUIDANCE"
-        val bellyNote = if (spec.activating) "" else " Bauchatmung empfohlen – ganz wie es angenehm ist."
+        val texts = when (origin) {
+            PatternOrigin.TODAY -> todayTexts(hint, character, spec.activating)
+            PatternOrigin.SAVED_DAILY -> savedDailyTexts(hint, character, spec.activating)
+            PatternOrigin.CUSTOM -> customTexts(hint, character, spec.activating)
+        }
 
         return Exercise(
             id = id,
             name = name,
             family = BreathingFamily.BALANCE,
+            shortDescription = texts.shortDescription,
+            effect = texts.effect,
+            effectDetail = texts.effectDetail,
+            segments = listOf(Segment(phases = phases, repeat = repeat)),
+            rounds = 1,
+            instructionHint = fullHint,
+            lore = loreFor(spec, origin),
+            generated = true,
+            activating = spec.activating,
+        )
+    }
+
+    /** Die Texte, die von der Herkunft abhängen. */
+    private class OriginTexts(val shortDescription: String, val effect: String, val effectDetail: String)
+
+    /** Muster des Tages: bytegleich mit Version 1.6.8 – nicht anfassen (DailyPatternGoldenTest). */
+    private fun todayTexts(hint: String, character: String, activating: Boolean): OriginTexts {
+        val bellyNote = if (activating) "" else " Bauchatmung empfohlen – ganz wie es angenehm ist."
+        return OriginTexts(
             shortDescription = "$hint – heute $character.$bellyNote Jeden Tag ein neues, " +
                 "zufällig erzeugtes Muster in physiologisch üblichen Grenzen.",
             effect = "Spielerische Abwechslung: ein generiertes Muster zum Ausprobieren – " +
@@ -197,38 +249,76 @@ object RandomPatternGenerator {
                 "Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: Einatmen länger, nie forciert). " +
                 "Für regelmäßiges Üben ist ein konstantes Muster – etwa die Resonanz-Atmung – " +
                 "die besser belegte Wahl; das Tagesmuster ist die Einladung, Neues zu entdecken.",
-            segments = listOf(Segment(phases = phases, repeat = repeat)),
-            rounds = 1,
-            instructionHint = fullHint,
-            lore = loreFor(spec),
-            generated = true,
-            activating = spec.activating,
         )
     }
 
+    /** Gespeichertes Muster des Tages: ohne „heute“, „jeden Tag neu“ und „aus dem Datum“. */
+    private fun savedDailyTexts(hint: String, character: String, activating: Boolean) = OriginTexts(
+        shortDescription = "$hint – $character.${bellyInvitation(activating)} " +
+            "Gespeichert aus einem Muster des Tages, in den Leitplanken der App.",
+        effect = "Dieses Muster stammt aus einem Muster des Tages und liegt in den Leitplanken der App.",
+        effectDetail = "Das Muster stammt aus einem Muster des Tages. ${rulesSentence(activating)} $STUDY_NOTE",
+    )
+
+    /** Eigenes Muster aus dem Editor: ehrlich selbst zusammengestellt, ohne Evidenzbehauptung. */
+    private fun customTexts(hint: String, character: String, activating: Boolean) = OriginTexts(
+        shortDescription = "$hint – $character.${bellyInvitation(activating)} " +
+            "Von dir zusammengestellt, in den Leitplanken der App.",
+        effect = "Dieses Muster hast du selbst zusammengestellt – in den Leitplanken der App.",
+        effectDetail = "Beim Zusammenstellen lässt die App nur Muster in festen Grenzen zu. " +
+            "${rulesSentence(activating)} $STUDY_NOTE",
+    )
+
+    /** Bauchatmung nur bei ruhigen Mustern und nur als Einladung (mit führendem Leerzeichen). */
+    private fun bellyInvitation(activating: Boolean): String = if (activating) "" else " Gern mit Bauchatmung, wenn es angenehm ist."
+
+    /** Die Erzeugungsregeln des Charakters in Worten, Zahlen aus [PatternRules]. */
+    private fun rulesSentence(activating: Boolean): String = if (activating) {
+        "Sanft aktivierende Muster bleiben bei ${breathsPerMinute(PatternRules.ACTIVE_CYCLE_MAX)} bis " +
+            "${breathsPerMinute(PatternRules.ACTIVE_CYCLE_MIN)} Atemzügen pro Minute, das Einatmen ist " +
+            "länger als das Ausatmen und das Halten höchstens ${PatternRules.ACTIVE_HOLD_FULL_MAX}${NBSP}s " +
+            "lang – nie forciert."
+    } else {
+        "Ruhige Muster bleiben bei ${breathsPerMinute(PatternRules.CALM_CYCLE_MAX)} bis " +
+            "${breathsPerMinute(PatternRules.CALM_CYCLE_MIN)} Atemzügen pro Minute, das Ausatmen ist " +
+            "mindestens so lang wie das Einatmen, Halten voll höchstens " +
+            "${PatternRules.CALM_HOLD_FULL_MAX}${NBSP}s und Halten leer höchstens " +
+            "${PatternRules.CALM_HOLD_EMPTY_MAX}${NBSP}s."
+    }
+
+    /** Atemzüge pro Minute bei [cycleSeconds], auf eine Nachkommastelle („4,6“, „10“). */
+    private fun breathsPerMinute(cycleSeconds: Int): String = ((60.0 / cycleSeconds * 10).roundToInt() / 10.0).fmt()
+
     /**
-     * Einordnung nach der Atemlehre: folgt nur dem Verhältnis der Phasen, nicht einer Quelle.
-     * Die Kennungen sind die Muster-Karten der Atemlehre (Datenschicht, hier nur als String);
-     * ein Halten verweist zusätzlich auf seine Karte.
+     * Keine Evidenzbehauptung für ein einzelnes Muster (TEXT-07): Die Grenzen folgen der
+     * Forschung zu langsamem Atmen, das Muster selbst ist nicht untersucht.
      */
-    private fun loreFor(spec: PatternSpec): YogaLore {
-        val (patternId, teaser) = when {
-            spec.exhale < spec.inhale ->
-                "brmhana" to
-                    "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
+    private const val STUDY_NOTE =
+        "Die Grenzen orientieren sich an der Forschung zu langsamem Atmen. Eine Studienlage zu " +
+            "genau diesem Muster gibt es nicht. Für regelmäßiges Üben ist ein konstantes Muster – " +
+            "etwa die Resonanz-Atmung – die besser belegte Wahl."
 
-            spec.exhale > spec.inhale ->
-                "langhana" to
-                    "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
-
-            // Auch aktivierende Muster mit gleich langem Ein- und Ausatmen (gespeichert bis 1.6.2):
-            // Das Verhältnis ist Samana, das Tempo allein macht es nach der Lehre nicht zu Brmhana.
-            else ->
-                "samana" to
-                    "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
+    /**
+     * Einordnung nach der Atemlehre ([atemlehreRefs]) mit Teaser und Detail. Der Teaser hängt nur
+     * am Verhältnis der Phasen, der erste Satz des Details an der Herkunft.
+     */
+    private fun loreFor(spec: PatternSpec, origin: PatternOrigin): YogaLore {
+        val refs = atemlehreRefs(spec)
+        val patternId = refs.patternId
+        val teaser = when (patternId) {
+            "brmhana" -> "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
+            "langhana" -> "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
+            else -> "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
         }
         val detail = buildString {
-            append("Das Muster ist zufällig erzeugt; die Einordnung folgt nur dem Verhältnis der Phasen.")
+            append(
+                when (origin) {
+                    PatternOrigin.TODAY -> "Das Muster ist zufällig erzeugt"
+                    PatternOrigin.SAVED_DAILY -> "Das Muster stammt aus einem Muster des Tages"
+                    PatternOrigin.CUSTOM -> "Du hast das Muster selbst zusammengestellt"
+                },
+            )
+            append("; die Einordnung folgt nur dem Verhältnis der Phasen.")
             if (spec.holdFull != null) {
                 append(
                     if (patternId == "brmhana") {
@@ -243,11 +333,32 @@ object RandomPatternGenerator {
                 append(" Das Halten nach dem Ausatmen gilt als Weg in die Stille und verstärkt das Beruhigende.")
             }
         }
+        return YogaLore(teaser = teaser, detail = detail, patternId = patternId, morePatternIds = refs.morePatternIds)
+    }
+
+    /**
+     * Einordnung eines Musters in die Atemlehre: folgt nur dem Verhältnis der Phasen, nicht einer
+     * Quelle. Eine Logik für Muster des Tages, gespeicherte und eigene Muster und die
+     * Live-Einordnung im Muster-Editor.
+     *
+     * - Ausatmen kürzer als Einatmen → „brmhana“, länger → „langhana“, gleich → „samana“. Auch
+     *   aktivierende Muster mit gleich langem Ein- und Ausatmen (gespeichert bis 1.6.2) sind
+     *   Samana: Das Tempo allein macht sie nach der Lehre nicht zu Brmhana.
+     * - Ein Halten verweist zusätzlich auf seine Karte: erst „halten-voll“, dann „halten-leer“.
+     *
+     * Die Kennungen sind die Muster-Karten der Atemlehre (Datenschicht, hier nur als String).
+     */
+    fun atemlehreRefs(spec: PatternSpec): AtemlehreRefs {
+        val patternId = when {
+            spec.exhale < spec.inhale -> "brmhana"
+            spec.exhale > spec.inhale -> "langhana"
+            else -> "samana"
+        }
         val holds = listOfNotNull(
             "halten-voll".takeIf { spec.holdFull != null },
             "halten-leer".takeIf { spec.holdEmpty != null },
         )
-        return YogaLore(teaser = teaser, detail = detail, patternId = patternId, morePatternIds = holds)
+        return AtemlehreRefs(patternId = patternId, morePatternIds = holds)
     }
 
     // ---- Helfer ----
@@ -272,10 +383,12 @@ object RandomPatternGenerator {
 
     /** Ziel-Vorgabedauer ≈ 5 min (Nutzer regelt im Detail 1–30 min). */
     private const val TARGET_SECONDS = 300.0
-    private const val CALM_CYCLE_MIN = 9
-    private const val CALM_CYCLE_MAX = 13
-    private const val CALM_EXHALE_MAX = 8
-    private const val ACTIVE_CYCLE_MIN = 6
-    private const val ACTIVE_CYCLE_MAX = 9
-    private const val ACTIVE_EXHALE_MIN = 2
+
+    // Eine Quelle für die Grenzen: die Erzeugungsregeln (PatternRules).
+    private const val CALM_CYCLE_MIN = PatternRules.CALM_CYCLE_MIN
+    private const val CALM_CYCLE_MAX = PatternRules.CALM_CYCLE_MAX
+    private const val CALM_EXHALE_MAX = PatternRules.EXHALE_MAX
+    private const val ACTIVE_CYCLE_MIN = PatternRules.ACTIVE_CYCLE_MIN
+    private const val ACTIVE_CYCLE_MAX = PatternRules.ACTIVE_CYCLE_MAX
+    private const val ACTIVE_EXHALE_MIN = PatternRules.EXHALE_MIN
 }

@@ -1,6 +1,9 @@
 package app.atemkraft.data
 
+import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.withinCreationRules
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -71,6 +74,74 @@ class AtemlehreTest {
                 "halten-leer".takeIf { p.spec.holdEmpty != null },
             )
             assertEquals("Seed $seed (${p.spec})", holds, p.exercise.lore?.morePatternIds)
+        }
+    }
+
+    /**
+     * Alle Muster, die Generator und Editor erzeugen dürfen: ganze Sekunden, Einatmen 2–8,
+     * Ausatmen 2–8, Halten voll 0–4, Halten leer 0–2, beide Charaktere, gefiltert mit den
+     * Erzeugungsregeln (191 ruhige + 18 aktivierende).
+     */
+    private val creatable: List<PatternSpec> = buildList {
+        for (activating in listOf(false, true)) {
+            for (inhale in 2..8) {
+                for (exhale in 2..8) {
+                    for (holdFull in 0..4) {
+                        for (holdEmpty in 0..2) {
+                            add(
+                                PatternSpec(
+                                    inhale.toDouble(),
+                                    holdFull.takeIf { it > 0 }?.toDouble(),
+                                    exhale.toDouble(),
+                                    holdEmpty.takeIf { it > 0 }?.toDouble(),
+                                    activating,
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }.filter { it.withinCreationRules() }
+
+    @Test
+    fun `atemlehreRefs verweist bei allen erzeugbaren Mustern nur auf die fünf Karten`() {
+        assertEquals(209, creatable.size)
+        val allowed = setOf("brmhana", "langhana", "samana", "halten-voll", "halten-leer")
+        val used = creatable.flatMap { spec ->
+            val refs = RandomPatternGenerator.atemlehreRefs(spec)
+            listOf(refs.patternId) + refs.morePatternIds
+        }.toSet()
+        assertEquals(allowed, used)
+        used.forEach { assertNotNull("unbekannte Karte „$it“", Atemlehre.pattern(it)) }
+        // Innerhalb der Regeln: ruhig → Langhana oder Samana, aktivierend → immer Brmhana.
+        creatable.forEach { spec ->
+            val id = RandomPatternGenerator.atemlehreRefs(spec).patternId
+            if (spec.activating) assertEquals("$spec", "brmhana", id) else assertTrue("$spec", id in setOf("langhana", "samana"))
+        }
+    }
+
+    @Test
+    fun `Einordnung ist für jede Herkunft dieselbe`() {
+        val specs = creatable + generated.map { it.spec }
+        specs.forEach { spec ->
+            val refs = RandomPatternGenerator.atemlehreRefs(spec)
+            PatternOrigin.entries.forEach { origin ->
+                val lore = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin, 5).lore
+                assertNotNull("$spec $origin ohne Yoga-Lehre", lore)
+                assertEquals("$spec $origin", refs.patternId, lore!!.patternId)
+                assertEquals("$spec $origin", refs.morePatternIds, lore.morePatternIds)
+            }
+        }
+    }
+
+    @Test
+    fun `Detail der Yoga-Lehre nennt die Herkunft ehrlich`() {
+        creatable.forEach { spec ->
+            fun detail(origin: PatternOrigin) = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin).lore!!.detail
+            assertTrue("$spec", detail(PatternOrigin.CUSTOM).startsWith("Du hast"))
+            assertTrue("$spec", detail(PatternOrigin.SAVED_DAILY).startsWith("Das Muster stammt aus einem Muster des Tages"))
+            assertTrue("$spec", detail(PatternOrigin.TODAY).startsWith("Das Muster ist zufällig erzeugt"))
         }
     }
 
