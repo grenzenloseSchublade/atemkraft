@@ -19,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,46 +33,35 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import app.atemkraft.R
-import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CollapsibleSection
-import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.home.ExerciseCard
-import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Situationen-Tab: „welche Atmung wann“ als Befindens-Übersicht. Gleiche Optik wie der Atmen-Tab
  * (Abschnitts-Header + Übungs-Karten), nur nach Lage gruppiert – mit Begründungssatz als
- * Entscheidungshilfe. Die Situationen sind aufklappbar und starten zu. „Meine Muster“ steht
- * darüber: bis zwei Muster immer offen (man hat sie selbst angelegt und will sie direkt
- * wiederfinden), ab [SAVED_PATTERNS_FOLD_FROM] einklappbar mit Anzahl im Kopf, damit sie die
- * Befinden nicht nach unten schieben. Diesen Zustand hält die App dauerhaft
- * ([savedPatternsExpanded] aus DataStore, Standard zu; [savedPatternsShownExpanded]).
+ * Entscheidungshilfe. Die Situationen sind aufklappbar und starten zu. „Meine Muster“ stehen
+ * im eigenen Tab „Eigene“ (`ui/own/OwnPatternsScreen`).
  *
  * Befindens-Suche (MUSTER-09): Die Lupe im Kopf ersetzt den Untertitel durch ein Suchfeld.
  * Sobald die Eingabe ein Suchwort enthält ([SituationSearch]), stehen nur die passenden
- * Situationen da, aufgeklappt und beste zuerst; „Meine Muster“ tritt zurück, weil die Suche
- * nur über das Befinden läuft. Die Eingabe lebt nur in `rememberSaveable` – nie in DataStore
- * oder Log (SEC-PRIV-03/04). System-Zurück schließt zuerst die Suche.
+ * Situationen da, aufgeklappt und beste zuerst. Die Eingabe lebt nur in `rememberSaveable` –
+ * nie in DataStore oder Log (SEC-PRIV-03/04). System-Zurück schließt zuerst die Suche.
  */
 @Composable
 fun SituationsScreen(
     recommendations: List<SituationRecommendation>,
-    savedPatterns: List<SavedPattern>,
-    savedPatternsExpanded: Boolean,
-    onSavedPatternsExpandedChange: (Boolean) -> Unit,
     resolve: (String) -> Exercise?,
     onSelect: (String) -> Unit,
-    onDeleteSavedPattern: (Long) -> Unit,
     markedIds: Set<String> = emptySet(),
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
@@ -157,27 +145,13 @@ fun SituationsScreen(
                     SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
                 }
             } else {
-                // Vom Nutzer gespeicherte generierte Muster – bewusst hier (nicht im Atmen-Tab).
-                val headOffset = if (savedPatterns.isNotEmpty()) 1 else 0
-                if (savedPatterns.isNotEmpty()) {
-                    item(key = "my-patterns") {
-                        SavedPatternsSection(
-                            patterns = savedPatterns,
-                            expanded = savedPatternsShownExpanded(savedPatterns.size, savedPatternsExpanded),
-                            onExpandedChange = onSavedPatternsExpandedChange,
-                            onSelect = onSelect,
-                            onDelete = onDeleteSavedPattern,
-                        )
-                    }
-                }
-
                 // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
                 // als langes Scrollen.
-                // Köpfe reihum nach ihrer Lage (FARBE-07): „Meine Muster“ zuerst, dann die Situationen.
+                // Köpfe reihum nach ihrer Lage (FARBE-07).
                 itemsIndexed(recommendations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
                     SituationSection(
                         rec,
-                        headOffset + index,
+                        index,
                         initiallyExpanded = false,
                         resolve = resolve,
                         markedIds = markedIds,
@@ -187,50 +161,6 @@ fun SituationsScreen(
             }
 
             item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
-        }
-    }
-}
-
-/** Ab so vielen gespeicherten Mustern ist „Meine Muster“ einklappbar. */
-const val SAVED_PATTERNS_FOLD_FROM = 3
-
-/**
- * Wie „Meine Muster“ bei [count] Mustern erscheint: `null` = nicht einklappbar (immer offen,
- * ohne Caret), sonst offen bzw. zu nach der gespeicherten Wahl [stored]. Fällt die Zahl unter
- * [SAVED_PATTERNS_FOLD_FROM], bleibt [stored] unangetastet und gilt wieder, sobald es mehr werden.
- */
-fun savedPatternsShownExpanded(count: Int, stored: Boolean): Boolean? = if (count < SAVED_PATTERNS_FOLD_FROM) null else stored
-
-/**
- * „Meine Muster“ als [CollapsibleSection] wie die Situationen. [expanded] siehe
- * [savedPatternsShownExpanded].
- */
-@Composable
-private fun SavedPatternsSection(
-    patterns: List<SavedPattern>,
-    expanded: Boolean?,
-    onExpandedChange: (Boolean) -> Unit,
-    onSelect: (String) -> Unit,
-    onDelete: (Long) -> Unit,
-) {
-    CollapsibleSection(
-        title = stringResource(R.string.situations_my_patterns),
-        // Steht es da, ist es der oberste Kopf (FARBE-07).
-        color = headingColor(0),
-        expanded = expanded,
-        onExpandedChange = onExpandedChange,
-        status = expanded?.let { stringResource(R.string.situations_my_patterns_count, patterns.size) },
-        statusDescription = expanded?.let { pluralStringResource(R.plurals.cd_situations_my_patterns_count, patterns.size, patterns.size) },
-        spacingAbove = Dimens.ListGap,
-    ) {
-        patterns.forEach { pattern ->
-            key(pattern.id) {
-                SavedPatternCard(
-                    pattern = pattern,
-                    onClick = { onSelect(pattern.exercise.id) },
-                    onDelete = { onDelete(pattern.id) },
-                )
-            }
         }
     }
 }
@@ -288,25 +218,5 @@ private fun SearchStatus(count: Int, onShowAll: () -> Unit) {
         if (count == 0) {
             AppTextButton(onClick = onShowAll) { Text(stringResource(R.string.action_show_all)) }
         }
-    }
-}
-
-/**
- * Karte eines gespeicherten Musters: aufgebaut wie das Muster des Tages ([PatternCard]), in der
- * Ecke Löschen – zweistufig, ein Fehltipp löscht nichts (MUSTER-05).
- */
-@Composable
-private fun SavedPatternCard(
-    pattern: SavedPattern,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val name = pattern.exercise.name
-    PatternCard(exercise = pattern.exercise, spec = pattern.spec, onClick = onClick) {
-        ConfirmIconButton(
-            name = name,
-            description = stringResource(R.string.cd_pattern_delete, name),
-            onConfirm = onDelete,
-        )
     }
 }

@@ -42,9 +42,8 @@ import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.HintText
-import app.atemkraft.ui.components.ScreenHeader
+import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
@@ -75,14 +74,16 @@ private val FAMILY_DOT = 10.dp
 private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.")
 
 /**
- * Logbuch-Tab: Statistik mit 7-Tage-Übersicht, darunter der Verlauf nach Tagen gruppiert
- * (Heute / Gestern / Diese Woche / je Monat), je Gruppe eine Karte. Leeren liegt bewusst in
- * den Einstellungen, nicht hier neben der Statistik. [today] nur für reproduzierbare Screenshots.
+ * Logbuch als Push-Seite (aus Einstellungen › Daten): Statistik mit 7-Tage-Übersicht, darunter
+ * der Verlauf nach Tagen gruppiert (Heute / Gestern / Diese Woche / je Monat), je Gruppe eine
+ * Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
+ * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik. [today] nur
+ * für reproduzierbare Screenshots.
  */
 @Composable
 fun LogbookScreen(
     entries: List<SessionLogEntry>,
-    onOpenSettings: () -> Unit,
+    onBack: () -> Unit,
     today: LocalDate = LocalDate.now(),
 ) {
     val zone = ZoneId.systemDefault()
@@ -98,28 +99,27 @@ fun LogbookScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-            // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-            // Listen-Clip sie anschneidet.
-            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-            verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-        ) {
-            item {
-                ScreenHeader(
-                    title = stringResource(R.string.tab_logbook),
-                    subtitle = stringResource(R.string.log_subtitle),
-                    action = { SettingsAction(onClick = onOpenSettings) },
-                )
-                // Titel und Statistik gehören zusammen – kleine Lücke statt Abschnitts-Abstand.
-                Spacer(Modifier.height(Dimens.GapSmall))
-                StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, today = today)
-            }
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild.
+            PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title))
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+                // Listen-Clip sie anschneidet.
+                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
+                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+            ) {
+                item {
+                    // Abstand unter dem festen Kopf wie in den Einstellungen.
+                    Spacer(Modifier.height(Dimens.SectionGap))
+                    StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, today = today)
+                }
 
-            // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
-            itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group -> LogGroupSection(index, group, zone) }
-            item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+                // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
+                itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group -> LogGroupSection(index, group, zone) }
+                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+            }
         }
     }
 }

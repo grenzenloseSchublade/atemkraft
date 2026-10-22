@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
@@ -93,6 +92,7 @@ import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationScreen
+import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.session.SessionUiState
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
@@ -225,7 +225,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /** Tabs der unteren Leiste, in der Reihenfolge der App (MainActivity). */
-    private enum class Tab { ATMEN, SITUATIONEN, MEDITATION, LOGBUCH }
+    private enum class Tab { ATMEN, SITUATIONEN, EIGENE, MEDITATION }
 
     /**
      * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
@@ -302,8 +302,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 val (label, icon) = when (tab) {
                     Tab.ATMEN -> R.string.tab_breathe to rememberVectorPainter(Icons.Filled.Home)
                     Tab.SITUATIONEN -> R.string.tab_situations to rememberVectorPainter(Icons.Filled.Search)
+                    Tab.EIGENE -> R.string.tab_own to painterResource(R.drawable.ic_bookmark_filled)
                     Tab.MEDITATION -> R.string.tab_meditation to painterResource(R.drawable.ic_meditation)
-                    Tab.LOGBUCH -> R.string.tab_logbook to rememberVectorPainter(Icons.Filled.DateRange)
                 }
                 AppNavItem(label = stringResource(label), selected = tab == selected, onClick = {}) {
                     Icon(icon, contentDescription = null)
@@ -420,35 +420,42 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
-    /** Befindens-Übersicht: alle Situationen zu (Standard); zwei Muster stehen offen, ohne Caret. */
+    /** Befindens-Übersicht: alle Situationen zu (Standard). */
     @Test
     fun situations() = snap("02_situationen") { SituationsContent() }
 
-    /** Drei Muster: „Meine Muster · 3“ einklappbar, Standard zu. */
+    /** Tab „Eigene“ mit drei Mustern: „Neues Muster“, darunter „Meine Muster“ immer offen. */
     @Test
-    fun situationsPatternsCollapsed() = snap("02_situationen_muster_zu", tab = Tab.SITUATIONEN) {
-        SituationsContent(patterns = 3)
-    }
+    fun ownPatterns() = snap("13_eigene", tab = Tab.EIGENE) { OwnPatternsContent() }
 
-    /** Drei Muster, vom Nutzer aufgeklappt: Caret nach oben, Karten darunter. */
+    /** Tab „Eigene“ ohne Muster: kurzer Satz und „Neues Muster“. */
     @Test
-    fun situationsPatternsExpanded() = snap("02_situationen_muster_auf", tab = Tab.SITUATIONEN) {
-        SituationsContent(patterns = 3, patternsExpanded = true)
-    }
+    fun ownPatternsEmpty() = snap("13_eigene_leer", tab = Tab.EIGENE) { OwnPatternsContent(patterns = 0) }
 
     /**
      * Muster löschen nach dem ersten Tipp (MUSTER-05): Icon mit Kreuz in error, Karte gleich hoch.
      * Die Uhr steht ab dem Tipp, sonst liefe der 4-s-Rückfall vor der Aufnahme ab.
      */
     @Test
-    fun situationsPatternDeleteArmed() = snap("02_situationen_muster_loeschen", tab = Tab.SITUATIONEN, prepare = {
+    fun ownPatternDeleteArmed() = snap("13_eigene_loeschen", tab = Tab.EIGENE, prepare = {
         compose.waitForIdle()
         val first = saved.first().exercise.name
         compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.cd_pattern_delete, first)).performClick()
         // Erst nach dem Klick anhalten: Bei stehender Uhr verarbeitet Compose 1.12 den Klick nicht.
         compose.waitForIdle()
         compose.mainClock.autoAdvance = false
-    }) { SituationsContent() }
+    }) { OwnPatternsContent() }
+
+    @Composable
+    private fun OwnPatternsContent(patterns: Int = 3) {
+        OwnPatternsScreen(
+            savedPatterns = saved.take(patterns),
+            onNewPattern = {},
+            onSelect = {},
+            onDeletePattern = {},
+            onOpenSettings = {},
+        )
+    }
 
     /** Eine Situation aufgeklappt – die mit den meisten Übungen, Caret zeigt nach oben. */
     @Test
@@ -482,18 +489,11 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     @Composable
-    private fun SituationsContent(patterns: Int = 2, patternsExpanded: Boolean = false) {
+    private fun SituationsContent() {
         SituationsScreen(
             recommendations = Situations.all,
-            savedPatterns = saved.take(patterns),
-            savedPatternsExpanded = patternsExpanded,
-            onSavedPatternsExpandedChange = {},
-            resolve = { id ->
-                BuiltInExercises.all.firstOrNull { it.id == id }
-                    ?: saved.firstOrNull { it.exercise.id == id }?.exercise
-            },
+            resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
             onSelect = {},
-            onDeleteSavedPattern = {},
         )
     }
 
@@ -589,12 +589,12 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             roundsCompleted = 0,
             kind = SessionKind.MEDITATION,
         )
-        LogbookScreen(entries = entries, onOpenSettings = {}, today = DAY)
+        LogbookScreen(entries = entries, onBack = {}, today = DAY)
     }
 
     @Test
-    fun logbookEmpty() = snap("04_logbuch_leer", tab = Tab.LOGBUCH) {
-        LogbookScreen(entries = emptyList(), onOpenSettings = {}, today = DAY)
+    fun logbookEmpty() = snap("04_logbuch_leer", tab = Tab.ATMEN) {
+        LogbookScreen(entries = emptyList(), onBack = {}, today = DAY)
     }
 
     @Test

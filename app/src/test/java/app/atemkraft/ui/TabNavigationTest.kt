@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -19,14 +20,20 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
@@ -39,7 +46,9 @@ import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.glossary.GlossaryScreen
+import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.settings.NoOpSettingsActions
+import app.atemkraft.ui.settings.SettingsActions
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsUiState
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -70,7 +79,11 @@ class TabNavigationTest {
 
     private lateinit var nav: NavHostController
 
-    private val tabs = listOf(AtmenRoute, SituationenRoute, MeditationRoute, LogbuchRoute)
+    private val tabs = listOf(AtmenRoute, SituationenRoute, EigeneRoute, MeditationRoute)
+
+    // Sitzungen im Logbuch (Zeile in Einstellungen › Daten) und Tipps auf „Logbuch leeren“.
+    private var logCount by mutableIntStateOf(3)
+    private var logCleared = 0
 
     private var overlayOpen by mutableStateOf(false)
     private lateinit var focusManager: FocusManager
@@ -120,11 +133,12 @@ class TabNavigationTest {
         NavHost(nav, startDestination = AtmenRoute) {
             composable<AtmenRoute> { Text("Atmen") }
             composable<SituationenRoute> { Text("Situationen") }
-            composable<LogbuchRoute> { Text("Logbuch") }
+            composable<EigeneRoute> { Text("Eigene") }
             composable<MeditationRoute> { Text("Meditation") }
             composable<SettingsRoute> { entry ->
                 Settings(focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation)
             }
+            composable<LogbookRoute> { LogbookScreen(entries = emptyList(), onBack = { nav.popBackStack() }) }
             composable<GlossaryRoute> { GlossaryScreen(onBack = { nav.popBackStack() }) }
             composable<AboutRoute> { AboutScreen(onBack = { nav.popBackStack() }) }
             composable<AtemlehreRoute> { entry ->
@@ -267,6 +281,49 @@ class TabNavigationTest {
         )
     }
 
+    /** Die Navigationszeile „Logbuch“ der Daten-Karte (Titel und Zahl als ein Button). */
+    private fun logRow() = rule.onNode(
+        SemanticsMatcher("Klick-Label „Logbuch öffnen“") {
+            it.config.getOrNull(SemanticsActions.OnClick)?.label == string(R.string.settings_logbook_open)
+        },
+    )
+
+    @Test
+    fun `Logbuch-Zeile der Einstellungen öffnet das Logbuch, Zurück-Pfeil führt zu den Einstellungen`() {
+        step { nav.tapTab(EigeneRoute, selected = false) }
+        step { nav.navigate(SettingsRoute()) }
+
+        logRow()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .assertTextContains(string(R.string.settings_log_title))
+        assertEquals("AtmenRoute > EigeneRoute > SettingsRoute > LogbookRoute", step { logRow().performScrollTo().performClick() })
+        rule.onNodeWithText(string(R.string.log_sessions_none)).assertIsDisplayed()
+
+        assertEquals("AtmenRoute > EigeneRoute > SettingsRoute", step { backArrow().performClick() })
+        step { logRow().performScrollTo().performClick() }
+        // Re-Tap auf den markierten Tab führt auch aus dem Logbuch zur Tab-Startseite.
+        assertEquals("AtmenRoute > EigeneRoute", step { nav.tapTab(EigeneRoute, selected = true) })
+    }
+
+    @Test
+    fun `Papierkorb der Logbuch-Zeile leert zweistufig und öffnet das Logbuch nicht`() {
+        step { nav.navigate(SettingsRoute()) }
+        val trash = rule.onNodeWithContentDescription(string(R.string.settings_data_clear_log))
+        trash.performScrollTo()
+        assertEquals("AtmenRoute > SettingsRoute", step { trash.performClick() })
+        assertEquals(0, logCleared)
+        assertEquals(
+            "AtmenRoute > SettingsRoute",
+            step { rule.onNodeWithContentDescription(string(R.string.cd_log_clear_confirm)).performClick() },
+        )
+        assertEquals(1, logCleared)
+
+        // Ohne Einträge kein Papierkorb – die Zeile öffnet das leere Logbuch weiterhin.
+        step { logCount = 0 }
+        rule.onNodeWithContentDescription(string(R.string.settings_data_clear_log)).assertDoesNotExist()
+        assertEquals("AtmenRoute > SettingsRoute > LogbookRoute", step { logRow().performScrollTo().performClick() })
+    }
+
     /** Führt [action] aus, wartet die Navigation ab und gibt den Stapel als Text zurück. */
     private fun step(action: () -> Unit): String {
         rule.runOnIdle(action)
@@ -288,12 +345,17 @@ class TabNavigationTest {
     @Composable
     private fun Settings(focusMeditation: Boolean) {
         SettingsScreen(
-            state = SettingsUiState(gongIntervalMin = 5, gongLong = false, piperEngineReady = true),
-            actions = NoOpSettingsActions,
+            state = SettingsUiState(gongIntervalMin = 5, gongLong = false, piperEngineReady = true, logCount = logCount),
+            actions = object : SettingsActions by NoOpSettingsActions {
+                override fun clearLog() {
+                    logCleared++
+                }
+            },
             onOpenGlossary = { nav.navigate(GlossaryRoute) },
             onOpenAtemlehre = { nav.navigate(AtemlehreRoute()) },
             onOpenAbout = { nav.navigate(AboutRoute) },
             onBack = { nav.popBackStack() },
+            onOpenLogbook = { nav.navigate(LogbookRoute) },
             focusMeditation = focusMeditation,
         )
     }

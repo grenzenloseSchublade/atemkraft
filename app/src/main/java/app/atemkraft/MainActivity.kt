@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
@@ -78,8 +77,9 @@ import app.atemkraft.ui.AboutRoute
 import app.atemkraft.ui.AtemlehreRoute
 import app.atemkraft.ui.AtmenRoute
 import app.atemkraft.ui.DetailRoute
+import app.atemkraft.ui.EigeneRoute
 import app.atemkraft.ui.GlossaryRoute
-import app.atemkraft.ui.LogbuchRoute
+import app.atemkraft.ui.LogbookRoute
 import app.atemkraft.ui.MeditationRoute
 import app.atemkraft.ui.SettingsRoute
 import app.atemkraft.ui.SituationenRoute
@@ -95,6 +95,7 @@ import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MiniMeditationBar
+import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionViewModel
@@ -149,10 +150,6 @@ private fun AtemkraftApp(
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val sessionDisplay by container.settingsRepository.sessionDisplay
         .collectAsStateWithLifecycle(initialValue = SessionDisplay())
-    // Hier oben gesammelt (nicht erst im Tab), damit der gespeicherte Zustand beim ersten
-    // Öffnen der Situationen schon da ist und „Meine Muster“ nicht sichtbar umspringt.
-    val savedPatternsExpanded by container.settingsRepository.savedPatternsExpanded
-        .collectAsStateWithLifecycle(initialValue = false)
     val markedExercises by container.settingsRepository.markedExercises
         .collectAsStateWithLifecycle(initialValue = emptySet())
 
@@ -197,8 +194,8 @@ private fun AtemkraftApp(
     val currentTopTab = when {
         currentDestination.isOn(AtmenRoute) -> TopTab.ATMEN
         currentDestination.isOn(SituationenRoute) -> TopTab.SITUATIONEN
+        currentDestination.isOn(EigeneRoute) -> TopTab.EIGENE
         currentDestination.isOn(MeditationRoute) -> TopTab.MEDITATION
-        currentDestination.isOn(LogbuchRoute) -> TopTab.LOGBUCH
         else -> null
     }
     var selectedTab by rememberSaveable { mutableStateOf(TopTab.ATMEN) }
@@ -253,15 +250,15 @@ private fun AtemkraftApp(
                                 onClick = { navController.tapTab(SituationenRoute, selected = selectedTab == TopTab.SITUATIONEN) },
                             ) { Icon(Icons.Filled.Search, contentDescription = null) }, // dekorativ: das Label benennt den Tab
                             AppNavItem(
+                                label = stringResource(R.string.tab_own),
+                                selected = selectedTab == TopTab.EIGENE,
+                                onClick = { navController.tapTab(EigeneRoute, selected = selectedTab == TopTab.EIGENE) },
+                            ) { Icon(painterResource(R.drawable.ic_bookmark_filled), contentDescription = null) }, // dekorativ: das Label benennt den Tab
+                            AppNavItem(
                                 label = stringResource(R.string.tab_meditation),
                                 selected = selectedTab == TopTab.MEDITATION,
                                 onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
                             ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                            AppNavItem(
-                                label = stringResource(R.string.tab_logbook),
-                                selected = selectedTab == TopTab.LOGBUCH,
-                                onClick = { navController.tapTab(LogbuchRoute, selected = selectedTab == TopTab.LOGBUCH) },
-                            ) { Icon(Icons.Filled.DateRange, contentDescription = null) }, // dekorativ: das Label benennt den Tab
                         ),
                     )
                 }
@@ -319,26 +316,24 @@ private fun AtemkraftApp(
                     )
                 }
                 composable<SituationenRoute> {
-                    val savedPatterns by container.savedPatternsRepository.patterns
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
                     SituationsScreen(
                         recommendations = Situations.all,
-                        savedPatterns = savedPatterns,
-                        savedPatternsExpanded = savedPatternsExpanded,
-                        onSavedPatternsExpandedChange = { expanded ->
-                            scope.launch { container.settingsRepository.setSavedPatternsExpanded(expanded) }
-                        },
                         resolve = { id -> container.exerciseRepository.byId(id) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
-                        onDeleteSavedPattern = { id ->
-                            scope.launch { container.savedPatternsRepository.delete(id) }
-                        },
                         markedIds = markedExercises,
                     )
                 }
-                composable<LogbuchRoute> {
-                    LogbookScreen(
-                        entries = logEntries,
+                composable<EigeneRoute> {
+                    val savedPatterns by container.savedPatternsRepository.patterns
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
+                    OwnPatternsScreen(
+                        savedPatterns = savedPatterns,
+                        // Editor folgt: Bis die Route „Eigenes Muster“ verdrahtet ist, tut der Knopf nichts.
+                        onNewPattern = {},
+                        onSelect = { id -> navController.navigate(DetailRoute(id)) },
+                        onDeletePattern = { id ->
+                            scope.launch { container.savedPatternsRepository.delete(id) }
+                        },
                         onOpenSettings = { navController.navigate(SettingsRoute()) },
                     )
                 }
@@ -436,9 +431,13 @@ private fun AtemkraftApp(
                         onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
+                        onOpenLogbook = { navController.navigate(LogbookRoute) },
                         transfer = patternTransfer,
                         focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )
+                }
+                pushComposable<LogbookRoute> {
+                    LogbookScreen(entries = logEntries, onBack = { navController.popBackStack() })
                 }
                 pushComposable<GlossaryRoute> {
                     GlossaryScreen(onBack = { navController.popBackStack() })
@@ -550,7 +549,7 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
 }
 
 /** Die vier Top-Level-Tabs in Leisten-Reihenfolge (für die Markierung, auch auf Push-Zielen). */
-private enum class TopTab { ATMEN, SITUATIONEN, MEDITATION, LOGBUCH }
+private enum class TopTab { ATMEN, SITUATIONEN, EIGENE, MEDITATION }
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
 private fun NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true

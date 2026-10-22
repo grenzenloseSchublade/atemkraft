@@ -159,7 +159,6 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val MED_SPEECH = booleanPreferencesKey("med_speech")
         val MED_NEURAL_VOICE = stringPreferencesKey("med_neural_voice") // VoiceCatalog.id; leer = keine
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
-        val SAVED_PATTERNS_EXPANDED = booleanPreferencesKey("saved_patterns_expanded") // „Meine Muster“ offen
         val MARKED_EXERCISES = stringSetPreferencesKey("marked_exercises") // Atemkreis „tut mir gut“
         val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked") // einmal gefragt (ab Android 13)
     }
@@ -181,16 +180,6 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     /** Das Zurücksetzen ist gemeldet; die Marke selbst bleibt als Vermerk stehen. */
     suspend fun acknowledgeSettingsReset() {
         store.edit { prefs -> prefs[CORRUPTION_RESET_AT]?.let { prefs[CORRUPTION_RESET_SEEN] = it } }
-    }
-
-    /**
-     * Zuletzt gewählter Aufklapp-Zustand von „Meine Muster“ im Situationen-Tab. Gilt erst ab
-     * drei gespeicherten Mustern; nicht gesetzt = zu.
-     */
-    val savedPatternsExpanded: Flow<Boolean> = data.map { it[Keys.SAVED_PATTERNS_EXPANDED] ?: false }
-
-    suspend fun setSavedPatternsExpanded(expanded: Boolean) {
-        store.edit { it[Keys.SAVED_PATTERNS_EXPANDED] = expanded }
     }
 
     /**

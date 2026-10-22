@@ -56,7 +56,6 @@
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
     <string name="tab_situations">Situationen</string>
-    <string name="tab_logbook">Logbuch</string>
     <string name="tab_own">Eigene</string>
 
     <!-- Situationen -->
@@ -98,12 +97,8 @@
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
     <string name="situations_my_patterns">Meine Muster</string>
-    <!-- Anzahl als Status-Suffix am Kopf (ab 3 Mustern, dann einklappbar); TalkBack liest die zweite Form. -->
+    <!-- Anzahl als Status-Suffix an einem Kopf (Vorschau des einklappbaren SectionHeader). -->
     <string name="situations_my_patterns_count">· %1$d</string>
-    <plurals name="cd_situations_my_patterns_count">
-        <item quantity="one">%1$d gespeichert</item>
-        <item quantity="other">%1$d gespeichert</item>
-    </plurals>
     <string name="cd_pattern_delete">Muster %1$s löschen</string>
     <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
@@ -111,7 +106,7 @@
     <!-- Tab „Eigene“: Kopf wie die anderen Tabs, darunter „Neues Muster“ und die Liste „Meine Muster“
          (gespeicherte Tagesmuster und selbst zusammengestellte). -->
     <string name="own_title">Eigene</string>
-    <string name="own_subtitle">Gespeichert oder selbst zusammengestellt</string>
+    <string name="own_subtitle">Deine Muster, selbst zusammengestellt</string>
     <string name="own_new_pattern">Neues Muster</string>
     <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung; der Knopf „Neues Muster“ steht darüber. -->
     <string name="own_empty">Noch keine Muster. Stell dir eines zusammen oder speichere im Tab „Atmen“ das Muster des Tages.</string>
@@ -288,7 +283,6 @@
         <item quantity="one">%d Runde</item>
         <item quantity="other">%d Runden</item>
     </plurals>
-    <string name="log_subtitle">Was du geübt hast</string>
     <!-- Verlauf nach Tagen gruppiert; ältere Einträge je Monat („September 2026“). -->
     <string name="log_group_today">Heute</string>
     <string name="log_group_yesterday">Gestern</string>
@@ -356,6 +350,8 @@
     <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) je nach Hersteller Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Die Muster sichert „Exportieren“ in jedem Fall.</string>
     <string name="settings_log_title">Logbuch</string>
     <string name="settings_log_empty">Noch keine Sitzung</string>
+    <!-- Klick-Label der Zeile „Logbuch“ (TalkBack: „Doppeltippen zum …“). -->
+    <string name="settings_logbook_open">Logbuch öffnen</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
     <!-- Bestätigungszustand von „Logbuch leeren“ (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_log_clear_confirm">Logbuch wirklich leeren?</string>

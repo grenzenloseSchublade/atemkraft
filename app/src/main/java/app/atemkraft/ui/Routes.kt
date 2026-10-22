@@ -3,8 +3,8 @@ package app.atemkraft.ui
 import kotlinx.serialization.Serializable
 
 /**
- * Type-safe Navigation-Routen. Tabs: Atmen, Situationen, Meditation, Logbuch. Push-Seiten mit
- * festem Kopf: Detail, Einstellungen, Glossar, Über, Atemlehre.
+ * Type-safe Navigation-Routen. Tabs: Atmen, Situationen, Eigene, Meditation. Push-Seiten mit
+ * festem Kopf: Detail, Einstellungen, Logbuch, Glossar, Über, Atemlehre.
  */
 @Serializable
 object AtmenRoute
@@ -12,8 +12,9 @@ object AtmenRoute
 @Serializable
 object SituationenRoute
 
+/** Tab „Eigene“: „Neues Muster“ und die Liste „Meine Muster“. */
 @Serializable
-object LogbuchRoute
+object EigeneRoute
 
 @Serializable
 object MeditationRoute
@@ -21,6 +22,10 @@ object MeditationRoute
 /** [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte. */
 @Serializable
 data class SettingsRoute(val focusMeditation: Boolean = false)
+
+/** Logbuch als Push-Seite, erreichbar aus Einstellungen › Daten. */
+@Serializable
+object LogbookRoute
 
 @Serializable
 object GlossaryRoute

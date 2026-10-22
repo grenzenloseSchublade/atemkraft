@@ -74,17 +74,6 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `Meine Muster startet zu, und die Wahl steht nach einem neuen Repository wieder da`() = runBlocking {
-        assertEquals(false, SettingsRepository(store).savedPatternsExpanded.first())
-
-        SettingsRepository(store).setSavedPatternsExpanded(true)
-        assertEquals(true, SettingsRepository(store).savedPatternsExpanded.first())
-
-        SettingsRepository(store).setSavedPatternsExpanded(false)
-        assertEquals(false, SettingsRepository(store).savedPatternsExpanded.first())
-    }
-
-    @Test
     fun `die Benachrichtigungs-Frage gilt als gestellt, sobald sie einmal kam`() = runBlocking {
         assertFalse(SettingsRepository(store).notificationAsked.first())
         SettingsRepository(store).setNotificationAsked()

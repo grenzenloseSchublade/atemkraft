@@ -5,17 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -29,9 +23,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
 import app.atemkraft.data.BuiltInExercises
-import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.Situations
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Situation
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -50,8 +42,8 @@ import org.robolectric.annotation.Config
  * Kopfzeile klappt auf, und TalkBack hört Überschrift, Rolle und Zustand (A11Y-01, -04).
  * Dazu die Befindens-Suche (MUSTER-09): Lupe öffnet ein Feld mit Fokus, Treffer stehen
  * aufgeklappt allein da, „Nichts gefunden“ bietet „Alle zeigen“, X und System-Zurück schließen,
- * und die Tastatur lernt nichts (SEC-PRIV-03). „Meine Muster“ ist bis zwei Muster offen, ab drei
- * einklappbar mit gespeicherter Wahl (Standard zu).
+ * und die Tastatur lernt nichts (SEC-PRIV-03). „Meine Muster“ stehen hier nicht mehr, sondern im
+ * Tab „Eigene“ (`OwnPatternsScreenTest`).
  * Der Screenshot-Test zeigt nur, wie es aussieht – hier wird das Verhalten festgehalten.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -65,18 +57,7 @@ class SituationsScreenTest {
     private val first = Situations.all.first()
     private val firstExercise = first.exerciseIds.firstNotNullOf { id -> BuiltInExercises.all.firstOrNull { it.id == id } }
     private val started = mutableListOf<String>()
-    private val savedAll = listOf(11L, 42L, 7L, 3L).mapIndexed { i, seed ->
-        RandomPatternGenerator.forSeed(seed).let { SavedPattern(id = i + 1L, exercise = it.exercise, spec = it.spec) }
-    }
     private val crash = Situations.all.single { it.situation == Situation.CRASH }
-
-    // Wie in MainActivity: Liste aus Room, Aufklapp-Wahl aus DataStore (hier nur im Speicher).
-    private var patternCount by mutableIntStateOf(1)
-    private var storedExpanded by mutableStateOf(false)
-    private val expandedChanges = mutableListOf<Boolean>()
-
-    // Gelöschte Muster verschwinden wie in MainActivity aus der Liste (Room → Flow).
-    private var deletedIds by mutableStateOf(emptySet<Long>())
 
     @Before
     fun setUp() {
@@ -84,15 +65,8 @@ class SituationsScreenTest {
             AtemkraftTheme {
                 SituationsScreen(
                     recommendations = Situations.all,
-                    savedPatterns = savedAll.take(patternCount).filter { it.id !in deletedIds },
-                    savedPatternsExpanded = storedExpanded,
-                    onSavedPatternsExpandedChange = {
-                        expandedChanges += it
-                        storedExpanded = it
-                    },
                     resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
                     onSelect = { started += it },
-                    onDeleteSavedPattern = { deletedIds = deletedIds + it },
                 )
             }
         }
@@ -144,19 +118,18 @@ class SituationsScreenTest {
         field().assertIsFocused()
         compose.onNodeWithText(str(R.string.situations_subtitle)).assertDoesNotExist()
         compose.onNodeWithContentDescription(str(R.string.cd_search_open)).assertDoesNotExist()
-        // Leeres Feld: Übersicht bleibt, auch „Meine Muster“.
-        compose.onNodeWithText(str(R.string.situations_my_patterns)).assertExists()
+        // Leeres Feld: Übersicht bleibt.
+        Situations.all.forEach { compose.onNodeWithText(it.title).assertExists() }
     }
 
     @Test
-    fun `Treffer stehen aufgeklappt allein da, Meine Muster treten zurück, die Zahl wird angesagt`() {
+    fun `Treffer stehen aufgeklappt allein da, die Zahl wird angesagt`() {
         openSearch()
         field().performTextInput("müde")
         compose.onNodeWithText(crash.title).assertExists()
         crash.exerciseIds.mapNotNull { id -> BuiltInExercises.all.firstOrNull { it.id == id } }
             .forEach { compose.onNodeWithText(it.name).assertExists() }
         Situations.all.filter { it != crash }.forEach { compose.onNodeWithText(it.title).assertDoesNotExist() }
-        compose.onNodeWithText(str(R.string.situations_my_patterns)).assertDoesNotExist()
         val count = app.resources.getQuantityString(R.plurals.situations_search_count, 1, 1)
         compose.onNodeWithText(count)
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
@@ -206,108 +179,8 @@ class SituationsScreenTest {
         field().performImeAction()
     }
 
-    private fun myPatterns() = compose.onNode(hasText(str(R.string.situations_my_patterns)) and hasClickAction())
-
-    /** Löschen-Knopf von [pattern]: Name in der Beschreibung (A11Y-06). */
-    private fun deleteButton(pattern: SavedPattern) = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_delete, pattern.exercise.name))
-
-    /** Ein Löschen-Knopf je sichtbarer Karte. */
-    private fun patternCards() = compose.onAllNodes(
-        SemanticsMatcher("Löschen-Knopf eines Musters") { node ->
-            val cds = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
-            savedAll.any { app.getString(R.string.cd_pattern_delete, it.exercise.name) in cds }
-        },
-    )
-
-    private fun countSuffix(n: Int) = app.getString(R.string.situations_my_patterns_count, n)
-
     @Test
-    fun `bis zwei Muster ist Meine Muster offen, ohne Caret und ohne Anzahl`() {
-        listOf(1, 2).forEach { n ->
-            patternCount = n
-            compose.onNodeWithText(str(R.string.situations_my_patterns)).assertExists()
-            myPatterns().assertDoesNotExist()
-            compose.onNodeWithText(countSuffix(n)).assertDoesNotExist()
-            patternCards().assertCountEquals(n)
-        }
-    }
-
-    @Test
-    fun `ab drei Mustern startet Meine Muster zu und zeigt die Anzahl`() {
-        patternCount = 3
-        myPatterns().assert(stateIs(R.string.state_collapsed))
-        compose.onNodeWithText(countSuffix(3)).assertExists()
-        compose.onNodeWithContentDescription(app.resources.getQuantityString(R.plurals.cd_situations_my_patterns_count, 3, 3)).assertExists()
-        patternCards().assertCountEquals(0)
-    }
-
-    @Test
-    fun `Tipp auf Meine Muster meldet die Wahl, und die gespeicherte Wahl gilt`() {
-        patternCount = 4
-        myPatterns().performClick()
-        assertEquals(listOf(true), expandedChanges)
-        myPatterns().assert(stateIs(R.string.state_expanded))
-        patternCards().assertCountEquals(4)
-
-        myPatterns().performClick()
-        assertEquals(listOf(true, false), expandedChanges)
-        patternCards().assertCountEquals(0)
-    }
-
-    @Test
-    fun `eine gespeicherte offene Wahl gilt sofort ab drei Mustern`() {
-        // Wie nach einem Neustart: Der Wert aus DataStore ist schon „offen“.
-        storedExpanded = true
-        patternCount = 3
-        myPatterns().assert(stateIs(R.string.state_expanded))
-        patternCards().assertCountEquals(3)
-        assertEquals(emptyList<Boolean>(), expandedChanges)
-    }
-
-    @Test
-    fun `fallen die Muster auf zwei, ist der Abschnitt offen, ab drei gilt wieder die gespeicherte Wahl`() {
-        patternCount = 3
-        patternCards().assertCountEquals(0)
-        patternCount = 2
-        myPatterns().assertDoesNotExist()
-        patternCards().assertCountEquals(2)
-        patternCount = 3
-        myPatterns().assert(stateIs(R.string.state_collapsed))
-        patternCards().assertCountEquals(0)
-        assertEquals(emptyList<Boolean>(), expandedChanges)
-    }
-
-    @Test
-    fun `die Aufklapp-Regel für Meine Muster`() {
-        assertEquals(null, savedPatternsShownExpanded(1, stored = true))
-        assertEquals(null, savedPatternsShownExpanded(2, stored = false))
-        assertEquals(false, savedPatternsShownExpanded(3, stored = false))
-        assertEquals(true, savedPatternsShownExpanded(3, stored = true))
-        assertEquals(true, savedPatternsShownExpanded(12, stored = true))
-    }
-
-    @Test
-    fun `Löschen ist zweistufig, angesagt und bleibt beim Muster, nicht bei der Position`() {
-        patternCount = 2
-        val (first, second) = savedAll.take(2)
-        deleteButton(first).performClick()
-        assertEquals(emptySet<Long>(), deletedIds)
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_delete_confirm, first.exercise.name))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-            .performClick()
-        assertEquals(setOf(first.id), deletedIds)
-        assertEquals(emptyList<String>(), started)
-        // Das nachrückende Muster ist nicht scharf: ein Tipp löscht es nicht.
-        patternCards().assertCountEquals(1)
-        deleteButton(second).performClick()
-        assertEquals(setOf(first.id), deletedIds)
-    }
-
-    @Test
-    fun `die Suche blendet Meine Muster auch eingeklappt aus`() {
-        patternCount = 3
-        openSearch()
-        field().performTextInput("müde")
+    fun `Meine Muster stehen nicht mehr in den Situationen`() {
         compose.onNodeWithText(str(R.string.situations_my_patterns)).assertDoesNotExist()
     }
 
