@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -44,11 +43,9 @@ import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.PatternBackup
 import app.atemkraft.domain.AdjustLimits
-import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternField
 import app.atemkraft.domain.PatternWish
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.estimatedTotalSeconds
@@ -120,7 +117,7 @@ fun PatternEditorScreen(
             ) {
                 Wishes(state)
                 Breath(state)
-                FineTuning(state, approx)
+                FineTuning(state)
                 NameSection(state)
                 Lore(exercise, onOpenLore)
                 Spacer(Modifier.height(Dimens.ScreenBottom))
@@ -243,10 +240,11 @@ private fun Breath(state: PatternEditorState) {
 /**
  * „Genau einstellen“: je Phase ein Stepper mit den Grenzen der Erzeugungsregeln ([PatternEditorState.rangeFor]);
  * ein Feld ohne Wertebereich (Halten leer bei „sanft aktivierend“) entfällt. Halten 0 heißt ohne
- * und wird „aus“ gesprochen. Darunter die Regel des Charakters in Worten und die Musterzeile.
+ * und wird „aus“ gesprochen. Darunter die Regel des Charakters in Worten; eine eigene
+ * Musterzeile gibt es nicht – die Werte stehen in den Steppern, die Dauer im Start-Knopf.
  */
 @Composable
-private fun FineTuning(state: PatternEditorState, approx: String) {
+private fun FineTuning(state: PatternEditorState) {
     val modified = stringResource(R.string.adjust_modified)
     Column(Modifier.fillMaxWidth()) {
         SectionHeader(
@@ -254,6 +252,7 @@ private fun FineTuning(state: PatternEditorState, approx: String) {
             color = headingColor(2),
             status = if (state.modified) "· $modified" else null,
             statusDescription = modified,
+            smallStatus = true,
         )
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(vertical = Dimens.GapTiny)) {
@@ -275,8 +274,6 @@ private fun FineTuning(state: PatternEditorState, approx: String) {
         }
         Spacer(Modifier.height(Dimens.GapSmall))
         HintText(stringResource(if (state.spec.activating) R.string.pattern_editor_rule_active else R.string.pattern_editor_rule_calm))
-        Spacer(Modifier.height(Dimens.GapSmall))
-        BodyText(RandomPatternGenerator.hintFor(state.spec) + DOT_SEPARATOR + approx, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -291,10 +288,9 @@ private fun NameSection(state: PatternEditorState) {
     Column(Modifier.fillMaxWidth()) {
         SectionHeader(title = stringResource(R.string.pattern_editor_name), color = headingColor(3))
         val keyboard = LocalSoftwareKeyboardController.current
-        val focusManager = LocalFocusManager.current
         var focused by remember { mutableStateOf(false) }
         val colors = MaterialTheme.colorScheme
-        // Wie das Suchfeld: Die Tastatur lernt den Namen nicht (SEC-PRIV-03).
+        // Wie das Suchfeld: Die Tastatur lernt den Namen nicht (SEC-PRIV-06).
         NoPersonalizedLearning {
             BasicTextField(
                 value = state.name,
@@ -311,10 +307,9 @@ private fun NameSection(state: PatternEditorState) {
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done,
                 ),
-                keyboardActions = KeyboardActions(onDone = {
-                    keyboard?.hide()
-                    focusManager.clearFocus()
-                }),
+                // Wie das Suchfeld: nur die Tastatur ausblenden, der Fokus bleibt im Feld – Tastatur-
+                // und D-Pad-Nutzer machen dort weiter, wo sie waren (A11Y-07).
+                keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
                 decorationBox = { inner ->
                     // Label im Feld: So liest TalkBack es mit dem Inhalt als einen Knoten.
                     Column(

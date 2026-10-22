@@ -66,6 +66,7 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.style.TextAlign
@@ -351,6 +352,20 @@ class ControlTouchTest(private val fontScale: Float) {
         keyboardMode()
         show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
         compose.onNodeWithText(again).assertIsFocused()
+    }
+
+    @Test
+    fun `Ende-Screen fuehrt mit Im Logbuch ansehen ins Logbuch`() {
+        val app = RuntimeEnvironment.getApplication()
+        var opened = 0
+        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}, onOpenLogbook = { opened++ }) }
+        compose.onNodeWithText(app.getString(R.string.session_open_logbook))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+        assertEquals(1, opened)
+        // Ohne Ziel kein Link.
+        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
+        compose.onNodeWithText(app.getString(R.string.session_open_logbook)).assertDoesNotExist()
     }
 
     @Test

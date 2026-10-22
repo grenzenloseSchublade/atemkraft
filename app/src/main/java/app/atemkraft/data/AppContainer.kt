@@ -9,6 +9,7 @@ import app.atemkraft.data.local.AtemkraftDatabase
 import app.atemkraft.playback.MeditationAudioCoordinator
 import app.atemkraft.playback.MeditationController
 import app.atemkraft.playback.MeditationServiceLink
+import kotlinx.coroutines.flow.first
 
 /**
  * Manuelles DI: hält die Repositories einmalig (keine Instanziierung in Composables).
@@ -21,10 +22,14 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository = SettingsRepository(context)
 
-    /** Beim Bearbeiten eines Musters fallen dessen Detailseiten-Anpassungen weg. */
+    /**
+     * Beim Bearbeiten eines Musters fallen dessen Detailseiten-Anpassungen weg; die dort gewählte
+     * Dauer übernimmt der Editor als Startwert.
+     */
     val savedPatternsRepository: SavedPatternsRepository = SavedPatternsRepository(
         dao = database.savedPatternDao(),
         clearOverrides = settingsRepository::clearExerciseIntervals,
+        overrideMinutes = { id -> settingsRepository.exerciseIntervals(id).first()?.duration },
     )
     val exerciseRepository: ExerciseRepository = ExerciseRepository(savedPatternsRepository)
     val logbookRepository: LogbookRepository = LogbookRepository(database.logbookDao())

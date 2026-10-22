@@ -223,7 +223,8 @@ private fun SessionRoundButton(
 
 /**
  * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft"-Eyebrow, [title], optional eine kurze
- * Bilanz aus den Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), Nochmal/Ende.
+ * Bilanz aus den Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), darunter
+ * mit [onOpenLogbook] der Link „Im Logbuch ansehen ›“, dann Nochmal/Ende.
  *
  * Für TalkBack ein eigener Bereich („Geschafft“ als `paneTitle`, beim Erscheinen angesagt). Wer
  * per Tastatur oder D-Pad bedient, landet auf „Nochmal“ – der zuletzt fokussierte Pause-Knopf
@@ -237,6 +238,7 @@ fun FinishedPanel(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
     summary: List<String> = emptyList(),
+    onOpenLogbook: (() -> Unit)? = null,
 ) {
     val pane = stringResource(R.string.session_done_title)
     val againFocus = remember { FocusRequester() }
@@ -275,6 +277,14 @@ fun FinishedPanel(
                 separator = { Text(text = DOT_SEPARATOR, style = summaryStyle, color = summaryColor) },
                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
             )
+        }
+        // Unter der Bilanz der Weg zum Eintrag (Nachtrag 2, Nutzer 2026-10-22): beendet wie
+        // „Ende“ und öffnet das Logbuch.
+        if (onOpenLogbook != null) {
+            Spacer(Modifier.height(Dimens.GapTiny))
+            AppTextButton(onClick = onOpenLogbook) {
+                ForwardLinkText(text = stringResource(R.string.session_open_logbook), color = MaterialTheme.colorScheme.secondary)
+            }
         }
         Spacer(Modifier.height(Dimens.SessionPadding))
         AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {

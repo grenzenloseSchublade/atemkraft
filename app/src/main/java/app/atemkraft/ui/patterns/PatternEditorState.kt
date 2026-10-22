@@ -228,10 +228,20 @@ class PatternEditorState internal constructor(
         nameEdited = true
     }
 
-    /** Der Entwurf wurde unter [id] gespeichert (neu angelegt oder aktualisiert). */
-    fun markSaved(id: Long) {
+    /**
+     * Der Stand, der gespeichert würde (Phasen, Minuten, bereinigter Name). Der Aufrufer bildet
+     * ihn **vor** dem Schreiben, schreibt genau diese Werte und gibt ihn an [markSaved] zurück.
+     */
+    fun draft(): PatternSnapshot = current()
+
+    /**
+     * Der Stand [written] wurde unter [id] gespeichert (neu angelegt oder aktualisiert). Hat
+     * sich der Entwurf während des Schreibens geändert (Kurve weitergezogen), bleibt das
+     * Lesezeichen leer – gespeichert ist ja der alte Stand.
+     */
+    fun markSaved(id: Long, written: PatternSnapshot = current()) {
         savedId = id
-        snapshot = current()
+        snapshot = written
     }
 
     /**

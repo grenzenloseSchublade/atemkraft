@@ -130,7 +130,9 @@ fun ExerciseDetailScreen(
     // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore). Generierte
     // Muster ändern ihre Phasen nur im Editor (Leitplanken): Von alten Anpassungen gilt dort
     // nur noch die Dauer.
-    LaunchedEffect(savedIntervals) {
+    // Schlüssel auch [adjust]: Ein neu begonnener Zustand (Muster im Editor geändert) prüft die
+    // gespeicherte Anpassung erneut.
+    LaunchedEffect(savedIntervals, adjust) {
         savedIntervals?.let { stored ->
             adjust.applyStored(if (exercise.generated) IntervalOverrides(duration = stored.duration) else stored)
         }

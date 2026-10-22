@@ -53,6 +53,7 @@ internal fun TestSessionOverlay(
     onContinue: () -> Unit = {},
     onRestart: () -> Unit = {},
     onStop: () -> Unit = {},
+    onOpenLogbook: (() -> Unit)? = {},
 ) = SessionOverlay(
     state = state,
     display = display,
@@ -63,6 +64,7 @@ internal fun TestSessionOverlay(
     onContinue = onContinue,
     onRestart = onRestart,
     onStop = onStop,
+    onOpenLogbook = onOpenLogbook,
 )
 
 /** Vollbild der Meditation; ohne automatische Ruhe, damit nichts von selbst ausblendet. */
@@ -76,6 +78,7 @@ internal fun TestMeditationOverlay(
     onTapHaptic: () -> Unit = {},
     onRestart: () -> Unit = {},
     onEnd: () -> Unit = {},
+    onOpenLogbook: (() -> Unit)? = {},
 ) = MeditationOverlay(
     state = state,
     display = display,
@@ -85,4 +88,5 @@ internal fun TestMeditationOverlay(
     onTapHaptic = onTapHaptic,
     onRestart = onRestart,
     onEnd = onEnd,
+    onOpenLogbook = onOpenLogbook,
 )

@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -25,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -32,8 +32,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -68,9 +71,10 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Meine Muster · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
- * TalkBack.
+ * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Genau
+ * einstellen · angepasst“, MUSTER-02). Passt er nicht mehr hinter den Titel, steht er darunter,
+ * ohne den führenden Punkt.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SectionHeader(
     title: String,
@@ -81,6 +85,7 @@ fun SectionHeader(
     onExpandedChange: (Boolean) -> Unit = {},
     status: String? = null,
     statusDescription: String? = null,
+    smallStatus: Boolean = false,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val toggle = if (expanded == null) {
@@ -119,26 +124,17 @@ fun SectionHeader(
                         .clip(RoundedCornerShape(2.dp))
                         .background(color),
                 )
-                // FlowRow (LAYOUT-03): Das Suffix steht direkt hinter dem Titel und rutscht in die
-                // nächste Zeile, statt ihn zu kürzen, wenn der Platz nicht reicht.
-                FlowRow(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                    WholeWordText(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = color,
-                        modifier = Modifier.alignByBaseline().semantics { heading() },
-                    )
-                    if (status != null) {
-                        Text(
-                            text = status,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                            modifier = Modifier.alignByBaseline().semantics {
-                                if (statusDescription != null) contentDescription = statusDescription
-                            },
-                        )
-                    }
-                }
+                // LAYOUT-03: Das Suffix steht direkt hinter dem Titel und rutscht in die nächste
+                // Zeile, statt ihn zu kürzen, wenn der Platz nicht reicht – dann ohne führenden
+                // Punkt, denn keine Zeile beginnt mit einem Satzzeichen ([TitleWithStatus]).
+                TitleWithStatus(
+                    title = title,
+                    color = color,
+                    status = status,
+                    statusDescription = statusDescription,
+                    statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f),
+                )
                 if (expanded != null) ExpandCaret(expanded = expanded, tint = color)
             }
             if (teaser != null) {
@@ -178,6 +174,7 @@ fun CollapsibleSection(
     teaser: String? = null,
     status: String? = null,
     statusDescription: String? = null,
+    smallStatus: Boolean = false,
     spacingAbove: Dp = 0.dp,
     contentSpacing: Dp = Dimens.ListGap,
     content: @Composable ColumnScope.() -> Unit,
@@ -196,10 +193,74 @@ fun CollapsibleSection(
             onExpandedChange = onExpandedChange,
             status = status,
             statusDescription = statusDescription,
+            smallStatus = smallStatus,
         )
         if (expanded != false) content()
     }
 }
+
+/**
+ * Titel eines [SectionHeader] mit optionalem [status] dahinter. Passt der Status in einer Zeile
+ * hinter den einzeiligen Titel, steht er dort auf dessen Grundlinie; sonst steht er unter dem
+ * Titel und verliert seinen führenden Punkt („· angepasst“ → „angepasst“), damit keine Zeile mit
+ * einem Satzzeichen beginnt (LAYOUT-03). Gemessen wird vorab mit dem [rememberTextMeasurer], so
+ * entsteht nur die gezeigte Variante (ein Knoten für TalkBack).
+ */
+@Composable
+private fun TitleWithStatus(
+    title: String,
+    color: Color,
+    status: String?,
+    statusDescription: String?,
+    statusStyle: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    val titleStyle = MaterialTheme.typography.titleLarge
+    val heading = Modifier.semantics { heading() }
+    if (status == null) {
+        WholeWordText(text = title, style = titleStyle, color = color, modifier = modifier.then(heading))
+        return
+    }
+    val statusColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
+    val statusSemantics = Modifier.semantics { if (statusDescription != null) contentDescription = statusDescription }
+    val measurer = rememberTextMeasurer()
+    SubcomposeLayout(modifier) { constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val titlePlaceable = subcompose(StatusSlot.TITLE) {
+            WholeWordText(text = title, style = titleStyle, color = color, modifier = heading)
+        }.first().measure(loose)
+        val gap = Dimens.GapTiny.roundToPx()
+        val titleWidth = measurer.measure(title, titleStyle, softWrap = false, maxLines = 1).size.width
+        val statusWidth = measurer.measure(status, statusStyle, softWrap = false, maxLines = 1).size.width
+        val inline = titleWidth + gap + statusWidth <= constraints.maxWidth
+        if (inline) {
+            val statusPlaceable = subcompose(StatusSlot.INLINE) {
+                Text(text = status, style = statusStyle, color = statusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
+            }.first().measure(loose)
+            // Auf gemeinsamer Grundlinie wie früher in der FlowRow (alignByBaseline).
+            val baseline = maxOf(titlePlaceable[FirstBaseline], statusPlaceable[FirstBaseline])
+            val titleTop = baseline - titlePlaceable[FirstBaseline]
+            val statusTop = baseline - statusPlaceable[FirstBaseline]
+            val height = maxOf(titleTop + titlePlaceable.height, statusTop + statusPlaceable.height)
+            layout(constraints.constrainWidth(titlePlaceable.width + gap + statusPlaceable.width), height) {
+                titlePlaceable.place(0, titleTop)
+                statusPlaceable.place(titlePlaceable.width + gap, statusTop)
+            }
+        } else {
+            val bare = status.trimStart().removePrefix("·").trimStart()
+            val statusPlaceable = subcompose(StatusSlot.BELOW) {
+                WholeWordText(text = bare, style = statusStyle, color = statusColor, modifier = statusSemantics)
+            }.first().measure(loose)
+            layout(maxOf(titlePlaceable.width, statusPlaceable.width), titlePlaceable.height + statusPlaceable.height) {
+                titlePlaceable.place(0, 0)
+                statusPlaceable.place(0, titlePlaceable.height)
+            }
+        }
+    }
+}
+
+/** Slots von [TitleWithStatus]: nur die gezeigte Status-Variante wird komponiert. */
+private enum class StatusSlot { TITLE, INLINE, BELOW }
 
 @Preview
 @Composable

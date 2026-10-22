@@ -172,6 +172,22 @@ object RandomPatternGenerator {
         spec.holdEmpty?.let { add("Halten ${it.fmt()}${NBSP}s") }
     }.joinToString(DOT_SEPARATOR)
 
+    /**
+     * Die Phasen einer generierten Übung ([exerciseFrom]) zurück als [PatternSpec] – etwa für den
+     * Editor, damit er genau das angezeigte Muster übernimmt. null bei anderen Übungen.
+     */
+    fun specOf(exercise: Exercise): PatternSpec? {
+        if (!exercise.generated) return null
+        val phases = exercise.segments.singleOrNull()?.phases ?: return null
+        fun seconds(type: PhaseType): Double? = phases.firstOrNull { it.type == type }
+            ?.let { (it.duration as? PhaseDuration.Fixed)?.millis?.div(MILLIS_PER_SECOND) }
+        val inhale = seconds(PhaseType.INHALE) ?: return null
+        val exhale = seconds(PhaseType.EXHALE) ?: return null
+        return PatternSpec(inhale, seconds(PhaseType.HOLD_FULL), exhale, seconds(PhaseType.HOLD_EMPTY), exercise.activating)
+    }
+
+    private const val MILLIS_PER_SECOND = 1000.0
+
     /** Geschütztes Leerzeichen zwischen Zahl und Einheit. */
     private const val NBSP = '\u00A0'
 
@@ -212,8 +228,8 @@ object RandomPatternGenerator {
         val fullHint = if (spec.activating) hint else "$hint. $BELLY_GUIDANCE"
         val texts = when (origin) {
             PatternOrigin.TODAY -> todayTexts(hint, character, spec.activating)
-            PatternOrigin.SAVED_DAILY -> savedDailyTexts(hint, character, spec.activating)
-            PatternOrigin.CUSTOM -> customTexts(hint, character, spec.activating)
+            PatternOrigin.SAVED_DAILY -> savedDailyTexts(hint, character, spec)
+            PatternOrigin.CUSTOM -> customTexts(hint, character, spec)
         }
 
         return Exercise(
@@ -253,21 +269,61 @@ object RandomPatternGenerator {
     }
 
     /** Gespeichertes Muster des Tages: ohne „heute“, „jeden Tag neu“ und „aus dem Datum“. */
-    private fun savedDailyTexts(hint: String, character: String, activating: Boolean) = OriginTexts(
-        shortDescription = "$hint – $character.${bellyInvitation(activating)} " +
+    private fun savedDailyTexts(hint: String, character: String, spec: PatternSpec) = OriginTexts(
+        shortDescription = "$hint – $character.${bellyInvitation(spec.activating)} " +
             "Gespeichert aus einem Muster des Tages, in den Leitplanken der App.",
         effect = "Dieses Muster stammt aus einem Muster des Tages und liegt in den Leitplanken der App.",
-        effectDetail = "Das Muster stammt aus einem Muster des Tages. ${rulesSentence(activating)} $STUDY_NOTE",
+        effectDetail = "Das Muster stammt aus einem Muster des Tages. ${limitsSentence(spec)}$STUDY_NOTE",
     )
 
     /** Eigenes Muster aus dem Editor: ehrlich selbst zusammengestellt, ohne Evidenzbehauptung. */
-    private fun customTexts(hint: String, character: String, activating: Boolean) = OriginTexts(
-        shortDescription = "$hint – $character.${bellyInvitation(activating)} " +
+    private fun customTexts(hint: String, character: String, spec: PatternSpec) = OriginTexts(
+        shortDescription = "$hint – $character.${bellyInvitation(spec.activating)} " +
             "Von dir zusammengestellt, in den Leitplanken der App.",
         effect = "Dieses Muster hast du selbst zusammengestellt – in den Leitplanken der App.",
-        effectDetail = "Beim Zusammenstellen lässt die App nur Muster in festen Grenzen zu. " +
-            "${rulesSentence(activating)} $STUDY_NOTE",
+        effectDetail = if (spec.withinCreationRules()) {
+            "Beim Zusammenstellen lässt die App nur Muster in festen Grenzen zu. ${limitsSentence(spec)}$STUDY_NOTE"
+        } else {
+            "${limitsSentence(spec)}$STUDY_NOTE"
+        },
     )
+
+    /**
+     * Die Grenzen, die [spec] tatsächlich einhält, mit Leerzeichen dahinter: die strengen
+     * Erzeugungsregeln ([rulesSentence]) nur, wenn das Muster sie einhält. Ältere gespeicherte
+     * Muster (bis 1.6.2: halbe Sekunden, ruhiger Atemzug ab 8,5 s, aktivierend mit gleich langem
+     * Ein- und Ausatmen) und importierte liegen oft nur in den weiteren Leitplanken
+     * ([guardrailsSentence]); außerhalb auch dieser steht gar kein Grenzen-Satz – der Text
+     * behauptet nie etwas, das für genau dieses Muster nicht gilt.
+     */
+    private fun limitsSentence(spec: PatternSpec): String = when {
+        spec.withinCreationRules() -> "${rulesSentence(spec.activating)} "
+        spec.withinGuardrails() -> "${guardrailsSentence(spec.activating)} "
+        else -> ""
+    }
+
+    /** Die weiteren Leitplanken ([withinGuardrails]) des Charakters in Worten. */
+    private fun guardrailsSentence(activating: Boolean): String = if (activating) {
+        "Es liegt in den weiteren Leitplanken der App: sanft aktivierende Muster bei " +
+            "${breathsPerMinute(GUARD_ACTIVE_CYCLE_MAX)} bis ${breathsPerMinute(GUARD_ACTIVE_CYCLE_MIN)} " +
+            "Atemzügen pro Minute, das Einatmen mindestens so lang wie das Ausatmen und das Halten " +
+            "höchstens ${GUARD_ACTIVE_HOLD_MAX.fmt()}${NBSP}s lang – nie forciert."
+    } else {
+        "Es liegt in den weiteren Leitplanken der App: ruhige Muster bei " +
+            "${breathsPerMinute(GUARD_CALM_CYCLE_MAX)} bis ${breathsPerMinute(GUARD_CALM_CYCLE_MIN)} " +
+            "Atemzügen pro Minute, das Ausatmen mindestens so lang wie das Einatmen und höchstens " +
+            "${PatternRules.EXHALE_MAX}${NBSP}s, Halten voll höchstens ${GUARD_CALM_HOLD_FULL_MAX.fmt()}${NBSP}s und Halten leer höchstens " +
+            "${GUARD_CALM_HOLD_EMPTY_MAX.fmt()}${NBSP}s."
+    }
+
+    // Zahlen der Leitplanken wie in [withinGuardrails] (nur für den Text).
+    private const val GUARD_CALM_CYCLE_MIN = 8.5
+    private const val GUARD_CALM_CYCLE_MAX = 13.0
+    private const val GUARD_CALM_HOLD_FULL_MAX = 4.0
+    private const val GUARD_CALM_HOLD_EMPTY_MAX = 2.0
+    private const val GUARD_ACTIVE_CYCLE_MIN = 6.0
+    private const val GUARD_ACTIVE_CYCLE_MAX = 9.0
+    private const val GUARD_ACTIVE_HOLD_MAX = 2.0
 
     /** Bauchatmung nur bei ruhigen Mustern und nur als Einladung (mit führendem Leerzeichen). */
     private fun bellyInvitation(activating: Boolean): String = if (activating) "" else " Gern mit Bauchatmung, wenn es angenehm ist."
@@ -281,13 +337,13 @@ object RandomPatternGenerator {
     } else {
         "Ruhige Muster bleiben bei ${breathsPerMinute(PatternRules.CALM_CYCLE_MAX)} bis " +
             "${breathsPerMinute(PatternRules.CALM_CYCLE_MIN)} Atemzügen pro Minute, das Ausatmen ist " +
-            "mindestens so lang wie das Einatmen, Halten voll höchstens " +
-            "${PatternRules.CALM_HOLD_FULL_MAX}${NBSP}s und Halten leer höchstens " +
+            "mindestens so lang wie das Einatmen und höchstens ${PatternRules.EXHALE_MAX}${NBSP}s, " +
+            "Halten voll höchstens ${PatternRules.CALM_HOLD_FULL_MAX}${NBSP}s und Halten leer höchstens " +
             "${PatternRules.CALM_HOLD_EMPTY_MAX}${NBSP}s."
     }
 
     /** Atemzüge pro Minute bei [cycleSeconds], auf eine Nachkommastelle („4,6“, „10“). */
-    private fun breathsPerMinute(cycleSeconds: Int): String = ((60.0 / cycleSeconds * 10).roundToInt() / 10.0).fmt()
+    private fun breathsPerMinute(cycleSeconds: Number): String = ((60.0 / cycleSeconds.toDouble() * 10).roundToInt() / 10.0).fmt()
 
     /**
      * Keine Evidenzbehauptung für ein einzelnes Muster (TEXT-07): Die Grenzen folgen der

@@ -47,6 +47,7 @@ import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.SettingsActions
 import app.atemkraft.ui.settings.SettingsScreen
@@ -133,7 +134,17 @@ class TabNavigationTest {
         NavHost(nav, startDestination = AtmenRoute) {
             composable<AtmenRoute> { Text("Atmen") }
             composable<SituationenRoute> { Text("Situationen") }
-            composable<EigeneRoute> { Text("Eigene") }
+            // Echter Tab „Eigene“: sein Kopf trägt den Kalender zum Logbuch (Nachtrag 2).
+            composable<EigeneRoute> {
+                OwnPatternsScreen(
+                    savedPatterns = emptyList(),
+                    onNewPattern = { nav.navigate(PatternEditorRoute()) },
+                    onSelect = {},
+                    onDeletePattern = {},
+                    onOpenSettings = { nav.navigate(SettingsRoute()) },
+                    onOpenLogbook = { nav.navigate(LogbookRoute) { launchSingleTop = true } },
+                )
+            }
             composable<MeditationRoute> { Text("Meditation") }
             composable<SettingsRoute> { entry ->
                 Settings(focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation)
@@ -296,33 +307,30 @@ class TabNavigationTest {
         )
     }
 
-    /** Die Navigationszeile „Logbuch“ der Daten-Karte (Titel und Zahl als ein Button). */
-    private fun logRow() = rule.onNode(
-        SemanticsMatcher("Klick-Label „Logbuch öffnen“") {
-            it.config.getOrNull(SemanticsActions.OnClick)?.label == string(R.string.settings_logbook_open)
-        },
-    )
-
     @Test
-    fun `Logbuch-Zeile der Einstellungen öffnet das Logbuch, Zurück-Pfeil führt zu den Einstellungen`() {
+    fun `Kalender im Kopf des Tabs öffnet das Logbuch, Zurück-Pfeil führt zum Tab`() {
         step { nav.tapTab(EigeneRoute, selected = false) }
-        step { nav.navigate(SettingsRoute()) }
-
-        logRow()
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-            .assertTextContains(string(R.string.settings_log_title))
-        assertEquals("AtmenRoute > EigeneRoute > SettingsRoute > LogbookRoute", step { logRow().performScrollTo().performClick() })
+        val calendar = rule.onNodeWithContentDescription(string(R.string.settings_log_title))
+        calendar.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        assertEquals("AtmenRoute > EigeneRoute > LogbookRoute", step { calendar.performClick() })
         rule.onNodeWithText(string(R.string.log_sessions_none)).assertIsDisplayed()
 
-        assertEquals("AtmenRoute > EigeneRoute > SettingsRoute", step { backArrow().performClick() })
-        step { logRow().performScrollTo().performClick() }
+        assertEquals("AtmenRoute > EigeneRoute", step { backArrow().performClick() })
+        step { rule.onNodeWithContentDescription(string(R.string.settings_log_title)).performClick() }
         // Re-Tap auf den markierten Tab führt auch aus dem Logbuch zur Tab-Startseite.
         assertEquals("AtmenRoute > EigeneRoute", step { nav.tapTab(EigeneRoute, selected = true) })
     }
 
     @Test
-    fun `Papierkorb der Logbuch-Zeile leert zweistufig und öffnet das Logbuch nicht`() {
+    fun `Logbuch-Zeile der Einstellungen öffnet nichts, der Papierkorb leert zweistufig`() {
         step { nav.navigate(SettingsRoute()) }
+        // Nachtrag 2: Die Zeile ist keine Navigationszeile mehr, nur Titel, Zahl und Papierkorb.
+        rule.onAllNodes(
+            SemanticsMatcher("klickbar mit Text „Logbuch“") {
+                it.config.contains(SemanticsActions.OnClick) &&
+                    it.config.getOrNull(SemanticsProperties.Text)?.any { text -> text.text == string(R.string.settings_log_title) } == true
+            },
+        ).assertCountEquals(0)
         val trash = rule.onNodeWithContentDescription(string(R.string.settings_data_clear_log))
         trash.performScrollTo()
         assertEquals("AtmenRoute > SettingsRoute", step { trash.performClick() })
@@ -333,10 +341,9 @@ class TabNavigationTest {
         )
         assertEquals(1, logCleared)
 
-        // Ohne Einträge kein Papierkorb – die Zeile öffnet das leere Logbuch weiterhin.
+        // Ohne Einträge kein Papierkorb.
         step { logCount = 0 }
         rule.onNodeWithContentDescription(string(R.string.settings_data_clear_log)).assertDoesNotExist()
-        assertEquals("AtmenRoute > SettingsRoute > LogbookRoute", step { logRow().performScrollTo().performClick() })
     }
 
     /** Führt [action] aus, wartet die Navigation ab und gibt den Stapel als Text zurück. */
@@ -370,7 +377,6 @@ class TabNavigationTest {
             onOpenAtemlehre = { nav.navigate(AtemlehreRoute()) },
             onOpenAbout = { nav.navigate(AboutRoute) },
             onBack = { nav.popBackStack() },
-            onOpenLogbook = { nav.navigate(LogbookRoute) },
             focusMeditation = focusMeditation,
         )
     }

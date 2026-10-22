@@ -41,7 +41,8 @@ import kotlinx.coroutines.sync.withLock
  * jedes weitere schreibt in denselben Eintrag ([SavedPatternsRepository.update]); Entfernen löscht
  * ihn. Die Schreibvorgänge laufen nacheinander in [scope] – dem App-weiten Scope, damit „Zurück“
  * direkt nach dem Tipp nichts verliert – und lesen den Entwurf erst, wenn sie dran sind: Ein
- * Doppeltipp legt so nur einen Eintrag an.
+ * Doppeltipp legt so nur einen Eintrag an. Das Lesezeichen merkt sich genau den geschriebenen
+ * Stand ([PatternEditorState.draft]), nicht den nach dem Schreiben.
  *
  * [onStart] startet den Entwurf ohne Speichern; der Aufrufer lässt den Editor dabei offen.
  */
@@ -125,13 +126,16 @@ private suspend fun write(
         state.markRemoved()
         return
     }
+    // Stand vor dem Schreiben festhalten: Was während des Schreibens geändert wird, ist nicht
+    // gespeichert und darf das Lesezeichen nicht füllen.
+    val draft = state.draft()
     val id = state.savedId
     val stored = if (id == null) {
-        repository.saveCustom(state.spec, state.minutes, state.savedName)
+        repository.saveCustom(draft.spec, draft.minutes, draft.name)
     } else {
-        repository.update(id, state.spec, state.minutes, state.savedName)
+        repository.update(id, draft.spec, draft.minutes, draft.name)
     }
-    if (stored == null) onMissing() else state.markSaved(stored.id)
+    if (stored == null) onMissing() else state.markSaved(stored.id, draft)
 }
 
 /** Kopf ohne Inhalt, solange das gespeicherte Muster lädt (Bruchteile einer Sekunde). */

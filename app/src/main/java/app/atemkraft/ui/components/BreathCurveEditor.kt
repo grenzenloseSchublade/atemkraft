@@ -8,17 +8,18 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -51,7 +52,6 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.domain.PatternField
@@ -94,8 +94,8 @@ private const val NANOS_PER_SECOND = 1_000_000_000f
  * hat keinen Griff.
  *
  * Darunter die Vorschau: Play/Pause lässt einen Punkt in Echtzeit über die Kurve laufen, daneben
- * der Phasenname; nur sichtbar, kein Ton. Bei abgeschalteten System-Animationen entfällt der Knopf
- * (MOTION-02).
+ * der Phasenname (statt des Hinweises „Griffe ziehen“, `HintText`); nur sichtbar, kein Ton. Bei
+ * abgeschalteten System-Animationen entfällt der Knopf (MOTION-02).
  *
  * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden, …“)
  * ohne liveRegion; Ziehen ist nie Pflicht – dieselben Werte stellt der Aufrufer als Stepper
@@ -208,27 +208,24 @@ fun BreathCurveEditor(
                     }
                 }
             }
-            // Phasenname nur, solange die Vorschau läuft; ohne liveRegion (er wechselt im Takt).
+            // Läuft die Vorschau, steht dort der Phasenname (ohne liveRegion, er wechselt im Takt),
+            // sonst der Hinweis „Griffe ziehen“ – beim Zuschauen ist er nicht gefragt. Beide
+            // brechen nur zwischen Wörtern um, nie im Wort (LAYOUT-03).
             if (playing) {
-                Text(
+                WholeWordText(
                     text = phaseName(phaseNow),
                     modifier = Modifier.weight(1f).padding(start = Dimens.GapSmall),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (phaseNow.isInhaleSide()) inhaleColor else exhaleColor,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Clip,
                 )
             } else {
-                Spacer(Modifier.weight(1f))
+                CompositionLocalProvider(LocalContentColor provides colors.onSurface) {
+                    HintText(
+                        text = stringResource(R.string.pattern_editor_curve_hint),
+                        modifier = Modifier.weight(1f).padding(start = Dimens.GapSmall).wrapContentWidth(Alignment.End),
+                    )
+                }
             }
-            Text(
-                text = stringResource(R.string.pattern_editor_curve_hint),
-                style = MaterialTheme.typography.labelMedium,
-                color = textColor,
-                maxLines = 1,
-                softWrap = false,
-            )
         }
     }
 }

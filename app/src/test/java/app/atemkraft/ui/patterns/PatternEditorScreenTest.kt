@@ -22,12 +22,14 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import app.atemkraft.R
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternField
+import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.PhaseDuration
@@ -262,6 +264,35 @@ class PatternEditorScreenTest {
         assertEquals(listOf(true), saves)
     }
 
+    @Test
+    fun `Regeltexte nennen die Grenzen aus PatternRules, samt Ausatmen hoechstens 8 s`() {
+        val calm = string(R.string.pattern_editor_rule_calm)
+        listOf(
+            "höchstens ${PatternRules.EXHALE_MAX}\u00A0s",
+            "${PatternRules.CALM_CYCLE_MIN} bis ${PatternRules.CALM_CYCLE_MAX}\u00A0s",
+            "voll bis ${PatternRules.CALM_HOLD_FULL_MAX}\u00A0s",
+            "leer bis ${PatternRules.CALM_HOLD_EMPTY_MAX}\u00A0s",
+        ).forEach { assertTrue("„$it“ fehlt in „$calm“", it in calm) }
+        val active = string(R.string.pattern_editor_rule_active)
+        listOf(
+            "${PatternRules.ACTIVE_CYCLE_MIN} bis ${PatternRules.ACTIVE_CYCLE_MAX}\u00A0s",
+            "voll bis ${PatternRules.ACTIVE_HOLD_FULL_MAX}\u00A0s",
+        ).forEach { assertTrue("„$it“ fehlt in „$active“", it in active) }
+    }
+
+    @Test
+    fun `angepasst steht leise am Kopf, eine eigene Musterzeile gibt es nicht`() {
+        val state = show(PatternEditorState.new(prefix))
+        val modified = string(R.string.adjust_modified)
+        compose.onNodeWithContentDescription(modified).assertDoesNotExist()
+        stepButton(R.string.phase_exhale, R.string.adjust_increase).performScrollTo().performClick()
+        assertTrue(state.modified)
+        // A54 bei Schrift 1,0: passt hinter den Titel, deshalb mit Trennpunkt.
+        compose.onNodeWithContentDescription(modified).assert(hasText("· $modified"))
+        // Die Werte stehen in den Steppern, die Dauer im Start-Knopf – keine Zeile „Einatmen 4 s · …“.
+        compose.onNodeWithText(RandomPatternGenerator.hintFor(state.spec), substring = true).assertDoesNotExist()
+    }
+
     // ---- Name ----
 
     @Test
@@ -275,6 +306,16 @@ class PatternEditorScreenTest {
         field.performTextReplacement("Abend😀ruhe\nkurz")
         assertEquals("Abendruhe kurz", state.name)
         assertTrue(state.nameEdited)
+    }
+
+    @Test
+    fun `Fertig im Namensfeld behaelt den Fokus fuer Tastatur und D-Pad`() {
+        show(PatternEditorState.new(prefix))
+        val field = compose.onNode(hasSetTextAction())
+        field.performScrollTo().performClick()
+        field.assertIsFocused()
+        field.performImeAction()
+        field.assertIsFocused()
     }
 
     @Test

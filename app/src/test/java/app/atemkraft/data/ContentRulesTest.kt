@@ -3,12 +3,16 @@ package app.atemkraft.data
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternComposer
 import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.PatternRules
+import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
+import app.atemkraft.domain.withinCreationRules
+import app.atemkraft.domain.withinGuardrails
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -612,4 +616,28 @@ class ContentRulesTest {
     private fun repoFile(path: String): File = listOf(File("../$path"), File(path)).firstOrNull { it.exists() } ?: File("../$path")
 
     private fun moduleFile(path: String): File = listOf(File(path), File("app/$path")).first { it.exists() }
+
+    @Test
+    fun `Herkunftstexte nennen die strengen Regeln nur fuer Muster, die sie einhalten`() {
+        // Gespeichert bis 1.6.2: aktivierend 4·4 (Ein = Aus), ruhig 3,5·5 (Atemzug 8,5 s).
+        val legacy = listOf(
+            PatternSpec(4.0, null, 4.0, null, activating = true),
+            PatternSpec(3.5, null, 5.0, null, activating = false),
+        )
+        val strict = listOf("das Einatmen ist länger als das Ausatmen", "4,6 bis 6,7", "Beim Zusammenstellen")
+        for (spec in legacy) {
+            check(spec.withinGuardrails() && !spec.withinCreationRules())
+            for (origin in listOf(PatternOrigin.SAVED_DAILY, PatternOrigin.CUSTOM)) {
+                val detail = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "x", origin, 5).effectDetail.orEmpty()
+                strict.forEach { claim ->
+                    if (claim in detail) fail("$origin $spec behauptet „$claim“: $detail")
+                }
+                if ("weiteren Leitplanken" !in detail) fail("$origin $spec nennt seine Leitplanken nicht: $detail")
+            }
+        }
+        // Ein Muster nach den Erzeugungsregeln nennt sie weiter, samt Ausatmen höchstens 8 s.
+        val calm = PatternComposer.propose(PatternWish(activating = false, withHold = true), 0)
+        val detail = RandomPatternGenerator.exerciseFrom(calm, "muster-1", "x", PatternOrigin.CUSTOM, 5).effectDetail.orEmpty()
+        if ("4,6 bis 6,7" !in detail || "höchstens ${PatternRules.EXHALE_MAX}\u00A0s" !in detail) fail("Regeln fehlen: $detail")
+    }
 }

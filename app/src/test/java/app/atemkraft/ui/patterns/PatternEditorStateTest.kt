@@ -8,8 +8,10 @@ import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.domain.secondsOf
 import app.atemkraft.domain.withinCreationRules
 import app.atemkraft.domain.withinGuardrails
+import app.atemkraft.ui.PatternEditorRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -493,4 +495,35 @@ class PatternEditorStateTest {
     }
 
     private val allWishes = listOf(false, true).flatMap { a -> listOf(false, true).map { PatternWish(a, it) } }
+
+    @Test
+    fun `Lesezeichen merkt sich den geschriebenen Stand, nicht den nach dem Schreiben`() {
+        val state = PatternEditorState.new(prefix)
+        // Stand vor dem Schreiben festhalten, während des Schreibens zieht die Kurve weiter.
+        val written = state.draft()
+        state.set(PatternField.EXHALE, state.secondsOf(PatternField.EXHALE) + 1)
+        state.markSaved(42, written)
+        assertEquals(42L, state.savedId)
+        assertFalse(state.saved)
+        // Zurück auf den geschriebenen Stand: Lesezeichen wieder gefüllt.
+        state.set(PatternField.EXHALE, written.spec.secondsOf(PatternField.EXHALE))
+        assertTrue(state.saved)
+    }
+
+    @Test
+    fun `Stift am Tagesmuster gibt genau dessen Zahlen mit`() {
+        val shown = RandomPatternGenerator.forDate(java.time.LocalDate.of(2026, 10, 21))
+        assertEquals(shown.spec, RandomPatternGenerator.specOf(shown.exercise))
+        val route = PatternEditorRoute.of(shown.spec)
+        assertTrue(route.fromDaily)
+        assertEquals(shown.spec, route.dailySpec())
+        // Mit Halten leer und ohne Halten voll, sanft aktivierend.
+        listOf(spec(4, null, 6, 2), spec(5, 1, 3, null, activating = true)).forEach {
+            assertEquals(it, PatternEditorRoute.of(it).dailySpec())
+            assertEquals(it, RandomPatternGenerator.specOf(RandomPatternGenerator.exerciseFrom(it, "x", "x")))
+        }
+        // Alte Route ohne Zahlen bzw. unlesbare: kein Spec, der Editor nimmt das aktuelle Tagesmuster.
+        assertNull(PatternEditorRoute(fromDaily = true).dailySpec())
+        assertNull(PatternEditorRoute(fromDaily = true, daily = "4,x,6,0,false").dailySpec())
+    }
 }

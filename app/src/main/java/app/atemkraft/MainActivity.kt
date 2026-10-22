@@ -317,6 +317,7 @@ private fun AtemkraftApp(
                         onOpenSettings = { navController.navigate(SettingsRoute()) },
                         markedIds = markedExercises,
                         onOpenPatternEditor = { navController.navigate(PatternEditorRoute()) },
+                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 composable<SituationenRoute> {
@@ -325,6 +326,7 @@ private fun AtemkraftApp(
                         resolve = { id -> container.exerciseRepository.byId(id) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
                         markedIds = markedExercises,
+                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 composable<EigeneRoute> {
@@ -338,6 +340,7 @@ private fun AtemkraftApp(
                             scope.launch { container.savedPatternsRepository.delete(id) }
                         },
                         onOpenSettings = { navController.navigate(SettingsRoute()) },
+                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 composable<MeditationRoute> {
@@ -358,6 +361,7 @@ private fun AtemkraftApp(
                             meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
                             askNotifications()
                         },
+                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 pushComposable<DetailRoute> { entry ->
@@ -431,8 +435,13 @@ private fun AtemkraftApp(
                         // Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen,
                         // ein gespeichertes bearbeiten.
                         onEditPattern = when {
+                            // Die Zahlen genau dieses Musters mitgeben: Ein erneutes daily() im
+                            // Editor wäre nach Mitternacht schon das nächste.
                             id == RandomPatternGenerator.ID -> {
-                                { navController.navigate(PatternEditorRoute(fromDaily = true)) }
+                                {
+                                    val shown = RandomPatternGenerator.specOf(exercise)
+                                    navController.navigate(shown?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true))
+                                }
                             }
 
                             savedPatternId != null -> {
@@ -449,7 +458,7 @@ private fun AtemkraftApp(
                         patternId = route.patternId,
                         fromDaily = route.fromDaily,
                         repository = container.savedPatternsRepository,
-                        dailySpec = { container.exerciseRepository.daily().spec },
+                        dailySpec = { route.dailySpec() ?: container.exerciseRepository.daily().spec },
                         scope = scope,
                         // Ausprobieren ohne Speichern: Der Editor bleibt unter der Session offen –
                         // probieren, nachstellen, noch einmal probieren.
@@ -480,7 +489,6 @@ private fun AtemkraftApp(
                         onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
-                        onOpenLogbook = { navController.navigate(LogbookRoute) },
                         transfer = patternTransfer,
                         focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
                     )
@@ -528,6 +536,12 @@ private fun AtemkraftApp(
                         sessionViewModel.stop()
                         sessionExpanded = false
                     },
+                    // „Im Logbuch ansehen ›“ am Ende: beendet wie „Ende“ und öffnet das Logbuch.
+                    onOpenLogbook = {
+                        sessionViewModel.stop()
+                        sessionExpanded = false
+                        navController.navigate(LogbookRoute) { launchSingleTop = true }
+                    },
                 )
             }
         }
@@ -552,6 +566,11 @@ private fun AtemkraftApp(
                     onEnd = {
                         meditationController.end()
                         meditationExpanded = false
+                    },
+                    onOpenLogbook = {
+                        meditationController.end()
+                        meditationExpanded = false
+                        navController.navigate(LogbookRoute) { launchSingleTop = true }
                     },
                 )
             }

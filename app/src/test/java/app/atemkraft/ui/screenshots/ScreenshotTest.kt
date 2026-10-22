@@ -158,6 +158,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
         private const val SHOT = "screenshot"
 
+        /** Laufende Kurven-Vorschau: 4,5 s nach Play, mitten in „Halten voll“ von 4·1·6. */
+        private const val PREVIEW_AT_MS = 4_500L
+
         /** Höhe für Listen-Screens bei fontScale 1,0; wächst mit der Schrift. */
         private const val TALL_DP = 4000
 
@@ -439,6 +442,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onSelect = {},
             onOpenSettings = {},
             onOpenPatternEditor = {},
+            onOpenLogbook = {},
         )
     }
 
@@ -465,6 +469,24 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun patternEditorLore() = snap("14_muster_editor_lehre_offen", prepare = {
         compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
+    }) {
+        Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+    }
+
+    /**
+     * Vorschau der Kurve läuft (Uhr fest, Punkt in „Halten voll“): Phasenname statt „Griffe
+     * ziehen“, bricht bei großer Schrift nur zwischen Wörtern um, nie im Wort (LAYOUT-03).
+     */
+    @Test
+    fun patternEditorPreview() = snap("14_muster_editor_vorschau", prepare = {
+        // Uhr erst anhalten, dann den Klick direkt auslösen: Die Vorschau läuft endlos.
+        compose.waitForIdle()
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithContentDescription(RuntimeEnvironment.getApplication().getString(R.string.cd_preview_play))
+            .performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        // 4·1·6: Halten voll von 4 bis 5 s – der längste Phasenname.
+        compose.mainClock.advanceTimeBy(PREVIEW_AT_MS)
     }) {
         Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
     }
@@ -531,6 +553,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onSelect = {},
             onDeletePattern = {},
             onOpenSettings = {},
+            onOpenLogbook = {},
         )
     }
 
@@ -571,6 +594,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             recommendations = Situations.all,
             resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
             onSelect = {},
+            onOpenLogbook = {},
         )
     }
 
@@ -625,6 +649,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onOpenSettings = {},
             onDurationTick = {},
             onStart = {},
+            onOpenLogbook = {},
         )
     }
 

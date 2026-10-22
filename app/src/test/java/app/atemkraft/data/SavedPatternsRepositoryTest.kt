@@ -264,4 +264,24 @@ class SavedPatternsRepositoryTest {
         createdAtEpochMs = 1_000,
         origin = origin,
     )
+
+    @Test
+    fun `Bearbeiten startet mit der Dauer der Detailseite, update schreibt sie in die Spalte`() = runBlocking {
+        val dao = FakeSavedPatternDao()
+        val overrides = mutableMapOf<String, Int>()
+        val repo = SavedPatternsRepository(dao, clearOverrides = { overrides.remove(it) }, overrideMinutes = { overrides[it] })
+        repo.save(daily)
+        val id = dao.rows.value.single().id
+        // Tagesmuster ohne eigene Dauer: Vorgabe; auf der Detailseite 15 min gewählt.
+        assertNull(repo.loadForEdit(id)!!.minutes)
+        overrides["muster-$id"] = 15
+
+        val loaded = repo.loadForEdit(id)!!
+        assertEquals(15, loaded.minutes)
+
+        repo.update(id, daily.spec, loaded.minutes!!, name = "Nur umbenannt")
+        assertEquals(15, dao.rows.value.single().minutes)
+        assertTrue(overrides.isEmpty())
+        assertEquals(15, repo.loadForEdit(id)!!.minutes)
+    }
 }

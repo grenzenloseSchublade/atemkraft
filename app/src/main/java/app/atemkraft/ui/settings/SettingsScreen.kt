@@ -108,7 +108,6 @@ fun SettingsScreen(
     onOpenAtemlehre: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
-    onOpenLogbook: () -> Unit = {},
     transfer: PatternTransfer = PatternTransfer.Idle,
     focusMeditation: Boolean = false,
 ) {
@@ -185,7 +184,7 @@ fun SettingsScreen(
                 }
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                DataCard(transfer, state.logCount, onOpenLogbook, actions::clearLog)
+                DataCard(transfer, state.logCount, actions::clearLog)
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
@@ -249,11 +248,11 @@ private fun KnowledgeRow(title: String, hint: String, onClick: () -> Unit) {
 
 /**
  * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
- * keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten das Logbuch als
- * Navigationszeile mit Papierkorb, zweistufig (MUSTER-05).
+ * keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die Zahl der
+ * Logbuch-Sitzungen mit Papierkorb, zweistufig (MUSTER-05).
  */
 @Composable
-private fun DataCard(transfer: PatternTransfer, logCount: Int, onOpenLog: () -> Unit, onClearLog: () -> Unit) {
+private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () -> Unit) {
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
@@ -284,46 +283,33 @@ private fun DataCard(transfer: PatternTransfer, logCount: Int, onOpenLog: () -> 
             )
             if (transferInfoExpanded) BodyText(stringResource(R.string.settings_data_transfer_hint))
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
-            LogRow(logCount, onOpenLog, onClearLog)
+            LogRow(logCount, onClearLog)
         }
     }
 }
 
 /**
- * Zeile „Logbuch“: links Titel und Zahl der Sitzungen mit Chevron – dieser Teil ist ein Button und
- * öffnet das Logbuch ([onOpen], TalkBack liest Titel und Zahl als einen Namen, Klick-Label
- * „Logbuch öffnen“). Rechts daneben, als eigener Knoten außerhalb der Tippfläche, der Papierkorb
- * in derselben Icon-Spalte wie bei den Stimmen. Leeren zweistufig im selben Element (MUSTER-05,
+ * Zeile „Logbuch“: links Titel und Zahl der Sitzungen, rechts in derselben Icon-Spalte wie bei
+ * den Stimmen der Papierkorb. Leeren zweistufig im selben Element (MUSTER-05,
  * [ConfirmIconButton]: „Logbuch wirklich leeren?“). Ohne Einträge gibt es nichts zu leeren – dann
- * fehlt der Papierkorb, die Zeile behält ihre Höhe und öffnet das (leere) Logbuch weiterhin.
+ * fehlt der Papierkorb, die Zeile behält ihre Höhe. Geöffnet wird das Logbuch über den Kalender
+ * im Kopf jedes Tabs und am Ende einer Übung (Nachtrag 2, Nutzer 2026-10-22), nicht hier.
  */
 @Composable
-private fun LogRow(count: Int, onOpen: () -> Unit, onClear: () -> Unit) {
-    val openLabel = stringResource(R.string.settings_logbook_open)
+private fun LogRow(count: Int, onClear: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.MinTouchTarget),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .heightIn(min = Dimens.MinTouchTarget)
-                .clickable(role = Role.Button, onClickLabel = openLabel, onClick = onOpen)
-                .padding(vertical = Dimens.GapTiny),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                WholeWordText(
-                    text = stringResource(R.string.settings_log_title),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                HintText(
-                    if (count > 0) pluralStringResource(R.plurals.log_sessions, count, count) else stringResource(R.string.settings_log_empty),
-                )
-            }
-            ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
+        Column(modifier = Modifier.weight(1f).padding(vertical = Dimens.GapTiny)) {
+            WholeWordText(
+                text = stringResource(R.string.settings_log_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            HintText(
+                if (count > 0) pluralStringResource(R.plurals.log_sessions, count, count) else stringResource(R.string.settings_log_empty),
+            )
         }
         if (count > 0) {
             TrailingIconCell {

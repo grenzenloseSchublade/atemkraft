@@ -94,6 +94,7 @@ fun SessionScreen(
     onRestart: () -> Unit,
     onStop: () -> Unit,
     controlsVisible: Boolean = true,
+    onOpenLogbook: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -104,6 +105,7 @@ fun SessionScreen(
                 title = stringResource(R.string.session_done_question),
                 onAgain = onRestart,
                 onExit = onStop,
+                onOpenLogbook = onOpenLogbook,
                 summary = state.summary?.let { sessionSummaryParts(it.durationMs, rounds = it.rounds, breaths = it.breaths) }.orEmpty(),
             )
         } else {

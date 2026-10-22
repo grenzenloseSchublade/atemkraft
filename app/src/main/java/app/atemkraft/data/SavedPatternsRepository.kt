@@ -51,10 +51,13 @@ data class SavedPattern(
  *
  * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update]
  *   ruft es auf, sonst überstimmen alte Anpassungen die neuen Werte.
+ * @param overrideMinutes die auf der Detailseite gespeicherte Dauer einer Übung (DataStore), null
+ *   = keine; [loadForEdit] startet damit, weil [update] sie danach löscht.
  */
 class SavedPatternsRepository(
     private val dao: SavedPatternDao,
     private val clearOverrides: suspend (exerciseId: String) -> Unit = {},
+    private val overrideMinutes: suspend (exerciseId: String) -> Int? = { null },
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
 
@@ -148,8 +151,17 @@ class SavedPatternsRepository(
         return updated.toSaved()
     }
 
-    /** Das Muster mit DB-Id [id] für den Editor (Bearbeiten-Modus); null, wenn es fehlt. */
-    suspend fun loadForEdit(id: Long): SavedPattern? = dao.byId(id)?.toSaved()
+    /**
+     * Das Muster mit DB-Id [id] für den Editor (Bearbeiten-Modus); null, wenn es fehlt. Hat die
+     * Detailseite eine eigene Dauer gespeichert, gilt sie als [SavedPattern.minutes]: Die Seite
+     * zeigt diese Dauer, und [update] übernimmt sie in die Spalte, bevor es die Anpassung
+     * löscht – statt sie still auf die Vorgabe zurückzusetzen.
+     */
+    suspend fun loadForEdit(id: Long): SavedPattern? {
+        val saved = dao.byId(id)?.toSaved() ?: return null
+        val minutes = overrideMinutes("$ID_PREFIX$id")?.coerceIn(AdjustLimits.MINUTES) ?: return saved
+        return saved.copy(minutes = minutes)
+    }
 
     /**
      * Die Übung zu [exerciseId] („muster-7“), solange es sie gibt: Die Detailseite zeigt so nach

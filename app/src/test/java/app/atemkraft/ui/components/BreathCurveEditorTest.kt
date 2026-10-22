@@ -1,21 +1,29 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
+import app.atemkraft.R
 import app.atemkraft.domain.PatternField
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.rangeFor
@@ -61,7 +69,7 @@ class BreathCurveEditorTest {
         }
     }
 
-    private fun show(initial: PatternSpec) {
+    private fun show(initial: PatternSpec, modifier: Modifier = Modifier) {
         spec = initial
         compose.setContent {
             AtemkraftTheme {
@@ -73,6 +81,7 @@ class BreathCurveEditorTest {
                             calls += field to value
                             spec = spec.with(field, value)
                         },
+                        modifier = modifier,
                     )
                 }
             }
@@ -198,6 +207,35 @@ class BreathCurveEditorTest {
         val layout = metrics.layout(width)
         assertEquals(2, layout.labelStep)
         assertLabelsApart(layout)
+    }
+
+    /**
+     * Laufende Vorschau auf 360 dp bei Schrift 2,0: Statt „Griffe ziehen“ steht der Phasenname,
+     * und auch der längste („Halten voll“) wird nicht abgeschnitten und bricht nie im Wort.
+     */
+    @Test
+    @Config(qualifiers = "w360dp-h640dp-xhdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `laufende Vorschau zeigt den Phasennamen statt des Hinweises, nie im Wort geschnitten`() {
+        RuntimeEnvironment.setFontScale(TestMatrix.MAX_FONT_SCALE)
+        show(calm, Modifier.width(360.dp - Dimens.ScreenPadding * 2))
+        val hint = RuntimeEnvironment.getApplication().getString(R.string.pattern_editor_curve_hint)
+        compose.onNodeWithText(hint).assertExists()
+
+        // Uhr erst anhalten, dann den Klick direkt auslösen: Die Vorschau läuft endlos, mit
+        // laufender Uhr würde der Test nie still.
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithContentDescription("Vorschau abspielen").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        // 4·1·6: Halten voll von 4 bis 5 s.
+        compose.mainClock.advanceTimeBy(4_500L)
+        compose.onNodeWithText(hint).assertDoesNotExist()
+        val name = RuntimeEnvironment.getApplication().getString(R.string.cd_hold_full)
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText(name).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        val layout = layouts.single()
+        assertFalse("abgeschnitten", layout.didOverflowWidth)
+        assertFalse("im Wort umbrochen", breaksInsideWord(layout))
     }
 
     private fun assertLabelsApart(layout: CurveLayout) {

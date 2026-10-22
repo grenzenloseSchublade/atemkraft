@@ -33,6 +33,8 @@ fun SessionOverlay(
     onRestart: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
+    // „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
+    onOpenLogbook: (() -> Unit)? = null,
 ) {
     BackHandler { if (state.status == SessionStatus.FINISHED) onStop() else onMinimize() }
     CalmHost(
@@ -58,6 +60,7 @@ fun SessionOverlay(
                 onContinue = onContinue,
                 onRestart = onRestart,
                 onStop = onStop,
+                onOpenLogbook = onOpenLogbook,
             )
         }
     }

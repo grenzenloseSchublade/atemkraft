@@ -1,5 +1,7 @@
 package app.atemkraft.ui.detail
 
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.SaverScope
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.domain.AdjustLimits
@@ -89,5 +91,34 @@ class SessionAdjustStateTest {
         resonance.applyStored(IntervalOverrides(hold = 10))
         assertNull(resonance.hold)
         assertFalse(resonance.modified)
+    }
+
+    private fun saveAndRestore(state: SessionAdjustState, restoreWith: AdjustDefaults): SessionAdjustState {
+        val saver = SessionAdjustState.saver(state.defaults)
+
+        @Suppress("UNCHECKED_CAST")
+        val saved = with(saver as Saver<SessionAdjustState, Any>) { SaverScope { true }.save(state) }!!
+        return (SessionAdjustState.saver(restoreWith) as Saver<SessionAdjustState, Any>).restore(saved)!!
+    }
+
+    @Test
+    fun `gesicherter Zustand gilt nur fuer dieselben Vorgaben`() {
+        val calm = AdjustDefaults(roundBased = false, duration = 5, inhale = 4, hold = null, exhale = 6)
+        val state = SessionAdjustState(calm)
+        state.duration = 7
+        state.applyStored(IntervalOverrides())
+
+        // Gleiche Vorgaben (Drehen, Zurück ohne Änderung): Werte und Merker bleiben.
+        val same = saveAndRestore(state, calm)
+        assertEquals(7, same.duration)
+        assertTrue(same.storedApplied)
+
+        // Im Editor geändert (gleiche Id, neue Vorgaben): frisch bei den neuen Vorgaben, ohne
+        // alte Phasen als Abweichung – Start nimmt keine Phasen-Overrides mit.
+        val edited = AdjustDefaults(roundBased = false, duration = 10, inhale = 5, hold = 1, exhale = 3)
+        val restored = saveAndRestore(state, edited)
+        assertFalse(restored.modified)
+        assertFalse(restored.storedApplied)
+        assertEquals(SessionConfig(minutes = 10), restored.config())
     }
 }

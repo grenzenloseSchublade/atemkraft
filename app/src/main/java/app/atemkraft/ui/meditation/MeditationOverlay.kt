@@ -80,6 +80,8 @@ fun MeditationOverlay(
     onTapHaptic: () -> Unit,
     onRestart: () -> Unit,
     onEnd: () -> Unit,
+    // „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
+    onOpenLogbook: (() -> Unit)? = null,
 ) {
     BackHandler { if (state.status == MeditationStatus.FINISHED) onEnd() else onMinimize() }
     CalmHost(
@@ -95,7 +97,7 @@ fun MeditationOverlay(
             onToggleMute = onToggleMute,
             chromeVisible = controlsVisible,
         ) {
-            MeditationContent(state, display, controlsVisible, onTogglePause, onTapHaptic, onRestart, onEnd)
+            MeditationContent(state, display, controlsVisible, onTogglePause, onTapHaptic, onRestart, onEnd, onOpenLogbook)
         }
     }
 }
@@ -109,12 +111,14 @@ private fun MeditationContent(
     onTapHaptic: () -> Unit,
     onRestart: () -> Unit,
     onEnd: () -> Unit,
+    onOpenLogbook: (() -> Unit)?,
 ) {
     if (state.status == MeditationStatus.FINISHED) {
         FinishedPanel(
             title = stringResource(R.string.session_done_question),
             onAgain = onRestart,
             onExit = onEnd,
+            onOpenLogbook = onOpenLogbook,
             // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
             // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
             summary = sessionSummaryParts(durationMs = state.elapsedMs),

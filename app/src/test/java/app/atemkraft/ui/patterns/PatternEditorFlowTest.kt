@@ -5,8 +5,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -63,6 +67,7 @@ class PatternEditorFlowTest {
     private val repo = SavedPatternsRepository(dao)
     private val exercises = ExerciseRepository(repo)
     private val started = mutableListOf<Pair<Exercise, SessionConfig>>()
+    private val detailStarts = mutableListOf<Pair<Exercise, SessionConfig>>()
 
     private fun show() {
         rule.setContent {
@@ -78,7 +83,7 @@ class PatternEditorFlowTest {
                             patternId = route.patternId,
                             fromDaily = route.fromDaily,
                             repository = repo,
-                            dailySpec = { exercises.daily().spec },
+                            dailySpec = { route.dailySpec() ?: exercises.daily().spec },
                             scope = scope,
                             onStart = { exercise, config -> started += exercise to config },
                             onOpenLore = {},
@@ -113,11 +118,11 @@ class PatternEditorFlowTest {
             onIntervalsChange = { _, _, _, _ -> },
             onIntervalsReset = {},
             onConfirmedSafety = {},
-            onStart = {},
+            onStart = { config -> detailStarts += exercise to config },
             onBack = { nav.popBackStack() },
             onEditPattern = when {
                 id == RandomPatternGenerator.ID -> {
-                    { nav.navigate(PatternEditorRoute(fromDaily = true)) }
+                    { nav.navigate(RandomPatternGenerator.specOf(exercise)?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true)) }
                 }
 
                 savedId != null -> {
@@ -248,6 +253,48 @@ class PatternEditorFlowTest {
         assertEquals(PatternEditorState.fitToCreationRules(daily.spec).exhale, row.exhale, 0.0)
         val saved = runBlocking { repo.loadForEdit(row.id)!! }
         assertFalse("Lesezeichen der Tageskarte bleibt leer", repo.isDailySaved(daily, listOf(saved)))
+    }
+
+    @Test
+    fun `Nach dem Bearbeiten startet die Detailseite das neue Muster ohne alte Phasen und mit der neuen Dauer`() {
+        val id = saveCustom(spec(4, null, 6), "")
+        show()
+        step { nav.navigate(DetailRoute("muster-$id")) }
+        step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_edit)).performClick() }
+        step {
+            rule.onNode(
+                hasText(string(R.string.daily_pattern_gentle_up)) and
+                    SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton) and
+                    SemanticsMatcher("sichtbar") { it.size.width > 0 },
+            ).performClick()
+        }
+        repeat(5) { stepper(R.string.cd_adjust_duration, R.string.adjust_increase).performScrollTo().performClick() }
+        step { bookmark().performClick() }
+        val row = dao.rows.value.single()
+        assertTrue(row.activating)
+        assertEquals(10, row.minutes)
+
+        assertEquals("EigeneRoute > DetailRoute", step { back().performClick() })
+        step { rule.onNodeWithText(string(R.string.action_start), substring = true).performClick() }
+        val (exercise, config) = detailStarts.single()
+        assertEquals("muster-$id", exercise.id)
+        assertTrue(exercise.activating)
+        assertEquals(SessionConfig(minutes = 10), config)
+    }
+
+    @Test
+    fun `Stift am Tagesmuster uebernimmt das angezeigte Muster, auch wenn es inzwischen ein anderes gibt`() {
+        show()
+        step { nav.navigate(DetailRoute(RandomPatternGenerator.ID)) }
+        val shown = exercises.daily()
+        // Wie über Mitternacht: Das Repository liefert inzwischen ein anderes Tagesmuster.
+        var next = exercises.regenerateDaily()
+        while (next.spec == shown.spec) next = exercises.regenerateDaily()
+        step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_adapt_daily)).performClick() }
+        step { bookmark().performClick() }
+
+        val saved = runBlocking { repo.loadForEdit(dao.rows.value.single().id)!! }
+        assertEquals(PatternEditorState.fitToCreationRules(shown.spec), saved.spec)
     }
 
     @Test

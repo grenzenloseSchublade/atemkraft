@@ -85,12 +85,14 @@ fun MeditationScreen(
     onOpenSettings: () -> Unit,
     onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
+    // Kalender im Kopf: öffnet das Logbuch; ohne ihn kein Icon (Vorschauen, Tests).
+    onOpenLogbook: (() -> Unit)? = null,
 ) {
     // Der Tab zeigt nur die Auswahl; die laufende/abgeschlossene Sitzung liegt als Vollbild-Overlay
     // darüber ([MeditationOverlay]) – so ist sie (wie die Atem-Session) minimierbar und über die
     // Mini-Leiste erreichbar.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart)
+        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart, onOpenLogbook)
     }
 }
 
@@ -102,6 +104,7 @@ private fun SelectionContent(
     onOpenSettings: () -> Unit,
     onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
+    onOpenLogbook: (() -> Unit)?,
 ) {
     // Saveable: Die Auswahl überlebt den Abstecher in die Einstellungen und Tab-Wechsel. Schlüssel
     // ohne die Intervall-LÄNGE (die ist global, s. SettingsRepository) – sonst würde eine Änderung
@@ -135,6 +138,7 @@ private fun SelectionContent(
                         title = stringResource(R.string.meditation_title),
                         subtitle = stringResource(R.string.meditation_subtitle),
                         action = { SettingsAction(onClick = onOpenSettings) },
+                        onOpenLogbook = onOpenLogbook,
                     )
                 },
                 center = {

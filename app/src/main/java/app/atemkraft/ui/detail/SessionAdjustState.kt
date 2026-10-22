@@ -132,18 +132,47 @@ class SessionAdjustState(
     }
 
     companion object {
-        /** Sichert Werte und den Übernahme-Merker über Konfigurationswechsel und Prozesstod. */
+        /**
+         * Sichert Werte und den Übernahme-Merker über Konfigurationswechsel und Prozesstod – samt
+         * der Vorgaben, zu denen sie gehören. Haben sich die Vorgaben inzwischen geändert (ein
+         * gespeichertes Muster wurde im Editor bearbeitet, die Id bleibt), gelten die alten Werte
+         * nicht mehr: Der Zustand beginnt neu bei den aktuellen [defaults].
+         */
         fun saver(defaults: AdjustDefaults): Saver<SessionAdjustState, *> = listSaver(
             // Fehlende Phasen als 0: Beim Wiederherstellen bleiben sie über [defaults] null.
-            save = { listOf(it.duration, it.inhale ?: 0, it.hold ?: 0, it.exhale ?: 0, if (it.storedApplied) 1 else 0) },
-            restore = { SessionAdjustState(defaults, it[0], it[1], it[2], it[3], storedApplied = it[4] == 1) },
+            save = {
+                listOf(it.duration, it.inhale ?: 0, it.hold ?: 0, it.exhale ?: 0, if (it.storedApplied) 1 else 0) +
+                    encode(it.defaults)
+            },
+            restore = {
+                if (it.drop(SAVED_VALUES) != encode(defaults)) {
+                    SessionAdjustState(defaults)
+                } else {
+                    SessionAdjustState(defaults, it[0], it[1], it[2], it[3], storedApplied = it[4] == 1)
+                }
+            },
+        )
+
+        private const val SAVED_VALUES = 5
+        private const val NO_PHASE = -1
+
+        private fun encode(defaults: AdjustDefaults): List<Int> = listOf(
+            if (defaults.roundBased) 1 else 0,
+            defaults.duration,
+            defaults.inhale ?: NO_PHASE,
+            defaults.hold ?: NO_PHASE,
+            defaults.exhale ?: NO_PHASE,
         )
     }
 }
 
-/** [SessionAdjustState] der Übung über rememberSaveable, geschlüsselt nach ihrer Id. */
+/**
+ * [SessionAdjustState] der Übung über rememberSaveable, geschlüsselt nach ihrer Id und ihren
+ * Vorgaben: Ändert sich ein gespeichertes Muster bei gleicher Id (Editor), beginnt die Anpassung
+ * neu – offen auf der Seite über den Schlüssel, nach „Zurück“ über den [SessionAdjustState.saver].
+ */
 @Composable
 fun rememberSessionAdjustState(exercise: Exercise): SessionAdjustState {
     val defaults = remember(exercise) { AdjustDefaults.of(exercise) }
-    return rememberSaveable(exercise.id, saver = SessionAdjustState.saver(defaults)) { SessionAdjustState(defaults) }
+    return rememberSaveable(exercise.id, defaults, saver = SessionAdjustState.saver(defaults)) { SessionAdjustState(defaults) }
 }

@@ -66,6 +66,8 @@ fun HomeScreen(
     markedIds: Set<String> = emptySet(),
     // Einstieg in den Muster-Editor unter der Tageskarte; ohne ihn kein Link.
     onOpenPatternEditor: (() -> Unit)? = null,
+    // Kalender im Kopf: öffnet das Logbuch; ohne ihn kein Icon (Vorschauen, Tests).
+    onOpenLogbook: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -84,6 +86,7 @@ fun HomeScreen(
                     title = stringResource(R.string.tab_breathe),
                     subtitle = stringResource(R.string.home_subtitle),
                     action = { SettingsAction(onClick = onOpenSettings) },
+                    onOpenLogbook = onOpenLogbook,
                 )
             }
 
