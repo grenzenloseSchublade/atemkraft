@@ -361,11 +361,7 @@ object RandomPatternGenerator {
     private fun loreFor(spec: PatternSpec, origin: PatternOrigin): YogaLore {
         val refs = atemlehreRefs(spec)
         val patternId = refs.patternId
-        val teaser = when (patternId) {
-            "brmhana" -> "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
-            "langhana" -> "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
-            else -> "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
-        }
+        val teaser = teaserFor(patternId)
         val detail = buildString {
             append(
                 when (origin) {
@@ -375,22 +371,30 @@ object RandomPatternGenerator {
                 },
             )
             append("; die Einordnung folgt nur dem Verhältnis der Phasen.")
-            if (spec.holdFull != null) {
-                append(
-                    if (patternId == "brmhana") {
-                        " Das Halten nach dem Einatmen verstärkt nach der Lehre das Belebende."
-                    } else {
-                        " Das Halten nach dem Einatmen gilt in der Lehre als sammelnd und verstärkt eher das " +
-                            "Belebende; das Muster mischt also beides."
-                    },
-                )
-            }
-            if (spec.holdEmpty != null) {
-                append(" Das Halten nach dem Ausatmen gilt als Weg in die Stille und verstärkt das Beruhigende.")
-            }
+            if (spec.holdFull != null) append(holdFullSentence(patternId))
+            if (spec.holdEmpty != null) append(HOLD_EMPTY_SENTENCE)
         }
         return YogaLore(teaser = teaser, detail = detail, patternId = patternId, morePatternIds = refs.morePatternIds)
     }
+
+    /** Teaser der Einordnung je Hauptkarte (≤ 95 Zeichen, zuschreibend formuliert). */
+    private fun teaserFor(patternId: String): String = when (patternId) {
+        "brmhana" -> "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
+        "langhana" -> "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
+        else -> "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
+    }
+
+    /** Satz zum Halten nach dem Einatmen, mit führendem Leerzeichen. */
+    private fun holdFullSentence(patternId: String): String = if (patternId == "brmhana") {
+        " Das Halten nach dem Einatmen verstärkt nach der Lehre das Belebende."
+    } else {
+        " Das Halten nach dem Einatmen gilt in der Lehre als sammelnd und verstärkt eher das " +
+            "Belebende; das Muster mischt also beides."
+    }
+
+    /** Satz zum Halten nach dem Ausatmen, mit führendem Leerzeichen. */
+    private const val HOLD_EMPTY_SENTENCE =
+        " Das Halten nach dem Ausatmen gilt als Weg in die Stille und verstärkt das Beruhigende."
 
     /**
      * Einordnung eines Musters in die Atemlehre: folgt nur dem Verhältnis der Phasen, nicht einer
@@ -416,6 +420,203 @@ object RandomPatternGenerator {
         )
         return AtemlehreRefs(patternId = patternId, morePatternIds = holds)
     }
+
+    // ---- Frei gestaltete eigene Muster ----
+
+    /**
+     * Baut aus einer freien Folge ([FreePattern]) eine lauffähige Übung – für eigene Muster aus
+     * dem Editor („Frei gestalten“, Herkunft [PatternOrigin.CUSTOM]). Das Muster des Tages bleibt
+     * bei [exerciseFrom] mit [PatternSpec].
+     *
+     * Phasen: Ein → [PhaseType.INHALE], Aus → [PhaseType.EXHALE], Halten oben →
+     * [PhaseType.HOLD_FULL] („voll“), unten → [PhaseType.HOLD_EMPTY] („leer“), dazwischen →
+     * [PhaseType.HOLD_FULL] mit Füllstand („Pause“) wie bei Viloma. Einen Füllstand
+     * ([Phase.level]) bekommt eine Phase nur, wo er vom Phasentyp abweicht (Stufen); Stufen tragen
+     * „1. Stufe“, „2. Stufe“ … als Notiz.
+     *
+     * [minutes] wie bei [exerciseFrom] (`null` ≈ 5 min); bei Durchläufen über eine Minute stimmt
+     * die Vorgabedauer nur auf ganze Durchläufe genau. Ein intensives Muster
+     * ([FreePattern.isIntense]) bekommt [Exercise.caution] und Sicherheitshinweise, also denselben
+     * Sicherheitsdialog vor dem Start wie Wim Hof. [Exercise.activating] ist gesetzt, wenn die
+     * Einordnung Brmhana ist (mehr Ein als Aus). Wirft bei einer ungültigen Folge.
+     */
+    fun exerciseFrom(pattern: FreePattern, id: String, name: String, minutes: Int? = null): Exercise {
+        require(pattern.isValid()) { "Ungültige freie Folge: ${pattern.validate()}" }
+        val targetSeconds = minutes?.let { it * 60.0 } ?: TARGET_SECONDS
+        val repeat = (targetSeconds / pattern.totalSeconds).roundToInt().coerceAtLeast(1)
+        val reasons = pattern.intensityReasons()
+        val intense = reasons.isNotEmpty()
+        val refs = atemlehreRefs(pattern)
+        val activating = refs.patternId == "brmhana"
+        val hint = pattern.hint()
+        val perMinute = breathsPerMinutePhrase(pattern)
+        return Exercise(
+            id = id,
+            name = name,
+            family = BreathingFamily.BALANCE,
+            shortDescription = "$hint. $perMinute, von dir selbst zusammengestellt." +
+                if (intense) " ${FreePattern.DIZZINESS_SENTENCE}" else "",
+            effect = if (intense) {
+                "Intensives eigenes Muster: ${FreePattern.DIZZINESS_SENTENCE}"
+            } else {
+                "Dieses Muster hast du selbst zusammengestellt – ohne Wirkversprechen."
+            },
+            effectDetail = freeEffectDetail(perMinute, reasons),
+            segments = listOf(Segment(phases = phasesOf(pattern), repeat = repeat)),
+            rounds = 1,
+            instructionHint = if (activating || intense) hint else "$hint. $BELLY_GUIDANCE",
+            cautions = if (intense) freeCautions(reasons) else emptyList(),
+            caution = intense,
+            lore = loreFor(pattern, refs),
+            generated = true,
+            activating = activating,
+        )
+    }
+
+    /**
+     * Einordnung einer freien Folge in die Atemlehre nach den Summen der Phasen: Aus insgesamt
+     * länger als Ein → „langhana“, kürzer → „brmhana“, gleich → „samana“. Dazu „halten-voll“,
+     * wenn es ein Halten oben gibt, und „halten-leer“ für ein Halten unten, in dieser Reihenfolge.
+     * Pausen zwischen Stufen ([HoldPosition.BETWEEN]) verweisen auf keine Karte.
+     */
+    fun atemlehreRefs(pattern: FreePattern): AtemlehreRefs {
+        val patternId = when {
+            pattern.exhaleSeconds > pattern.inhaleSeconds -> "langhana"
+            pattern.exhaleSeconds < pattern.inhaleSeconds -> "brmhana"
+            else -> "samana"
+        }
+        val positions = pattern.phases.indices.mapNotNull { pattern.holdPositionAt(it) }
+        val holds = listOfNotNull(
+            "halten-voll".takeIf { HoldPosition.FULL in positions },
+            "halten-leer".takeIf { HoldPosition.EMPTY in positions },
+        )
+        return AtemlehreRefs(patternId = patternId, morePatternIds = holds)
+    }
+
+    /**
+     * Die Phasen einer generierten Übung zurück als freie Folge – für den Editor, beim Muster des
+     * Tages ebenso wie bei eigenen Mustern. `null` bei anderen Übungen oder wenn die Phasen keine
+     * gültige Folge in ganzen Sekunden ergeben.
+     */
+    fun freePatternOf(exercise: Exercise): FreePattern? {
+        if (!exercise.generated) return null
+        val phases = exercise.segments.singleOrNull()?.phases ?: return null
+        val free = phases.map { phase ->
+            val type = when (phase.type) {
+                PhaseType.INHALE -> FreePhaseType.IN
+                PhaseType.EXHALE -> FreePhaseType.OUT
+                PhaseType.HOLD_FULL, PhaseType.HOLD_EMPTY -> FreePhaseType.HOLD
+                else -> return null
+            }
+            val millis = (phase.duration as? PhaseDuration.Fixed)?.millis ?: return null
+            if (millis % WHOLE_SECOND_MILLIS != 0L) return null
+            FreePhase(type, (millis / WHOLE_SECOND_MILLIS).toInt())
+        }
+        return FreePattern(free).takeIf { it.isValid() }
+    }
+
+    private fun phasesOf(pattern: FreePattern): List<Phase> {
+        val levels = pattern.levels()
+        val stages = stageNumbers(pattern)
+        return pattern.phases.mapIndexed { i, free ->
+            val level = levels[i]
+            val duration = PhaseDuration.Fixed(free.seconds * WHOLE_SECOND_MILLIS)
+            val stage = stages[i]?.let { "$it. Stufe" }
+            when (free.type) {
+                FreePhaseType.IN -> Phase(PhaseType.INHALE, duration, note = stage, level = level.takeUnless { it == FULL_INHALE })
+
+                FreePhaseType.OUT -> Phase(PhaseType.EXHALE, duration, note = stage, level = level.takeUnless { it == FULL_EXHALE })
+
+                FreePhaseType.HOLD -> when (pattern.holdPositionAt(i)) {
+                    HoldPosition.FULL -> Phase(PhaseType.HOLD_FULL, duration, note = "voll")
+                    HoldPosition.EMPTY -> Phase(PhaseType.HOLD_EMPTY, duration, note = "leer")
+                    else -> Phase(PhaseType.HOLD_FULL, duration, note = "Pause", level = level)
+                }
+            }
+        }
+    }
+
+    /**
+     * Stufennummer je Ein bzw. Aus, wenn es zu einem Lauf aus mehreren gehört (Halten dazwischen
+     * zählt nicht, wie bei [FreePattern.levels]); sonst und bei Halten `null`.
+     */
+    private fun stageNumbers(pattern: FreePattern): List<Int?> {
+        val runIds = IntArray(pattern.phases.size) { -1 }
+        var run = -1
+        var previous: FreePhaseType? = null
+        pattern.phases.forEachIndexed { i, phase ->
+            if (phase.type != FreePhaseType.HOLD) {
+                if (phase.type != previous) run++
+                runIds[i] = run
+                previous = phase.type
+            }
+        }
+        val sizes = runIds.filter { it >= 0 }.groupingBy { it }.eachCount()
+        val seen = mutableMapOf<Int, Int>()
+        return runIds.map { id ->
+            if (id < 0 || (sizes[id] ?: 0) < 2) {
+                null
+            } else {
+                (seen.getOrElse(id) { 0 } + 1).also { seen[id] = it }
+            }
+        }
+    }
+
+    /** „6 Atemzüge pro Minute“, „1 Atemzug pro Minute“, „4,6 Atemzüge pro Minute“. */
+    private fun breathsPerMinutePhrase(pattern: FreePattern): String {
+        val number = pattern.breathsPerMinuteText()
+        return "$number ${if (number == "1") "Atemzug" else "Atemzüge"} pro Minute"
+    }
+
+    /** Vertiefung: nur, was die App wirklich prüft – keine Stil-Regeln, keine Evidenzbehauptung. */
+    private fun freeEffectDetail(perMinute: String, reasons: List<IntensityReason>): String = buildString {
+        append(
+            "Bei eigenen Mustern prüft die App nur feste Grenzen: ${FreePattern.MIN_PHASES} bis " +
+                "${FreePattern.MAX_PHASES} Phasen, jede ${FreePattern.MIN_SECONDS} bis " +
+                "${FreePattern.MAX_SECONDS}${NBSP}s lang, mindestens einmal Ein- und Ausatmen. " +
+                "Dieses Muster ergibt $perMinute. ",
+        )
+        if (reasons.isNotEmpty()) {
+            append(
+                "Es gilt als intensiv (${reasons.joinToString(", ") { it.text }}), deshalb erscheint " +
+                    "vor dem Start ein Sicherheitshinweis. ${FreePattern.DIZZINESS_SENTENCE} ",
+            )
+        }
+        append(
+            "Eine Studienlage zu genau diesem Muster gibt es nicht. Für regelmäßiges Üben ist ein " +
+                "konstantes langsames Muster – etwa die Resonanz-Atmung – die besser belegte Wahl.",
+        )
+    }
+
+    /** Sicherheitshinweise intensiver eigener Muster; der erste steht auf der Detailseite oben. */
+    private fun freeCautions(reasons: List<IntensityReason>): List<String> = listOf(
+        FreePattern.DIZZINESS_SENTENCE,
+        "Intensiv durch: ${reasons.joinToString(", ") { it.text }}.",
+        "Nur im Sitzen oder Liegen – nie im oder am Wasser, beim Fahren oder Stehen.",
+        "Nur, wenn du dich gesund und ausgeruht fühlst.",
+    )
+
+    /** Einordnung einer freien Folge mit Teaser und Detail (siehe [atemlehreRefs] für freie Folgen). */
+    private fun loreFor(pattern: FreePattern, refs: AtemlehreRefs): YogaLore {
+        val detail = buildString {
+            append(
+                "Du hast das Muster selbst zusammengestellt; die Einordnung folgt nur der Summe der " +
+                    "Phasen (Einatmen ${pattern.inhaleSeconds}${NBSP}s, Ausatmen ${pattern.exhaleSeconds}${NBSP}s).",
+            )
+            if ("halten-voll" in refs.morePatternIds) append(holdFullSentence(refs.patternId))
+            if ("halten-leer" in refs.morePatternIds) append(HOLD_EMPTY_SENTENCE)
+        }
+        return YogaLore(
+            teaser = teaserFor(refs.patternId),
+            detail = detail,
+            patternId = refs.patternId,
+            morePatternIds = refs.morePatternIds,
+        )
+    }
+
+    private const val WHOLE_SECOND_MILLIS = 1000L
+    private val FULL_INHALE = BreathLevel(0f, 1f)
+    private val FULL_EXHALE = BreathLevel(1f, 0f)
 
     // ---- Helfer ----
 

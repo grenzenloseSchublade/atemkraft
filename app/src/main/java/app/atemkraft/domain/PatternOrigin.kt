@@ -8,7 +8,10 @@ package app.atemkraft.domain
  *
  * - [TODAY]: das Muster des Tages auf dem Atmen-Tab (Texte unverändert seit 1.6.8);
  * - [SAVED_DAILY]: ein Muster des Tages, das in „Meine Muster“ gespeichert wurde;
- * - [CUSTOM]: ein im Muster-Editor zusammengestelltes Muster („Eigenes Muster“).
+ * - [CUSTOM]: ein im Muster-Editor zusammengestelltes Muster („Eigenes Muster“). Seit „Frei
+ *   gestalten“ ist das eine freie Folge ([FreePattern], Texte aus
+ *   [RandomPatternGenerator.exerciseFrom] mit [FreePattern]); die Variante mit [PatternSpec]
+ *   bleibt für Muster mit vier festen Feldern.
  *
  * Gespeichert wird die Herkunft als String mit Rückfall (Datenschicht), nie als Enum direkt.
  */
