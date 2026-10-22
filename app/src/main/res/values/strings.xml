@@ -57,6 +57,7 @@
     <string name="tab_breathe">Atmen</string>
     <string name="tab_situations">Situationen</string>
     <string name="tab_logbook">Logbuch</string>
+    <string name="tab_own">Eigene</string>
 
     <!-- Situationen -->
     <string name="situations_subtitle">Welche Atmung passt gerade?</string>
@@ -106,6 +107,65 @@
     <string name="cd_pattern_delete">Muster %1$s löschen</string>
     <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
+
+    <!-- Tab „Eigene“: Kopf wie die anderen Tabs, darunter „Neues Muster“ und die Liste „Meine Muster“
+         (gespeicherte Tagesmuster und selbst zusammengestellte). -->
+    <string name="own_title">Eigene</string>
+    <string name="own_subtitle">Gespeichert oder selbst zusammengestellt</string>
+    <string name="own_new_pattern">Neues Muster</string>
+    <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung; der Knopf „Neues Muster“ steht darüber. -->
+    <string name="own_empty">Noch keine Muster. Stell dir eines zusammen oder speichere im Tab „Atmen“ das Muster des Tages.</string>
+
+    <!-- Einstiege in den Muster-Editor: Link unter dem Muster des Tages, Stift auf der Detailseite. -->
+    <string name="home_own_pattern_link">Eigenes Muster zusammenstellen</string>
+    <string name="cd_pattern_edit">Muster bearbeiten</string>
+    <string name="cd_pattern_adapt_daily">Als eigenes Muster anpassen</string>
+
+    <!-- Muster-Editor „Eigenes Muster“: Wünsche → Vorschlag → Atemkurve und genau einstellen (MUSTER-10). -->
+    <string name="pattern_editor_title">Eigenes Muster</string>
+    <string name="pattern_editor_wishes">Wünsche</string>
+    <string name="cd_pattern_suggest">Anderer Vorschlag</string>
+    <string name="pattern_editor_character">Charakter</string>
+    <string name="pattern_editor_hold">Halten</string>
+    <string name="pattern_editor_hold_without">ohne</string>
+    <string name="pattern_editor_hold_with">mit</string>
+    <!-- Abschnitt mit der Atemkurve; Status hinter dem Titel: „Atemzug · 10 s“, TalkBack liest die Plural-Form. -->
+    <string name="pattern_editor_breath">Atemzug</string>
+    <string name="pattern_editor_cycle">· %1$d\u00A0s</string>
+    <plurals name="cd_pattern_editor_cycle">
+        <item quantity="one">ein Atemzug %1$d Sekunde</item>
+        <item quantity="other">ein Atemzug %1$d Sekunden</item>
+    </plurals>
+    <!-- Beschriftung in der Kurve: Linien „voll“/„leer“, je Phase „4 s“ in Phasenfarbe, Hinweis darunter. -->
+    <string name="pattern_editor_curve_full">voll</string>
+    <string name="pattern_editor_curve_empty">leer</string>
+    <string name="pattern_editor_curve_seconds">%1$d\u00A0s</string>
+    <string name="pattern_editor_curve_hint">Griffe ziehen</string>
+    <!-- TalkBack: die Kurve ist ein Knoten. %1$s = Phasen mit „, “ verbunden, je Phase
+         cd_breath_curve_part aus Name (phase_inhale, cd_hold_full, phase_exhale, cd_hold_empty)
+         und cd_duration_seconds: „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“. -->
+    <string name="cd_breath_curve">Atemkurve: %1$s</string>
+    <string name="cd_breath_curve_part">%1$s %2$s</string>
+    <string name="cd_preview_play">Vorschau abspielen</string>
+    <string name="cd_preview_pause">Vorschau anhalten</string>
+    <string name="pattern_editor_fine">Genau einstellen</string>
+    <!-- Sichtbar mit Einheit, gesprochen ohne (A11Y-06); phase_hold_full und phase_hold_empty
+         heißen beide nur „Halten“. -->
+    <string name="adjust_hold_full">Halten voll (s)</string>
+    <string name="adjust_hold_empty">Halten leer (s)</string>
+    <string name="cd_hold_full">Halten voll</string>
+    <string name="cd_hold_empty">Halten leer</string>
+    <!-- Stepper-Wert 0 bei Halten: gesprochen „Halten voll: aus“ statt „0 Sekunden“. -->
+    <string name="stepper_value_off">aus</string>
+    <!-- Regel des gewählten Charakters in Worten unter den Steppern (Grenzen = Erzeugungsregeln). -->
+    <string name="pattern_editor_rule_calm">Ruhig: Ausatmen mindestens so lang wie Einatmen, ein Atemzug 9 bis 13\u00A0s, Halten voll bis 4\u00A0s, leer bis 2\u00A0s. 0 heißt ohne Halten.</string>
+    <string name="pattern_editor_rule_active">Sanft aktivierend: Einatmen länger als Ausatmen, ein Atemzug 6 bis 9\u00A0s, Halten voll bis 2\u00A0s. 0 heißt ohne Halten.</string>
+    <!-- Name frei wählbar (höchstens 80 Zeichen), vorausgefüllt mit dem Vorschlagsnamen. -->
+    <string name="pattern_editor_name">Name</string>
+    <string name="pattern_editor_name_label">Name des Musters</string>
+
+    <!-- Logbuch als Push-Seite, erreichbar über die Zeile „Logbuch“ in der Karte „Daten“. -->
+    <string name="logbook_title">Logbuch</string>
 
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
@@ -303,7 +363,7 @@
         <item quantity="one">✓ %1$d exportiert</item>
         <item quantity="other">✓ %1$d exportiert</item>
     </plurals>
-    <string name="data_export_empty">Noch keine gespeicherten Muster – speichere im Tab „Atmen“ das Muster des Tages.</string>
+    <string name="data_export_empty">Noch keine gespeicherten Muster – speichere im Tab „Atmen“ das Muster des Tages oder stell dir im Tab „Eigene“ eines zusammen.</string>
     <plurals name="data_import_done">
         <item quantity="one">✓ %1$d neu\u00A0· %2$d vorhanden</item>
         <item quantity="other">✓ %1$d neu\u00A0· %2$d vorhanden</item>

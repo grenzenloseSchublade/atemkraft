@@ -48,7 +48,8 @@ import app.atemkraft.ui.theme.Sizes
  *
  * TalkBack hört Name und Einheit ausgeschrieben (A11Y-06): [spokenLabel] ist das Label ohne
  * sichtbare Einheit („Einatmen“ statt „Einatmen (s)“), [valueUnit] ein Plural für den Wert
- * („4 Sekunden“); ohne ihn die blanke Zahl.
+ * („4 Sekunden“); ohne ihn die blanke Zahl. [zeroSpoken] ersetzt den gesprochenen Wert 0
+ * („Halten voll: aus“ statt „0 Sekunden“), sichtbar bleibt die „0“.
  */
 @Composable
 fun Stepper(
@@ -61,6 +62,7 @@ fun Stepper(
     vertical: Dp = Dimens.CardPadding,
     spokenLabel: String = label,
     @PluralsRes valueUnit: Int? = null,
+    zeroSpoken: String? = null,
 ) {
     // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
     // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
@@ -76,7 +78,11 @@ fun Stepper(
         // wenig Platz (360 dp, große Schrift) bricht das Label zwischen ganzen Wörtern um,
         // statt „+“ aus der Zeile zu drücken.
         StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
-        val spokenValue = valueUnit?.let { pluralStringResource(it, value, value) } ?: value.toString()
+        val spokenValue = when {
+            value == 0 && zeroSpoken != null -> zeroSpoken
+            valueUnit != null -> pluralStringResource(valueUnit, value, value)
+            else -> value.toString()
+        }
         StepButtons(spokenLabel, stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue), value, range, onChange)
     }
 }
