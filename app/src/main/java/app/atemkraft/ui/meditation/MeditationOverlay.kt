@@ -32,12 +32,14 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
+import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.formatClock
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.ui.components.BreathingCircle
+import app.atemkraft.ui.components.CalmHost
 import app.atemkraft.ui.components.CircleTapTarget
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
@@ -64,11 +66,14 @@ import app.atemkraft.ui.theme.Dimens
  * Vollbild-Overlay der laufenden/abgeschlossenen Meditation – identischer Rahmen wie die
  * Atem-Session ([app.atemkraft.ui.session.SessionOverlay]) über das geteilte [OverlayChrome].
  * Am Ende dieselbe Frage samt Bilanz wie dort; System-Zurück minimiert, am Ende-Screen wirkt es
- * wie „Ende“ (Nutzerentscheidung 2026-10-19).
+ * wie „Ende“ (Nutzerentscheidung 2026-10-19). Ruhe-Ansicht wie dort ([CalmHost]): Ein Tipp neben
+ * den Kreis blendet Titel, Knöpfe und Systemleisten aus; mit [MeditationDisplay.autoCalm] von
+ * selbst, sobald die Meditation läuft. Ring und Zeit schaltet [display] ab.
  */
 @Composable
 fun MeditationOverlay(
     state: MeditationUiState,
+    display: MeditationDisplay,
     onMinimize: () -> Unit,
     onToggleMute: () -> Unit,
     onTogglePause: () -> Unit,
@@ -77,36 +82,61 @@ fun MeditationOverlay(
     onEnd: () -> Unit,
 ) {
     BackHandler { if (state.status == MeditationStatus.FINISHED) onEnd() else onMinimize() }
-    OverlayChrome(
-        title = stringResource(R.string.meditation_title),
-        muted = state.muted,
-        onMinimize = onMinimize,
-        onToggleMute = onToggleMute,
-    ) {
-        if (state.status == MeditationStatus.FINISHED) {
-            FinishedPanel(
-                title = stringResource(R.string.session_done_question),
-                onAgain = onRestart,
-                onExit = onEnd,
-                // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
-                // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
-                summary = sessionSummaryParts(durationMs = state.elapsedMs),
-            )
-        } else {
-            RunningContent(
-                state = state,
-                onTogglePause = onTogglePause,
-                onTapHaptic = onTapHaptic,
-                onRestart = onRestart,
-                onEnd = onEnd,
-            )
+    CalmHost(
+        canHide = state.status == MeditationStatus.PREPARING || state.status == MeditationStatus.RUNNING,
+        autoCalm = display.autoCalm && state.status == MeditationStatus.RUNNING,
+        // Ende und Neustart (Countdown) beginnen wieder mit allen Bedienelementen.
+        reset = state.status == MeditationStatus.FINISHED || state.status == MeditationStatus.PREPARING,
+    ) { controlsVisible ->
+        OverlayChrome(
+            title = stringResource(R.string.meditation_title),
+            muted = state.muted,
+            onMinimize = onMinimize,
+            onToggleMute = onToggleMute,
+            chromeVisible = controlsVisible,
+        ) {
+            MeditationContent(state, display, controlsVisible, onTogglePause, onTapHaptic, onRestart, onEnd)
         }
+    }
+}
+
+@Composable
+private fun MeditationContent(
+    state: MeditationUiState,
+    display: MeditationDisplay,
+    controlsVisible: Boolean,
+    onTogglePause: () -> Unit,
+    onTapHaptic: () -> Unit,
+    onRestart: () -> Unit,
+    onEnd: () -> Unit,
+) {
+    if (state.status == MeditationStatus.FINISHED) {
+        FinishedPanel(
+            title = stringResource(R.string.session_done_question),
+            onAgain = onRestart,
+            onExit = onEnd,
+            // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
+            // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
+            summary = sessionSummaryParts(durationMs = state.elapsedMs),
+        )
+    } else {
+        RunningContent(
+            state = state,
+            display = display,
+            controlsVisible = controlsVisible,
+            onTogglePause = onTogglePause,
+            onTapHaptic = onTapHaptic,
+            onRestart = onRestart,
+            onEnd = onEnd,
+        )
     }
 }
 
 @Composable
 private fun RunningContent(
     state: MeditationUiState,
+    display: MeditationDisplay,
+    controlsVisible: Boolean,
     onTogglePause: () -> Unit,
     onTapHaptic: () -> Unit,
     onRestart: () -> Unit,
@@ -139,6 +169,7 @@ private fun RunningContent(
     // Platz, Steuerung unten – nichts überlappt, auch bei großer Schrift.
     SessionRunningLayout(
         modifier = Modifier.fillMaxSize().padding(Dimens.SessionPadding),
+        chromeVisible = controlsVisible,
         top = {
             // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
             Text(
@@ -176,6 +207,7 @@ private fun RunningContent(
             BreathingCircle(
                 fraction = 1f,
                 progress = progress,
+                ring = display.showProgress,
                 modifier = Modifier.size(side),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -189,11 +221,15 @@ private fun RunningContent(
                         )
                         Spacer(Modifier.height(Dimens.GapTiny))
                     }
-                    GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
+                    // Ohne Zeit bleibt nur der stille Kreis; der Countdown vor dem Start zählt immer.
+                    if (preparing || display.showTime) {
+                        GlowText(text = timeText, style = MaterialTheme.typography.displaySmall)
+                    }
                 }
             }
             // Wie in der Atem-Session: Tippen auf den Kreis (bis zur Spur, nicht ins Quadrat
-            // daneben) pausiert/setzt fort; im Countdown tut er nichts.
+            // daneben) pausiert/setzt fort; im Countdown tut er nichts, fällt aber auch nicht zur
+            // Ruhe-Ansicht durch.
             CircleTapTarget(
                 side = side,
                 description = ringDescription,
@@ -203,6 +239,7 @@ private fun RunningContent(
                 } else {
                     { tapFlash.toggle(running = state.status == MeditationStatus.RUNNING, haptic = onTapHaptic, toggle = onTogglePause) }
                 },
+                swallowWhenIdle = true,
             )
             // Flash-Overlay ÜBER dem Kreis (Geschwister, nicht im Kreis-Content).
             PauseFlash(alpha = tapFlash.alpha, isPause = tapFlash.isPause, maxSize = side)

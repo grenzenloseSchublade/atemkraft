@@ -14,6 +14,7 @@ import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.LogbookRepository
+import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
@@ -39,6 +40,7 @@ data class SettingsUiState(
     val haptics: Boolean = CueSettings().haptics,
     val showSafetyWarning: Boolean = true,
     val sessionDisplay: SessionDisplay = SessionDisplay(),
+    val meditationDisplay: MeditationDisplay = MeditationDisplay(),
     val gongIntervalMin: Int = GONG_INTERVAL_DEFAULT_MINUTES,
     val gongLong: Boolean = CueSettings().gongLong,
     val voiceStates: Map<String, VoiceDownloadState> = emptyMap(),
@@ -61,6 +63,9 @@ interface SettingsActions {
     fun setShowProgress(enabled: Boolean)
     fun setShowSeconds(enabled: Boolean)
     fun setAutoCalm(enabled: Boolean)
+    fun setMeditationAutoCalm(enabled: Boolean)
+    fun setMeditationShowProgress(enabled: Boolean)
+    fun setMeditationShowTime(enabled: Boolean)
     fun setGongInterval(minutes: Int)
     fun setGongLong(long: Boolean)
     fun previewGong()
@@ -105,9 +110,10 @@ class SettingsViewModel(
         voices.states,
         settings.neuralVoiceId,
         meditation.piperReady,
-        combine(settings.settingsResetPending, logbook.count, ::Pair),
-    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount) ->
+        combine(settings.settingsResetPending, logbook.count, settings.meditationDisplay, ::Triple),
+    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount, meditationDisplay) ->
         base.copy(
+            meditationDisplay = meditationDisplay,
             voiceStates = voiceStates,
             activeVoiceId = voiceId,
             piperEngineReady = piperReady,
@@ -139,6 +145,12 @@ class SettingsViewModel(
         override fun setShowSeconds(enabled: Boolean) = write { settings.setShowSeconds(enabled) }
 
         override fun setAutoCalm(enabled: Boolean) = write { settings.setAutoCalm(enabled) }
+
+        override fun setMeditationAutoCalm(enabled: Boolean) = write { settings.setMeditationAutoCalm(enabled) }
+
+        override fun setMeditationShowProgress(enabled: Boolean) = write { settings.setMeditationShowProgress(enabled) }
+
+        override fun setMeditationShowTime(enabled: Boolean) = write { settings.setMeditationShowTime(enabled) }
 
         override fun setGongInterval(minutes: Int) = write { settings.setGongIntervalMin(minutes) }
 

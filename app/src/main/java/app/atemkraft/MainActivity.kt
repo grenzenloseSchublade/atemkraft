@@ -64,6 +64,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
+import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
@@ -161,6 +162,8 @@ private fun AtemkraftApp(
         .collectAsStateWithLifecycle(initialValue = MeditationConfig())
     val meditationSpeechAvailable by meditationController.speechAvailable
         .collectAsStateWithLifecycle()
+    val meditationDisplay by container.settingsRepository.meditationDisplay
+        .collectAsStateWithLifecycle(initialValue = MeditationDisplay())
     val gongIntervalMin by container.settingsRepository.gongIntervalMin
         .collectAsStateWithLifecycle(initialValue = GONG_INTERVAL_DEFAULT_MINUTES)
 
@@ -486,6 +489,7 @@ private fun AtemkraftApp(
             SessionHost(meditationController.state) { state ->
                 MeditationOverlay(
                     state = state,
+                    display = meditationDisplay,
                     onMinimize = { meditationExpanded = false },
                     onToggleMute = meditationController::toggleMute,
                     onTogglePause = {

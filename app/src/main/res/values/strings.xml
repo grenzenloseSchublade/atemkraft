@@ -150,6 +150,9 @@
     <string name="settings_progress">Fortschrittsring</string>
     <string name="settings_progress_hint">Zeigt am Rand des Kreises, wie weit die Übung ist.</string>
     <string name="settings_seconds">Sekunden im Kreis</string>
+    <string name="settings_med_progress_hint">Zeigt am Rand des Kreises, wie viel der Zeit vorbei ist.</string>
+    <string name="settings_med_time">Zeit im Kreis</string>
+    <string name="settings_med_time_hint">Restzeit, bei offener Meditation die verstrichene Zeit. Aus: nur der stille Kreis.</string>
     <string name="settings_seconds_hint">Zählt jede Phase mit. Aus: nur das Phasenwort, den Takt gibt der Kreis.</string>
     <string name="settings_about">Mit Quellen, aber keine ärztliche Empfehlung.</string>
 

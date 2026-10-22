@@ -14,6 +14,7 @@ import app.atemkraft.domain.PhaseType
 import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestSessionOverlay
+import app.atemkraft.ui.components.AUTO_CALM_DELAY_MS
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule

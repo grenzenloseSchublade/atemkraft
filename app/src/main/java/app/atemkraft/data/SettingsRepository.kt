@@ -57,6 +57,16 @@ data class SessionDisplay(
     val autoCalm: Boolean = true,
 )
 
+/**
+ * Was die laufende Meditation zeigt (Meditations-Karte der Einstellungen). [autoCalm] wie bei
+ * [SessionDisplay]; [showTime] = Restzeit bzw. verstrichene Zeit im Kreis.
+ */
+data class MeditationDisplay(
+    val autoCalm: Boolean = true,
+    val showProgress: Boolean = true,
+    val showTime: Boolean = true,
+)
+
 /** Vom Nutzer angepasste Session-Werte einer Übung: Dauer (Minuten bzw. Runden) und
  *  Phasenlängen in Sekunden; null = nicht angepasst bzw. Phase nicht vorhanden. */
 data class IntervalOverrides(
@@ -137,6 +147,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val SHOW_PROGRESS = booleanPreferencesKey("show_session_progress")
         val SHOW_SECONDS = booleanPreferencesKey("show_session_seconds")
         val AUTO_CALM = booleanPreferencesKey("session_auto_calm")
+        val MED_AUTO_CALM = booleanPreferencesKey("med_auto_calm")
+        val MED_SHOW_PROGRESS = booleanPreferencesKey("med_show_progress")
+        val MED_SHOW_TIME = booleanPreferencesKey("med_show_time")
         val MED_MODE = stringPreferencesKey("med_mode_name")
         val MED_MODE_ORDINAL = intPreferencesKey("med_mode")
         val MED_MINUTES = intPreferencesKey("med_minutes")
@@ -322,6 +335,27 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setAutoCalm(enabled: Boolean) {
         store.edit { it[Keys.AUTO_CALM] = enabled }
+    }
+
+    val meditationDisplay: Flow<MeditationDisplay> = data.map { prefs ->
+        val defaults = MeditationDisplay()
+        MeditationDisplay(
+            autoCalm = prefs[Keys.MED_AUTO_CALM] ?: defaults.autoCalm,
+            showProgress = prefs[Keys.MED_SHOW_PROGRESS] ?: defaults.showProgress,
+            showTime = prefs[Keys.MED_SHOW_TIME] ?: defaults.showTime,
+        )
+    }
+
+    suspend fun setMeditationAutoCalm(enabled: Boolean) {
+        store.edit { it[Keys.MED_AUTO_CALM] = enabled }
+    }
+
+    suspend fun setMeditationShowProgress(enabled: Boolean) {
+        store.edit { it[Keys.MED_SHOW_PROGRESS] = enabled }
+    }
+
+    suspend fun setMeditationShowTime(enabled: Boolean) {
+        store.edit { it[Keys.MED_SHOW_TIME] = enabled }
     }
 
     // Angepasste Phasenlängen je Übung (dynamische Keys pro Übungs-Id). Das Muster des Tages

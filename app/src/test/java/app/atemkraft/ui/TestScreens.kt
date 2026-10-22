@@ -2,6 +2,7 @@ package app.atemkraft.ui
 
 import androidx.compose.runtime.Composable
 import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.domain.Exercise
 import app.atemkraft.playback.MeditationUiState
@@ -62,10 +63,11 @@ internal fun TestSessionOverlay(
     onStop = onStop,
 )
 
-/** Vollbild der Meditation. */
+/** Vollbild der Meditation; ohne automatische Ruhe, damit nichts von selbst ausblendet. */
 @Composable
 internal fun TestMeditationOverlay(
     state: MeditationUiState,
+    display: MeditationDisplay = MeditationDisplay(autoCalm = false),
     onMinimize: () -> Unit = {},
     onToggleMute: () -> Unit = {},
     onTogglePause: () -> Unit = {},
@@ -74,6 +76,7 @@ internal fun TestMeditationOverlay(
     onEnd: () -> Unit = {},
 ) = MeditationOverlay(
     state = state,
+    display = display,
     onMinimize = onMinimize,
     onToggleMute = onToggleMute,
     onTogglePause = onTogglePause,

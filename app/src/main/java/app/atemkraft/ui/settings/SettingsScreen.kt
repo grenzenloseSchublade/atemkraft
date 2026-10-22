@@ -62,6 +62,7 @@ import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceGender
 import app.atemkraft.cue.tts.VoiceQuality
 import app.atemkraft.cue.tts.VoiceSpec
+import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.Refs
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.domain.DOT_SEPARATOR
@@ -178,6 +179,7 @@ fun SettingsScreen(
                         state.voiceStates, state.activeVoiceId, state.piperEngineReady,
                         actions::sampleVoice, actions::downloadVoice, actions::selectVoice, actions::deleteVoice,
                         columns,
+                        display = { MeditationDisplayRows(state.meditationDisplay, actions) },
                     )
                 }
 
@@ -501,6 +503,33 @@ private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions
     }
 }
 
+/** Was die laufende Meditation zeigt; wie bei der Atemübung alles abschaltbar. */
+@Composable
+private fun MeditationDisplayRows(display: MeditationDisplay, actions: SettingsActions) {
+    Column {
+        ToggleRow(
+            label = stringResource(R.string.settings_auto_calm),
+            checked = display.autoCalm,
+            onCheckedChange = actions::setMeditationAutoCalm,
+            hint = stringResource(R.string.settings_auto_calm_hint),
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+        ToggleRow(
+            label = stringResource(R.string.settings_progress),
+            checked = display.showProgress,
+            onCheckedChange = actions::setMeditationShowProgress,
+            hint = stringResource(R.string.settings_med_progress_hint),
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+        ToggleRow(
+            label = stringResource(R.string.settings_med_time),
+            checked = display.showTime,
+            onCheckedChange = actions::setMeditationShowTime,
+            hint = stringResource(R.string.settings_med_time_hint),
+        )
+    }
+}
+
 @Composable
 private fun MeditationCard(
     gongIntervalMin: Int,
@@ -513,6 +542,7 @@ private fun MeditationCard(
     onSelectVoice: (String?) -> Unit,
     onDeleteVoice: (String) -> Unit,
     columns: TrailingColumns,
+    display: @Composable () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
@@ -532,6 +562,9 @@ private fun MeditationCard(
             }
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_gong_interval_hint))
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
+            display()
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
             // Zugeklappt nur die aktive Stimme; der Katalog klappt darunter auf (Umschalter wie „Wie

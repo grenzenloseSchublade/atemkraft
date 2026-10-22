@@ -52,6 +52,7 @@ import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.Situations
@@ -926,7 +927,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         display = display,
     )
 
-    /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Pause, Ende. */
+    /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Pause, Ende, Ruhe-Ansicht ohne Ring und Zeit. */
     @Test
     fun meditationSession() {
         val states = mapOf(
@@ -941,6 +942,15 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     state = state,
                 )
             }
+        }
+        // Ganz ruhig: Tipp neben den Kreis, Ring und Zeit abgeschaltet – nur der stille Kreis.
+        snap("10_meditation_ganz_ruhig", heightDp = device.heightDp, prepare = {
+            compose.onNodeWithTag(SHOT).performTouchInput { click(Offset(left + 4.dp.toPx(), centerY)) }
+        }) {
+            TestMeditationOverlay(
+                state = states.getValue("laeuft"),
+                display = MeditationDisplay(autoCalm = false, showProgress = false, showTime = false),
+            )
         }
     }
 
