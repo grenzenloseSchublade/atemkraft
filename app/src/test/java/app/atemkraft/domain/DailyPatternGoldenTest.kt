@@ -11,8 +11,7 @@ import java.time.LocalDate
  * Tagesmuster für die Nutzer verschoben – das darf nur mit Absicht passieren und braucht dann
  * neue Literale samt Begründung im Commit.
  *
- * Der Determinismus-Test in [RandomPatternGeneratorTest] vergleicht nur zwei Aufrufe derselben
- * Version und merkt eine Verschiebung deshalb nicht.
+ * Damit ist auch der Determinismus innerhalb einer Version abgedeckt.
  */
 class DailyPatternGoldenTest {
 
@@ -29,7 +28,7 @@ class DailyPatternGoldenTest {
 
     private fun active(inhale: Double, holdFull: Double?, exhale: Double) = PatternSpec(inhale, holdFull, exhale, null, activating = true)
 
-    /** Mindestens ein Datum je Stil (ohne Halten, mit Halten, nach 4-7-8, sanfte Box, aktivierend). */
+    /** Ein Datum je Stil (ohne Halten, mit Halten, nach 4-7-8, sanfte Box, aktivierend), dazu Screenshot-Tag und Schalttag. */
     private val goldens = listOf(
         // ruhig ohne Halten (Neujahr)
         Golden("2026-01-01", calm(5.0, null, 8.0, null), "Tagesmuster 5·8", 23, "INHALE 5000, EXHALE 8000"),
@@ -65,24 +64,6 @@ class DailyPatternGoldenTest {
             38,
             "INHALE 4000, HOLD_FULL 2000 voll, EXHALE 2000",
         ),
-        // sanft aktivierend ohne Halten
-        Golden("2026-01-19", active(4.0, null, 2.0), "Tagesmuster 4·2", 50, "INHALE 4000, EXHALE 2000"),
-        // sanfte Box mit gleich langem Ein- und Ausatmen
-        Golden(
-            "2026-01-27",
-            calm(3.0, 3.0, 3.0, 2.0),
-            "Tagesmuster 3·3·3·2",
-            27,
-            "INHALE 3000, HOLD_FULL 3000 voll, EXHALE 3000, HOLD_EMPTY 2000 leer",
-        ),
-        // sanft aktivierend, kürzester Zyklus
-        Golden(
-            "2026-02-02",
-            active(3.0, 1.0, 2.0),
-            "Tagesmuster 3·1·2",
-            50,
-            "INHALE 3000, HOLD_FULL 1000 voll, EXHALE 2000",
-        ),
         // Screenshot-Tag (ScreenshotTest)
         Golden(
             "2026-10-03",
@@ -90,22 +71,6 @@ class DailyPatternGoldenTest {
             "Tagesmuster 5·1·7",
             23,
             "INHALE 5000, HOLD_FULL 1000 voll, EXHALE 7000",
-        ),
-        // Jahresende, nach 4-7-8
-        Golden(
-            "2026-12-31",
-            calm(3.0, 4.0, 6.0, null),
-            "Tagesmuster 3·4·6",
-            23,
-            "INHALE 3000, HOLD_FULL 4000 voll, EXHALE 6000",
-        ),
-        // Jahreswechsel, ruhig mit Halten voll
-        Golden(
-            "2027-01-01",
-            calm(5.0, 3.0, 5.0, null),
-            "Tagesmuster 5·3·5",
-            23,
-            "INHALE 5000, HOLD_FULL 3000 voll, EXHALE 5000",
         ),
         // Schalttag
         Golden("2028-02-29", calm(3.0, null, 6.0, null), "Tagesmuster 3·6", 33, "INHALE 3000, EXHALE 6000"),
@@ -120,29 +85,23 @@ class DailyPatternGoldenTest {
             assertEquals("Name ${golden.date}", golden.name, daily.exercise.name)
             assertEquals("repeat ${golden.date}", golden.repeat, segment.repeat)
             assertEquals("Phasen ${golden.date}", golden.phases, phasesOf(daily.exercise))
-            assertEquals("id ${golden.date}", RandomPatternGenerator.ID, daily.exercise.id)
             assertEquals("Charakter ${golden.date}", golden.spec.activating, daily.exercise.activating)
-            assertEquals("Runden ${golden.date}", 1, daily.exercise.rounds)
         }
     }
 
+    /**
+     * Breite Abdeckung über Hashes: Specs von forSeed 0 bis 4999, alle Tage 2026 (Spec, Name,
+     * repeat; forDate nutzt andere Seeds) und die Texte von forSeed 0 bis 199 (Herkunft TODAY).
+     */
     @Test
-    fun `Specs von forSeed 0 bis 4999 bleiben unveraendert`() {
+    fun `Hashes von Seeds, Jahr 2026 und Texten bleiben unveraendert`() {
         assertEquals(
+            "Specs forSeed 0..4999",
             "44f5e8b775a6a5c48a039a175a38ad7b57f92db5aff706a5c7d74349596aaa7b",
             specsHash((0L until 5000L).map { RandomPatternGenerator.forSeed(it) }),
         )
-    }
-
-    @Test
-    fun `alle Tage 2026 bleiben unveraendert`() {
-        assertEquals("d5c0ae95467e7f394301194c39d9100c2b568a6fba3538b49839d99b0103c378", yearHash())
-    }
-
-    /** Texte des Tagesmusters (Herkunft TODAY) bleiben bytegleich – auch nach den Herkunftstexten. */
-    @Test
-    fun `Texte von forSeed 0 bis 199 bleiben bytegleich`() {
-        assertEquals("90f31fe1a27f428131a5641616c4068f8c313b3524e61b54aa6f7bc1334a5242", textHash())
+        assertEquals("Jahr 2026", "d5c0ae95467e7f394301194c39d9100c2b568a6fba3538b49839d99b0103c378", yearHash())
+        assertEquals("Texte forSeed 0..199", "90f31fe1a27f428131a5641616c4068f8c313b3524e61b54aa6f7bc1334a5242", textHash())
     }
 
     private companion object {

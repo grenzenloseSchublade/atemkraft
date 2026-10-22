@@ -1,6 +1,9 @@
 package app.atemkraft.ui.session
 
 import android.view.accessibility.AccessibilityManager
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -28,7 +31,8 @@ import org.robolectric.annotation.Config
 /**
  * Ruhe-Ansicht der Atem-Session ([SessionOverlay]): Ein Tipp neben den Kreis blendet die
  * Bedienelemente aus und wieder ein; der Tipp auf den Kreis bleibt Pause/Weiter. In der Pause,
- * im Countdown auf dem Kreis und mit TalkBack (Touch-Erkundung) bleibt alles sichtbar. Mit
+ * im Countdown auf dem Kreis und mit TalkBack (Touch-Erkundung) bleibt alles sichtbar. Der
+ * Tipp-Tick geht nur über `onTapHaptic`. Mit
  * automatischer Ruhe blendet die laufende Übung nach [AUTO_CALM_DELAY_MS] ohne Berührung aus.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -41,7 +45,12 @@ class CalmViewTest {
     private val app = RuntimeEnvironment.getApplication()
     private val events = mutableListOf<String>()
 
-    private fun show(status: SessionStatus, display: SessionDisplay = SessionDisplay(autoCalm = false)) {
+    private var status by mutableStateOf(SessionStatus.RUNNING)
+    private var display by mutableStateOf(SessionDisplay(autoCalm = false))
+
+    private fun show(initial: SessionStatus, initialDisplay: SessionDisplay = SessionDisplay(autoCalm = false)) {
+        status = initial
+        display = initialDisplay
         compose.setContent {
             AtemkraftTheme {
                 TestSessionOverlay(
@@ -57,6 +66,7 @@ class CalmViewTest {
                     display = display,
                     onTogglePause = { events += "pause" },
                     onContinue = { events += "weiter" },
+                    onTapHaptic = { events += "tick" },
                 )
             }
         }
@@ -68,40 +78,43 @@ class CalmViewTest {
     /** Ecke des Quadrats um den Kreis: außerhalb der Kreisform, also „daneben“. */
     private fun tapBeside() = circle.performTouchInput { click(Offset(1f, 1f)) }
 
+    /**
+     * Tipp daneben blendet aus und wieder ein; der Kreis-Tipp blendet nichts aus, meldet den
+     * Tipp-Tick nur über `onTapHaptic` (AUDIO-04/-05: der Aufrufer prüft den App-Schalter) und
+     * pausiert – im offenen Halten atmet er weiter.
+     */
     @Test
-    fun `Tipp neben den Kreis blendet aus, ein zweiter wieder ein`() {
+    fun `Tipp daneben blendet um, Kreis-Tipp meldet Tick und pausiert bzw atmet weiter`() {
         show(SessionStatus.RUNNING)
         tapBeside()
         stop.assertDoesNotExist()
         tapBeside()
         stop.assertExists()
         assertEquals(emptyList<String>(), events)
-    }
 
-    @Test
-    fun `Tipp auf den Kreis pausiert und blendet nichts aus`() {
-        show(SessionStatus.RUNNING)
         circle.performTouchInput { click(center) }
         stop.assertExists()
-        assertEquals(listOf("pause"), events)
+        assertEquals(listOf("tick", "pause"), events)
+
+        status = SessionStatus.WAITING_FOR_USER
+        circle.performClick()
+        assertEquals("weiter", events.last())
     }
 
     @Test
-    fun `In der Pause bleibt alles sichtbar`() {
-        show(SessionStatus.PAUSED)
-        tapBeside()
-        stop.assertExists()
-    }
-
-    @Test
-    fun `Im Countdown bewirkt der Tipp auf den Kreis nichts`() {
-        show(SessionStatus.PREPARING)
+    fun `In Pause und Countdown wird nie ausgeblendet, auch nicht automatisch`() {
+        show(SessionStatus.PREPARING, SessionDisplay(autoCalm = true))
         // Im Countdown hat der Kreis keinen Namen (kein leerer TalkBack-Halt): getippt wird mitten
         // auf „Gleich geht’s los“, das über dem Kreis liegt und den Tipp durchlässt.
         circle.assertDoesNotExist()
         compose.onNodeWithText(app.getString(R.string.session_get_ready)).performTouchInput { click(center) }
+        compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS * 2)
         stop.assertExists()
         assertEquals(emptyList<String>(), events)
+
+        status = SessionStatus.PAUSED
+        tapBeside()
+        stop.assertExists()
     }
 
     @Test
@@ -111,13 +124,6 @@ class CalmViewTest {
         show(SessionStatus.RUNNING)
         tapBeside()
         stop.assertExists()
-    }
-
-    @Test
-    fun `Offener Hold – Kreis-Tipp atmet weiter`() {
-        show(SessionStatus.WAITING_FOR_USER)
-        circle.performClick()
-        assertEquals(listOf("weiter"), events)
     }
 
     @Test
@@ -137,21 +143,10 @@ class CalmViewTest {
     }
 
     @Test
-    fun `Automatische Ruhe greift nicht im Countdown`() {
-        show(SessionStatus.PREPARING, SessionDisplay(autoCalm = true))
-        compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS * 2)
-        stop.assertExists()
-    }
-
-    @Test
-    fun `Mit Sekunden zählt der Kreis die Phase mit`() {
+    fun `Sekunden-Schalter blendet die Zahl im Kreis ein und aus`() {
         show(SessionStatus.RUNNING)
         compose.onNodeWithText("3").assertExists()
-    }
-
-    @Test
-    fun `Ohne Sekunden steht nur das Phasenwort im Kreis`() {
-        show(SessionStatus.RUNNING, SessionDisplay(showSeconds = false, autoCalm = false))
+        display = SessionDisplay(showSeconds = false, autoCalm = false)
         compose.onNodeWithText("3").assertDoesNotExist()
     }
 }

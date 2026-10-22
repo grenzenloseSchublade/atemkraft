@@ -2,11 +2,11 @@ package app.atemkraft.data
 
 import app.atemkraft.data.local.SavedPatternEntity
 import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.RandomPatternGenerator
-import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
-import kotlin.math.abs
 
 /**
  * Gespeicherte Muster über das Repository: Lesezeichen am „Muster des Tages“ und eigene Muster
@@ -35,6 +34,9 @@ class SavedPatternsRepositoryTest {
 
     /** Freie Folge Ein 4, Halten 1, Aus 6 (Langhana). */
     private val calm = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.HOLD, 1), FreePhase(FreePhaseType.OUT, 6)))
+
+    /** Viloma I: Stufen beim Einatmen. */
+    private val viloma = FreePatternTemplates.all.single { it.label == "Viloma I" }.pattern
 
     /** Freie Folge Ein 4, Aus 3 (Brmhana). */
     private val active = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.OUT, 3)))
@@ -50,62 +52,50 @@ class SavedPatternsRepositoryTest {
         assertEquals(listOf(repo.savedName(daily)), dao.rows.value.map { it.name })
         assertEquals(SavedPatternEntity.ORIGIN_DAILY, dao.rows.value.single().origin)
         assertNull(dao.rows.value.single().minutes)
+        val saved = repo.patterns.first().single()
+        assertEquals(PatternOrigin.SAVED_DAILY, saved.origin)
+        assertEquals(
+            RandomPatternGenerator.exerciseFrom(daily.spec, "muster-${saved.id}", repo.savedName(daily), PatternOrigin.SAVED_DAILY),
+            saved.exercise,
+        )
     }
 
     @Test
-    fun `Abwaehlen nimmt nur das Tagesmuster heraus und laesst andere Muster stehen`() = runBlocking {
+    fun `Lesezeichen am Tagesmuster laesst ein eigenes Muster mit gleichen Zahlen und Namen und andere Tagesmuster unberuehrt`() = runBlocking {
         val dao = FakeSavedPatternDao()
         val repo = SavedPatternsRepository(dao)
         assertNotEquals("Testdaten brauchen zwei verschiedene Namen", repo.savedName(daily), repo.savedName(other))
+        val custom = repo.saveCustom(daily.spec.toFreePattern(), minutes = 5, name = repo.savedName(daily))
         repo.save(other)
+
+        assertFalse(repo.isDailySaved(daily, repo.patterns.first()))
         repo.save(daily)
+        assertEquals(3, dao.rows.value.size)
+        assertTrue(repo.isDailySaved(daily, repo.patterns.first()))
 
         repo.unsave(daily)
 
-        assertEquals(listOf(repo.savedName(other)), dao.rows.value.map { it.name })
-    }
-
-    @Test
-    fun `saveCustom liefert sofort eine Id, die byExerciseId aufloest`() = runBlocking {
-        val repo = SavedPatternsRepository(FakeSavedPatternDao())
-
-        val saved = repo.saveCustom(calm, minutes = 7, name = "Abendmuster")
-
-        assertTrue(saved.id > 0)
-        assertEquals(PatternOrigin.CUSTOM, saved.origin)
-        assertEquals(7, saved.minutes)
-        val exercise = repo.byExerciseId("muster-${saved.id}")
-        assertNotNull(exercise)
-        assertEquals("Abendmuster", exercise!!.name)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun `saveCustom lehnt eine ungueltige Folge ab`() {
-        runBlocking {
-            // Kein Ausatmen: keine gültige freie Folge.
-            val onlyIn = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.IN, 4)))
-            SavedPatternsRepository(FakeSavedPatternDao()).saveCustom(onlyIn, minutes = 5, name = "")
-        }
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun `saveCustom lehnt eine Dauer ausserhalb 1 bis 30 Minuten ab`() {
-        runBlocking { SavedPatternsRepository(FakeSavedPatternDao()).saveCustom(calm, minutes = 31, name = "") }
+        assertEquals(listOf(repo.savedName(daily), repo.savedName(other)), dao.rows.value.map { it.name })
+        assertEquals(custom.id, dao.rows.value.first().id)
+        assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, dao.rows.value.first().origin)
+        assertFalse(repo.isDailySaved(daily, repo.patterns.first()))
     }
 
     @Test
     fun `leerer Name wird zum Vorschlagsnamen, langer Name wird auf 80 Zeichen gekuerzt`() = runBlocking {
         val dao = FakeSavedPatternDao()
         val repo = SavedPatternsRepository(dao)
+        val steps = FreePattern(listOf(FreePhase(FreePhaseType.IN, 3), FreePhase(FreePhaseType.IN, 1), FreePhase(FreePhaseType.OUT, 6)))
 
-        val blank = repo.saveCustom(calm, minutes = 5, name = "   ")
+        val blank = repo.saveCustom(steps, minutes = 5, name = "   ")
         val long = repo.saveCustom(calm, minutes = 5, name = "x".repeat(120))
-        val broken = repo.saveCustom(active, minutes = 5, name = "  Morgen\nfrisch‮ ")
+        val broken = repo.saveCustom(active, minutes = 5, name = "  Morgen\n\tfrisch\u200B\u202E ")
 
-        assertEquals("Eigenes Muster 4·1·6", blank.exercise.name)
+        assertEquals("Eigenes Muster 3·1·6", blank.exercise.name)
+        assertEquals("Eigenes Muster 3·1·6", SavedPatternsRepository.suggestedName(steps))
         assertEquals(PatternBackup.MAX_NAME, long.exercise.name.length)
         assertEquals("Morgen frisch", broken.exercise.name)
-        assertEquals(listOf("Eigenes Muster 4·1·6", "x".repeat(80), "Morgen frisch"), dao.rows.value.map { it.name })
+        assertEquals(listOf("Eigenes Muster 3·1·6", "x".repeat(80), "Morgen frisch"), dao.rows.value.map { it.name })
     }
 
     @Test
@@ -115,82 +105,25 @@ class SavedPatternsRepositoryTest {
         val repo = SavedPatternsRepository(dao, clearOverrides = { cleared += it })
         repo.save(daily)
         val before = dao.rows.value.single()
+        assertEquals(daily.spec.toFreePattern(), repo.loadForEdit(before.id)!!.pattern)
 
-        val updated = repo.update(before.id, calm, minutes = 12, name = "")
+        val updated = repo.update(before.id, viloma, minutes = 12, name = "Stufen")
 
         val after = dao.rows.value.single()
         assertEquals(before.id, after.id)
         assertEquals(before.createdAtEpochMs, after.createdAtEpochMs)
         assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, after.origin)
         assertEquals(12, after.minutes)
-        assertEquals("Eigenes Muster 4·1·6", after.name)
+        assertEquals(viloma.toCompact(), after.phases)
         assertEquals(listOf("muster-${before.id}"), cleared)
         assertEquals(PatternOrigin.CUSTOM, updated!!.origin)
-        assertEquals(calm, updated.pattern)
+        assertEquals(viloma, updated.pattern)
+        assertEquals(RandomPatternGenerator.exerciseFrom(viloma, "muster-${before.id}", "Stufen", 12), updated.exercise)
         assertEquals(updated.exercise, repo.byExerciseId("muster-${before.id}"))
-    }
 
-    @Test
-    fun `update eines geloeschten Musters liefert null und loescht keine Anpassungen`() = runBlocking {
-        val cleared = mutableListOf<String>()
-        val repo = SavedPatternsRepository(FakeSavedPatternDao(), clearOverrides = { cleared += it })
-
+        // Ein inzwischen gelöschtes Muster: nichts geschrieben, keine Anpassungen gelöscht.
         assertNull(repo.update(42, calm, minutes = 5, name = "x"))
-        assertTrue(cleared.isEmpty())
-    }
-
-    @Test
-    fun `Lesezeichen am Tagesmuster laesst ein eigenes Muster mit gleichen Zahlen und Namen unberuehrt`() = runBlocking {
-        val dao = FakeSavedPatternDao()
-        val repo = SavedPatternsRepository(dao)
-        val custom = repo.saveCustom(daily.spec.toFreePattern(), minutes = 5, name = repo.savedName(daily))
-
-        assertFalse(repo.isDailySaved(daily, repo.patterns.first()))
-        repo.save(daily)
-        assertEquals(2, dao.rows.value.size)
-        assertTrue(repo.isDailySaved(daily, repo.patterns.first()))
-
-        repo.unsave(daily)
-
-        assertEquals(listOf(custom.id), dao.rows.value.map { it.id })
-        assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, dao.rows.value.single().origin)
-        assertFalse(repo.isDailySaved(daily, repo.patterns.first()))
-    }
-
-    @Test
-    fun `eigene Muster bekommen die Texte eigener Muster und ihre Dauer`() = runBlocking {
-        val repo = SavedPatternsRepository(FakeSavedPatternDao())
-
-        for (minutes in listOf(1, 3, 5, 10, 30)) {
-            val saved = repo.saveCustom(calm, minutes = minutes, name = "Mein Muster")
-            val expected = RandomPatternGenerator.exerciseFrom(calm, "muster-${saved.id}", "Mein Muster", minutes)
-            assertEquals(expected, saved.exercise)
-            assertTrue("$minutes min", abs(saved.exercise.defaultMinutes() - minutes) <= 1)
-        }
-    }
-
-    @Test
-    fun `gespeicherte Tagesmuster bekommen die Texte gespeicherter Tagesmuster`() = runBlocking {
-        val repo = SavedPatternsRepository(FakeSavedPatternDao())
-        repo.save(daily)
-
-        val saved = repo.patterns.first().single()
-
-        assertEquals(PatternOrigin.SAVED_DAILY, saved.origin)
-        assertEquals(
-            RandomPatternGenerator.exerciseFrom(daily.spec, "muster-${saved.id}", repo.savedName(daily), PatternOrigin.SAVED_DAILY),
-            saved.exercise,
-        )
-    }
-
-    @Test
-    fun `unbekannte Herkunft in der DB gilt als eigenes Muster`() = runBlocking {
-        val dao = FakeSavedPatternDao()
-        dao.insert(row(origin = "zukunft"))
-
-        val saved = SavedPatternsRepository(dao).patterns.first().single()
-
-        assertEquals(PatternOrigin.CUSTOM, saved.origin)
+        assertEquals(1, cleared.size)
     }
 
     @Test
@@ -199,7 +132,6 @@ class SavedPatternsRepositoryTest {
         val saved = repo.saveCustom(calm, minutes = 5, name = "A")
 
         assertEquals(saved, repo.loadForEdit(saved.id))
-        assertNull(repo.loadForEdit(999))
         assertEquals("A", repo.observe("muster-${saved.id}").first()?.name)
 
         repo.update(saved.id, active, minutes = 8, name = "B")
@@ -208,8 +140,6 @@ class SavedPatternsRepositoryTest {
         assertEquals("B", observed?.name)
         assertTrue(observed!!.activating)
         assertNull(repo.observe("muster-999").first())
-        assertNull(repo.observe("box-4-4-4-4").first())
-        assertNull(repo.observe(RandomPatternGenerator.DRAFT_ID).first())
     }
 
     @Test

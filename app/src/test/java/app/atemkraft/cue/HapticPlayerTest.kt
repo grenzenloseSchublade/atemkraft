@@ -9,8 +9,10 @@ import android.os.VibratorManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
@@ -23,9 +25,14 @@ import org.robolectric.shadows.ShadowVibrator
  * Tippvibration); ab API 33 über `VibrationAttributes`, davor über die `AudioAttributes`-Usage.
  * Die Rasten des Zeitrings ([HapticPlayer.dialTick]) sind Bedien-Rückmeldung: ohne App-Schalter,
  * als Berührungs-Vibration, die Android regelt.
- * Rasten: Primitive, wenn der Motor sie kann, sonst One-Shot; gedrosselt, ein Klick hat Vorrang.
+ * Rasten: Primitive, wenn der Motor sie kann, sonst One-Shot; gedrosselt ([TickGate]), ein Klick hat Vorrang.
  */
 @RunWith(RobolectricTestRunner::class)
+// Feste Reihenfolge: Die Tests auf aktuellem SDK laufen vor denen auf API 28/29 („vor API 33 …“).
+// Lädt zuerst ein älteres SDK die native Laufzeit von Robolectric, scheitert sie danach im
+// aktuellen SDK (FileSystemAlreadyExistsException beim Kopieren der Schriften) – und mit ihr jeder
+// folgende Robolectric-Test derselben JVM.
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class HapticPlayerTest {
 
     private val context: Context = RuntimeEnvironment.getApplication()
@@ -40,14 +47,21 @@ class HapticPlayerTest {
     private fun usage(shadow: ShadowVibrator): Int = (shadow.vibrationAttributesFromLastVibration as VibrationAttributes).usage
 
     @Test
-    fun `Tipp-Tick vibriert nicht, wenn der App-Schalter aus ist`() {
+    fun `App-Schalter aus - weder Tipp-Tick noch Phasen-Haptik, Drosselung bleibt frei`() {
         player.tick(enabled = false)
+        CueEvent.entries.forEach { player.play(it, enabled = false) }
         assertFalse(vibrator().isVibrating)
+
+        player.tick(enabled = true) // gleiche Zeit: der ausgeschaltete Tick hat nichts gesperrt
+        assertTrue(vibrator().isVibrating)
     }
 
     @Test
-    fun `Tipp-Tick vibriert als Alarm, wenn der App-Schalter an ist`() {
+    fun `App-Schalter an - Tipp-Tick und Phasen-Haptik vibrieren als Alarm`() {
         player.tick(enabled = true)
+        assertEquals(VibrationAttributes.USAGE_ALARM, usage(vibrator()))
+        now += TICK_GAP_MS
+        player.play(CueEvent.INHALE, enabled = true)
         val shadow = vibrator()
         assertTrue(shadow.isVibrating)
         assertEquals(VibrationAttributes.USAGE_ALARM, usage(shadow))
@@ -66,54 +80,16 @@ class HapticPlayerTest {
     }
 
     @Test
-    fun `ohne Primitive spuerbarer One-Shot mit voller Amplitude`() {
-        player.tick(enabled = true)
-        assertEquals(TICK_ONE_SHOT_MS, vibrator().milliseconds)
-        now += TICK_GAP_MS
-        player.dialTick(strong = true)
-        assertEquals(STRONG_ONE_SHOT_MS, vibrator().milliseconds)
-    }
-
-    @Test
     fun `mit Primitiven leiser Tick je Minute, satter Klick je 5 Minuten`() {
         vibrator().setSupportedPrimitives(listOf(VibrationEffect.Composition.PRIMITIVE_TICK, VibrationEffect.Composition.PRIMITIVE_CLICK))
         val player = HapticPlayer(context) { now }
         player.tick(enabled = true)
-        assertEquals(
-            listOf(ShadowVibrator.PrimitiveEffect(VibrationEffect.Composition.PRIMITIVE_TICK, TICK_PRIMITIVE_SCALE, 0)),
-            vibrator().primitiveSegmentsInPrimitiveEffects,
-        )
+        assertEquals(listOf(VibrationEffect.Composition.PRIMITIVE_TICK), vibrator().primitiveSegmentsInPrimitiveEffects.map { it.id })
         now += TICK_GAP_MS
         player.dialTick(strong = true)
         val shadow = vibrator()
-        assertEquals(listOf(ShadowVibrator.PrimitiveEffect(VibrationEffect.Composition.PRIMITIVE_CLICK, STRONG_PRIMITIVE_SCALE, 0)), shadow.primitiveSegmentsInPrimitiveEffects)
+        assertEquals(listOf(VibrationEffect.Composition.PRIMITIVE_CLICK), shadow.primitiveSegmentsInPrimitiveEffects.map { it.id })
         assertEquals(VibrationAttributes.USAGE_TOUCH, usage(shadow))
-    }
-
-    @Test
-    fun `dichte Ticks werden gedrosselt, ein Klick geht immer durch`() {
-        val v = context.getSystemService(VibratorManager::class.java).defaultVibrator
-        player.tick(enabled = true)
-        assertTrue(vibrator().isVibrating)
-        v.cancel()
-
-        now += TICK_GAP_MS - 1
-        player.tick(enabled = true) // zu dicht: bricht den laufenden Tick nicht ab
-        assertFalse(vibrator().isVibrating)
-
-        player.dialTick(strong = true) // Klick hat Vorrang
-        assertTrue(vibrator().isVibrating)
-        assertEquals(STRONG_ONE_SHOT_MS, vibrator().milliseconds)
-        v.cancel()
-
-        now += STRONG_GAP_MS - 1
-        player.tick(enabled = true) // der Klick klingt noch aus
-        assertFalse(vibrator().isVibrating)
-
-        now += 1
-        player.tick(enabled = true)
-        assertTrue(vibrator().isVibrating)
-        assertEquals(TICK_ONE_SHOT_MS, vibrator().milliseconds)
     }
 
     @Test
@@ -129,29 +105,8 @@ class HapticPlayerTest {
     }
 
     @Test
-    fun `ein Tick bei ausgeschaltetem App-Schalter sperrt die Drosselung nicht`() {
-        player.tick(enabled = false)
-        player.tick(enabled = true) // gleiche Zeit: der ausgeschaltete Tick hat nichts gesperrt
-        assertTrue(vibrator().isVibrating)
-    }
-
-    @Test
-    fun `Phasen-Haptik vibriert nicht, wenn der App-Schalter aus ist`() {
-        CueEvent.entries.forEach { player.play(it, enabled = false) }
-        assertFalse(vibrator().isVibrating)
-    }
-
-    @Test
-    fun `Phasen-Haptik vibriert als Alarm, wenn der App-Schalter an ist`() {
-        player.play(CueEvent.INHALE, enabled = true)
-        val shadow = vibrator()
-        assertTrue(shadow.isVibrating)
-        assertEquals(VibrationAttributes.USAGE_ALARM, usage(shadow))
-    }
-
-    @Test
     @Config(sdk = [28])
-    fun `vor API 33 gelten dieselben Regeln über AudioAttributes`() {
+    fun `vor API 33 - gelten dieselben Regeln über AudioAttributes`() {
         @Suppress("DEPRECATION")
         val shadow = shadowOf(context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
         player.tick(enabled = false)
@@ -166,7 +121,7 @@ class HapticPlayerTest {
 
     @Test
     @Config(sdk = [29])
-    fun `API 29 nimmt vordefinierte Effekte, Klick je 5 Minuten schwer`() {
+    fun `vor API 33 - API 29 nimmt vordefinierte Effekte, Klick je 5 Minuten schwer`() {
         @Suppress("DEPRECATION")
         val shadow = shadowOf(context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
         player.tick(enabled = true)

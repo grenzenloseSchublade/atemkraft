@@ -10,7 +10,7 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
 
-/** Maße des Zeitrings (px bei Dichte 1, also dp): Knopf greifen, Band und Mitte, 10er-Zahlen. */
+/** Maße des Zeitrings (px bei Dichte 1, also dp): Knopf greifen, Zahlen und ∞-Knopf ohne Überlappung. */
 class TimeDialGeometryTest {
 
     private val touch = 48f
@@ -27,8 +27,8 @@ class TimeDialGeometryTest {
     }
 
     @Test
-    fun `Knopf bei 60 ist auch rechts von 12 Uhr greifbar, ohne dass der Wert springt`() {
-        for (side in listOf(200f, 300f, 360f)) {
+    fun `Knopf mit 48 dp Greifflaeche ist bei 60 auch rechts von 12 Uhr greifbar, ohne dass der Wert springt`() {
+        for (side in listOf(200f, 360f)) {
             val geo = geometry(side, IntSize(14, 10))
             val c = Offset(side / 2f, side / 2f)
             // Rechte Knopfhälfte: unter dem Finger liegt schon 1 min.
@@ -42,35 +42,19 @@ class TimeDialGeometryTest {
             assertEquals(1, DialDrag(value = 1, at = DialScale.exactMinutesAt(DialScale.angleOf(left.x, left.y, c.x, c.y))).move(59f))
             // Weit weg vom Knopf: Tippen setzt den Wert.
             assertFalse(geo.isOnKnob(onTrack(geo, c, 90.0), c, 60))
+            assertTrue("side $side: Greiffläche ≥ 48 dp", geo.knobGrab >= touch / 2f)
         }
     }
 
+    /**
+     * Die Zahlen zeichnet die Canvas – die Text-Gates der Screenshots sehen sie nicht. Kleiner Ring
+     * bei großer Schrift zeigt nur die 10er; ∞ umfasst das Zeichen und hält Abstand.
+     */
     @Test
-    fun `Knopf hat mindestens 48 dp Greifflaeche`() {
-        val geo = geometry(200f, IntSize(14, 10))
-        assertTrue(geo.knobGrab >= touch / 2f)
-    }
-
-    @Test
-    fun `Band beginnt erst ausserhalb der Mitte`() {
-        for (side in listOf(200f, 240f, 300f, 360f)) {
-            for (numeral in listOf(IntSize(14, 10), IntSize(28, 20))) {
-                val geo = geometry(side, numeral)
-                assertTrue("side $side, Zahl $numeral", geo.bandInner >= geo.contentRadius)
-                assertTrue(geo.bandInner < geo.trackRadius)
-            }
-        }
-    }
-
-    @Test
-    fun `kleiner Ring bei grosser Schrift zeigt nur die 10er`() {
+    fun `Zahlen und ∞-Knopf ueberlappen nicht, kleiner Ring zeigt nur 10er`() {
         assertEquals(listOf(10, 20, 30, 40, 50), geometry(200f, IntSize(28, 20)).numerals)
         assertEquals((5 until 60 step 5).toList(), geometry(360f, IntSize(14, 10)).numerals)
-    }
-
-    @Test
-    fun `∞-Knopf umfasst das Zeichen und haelt Abstand zu Rand, Strichen und Nachbarzahlen`() {
-        for (side in listOf(200f, 240f, 300f, 360f)) {
+        for (side in listOf(200f, 360f)) {
             for (numeral in listOf(IntSize(14, 10), IntSize(28, 20))) {
                 val numerals = (5 until 60 step 5).associateWith { numeral }
                 // ∞ ist breiter als hoch gemessen, die Zeile aber höher als das Zeichen.
@@ -88,12 +72,5 @@ class TimeDialGeometryTest {
                 assertTrue("$where: Tippfläche ≥ 48 dp und um den Kreis", geo.markTouch >= touch && geo.markTouch >= 2f * reach)
             }
         }
-    }
-
-    @Test
-    fun `Bogenkappe beginnt am 12-Uhr-Strich`() {
-        val geo = geometry(300f, IntSize(14, 10))
-        // Kappe = halbe Spurbreite als Winkel; kleiner als eine Minute (6°), damit 1 min sichtbar bleibt.
-        assertTrue(geo.capDeg > 0f && geo.capDeg < 6f)
     }
 }

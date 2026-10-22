@@ -25,13 +25,17 @@ class VoiceOrphanCleanupTest {
     }
 
     @Test
-    fun `verwaister Stimmordner und sein Staging-Ordner werden geloescht, Katalog-Stimmen bleiben`() {
+    fun `verwaister Stimmordner und sein Staging-Ordner werden geloescht, Katalog-Stimmen und Fremdes bleiben`() {
+        assertEquals(emptyList<String>(), deleteOrphanVoiceDirs(File(tmp.root, "gibtsnicht"), VoiceCatalog.all))
+
         val base = tmp.newFolder("tts")
         val thorsten = VoiceCatalog.byId("thorsten")!!
         val known = dirWithModel(base, thorsten.dirName)
         val knownStaging = dirWithModel(base, ".${thorsten.dirName}.staging")
         dirWithModel(base, "vits-piper-de_DE-glados-high")
         dirWithModel(base, ".vits-piper-de_DE-glados-high.staging")
+        val other = dirWithModel(base, "eigener-ordner")
+        val file = File(base, "vits-piper-de_DE-x-high").apply { writeText("keine Stimme") }
 
         val deleted = deleteOrphanVoiceDirs(base, VoiceCatalog.all)
 
@@ -41,17 +45,7 @@ class VoiceOrphanCleanupTest {
         )
         assertTrue(File(known, "tokens.txt").isFile)
         assertTrue(knownStaging.isDirectory)
-        assertEquals(setOf(known.name, knownStaging.name), base.list()!!.toSet())
-    }
-
-    @Test
-    fun `fremde Namen und Dateien bleiben unangetastet`() {
-        val base = tmp.newFolder("tts")
-        val other = dirWithModel(base, "eigener-ordner")
-        val file = File(base, "vits-piper-de_DE-x-high").apply { writeText("keine Stimme") }
-
-        assertEquals(emptyList<String>(), deleteOrphanVoiceDirs(base, VoiceCatalog.all))
-        assertTrue(other.isDirectory)
+        assertEquals(setOf(known.name, knownStaging.name, other.name, file.name), base.list()!!.toSet())
         assertTrue(file.isFile)
     }
 
@@ -74,10 +68,5 @@ class VoiceOrphanCleanupTest {
         assertFalse(orphan.exists())
         assertTrue(Files.isSymbolicLink(topLink.toPath()))
         assertEquals("bleibt", precious.readText())
-    }
-
-    @Test
-    fun `fehlendes tts-Verzeichnis ist kein Fehler`() {
-        assertEquals(emptyList<String>(), deleteOrphanVoiceDirs(File(tmp.root, "gibtsnicht"), VoiceCatalog.all))
     }
 }

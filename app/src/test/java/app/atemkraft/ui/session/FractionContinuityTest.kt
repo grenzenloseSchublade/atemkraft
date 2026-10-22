@@ -75,18 +75,15 @@ class FractionContinuityTest {
     }
 
     @Test
-    fun `keine neuen Skalensprünge an Phasengrenzen`() {
-        val unknown = findJumps().filterKeys { it !in knownJumps }
+    fun `keine neuen Skalenspruenge, jeder bekannte tritt noch auf`() {
+        val jumps = findJumps()
+        val unknown = jumps.filterKeys { it !in knownJumps }
         assertTrue(
             "Neue Skalensprünge (MOTION-03): " +
                 unknown.entries.joinToString("; ") { (k, v) -> "$k in ${v.joinToString()}" },
             unknown.isEmpty(),
         )
-    }
-
-    @Test
-    fun `jeder bekannte Sprung tritt noch auf`() {
-        val stale = knownJumps.keys - findJumps().keys
+        val stale = knownJumps.keys - jumps.keys
         assertTrue(
             "Behoben – aus knownJumps und Backlog streichen: ${stale.joinToString()}",
             stale.isEmpty(),

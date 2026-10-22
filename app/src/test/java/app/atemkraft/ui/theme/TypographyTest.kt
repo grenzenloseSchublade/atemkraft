@@ -27,46 +27,34 @@ class TypographyTest {
         )
     }
 
+    /** Kernregel: nie Wortumbruch – Überschriften brechen nur zwischen Wörtern, keine Rolle trennt Silben. */
     @Test
-    fun `jede Ueberschrift-Rolle bricht nur zwischen Woertern`() {
+    fun `Ueberschriften brechen nur zwischen Woertern, keine Rolle trennt Silben`() {
         headingRoles.forEach { (name, style) ->
             assertEquals("$name: lineBreak", LineBreak.Heading, style.lineBreak)
             assertEquals("$name: hyphens", Hyphens.None, style.hyphens)
         }
+        roles(AtemkraftTypography).forEach { (name, style) -> assertNotEquals("$name: hyphens", Hyphens.Auto, style.hyphens) }
     }
 
+    /** Nutzerentscheidung 2026-10-19: Material-3-Größen ohne eigenen Faktor, nur Überschriften kräftiger. */
     @Test
-    fun `keine Rolle schaltet Silbentrennung ein`() {
-        with(AtemkraftTypography) {
-            listOf(
-                displayLarge, displayMedium, displaySmall, headlineLarge, headlineMedium, headlineSmall,
-                titleLarge, titleMedium, titleSmall, bodyLarge, bodyMedium, bodySmall,
-                labelLarge, labelMedium, labelSmall,
-            )
-        }.forEach { assertNotEquals(Hyphens.Auto, it.hyphens) }
-    }
-
-    @Test
-    fun `alle Rollen haben Material-Groesse`() {
+    fun `Rollen sind Material 3, nur das Gewicht der Ueberschriften ist ueberschrieben`() {
         val m3 = Typography()
         roles(m3).zip(roles(AtemkraftTypography)).forEach { (expected, actual) ->
             assertEquals("${expected.first}: fontSize", expected.second.fontSize, actual.second.fontSize)
             assertEquals("${expected.first}: lineHeight", expected.second.lineHeight, actual.second.lineHeight)
             assertEquals("${expected.first}: letterSpacing", expected.second.letterSpacing, actual.second.letterSpacing)
         }
-    }
-
-    @Test
-    fun `Ueberschriften sind kraeftiger als Material`() {
-        val expected = mapOf(
+        val weights = mapOf(
             "headlineLarge" to FontWeight.Bold,
             "headlineMedium" to FontWeight.Bold,
             "headlineSmall" to FontWeight.SemiBold,
             "titleLarge" to FontWeight.SemiBold,
             "titleMedium" to FontWeight.SemiBold,
-            "titleSmall" to Typography().titleSmall.fontWeight,
+            "titleSmall" to m3.titleSmall.fontWeight,
         )
-        expected.forEach { (name, weight) -> assertEquals("$name: fontWeight", weight, headingRoles.getValue(name).fontWeight) }
+        weights.forEach { (name, weight) -> assertEquals("$name: fontWeight", weight, headingRoles.getValue(name).fontWeight) }
     }
 
     private fun roles(t: Typography): List<Pair<String, TextStyle>> = with(t) {

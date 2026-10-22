@@ -32,13 +32,12 @@ class SessionProgressTest {
         assertEquals(0f, progress.at(0, 0L), DELTA)
         assertEquals(7f / 30f, progress.at(1, 3_000L), DELTA)
         assertEquals(1f, progress.at(5, 6_000L), DELTA)
-    }
-
-    @Test
-    fun `verstrichene Zeit wird auf die Phasendauer begrenzt`() {
-        val progress = SessionProgress(continuous(3))
+        // Verstrichene Zeit wird auf die Phasendauer begrenzt, ein Index außerhalb liefert Anfang bzw. Ende.
         assertEquals(progress.at(0, 4_000L), progress.at(0, 99_000L), DELTA)
         assertEquals(0f, progress.at(0, -500L), DELTA)
+        assertEquals(0f, progress.at(-1, 0L), DELTA)
+        assertEquals(1f, progress.at(6, 0L), DELTA)
+        assertEquals(0f, SessionProgress(emptyList()).at(-1, 0L), DELTA)
     }
 
     @Test
@@ -68,22 +67,10 @@ class SessionProgressTest {
         val progress = SessionProgress(timeline)
         assertEquals(0.25f, progress.at(1, 0L), DELTA)
         assertEquals(0.25f, progress.at(1, 60_000L), DELTA)
-    }
-
-    @Test
-    fun `Runde ohne feste Dauer zaehlt nach Phasen`() {
-        val timeline = listOf(phase(HOLD_EMPTY, null), phase(HOLD_FULL, null))
-        val progress = SessionProgress(timeline)
-        assertEquals(0f, progress.at(0, 0L), DELTA)
-        assertEquals(0.5f, progress.at(1, 0L), DELTA)
-    }
-
-    @Test
-    fun `Index ausserhalb des Ablaufs liefert Anfang bzw Ende`() {
-        val progress = SessionProgress(continuous(1))
-        assertEquals(0f, progress.at(-1, 0L), DELTA)
-        assertEquals(1f, progress.at(2, 0L), DELTA)
-        assertEquals(0f, SessionProgress(emptyList()).at(-1, 0L), DELTA)
+        // Eine Runde ganz ohne feste Dauer zählt nach Phasen.
+        val open = SessionProgress(listOf(phase(HOLD_EMPTY, null), phase(HOLD_FULL, null)))
+        assertEquals(0f, open.at(0, 0L), DELTA)
+        assertEquals(0.5f, open.at(1, 0L), DELTA)
     }
 
     @Test

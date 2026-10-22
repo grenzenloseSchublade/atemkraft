@@ -54,20 +54,11 @@ class EvidenceLevelTest {
         assertEquals(setOf("wim-hof", "feueratmung"), caution)
     }
 
+    /** Muster des Tages, eigene und gespeicherte Muster sind nicht untersucht (TEXT-07, MUSTER-06). */
     @Test
-    fun `generierte Muster haben keine Studienlage und keine Vorsicht`() {
-        (0L..20L).map { RandomPatternGenerator.forSeed(it).exercise }.forEach {
-            assertNull("Muster ${it.name} mit Studienlage", it.evidence)
-            assertEquals("Muster ${it.name} mit Vorsicht", false, it.caution)
-        }
-    }
-
-    /** Eigene und gespeicherte Muster sind nicht untersucht (TEXT-07, MUSTER-06). */
-    @Test
-    fun `eigene und gespeicherte Muster haben keine Studienlage und keine Vorsicht`() {
-        val specs = creationRuleSpecs
-        specs.forEach { spec ->
-            listOf(PatternOrigin.CUSTOM, PatternOrigin.SAVED_DAILY).forEach { origin ->
+    fun `generierte, eigene und gespeicherte Muster haben keine Studienlage und keine Vorsicht`() {
+        creationRuleSpecs.forEach { spec ->
+            PatternOrigin.entries.forEach { origin ->
                 val e = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin, 5)
                 assertNull("$origin $spec mit Studienlage", e.evidence)
                 assertEquals("$origin $spec mit Vorsicht", false, e.caution)

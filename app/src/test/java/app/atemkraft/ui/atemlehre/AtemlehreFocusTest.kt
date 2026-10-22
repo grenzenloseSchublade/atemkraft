@@ -2,7 +2,6 @@ package app.atemkraft.ui.atemlehre
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -59,16 +58,5 @@ class AtemlehreFocusTest {
         val top = rule.onNodeWithText(title).fetchSemanticsNode().boundsInRoot.top
         val height = rule.onRoot().fetchSemanticsNode().boundsInRoot.height
         assertTrue("„$title“ steht bei $top von $height", top < height / 4)
-    }
-
-    /** Gegenprobe: ohne Sprung steht die letzte Karte nicht im Bild (die Prüfung oben greift also). */
-    @Test
-    fun `ohne Sprung bleibt die letzte Karte unten`() {
-        val pattern = Atemlehre.patterns.last()
-        rule.setContent {
-            AtemkraftTheme { AtemlehreScreen(onBack = {}, onOpenExercise = {}) }
-        }
-        rule.waitForIdle()
-        rule.onNodeWithText(pattern.title).assertIsNotDisplayed()
     }
 }

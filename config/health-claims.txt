@@ -2,7 +2,7 @@
 # Eine Zeile pro Muster: regulärer Ausdruck, ohne Groß-/Kleinschreibung, an Wortgrenzen.
 # Leerzeilen und Zeilen mit # werden ignoriert. Ausnahmen (Disclaimer, belegte
 # Verneinungen) stehen zeilengenau in health-claims.allow.
-# Genutzt von ContentRulesTest: health-claims (Inhalte, strings.xml) und health-claims-public
+# Genutzt von ContentRulesTest health-claims: Inhalte, strings.xml und öffentliche Texte
 # (README, Store, Release-Notes, PRIVACY).
 
 # Heilen und behandeln

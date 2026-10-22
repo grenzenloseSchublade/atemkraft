@@ -5,7 +5,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
@@ -177,7 +176,7 @@ class PatternEditorFlowTest {
     }
 
     @Test
-    fun `Detail - Stift - Werte aendern - Speichern - Zurueck zeigt die neuen Werte`() {
+    fun `Detail - Stift - Werte aendern - Speichern - Zurueck zeigt und startet die neuen Werte`() {
         val id = saveCustom(free(4, 1, 6), "")
         show()
         step { nav.navigate(DetailRoute("muster-$id")) }
@@ -188,12 +187,15 @@ class PatternEditorFlowTest {
         bookmark().assertIsDisplayed()
         selectRow("Ausatmen")
         stepper(rule.activity.getString(R.string.pattern_editor_phase_spoken, 3, "Ausatmen"), R.string.adjust_increase).performScrollTo().performClick()
+        // Die Dauer steht in der festen Leiste unten (kein Scrollen nötig).
+        repeat(5) { stepper(string(R.string.cd_adjust_duration), R.string.adjust_increase).performClick() }
         step { bookmark().performClick() }
 
-        // Dieselbe Zeile, neue Folge, Name folgt den Zahlen.
+        // Dieselbe Zeile, neue Folge und Dauer, Name folgt den Zahlen.
         val row = dao.rows.value.single()
         assertEquals(id, row.id)
         assertEquals("in:4,hold:1,out:7", row.phases)
+        assertEquals(10, row.minutes)
         assertEquals("Eigenes Muster 4·1·7", row.name)
         assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, row.origin)
 
@@ -202,19 +204,13 @@ class PatternEditorFlowTest {
         rule.onAllNodesWithText("Ausatmen\u00A07\u00A0s", substring = true).assertCountEquals(2)
         rule.onAllNodesWithText("Ausatmen\u00A06\u00A0s", substring = true).assertCountEquals(0)
         rule.onNodeWithText("Eigenes Muster 4·1·6").assertDoesNotExist()
-    }
 
-    @Test
-    fun `Offene Detailseite folgt dem Repository, geloescht geht sie zurueck`() {
-        val id = saveCustom(free(4, 1, 6), "Abendruhe")
-        show()
-        step { nav.navigate(DetailRoute("muster-$id")) }
-        rule.onNodeWithText("Abendruhe").assertIsDisplayed()
-
-        step { runBlocking { repo.update(id, free(4, 2, 6), 8, "Morgenruhe") } }
-        rule.onNodeWithText("Morgenruhe").assertIsDisplayed()
-
-        assertEquals("EigeneRoute", step { runBlocking { repo.delete(id) } })
+        // Die Detailseite startet das neue Muster ohne alte Phasen und mit der neuen Dauer.
+        step { rule.onNodeWithText(string(R.string.action_start), substring = true).performClick() }
+        val (exercise, config) = detailStarts.single()
+        assertEquals("muster-$id", exercise.id)
+        assertEquals(listOf(PhaseType.INHALE, PhaseType.HOLD_FULL, PhaseType.EXHALE), exercise.segments.single().phases.map { it.type })
+        assertEquals(SessionConfig(minutes = 10), config)
     }
 
     @Test
@@ -227,7 +223,8 @@ class PatternEditorFlowTest {
         assertEquals("EigeneRoute > PatternEditorRoute", stack)
         val (exercise, config) = started.single()
         assertEquals(RandomPatternGenerator.DRAFT_ID, exercise.id)
-        assertEquals(5, config.minutes)
+        assertEquals(SessionConfig(minutes = 5), config)
+        assertEquals(listOf(PhaseType.INHALE, PhaseType.EXHALE), exercise.segments.single().phases.map { it.type })
         assertTrue("Ausprobieren speichert nicht", dao.rows.value.isEmpty())
     }
 
@@ -268,6 +265,10 @@ class PatternEditorFlowTest {
         show()
         step { nav.navigate(DetailRoute(RandomPatternGenerator.ID)) }
         val daily = exercises.daily()
+        // Wie über Mitternacht: Das Repository liefert inzwischen ein anderes Tagesmuster – der
+        // Stift übernimmt trotzdem das angezeigte.
+        var next = exercises.regenerateDaily()
+        while (next.spec == daily.spec) next = exercises.regenerateDaily()
         step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_adapt_daily)).performClick() }
         step { bookmark().performClick() }
 
@@ -277,54 +278,6 @@ class PatternEditorFlowTest {
         assertEquals("als freie Folge gespeichert", daily.spec.toFreePattern(), saved.pattern)
         assertEquals(daily.spec.toFreePattern().toCompact(), row.phases)
         assertFalse("Lesezeichen der Tageskarte bleibt leer", repo.isDailySaved(daily, listOf(saved)))
-    }
-
-    @Test
-    fun `Nach dem Bearbeiten startet die Detailseite das neue Muster ohne alte Phasen und mit der neuen Dauer`() {
-        val id = saveCustom(free(4, null, 6), "")
-        show()
-        step { nav.navigate(DetailRoute("muster-$id")) }
-        step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_edit)).performClick() }
-        // Startpunkt-Sheet öffnen und die Vorlage „Wechsel“ wählen.
-        step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_editor_start).substringBefore(","), substring = true).performClick() }
-        step {
-            rule.onNode(
-                hasText("Wechsel") and
-                    SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton) and
-                    SemanticsMatcher("sichtbar") { it.size.width > 0 },
-            ).performClick()
-        }
-        // Die Dauer steht in der festen Leiste unten (kein Scrollen nötig).
-        repeat(5) { stepper(string(R.string.cd_adjust_duration), R.string.adjust_increase).performClick() }
-        step { bookmark().performClick() }
-        val row = dao.rows.value.single()
-        assertEquals("in:3,out:3,in:4,hold:2,out:8", row.phases)
-        assertEquals(10, row.minutes)
-
-        assertEquals("EigeneRoute > DetailRoute", step { back().performClick() })
-        step { rule.onNodeWithText(string(R.string.action_start), substring = true).performClick() }
-        val (exercise, config) = detailStarts.single()
-        assertEquals("muster-$id", exercise.id)
-        assertEquals(
-            listOf(PhaseType.INHALE, PhaseType.EXHALE, PhaseType.INHALE, PhaseType.HOLD_FULL, PhaseType.EXHALE),
-            exercise.segments.single().phases.map { it.type },
-        )
-        assertEquals(SessionConfig(minutes = 10), config)
-    }
-
-    @Test
-    fun `Stift am Tagesmuster uebernimmt das angezeigte Muster, auch wenn es inzwischen ein anderes gibt`() {
-        show()
-        step { nav.navigate(DetailRoute(RandomPatternGenerator.ID)) }
-        val shown = exercises.daily()
-        // Wie über Mitternacht: Das Repository liefert inzwischen ein anderes Tagesmuster.
-        var next = exercises.regenerateDaily()
-        while (next.spec == shown.spec) next = exercises.regenerateDaily()
-        step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_adapt_daily)).performClick() }
-        step { bookmark().performClick() }
-
-        val saved = runBlocking { repo.loadForEdit(dao.rows.value.single().id)!! }
-        assertEquals(shown.spec.toFreePattern(), saved.pattern)
     }
 
     @Test

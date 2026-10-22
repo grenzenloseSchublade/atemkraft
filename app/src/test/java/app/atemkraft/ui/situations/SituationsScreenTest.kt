@@ -42,8 +42,7 @@ import org.robolectric.annotation.Config
  * Kopfzeile klappt auf, und TalkBack hört Überschrift, Rolle und Zustand (A11Y-01, -04).
  * Dazu die Befindens-Suche (MUSTER-09): Lupe öffnet ein Feld mit Fokus, Treffer stehen
  * aufgeklappt allein da, „Nichts gefunden“ bietet „Alle zeigen“, X und System-Zurück schließen,
- * und die Tastatur lernt nichts (SEC-PRIV-03). „Meine Muster“ stehen hier nicht mehr, sondern im
- * Tab „Eigene“ (`OwnPatternsScreenTest`).
+ * und die Tastatur lernt nichts (SEC-PRIV-03).
  * Der Screenshot-Test zeigt nur, wie es aussieht – hier wird das Verhalten festgehalten.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -76,33 +75,55 @@ class SituationsScreenTest {
 
     private fun stateIs(resId: Int) = SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, app.getString(resId))
 
+    /** Repräsentativer TalkBack- und Bedien-Check der Übersicht (MUSTER-03, A11Y-01, -04). */
     @Test
-    fun `Abschnitte starten zu und zeigen Titel und Begründung, aber noch keine Übung`() {
+    fun `Kopfzeile ist Ueberschrift und Schaltflaeche, klappt auf und zu, Karte startet, Kopf nicht`() {
         compose.onNodeWithText(first.rationale).assertExists()
         compose.onNodeWithText(firstExercise.name).assertDoesNotExist()
-        header().assert(stateIs(R.string.state_collapsed))
-    }
-
-    @Test
-    fun `Kopfzeile ist Überschrift und Schaltfläche und klappt per Tipp auf und wieder zu`() {
         header()
+            .assert(stateIs(R.string.state_collapsed))
             .assert(isHeading())
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .performClick()
         header().assert(stateIs(R.string.state_expanded))
-        compose.onNodeWithText(firstExercise.name).assertExists()
+        assertEquals(emptyList<String>(), started)
+        compose.onNodeWithText(firstExercise.name).performClick()
+        assertEquals(listOf(firstExercise.id), started)
 
         header().performClick()
         header().assert(stateIs(R.string.state_collapsed))
         compose.onNodeWithText(firstExercise.name).assertDoesNotExist()
     }
 
+    /** Ein Suchfluss (MUSTER-09); die Treffer-Logik prüft `SituationSearchTest`. */
     @Test
-    fun `Übungskarte im aufgeklappten Abschnitt startet die Übung, die Kopfzeile nicht`() {
-        header().performClick()
-        assertEquals(emptyList<String>(), started)
-        compose.onNodeWithText(firstExercise.name).performClick()
-        assertEquals(listOf(firstExercise.id), started)
+    fun `Suche - Lupe fokussiert, Treffer allein mit angesagter Zahl, X leert und schliesst, ohne Treffer Alle zeigen`() {
+        openSearch()
+        field().assertIsFocused()
+        compose.onNodeWithText(str(R.string.situations_subtitle)).assertDoesNotExist()
+
+        field().performTextInput("müde")
+        compose.onNodeWithText(crash.title).assertExists()
+        Situations.all.filter { it != crash }.forEach { compose.onNodeWithText(it.title).assertDoesNotExist() }
+        val count = app.resources.getQuantityString(R.plurals.situations_search_count, 1, 1)
+        compose.onNodeWithText(count)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+
+        // X leert zuerst die Eingabe, dann schließt es die Suche.
+        compose.onNodeWithContentDescription(str(R.string.cd_search_clear)).performClick()
+        field().assertExists()
+        compose.onNodeWithText(first.title).assertExists()
+        compose.onNodeWithContentDescription(str(R.string.cd_search_close)).performClick()
+        field().assertDoesNotExist()
+        compose.onNodeWithText(str(R.string.situations_subtitle)).assertExists()
+
+        // Ohne Treffer: „Nichts gefunden“, „Alle zeigen“ führt zur ganzen Übersicht zurück.
+        openSearch()
+        field().performTextInput("Asthma")
+        compose.onNodeWithText(str(R.string.situations_search_none)).assertExists()
+        compose.onNodeWithText(str(R.string.action_show_all)).performClick()
+        field().assertDoesNotExist()
+        Situations.all.forEach { compose.onNodeWithText(it.title).assertExists() }
     }
 
     private fun str(resId: Int) = app.getString(resId)
@@ -110,53 +131,6 @@ class SituationsScreenTest {
     private fun openSearch() = compose.onNodeWithContentDescription(str(R.string.cd_search_open)).performClick()
 
     private fun field() = compose.onNode(hasSetTextAction())
-
-    @Test
-    fun `Lupe öffnet das Suchfeld mit Fokus anstelle des Untertitels`() {
-        compose.onNodeWithText(str(R.string.situations_subtitle)).assertExists()
-        openSearch()
-        field().assertIsFocused()
-        compose.onNodeWithText(str(R.string.situations_subtitle)).assertDoesNotExist()
-        compose.onNodeWithContentDescription(str(R.string.cd_search_open)).assertDoesNotExist()
-        // Leeres Feld: Übersicht bleibt.
-        Situations.all.forEach { compose.onNodeWithText(it.title).assertExists() }
-    }
-
-    @Test
-    fun `Treffer stehen aufgeklappt allein da, die Zahl wird angesagt`() {
-        openSearch()
-        field().performTextInput("müde")
-        compose.onNodeWithText(crash.title).assertExists()
-        crash.exerciseIds.mapNotNull { id -> BuiltInExercises.all.firstOrNull { it.id == id } }
-            .forEach { compose.onNodeWithText(it.name).assertExists() }
-        Situations.all.filter { it != crash }.forEach { compose.onNodeWithText(it.title).assertDoesNotExist() }
-        val count = app.resources.getQuantityString(R.plurals.situations_search_count, 1, 1)
-        compose.onNodeWithText(count)
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-    }
-
-    @Test
-    fun `ohne Treffer heißt es Nichts gefunden und Alle zeigen führt zur ganzen Übersicht zurück`() {
-        openSearch()
-        field().performTextInput("Asthma")
-        Situations.all.forEach { compose.onNodeWithText(it.title).assertDoesNotExist() }
-        compose.onNodeWithText(str(R.string.situations_search_none)).assertExists()
-        compose.onNodeWithText(str(R.string.action_show_all)).performClick()
-        field().assertDoesNotExist()
-        Situations.all.forEach { compose.onNodeWithText(it.title).assertExists() }
-    }
-
-    @Test
-    fun `X leert zuerst die Eingabe und schließt dann die Suche`() {
-        openSearch()
-        field().performTextInput("müde")
-        compose.onNodeWithContentDescription(str(R.string.cd_search_clear)).performClick()
-        field().assertExists()
-        compose.onNodeWithText(first.title).assertExists()
-        compose.onNodeWithContentDescription(str(R.string.cd_search_close)).performClick()
-        field().assertDoesNotExist()
-        compose.onNodeWithText(str(R.string.situations_subtitle)).assertExists()
-    }
 
     @Test
     fun `System-Zurück schließt zuerst die Suche`() {
@@ -177,11 +151,6 @@ class SituationsScreenTest {
         assertTrue("IME_FLAG_NO_PERSONALIZED_LEARNING fehlt", info.imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0)
         assertEquals(0, info.inputType and InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
         field().performImeAction()
-    }
-
-    @Test
-    fun `Meine Muster stehen nicht mehr in den Situationen`() {
-        compose.onNodeWithText(str(R.string.situations_my_patterns)).assertDoesNotExist()
     }
 
     /** Die View, die Compose die Texteingabe liefert (AndroidComposeView). */

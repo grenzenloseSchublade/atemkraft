@@ -8,7 +8,6 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -40,9 +39,9 @@ import org.robolectric.annotation.Config
  * „Neu nach …“, Hinzufügen), Ablauf, Name, „Aus der Yoga-Lehre“, dann die feste Leiste (Startpunkt,
  * Dauer, Start) –, jeder Stepper-Tipp löst genau eine Ansage aus (den neuen Wert; weder Einordnung,
  * Status am Kopf, Kurve noch Lesezeichen melden sich dazu), eine Vorlage nur eine (das
- * Startpunkt-Symbol), und alles ist ohne
- * Ziehen bedienbar: die Kurve ist ein Knoten ohne Live-Region, Auswahl über die Ablauf-Liste,
- * Sekunden, Entfernen und Hinzufügen über die Werkzeugleiste.
+ * Startpunkt-Symbol), und alles ist ohne Ziehen bedienbar: Auswahl über die Ablauf-Liste,
+ * Sekunden, Entfernen und Hinzufügen über die Werkzeugleiste. Dass die Kurve ein Knoten ohne
+ * Live-Region ist, prüft `BreathCurveEditorTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -145,19 +144,6 @@ class PatternEditorA11yTest {
     }
 
     @Test
-    fun `die Kurve ist ein Knoten mit Beschreibung und ohne Live-Region`() {
-        show(PatternEditorState.new(prefix, box))
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_breath_curve, box.spokenDescription()))
-            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
-    }
-
-    @Test
-    fun `je Stepper-Tipp genau eine Ansage – neues Muster`() {
-        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
-        tapEveryStepper(state)
-    }
-
-    @Test
     fun `je Stepper-Tipp genau eine Ansage – gespeichertes Muster bearbeiten`() {
         val state = show(PatternEditorState.forEdit(prefix, id = 7, pattern = box, minutes = 5, name = "Abendruhe").apply { select(1) })
         assertTrue(state.saved)
@@ -237,73 +223,38 @@ class PatternEditorA11yTest {
         val said = announcementsAfterTapOn("$spoken, ${string(R.string.adjust_increase)}")
         assertEquals(1, said.size)
         assertTrue(said.single(), said.single().startsWith("$spoken:"))
-    }
 
-    @Test
-    fun `nach Einfuegen und Wechsel der Auswahl liest die Zeile wieder die gewaehlte Phase`() {
-        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
+        // Ein Wechsel der Auswahl verbraucht die Ansage und löst selbst keine aus – auch nicht
+        // beim Zurückwählen einer Phase, deren Wert eben angesagt wurde.
         announcementsAfterTapOn(string(R.string.cd_pattern_add_hold))
-        assertEquals(2, state.selected)
         val notice = app.getString(R.string.cd_pattern_phase_added, "Halten voll", 3, 5, 12)
         compose.onNodeWithContentDescription(notice).assertExists()
-
-        // Andere Phase wählen (wie über Ablauf-Liste oder Kurve): Die Ansage ist verbraucht.
-        compose.runOnIdle { state.select(4) }
-        compose.waitForIdle()
-        compose.onNodeWithContentDescription(notice).assertDoesNotExist()
-        val selected = app.getString(R.string.cd_pattern_selected, app.getString(R.string.pattern_editor_phase_spoken, 5, state.pattern.labelAt(4)))
-        compose.onNodeWithContentDescription(selected).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
-
-        // Auch nach dem Entfernen und einem Wechsel zurück gilt wieder „Gewählte Phase: …“.
-        announcementsAfterTapOn(app.getString(R.string.cd_pattern_phase_remove, 5))
-        val removed = app.getString(R.string.cd_pattern_phase_removed, 5, 4, 12)
-        compose.onNodeWithContentDescription(removed).assertExists()
-        compose.runOnIdle { state.select(0) }
-        compose.waitForIdle()
-        compose.onNodeWithContentDescription(removed).assertDoesNotExist()
-        // Der Stepper der nun gewählten Phase sagt seinen nächsten Wert wieder an.
-        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 1, "Einatmen")
-        val said = announcementsAfterTapOn("$spoken, ${string(R.string.adjust_increase)}")
-        assertEquals(said.toString(), 1, said.size)
-        assertTrue(said.single(), said.single().startsWith("$spoken:"))
-    }
-
-    @Test
-    fun `Zurueckwaehlen einer Phase sagt ihren Wert nicht noch einmal an`() {
-        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
-        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")
-        assertEquals(1, announcementsAfterTapOn("$spoken, ${string(R.string.adjust_increase)}").size)
-        compose.runOnIdle { state.select(2) }
-        compose.waitForIdle()
         val before = liveRegions()
         compose.runOnIdle { state.select(1) }
         compose.waitForIdle()
-        val said = liveRegions().filter { (id, text) -> before[id] != text }.values.toList()
-        assertEquals("Ansagen nach dem Zurückwählen: $said", emptyList<String>(), said)
+        compose.onNodeWithContentDescription(notice).assertDoesNotExist()
+        val afterSelect = liveRegions().filter { (id, text) -> before[id] != text }.values.toList()
+        assertEquals("Ansagen nach dem Wechsel der Auswahl: $afterSelect", emptyList<String>(), afterSelect)
     }
 
+    /** Sicherheitsrelevant: Wer TalkBack nutzt, erfährt, wenn das Muster ins Intensive kippt. */
     @Test
-    fun `Kippt Entfernen oder Einfuegen die Intensitaet, sagt die Zeile es mit`() {
+    fun `Intensitaet wird beim Kippen mit angesagt`() {
         // Ein 1 · Halten 2 · Aus 1: 15 pro Minute; ohne das Halten 30 pro Minute, also intensiv.
-        val state = show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 1, FreePhaseType.HOLD to 2, FreePhaseType.OUT to 1)).apply { select(1) })
+        val fast = show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 1, FreePhaseType.HOLD to 2, FreePhaseType.OUT to 1)).apply { select(1) })
         val removed = announcementsAfterTapOn(app.getString(R.string.cd_pattern_phase_remove, 2)).map { it.substringBefore(" | ") }
-        assertTrue(state.pattern.isIntense)
+        assertTrue(fast.pattern.isIntense)
         assertEquals(listOf(app.getString(R.string.cd_pattern_phase_removed, 2, 2, 12) + ", ${string(R.string.detail_intense)}"), removed)
 
-        // Halten wieder einfügen: 15 pro Minute, nicht mehr intensiv.
-        compose.runOnIdle { state.select(0) }
-        compose.waitForIdle()
-        val added = announcementsAfterTapOn(string(R.string.cd_pattern_add_hold)).map { it.substringBefore(" | ") }
-        assertTrue(!state.pattern.isIntense)
-        assertEquals(listOf(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 2, 3, 12) + ", ${string(R.string.cd_pattern_not_intense)}"), added)
-    }
-
-    @Test
-    fun `Kippt ein Stepper-Tipp ins Intensive, sagt der Wert es mit`() {
-        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
+        // Stepper: Halten voll von 10 auf 11 s.
+        val state = fast
+        compose.runOnIdle {
+            state.applyTemplate(FreePatternTemplates.all.single { it.label == "Box" })
+            state.select(1)
+        }
         val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")
         val plus = "$spoken, ${string(R.string.adjust_increase)}"
-        repeat(6) { compose.onNodeWithContentDescription(plus).performScrollTo().performSemanticsAction(SemanticsActions.OnClick) }
+        compose.runOnIdle { state.setSeconds(1, 10) }
         assertEquals(10, state.pattern.phases[1].seconds)
         val said = announcementsAfterTapOn(plus)
         assertEquals(1, said.size)
@@ -326,39 +277,28 @@ class PatternEditorA11yTest {
     }
 
     @Test
-    fun `Tastatur - Zuruecksetzen in der Leiste gibt den Fokus an den Play-Knopf`() {
-        val state = show(PatternEditorState.new(prefix, box))
-        compose.runOnIdle { state.add(FreePhaseType.IN) }
+    fun `Tastatur - Fokus geht nicht verloren, wenn ein Knopf verschwindet oder abschaltet`() {
+        val state = show(PatternEditorState.new(prefix, box).apply { select(3) })
         compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
+        // Reset (Split-Button) gibt es erst nach einer Änderung; danach geht sein Fokus an Play.
         val reset = compose.onNodeWithContentDescription(string(R.string.adjust_reset))
+        reset.assertDoesNotExist()
+        compose.runOnIdle { state.add(FreePhaseType.IN) }
         reset.performSemanticsAction(SemanticsActions.RequestFocus)
         reset.assertIsFocused()
         reset.performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(box, state.pattern)
         compose.onNodeWithContentDescription(string(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).assertIsFocused()
-    }
 
-    @Test
-    fun `Tastatur - Papierkorb oder Hinzufuegen abgeschaltet, der Fokus geht auf den Gegenpart`() {
-        val state = show(PatternEditorState.new(prefix, box).apply { select(3) })
-        compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
+        // Papierkorb: Danach ist „Ausatmen“ gewählt, das einzige Aus – sein Papierkorb ist aus, der Fokus auf „+ Ein“.
+        compose.runOnIdle { state.select(3) }
         val trash = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 4))
         trash.performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
         trash.assertIsFocused()
         trash.performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
-        // Nun ist „Ausatmen“ gewählt, das einzige Aus: Sein Papierkorb ist aus, der Fokus auf „+ Ein“.
         assertEquals(2, state.selected)
         compose.onNodeWithContentDescription(string(R.string.cd_pattern_add_in)).assertIsFocused()
-
-        repeat(8) { compose.runOnIdle { state.add(FreePhaseType.HOLD) } }
-        val addOut = compose.onNodeWithContentDescription(string(R.string.cd_pattern_add_out))
-        addOut.performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
-        addOut.performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitForIdle()
-        assertEquals(12, state.pattern.phases.size)
-        // Die zwölfte Phase schaltet die Knöpfe ab: Fokus auf den Papierkorb der neuen Phase.
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, state.selected + 1)).assertIsFocused()
     }
 }

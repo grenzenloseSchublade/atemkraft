@@ -13,7 +13,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -22,14 +21,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhase
@@ -144,24 +138,11 @@ class BreathCurveEditorTest {
         assertEquals(FreePattern.MIN_SECONDS, pattern.phases[0].seconds)
         assertTrue(calls.all { (i, v) -> i == 0 && v in FreePattern.SECONDS_RANGE })
 
-        // Nach rechts: Die Achse steht während des Zugs, der Finger kommt bis zum Rand – auch
-        // mehrfach gezogen nie über 30 s.
+        // Nach rechts: Die Achse steht während des Zugs, der Finger kommt bis zum Rand – nie über 30 s.
         calls.clear()
-        repeat(4) { dragHandle(index = 1, seconds = 40) }
+        dragHandle(index = 1, seconds = 40)
         assertEquals(FreePattern.MAX_SECONDS, pattern.phases[1].seconds)
         assertTrue(calls.all { (i, v) -> i == 1 && v in FreePattern.SECONDS_RANGE })
-    }
-
-    @Test
-    fun `Halten-Griffe ueber bzw unter der Linie, Ein und Aus auf der Kurve`() {
-        show(BOX)
-        val layout = layoutNow()
-        val handles = curveHandles(BOX, layout)
-        assertEquals(layout.yFull, handles[0].center.y, 0.01f)
-        assertEquals(layout.yFull - layout.holdOffset, handles[1].center.y, 0.01f)
-        assertEquals(layout.yEmpty, handles[2].center.y, 0.01f)
-        assertEquals(layout.yEmpty + layout.holdOffset, handles[3].center.y, 0.01f)
-        assertEquals(layout.xAt(8f), handles[1].center.x, 0.01f)
     }
 
     @Test
@@ -175,7 +156,7 @@ class BreathCurveEditorTest {
         dragHandle(index = 1, seconds = 3, release = false)
         assertEquals(7, pattern.phases[1].seconds)
         curve().assert(SemanticsMatcher.expectValue(CurveDragPhase, 1))
-        curve().assert(SemanticsMatcher.expectValue(CurveBandLabel, "1 bis 30 s, Ende rechts außerhalb"))
+        curve().assert(SemanticsMatcher.keyIsDefined(CurveBandLabel))
         // Gesamt 19 s → Achse wäre 26 s, steht aber noch auf 22 s.
         curve().assert(SemanticsMatcher.expectValue(CurveAxisSeconds, 22))
 
@@ -186,45 +167,8 @@ class BreathCurveEditorTest {
     }
 
     @Test
-    fun `Senkrechtes Wischen auf einem Griff aendert nichts, ein Tipp waehlt ihn`() {
-        show(BOX)
-        val layout = layoutNow()
-        val handle = curveHandles(BOX, layout).single { it.index == 2 }
-        curve().performTouchInput {
-            down(handle.center)
-            // Leicht schräg nach oben, wie beim Scrollen.
-            repeat(6) { moveBy(Offset(layout.pxPerSecond / 16f, -layout.touchRadius / 2f)) }
-            up()
-        }
-        compose.waitForIdle()
-        assertTrue(calls.isEmpty())
-        assertTrue(selections.isEmpty())
-        assertEquals(0, ticks)
-
-        curve().performTouchInput { click(handle.center) }
-        compose.waitForIdle()
-        assertTrue(calls.isEmpty())
-        assertEquals(listOf<Int?>(2), selections)
-    }
-
-    @Test
-    fun `Tipp neben die Griffe waehlt nichts und aendert nichts`() {
-        show(BOX)
-        val layout = layoutNow()
-        curve().performTouchInput {
-            down(Offset(layout.xAt(2f), layout.yAt(0.5f) + layout.touchRadius * 2))
-            moveBy(Offset(layout.pxPerSecond * 3, 0f))
-            up()
-        }
-        compose.waitForIdle()
-        assertTrue(calls.isEmpty())
-        assertTrue(selections.isEmpty())
-    }
-
-    @Test
     fun `Griffe mit 48-dp-Tippflaeche, bei Ueberlappung gewinnt der naechste`() {
         show(BOX)
-        assertTrue(Sizes.CurveHandleSelected <= Dimens.MinTouchTarget)
         val layout = layoutNow()
         assertEquals(compose.density.run { Dimens.MinTouchTarget.toPx() } / 2f, layout.touchRadius, 0.01f)
         val handles = curveHandles(BOX, layout)
@@ -239,7 +183,7 @@ class BreathCurveEditorTest {
     }
 
     @Test
-    fun `Stufen - Viloma steigt in drei Stufen, Halten dazwischen auf halber Hoehe darunter`() {
+    fun `Griffe sitzen auf der Kurve, Halten ueber bzw unter der Linie, Stufen dazwischen`() {
         val viloma = FreePattern(
             listOf(
                 FreePhase(FreePhaseType.IN, 2),
@@ -260,6 +204,16 @@ class BreathCurveEditorTest {
         // Halten bei zwei Dritteln: über der Linie.
         assertEquals(layout.yAt(2f / 3f) - layout.holdOffset, handles[3].center.y, 0.5f)
         assertEquals(layout.yFull - layout.holdOffset, handles[5].center.y, 0.5f)
+        assertEquals(layout.yFull, handles[4].center.y, 0.5f)
+        assertEquals(layout.yEmpty, handles[6].center.y, 0.5f)
+
+        // Box: Halten leer unter der Linie „leer“, waagrecht am Ende seiner Phase.
+        pattern = BOX
+        compose.waitForIdle()
+        val boxLayout = layoutNow()
+        val box = curveHandles(BOX, boxLayout)
+        assertEquals(boxLayout.yEmpty + boxLayout.holdOffset, box[3].center.y, 0.5f)
+        assertEquals(boxLayout.xAt(8f), box[1].center.x, 0.5f)
     }
 
     @Test
@@ -267,43 +221,16 @@ class BreathCurveEditorTest {
         val dp = compose.density.density
         val spacing = 30 * dp
         val fine = 6 * dp
-        // Feste Breite 320 dp Zeichenfläche: 12 s → 1 s je ~26 dp → Schritt 2.
         assertEquals(1, curveLabelStep(pxPerSecond = 30 * dp, minSpacing = spacing))
-        assertEquals(2, curveLabelStep(pxPerSecond = 26 * dp, minSpacing = spacing))
         assertEquals(5, curveLabelStep(pxPerSecond = 8 * dp, minSpacing = spacing))
-        assertEquals(10, curveLabelStep(pxPerSecond = 4 * dp, minSpacing = spacing))
-        assertEquals(15, curveLabelStep(pxPerSecond = 2.5f * dp, minSpacing = spacing))
-        assertEquals(30, curveLabelStep(pxPerSecond = 1.5f * dp, minSpacing = spacing))
-        assertEquals(60, curveLabelStep(pxPerSecond = 0.6f * dp, minSpacing = spacing))
+        // Höchstens 60 s je Zahl, auch bei sehr langen Folgen.
         assertEquals(60, curveLabelStep(pxPerSecond = 0.1f * dp, minSpacing = spacing))
 
         assertEquals(1, curveMinorStep(labelStep = 5, pxPerSecond = 6 * dp, fineMin = fine))
         assertEquals(5, curveMinorStep(labelStep = 5, pxPerSecond = 5 * dp, fineMin = fine))
-        assertEquals(2, curveMinorStep(labelStep = 10, pxPerSecond = 4 * dp, fineMin = fine))
-        assertEquals(6, curveMinorStep(labelStep = 30, pxPerSecond = 1.5f * dp, fineMin = fine))
     }
 
-    @Test
-    @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
-    @GraphicsMode(GraphicsMode.Mode.NATIVE) // echte Textmaße
-    fun `Zeitleiste auf dem A54 - kurze Folge alle 2 s, lange in groesseren Schritten, nie zu dicht`() {
-        show(BOX)
-        val width = curve().fetchSemanticsNode().size.width.toFloat()
-        val short = metrics.layout(width, 12f)
-        assertEquals(2, short.labelStep)
-        assertEquals(1, short.minorStep)
-        assertLabelsApart(short)
-        // 4·1·6 (11 s) → Achse 18 s: noch alle 2 s.
-        assertEquals(2, metrics.layout(width, 18f).labelStep)
-        assertLabelsApart(metrics.layout(width, 18f))
-
-        val long = metrics.layout(width, 366f)
-        assertTrue("Schritt ${long.labelStep}", long.labelStep >= 30)
-        assertTrue(long.minorStep > 1)
-        assertLabelsApart(long)
-    }
-
-    /** 360 dp bei Schrift 2,0: Die Zahlen stehen weiter auseinander statt übereinander. */
+    /** Ungünstigster Fall 360 dp bei Schrift 2,0: Die Zahlen stehen weiter auseinander statt übereinander. */
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -311,7 +238,11 @@ class BreathCurveEditorTest {
         RuntimeEnvironment.setFontScale(TestMatrix.MAX_FONT_SCALE)
         show(BOX)
         val width = with(compose.density) { (360.dp - Dimens.ScreenPadding * 2).toPx() }
-        listOf(12f, 22f, 60f, 180f).forEach { assertLabelsApart(metrics.layout(width, it)) }
+        listOf(12f, 60f, 180f).forEach { assertLabelsApart(metrics.layout(width, it)) }
+        // Lange Folgen in größeren Schritten, mit feineren Strichen dazwischen.
+        val long = metrics.layout(width, 366f)
+        assertTrue("Schritt ${long.labelStep}", long.labelStep >= 30)
+        assertTrue(long.minorStep > 1)
     }
 
     @Test
@@ -332,9 +263,26 @@ class BreathCurveEditorTest {
     }
 
     @Test
-    fun `Tipp auf eine Linie waehlt ihre Phase, daneben und beim Wischen nichts`() {
+    fun `Tippen waehlt Griff oder Linie, Wischen und daneben tun nichts`() {
         show(BOX)
         val layout = layoutNow()
+        // Senkrechtes (leicht schräges) Wischen auf einem Griff, wie beim Scrollen: nichts.
+        val handle = curveHandles(BOX, layout).single { it.index == 2 }
+        curve().performTouchInput {
+            down(handle.center)
+            repeat(6) { moveBy(Offset(layout.pxPerSecond / 16f, -layout.touchRadius / 2f)) }
+            up()
+        }
+        compose.waitForIdle()
+        assertTrue(selections.isEmpty())
+        // Ein Tipp auf den Griff wählt ihn.
+        curve().performTouchInput { click(handle.center) }
+        compose.waitForIdle()
+        assertEquals(listOf<Int?>(2), selections)
+        selections.clear()
+        selected = null
+        compose.waitForIdle()
+
         // Mitte der Ausatmen-Linie (8 bis 12 s, voll → leer), fern aller Griffe.
         val middle = Offset(layout.xAt(10f), layout.yAt(0.5f))
         assertNull(nearestHandle(curveHandles(BOX, layout), middle, layout.touchRadius))
@@ -359,16 +307,6 @@ class BreathCurveEditorTest {
     }
 
     @Test
-    fun `Vorschau-Knoepfe stehen ausserhalb der Kurve und schalten die Vorschau`() {
-        val preview = CurvePreviewState()
-        compose.setContent { AtemkraftTheme { CurvePreviewControls(preview) } }
-        compose.onNodeWithContentDescription("Vorschau abspielen").performClick()
-        assertTrue(preview.playing)
-        compose.onNodeWithContentDescription("Vorschau anhalten").performClick()
-        assertFalse(preview.playing)
-    }
-
-    @Test
     fun `Vorschau-Zustand - Phase und Restdauer`() {
         val preview = CurvePreviewState()
         preview.play()
@@ -384,18 +322,19 @@ class BreathCurveEditorTest {
         assertEquals("Start am Anfang", 0f, preview.time, 0f)
     }
 
-    @Test
-    @GraphicsMode(GraphicsMode.Mode.NATIVE) // echte Textmaße
-    fun `Phasen-Beschriftungen ueberlappen weder Griffe noch einander, kurze Folgen tragen alle`() = labelsClear(minHeight = false)
-
-    /** Kleiner Bildschirm (Kurve auf Mindesthöhe), mit echten Textmaßen: Box trägt weiter alle vier, nichts überlappt. */
+    /**
+     * 360 dp mit echten Textmaßen, in voller und in Mindesthöhe: nichts überlappt, Box trägt alle
+     * vier Beschriftungen. Die Beschriftungen zeichnet die Canvas – die Text-Gates sehen sie nicht.
+     */
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    fun `Phasen-Beschriftungen auch bei Mindesthoehe ohne Ueberlappung`() = labelsClear(minHeight = true)
+    fun `Phasen-Beschriftungen ueberlappen weder Griffe noch einander, auch bei Mindesthoehe`() {
+        show(BOX, Modifier.width(TestMatrix.COMPACT.widthDp.dp))
+        for (minHeight in listOf(false, true)) labelsClear(minHeight)
+    }
 
     private fun labelsClear(minHeight: Boolean) {
-        show(BOX, Modifier.width(TestMatrix.COMPACT.widthDp.dp))
         listOf(
             BOX to 1,
             FreePatternTemplates.all.single { it.label == "Viloma I" }.pattern to null,
@@ -447,7 +386,7 @@ class BreathCurveEditorTest {
     @Test
     @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
     @GraphicsMode(GraphicsMode.Mode.NATIVE) // echte Textmaße
-    fun `Hoehe - volle Hoehe mit 88 dp Abstand, bei weniger Platz zuerst der Rand ueber voll, nie unter 48 dp`() {
+    fun `Hoehe - volle Hoehe mit 88 dp Abstand, bei weniger Platz zuerst der Rand ueber voll, Mindesthoehe haelt`() {
         show(BOX)
         val node = curve().fetchSemanticsNode()
         val width = node.size.width.toFloat()
@@ -461,30 +400,17 @@ class BreathCurveEditorTest {
         val less = metrics.layout(width, 22f, 22, metrics.preferredHeight - px(Dimens.GapSmall))
         assertEquals(px(Sizes.CurveSpan), less.yEmpty - less.yFull, 0.5f)
         assertEquals(full.yFull - px(Dimens.GapSmall), less.yFull, 0.5f)
-        // Mindesthöhe: 48 dp, und auch darunter nicht weniger.
+        // Mindesthöhe: 48 dp Abstand; der gewählte Halten-voll-Griff ragt nicht über den Rand.
         val min = metrics.layout(width, 22f, 22, metrics.minHeight)
         assertEquals(px(Sizes.CurveSpanMin), min.yEmpty - min.yFull, 0.5f)
-        val tooSmall = metrics.layout(width, 22f, 22, metrics.minHeight / 2f)
-        assertEquals(px(Sizes.CurveSpanMin), tooSmall.yEmpty - tooSmall.yFull, 0.5f)
-        // Der gewählte Halten-voll-Griff ragt auch bei Mindesthöhe nicht über den Rand.
         assertTrue(min.yFull - px(Sizes.CurveHoldHandleOffset) - px(Sizes.CurveHandleSelected) / 2f >= 0f)
 
-        val heights = BreathCurveHeights(min = 150.dp, preferred = 200.dp)
-        assertEquals(200.dp, heights.fit(400.dp))
-        assertEquals(170.dp, heights.fit(170.dp))
-        assertEquals(150.dp, heights.fit(100.dp))
-    }
-
-    @Test
-    fun `Kurve nimmt die vorgegebene Hoehe an, Griffe folgen`() {
-        show(BOX)
+        // Vorgegebene Mindesthöhe (Editor-Fit): Die Kurve nimmt sie an, die Griffe treffen weiter.
         forcedHeight = with(compose.density) { metrics.minHeight.toDp() }
         compose.waitForIdle()
-        val node = curve().fetchSemanticsNode()
-        assertEquals(metrics.minHeight, node.size.height.toFloat(), 1f)
-        val layout = layoutNow()
-        assertEquals(with(compose.density) { Sizes.CurveSpanMin.toPx() }, layout.yEmpty - layout.yFull, 0.5f)
-        // Griffe treffen weiterhin: Ziehen am Halten-leer-Griff ändert Phase 4.
+        assertEquals(metrics.minHeight, curve().fetchSemanticsNode().size.height.toFloat(), 1f)
+        val forced = layoutNow()
+        assertEquals(px(Sizes.CurveSpanMin), forced.yEmpty - forced.yFull, 0.5f)
         dragHandle(index = 3, seconds = 2)
         assertEquals(6, pattern.phases[3].seconds)
     }

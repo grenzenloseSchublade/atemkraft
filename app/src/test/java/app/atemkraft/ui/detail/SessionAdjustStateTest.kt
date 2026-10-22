@@ -32,7 +32,7 @@ class SessionAdjustStateTest {
     }
 
     @Test
-    fun `zurück auf die Vorgabe gilt wieder als unangepasst`() {
+    fun `nur echte Abweichungen zaehlen - fuer angepasst, Overrides und Start`() {
         val state = SessionAdjustState(box)
         assertFalse(state.modified)
         assertNull(state.overrides)
@@ -40,25 +40,20 @@ class SessionAdjustStateTest {
         state.inhale = 5
         assertTrue(state.intervalsModified)
         assertEquals(IntervalOverrides(duration = 8, inhale = 5, hold = 4, exhale = 4), state.overrides)
-
         state.inhale = 4
         assertFalse(state.modified)
         assertNull(state.overrides)
-    }
 
-    @Test
-    fun `Start nimmt Phasenlängen nur mit, wenn sie abweichen`() {
-        val state = SessionAdjustState(box)
+        // Start nimmt Phasenlängen nur mit, wenn sie abweichen.
         state.duration = 3
         assertEquals(SessionConfig(rounds = 3), state.config())
-
         state.exhale = 6
         assertEquals(SessionConfig(rounds = 3, inhaleSeconds = 4.0, exhaleSeconds = 6.0, holdSeconds = 4.0), state.config())
-
         state.reset()
         assertEquals(SessionConfig(rounds = 8), state.config())
     }
 
+    /** Persistierte Werte: einmal übernommen, geklemmt, die Wahl des Nutzers geht vor, fehlende Phase ohne Wirkung. */
     @Test
     fun `gespeicherte Werte werden einmal übernommen und auf die Grenzen geklemmt`() {
         val state = SessionAdjustState(box)
@@ -73,20 +68,16 @@ class SessionAdjustStateTest {
         state.applyStored(IntervalOverrides(duration = 2, exhale = 3))
         assertEquals(7, state.exhale)
         assertEquals(AdjustLimits.ROUNDS.last, state.duration)
-    }
 
-    @Test
-    fun `hat der Nutzer schon verstellt, bleibt seine Wahl vor der gespeicherten`() {
-        val state = SessionAdjustState(box)
-        state.duration = 5
-        state.applyStored(IntervalOverrides(duration = 2, inhale = 6))
-        assertEquals(5, state.duration)
-        assertEquals(4, state.inhale)
-        assertTrue(state.storedApplied)
-    }
+        // Hat der Nutzer vorher verstellt, bleibt seine Wahl.
+        val chosen = SessionAdjustState(box)
+        chosen.duration = 5
+        chosen.applyStored(IntervalOverrides(duration = 2, inhale = 6))
+        assertEquals(5, chosen.duration)
+        assertEquals(4, chosen.inhale)
+        assertTrue(chosen.storedApplied)
 
-    @Test
-    fun `gespeicherte Phase, die die Übung nicht hat, bleibt ohne Wirkung`() {
+        // Eine gespeicherte Phase, die die Übung nicht hat, bleibt ohne Wirkung.
         val resonance = SessionAdjustState(AdjustDefaults.of(exercise("resonanz")))
         resonance.applyStored(IntervalOverrides(hold = 10))
         assertNull(resonance.hold)

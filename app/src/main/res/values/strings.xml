@@ -304,7 +304,7 @@
         <item quantity="one">%d Sitzung</item>
         <item quantity="other">%d Sitzungen</item>
     </plurals>
-    <string name="log_minutes_total">%1$d min gesamt</string>
+    <string name="log_minutes_total">%1$d\u00A0min gesamt</string>
     <plurals name="log_rounds">
         <item quantity="one">%d Runde</item>
         <item quantity="other">%d Runden</item>
@@ -467,12 +467,12 @@
     <string name="meditation_gong_label">Gong</string>
     <string name="meditation_sound_voice_label">Klang &amp; Stimme</string>
     <string name="meditation_gong_startstop">Start &amp; Ende</string>
-    <string name="meditation_interval_minutes">alle %1$d min</string>
+    <string name="meditation_interval_minutes">alle %1$d\u00A0min</string>
     <string name="meditation_off">Aus</string>
     <string name="meditation_speech_label">Sprachanleitung</string>
     <string name="meditation_speech_hint">Spricht in unregelmäßigen Abständen kurze Hinweise.</string>
     <string name="meditation_speech_unavailable">Keine deutsche Sprachausgabe auf dem Gerät verfügbar.</string>
-    <string name="meditation_minutes">%1$d min</string>
+    <string name="meditation_minutes">%1$d\u00A0min</string>
     <string name="meditation_free_symbol">∞</string>
     <!-- Zusammenfassung unter dem zugeklappten Kopf „Klang & Stimme“: Gong-Wahl · Stimme. -->
     <string name="meditation_sound_summary">Gong %1$s\u00A0· %2$s</string>

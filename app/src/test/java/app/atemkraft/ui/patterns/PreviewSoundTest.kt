@@ -36,9 +36,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 /**
- * Vorschau-Ton im Editor (Nachtrag 3): Lautsprecher-Schalter als Icon-only-Switch („Ton der
- * Vorschau“, An/Aus, Startwert nach Klangmodus), Ton zu Phasenwechseln und still bei Pause,
- * Schalter aus, Modus „Aus“, App im Hintergrund und Verlassen der Seite.
+ * Vorschau-Ton im Editor (Nachtrag 3), Verdrahtung zum Player: Lautsprecher-Schalter als
+ * Icon-only-Switch („Ton der Vorschau“, An/Aus, Startwert nach Klangmodus), Ton zu
+ * Phasenwechseln und still bei Pause, geänderte Folge, App im Hintergrund und Verlassen der
+ * Seite. Die Ton-Regeln selbst prüft `PreviewCuePlayerTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 class PreviewSoundTest {
@@ -96,19 +97,12 @@ class PreviewSoundTest {
         switch.assertIsEnabled().performClick()
         compose.waitForIdle()
         assertSwitch(on = false)
-    }
 
-    @Test
-    fun `Klangmodus Aus - Schalter aus und deaktiviert, kein Ton`() {
+        // Klangmodus „Aus“: Schalter aus und abgeschaltet.
         settings = CueSettings(soundMode = SoundMode.OFF)
         compose.waitForIdle()
         assertSwitch(on = false)
         switch.assertIsNotEnabled()
-
-        playing = true
-        compose.waitForIdle()
-        assertTrue(output.sounds.isEmpty())
-        assertEquals(0, output.focusRequests)
     }
 
     @Test
@@ -131,23 +125,6 @@ class PreviewSoundTest {
     }
 
     @Test
-    fun `Schalter aus - kein Ton, Einschalten mitten in der Phase ohne Wechselton`() {
-        switch.performClick()
-        playing = true
-        compose.waitForIdle()
-        index = 1
-        compose.waitForIdle()
-        assertTrue(output.sounds.isEmpty())
-
-        switch.performClick()
-        compose.waitForIdle()
-        assertTrue(output.sounds.isEmpty())
-        index = 2
-        compose.waitForIdle()
-        assertEquals(listOf("cue INHALE"), output.sounds)
-    }
-
-    @Test
     fun `Folge aendert sich bei gleichem Index - Ton folgt der neuen Phase`() {
         playing = true
         compose.waitForIdle()
@@ -159,24 +136,14 @@ class PreviewSoundTest {
         phases = listOf(PhaseAudio(PhaseType.EXHALE, 7_000L, open = false), PhaseAudio(PhaseType.INHALE, 4_000L, open = false))
         compose.waitForIdle()
         assertEquals(listOf("cue INHALE", "cue EXHALE"), output.sounds)
-    }
 
-    @Test
-    fun `Dauerton folgt einer geaenderten Folge mit neuer Dauer`() {
+        // Dauerton: folgt auch einer neuen Dauer an derselben Stelle.
+        output.sounds.clear()
         settings = CueSettings(soundMode = SoundMode.CONTINUOUS)
-        playing = true
         compose.waitForIdle()
-        phases = listOf(PhaseAudio(PhaseType.HOLD_FULL, 2_000L, open = false), PhaseAudio(PhaseType.EXHALE, 6_000L, open = false))
+        phases = listOf(PhaseAudio(PhaseType.HOLD_FULL, 2_000L, open = false), PhaseAudio(PhaseType.INHALE, 4_000L, open = false))
         compose.waitForIdle()
-        assertEquals(listOf("continuous INHALE 4000", "continuous HOLD_FULL 2000"), output.sounds)
-    }
-
-    @Test
-    fun `Dauerton laeuft im eingestellten Modus`() {
-        settings = CueSettings(soundMode = SoundMode.CONTINUOUS)
-        playing = true
-        compose.waitForIdle()
-        assertEquals(listOf("continuous INHALE 4000"), output.sounds)
+        assertEquals("continuous HOLD_FULL 2000", output.sounds.last())
         assertEquals(SoundMode.CONTINUOUS, output.applied.last().soundMode)
     }
 

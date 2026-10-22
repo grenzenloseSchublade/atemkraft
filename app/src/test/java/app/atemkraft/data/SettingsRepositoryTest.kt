@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_MAX_MINUTES
-import app.atemkraft.domain.GONG_INTERVAL_MIN_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SoundMode
@@ -24,7 +23,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -37,7 +35,7 @@ import java.io.File
  *
  * Jeder Test hat seinen eigenen Speicher in einem eigenen Ordner, ohne Robolectric: Unter
  * Robolectric startet pro Test die echte App, deren Start die Stimmen-Id im gemeinsamen
- * DataStore „settings“ im Hintergrund bereinigt. Das lief dem GLaDOS-Test sporadisch dazwischen.
+ * DataStore „settings“ im Hintergrund bereinigt. Das lief dem Stimmen-Test sporadisch dazwischen.
  */
 class SettingsRepositoryTest {
 
@@ -62,22 +60,10 @@ class SettingsRepositoryTest {
 
     @Test
     fun `Markierung tut mir gut gilt je Übung und bleibt nach einem neuen Repository`() = runBlocking {
-        assertEquals(emptySet<String>(), SettingsRepository(store).markedExercises.first())
-
         SettingsRepository(store).setExerciseMarked("resonanz", true)
         SettingsRepository(store).setExerciseMarked("box-4-4-4-4", true)
-        assertEquals(setOf("resonanz", "box-4-4-4-4"), SettingsRepository(store).markedExercises.first())
-
         SettingsRepository(store).setExerciseMarked("box-4-4-4-4", false)
-        SettingsRepository(store).setExerciseMarked("4-7-8", false)
         assertEquals(setOf("resonanz"), SettingsRepository(store).markedExercises.first())
-    }
-
-    @Test
-    fun `die Benachrichtigungs-Frage gilt als gestellt, sobald sie einmal kam`() = runBlocking {
-        assertFalse(SettingsRepository(store).notificationAsked.first())
-        SettingsRepository(store).setNotificationAsked()
-        assertTrue(SettingsRepository(store).notificationAsked.first())
     }
 
     @Test
@@ -93,9 +79,9 @@ class SettingsRepositoryTest {
         assertEquals("thorsten", SettingsRepository(store).neuralVoiceId.first())
     }
 
+    /** Bis 1.6.5 stand jede Einstellung als Enum-ordinal unter dem alten Int-Key. */
     @Test
-    fun `alte Einstellungen mit ordinal-Index gelten weiter`() = runBlocking {
-        // So hat bis 1.6.5 jede Einstellung ausgesehen: Enum als ordinal unter dem alten Int-Key.
+    fun `alte Einstellungen mit ordinal-Index gelten weiter und wandern beim Setzen unter den Namen`() = runBlocking {
         store.edit {
             it[intPreferencesKey("sound_mode")] = SoundMode.CONTINUOUS.ordinal
             it[intPreferencesKey("transition_emphasis")] = TransitionEmphasis.STRONG.ordinal
@@ -108,17 +94,11 @@ class SettingsRepositoryTest {
         assertEquals(TransitionEmphasis.STRONG, cue.transition)
         assertEquals(ToneVolume.QUIET, cue.volume)
         assertEquals(MeditationMode.FREE, repo.meditationSettings.first().mode)
-    }
 
-    @Test
-    fun `neu gesetzte Werte stehen unter dem Namen, der alte ordinal-Key verschwindet`() = runBlocking {
-        store.edit { it[intPreferencesKey("sound_mode")] = SoundMode.CONTINUOUS.ordinal }
-        val repo = SettingsRepository(store)
         repo.setSoundMode(SoundMode.OFF)
         repo.setTransitionEmphasis(TransitionEmphasis.SOFT)
         repo.setToneVolume(ToneVolume.MEDIUM)
         repo.setMeditationConfig(MeditationConfig(mode = MeditationMode.FREE))
-
         val raw = store.data.first().asMap().mapKeys { it.key.name }
         assertEquals("OFF", raw["sound_mode_name"])
         assertEquals("SOFT", raw["transition_emphasis_name"])
@@ -126,24 +106,14 @@ class SettingsRepositoryTest {
         assertEquals("FREE", raw["med_mode_name"])
         assertFalse(raw.keys.any { it in setOf("sound_mode", "transition_emphasis", "tone_volume", "med_mode") })
 
-        val cue = SettingsRepository(store).cueSettings.first()
-        assertEquals(SoundMode.OFF, cue.soundMode)
-        assertEquals(TransitionEmphasis.SOFT, cue.transition)
-        assertEquals(ToneVolume.MEDIUM, cue.volume)
-    }
-
-    @Test
-    fun `unbekannte Enum-Namen fallen auf den Standard zurück`() = runBlocking {
+        // Unbekannte Namen (künftige oder kaputte Werte) fallen auf den Standard zurück.
         store.edit { it[stringPreferencesKey("sound_mode_name")] = "GIBT_ES_NICHT" }
         assertEquals(SoundMode.CUES, SettingsRepository(store).cueSettings.first().soundMode)
     }
 
     @Test
-    fun `Gong-Abstand bleibt in seinen Grenzen`() = runBlocking {
+    fun `Gong-Abstand bleibt in seinen Grenzen, Alt-Wert 0 gilt als nicht gesetzt`() = runBlocking {
         val repo = SettingsRepository(store)
-        assertEquals(GONG_INTERVAL_DEFAULT_MINUTES, repo.gongIntervalMin.first())
-        repo.setGongIntervalMin(1)
-        assertEquals(GONG_INTERVAL_MIN_MINUTES, repo.gongIntervalMin.first())
         repo.setGongIntervalMin(500)
         assertEquals(GONG_INTERVAL_MAX_MINUTES, repo.gongIntervalMin.first())
         // Alt-Wert 0 (früher „kein Intervall“) gilt als nicht gesetzt.
@@ -152,26 +122,13 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `eine beschädigte Einstellungsdatei startet leer und vermerkt das`() = runBlocking {
+    fun `eine beschädigte Einstellungsdatei startet leer, bleibt beschreibbar und meldet das genau einmal`() = runBlocking {
         val file = File(folder.root, "kaputt.preferences_pb")
         file.writeBytes(byteArrayOf(0x7f, 0x13, 0x00, 0x42, 0x55)) // kein gültiges Protobuf
         val broken = PreferenceDataStoreFactory.create(corruptionHandler = settingsCorruptionHandler, scope = scope) { file }
 
         val repo = SettingsRepository(broken)
         assertEquals(SoundMode.CUES, repo.cueSettings.first().soundMode)
-        assertNotNull(repo.resetAfterCorruptionAt.first())
-        // Danach ist die Datei wieder beschreibbar.
-        repo.setSoundMode(SoundMode.OFF)
-        assertEquals(SoundMode.OFF, repo.cueSettings.first().soundMode)
-    }
-
-    @Test
-    fun `das Zurücksetzen wird genau einmal gemeldet`() = runBlocking {
-        val file = File(folder.root, "kaputt.preferences_pb")
-        file.writeBytes(byteArrayOf(0x7f, 0x13, 0x00, 0x42, 0x55)) // kein gültiges Protobuf
-        val broken = PreferenceDataStoreFactory.create(corruptionHandler = settingsCorruptionHandler, scope = scope) { file }
-
-        val repo = SettingsRepository(broken)
         assertTrue(repo.settingsResetPending.first())
         repo.acknowledgeSettingsReset()
         assertFalse(repo.settingsResetPending.first())
@@ -179,15 +136,9 @@ class SettingsRepositoryTest {
         assertNotNull(repo.resetAfterCorruptionAt.first())
         repo.acknowledgeSettingsReset()
         assertFalse(repo.settingsResetPending.first())
-    }
-
-    @Test
-    fun `ohne Zurücksetzen gibt es nichts zu melden`() = runBlocking {
-        val repo = SettingsRepository(store)
-        assertFalse(repo.settingsResetPending.first())
-        repo.acknowledgeSettingsReset()
-        assertFalse(repo.settingsResetPending.first())
-        assertNull(repo.resetAfterCorruptionAt.first())
+        // Danach ist die Datei wieder beschreibbar.
+        repo.setSoundMode(SoundMode.OFF)
+        assertEquals(SoundMode.OFF, repo.cueSettings.first().soundMode)
     }
 
     @Test

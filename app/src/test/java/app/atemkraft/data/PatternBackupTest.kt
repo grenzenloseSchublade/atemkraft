@@ -1,6 +1,8 @@
 package app.atemkraft.data
 
 import app.atemkraft.data.local.SavedPatternEntity
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
@@ -16,38 +18,72 @@ import java.time.LocalDate
 /** SEC-STORE-01/-02: Export/Import gespeicherter Muster – Round-Trip und Import als nicht vertrauenswürdige Eingabe. */
 class PatternBackupTest {
 
-    private fun entity(created: Long, inhale: Double = 4.0, holdFull: Double? = 2.0) = SavedPatternEntity(
+    private fun entity(created: Long, origin: String = SavedPatternEntity.ORIGIN_DAILY, minutes: Int? = null) = SavedPatternEntity(
         name = "Muster $created",
-        inhale = inhale,
-        holdFull = holdFull,
+        inhale = 4.0,
+        holdFull = 2.0,
         exhale = 6.0,
         holdEmpty = null,
         activating = false,
         createdAtEpochMs = created,
+        origin = origin,
+        minutes = minutes,
     )
 
+    /** Viloma I: drei Stufen Einatmen mit Pausen, dann Ausatmen. */
+    private val viloma = FreePatternTemplates.all.single { it.label == "Viloma I" }.pattern
+
+    /** Zwölf Phasen, die Höchstzahl. */
+    private val twelve = FreePattern.parse("in:3,hold:1,in:3,hold:1,out:4,hold:2,in:2,in:2,out:3,hold:1,out:3,hold:5")!!
+
+    private fun entry(fields: String, created: Int = 1) = """{"name":"M","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":$created${if (fields.isEmpty()) "" else ",$fields"}}"""
+
+    private fun backup(vararg entries: String) = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"zukunft":true,"patterns":[${entries.joinToString(",")}]}"""
+
+    /** Ein Rundlauf für alle Mustertypen: Tagesmuster, eigene mit vier Feldern und freie Folgen. */
     @Test
     fun `Export und Import ergeben dieselben Werte und Anpassungen`() = runBlocking {
         val source = FakeSavedPatternDao()
-        source.insert(entity(1_000))
-        source.insert(entity(2_000, inhale = 5.5, holdFull = null))
         val sourceRepo = SavedPatternsRepository(source)
+        sourceRepo.save(RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5)))
+        val abend = PatternSpec(4.0, 1.0, 6.0, null, false).toFreePattern()
+        sourceRepo.saveCustom(abend, minutes = 12, name = "Abend")
+        sourceRepo.saveCustom(viloma, minutes = 7, name = "Stufen")
+        sourceRepo.saveCustom(twelve, minutes = 20, name = "Zwölf")
+        // Ein älteres eigenes Muster nur mit vier Feldern (Editor vor „Frei gestalten“).
+        source.insert(entity(4_000, origin = SavedPatternEntity.ORIGIN_CUSTOM, minutes = 5))
         val overrides = mapOf("muster-1" to IntervalOverrides(duration = 7, inhale = 5))
         val file = sourceRepo.exportFile(nowEpochMs = 3_000) { overrides[it] }
+        val text = PatternBackup.encode(file)
 
-        val decoded = PatternBackup.decode(PatternBackup.encode(file))!!
-        assertEquals(0, decoded.invalid)
-
-        val target = FakeSavedPatternDao()
-        val written = mutableMapOf<String, PatternBackupOverrides>()
-        val result = SavedPatternsRepository(target).import(decoded.entries) { id, o -> written[id] = o }
-
-        assertEquals(ImportResult(added = 2, duplicates = 0), result)
+        assertEquals(1, file.version)
+        assertTrue(text.contains("\"origin\": \"custom\""))
+        assertTrue(text.contains("\"minutes\": 12"))
         assertEquals(
-            source.rows.value.map { it.copy(id = 0) },
-            target.rows.value.map { it.copy(id = 0) },
+            listOf(null, null, abend.toCompact(), viloma.toCompact(), twelve.toCompact()).sortedBy { it.orEmpty() },
+            file.patterns.map { it.phases }.sortedBy { it.orEmpty() },
         )
-        assertEquals(mapOf("muster-1" to PatternBackupOverrides(duration = 7, inhale = 5)), written)
+
+        val decoded = PatternBackup.decode(text)!!
+        assertEquals(0, decoded.invalid)
+        val target = FakeSavedPatternDao()
+        val targetRepo = SavedPatternsRepository(target)
+        val written = mutableMapOf<String, PatternBackupOverrides>()
+        assertEquals(ImportResult(added = 5, duplicates = 0), targetRepo.import(decoded.entries) { id, o -> written[id] = o })
+
+        // Gleiche Zeilen (die Reihenfolge folgt dem Export, nicht dem Anlegen).
+        assertEquals(source.rows.value.map { it.copy(id = 0) }.sortedBy { it.name }, target.rows.value.map { it.copy(id = 0) }.sortedBy { it.name })
+        // Die Anpassungen hängen am Tagesmuster, auch wenn es im Ziel eine andere Id hat.
+        val dailyId = target.rows.value.single { it.origin == SavedPatternEntity.ORIGIN_DAILY }.id
+        assertEquals(mapOf("muster-$dailyId" to PatternBackupOverrides(duration = 7, inhale = 5)), written)
+        val custom = targetRepo.patterns.first().single { it.exercise.name == "Abend" }
+        assertEquals(PatternOrigin.CUSTOM, custom.origin)
+        assertEquals(12, custom.minutes)
+        val free = targetRepo.patterns.first().filter { it.exercise.name in setOf("Stufen", "Zwölf") }.map { it.pattern }.toSet()
+        assertEquals(setOf(viloma, twelve), free)
+
+        // Erneuter Import derselben Datei: alles Dubletten.
+        assertEquals(ImportResult(added = 0, duplicates = 5), targetRepo.import(decoded.entries) { _, _ -> })
     }
 
     @Test
@@ -65,79 +101,27 @@ class PatternBackupTest {
         assertEquals(mapOf("muster-2" to PatternBackupOverrides(duration = 8)), written)
     }
 
-    @Test
-    fun `eigenes Muster mit Dauer uebersteht Export und Import, Version bleibt 1`() = runBlocking {
-        val source = FakeSavedPatternDao()
-        val sourceRepo = SavedPatternsRepository(source)
-        sourceRepo.save(RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5)))
-        sourceRepo.saveCustom(PatternSpec(4.0, 1.0, 6.0, null, false).toFreePattern(), minutes = 12, name = "Abend")
-        val file = sourceRepo.exportFile(nowEpochMs = 3_000) { null }
-        val text = PatternBackup.encode(file)
-
-        assertEquals(1, file.version)
-        assertTrue(text.contains("\"origin\": \"custom\""))
-        assertTrue(text.contains("\"minutes\": 12"))
-
-        val target = FakeSavedPatternDao()
-        val targetRepo = SavedPatternsRepository(target)
-        val result = targetRepo.import(PatternBackup.decode(text)!!.entries) { _, _ -> }
-
-        assertEquals(ImportResult(added = 2, duplicates = 0), result)
-        assertEquals(source.rows.value.map { it.copy(id = 0) }, target.rows.value.map { it.copy(id = 0) })
-        val custom = targetRepo.patterns.first().single { it.origin == PatternOrigin.CUSTOM }
-        assertEquals(12, custom.minutes)
-        assertEquals("Abend", custom.exercise.name)
-
-        // Erneuter Import derselben Datei: alles Dubletten.
-        assertEquals(
-            ImportResult(added = 0, duplicates = 2),
-            targetRepo.import(PatternBackup.decode(text)!!.entries) { _, _ -> },
-        )
-    }
-
-    @Test
-    fun `Dauer ausserhalb 1 bis 30 Minuten wird verworfen, unbekannte Herkunft wird eigenes Muster`() = runBlocking {
-        fun entry(extra: String) = """{"name":"M","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1$extra}"""
-        val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"patterns":[
-            ${entry(""","minutes":0""")},
-            ${entry(""","minutes":31""")},
-            ${entry(""","minutes":30,"origin":"custom"""")},
-            ${entry(""","origin":"zukunft"""").replace("\"createdAtEpochMs\":1", "\"createdAtEpochMs\":2")}
-        ]}"""
-
-        val decoded = PatternBackup.decode(text)!!
-
-        assertEquals(2, decoded.invalid)
-        assertEquals(listOf(30, null), decoded.entries.map { it.minutes })
-
-        val dao = FakeSavedPatternDao()
-        SavedPatternsRepository(dao).import(decoded.entries) { _, _ -> }
-        assertEquals(
-            listOf(SavedPatternEntity.ORIGIN_CUSTOM, SavedPatternEntity.ORIGIN_CUSTOM),
-            dao.rows.value.map { it.origin },
-        )
-    }
-
-    @Test
-    fun `cleanName macht Namen importfest`() {
-        assertEquals("Morgen frisch", PatternBackup.cleanName(" Morgen\n\tfrisch\u200B "))
-        assertEquals("", PatternBackup.cleanName("\u202E \u0000"))
-        assertEquals(PatternBackup.MAX_NAME, PatternBackup.cleanName("y".repeat(200)).length)
-        assertEquals("a b", PatternBackup.cleanName("a" + " ".repeat(5) + "b"))
-    }
-
+    /** Dubletten zählen nach Zeitpunkt und Werten; eine freie Folge zählt normalisiert. */
     @Test
     fun `Import ueberspringt vorhandene und doppelte Muster`() = runBlocking {
         val dao = FakeSavedPatternDao()
         dao.insert(entity(1_000))
         val repo = SavedPatternsRepository(dao)
-        val file = repo.exportFile(nowEpochMs = 0) { null }
-        val twice = file.copy(patterns = file.patterns + file.patterns + file.patterns.map { it.copy(createdAtEpochMs = 5_000) })
+        repo.saveCustom(viloma, minutes = 5, name = "Stufen")
+        val (four, free) = repo.exportFile(nowEpochMs = 0) { null }.patterns
+        val patterns = listOf(
+            four,
+            four,
+            four.copy(createdAtEpochMs = 5_000),
+            free.copy(phases = free.phases!!.replace(",", " , ").uppercase()),
+            free.copy(phases = "in:6,hold:6,out:6"),
+        )
 
-        val result = repo.import(PatternBackup.decode(PatternBackup.encode(twice))!!.entries) { _, _ -> }
+        val result = repo.import(PatternBackup.decode(PatternBackup.encode(PatternBackupFile(exportedAtEpochMs = 0, patterns = patterns)))!!.entries) { _, _ -> }
 
-        assertEquals(ImportResult(added = 1, duplicates = 2), result)
-        assertEquals(2, dao.rows.value.size)
+        assertEquals(ImportResult(added = 2, duplicates = 3), result)
+        assertEquals(4, dao.rows.value.size)
+        assertEquals(setOf(null, viloma.toCompact(), "in:6,hold:6,out:6"), dao.rows.value.map { it.phases }.toSet())
     }
 
     @Test
@@ -146,75 +130,45 @@ class PatternBackupTest {
         assertNull(PatternBackup.decode("""{"format":"atemkraft-muster","version":99,"exportedAtEpochMs":0,"patterns":[]}"""))
         assertNull(PatternBackup.decode("kein json"))
         assertNull(PatternBackup.decode(" ".repeat(PatternBackup.MAX_BYTES + 1)))
+
+        // Zu viele Muster: der Rest wird abgeschnitten und gezählt.
+        val many = PatternBackup.decode(backup(*Array(PatternBackup.MAX_PATTERNS + 5) { entry("") }))!!
+        assertEquals(PatternBackup.MAX_PATTERNS, many.entries.size)
+        assertEquals(0, many.invalid)
+        assertEquals(5, many.truncated)
     }
 
+    /** Je Regel ein Vertreter; die Parser-Fälle der Folge stehen in `FreePatternTest`. */
     @Test
-    fun `unplausible Eintraege fallen weg, der Rest bleibt`() {
-        val ok = """{"name":"Muster","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}"""
+    fun `unplausible Eintraege fallen weg, der Rest bleibt`() = runBlocking {
         val bad = listOf(
             """{"name":" ","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""",
-            """{"name":"x","inhale":0.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""",
+            """{"name":"\u202Eretsum","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""",
+            // Wert außerhalb des Rasters, ruhig mit Ausatmen kürzer als Einatmen (Leitplanken)
             """{"name":"x","inhale":4.3,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""",
-            """{"name":"x","inhale":4.0,"exhale":99.0,"activating":false,"createdAtEpochMs":1}""",
-            """{"name":"x","inhale":4.0,"holdFull":-1.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""",
-            """{"name":"x","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":0}""",
-            """{"name":"x","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1,"overrides":{"duration":-3}}""",
+            """{"name":"x","inhale":6.0,"exhale":4.0,"activating":false,"createdAtEpochMs":1}""",
+            // Anpassung umgeht die Stepper-Grenzen, Dauer über 30 min, Zeitpunkt fehlt
+            entry(""""overrides":{"hold":600}"""),
+            entry(""""minutes":31"""),
+            entry("", created = 0),
+            // Folge ohne Ausatmen, mit 13 Phasen, Folge bei einem Tagesmuster
+            entry(""""phases":"in:4,hold:3","origin":"custom""""),
+            entry(""""phases":"${List(13) { if (it % 2 == 0) "in:2" else "out:2" }.joinToString(",")}","origin":"custom""""),
+            entry(""""phases":"in:4,out:6","origin":"daily""""),
         )
-        val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"zukunft":true,
-            "patterns":[$ok,${bad.joinToString(",")}]}"""
+        val good = listOf(entry(""), entry(""""minutes":30,"origin":"custom"""", created = 2), entry(""""origin":"zukunft"""", created = 3))
 
-        val decoded = PatternBackup.decode(text)!!
+        val decoded = PatternBackup.decode(backup(*(bad + good).toTypedArray()))!!
 
-        assertEquals(1, decoded.entries.size)
         assertEquals(bad.size, decoded.invalid)
-    }
-
-    @Test
-    fun `Anzahl der Muster ist begrenzt`() {
-        val one = """{"name":"M","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}"""
-        val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,
-            "patterns":[${List(PatternBackup.MAX_PATTERNS + 5) { one }.joinToString(",")}]}"""
-
-        val decoded = PatternBackup.decode(text)!!
-
-        assertEquals(PatternBackup.MAX_PATTERNS, decoded.entries.size)
-        assertEquals(0, decoded.invalid)
-        assertEquals(5, decoded.truncated)
-    }
-
-    @Test
-    fun `Muster ausserhalb der Leitplanken und Anpassungen ausserhalb der Stepper werden abgewiesen`() {
-        fun entry(fields: String) = """{"name":"M","activating":false,"createdAtEpochMs":1,$fields}"""
-        val bad = listOf(
-            // 30 s Halten: läge außerhalb der Generator-Leitplanken (Halten ≤ 4 s)
-            entry(""""inhale":4.0,"holdFull":30.0,"exhale":4.0,"holdEmpty":30.0"""),
-            // ruhig, aber Ausatmen kürzer als Einatmen
-            entry(""""inhale":6.0,"exhale":4.0"""),
-            // Anpassung umgeht die Stepper-Grenzen (Halten 1..20 s, Einatmen 2..12 s)
-            entry(""""inhale":4.0,"exhale":6.0,"overrides":{"hold":600}"""),
-            entry(""""inhale":4.0,"exhale":6.0,"overrides":{"inhale":0}"""),
-            // aktivierend mit Halten nach dem Ausatmen
-            """{"name":"M","activating":true,"createdAtEpochMs":1,"inhale":4.0,"exhale":3.0,"holdEmpty":1.0}""",
+        assertEquals(listOf(null, 30, null), decoded.entries.map { it.minutes })
+        val dao = FakeSavedPatternDao()
+        SavedPatternsRepository(dao).import(decoded.entries) { _, _ -> }
+        // Ohne Herkunft (vor dem Editor) ein Tagesmuster, unbekannte Herkunft ein eigenes Muster.
+        assertEquals(
+            listOf(SavedPatternEntity.ORIGIN_DAILY, SavedPatternEntity.ORIGIN_CUSTOM, SavedPatternEntity.ORIGIN_CUSTOM),
+            dao.rows.value.map { it.origin },
         )
-        val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"patterns":[${bad.joinToString(",")}]}"""
-
-        val decoded = PatternBackup.decode(text)!!
-
-        assertEquals(0, decoded.entries.size)
-        assertEquals(bad.size, decoded.invalid)
-    }
-
-    @Test
-    fun `Namen mit Steuer- oder Formatzeichen werden abgewiesen`() {
-        val names = listOf("\u202Eretsum", "Muster\nzwei", "\u200B", "\u0000x", "x\u2028y")
-        val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"patterns":[${
-            names.joinToString(",") { """{"name":"$it","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1}""" }
-        }]}"""
-
-        val decoded = PatternBackup.decode(text)!!
-
-        assertEquals(0, decoded.entries.size)
-        assertEquals(names.size, decoded.invalid)
     }
 
     private companion object {

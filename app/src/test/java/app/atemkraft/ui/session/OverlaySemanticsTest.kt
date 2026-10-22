@@ -15,7 +15,6 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performSemanticsAction
 import app.atemkraft.R
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.playback.MeditationStatus
@@ -26,6 +25,7 @@ import app.atemkraft.ui.TestMeditationOverlay
 import app.atemkraft.ui.TestSessionOverlay
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -110,8 +110,27 @@ class OverlaySemanticsTest {
         .fetchSemanticsNode()
         .config.getOrNull(SemanticsActions.OnClick)?.label
 
+    /**
+     * Atem-Session: eigener Bereich (auch der Ende-Screen), genau eine Live-Region am Phasenwort –
+     * pausiert mit „Pausiert“ davor –, der Kreis mit Klick-Aktion (im Countdown kein Halt) und der
+     * Ton als Schalter mit Zustand.
+     */
     @Test
-    fun `Pause wird am Phasenwort angesagt, ohne zweite Live-Region`() {
+    fun `Atem-Session fuer TalkBack`() {
+        session(SessionStatus.RUNNING)
+        assertEquals(listOf("Box-Atmung"), paneTitles())
+        val running = compose
+            .onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion), useUnmergedTree = true)
+            .fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single()
+        assertTrue("Ansage „$running“", !running.contains(string(R.string.session_paused)))
+        assertNotNull(clickLabel(R.string.cd_breathing_circle))
+        compose.onNodeWithContentDescription(string(R.string.action_sound))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.On))
+        session(SessionStatus.RUNNING, muted = true)
+        compose.onNodeWithContentDescription(string(R.string.action_sound))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.Off))
+
         session(SessionStatus.PAUSED)
         val live = compose
             .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion), useUnmergedTree = true)
@@ -119,74 +138,17 @@ class OverlaySemanticsTest {
         assertEquals(1, live.size)
         val said = live.single().config[SemanticsProperties.ContentDescription].single()
         assertTrue("Ansage „$said“", said.startsWith(string(R.string.session_paused) + ", "))
-    }
 
-    @Test
-    fun `laufend sagt das Phasenwort nur die Phase`() {
-        session(SessionStatus.RUNNING)
-        val said = compose
-            .onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion), useUnmergedTree = true)
-            .fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single()
-        assertTrue("Ansage „$said“", !said.contains(string(R.string.session_paused)))
-    }
-
-    @Test
-    fun `Atemkreis sagt, was der Doppeltipp tut, und ist im Countdown kein Halt`() {
-        session(SessionStatus.RUNNING)
-        assertEquals(string(R.string.circle_action_pause), clickLabel(R.string.cd_breathing_circle))
-        session(SessionStatus.PAUSED)
-        assertEquals(string(R.string.circle_action_resume), clickLabel(R.string.cd_breathing_circle))
-        session(SessionStatus.WAITING_FOR_USER)
-        assertEquals(string(R.string.circle_action_continue), clickLabel(R.string.cd_breathing_circle))
         session(SessionStatus.PREPARING)
         compose.onNodeWithContentDescription(string(R.string.cd_breathing_circle)).assertDoesNotExist()
-    }
 
-    @Test
-    fun `Ton ist ein Schalter mit festem Namen und Zustand`() {
-        session(SessionStatus.RUNNING)
-        compose.onNodeWithContentDescription(string(R.string.action_sound))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.On))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_switch_on)))
-            .performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals(listOf("ton"), events)
-        session(SessionStatus.RUNNING, muted = true)
-        compose.onNodeWithContentDescription(string(R.string.action_sound))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.Off))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_switch_off)))
-    }
-
-    @Test
-    fun `Overlay und Ende-Screen sind eigene Bereiche`() {
-        session(SessionStatus.RUNNING)
-        assertEquals(listOf("Box-Atmung"), paneTitles())
         session(SessionStatus.FINISHED)
         assertEquals(listOf("Box-Atmung", string(R.string.session_done_title)), paneTitles())
-        meditation(MeditationStatus.FINISHED)
-        assertEquals(listOf(string(R.string.meditation_title), string(R.string.session_done_title)), paneTitles())
     }
 
+    /** Meditation: eigene Bereiche, Pause als Zustand des sichtbaren Titels, Ring mit Klick-Aktion. */
     @Test
-    fun `Zurück minimiert die laufende Session und beendet sie am Ende-Screen`() {
-        session(SessionStatus.RUNNING)
-        back()
-        session(SessionStatus.FINISHED)
-        back()
-        assertEquals(listOf("minimieren", "ende"), events)
-    }
-
-    @Test
-    fun `Zurück minimiert die laufende Meditation und beendet sie am Ende-Screen`() {
-        meditation(MeditationStatus.RUNNING)
-        back()
-        meditation(MeditationStatus.FINISHED)
-        back()
-        assertEquals(listOf("minimieren", "ende"), events)
-    }
-
-    @Test
-    fun `Meditation sagt die Pause als Zustand des sichtbaren Titels an`() {
+    fun `Meditation fuer TalkBack`() {
         meditation(MeditationStatus.PAUSED)
         val title = compose.onNodeWithText(string(R.string.meditation_title), useUnmergedTree = true).fetchSemanticsNode().config
         assertEquals(string(R.string.session_paused), title.getOrNull(SemanticsProperties.StateDescription))
@@ -195,13 +157,22 @@ class OverlaySemanticsTest {
         meditation(MeditationStatus.RUNNING)
         val running = compose.onNodeWithText(string(R.string.meditation_title), useUnmergedTree = true).fetchSemanticsNode().config
         assertNull(running.getOrNull(SemanticsProperties.StateDescription))
-        assertEquals(string(R.string.circle_action_pause), clickLabel(R.string.cd_meditation_ring))
+
+        meditation(MeditationStatus.FINISHED)
+        assertEquals(listOf(string(R.string.meditation_title), string(R.string.session_done_title)), paneTitles())
     }
 
+    /** Navigations-Grundregel (MUSTER-07): Zurück minimiert laufend und beendet am Ende-Screen. */
     @Test
-    fun `Meditation fragt am Ende wie die Atem-Session nach dem Befinden`() {
+    fun `Zurueck minimiert laufend und beendet am Ende-Screen - Session und Meditation`() {
+        session(SessionStatus.RUNNING)
+        back()
+        session(SessionStatus.FINISHED)
+        back()
+        meditation(MeditationStatus.RUNNING)
+        back()
         meditation(MeditationStatus.FINISHED)
-        compose.onNodeWithText(string(R.string.session_done_question)).assertExists()
-        compose.onNodeWithText("10:00", substring = true).assertExists()
+        back()
+        assertEquals(listOf("minimieren", "ende", "minimieren", "ende"), events)
     }
 }

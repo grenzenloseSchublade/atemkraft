@@ -81,10 +81,10 @@ class ToneEnvelopeTest {
 
     @Test
     fun `Wechseltöne halten Attack, Release und Spitze ein`() {
-        val problems = ToneVolume.entries.flatMap { volume ->
-            listOf(528.0, 396.0, 440.0).flatMap { hz ->
-                check("Wechselton $hz Hz/$volume", synthesizeCue(hz, 180, cueVolumeScale(volume)))
-            }
+        // Attack und Release hängen nicht vom Pegel ab; die Spitze ist bei der lautesten Stufe am knappsten.
+        val loudest = ToneVolume.entries.maxBy { cueVolumeScale(it) }
+        val problems = listOf(528.0, 396.0, 440.0).flatMap { hz ->
+            check("Wechselton $hz Hz/$loudest", synthesizeCue(hz, 180, cueVolumeScale(loudest)))
         }
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
     }
@@ -106,20 +106,6 @@ class ToneEnvelopeTest {
         val peak = ToneVolume.entries.maxOf { ContinuousTonePlayer.volumeScaleFor(it) } *
             ContinuousTonePlayer.AMPLITUDE / Short.MAX_VALUE
         assertTrue("Dauerton: Spitze $peak FS > $MAX_PEAK_FS", peak <= MAX_PEAK_FS)
-    }
-
-    /**
-     * Bekannter Befund (noch ohne Backlog-ID): Der Dauerton blendet bei Pause, Stumm und Ende
-     * mit derselben 15-ms-Rampe aus wie beim Einblenden – kürzer als 60 ms Release. Schlägt
-     * fehl, sobald das behoben ist; dann diesen Test in die Prüfung oben übernehmen.
-     */
-    @Test
-    fun `bekannt - Dauerton-Release unter 60 ms`() {
-        val fadeMs = ContinuousTonePlayer.GAIN_FADE_SECONDS * 1000
-        assertTrue(
-            "Dauerton-Release ist jetzt $fadeMs ms ≥ $MIN_RELEASE_MS ms – Befund behoben, Test umstellen",
-            fadeMs < MIN_RELEASE_MS,
-        )
     }
 
     private companion object {

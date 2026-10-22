@@ -38,10 +38,7 @@ class VoiceIntegrityTest {
     @Test
     fun `passender Download wird vollstaendig durchgereicht`() {
         assertArrayEquals(payload, copy(payload, payload.size.toLong(), payloadSha))
-    }
-
-    @Test
-    fun `Pruefsumme ist case-insensitiv`() {
+        // Prüfsumme ist case-insensitiv
         assertArrayEquals(payload, copy(payload, payload.size.toLong(), payloadSha.uppercase()))
     }
 
@@ -54,17 +51,14 @@ class VoiceIntegrityTest {
     }
 
     @Test
-    fun `zu grosser Download bricht frueh ab`() {
+    fun `abweichende Groesse - zu gross bricht frueh ab, zu kurz wird abgelehnt`() {
         val out = ByteArrayOutputStream()
         assertThrows(VoiceIntegrityException::class.java) {
             copyVerified(ByteArrayInputStream(payload), out, 1000L, payloadSha)
         }
         // Abbruch, bevor die Datei über die erwartete Größe hinaus wächst
         assertTrue(out.size() <= 1000)
-    }
 
-    @Test
-    fun `zu kurzer Download wird abgelehnt`() {
         assertThrows(VoiceIntegrityException::class.java) {
             copy(payload.copyOf(1000), payload.size.toLong(), payloadSha)
         }
@@ -106,19 +100,13 @@ class VoiceIntegrityTest {
     }
 
     @Test
-    fun `Symlink-Eintrag wird abgelehnt`() {
-        val archive = tarBz2 { it.link("voice/evil", "/etc/passwd", TarConstants.LF_SYMLINK) }
-        val target = tmp.newFolder("out")
-        assertThrows(VoiceIntegrityException::class.java) { extractTarBz2Safely(archive, target) }
-        assertFalse(File(target, "voice/evil").exists())
-    }
-
-    @Test
-    fun `Hardlink-Eintrag wird abgelehnt`() {
-        val archive = tarBz2 { it.link("voice/evil", "../../secret", TarConstants.LF_LINK) }
-        val target = tmp.newFolder("out")
-        assertThrows(VoiceIntegrityException::class.java) { extractTarBz2Safely(archive, target) }
-        assertFalse(File(target, "voice/evil").exists())
+    fun `Symlink- und Hardlink-Eintraege werden abgelehnt`() {
+        listOf(TarConstants.LF_SYMLINK to "/etc/passwd", TarConstants.LF_LINK to "../../secret").forEach { (flag, linkTarget) ->
+            val archive = tarBz2 { it.link("voice/evil", linkTarget, flag) }
+            val target = tmp.newFolder()
+            assertThrows(VoiceIntegrityException::class.java) { extractTarBz2Safely(archive, target) }
+            assertFalse(File(target, "voice/evil").exists())
+        }
     }
 
     @Test

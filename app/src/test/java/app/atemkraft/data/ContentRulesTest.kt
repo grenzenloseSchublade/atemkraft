@@ -9,6 +9,7 @@ import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
+import app.atemkraft.domain.activeWithoutHold
 import app.atemkraft.domain.calmWithHold
 import app.atemkraft.domain.creationRuleSpecs
 import app.atemkraft.domain.withinCreationRules
@@ -26,7 +27,7 @@ import java.io.File
  *
  * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Testfall | Datensatz | S-nn`).
  * Ein Fall schlägt fehl bei einem neuen Verstoß und bei einem Baseline-Eintrag, der nicht mehr
- * zutrifft (dann Eintrag streichen, META-01). Fälle mit Stufe SOLL geben ihre Funde nur aus.
+ * zutrifft (dann Eintrag streichen, META-01).
  */
 class ContentRulesTest {
 
@@ -236,11 +237,6 @@ class ContentRulesTest {
         )
     }
 
-    /** SOLL-Fall oder noch nicht scharf geschalteter Fall: Funde nur ausgeben. */
-    private fun report(case: String, findings: List<Finding>) {
-        findings.collapseSeeds().forEach { println("ContentRulesTest $case (Hinweis): ${it.dataset} – ${it.why}") }
-    }
-
     // ---- TEXT-06, MUSTER-03: Teaser -----------------------------------------------------
 
     /** Kürzel, deren Punkt keinen Satz beendet. */
@@ -271,7 +267,8 @@ class ContentRulesTest {
 
     /**
      * TEXT-13: Teaser der Yoga-Lehre (Detailseite, Muster-Karten und Abschnitte der Atemlehre)
-     * folgen der Teaser-Regel aus TEXT-06. Neue Inhalte ohne Altlasten: jeder Fund ist ein
+     * folgen der Teaser-Regel aus TEXT-06 und schreiben zu, statt Wirkung zu behaupten („gilt in
+     * der Yoga-Lehre als …“, nie „wirkt“). Neue Inhalte ohne Altlasten: jeder Fund ist ein
      * Fehler, keine Baseline.
      */
     @Test
@@ -283,11 +280,15 @@ class ContentRulesTest {
             "atemlehre.influencesTeaser" to Atemlehre.influencesTeaser,
             "atemlehre.sourcesTeaser" to Atemlehre.sourcesTeaser,
         )
+        val claim = Regex("""\b(wirkt|bewirkt|hilft gegen)\b""", RegexOption.IGNORE_CASE)
         val findings = (lore + patterns).flatMap { (key, teaser, detail) ->
             val repeats = detail.startsWith(teaser.trimEnd('.').take(40))
             teaserProblems(teaser).map { Finding("$key.teaser", it) } +
                 if (repeats) listOf(Finding("$key.detail", "beginnt mit dem Teaser")) else emptyList()
-        } + sections.flatMap { (key, teaser) -> teaserProblems(teaser).map { Finding(key, it) } }
+        } + sections.flatMap { (key, teaser) -> teaserProblems(teaser).map { Finding(key, it) } } +
+            (lore.map { it.first to it.second } + patterns.map { it.first to it.second } + sections).mapNotNull { (key, teaser) ->
+                claim.find(teaser)?.let { Finding("$key.teaser", "Wirkbehauptung „${it.value}“ statt Zuschreibung") }
+            }
         if (baseline["lore-teaser"].orEmpty().isNotEmpty()) {
             fail("ContentRulesTest lore-teaser: keine Baseline erlaubt (TEXT-13), Einträge streichen")
         }
@@ -319,17 +320,6 @@ class ContentRulesTest {
             teaserProblems(e.cautions.first()).map { Finding("${e.key()}.cautions[0]", it) }
         }
         assertAgainstBaseline("first-caution", findings)
-    }
-
-    /** SOLL ≤ 700 Zeichen: nur Hinweis, kein Testfehler. */
-    @Test
-    fun `detail-length`() {
-        report(
-            "detail-length",
-            exercises.mapNotNull { e ->
-                e.effectDetail?.takeIf { it.length > 700 }?.let { Finding("${e.key()}.effectDetail", "${it.length} Zeichen > 700") }
-            },
-        )
     }
 
     // ---- TEXT-09: Heilversprechen -------------------------------------------------------
@@ -370,11 +360,6 @@ class ContentRulesTest {
         }
     }
 
-    @Test
-    fun `health-claims`() {
-        assertNoHealthClaims("health-claims", healthClaimFindings(allTexts))
-    }
-
     /**
      * Öffentliche Texte außerhalb der App (SEC-LEGAL-01): README, Datenschutzerklärung,
      * Release-Notes und Store-Texte samt Changelogs, je Zeile ein Datensatz `datei:zeile`.
@@ -390,10 +375,13 @@ class ContentRulesTest {
         }
     }
 
+    /** App-Texte und öffentliche Texte (falls das Repo sie mitbringt) in einem Fall. */
     @Test
-    fun `health-claims-public`() {
-        assumeTrue("README.md fehlt", repoFile("README.md").isFile)
-        assertNoHealthClaims("health-claims-public", healthClaimFindings(publicTexts))
+    fun `health-claims`() {
+        assertNoHealthClaims("health-claims", healthClaimFindings(allTexts + publicTexts))
+        if (baseline["health-claims-public"].orEmpty().isNotEmpty()) {
+            fail("ContentRulesTest health-claims-public: keine Baseline erlaubt (TEXT-09), Einträge streichen")
+        }
     }
 
     // ---- TEXT-05: Jargon ----------------------------------------------------------------
@@ -403,9 +391,14 @@ class ContentRulesTest {
         "Hormese", "hormetisch", "CO₂-Toleranz", "CO2-Toleranz",
     ).map { Regex("""(?<![\p{L}])(?:$it)(?![\p{L}])""", RegexOption.IGNORE_CASE) }
 
-    /** Laiensprache in Situationen, Labels und Tags (UI-Strings, Übungsnamen); Fachbegriffe nur im Detail. */
+    /**
+     * Laiensprache in Situationen, Labels und Tags (UI-Strings, Übungsnamen); Fachbegriffe nur im
+     * Detail. Suchbegriffe sind neu und ohne Altlasten (MUSTER-09): für sie gibt es keine Baseline.
+     */
     @Test
     fun jargon() {
+        val keywordBaseline = baseline["jargon"].orEmpty().filter { ".keywords[" in it }
+        if (keywordBaseline.isNotEmpty()) fail("ContentRulesTest jargon: Suchbegriffe nicht in die Baseline: $keywordBaseline")
         val scope = situationTexts + strings + exerciseTexts.filter { it.id.endsWith(".name") }
         val findings = scope.flatMap { t ->
             jargon.mapNotNull { re -> re.find(t.value)?.let { Finding(t.id, "„${it.value}“") } }
@@ -434,18 +427,6 @@ class ContentRulesTest {
             )
         }
         if (findings.isNotEmpty()) fail("ContentRulesTest glossary-terms:\n" + findings.joinToString("\n") { "  $it" })
-    }
-
-    /**
-     * Suchbegriffe sind neu und ohne Altlasten: Heilversprechen und Jargon sind hier sofort
-     * ein Fehler, ohne Baseline (TEXT-05, TEXT-09, MUSTER-09).
-     */
-    @Test
-    fun `situation-keywords`() {
-        val findings = Situations.all.flatMap(::keywordTexts).flatMap { t ->
-            (healthClaims + jargon).mapNotNull { re -> re.find(t.value)?.let { "${t.id}: „${it.value}“" } }
-        }
-        if (findings.isNotEmpty()) fail("ContentRulesTest situation-keywords:\n" + findings.joinToString("\n"))
     }
 
     // ---- TEXT-04: Anrede ----------------------------------------------------------------
@@ -503,6 +484,15 @@ class ContentRulesTest {
             if (Regex("""\s·""").containsMatchIn(t.value.replace("\u00A0·", ""))) Finding(t.id, "„ ·“ ohne geschütztes Leerzeichen") else null
         }
         assertAgainstBaseline("dot-separator", findings)
+    }
+
+    /** Zahl und Einheit („4\u00A0s“, „ca.\u00A0%1$d\u00A0min“) bleiben in sichtbaren Texten zusammen (TEXT-10). */
+    @Test
+    fun `number-unit`() {
+        val findings = strings.mapNotNull { t ->
+            Regex("""\d (s|min)\b""").find(t.value)?.let { Finding(t.id, "„${it.value}“ ohne geschütztes Leerzeichen") }
+        }
+        assertAgainstBaseline("number-unit", findings)
     }
 
     // ---- TEXT-12: Quellen ---------------------------------------------------------------
@@ -582,8 +572,9 @@ class ContentRulesTest {
 
     // ---- TEXT-11: Store-Texte -----------------------------------------------------------
 
+    /** Längengrenzen der Store-Texte und der Disclaimer aus SECURITY.md SEC-LEGAL-02 wörtlich. */
     @Test
-    fun `store-lengths`() {
+    fun `store-texts`() {
         val dir = repoFile("fastlane/metadata/android/de-DE")
         assumeTrue("fastlane/ gibt es noch nicht", dir.isDirectory)
         val limits = mapOf("title.txt" to 30, "short_description.txt" to 80, "full_description.txt" to 4000)
@@ -594,17 +585,11 @@ class ContentRulesTest {
             f.readText().trim().takeIf { it.length > 500 }?.let { Finding("fastlane:changelogs/${f.name}", "${it.length} Zeichen > 500") }
         }
         assertAgainstBaseline("store-lengths", findings)
-    }
-
-    /** Der Disclaimer aus SECURITY.md SEC-LEGAL-02 steht wörtlich in der Store-Beschreibung. */
-    @Test
-    fun `store-disclaimer`() {
-        val file = repoFile("fastlane/metadata/android/de-DE/full_description.txt")
-        assumeTrue("fastlane/ gibt es noch nicht", file.isFile)
         val disclaimer = "Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. " +
             "Für medizinischen Rat wende dich an Fachpersonal."
-        if (disclaimer !in file.readText()) {
-            fail("ContentRulesTest store-disclaimer: full_description.txt enthält den Disclaimer aus SEC-LEGAL-02 nicht wörtlich")
+        val description = File(dir, "full_description.txt")
+        if (description.isFile && disclaimer !in description.readText()) {
+            fail("ContentRulesTest store-texts: full_description.txt enthält den Disclaimer aus SEC-LEGAL-02 nicht wörtlich")
         }
     }
 
@@ -633,9 +618,14 @@ class ContentRulesTest {
                 if ("weiteren Leitplanken" !in detail) fail("$origin $spec nennt seine Leitplanken nicht: $detail")
             }
         }
-        // Ein Muster nach den Erzeugungsregeln nennt sie weiter, samt Ausatmen höchstens 8 s.
-        val calm = calmWithHold
-        val detail = RandomPatternGenerator.exerciseFrom(calm, "muster-1", "x", PatternOrigin.CUSTOM, 5).effectDetail.orEmpty()
-        if ("4,6 bis 6,7" !in detail || "höchstens ${PatternRules.EXHALE_MAX}\u00A0s" !in detail) fail("Regeln fehlen: $detail")
+        // Ein Muster nach den Erzeugungsregeln nennt sie weiter (ruhig samt Ausatmen höchstens 8 s,
+        // aktivierend mit eigener Spanne), dazu ehrlich: keine Studienlage zu genau diesem Muster.
+        for (origin in listOf(PatternOrigin.SAVED_DAILY, PatternOrigin.CUSTOM)) {
+            val calm = RandomPatternGenerator.exerciseFrom(calmWithHold, "muster-1", "x", origin, 5).effectDetail.orEmpty()
+            if ("4,6 bis 6,7" !in calm || "höchstens ${PatternRules.EXHALE_MAX}\u00A0s" !in calm) fail("Regeln fehlen: $calm")
+            val active = RandomPatternGenerator.exerciseFrom(activeWithoutHold, "muster-1", "x", origin, 5).effectDetail.orEmpty()
+            if ("6,7 bis 10" !in active) fail("Regeln fehlen: $active")
+            listOf(calm, active).forEach { if ("Eine Studienlage zu genau diesem Muster gibt es nicht." !in it) fail("Studienlage fehlt: $it") }
+        }
     }
 }

@@ -1,5 +1,8 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasText
@@ -53,20 +56,18 @@ class EvidenceChipSemanticsTest {
 
     @Test
     fun `Karte zeigt keine Studienlage, aber Vorsicht und Markierung`() {
-        compose.setContent { AtemkraftTheme { ExerciseCard(wimHof, marked = true) {} } }
+        var marked by mutableStateOf(true)
+        compose.setContent { AtemkraftTheme { ExerciseCard(wimHof, marked = marked) {} } }
 
         val card = compose.onNode(hasText("Wim Hof")).fetchSemanticsNode().config
         val texts = card.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
         assertEquals(listOf("Wim Hof", app.getString(R.string.tag_caution)), texts.take(2))
         assertFalse(evidence in texts)
         assertTrue(app.getString(R.string.cd_personal_mark) in card.getOrNull(SemanticsProperties.ContentDescription).orEmpty())
-    }
 
-    @Test
-    fun `Karte ohne Markierung zeigt keinen Atemkreis`() {
-        compose.setContent { AtemkraftTheme { ExerciseCard(wimHof) {} } }
-
-        val card = compose.onNode(hasText("Wim Hof")).fetchSemanticsNode().config
-        assertFalse(app.getString(R.string.cd_personal_mark) in card.getOrNull(SemanticsProperties.ContentDescription).orEmpty())
+        // Ohne Markierung kein Atemkreis.
+        marked = false
+        val unmarked = compose.onNode(hasText("Wim Hof")).fetchSemanticsNode().config
+        assertFalse(app.getString(R.string.cd_personal_mark) in unmarked.getOrNull(SemanticsProperties.ContentDescription).orEmpty())
     }
 }

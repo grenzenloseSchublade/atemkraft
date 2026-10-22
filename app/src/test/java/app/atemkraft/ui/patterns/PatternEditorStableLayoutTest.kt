@@ -14,7 +14,6 @@ import app.atemkraft.R
 import app.atemkraft.cue.FakePreviewSoundOutput
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
-import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
@@ -32,8 +31,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * MUSTER-10 (Nachtrag 5 und 6): Im kompakten Muster-Editor springt nichts unter dem Finger – auf
- * allen Geräten und Schriftgrößen der Matrix. Die Kurve bleibt an ihrem Platz (Höhe und Lage), wenn
+ * MUSTER-10 (Nachtrag 5 und 6): Im kompakten Muster-Editor springt nichts unter dem Finger – dort,
+ * wo Chip, Status und Phasennamen zuerst umbrechen ([TestMatrix.isDetailConfig]: 360 dp bei 1,3
+ * und 2,0, A54 bei 1,0). Die Kurve bleibt an ihrem Platz (Höhe und Lage), wenn
  * der Startpunkt auf „angepasst“ wechselt, wenn das Muster ins Intensive kippt (Chip „intensiv“)
  * und während die Vorschau läuft (Phasenname statt Status); die Werkzeugleiste behält ihre Höhe,
  * wenn man eine andere Phase wählt.
@@ -47,14 +47,14 @@ class PatternEditorStableLayoutTest(private val device: Device, private val font
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}_fs{1}")
-        fun params(): List<Array<Any>> = TestMatrix.DEVICES.flatMap { d -> TestMatrix.FONT_SCALES.map { arrayOf<Any>(d, it) } }
+        fun params(): List<Array<Any>> = TestMatrix.WIDTH_CONFIGS.filter { (d, fs) -> TestMatrix.isDetailConfig(d, fs) }.map { (d, fs) -> arrayOf<Any>(d, fs) }
 
         /** Hoch genug, dass nichts scrollt: gemessen wird die Lage, nicht der sichtbare Teil. */
         private const val HEIGHT_DP = 2400
 
-        /** Schritt durch die Vorschau von 4·1·6: jede Phase mindestens einmal. */
-        private const val PREVIEW_STEP_MS = 500L
-        private const val PREVIEW_STEPS = 24
+        /** Schritt durch die Vorschau von Box (4·4·4·4): jede Phase mindestens einmal. */
+        private const val PREVIEW_STEP_MS = 1_000L
+        private const val PREVIEW_STEPS = 16
     }
 
     @get:Rule
@@ -93,9 +93,21 @@ class PatternEditorStableLayoutTest(private val device: Device, private val font
     private fun template(label: String) = FreePatternTemplates.all.single { it.label == label }.pattern
 
     @Test
-    fun `Kurve bleibt stehen, wenn der Startpunkt angepasst zeigt oder das Muster intensiv wird`() {
+    fun `Kurve bleibt stehen - Vorschau laeuft, Pause, Startpunkt angepasst, Muster intensiv`() {
         val state = show(PatternEditorState.new(prefix, template("Box")).apply { select(1) })
         val top = curveTop()
+
+        // Vorschau: Phasenname in Phasenfarbe statt des Status am Kopf „Atemzug“.
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_preview_play)).performSemanticsAction(SemanticsActions.OnClick)
+        repeat(PREVIEW_STEPS) { step ->
+            compose.mainClock.advanceTimeBy(PREVIEW_STEP_MS)
+            assertEquals("Kurve nach ${(step + 1) * PREVIEW_STEP_MS} ms Vorschau", top, curveTop())
+        }
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_preview_pause)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.mainClock.advanceTimeBy(PREVIEW_STEP_MS)
+        assertEquals("Kurve nach Pause", top, curveTop())
+        compose.mainClock.autoAdvance = true
 
         compose.runOnIdle { state.add(FreePhaseType.IN) }
         compose.waitForIdle()
@@ -106,21 +118,6 @@ class PatternEditorStableLayoutTest(private val device: Device, private val font
         compose.waitForIdle()
         assertTrue(state.pattern.isIntense)
         assertEquals("Kurve mit Chip „intensiv“", top, curveTop())
-    }
-
-    @Test
-    fun `Kurve bleibt stehen, waehrend die Vorschau laeuft`() {
-        show(PatternEditorState.new(prefix, FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.HOLD, 1), FreePhase(FreePhaseType.OUT, 6)))))
-        val top = curveTop()
-        compose.mainClock.autoAdvance = false
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_preview_play)).performSemanticsAction(SemanticsActions.OnClick)
-        repeat(PREVIEW_STEPS) { step ->
-            compose.mainClock.advanceTimeBy(PREVIEW_STEP_MS)
-            assertEquals("Kurve nach ${(step + 1) * PREVIEW_STEP_MS} ms Vorschau", top, curveTop())
-        }
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_preview_pause)).performSemanticsAction(SemanticsActions.OnClick)
-        compose.mainClock.advanceTimeBy(PREVIEW_STEP_MS)
-        assertEquals("Kurve nach Pause", top, curveTop())
     }
 
     @Test

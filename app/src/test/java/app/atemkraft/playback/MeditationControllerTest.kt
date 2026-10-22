@@ -24,7 +24,6 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -51,8 +50,8 @@ class MeditationControllerTest {
         storeScope.cancel()
     }
 
-    private fun TestScope.controller(): MeditationController {
-        val store = PreferenceDataStoreFactory.create(scope = storeScope) { File(folder.root, "settings.preferences_pb") }
+    private fun TestScope.controller(file: String = "settings.preferences_pb"): MeditationController {
+        val store = PreferenceDataStoreFactory.create(scope = storeScope) { File(folder.root, file) }
         return MeditationController(
             settingsRepository = SettingsRepository(store),
             logbook = LogbookRepository(dao),
@@ -120,31 +119,28 @@ class MeditationControllerTest {
     }
 
     @Test
-    fun `offene Sitzung endet über Beenden mit ihrer aktiven Zeit`() = runTest {
-        val c = controller()
-        c.start(MeditationConfig(mode = MeditationMode.FREE, startEndGong = false))
+    fun `Beenden - offene Sitzung loggt ihre aktive Zeit, Abbruch im Countdown loggt nichts`() = runTest {
+        val open = controller()
+        open.start(MeditationConfig(mode = MeditationMode.FREE, startEndGong = false))
         advance(COUNTDOWN_MS + 90_000L)
-        assertEquals(90_000L, c.state.value.elapsedMs)
+        assertEquals(90_000L, open.state.value.elapsedMs)
 
-        c.end()
+        open.end()
         advance(0)
-        val end = c.state.value
+        val end = open.state.value
         assertEquals(MeditationStatus.FINISHED, end.status)
         assertEquals(90_000L, end.elapsedMs)
         assertEquals(listOf(90_000L), dao.rows.map { it.durationMs })
         assertEquals(1, service.stopped)
-    }
 
-    @Test
-    fun `Abbruch im Countdown schreibt nichts ins Logbuch`() = runTest {
-        val c = controller()
-        c.start(MeditationConfig(minutes = 5))
+        val aborted = controller("zweite.preferences_pb")
+        aborted.start(MeditationConfig(minutes = 5))
         advance(1_000L)
-        c.end()
+        aborted.end()
         runCurrent()
-        assertEquals(MeditationStatus.IDLE, c.state.value.status)
-        assertTrue(dao.rows.isEmpty())
-        assertEquals(1, service.stopped)
+        assertEquals(MeditationStatus.IDLE, aborted.state.value.status)
+        assertEquals(1, dao.rows.size)
+        assertEquals(2, service.stopped)
     }
 
     private class CountingAudio : MeditationAudio {

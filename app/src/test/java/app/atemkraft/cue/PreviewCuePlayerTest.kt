@@ -24,13 +24,6 @@ class PreviewCuePlayerTest {
     private val hold = PhaseAudio(PhaseType.HOLD_FULL, 2_000L, open = false)
 
     @Test
-    fun `ohne Einstellungen klingt nichts`() {
-        player.onPhase(inhale)
-        assertTrue(output.sounds.isEmpty())
-        assertFalse(player.audible)
-    }
-
-    @Test
     fun `Toene spielen den Wechselton zum Phasenbeginn, nicht beim Fortsetzen`() {
         player.updateSettings(CueSettings(soundMode = SoundMode.CUES))
         player.onPhase(inhale)
@@ -51,11 +44,23 @@ class PreviewCuePlayerTest {
     }
 
     @Test
-    fun `Modus Aus bleibt still`() {
+    fun `still ohne Einstellungen, bei Modus Aus und gesperrt, danach wieder hoerbar`() {
+        player.onPhase(inhale)
+        assertFalse(player.audible)
+
         player.updateSettings(CueSettings(soundMode = SoundMode.OFF))
         player.onPhase(inhale)
         assertTrue(output.sounds.isEmpty())
         assertEquals(0, output.focusRequests)
+
+        player.updateSettings(CueSettings(soundMode = SoundMode.CUES))
+        player.blocked = true
+        player.onPhase(inhale)
+        assertTrue(output.sounds.isEmpty())
+
+        player.blocked = false
+        player.onPhase(hold)
+        assertEquals(listOf("cue HOLD"), output.sounds)
     }
 
     @Test
@@ -71,26 +76,19 @@ class PreviewCuePlayerTest {
     }
 
     @Test
-    fun `gesperrt (Hintergrund, laufende Uebung) bleibt still, danach wieder hoerbar`() {
-        player.updateSettings(CueSettings(soundMode = SoundMode.CUES))
-        player.blocked = true
-        player.onPhase(inhale)
-        assertTrue(output.sounds.isEmpty())
-
-        player.blocked = false
-        player.onPhase(hold)
-        assertEquals(listOf("cue HOLD"), output.sounds)
-    }
-
-    @Test
-    fun `Anhalten gibt den Fokus genau einmal ab`() {
+    fun `stop und release sind idempotent`() {
         player.updateSettings(CueSettings(soundMode = SoundMode.CUES))
         player.onPhase(inhale)
         player.stop()
         player.stop()
-
         assertEquals(1, output.focusRequests)
         assertEquals(1, output.focusAbandons)
+
+        player.release()
+        player.release()
+        player.onPhase(inhale)
+        assertEquals(listOf("cue INHALE"), output.sounds)
+        assertEquals(1, output.releases)
     }
 
     @Test
@@ -103,17 +101,6 @@ class PreviewCuePlayerTest {
         assertEquals(ToneVolume.QUIET, output.applied.last().volume)
         assertTrue(output.silenced > silencedBefore)
         assertEquals(1, output.focusAbandons)
-    }
-
-    @Test
-    fun `nach release klingt nichts mehr`() {
-        player.updateSettings(CueSettings(soundMode = SoundMode.CUES))
-        player.release()
-        player.release()
-        player.onPhase(inhale)
-
-        assertTrue(output.sounds.isEmpty())
-        assertEquals(1, output.releases)
     }
 }
 

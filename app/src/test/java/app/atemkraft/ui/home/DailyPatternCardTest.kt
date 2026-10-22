@@ -3,9 +3,6 @@ package app.atemkraft.ui.home
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -13,20 +10,15 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.atemkraft.R
-import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.RandomPatternGenerator
-import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,8 +30,9 @@ import java.time.LocalDate
 
 /**
  * „Muster des Tages“ auf der Startseite: Neu generieren im Abschnittskopf, Lesezeichen in der
- * Kartenecke, Karte startet die Übung. Die drei Ziele dürfen sich nicht gegenseitig auslösen,
- * und TalkBack muss Name, Rolle und Zustand des Lesezeichens lesen (A11Y-01, -04, KOMP-02).
+ * Kartenecke, Karte startet die Übung, Link zum Editor darunter. Die Ziele dürfen sich nicht
+ * gegenseitig auslösen, und TalkBack liest Rolle und Zustand des Lesezeichens (A11Y-01, -04,
+ * KOMP-02). Tippfläche und Lage prüfen die Screenshot-Gates (`01_atmen`).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -80,69 +73,28 @@ class DailyPatternCardTest {
         val bookmark = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_save))
         bookmark
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, app.getString(R.string.state_not_saved)))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
             .assertIsOff()
-
-        bookmark.performClick()
-        bookmark
-            .assertIsOn()
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, app.getString(R.string.state_saved)))
-        bookmark.performClick()
-
+            .performClick()
+        bookmark.assertIsOn().performClick()
         assertEquals(listOf("gespeichert=true", "gespeichert=false"), events)
     }
 
+    /** Die drei Ziele lösen sich nicht gegenseitig aus; in der Karte gibt es nur Start und Lesezeichen. */
     @Test
-    fun `Lesezeichen liegt mit voller Tippflaeche in der Kartenecke`() {
-        // Die Klick-Semantik sitzt im sichtbaren Kreis; die 48-dp-Reservierung ist der
-        // Layout-Knoten drumherum (minimumInteractiveComponentSize), zentriert um denselben Punkt.
-        val node = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_save)).fetchSemanticsNode()
-        val c = node.boundsInRoot.center
-        val half = Offset(node.layoutInfo.width / 2f, node.layoutInfo.height / 2f)
-        val bookmark = Rect(c - half, c + half)
+    fun `Karte, Neu generieren und Editor-Link loesen je genau ihre Aktion aus`() {
         val card = compose.onNodeWithText(daily.exercise.name, substring = true).fetchSemanticsNode().boundsInRoot
-        val px48 = 48 * compose.density.density
-        assertTrue("Tippfläche ${bookmark.width} × ${bookmark.height} px", bookmark.width >= px48 - 0.5f && bookmark.height >= px48 - 0.5f)
-        // Overlay: oben rechts bündig in der Karte, ragt nicht heraus (A11Y-05, KOMP-02).
-        assertEquals(card.top, bookmark.top, 1f)
-        assertEquals(card.right, bookmark.right, 1f)
-        assertTrue(bookmark.bottom <= card.bottom + 0.5f)
-    }
-
-    @Test
-    fun `Karte startet das Muster, Neu generieren sitzt im Abschnittskopf`() {
-        compose.onNodeWithText(daily.exercise.name, substring = true).performClick()
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_regenerate))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-            .performClick()
-        compose.onNode(isHeading() and hasText(app.getString(R.string.home_daily_pattern))).assertExists()
-
-        assertEquals(listOf("start:${daily.exercise.id}", "neu"), events)
-    }
-
-    @Test
-    fun `Dauer haelt Zahl und Einheit mit geschuetztem Leerzeichen zusammen`() {
-        val duration = app.getString(R.string.duration_approx, daily.exercise.defaultMinutes())
-        assertEquals("ca. ${daily.exercise.defaultMinutes()} min", duration)
-        compose.onNodeWithText(DOT_SEPARATOR + duration, substring = true).assertExists()
-    }
-
-    @Test
-    fun `Link zum Muster-Editor steht unter der Karte, die Karte behaelt genau eine Aktion`() {
-        val card = compose.onNodeWithText(daily.exercise.name, substring = true).fetchSemanticsNode().boundsInRoot
-        val link = compose.onNodeWithText(app.getString(R.string.home_own_pattern_link))
-        link.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-        val linkBounds = link.fetchSemanticsNode().boundsInRoot
-        assertTrue("Link ${linkBounds.top} unter Karte ${card.bottom}", linkBounds.top >= card.bottom - 0.5f)
-
-        // Bedienbar innerhalb der Karte: die Karte selbst und das Lesezeichen – sonst nichts.
         val inCard = compose.onAllNodes(hasClickAction(), useUnmergedTree = true).fetchSemanticsNodes()
             .map { it.boundsInRoot }
             .filter { it.top >= card.top - 0.5f && it.bottom <= card.bottom + 0.5f && it.left >= card.left - 0.5f && it.right <= card.right + 0.5f }
         assertEquals(2, inCard.size)
 
-        link.performClick()
-        assertEquals(listOf("editor"), events)
+        compose.onNodeWithText(daily.exercise.name, substring = true).performClick()
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_regenerate))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+        compose.onNodeWithText(app.getString(R.string.home_own_pattern_link))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+        assertEquals(listOf("start:${daily.exercise.id}", "neu", "editor"), events)
     }
 }

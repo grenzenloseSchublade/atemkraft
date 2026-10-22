@@ -125,70 +125,6 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `2 nach 4 in einem Zug behält das Logbuch und nimmt freie Folgen auf`() {
-        helper.createDatabase(DB_NAME, 2).use { db ->
-            db.execSQL(
-                """
-                INSERT INTO log_entries
-                    (id, exerciseId, exerciseName, family, startedAtEpochMs, durationMs, roundsCompleted, kind)
-                VALUES (1, 'resonanz', 'Resonanzatmung', 'DOWNREGULATE', 1700000000000, 300000, 30, 'BREATHING')
-                """.trimIndent(),
-            )
-        }
-
-        helper.runMigrationsAndValidate(DB_NAME, 4, true, *AtemkraftDatabase.MIGRATIONS).use { db ->
-            db.query("SELECT exerciseId, durationMs FROM log_entries").use { c ->
-                assertEquals(1, c.count)
-                c.moveToFirst()
-                assertEquals("resonanz", c.getString(0))
-                assertEquals(300000L, c.getLong(1))
-            }
-            db.query("SELECT COUNT(*) FROM saved_patterns").use { c ->
-                c.moveToFirst()
-                assertEquals(0, c.getInt(0))
-            }
-            // Die Spalte für die Phasenfolge ist da: Ein eigenes Muster mit 12 Phasen passt hinein.
-            db.execSQL(
-                """
-                INSERT INTO saved_patterns
-                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
-                VALUES ('Zwölf', 8.0, 4.0, 10.0, 2.0, 0, 1761000000000, 'custom', 10, '$TWELVE_PHASES')
-                """.trimIndent(),
-            )
-            db.query("SELECT origin, minutes, phases FROM saved_patterns").use { c ->
-                c.moveToFirst()
-                assertEquals("custom", c.getString(0))
-                assertEquals(10, c.getInt(1))
-                assertEquals(TWELVE_PHASES, c.getString(2))
-            }
-        }
-    }
-
-    @Test
-    fun `die App liest eine freie Folge aus einer migrierten Datenbank`() = runBlocking {
-        helper.createDatabase(DB_NAME, 3).close()
-        helper.runMigrationsAndValidate(DB_NAME, 4, true, *AtemkraftDatabase.MIGRATIONS).use { db ->
-            db.execSQL(
-                """
-                INSERT INTO saved_patterns
-                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
-                VALUES ('Zwölf', 8.0, 4.0, 10.0, 2.0, 0, 1761000000000, 'custom', 10, '$TWELVE_PHASES')
-                """.trimIndent(),
-            )
-        }
-
-        val room = openWithAppBuilder()
-        try {
-            val row = room.savedPatternDao().snapshot().single()
-            assertEquals(TWELVE_PHASES, row.phases)
-            assertEquals(12, row.freePattern()!!.phases.size)
-            assertEquals(TWELVE_PHASES, row.freePattern()!!.toCompact())
-        } finally {
-            room.close()
-        }
-    }
-
-    @Test
     fun `die App öffnet eine Datenbank von 3 und liest gespeicherte Muster als Tagesmuster`() = runBlocking {
         helper.createDatabase(DB_NAME, 3).use { db ->
             db.execSQL(
@@ -223,7 +159,7 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `die App öffnet eine migrierte Datenbank und liest das Logbuch`() = runBlocking {
+    fun `2 bis heute in einem Zug - Schema stimmt und die App liest das Logbuch`() = runBlocking {
         helper.createDatabase(DB_NAME, 2).use { db ->
             db.execSQL(
                 """
@@ -233,11 +169,13 @@ class DatabaseMigrationTest {
                 """.trimIndent(),
             )
         }
+        helper.runMigrationsAndValidate(DB_NAME, 5, true, *AtemkraftDatabase.MIGRATIONS).close()
 
         val room = openWithAppBuilder()
         try {
             val entries = room.logbookDao().all().first()
             assertEquals(listOf("box-4-4-4-4"), entries.map { it.exerciseId })
+            assertEquals(listOf(240000L), entries.map { it.durationMs })
         } finally {
             room.close()
         }
@@ -285,7 +223,7 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `4 mit Folge-Spalte nach 5 aendert nichts`() {
+    fun `4 mit Folge-Spalte nach 5 aendert nichts, die App liest die freie Folge`() = runBlocking {
         helper.createDatabase(DB_NAME, 4).use { db ->
             db.execSQL(
                 """
@@ -300,6 +238,15 @@ class DatabaseMigrationTest {
                 c.moveToFirst()
                 assertEquals(TWELVE_PHASES, c.getString(0))
             }
+        }
+
+        val room = openWithAppBuilder()
+        try {
+            val free = room.savedPatternDao().snapshot().single().freePattern()!!
+            assertEquals(12, free.phases.size)
+            assertEquals(TWELVE_PHASES, free.toCompact())
+        } finally {
+            room.close()
         }
     }
 

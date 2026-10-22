@@ -1,10 +1,14 @@
 package app.atemkraft.ui.meditation
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import app.atemkraft.R
 import app.atemkraft.data.MeditationDisplay
@@ -14,6 +18,7 @@ import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMeditationOverlay
 import app.atemkraft.ui.components.AUTO_CALM_DELAY_MS
 import app.atemkraft.ui.theme.AtemkraftTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,16 +40,9 @@ class MeditationCalmViewTest {
 
     private val app = RuntimeEnvironment.getApplication()
 
-    private fun show(status: MeditationStatus, display: MeditationDisplay = MeditationDisplay(autoCalm = false)) {
-        compose.setContent {
-            AtemkraftTheme {
-                TestMeditationOverlay(
-                    state = MeditationUiState(status = status, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
-                    display = display,
-                )
-            }
-        }
-    }
+    private val events = mutableListOf<String>()
+    private var status by mutableStateOf(MeditationStatus.RUNNING)
+    private var display by mutableStateOf(MeditationDisplay(autoCalm = true))
 
     private val ring get() = compose.onNodeWithContentDescription(app.getString(R.string.cd_meditation_ring))
     private val stop get() = compose.onNodeWithContentDescription(app.getString(R.string.action_stop))
@@ -52,41 +50,38 @@ class MeditationCalmViewTest {
     /** Ecke des Quadrats um den Kreis: außerhalb der Kreisform, also „daneben“. */
     private fun tapBeside() = ring.performTouchInput { click(Offset(1f, 1f)) }
 
+    /**
+     * Die Ruhe-Logik steckt im gemeinsamen CalmHost (geprüft in `CalmViewTest`); hier nur die
+     * Verdrahtung der Meditation: Ausblenden, Ring-Tipp mit Tick und Pause, nie in der Pause, Zeit-Schalter.
+     */
     @Test
-    fun `Tipp neben den Kreis blendet aus, ein zweiter wieder ein`() {
-        show(MeditationStatus.RUNNING)
+    fun `Meditation nutzt die Ruhe-Ansicht - daneben blendet aus, Ring-Tipp meldet Tick und pausiert, Pause blendet nie aus`() {
+        compose.setContent {
+            AtemkraftTheme {
+                TestMeditationOverlay(
+                    state = MeditationUiState(status = status, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
+                    display = display,
+                    onTogglePause = { events += "pause" },
+                    onTapHaptic = { events += "tick" },
+                )
+            }
+        }
         tapBeside()
         stop.assertDoesNotExist()
         tapBeside()
         stop.assertExists()
-    }
 
-    @Test
-    fun `Automatische Ruhe blendet nach der Wartezeit aus`() {
-        show(MeditationStatus.RUNNING, MeditationDisplay(autoCalm = true))
-        compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS - 1_000L)
-        stop.assertExists()
-        compose.mainClock.advanceTimeBy(2_000L)
-        stop.assertDoesNotExist()
-    }
+        ring.performClick()
+        assertEquals(listOf("tick", "pause"), events)
 
-    @Test
-    fun `In der Pause bleibt alles sichtbar`() {
-        show(MeditationStatus.PAUSED, MeditationDisplay(autoCalm = true))
+        status = MeditationStatus.PAUSED
         tapBeside()
         compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS * 2)
         stop.assertExists()
-    }
 
-    @Test
-    fun `Mit Zeit steht die Restzeit im Kreis`() {
-        show(MeditationStatus.RUNNING)
+        // Ohne Zeit steht nichts im Kreis.
         compose.onNodeWithText("7:12").assertExists()
-    }
-
-    @Test
-    fun `Ohne Zeit steht nichts im Kreis`() {
-        show(MeditationStatus.RUNNING, MeditationDisplay(autoCalm = false, showTime = false))
+        display = MeditationDisplay(autoCalm = false, showTime = false)
         compose.onNodeWithText("7:12").assertDoesNotExist()
     }
 }

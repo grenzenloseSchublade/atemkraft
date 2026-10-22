@@ -1,6 +1,7 @@
 package app.atemkraft.ui.session
 
 import app.atemkraft.data.BuiltInExercises
+import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.SessionTiming
 import app.atemkraft.playback.SessionStatus
 import kotlinx.coroutines.Dispatchers
@@ -35,62 +36,56 @@ class SessionViewModelTimingTest {
         Dispatchers.resetMain()
     }
 
+    /** Drift und Pause über dieselbe Box-Session: Ende auf die Millisekunde, die Pause zählt nicht. */
     @Test
-    fun `Countdown, dann 32 feste Phasen ohne Drift - Ende genau nach der Sollzeit`() = runTest {
+    fun `Countdown, Pause und Ende genau nach der Sollzeit`() = runTest {
         val vm = SessionViewModel(now = { testScheduler.currentTime })
         vm.start(box)
         runCurrent()
         assertEquals(SessionStatus.PREPARING, vm.state.value.status)
         assertEquals(SessionTiming.COUNTDOWN_SECONDS, vm.state.value.countdown)
 
-        advanceTimeBy(COUNTDOWN_MS)
-        runCurrent()
-        assertEquals(SessionStatus.RUNNING, vm.state.value.status)
-
-        advanceTimeBy(BOX_MS - 1)
-        runCurrent()
-        assertEquals(SessionStatus.RUNNING, vm.state.value.status)
-        advanceTimeBy(1)
-        runCurrent()
-        assertEquals(SessionStatus.FINISHED, vm.state.value.status)
-        assertEquals(BOX_MS, requireNotNull(vm.state.value.summary).durationMs)
-    }
-
-    @Test
-    fun `eine Pause verlängert die Sitzung, zählt aber nicht zur aktiven Zeit`() = runTest {
-        val vm = SessionViewModel(now = { testScheduler.currentTime })
-        vm.start(box)
         advanceTimeBy(COUNTDOWN_MS + 40_000L)
         runCurrent()
+        assertEquals(SessionStatus.RUNNING, vm.state.value.status)
         vm.pause()
-        assertEquals(SessionStatus.PAUSED, vm.state.value.status)
+        val paused = vm.state.value.progress
         advanceTimeBy(30_000L)
         runCurrent()
         assertEquals(SessionStatus.PAUSED, vm.state.value.status)
+        assertEquals("Bogen steht in der Pause", paused, vm.state.value.progress, 0f)
 
         vm.resume()
-        advanceTimeBy(BOX_MS)
+        advanceTimeBy(BOX_MS - 40_000L - 1)
+        runCurrent()
+        assertEquals(SessionStatus.RUNNING, vm.state.value.status)
+        advanceTimeBy(1)
         runCurrent()
         val end = vm.state.value
         assertEquals(SessionStatus.FINISHED, end.status)
         assertEquals(BOX_MS, requireNotNull(end.summary).durationMs)
     }
 
+    /** Von vorne nimmt dasselbe Muster samt Anpassung, ohne es per Id neu nachzuschlagen. */
     @Test
     fun `Von vorne setzt Countdown und aktive Zeit zurück`() = runTest {
         val vm = SessionViewModel(now = { testScheduler.currentTime })
-        vm.start(box)
+        // Ein Muster, das das Repository nicht kennt (wie ein Tagesmuster von gestern), mit 2 Runden.
+        vm.start(box.copy(id = "nicht-im-repository", name = "Eigenes Muster"), SessionConfig(rounds = 2))
         advanceTimeBy(COUNTDOWN_MS + 20_000L)
         runCurrent()
         vm.restart()
         runCurrent()
-        assertEquals(SessionStatus.PREPARING, vm.state.value.status)
-        assertEquals(0f, vm.state.value.progress, 0f)
+        val restarted = vm.state.value
+        assertEquals(SessionStatus.PREPARING, restarted.status)
+        assertEquals("Eigenes Muster", restarted.exerciseName)
+        assertEquals(2, restarted.roundCount)
+        assertEquals(0f, restarted.progress, 0f)
 
-        advanceTimeBy(COUNTDOWN_MS + BOX_MS)
+        advanceTimeBy(COUNTDOWN_MS + 2 * 16_000L)
         runCurrent()
         assertEquals(SessionStatus.FINISHED, vm.state.value.status)
-        assertEquals(BOX_MS, requireNotNull(vm.state.value.summary).durationMs)
+        assertEquals(2 * 16_000L, requireNotNull(vm.state.value.summary).durationMs)
     }
 
     private companion object {

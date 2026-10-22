@@ -4,11 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -23,7 +18,6 @@ import app.atemkraft.domain.SessionConfig
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +28,7 @@ import java.time.LocalDate
 
 /**
  * Einstieg in den Muster-Editor auf der Detailseite: Der Stift sitzt nur bei generierten Mustern
- * im Kopf (Wortlaut nach Herkunft), eingebaute Übungen behalten ihren Slot. Gespeicherte und
+ * im Kopf, eingebaute Übungen behalten ihren Slot. Gespeicherte und
  * eigene Muster bieten nur die Dauer an, ihre Phasen ändert man im Editor (Nutzer 2026-10-22);
  * das Muster des Tages behält seine Phasen-Stepper.
  */
@@ -73,84 +67,36 @@ class ExerciseDetailEditActionTest {
 
     private fun show(content: @Composable () -> Unit) = compose.setContent { AtemkraftTheme { content() } }
 
+    /**
+     * Angebot je Herkunft (Nutzer 2026-10-22): Stift nur bei generierten Mustern; Phasen-Stepper bei
+     * eingebauten Übungen (Markierung bleibt im Slot) und beim Muster des Tages wie in v1.6;
+     * gespeicherte und eigene Muster nur die Dauer – ihre Phasen ändert man im Editor.
+     */
     @Test
-    fun `Stift beim Muster des Tages ist ein Button mit voller Tippflaeche und ruft den Editor`() {
-        show { Detail(daily) }
-        val pen = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_adapt_daily))
-        pen.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-        // Klick-Semantik im sichtbaren Kreis, die 48 dp trägt der Layout-Knoten drumherum.
-        val node = pen.fetchSemanticsNode()
-        val size = Offset(node.layoutInfo.width.toFloat(), node.layoutInfo.height.toFloat())
-        val px48 = 48 * compose.density.density
-        assertTrue("Tippfläche ${size.x} × ${size.y} px", size.x >= px48 - 0.5f && size.y >= px48 - 0.5f)
+    fun `Angebot je Herkunft - Stift nur bei generierten Mustern, Phasen-Stepper nur bei eingebauten und Tagesmuster`() {
+        var exercise by mutableStateOf(builtIn)
+        show { Detail(exercise, onMarkedChange = if (exercise == builtIn) ({}) else null) }
 
-        pen.performClick()
-        assertEquals(listOf("bearbeiten"), events)
-    }
-
-    @Test
-    fun `Gespeichertes Muster heisst Muster bearbeiten, eigener Wortlaut geht vor`() {
-        var description by mutableStateOf<String?>(null)
-        show {
-            ExerciseDetailScreen(
-                exercise = saved,
-                requireSafetyConfirm = false,
-                savedIntervals = null,
-                onIntervalsChange = { _, _, _, _ -> },
-                onIntervalsReset = {},
-                onConfirmedSafety = {},
-                onStart = {},
-                onBack = {},
-                onEditPattern = { events += "bearbeiten" },
-                editDescription = description,
-            )
-        }
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_edit)).performClick()
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_adapt_daily)).assertDoesNotExist()
-
-        description = app.getString(R.string.cd_pattern_adapt_daily)
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_adapt_daily)).assertExists()
-        assertEquals(listOf("bearbeiten"), events)
-    }
-
-    @Test
-    fun `Eingebaute Uebung zeigt keinen Stift, die Markierung bleibt im Slot`() {
-        show { Detail(builtIn, onMarkedChange = {}) }
         compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_edit)).assertDoesNotExist()
         compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_adapt_daily)).assertDoesNotExist()
         compose.onNodeWithContentDescription(app.getString(R.string.cd_personal_mark)).assertExists()
-    }
-
-    @Test
-    fun `Ohne Callback kein Stift, auch nicht bei generierten Mustern`() {
-        show { Detail(daily, onEditPattern = null) }
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_adapt_daily)).assertDoesNotExist()
-    }
-
-    @Test
-    fun `Muster des Tages behaelt Phasen anpassen wie in v1_6`() {
-        show { Detail(daily) }
         compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
         compose.onNodeWithText(app.getString(R.string.adjust_inhale)).assertExists()
-        compose.onNodeWithText(app.getString(R.string.adjust_exhale)).assertExists()
-    }
 
-    @Test
-    fun `Gespeicherte Muster bieten nur die Dauer an, keine Phasen-Stepper`() {
-        show { Detail(saved) }
+        exercise = daily
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_adapt_daily)).performClick()
+        assertEquals(listOf("bearbeiten"), events)
+        compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
+        compose.onNodeWithText(app.getString(R.string.adjust_inhale)).assertExists()
+
+        exercise = saved
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_edit)).assertExists()
         compose.onNodeWithText(app.getString(R.string.adjust_minutes)).assertExists()
         compose.onNodeWithText(app.getString(R.string.adjust_intervals)).assertDoesNotExist()
         compose.onNodeWithText(app.getString(R.string.adjust_inhale)).assertDoesNotExist()
     }
 
-    @Test
-    fun `Eingebaute Uebungen behalten Phasen anpassen`() {
-        show { Detail(builtIn) }
-        compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
-        compose.onNodeWithText(app.getString(R.string.adjust_inhale)).assertExists()
-        compose.onNodeWithText(app.getString(R.string.adjust_exhale)).assertExists()
-    }
-
+    /** Persistierte Overrides aus v1.5 dürfen nach einem Update keine Phasen mehr erzwingen. */
     @Test
     fun `Alte Phasen-Anpassung eines generierten Musters gilt nicht mehr, die Dauer schon`() {
         var config: SessionConfig? = null

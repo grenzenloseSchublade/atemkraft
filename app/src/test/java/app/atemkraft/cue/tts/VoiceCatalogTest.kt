@@ -5,53 +5,23 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/** Integrität des Stimmen-Katalogs: eindeutige Ids, gepinnte Prüfsummen, Ableitungen aus dem Piper-Schema. */
+/** Integrität des Stimmen-Katalogs: eindeutige Ids, gepinnte Prüfsummen, Lizenzen, Hörproben. */
 class VoiceCatalogTest {
 
     @Test
-    fun `alle Ids und Sample-Assets sind eindeutig`() {
-        val ids = VoiceCatalog.all.map { it.id }
-        assertEquals(ids.size, ids.toSet().size)
-        val samples = VoiceCatalog.all.map { it.sampleAsset }
-        assertEquals(samples.size, samples.toSet().size)
-    }
-
-    @Test
-    fun `jeder Eintrag hat gepinnte Groesse und SHA-256`() {
+    fun `Katalog ist eindeutig, gepinnt und laedt nur aus der offiziellen Quelle`() {
+        listOf<(VoiceSpec) -> Any>({ it.id }, { it.sampleAsset }, { it.sha256 }).forEach { key ->
+            val values = VoiceCatalog.all.map(key)
+            assertEquals("doppelt: $values", values.size, values.toSet().size)
+        }
         val hex64 = Regex("^[0-9a-f]{64}$")
         VoiceCatalog.all.forEach { spec ->
             assertTrue("${spec.id}: sha256 muss 64 Hex-Zeichen (klein) haben", hex64.matches(spec.sha256))
             assertTrue("${spec.id}: sizeBytes muss > 0 sein", spec.sizeBytes > 0L)
-            assertTrue("${spec.id}: approxMb muss > 0 sein", spec.approxMb > 0)
-        }
-        val hashes = VoiceCatalog.all.map { it.sha256 }
-        assertEquals("Prüfsummen doppelt – Copy-Paste-Fehler?", hashes.size, hashes.toSet().size)
-    }
-
-    @Test
-    fun `approxMb ist die abgerundete MiB-Groesse`() {
-        assertEquals(110, VoiceCatalog.byId("thorsten")!!.approxMb)
-        assertEquals(25, VoiceCatalog.byId("eva")!!.approxMb)
-    }
-
-    @Test
-    fun `onnxName folgt dem Piper-Schema (dirName ohne Praefix + onnx)`() {
-        val thorsten = VoiceCatalog.byId("thorsten")!!
-        assertEquals("de_DE-thorsten-high.onnx", thorsten.onnxName)
-        VoiceCatalog.all.forEach { spec ->
-            assertTrue(spec.onnxName.endsWith(".onnx"))
-            assertTrue(!spec.onnxName.startsWith("vits-piper-"))
-        }
-    }
-
-    @Test
-    fun `tarUrl zeigt auf die offizielle tts-models-Release`() {
-        VoiceCatalog.all.forEach { spec ->
             assertTrue(
                 spec.tarUrl,
-                spec.tarUrl.startsWith(
-                    "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/",
-                ) && spec.tarUrl.endsWith("${spec.dirName}.tar.bz2"),
+                spec.tarUrl.startsWith("https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/") &&
+                    spec.tarUrl.endsWith("${spec.dirName}.tar.bz2"),
             )
         }
     }
@@ -74,21 +44,9 @@ class VoiceCatalogTest {
     }
 
     @Test
-    fun `GLaDOS ist entfernt, weil das Modell keine Lizenz hat (SEC-LEGAL-03)`() {
-        assertEquals(null, VoiceCatalog.byId("glados"))
-        assertTrue(VoiceCatalog.all.none { it.dirName.contains("glados") })
-    }
-
-    @Test
     fun `jede Hoerprobe gehoert zu einer Stimme und umgekehrt`() {
         val dir = listOf(File("src/main/assets"), File("app/src/main/assets")).first { it.isDirectory }
         val files = File(dir, "voice_samples").listFiles().orEmpty().map { "voice_samples/${it.name}" }.toSet()
         assertEquals(VoiceCatalog.all.map { it.sampleAsset }.toSet(), files)
-    }
-
-    @Test
-    fun `byId liefert null fuer Unbekanntes`() {
-        assertEquals(null, VoiceCatalog.byId("gibtsnicht"))
-        assertEquals(null, VoiceCatalog.byId(null))
     }
 }

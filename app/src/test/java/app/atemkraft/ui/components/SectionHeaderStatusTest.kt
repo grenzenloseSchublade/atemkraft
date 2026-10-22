@@ -2,6 +2,10 @@ package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasText
@@ -30,7 +34,11 @@ class SectionHeaderStatusTest {
     @get:Rule
     val compose = createComposeRule()
 
-    private fun show(width: Int, status: String = "· angepasst", spoken: String = "angepasst") {
+    @Test
+    fun `Status bricht nur zwischen Teilen um, nie mit Punkt am Zeilenanfang`() {
+        var width by mutableIntStateOf(360)
+        var status by mutableStateOf("· angepasst")
+        var spoken by mutableStateOf("angepasst")
         compose.setContent {
             AtemkraftTheme {
                 Box(Modifier.width(width.dp)) {
@@ -44,23 +52,17 @@ class SectionHeaderStatusTest {
                 }
             }
         }
-    }
-
-    @Test
-    fun `genug Platz - Status mit Trennpunkt hinter dem Titel`() {
-        show(width = 360)
+        // Genug Platz: Status mit Trennpunkt hinter dem Titel.
         compose.onNodeWithContentDescription("angepasst").assert(hasText("· angepasst"))
-    }
 
-    @Test
-    fun `zu schmal - Status darunter ohne Trennpunkt am Zeilenanfang`() {
-        show(width = 170)
+        // Zu schmal: Status darunter ohne Trennpunkt am Zeilenanfang.
+        width = 170
         compose.onNodeWithContentDescription("angepasst").assert(hasText("angepasst"))
-    }
 
-    @Test
-    fun `darunter zu breit - jeder Teil in eigener Zeile, keine Zeile endet auf Punkt`() {
-        show(width = 120, status = "· 24\u00A0s\u00A0· 2,5\u00A0Atemzüge/min", spoken = "Atemzug")
+        // Darunter zu breit: jeder Teil in eigener Zeile, keine Zeile endet auf Punkt.
+        width = 120
+        status = "· 24\u00A0s\u00A0· 2,5\u00A0Atemzüge/min"
+        spoken = "Atemzug"
         compose.onNodeWithContentDescription("Atemzug").assert(hasText("24\u00A0s\n2,5\u00A0Atemzüge/min"))
     }
 }

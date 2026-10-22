@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +39,6 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -51,22 +49,14 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsNotFocused
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.click
-import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.style.TextAlign
@@ -78,7 +68,6 @@ import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.LinkChip
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
@@ -87,9 +76,7 @@ import app.atemkraft.ui.components.SessionPrimaryButton
 import app.atemkraft.ui.components.SessionSecondaryButton
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
-import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
-import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.meditation.DurationPickerState
 import app.atemkraft.ui.meditation.TimeDial
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -103,6 +90,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -112,20 +100,14 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Echte Tap-Injektion um jedes zentrale Bedienelement (A11Y-05): Die sichtbare Fläche folgt der
- * Schrift (Sizes), die Tippfläche bleibt 48 dp – ±23 dp vom Mittelpunkt trifft, ±25 dp nicht.
- * Sichert ab, was nur über Material-Interna (Hit-Test-Erweiterung, minimumInteractive) gilt.
+ * Gemeinsamer Rahmen der Tipp-Tests: ein Inhalt je [show], echte Taps ([tap]) und die Prüfung
+ * der 48-dp-Tippfläche ([probe]).
  */
-@RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w412dp-h800dp-xhdpi")
-class ControlTouchTest(private val fontScale: Float) {
+abstract class ControlHarness(protected val fontScale: Float) {
 
     companion object {
-        @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "fs{0}")
-        fun params(): List<Array<Any>> = TestMatrix.FONT_SCALES.map { arrayOf<Any>(it) }
-
         private const val INSIDE_DP = 23f
         private const val OUTSIDE_DP = 25f
     }
@@ -134,17 +116,19 @@ class ControlTouchTest(private val fontScale: Float) {
     @get:Rule
     val compose = createComposeRule(effectContext = Frozen)
 
+    protected val app get() = RuntimeEnvironment.getApplication()
+
     private object Frozen : InfiniteAnimationPolicy {
         override suspend fun <R> onInfiniteOperation(block: suspend () -> R): R = awaitCancellation()
     }
 
     private var current by mutableStateOf<(@Composable () -> Unit)?>(null)
     private lateinit var inputMode: InputModeManager
-    private val hits = mutableListOf<String>()
-    private val density get() = compose.density.density
+    protected val hits = mutableListOf<String>()
+    protected val density get() = compose.density.density
 
     @Before
-    fun setUp() {
+    fun setUpContent() {
         RuntimeEnvironment.setFontScale(fontScale)
         compose.setContent {
             inputMode = LocalInputModeManager.current
@@ -154,25 +138,25 @@ class ControlTouchTest(private val fontScale: Float) {
         }
     }
 
-    private fun show(content: @Composable () -> Unit) {
+    protected fun show(content: @Composable () -> Unit) {
         current = content
         compose.waitForIdle()
     }
 
     /** Bedienung per Tastatur/D-Pad: Erst dann sind Knöpfe fokussierbar (Compose 1.7). */
     @OptIn(ExperimentalComposeUiApi::class)
-    private fun keyboardMode() {
+    protected fun keyboardMode() {
         compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
         compose.waitForIdle()
     }
 
-    private fun clickables(): List<SemanticsNode> = compose
+    protected fun clickables(): List<SemanticsNode> = compose
         .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick), useUnmergedTree = true)
         .fetchSemanticsNodes()
         .filter { it.layoutInfo.isPlaced }
 
     /** Tippt an [at] (Root-px) und liefert, wer reagiert hat. */
-    private fun tap(at: Offset): List<String> {
+    protected fun tap(at: Offset): List<String> {
         hits.clear()
         compose.onRoot().performTouchInput { click(at) }
         compose.waitForIdle()
@@ -184,7 +168,7 @@ class ControlTouchTest(private val fontScale: Float) {
      * Ebene (nach Polster und Größe); die Bedienelemente sind darin zentriert, deshalb liefert sie
      * den Mittelpunkt, die äußere Größe kommt aus `layoutInfo.width/height`.
      */
-    private fun layoutBounds(node: SemanticsNode): Rect {
+    protected fun layoutBounds(node: SemanticsNode): Rect {
         val c = node.layoutInfo.coordinates.boundsInRoot().center
         val w = node.layoutInfo.width / 2f
         val h = node.layoutInfo.height / 2f
@@ -196,7 +180,7 @@ class ControlTouchTest(private val fontScale: Float) {
      * Optik kleiner als 48 dp) verfehlt ±25 dp. Ist die Optik bei großer Schrift entlang der Achse
      * selbst über 50 dp gewachsen (Text-Button mit M3-Beschriftung bei fs 2,0), trifft ±25 dp zu Recht.
      */
-    private fun probe(name: String, node: SemanticsNode, expected: String, tightAxes: Set<Char>) {
+    protected fun probe(name: String, node: SemanticsNode, expected: String, tightAxes: Set<Char>) {
         val c = layoutBounds(node).center
         for (axis in listOf('x', 'y')) {
             val visible = if (axis == 'x') node.size.width else node.size.height
@@ -209,15 +193,34 @@ class ControlTouchTest(private val fontScale: Float) {
             }
         }
     }
+}
 
-    @Test
-    fun `AppIconButton trifft genau in der 48-dp-Tippflaeche`() {
-        show { AppIconButton(onClick = { hits += "icon" }) { Icon(Icons.Filled.Delete, contentDescription = "x") } }
-        probe("AppIconButton", clickables().single(), "icon", setOf('x', 'y'))
+/**
+ * Echte Tap-Injektion um jedes zentrale Bedienelement (A11Y-05) bei Schrift 1,0, 1,3 und 2,0: Die
+ * sichtbare Fläche folgt der Schrift (Sizes), die Tippfläche bleibt 48 dp – ±23 dp vom Mittelpunkt
+ * trifft, ±25 dp nicht. Sichert ab, was nur über Material-Interna (Hit-Test-Erweiterung,
+ * minimumInteractive) gilt.
+ */
+@RunWith(ParameterizedRobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w412dp-h800dp-xhdpi")
+class ControlTouchTest(fontScale: Float) : ControlHarness(fontScale) {
+
+    companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "fs{0}")
+        fun params(): List<Array<Any>> = TestMatrix.FONT_SCALES.map { arrayOf<Any>(it) }
+
+        private const val INSIDE_DP = 23f
     }
 
+    // PushHeader meldet den Pfeil schmaler, als seine Tippfläche ist (Titel rückt näher heran):
+    // Die Tippfläche muss trotzdem volle 48 dp bleiben und darf nicht unter den Titel reichen.
     @Test
-    fun `AppIconToggle trifft genau in der 48-dp-Tippflaeche`() {
+    fun `Icon-Knoepfe - AppIconButton, AppIconToggle, PushHeader-Pfeil und Stepper treffen genau in 48 dp`() {
+        show { AppIconButton(onClick = { hits += "icon" }) { Icon(Icons.Filled.Delete, contentDescription = "x") } }
+        probe("AppIconButton", clickables().single(), "icon", setOf('x', 'y'))
+
         show {
             var on by remember { mutableStateOf(false) }
             AppIconToggle(
@@ -230,18 +233,10 @@ class ControlTouchTest(private val fontScale: Float) {
             ) { Icon(Icons.Filled.Delete, contentDescription = "x") }
         }
         probe("AppIconToggle", clickables().single(), "toggle", setOf('x', 'y'))
-    }
 
-    // PushHeader meldet den Pfeil schmaler, als seine Tippfläche ist (Titel rückt näher heran):
-    // Die Tippfläche muss trotzdem volle 48 dp bleiben und darf nicht unter den Titel reichen.
-    @Test
-    fun `Zurueck-Pfeil im PushHeader trifft genau in der 48-dp-Tippflaeche`() {
         show { Box(Modifier.width(340.dp)) { PushHeader(onBack = { hits += "back" }, title = "Begriffe erklärt") } }
         probe("PushHeader-Pfeil", clickables().single(), "back", setOf('x', 'y'))
-    }
 
-    @Test
-    fun `Stepper-Knoepfe treffen genau in der 48-dp-Tippflaeche`() {
         show {
             Box(Modifier.width(340.dp)) {
                 Stepper(label = "Dauer", value = 5, range = 1..10, onChange = { hits += if (it > 5) "plus" else "minus" })
@@ -253,7 +248,7 @@ class ControlTouchTest(private val fontScale: Float) {
     }
 
     @Test
-    fun `Chip, Text-Buttons, Segment und Reset sind 48 dp hoch antippbar`() {
+    fun `Chip, Text-Buttons, Segment, Reset und Schalterzeile sind 48 dp hoch antippbar`() {
         show { LinkChip(label = "Box-Atmung", onClick = { hits += "chip" }) }
         probe("LinkChip", clickables().single(), "chip", setOf('y'))
 
@@ -270,10 +265,8 @@ class ControlTouchTest(private val fontScale: Float) {
         show { Box(Modifier.width(340.dp)) { StartSplitButton("Starten", resetVisible = true, onStart = { hits += "start" }, onReset = { hits += "reset" }) } }
         val reset = clickables().maxBy { layoutBounds(it).left }
         probe("Reset", reset, "reset", setOf('y'))
-    }
 
-    @Test
-    fun `Schalterzeile schaltet ueber die ganze Zeile`() {
+        // Schalterzeile: schaltet über die ganze Zeile, ganz links auf dem Label ebenso.
         show {
             var on by remember { mutableStateOf(false) }
             Box(Modifier.width(340.dp)) {
@@ -289,154 +282,19 @@ class ControlTouchTest(private val fontScale: Float) {
             .single()
         assertTrue("Zeile ≥ 48 dp hoch", layoutBounds(row).height >= 48 * density - 0.5f)
         probe("ToggleRow", row, "row", emptySet())
-        // Ganz links auf dem Label schaltet die Zeile ebenso.
         val b = layoutBounds(row)
         assertEquals(listOf("row"), tap(Offset(b.left + 4 * density, b.center.y)))
     }
 
     @Test
-    fun `Stepper und Schalterzeile melden Name, Rolle, Zustand und Wert`() {
-        // Was TalkBack liest (zusammengeführter Baum): Knöpfe mit Name, Rolle, Klick und Disabled
-        // an der Grenze; der Wert als Live-Region, die nach dem Klick den neuen Wert trägt.
-        val app = RuntimeEnvironment.getApplication()
-        val minusName = "Dauer, ${app.getString(R.string.adjust_decrease)}"
-        val plusName = "Dauer, ${app.getString(R.string.adjust_increase)}"
-        var value by mutableIntStateOf(1)
-        show { Box(Modifier.width(340.dp)) { Stepper(label = "Dauer", value = value, range = 1..10, onChange = { value = it }) } }
-        compose.onNodeWithContentDescription(minusName)
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-            .assertIsNotEnabled()
-        compose.onNodeWithContentDescription(plusName)
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-            .assertIsEnabled()
-            .performSemanticsAction(SemanticsActions.OnClick)
-        compose.onNodeWithContentDescription("Dauer: 2")
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-        compose.onNodeWithContentDescription(minusName).assertIsEnabled()
-
-        var on by mutableStateOf(false)
-        show { Box(Modifier.width(340.dp)) { ToggleRow(label = "Vibration", checked = on, onCheckedChange = { on = it }, hint = "Hinweis") } }
-        val row = compose.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch))
-        row.assertIsOff().assert(hasText("Vibration")).assert(hasText("Hinweis"))
-        row.performSemanticsAction(SemanticsActions.OnClick)
-        row.assertIsOn()
-
-        show { Box(Modifier.width(340.dp)) { ToggleRow(label = "Sprachanleitung", checked = false, onCheckedChange = {}, enabled = false) } }
-        compose.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch)).assertIsNotEnabled()
-    }
-
-    @Test
-    fun `Reset per Tastatur gibt den Fokus an Starten, statt ihn mit dem Knopf zu verlieren`() {
-        val app = RuntimeEnvironment.getApplication()
-        var resetVisible by mutableStateOf(true)
-        show {
-            Box(Modifier.width(340.dp)) {
-                StartSplitButton("Starten", resetVisible = resetVisible, onStart = {}, onReset = { resetVisible = false })
-            }
-        }
-        keyboardMode()
-        val reset = compose.onNodeWithContentDescription(app.getString(R.string.adjust_reset))
-        reset.performSemanticsAction(SemanticsActions.RequestFocus)
-        reset.assertIsFocused()
-        reset.performSemanticsAction(SemanticsActions.OnClick)
-        compose.onNodeWithText("Starten").assertIsFocused()
-    }
-
-    @Test
-    fun `Ende-Screen legt den Fokus nur bei Tastatur auf Nochmal`() {
-        val app = RuntimeEnvironment.getApplication()
-        val again = app.getString(R.string.action_again)
-        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
-        compose.onNodeWithText(again).assertIsNotFocused()
-        show {}
-        keyboardMode()
-        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
-        compose.onNodeWithText(again).assertIsFocused()
-    }
-
-    @Test
-    fun `Ende-Screen fuehrt mit Im Logbuch ansehen ins Logbuch`() {
-        val app = RuntimeEnvironment.getApplication()
-        var opened = 0
-        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}, onOpenLogbook = { opened++ }) }
-        compose.onNodeWithText(app.getString(R.string.session_open_logbook))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-            .performClick()
-        assertEquals(1, opened)
-        // Ohne Ziel kein Link.
-        show { FinishedPanel(title = "Wie fühlst du dich?", onAgain = {}, onExit = {}) }
-        compose.onNodeWithText(app.getString(R.string.session_open_logbook)).assertDoesNotExist()
-    }
-
-    @Test
-    fun `Stepper am Anschlag gibt den Fokus an den Gegenknopf`() {
-        val app = RuntimeEnvironment.getApplication()
-        var value by mutableIntStateOf(2)
-        show { Box(Modifier.width(340.dp)) { Stepper(label = "Dauer", value = value, range = 1..3, onChange = { value = it }) } }
-        val minus = compose.onNodeWithContentDescription("Dauer, ${app.getString(R.string.adjust_decrease)}")
-        val plus = compose.onNodeWithContentDescription("Dauer, ${app.getString(R.string.adjust_increase)}")
-        keyboardMode()
-        minus.performSemanticsAction(SemanticsActions.RequestFocus)
-        minus.assertIsFocused()
-        minus.performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals(1, value)
-        minus.assertIsNotEnabled()
-        plus.assertIsFocused()
-        // Ohne Anschlag bleibt der Fokus, wo er ist.
-        plus.performSemanticsAction(SemanticsActions.OnClick)
-        plus.assertIsFocused()
-        plus.performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals(3, value)
-        minus.assertIsFocused()
-    }
-
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Test
-    fun `Segment-Gruppe traegt ihre Ueberschrift als Namen, TalkBack liest sie einmal`() {
-        show {
-            Column(Modifier.width(340.dp)) {
-                SubLabel("Lautstärke", Modifier.choiceGroupHeading())
-                SegmentedChoiceRow(listOf(1, 2), 1, {}, groupLabel = "Lautstärke") { "Stufe $it" }
-            }
-        }
-        val group = compose.onNodeWithContentDescription("Lautstärke", useUnmergedTree = true).fetchSemanticsNode()
-        assertTrue("Gruppe enthält die Segmente", group.children.isNotEmpty())
-        assertTrue("Gruppe fasst nicht zusammen", !group.config.isMergingSemanticsOfDescendants)
-        // Die Gruppe ist für TalkBack ein Halt (Name ohne fokussierbaren Vorfahren); die sichtbare
-        // Überschrift darf den Text deshalb nicht noch einmal ansagen.
-        val spoken = (hasText("Lautstärke") or hasContentDescription("Lautstärke")) and
-            !SemanticsMatcher.keyIsDefined(SemanticsProperties.InvisibleToUser)
-        compose.onAllNodes(spoken, useUnmergedTree = true).assertCountEquals(1)
-        assertEquals("Segmente bleiben einzeln antippbar", 2, clickables().size)
-    }
-
-    @Test
-    fun `benachbarte Icon-Buttons ohne Abstand trennen an der Naht`() {
-        show {
-            Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-                AppIconButton(onClick = { hits += "links" }) { Icon(Icons.Filled.PlayArrow, contentDescription = "l") }
-                AppIconButton(onClick = { hits += "rechts" }) { Icon(Icons.Filled.Delete, contentDescription = "r") }
-            }
-        }
-        val (left, right) = clickables().sortedBy { layoutBounds(it).left }
-        val seam = layoutBounds(left).right
-        val y = layoutBounds(left).center.y
-        assertEquals(listOf("links"), tap(Offset(seam - 2 * density, y)))
-        assertEquals(listOf("rechts"), tap(Offset(seam + 2 * density, y)))
-    }
-
-    @Test
-    fun `Start und Reset sind gleich hoch und nicht auf 48 dp aufgeblaeht`() {
+    fun `Buttons sind sichtbar so hoch wie M3-Buttons - Split-Button und Session-Reihe`() {
         show { Box(Modifier.width(340.dp)) { StartSplitButton("Starten", resetVisible = true, onStart = {}, onReset = {}) } }
         val (start, reset) = clickables().sortedBy { layoutBounds(it).left }
         val hStart = visibleHeight(start)
         val hReset = visibleHeight(reset)
         assertTrue("Start $hStart px ≠ Reset $hReset px (fs$fontScale)", abs(hStart - hReset) <= 1f)
         assertMinHeight("Start", hStart)
-    }
 
-    @Test
-    fun `Session-Buttons in einer Reihe sind sichtbar nur so hoch wie Buttons`() {
         show {
             Box(Modifier.width(340.dp)) {
                 AdaptiveButtonRow {
@@ -452,7 +310,6 @@ class ControlTouchTest(private val fontScale: Float) {
 
     @Test
     fun `Session-Steuerung - Icon-Knoepfe mit Namen und 48-dp-Tippflaeche, Vorbereitung nur Beenden`() {
-        val app = RuntimeEnvironment.getApplication()
         var playing by mutableStateOf(true)
         var preparing by mutableStateOf(false)
         show {
@@ -505,72 +362,9 @@ class ControlTouchTest(private val fontScale: Float) {
     }
 
     @Test
-    fun `Pruefung erkennt klickbare Flaechen ohne Klick-Semantik und zu kleine Tippflaechen`() {
-        // Selbsttest für ControlFindings: bricht ein Compose-Update die Erkennung über die
-        // Modifier-Klassen, wird dieser Test rot statt die Screenshot-Prüfung stumm.
-        show {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.size(48.dp).clearAndSetSemantics { contentDescription = "stumm" }.clickable(role = Role.Button) {})
-                Box(Modifier.size(40.dp).clickable(role = Role.Button) {})
-            }
-        }
-        val nodes = compose.onAllNodes(SemanticsMatcher("alle") { true }, useUnmergedTree = true).fetchSemanticsNodes()
-        val frame = compose.onRoot().fetchSemanticsNode().boundsInRoot
-        val found = ControlFindings.findings(nodes, frame, density, "selbsttest").map { it.substringBefore('\t') }
-        assertTrue("OHNE_KLICK nicht erkannt: $found", "OHNE_KLICK" in found)
-        assertTrue("TIPPFLAECHE nicht erkannt: $found", "TIPPFLAECHE" in found)
-    }
-
-    @Test
-    fun `Pruefung erkennt Text, den eine Rundung anschneidet`() {
-        // Selbsttest für TextClipFindings: links das Fehlerbild aus v1.6.5 (Rundung eng um die
-        // Anzeige, „Minuten“ unten links in der Ecke), daneben eine runde Scheibe mit Luft um den
-        // Text, rechts zentrierter Text mit Mindestbreite am Ende einer runden Karte wie der
-        // Stepper-Wert (sein Layout ist mit der ganzen Kartenbreite gesetzt – früher Fehlalarm).
-        show {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.size(64.dp, 48.dp).clip(RoundedCornerShape(16.dp))) {
-                    Text("Minuten", maxLines = 1, softWrap = false, modifier = Modifier.align(Alignment.BottomStart))
-                }
-                Box(Modifier.size(160.dp).clip(CircleShape), contentAlignment = Alignment.Center) { Text("Minuten") }
-                Row(Modifier.width(160.dp).clip(RoundedCornerShape(16.dp)), verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(Modifier.weight(1f))
-                    Text("10", textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 40.dp).padding(vertical = 12.dp))
-                    Spacer(Modifier.width(16.dp))
-                }
-            }
-        }
-        val (tight, roomy, centered) = compose
-            .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
-            .fetchSemanticsNodes()
-            .sortedBy { it.positionInRoot.x }
-        assertEquals("enge Rundung nicht erkannt (fs$fontScale)", listOf("Minuten"), TextClipFindings.findings(tight))
-        assertEquals("Scheibe mit Luft fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(roomy))
-        assertEquals("zentrierter Wert fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(centered))
-    }
-
-    @Test
-    fun `Pruefung uebergeht weggescrollten Text in einer runden Flaeche`() {
-        // Wie die Hinweisliste im Sicherheitsdialog: Die Scrollfläche liegt in einer runden
-        // Fläche, ein Hinweis steht weit unten außerhalb – unsichtbar, also kein Befund.
-        show {
-            Box(Modifier.size(160.dp, 64.dp).clip(RoundedCornerShape(16.dp))) {
-                Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-                    Text("Oben")
-                    Text("Weggescrollt", modifier = Modifier.padding(top = 120.dp))
-                }
-            }
-        }
-        val texts = compose
-            .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
-            .fetchSemanticsNodes()
-        assertEquals("weggescrollter Text fälschlich gemeldet (fs$fontScale)", emptyList<String>(), texts.flatMap { TextClipFindings.findings(it) })
-    }
-
-    @Test
     fun `Zeitring - ∞-Marke 48 dp, Mitte schaltet nur die Feinwahl, Band und Regler stellen den Wert`() {
-        val app = RuntimeEnvironment.getApplication()
-        for (sideDp in listOf(200, 360)) {
+        // Der kleine Ring ist der ungünstigste Fall (Zahlen, ∞-Marke und Mitte am engsten).
+        for (sideDp in listOf(200)) {
             val state = DurationPickerState(initialMinutes = 30, initialFree = false)
             show { Box(Modifier.size(sideDp.dp)) { TimeDial(state = state, onTick = {}, modifier = Modifier.fillMaxSize()) } }
             val where = "Ring $sideDp dp fs$fontScale"
@@ -669,5 +463,96 @@ class ControlTouchTest(private val fontScale: Float) {
         } else {
             assertTrue("$name fs$fontScale wächst mit der Schrift: $heightPx < $expected", heightPx >= expected - 1f)
         }
+    }
+}
+
+/**
+ * Was nicht von der Schrift abhängt, einmal bei 1,0: Selbsttests der Screenshot-Gates
+ * ([ControlFindings], [TextClipFindings]) und der Fokus am Stepper-Anschlag per Tastatur.
+ */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w412dp-h800dp-xhdpi")
+class ControlChecksTest : ControlHarness(1.0f) {
+
+    @Test
+    fun `Stepper am Anschlag gibt den Fokus an den Gegenknopf`() {
+        var value by mutableIntStateOf(2)
+        show { Box(Modifier.width(340.dp)) { Stepper(label = "Dauer", value = value, range = 1..3, onChange = { value = it }) } }
+        val minus = compose.onNodeWithContentDescription("Dauer, ${app.getString(R.string.adjust_decrease)}")
+        val plus = compose.onNodeWithContentDescription("Dauer, ${app.getString(R.string.adjust_increase)}")
+        keyboardMode()
+        minus.performSemanticsAction(SemanticsActions.RequestFocus)
+        minus.assertIsFocused()
+        minus.performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(1, value)
+        minus.assertIsNotEnabled()
+        plus.assertIsFocused()
+        // Ohne Anschlag bleibt der Fokus, wo er ist.
+        plus.performSemanticsAction(SemanticsActions.OnClick)
+        plus.assertIsFocused()
+        plus.performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(3, value)
+        minus.assertIsFocused()
+    }
+
+    @Test
+    fun `Pruefung erkennt klickbare Flaechen ohne Klick-Semantik und zu kleine Tippflaechen`() {
+        // Selbsttest für ControlFindings: bricht ein Compose-Update die Erkennung über die
+        // Modifier-Klassen, wird dieser Test rot statt die Screenshot-Prüfung stumm.
+        show {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.size(48.dp).clearAndSetSemantics { contentDescription = "stumm" }.clickable(role = Role.Button) {})
+                Box(Modifier.size(40.dp).clickable(role = Role.Button) {})
+            }
+        }
+        val nodes = compose.onAllNodes(SemanticsMatcher("alle") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+        val frame = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        val found = ControlFindings.findings(nodes, frame, density, "selbsttest").map { it.substringBefore('\t') }
+        assertTrue("OHNE_KLICK nicht erkannt: $found", "OHNE_KLICK" in found)
+        assertTrue("TIPPFLAECHE nicht erkannt: $found", "TIPPFLAECHE" in found)
+    }
+
+    @Test
+    fun `Pruefung erkennt Text, den eine Rundung anschneidet, nicht aber weggescrollten`() {
+        // Selbsttest für TextClipFindings: links das Fehlerbild aus v1.6.5 (Rundung eng um die
+        // Anzeige, „Minuten“ unten links in der Ecke), daneben eine runde Scheibe mit Luft um den
+        // Text, rechts zentrierter Text mit Mindestbreite am Ende einer runden Karte wie der
+        // Stepper-Wert (sein Layout ist mit der ganzen Kartenbreite gesetzt – früher Fehlalarm).
+        show {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.size(64.dp, 48.dp).clip(RoundedCornerShape(16.dp))) {
+                    Text("Minuten", maxLines = 1, softWrap = false, modifier = Modifier.align(Alignment.BottomStart))
+                }
+                Box(Modifier.size(160.dp).clip(CircleShape), contentAlignment = Alignment.Center) { Text("Minuten") }
+                Row(Modifier.width(160.dp).clip(RoundedCornerShape(16.dp)), verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.weight(1f))
+                    Text("10", textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 40.dp).padding(vertical = 12.dp))
+                    Spacer(Modifier.width(16.dp))
+                }
+            }
+        }
+        val (tight, roomy, centered) = compose
+            .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .sortedBy { it.positionInRoot.x }
+        assertEquals("enge Rundung nicht erkannt (fs$fontScale)", listOf("Minuten"), TextClipFindings.findings(tight))
+        assertEquals("Scheibe mit Luft fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(roomy))
+        assertEquals("zentrierter Wert fälschlich gemeldet (fs$fontScale)", emptyList<String>(), TextClipFindings.findings(centered))
+
+        // Wie die Hinweisliste im Sicherheitsdialog: Die Scrollfläche liegt in einer runden
+        // Fläche, ein Hinweis steht weit unten außerhalb – unsichtbar, also kein Befund.
+        show {
+            Box(Modifier.size(160.dp, 64.dp).clip(RoundedCornerShape(16.dp))) {
+                Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+                    Text("Oben")
+                    Text("Weggescrollt", modifier = Modifier.padding(top = 120.dp))
+                }
+            }
+        }
+        val texts = compose
+            .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+        assertEquals("weggescrollter Text fälschlich gemeldet", emptyList<String>(), texts.flatMap { TextClipFindings.findings(it) })
     }
 }

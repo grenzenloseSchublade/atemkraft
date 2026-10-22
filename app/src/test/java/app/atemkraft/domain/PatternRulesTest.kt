@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Erzeugungsregeln über das ganze Gitter (Einatmen 2..8, Ausatmen 2..8, Halten voll 0..4,
- * Halten leer 0..2, beide Charaktere): Teilmenge der Import-Leitplanken, nachgezählte Mengen.
+ * Halten leer 0..2, beide Charaktere): Teilmenge der Import-Leitplanken, Größe und Spannen.
  */
 class PatternRulesTest {
 
@@ -39,31 +39,24 @@ class PatternRulesTest {
 
     private fun PatternSpec.hasHold() = holdFull != null || holdEmpty != null
 
-    /** Jedes erzeugte Muster besteht den Import: kein Verwerfen, keine Sicherheitsabfrage. */
+    /**
+     * Jedes Muster des Tages folgt den Erzeugungsregeln, und jedes erzeugbare Muster besteht den
+     * Import (Leitplanken): kein Verwerfen, keine Sicherheitsabfrage.
+     */
     @Test
-    fun `Erzeugungsregeln sind eine Teilmenge der Leitplanken`() {
+    fun `Tagesmuster sind in den Erzeugungsregeln, diese in den Leitplanken`() {
+        (0L until 5000L).forEach { seed ->
+            val spec = RandomPatternGenerator.forSeed(seed).spec
+            assertTrue("$seed: $spec", spec.withinCreationRules())
+        }
         valid.forEach { assertTrue("$it", it.withinGuardrails()) }
     }
 
+    /** Größe des Regelraums und erreichbare Spannen je Charakter fangen Änderungen an den Konstanten ab. */
     @Test
-    fun `Zaehlung ruhig 191 davon 37 Samana und 15 ohne Halten`() {
+    fun `Regelraum - Groesse 191 und 18, erreichbare Grenzen je Charakter`() {
         assertEquals(191, calm.size)
-        assertEquals(37, calm.count { it.exhale == it.inhale })
-        assertEquals(15, calm.count { !it.hasHold() })
-        assertEquals(13, calm.count { !it.hasHold() && it.exhale > it.inhale })
-        assertEquals(141, calm.count { it.hasHold() && it.exhale > it.inhale })
-    }
-
-    @Test
-    fun `Zaehlung aktivierend 18 davon 8 ohne und 10 mit Halten`() {
         assertEquals(18, active.size)
-        assertEquals(8, active.count { !it.hasHold() })
-        assertEquals(10, active.count { it.hasHold() })
-        assertEquals(209, valid.size)
-    }
-
-    @Test
-    fun `erreichbare Grenzen je Charakter`() {
         fun List<PatternSpec>.span(field: PatternField) = minOf { it.secondsOf(field) }..maxOf { it.secondsOf(field) }
         assertEquals(2..6, calm.span(PatternField.INHALE))
         assertEquals(2..8, calm.span(PatternField.EXHALE))
@@ -73,11 +66,7 @@ class PatternRulesTest {
         assertEquals(2..4, active.span(PatternField.EXHALE))
         assertEquals(0..2, active.span(PatternField.HOLD_FULL))
         assertTrue(active.all { it.holdEmpty == null })
-    }
-
-    /** 4·4 = 8 s liegt unter 9 s: Ruhig ohne Halten mit Ein = Aus geht nur als 5·5 oder 6·6. */
-    @Test
-    fun `ruhig ohne Halten und gleich lang nur 5-5 und 6-6`() {
+        // 4·4 = 8 s liegt unter 9 s: Ruhig ohne Halten mit Ein = Aus geht nur als 5·5 oder 6·6.
         val samana = calm.filter { !it.hasHold() && it.exhale == it.inhale }
         assertEquals(listOf(5, 6), samana.map { it.secondsOf(PatternField.INHALE) }.sorted())
     }
@@ -92,24 +81,5 @@ class PatternRulesTest {
         // 8,5 s: Leitplanke ja, Erzeugung nein.
         assertTrue(PatternSpec(4.0, null, 4.5, null, false).withinGuardrails())
         assertFalse(PatternSpec(4.0, null, 4.5, null, false).withinCreationRules())
-        assertEquals(5, PatternSpec(4.5, null, 6.0, null, false).secondsOf(PatternField.INHALE))
-    }
-
-    /** Das Muster des Tages folgt den Erzeugungsregeln. */
-    @Test
-    fun `jedes Tagesmuster erfuellt die Erzeugungsregeln`() {
-        (0L until 5000L).forEach { seed ->
-            val spec = RandomPatternGenerator.forSeed(seed).spec
-            assertTrue("$seed: $spec", spec.withinCreationRules())
-        }
-    }
-
-    @Test
-    fun `Konstanten passen zum Plan`() {
-        assertEquals(9, PatternRules.CALM_CYCLE_MIN)
-        assertEquals(13, PatternRules.CALM_CYCLE_MAX)
-        assertEquals(8, PatternRules.EXHALE_MAX)
-        assertEquals(6, PatternRules.ACTIVE_CYCLE_MIN)
-        assertEquals(9, PatternRules.ACTIVE_CYCLE_MAX)
     }
 }

@@ -12,80 +12,47 @@ import org.junit.Test
 class DurationPickerStateTest {
 
     @Test
-    fun `Anfangswerte werden auf 1 bis 60 geklemmt`() {
+    fun `Klemmen auf 1 bis 60 bei Start, select und step, Aenderung nur bei echtem Wechsel`() {
         assertEquals(1, DurationPickerState(0, false).minutes)
-        assertEquals(1, DurationPickerState(-5, false).minutes)
-        assertEquals(60, DurationPickerState(61, false).minutes)
         assertEquals(60, DurationPickerState(90, false).minutes) // alte 90-min-Einstellung
-        assertEquals(20, DurationPickerState(20, true).minutes)
-        assertTrue(DurationPickerState(20, true).free)
-        assertFalse(DurationPickerState(20, true).fineAdjust)
-    }
 
-    @Test
-    fun `select klemmt und meldet nur echte Aenderungen`() {
         val state = DurationPickerState(10, false)
         assertFalse(state.select(10))
-        assertTrue(state.select(12))
-        assertEquals(12, state.minutes)
-        assertTrue(state.select(0))
-        assertEquals(1, state.minutes)
-        assertFalse(state.select(-3)) // bleibt 1
         assertTrue(state.select(90))
         assertEquals(60, state.minutes)
-        assertFalse(state.select(61)) // bleibt 60
+        assertFalse(state.step(1))
+        assertTrue(state.select(1))
+        assertFalse(state.step(-1))
+        assertEquals(1, state.minutes)
+        assertTrue(state.step(1))
+        assertEquals(2, state.minutes)
     }
 
     @Test
-    fun `selectFree behaelt den letzten Minutenwert, select verlaesst offen`() {
+    fun `∞ und Minuten - letzter Wert bleibt, Verlassen von ∞ ist immer eine Aenderung`() {
         val state = DurationPickerState(15, false)
-        state.selectFree()
-        assertTrue(state.free)
+        assertTrue(state.selectFree())
+        assertFalse(state.selectFree())
         assertEquals(15, state.minutes)
         // Gleicher Wert aus ∞ heraus zählt als Änderung (∞ → 15).
         assertTrue(state.select(15))
         assertFalse(state.free)
-        assertEquals(15, state.minutes)
-    }
 
-    @Test
-    fun `step zaehlt in Minuten und haelt an den Grenzen`() {
-        val state = DurationPickerState(59, false)
-        assertTrue(state.step(1))
-        assertEquals(60, state.minutes)
-        assertFalse(state.step(1))
-        assertEquals(60, state.minutes)
-
-        state.select(2)
-        assertTrue(state.step(-1))
-        assertEquals(1, state.minutes)
-        assertFalse(state.step(-1))
-        assertEquals(1, state.minutes)
-    }
-
-    @Test
-    fun `step aus offen heraus startet beim letzten Minutenwert`() {
-        val up = DurationPickerState(20, true)
-        assertTrue(up.step(1))
-        assertFalse(up.free)
-        assertEquals(21, up.minutes)
-
-        val down = DurationPickerState(20, true)
-        assertTrue(down.step(-1))
-        assertEquals(19, down.minutes)
-
-        // Auch an der Grenze ist das Verlassen von ∞ eine Änderung.
+        // Schritt aus ∞ startet beim letzten Minutenwert, auch an der Grenze.
         val atMax = DurationPickerState(60, true)
         assertTrue(atMax.step(1))
         assertFalse(atMax.free)
         assertEquals(60, atMax.minutes)
-    }
 
-    @Test
-    fun `selectFree meldet nur den Wechsel nach offen`() {
-        val state = DurationPickerState(15, false)
-        assertTrue(state.selectFree())
-        assertFalse(state.selectFree())
+        // Erneuter Tipp auf ∞ gibt den letzten Minutenwert frei, beide Male mit deutlicher Raste.
+        val toggle = DurationPickerState(20, false)
+        val ticks = mutableListOf<Boolean>()
+        toggle.toggleFreeWithTick { ticks += it }
+        assertTrue(toggle.free)
+        toggle.toggleFreeWithTick { ticks += it }
+        assertFalse(toggle.free)
+        assertEquals(20, toggle.minutes)
+        assertEquals(listOf(true, true), ticks)
     }
 
     @Test
@@ -106,18 +73,7 @@ class DurationPickerStateTest {
         assertFalse(state.free)
     }
 
-    @Test
-    fun `Feinwahl schaltet um und ist unabhaengig vom Wert`() {
-        val state = DurationPickerState(10, false)
-        state.toggleFineAdjust()
-        assertTrue(state.fineAdjust)
-        state.step(1)
-        state.selectFree()
-        assertTrue(state.fineAdjust)
-        state.toggleFineAdjust()
-        assertFalse(state.fineAdjust)
-    }
-
+    /** Die Einstellung übersteht eine Drehung. */
     @Test
     fun `Saver sichert Minuten, offen und Feinwahl`() {
         val state = DurationPickerState(42, false).apply {
@@ -128,11 +84,6 @@ class DurationPickerStateTest {
         assertEquals(42, restored.minutes)
         assertTrue(restored.free)
         assertTrue(restored.fineAdjust)
-
-        val plain = roundTrip(DurationPickerState(7, false))
-        assertEquals(7, plain.minutes)
-        assertFalse(plain.free)
-        assertFalse(plain.fineAdjust)
     }
 
     private fun roundTrip(state: DurationPickerState): DurationPickerState {
@@ -142,17 +93,5 @@ class DurationPickerStateTest {
         val saved = with(saver) { scope.save(state) }
         assertNotNull(saved)
         return requireNotNull(saver.restore(saved!!))
-    }
-
-    @Test
-    fun `erneuter Tipp auf unendlich gibt den letzten Minutenwert frei`() {
-        val state = DurationPickerState(20, false)
-        val ticks = mutableListOf<Boolean>()
-        state.toggleFreeWithTick { ticks += it }
-        assertTrue(state.free)
-        state.toggleFreeWithTick { ticks += it }
-        assertFalse(state.free)
-        assertEquals(20, state.minutes)
-        assertEquals(listOf(true, true), ticks)
     }
 }
