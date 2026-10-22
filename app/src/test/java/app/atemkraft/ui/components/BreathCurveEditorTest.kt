@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
@@ -66,6 +68,7 @@ class BreathCurveEditorTest {
     private var ticks = 0
     private var pattern by mutableStateOf(BOX)
     private var selected by mutableStateOf<Int?>(null)
+    private var forcedHeight by mutableStateOf<Dp?>(null)
     private lateinit var metrics: CurveMetrics
 
     private val haptics = object : HapticFeedback {
@@ -91,7 +94,7 @@ class BreathCurveEditorTest {
                             calls += index to value
                             pattern = pattern.withSeconds(index, value)
                         },
-                        modifier = modifier,
+                        modifier = modifier.then(forcedHeight?.let { Modifier.height(it) } ?: Modifier),
                     )
                 }
             }
@@ -103,7 +106,7 @@ class BreathCurveEditorTest {
     private fun layoutNow(): CurveLayout {
         val node = curve().fetchSemanticsNode()
         val axis = node.config[CurveAxisSeconds]
-        return metrics.layout(node.size.width.toFloat(), axis.toFloat(), axis)
+        return metrics.layout(node.size.width.toFloat(), axis.toFloat(), axis, node.size.height.toFloat())
     }
 
     /** Zieht den Griff von Phase [index] in halben Sekunden um [seconds] (negativ = nach links); [release] = loslassen. */
@@ -382,7 +385,16 @@ class BreathCurveEditorTest {
     }
 
     @Test
-    fun `Phasen-Beschriftungen ueberlappen weder Griffe noch einander, kurze Folgen tragen alle`() {
+    @GraphicsMode(GraphicsMode.Mode.NATIVE) // echte Textmaße
+    fun `Phasen-Beschriftungen ueberlappen weder Griffe noch einander, kurze Folgen tragen alle`() = labelsClear(minHeight = false)
+
+    /** Kleiner Bildschirm (Kurve auf Mindesthöhe), mit echten Textmaßen: Box trägt weiter alle vier, nichts überlappt. */
+    @Test
+    @Config(qualifiers = "w360dp-h640dp-xhdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `Phasen-Beschriftungen auch bei Mindesthoehe ohne Ueberlappung`() = labelsClear(minHeight = true)
+
+    private fun labelsClear(minHeight: Boolean) {
         show(BOX, Modifier.width(TestMatrix.COMPACT.widthDp.dp))
         listOf(
             BOX to 1,
@@ -393,7 +405,17 @@ class BreathCurveEditorTest {
             pattern = p
             selected = sel
             compose.waitForIdle()
-            val layout = layoutNow()
+            val layout = layoutNow().let { if (minHeight) metrics.layout(curve().fetchSemanticsNode().size.width.toFloat(), it.axis, p.axisSeconds(), metrics.minHeight) else it }
+            assertLabelsClear(p, sel, layout, selectedLabeled = !minHeight || p.phases.size <= BOX.phases.size)
+        }
+    }
+
+    /**
+     * Nichts überlappt; Box trägt alle vier. [selectedLabeled]: auch die gewählte Phase ist
+     * beschriftet (bei Mindesthöhe nicht für zwölf 1-s-Phasen – dort darf sie entfallen).
+     */
+    private fun assertLabelsClear(p: FreePattern, sel: Int?, layout: CurveLayout, selectedLabeled: Boolean) {
+        run {
             val width = curve().fetchSemanticsNode().size.width.toFloat()
             val sizes = p.phases.map { phase ->
                 val size = layout.measurer.measure("${phase.seconds}${layout.secondsSuffix}", layout.phaseStyle).size
@@ -406,7 +428,7 @@ class BreathCurveEditorTest {
                 curveHandles(p, layout).forEach { h ->
                     assertFalse("Beschriftung $a über Griff ${h.index}", a.overlaps(Rect(h.center, layout.handle / 2f)))
                 }
-                assertTrue("in der Fläche über dem Band, mit Innenrand", a.left >= layout.gapSmall && a.right <= width - layout.gapSmall && a.top >= 0f && a.bottom <= layout.bandTop)
+                assertTrue("in der Fläche über der Zeitleiste (Band), mit Innenrand", a.left >= layout.gapSmall && a.right <= width - layout.gapSmall && a.top >= 0f && a.bottom <= layout.bandTop)
                 // Nicht auf den Linien „voll“/„leer“ und mit Abstand zu ihren Wörtern.
                 listOf(layout.yFull, layout.yEmpty).forEach { y -> assertFalse("Beschriftung $a auf einer Linie", a.top <= y + layout.hairline && a.bottom >= y - layout.hairline) }
                 val fullWord = layout.measurer.measure(layout.fullLabel, layout.smallStyle).size
@@ -418,8 +440,53 @@ class BreathCurveEditorTest {
                 words.forEach { word -> assertFalse("Beschriftung $a klebt an $word", a.overlaps(word.inflate(layout.gapTiny))) }
             }
             if (p == BOX) assertEquals("Box: alle vier", 4, placed.size)
-            sel?.let { assertTrue("die gewählte Phase ist beschriftet", spots[it] != null) }
+            if (selectedLabeled) sel?.let { assertTrue("die gewählte Phase ist beschriftet", spots[it] != null) }
         }
+    }
+
+    @Test
+    @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE) // echte Textmaße
+    fun `Hoehe - volle Hoehe mit 88 dp Abstand, bei weniger Platz zuerst der Rand ueber voll, nie unter 48 dp`() {
+        show(BOX)
+        val node = curve().fetchSemanticsNode()
+        val width = node.size.width.toFloat()
+        val px = { d: Dp -> with(compose.density) { d.toPx() } }
+        assertEquals("ohne Vorgabe volle Höhe", metrics.preferredHeight, node.size.height.toFloat(), 1f)
+        val full = metrics.layout(width, 22f, 22, metrics.preferredHeight)
+        assertEquals(px(Sizes.CurveSpan), full.yEmpty - full.yFull, 0.5f)
+        // Unter „leer“ nur Griff (16 dp unter der Linie, gewählt 22 dp) und GapTiny bis zur Zeitleiste.
+        assertEquals(px(Sizes.CurveHoldHandleOffset) + px(Sizes.CurveHandleSelected) / 2f + px(Dimens.GapTiny), full.ticksTop - full.yEmpty, 0.5f)
+        // Etwas weniger Höhe: Der Abstand „voll“–„leer“ bleibt, der Rand darüber schrumpft.
+        val less = metrics.layout(width, 22f, 22, metrics.preferredHeight - px(Dimens.GapSmall))
+        assertEquals(px(Sizes.CurveSpan), less.yEmpty - less.yFull, 0.5f)
+        assertEquals(full.yFull - px(Dimens.GapSmall), less.yFull, 0.5f)
+        // Mindesthöhe: 48 dp, und auch darunter nicht weniger.
+        val min = metrics.layout(width, 22f, 22, metrics.minHeight)
+        assertEquals(px(Sizes.CurveSpanMin), min.yEmpty - min.yFull, 0.5f)
+        val tooSmall = metrics.layout(width, 22f, 22, metrics.minHeight / 2f)
+        assertEquals(px(Sizes.CurveSpanMin), tooSmall.yEmpty - tooSmall.yFull, 0.5f)
+        // Der gewählte Halten-voll-Griff ragt auch bei Mindesthöhe nicht über den Rand.
+        assertTrue(min.yFull - px(Sizes.CurveHoldHandleOffset) - px(Sizes.CurveHandleSelected) / 2f >= 0f)
+
+        val heights = BreathCurveHeights(min = 150.dp, preferred = 200.dp)
+        assertEquals(200.dp, heights.fit(400.dp))
+        assertEquals(170.dp, heights.fit(170.dp))
+        assertEquals(150.dp, heights.fit(100.dp))
+    }
+
+    @Test
+    fun `Kurve nimmt die vorgegebene Hoehe an, Griffe folgen`() {
+        show(BOX)
+        forcedHeight = with(compose.density) { metrics.minHeight.toDp() }
+        compose.waitForIdle()
+        val node = curve().fetchSemanticsNode()
+        assertEquals(metrics.minHeight, node.size.height.toFloat(), 1f)
+        val layout = layoutNow()
+        assertEquals(with(compose.density) { Sizes.CurveSpanMin.toPx() }, layout.yEmpty - layout.yFull, 0.5f)
+        // Griffe treffen weiterhin: Ziehen am Halten-leer-Griff ändert Phase 4.
+        dragHandle(index = 3, seconds = 2)
+        assertEquals(6, pattern.phases[3].seconds)
     }
 
     private fun assertLabelsApart(layout: CurveLayout) {

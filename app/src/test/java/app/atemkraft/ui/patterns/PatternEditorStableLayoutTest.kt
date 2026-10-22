@@ -32,9 +32,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * MUSTER-10 (Nachtrag 5): Im kompakten Muster-Editor springt nichts unter dem Finger – auf allen
- * Geräten und Schriftgrößen der Matrix. Die Kurve bleibt an ihrem Platz, wenn die Pille
- * „Startpunkt“ auf „angepasst“ wechselt, wenn das Muster ins Intensive kippt (Chip „intensiv“)
+ * MUSTER-10 (Nachtrag 5 und 6): Im kompakten Muster-Editor springt nichts unter dem Finger – auf
+ * allen Geräten und Schriftgrößen der Matrix. Die Kurve bleibt an ihrem Platz (Höhe und Lage), wenn
+ * der Startpunkt auf „angepasst“ wechselt, wenn das Muster ins Intensive kippt (Chip „intensiv“)
  * und während die Vorschau läuft (Phasenname statt Status); die Werkzeugleiste behält ihre Höhe,
  * wenn man eine andere Phase wählt.
  */
@@ -93,13 +93,13 @@ class PatternEditorStableLayoutTest(private val device: Device, private val font
     private fun template(label: String) = FreePatternTemplates.all.single { it.label == label }.pattern
 
     @Test
-    fun `Kurve bleibt stehen, wenn die Pille angepasst zeigt oder das Muster intensiv wird`() {
+    fun `Kurve bleibt stehen, wenn der Startpunkt angepasst zeigt oder das Muster intensiv wird`() {
         val state = show(PatternEditorState.new(prefix, template("Box")).apply { select(1) })
         val top = curveTop()
 
         compose.runOnIdle { state.add(FreePhaseType.IN) }
         compose.waitForIdle()
-        assertEquals("„angepasst“ in der Pille", null, state.template)
+        assertEquals("„angepasst“ am Startpunkt", null, state.template)
         assertEquals("Kurve nach „angepasst“", top, curveTop())
 
         compose.runOnIdle { state.setSeconds(1, FreePattern.INTENSE_HOLD_FULL_SECONDS + 1) }

@@ -221,7 +221,8 @@ class PatternEditorFlowTest {
     fun `Starten aus dem Editor laesst den Editor auf dem Stapel und nimmt den Entwurf`() {
         show()
         step { nav.navigate(PatternEditorRoute()) }
-        val stack = step { rule.onNodeWithText(string(R.string.action_start), substring = true).performClick() }
+        // Großer Play-Knopf der festen Leiste („Übung starten, ca. 5 Minuten“).
+        val stack = step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).performClick() }
 
         assertEquals("EigeneRoute > PatternEditorRoute", stack)
         val (exercise, config) = started.single()
@@ -284,8 +285,8 @@ class PatternEditorFlowTest {
         show()
         step { nav.navigate(DetailRoute("muster-$id")) }
         step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_edit)).performClick() }
-        // Startpunkt aufklappen und die Vorlage „Wechsel“ wählen.
-        step { rule.onNodeWithText(string(R.string.pattern_editor_start)).performClick() }
+        // Startpunkt-Sheet öffnen und die Vorlage „Wechsel“ wählen.
+        step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_editor_start).substringBefore(","), substring = true).performClick() }
         step {
             rule.onNode(
                 hasText("Wechsel") and
@@ -293,7 +294,8 @@ class PatternEditorFlowTest {
                     SemanticsMatcher("sichtbar") { it.size.width > 0 },
             ).performClick()
         }
-        repeat(5) { stepper(string(R.string.cd_adjust_duration), R.string.adjust_increase).performScrollTo().performClick() }
+        // Die Dauer steht in der festen Leiste unten (kein Scrollen nötig).
+        repeat(5) { stepper(string(R.string.cd_adjust_duration), R.string.adjust_increase).performClick() }
         step { bookmark().performClick() }
         val row = dao.rows.value.single()
         assertEquals("in:3,out:3,in:4,hold:2,out:8", row.phases)

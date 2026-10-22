@@ -49,7 +49,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Muster-Editor „Frei gestalten“ (MUSTER-10, Nachtrag 4 und 5): Startpunkt als Pille mit Vorlagen,
+ * Muster-Editor „Frei gestalten“ (MUSTER-10, Nachtrag 4 bis 6): Startpunkt-Symbol mit Vorlagen-Sheet,
  * Dauer daneben, Werkzeugleiste (gewählte Phase mit Sekunden und Papierkorb, Hinzufügen hinter
  * der Auswahl bis 12 Phasen), Ablauf-Liste eingeklappt und synchron, Vorschau im Kopf „Atemzug“,
  * „intensiv“ mit Hinweis und Sicherheitsdialog, Ton-Schalter, Einordnung ohne Live-Region,
@@ -98,6 +98,15 @@ class PatternEditorScreenTest {
 
     private fun string(id: Int) = app.getString(id)
 
+    /** Großer Play-Knopf der festen Leiste; mit [minutes] genau „Übung starten, ca. N Minuten“. */
+    private fun play(minutes: Int? = null) = if (minutes == null) {
+        compose.onNodeWithContentDescription(string(R.string.cd_pattern_editor_play).substringBefore(","), substring = true)
+    } else {
+        compose.onNodeWithContentDescription(
+            app.getString(R.string.cd_pattern_editor_play, app.resources.getQuantityString(R.plurals.cd_duration_minutes, minutes, minutes)),
+        )
+    }
+
     private fun stepButton(spoken: String, action: Int) = compose.onNodeWithContentDescription("$spoken, ${string(action)}")
 
     /** Zeile [number] der Ablauf-Liste (die auswählbare Fläche, nicht der Stepper). */
@@ -122,25 +131,24 @@ class PatternEditorScreenTest {
     // ---- Startpunkt ----
 
     @Test
-    fun `Startpunkt ist eingeklappt, nennt die Vorlage und klappt nach der Wahl wieder zu`() {
+    fun `Startpunkt-Symbol nennt die Vorlage, das Sheet waehlt eine und schliesst sich`() {
         val state = show(PatternEditorState.new(prefix))
-        val pill = compose.onNode(hasText(string(R.string.pattern_editor_start)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription))
-        pill.assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_collapsed)))
-            .assert(hasText("4·6"))
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "4·6")).assertExists()
         visibleSegment("Box").assertDoesNotExist()
 
-        pill.performClick()
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "4·6")).performClick()
         visibleSegment("4·6").assertIsSelected()
         visibleSegment("Seufzer").assertIsNotSelected().performClick()
+        compose.waitForIdle()
         assertEquals(template("Seufzer").pattern, state.pattern)
         // Nach einer Vorlage ist ihre letzte Phase gewählt.
         assertEquals(2, state.selected)
         visibleSegment("Box").assertDoesNotExist()
-        pill.assert(hasText("Seufzer"))
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "Seufzer")).assertExists()
 
         // Eine Änderung macht aus der Vorlage „angepasst“.
         compose.runOnIdle { state.setSeconds(0, 5) }
-        pill.assert(hasText(string(R.string.adjust_modified)))
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, string(R.string.adjust_modified))).assertExists()
     }
 
     // ---- Dauer ----
@@ -153,7 +161,7 @@ class PatternEditorScreenTest {
         assertEquals(6, state.minutes)
         assertEquals(FreePattern.DEFAULT, state.pattern)
         compose.onNodeWithText("6\u00A0min").assertExists()
-        compose.onNodeWithText(string(R.string.action_start), substring = true).assert(hasText(app.getString(R.string.duration_approx, 6), substring = true))
+        play(6).assertExists()
     }
 
     // ---- Werkzeugleiste und Ablauf ----
@@ -261,7 +269,7 @@ class PatternEditorScreenTest {
         compose.onNodeWithText(string(R.string.detail_intense)).assertExists()
         compose.onNodeWithText(state.pattern.intensityNote()!!, substring = true).performScrollTo()
 
-        compose.onNodeWithText(string(R.string.action_start), substring = true).performClick()
+        play().performClick()
         assertTrue(started.isEmpty())
         compose.onNodeWithText(string(R.string.safety_confirm)).performClick()
         assertEquals(1, confirmedSafety)
@@ -272,7 +280,7 @@ class PatternEditorScreenTest {
     @Test
     fun `nach bestaetigtem Hinweis startet ein intensives Muster direkt`() {
         show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 1, FreePhaseType.OUT to 1)), requireSafetyConfirm = false)
-        compose.onNodeWithText(string(R.string.action_start), substring = true).performClick()
+        play().performClick()
         assertTrue(started.single().first.caution)
         compose.onNodeWithText(string(R.string.safety_confirm)).assertDoesNotExist()
     }
@@ -411,9 +419,7 @@ class PatternEditorScreenTest {
         val state = show(PatternEditorState.new(prefix, template("Box").pattern))
         val reset = string(R.string.adjust_reset)
         compose.onNodeWithContentDescription(reset).assertDoesNotExist()
-        compose.onNodeWithText(string(R.string.action_start), substring = true)
-            .assert(hasText(app.getString(R.string.duration_approx, 5), substring = true))
-            .performClick()
+        play(5).performClick()
         val (exercise, config) = started.single()
         assertEquals(RandomPatternGenerator.DRAFT_ID, exercise.id)
         assertEquals(SessionConfig(minutes = 5), config)

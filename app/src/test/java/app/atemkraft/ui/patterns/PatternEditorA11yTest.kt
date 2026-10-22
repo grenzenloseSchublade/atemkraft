@@ -35,11 +35,12 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * TalkBack im Muster-Editor (MUSTER-10, A11Y-04, Nachtrag 4 und 5): Die Lesereihenfolge folgt der
- * Seite – Startpunkt, Dauer, Atemzug mit Vorschau-Knöpfen, Kurve, Werkzeugleiste (gewählte Phase,
- * Sekunden, Papierkorb, „Neu nach …“, Hinzufügen), Ablauf, Name, „Aus der Yoga-Lehre“, Start –,
- * jeder Stepper-Tipp löst genau eine Ansage aus (den neuen Wert; weder Einordnung, Status am Kopf,
- * Kurve noch Lesezeichen melden sich dazu), eine Vorlage nur eine (die Pille), und alles ist ohne
+ * TalkBack im Muster-Editor (MUSTER-10, A11Y-04, Nachtrag 4 bis 6): Die Lesereihenfolge folgt der
+ * Seite – Atemzug mit Vorschau-Knöpfen, Kurve, Werkzeugleiste (gewählte Phase, Sekunden, Papierkorb,
+ * „Neu nach …“, Hinzufügen), Ablauf, Name, „Aus der Yoga-Lehre“, dann die feste Leiste (Startpunkt,
+ * Dauer, Start) –, jeder Stepper-Tipp löst genau eine Ansage aus (den neuen Wert; weder Einordnung,
+ * Status am Kopf, Kurve noch Lesezeichen melden sich dazu), eine Vorlage nur eine (das
+ * Startpunkt-Symbol), und alles ist ohne
  * Ziehen bedienbar: die Kurve ist ein Knoten ohne Live-Region, Auswahl über die Ablauf-Liste,
  * Sekunden, Entfernen und Hinzufügen über die Werkzeugleiste.
  */
@@ -103,7 +104,8 @@ class PatternEditorA11yTest {
     /** Tippt [button] an und liefert die Live-Regionen, deren Inhalt sich dadurch geändert hat (oder neu sind). */
     private fun announcementsAfterTapOn(button: String): List<String> {
         val node = compose.onNodeWithContentDescription(button)
-        node.performScrollTo()
+        // Die Dauer steht in der festen Leiste unten, nicht in der Scroll-Fläche.
+        runCatching { node.performScrollTo() }
         compose.waitForIdle()
         val before = liveRegions()
         node.performClick()
@@ -120,8 +122,6 @@ class PatternEditorA11yTest {
         show(PatternEditorState.new(prefix, box).apply { select(1) })
         val order = traversal()
         val milestones = listOf(
-            string(R.string.pattern_editor_start),
-            "${string(R.string.cd_adjust_duration)}, ${string(R.string.adjust_increase)}",
             string(R.string.pattern_editor_breath),
             string(R.string.cd_preview_play),
             string(R.string.cd_preview_sound),
@@ -135,7 +135,10 @@ class PatternEditorA11yTest {
             string(R.string.pattern_editor_sequence),
             string(R.string.pattern_editor_name_label),
             string(R.string.detail_lore),
-            string(R.string.action_start),
+            // Feste Leiste unten (Nachtrag 6): Startpunkt, Dauer, Start.
+            app.getString(R.string.cd_pattern_editor_start, "Box"),
+            "${string(R.string.cd_adjust_duration)}, ${string(R.string.adjust_increase)}",
+            app.getString(R.string.cd_pattern_editor_play, ""),
         )
         val positions = milestones.map { m -> order.indexOfFirst { it.contains(m) } }
         milestones.zip(positions).forEach { (m, at) -> assertTrue("„$m“ fehlt in:\n${order.joinToString("\n")}", at >= 0) }
@@ -309,20 +312,32 @@ class PatternEditorA11yTest {
     }
 
     @Test
-    fun `Vorlage gewaehlt - der Kopf Startpunkt sagt einmal an und bekommt den Tastatur-Fokus`() {
+    fun `Vorlage gewaehlt - das Startpunkt-Symbol sagt einmal an und bekommt den Tastatur-Fokus`() {
         show(PatternEditorState.new(prefix))
         compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
-        val header = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription) and hasText(string(R.string.pattern_editor_start), substring = true))
-        header.performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "4·6")).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         val before = liveRegions()
-        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Viloma I")).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Viloma I")).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         val said = liveRegions().filter { (id, spoken) -> before[id] != spoken }.values.toList()
-        // Eine Ansage: der Kopf selbst (zusammengeführt liest TalkBack „Startpunkt, Viloma I, eingeklappt“).
+        // Eine Ansage: das Symbol selbst („Startpunkt wählen, aktuell: Viloma I“).
         assertEquals(said.toString(), 1, said.size)
-        header.assert(hasText("Viloma I"))
-        header.assertIsFocused()
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "Viloma I")).assertIsFocused()
+    }
+
+    @Test
+    fun `Tastatur - Zuruecksetzen in der Leiste gibt den Fokus an den Play-Knopf`() {
+        val state = show(PatternEditorState.new(prefix, box))
+        compose.runOnIdle { state.add(FreePhaseType.IN) }
+        compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
+        val reset = compose.onNodeWithContentDescription(string(R.string.adjust_reset))
+        reset.performSemanticsAction(SemanticsActions.RequestFocus)
+        reset.assertIsFocused()
+        reset.performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(box, state.pattern)
+        compose.onNodeWithContentDescription(string(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).assertIsFocused()
     }
 
     @Test

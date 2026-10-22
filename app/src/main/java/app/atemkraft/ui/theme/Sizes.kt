@@ -61,6 +61,15 @@ object Sizes {
     /** Abstand der Linien „voll“ und „leer“, also die Höhe der Kurve (88). */
     val CurveSpan = 88.dp
 
+    /**
+     * Kleinster Abstand „voll“–„leer“, wenn der Bildschirm für [CurveSpan] zu niedrig ist (48 =
+     * [Dimens.MinTouchTarget]): Ein-Ende oben und Aus-Ende unten liegen dann noch eine ganze
+     * Tippfläche auseinander, Halten-Griffe über und unter den Linien bleiben getrennt greifbar,
+     * und „4 s“ passt neben die Schräge zwischen die Linien (sonst rückt es über bzw. unter den
+     * Griff oder entfällt – Beschriftungen überlappen nie).
+     */
+    val CurveSpanMin = 48.dp
+
     /** Sichtbarer Griff an einem Phasenende (18); die Tippfläche ist [Dimens.MinTouchTarget]. */
     val CurveHandle = 18.dp
 
@@ -90,4 +99,8 @@ object Sizes {
 
     /** Punkt der Vorschau, der über die Kurve wandert (14). */
     val CurveDot = 14.dp
+
+    /** Mini-Kurve je Vorlage im Startpunkt-Sheet des Muster-Editors: Breite (64) und Höhe (24 = [IconDefault]). */
+    val MiniCurveWidth = 64.dp
+    val MiniCurveHeight = IconDefault
 }

@@ -53,11 +53,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceIn
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
@@ -109,6 +112,32 @@ internal val CurveAxisSeconds = SemanticsPropertyKey<Int>("CurveAxisSeconds")
 
 /** Nur für Tests: Beschriftung des gelben Bands, solange es zu sehen ist. */
 internal val CurveBandLabel = SemanticsPropertyKey<String>("CurveBandLabel")
+
+/** Nur für Tests: Höhen der Kurve in px ([CurveMetrics.minHeight] und [CurveMetrics.preferredHeight]). */
+internal val CurveHeightRange = SemanticsPropertyKey<ClosedFloatingPointRange<Float>>("CurveHeightRange")
+
+/**
+ * Höhen der Atemkurve ([BreathCurveEditor]) mit der aktuellen Schrift: [preferred] ist die volle
+ * Höhe (Abstand „voll“–„leer“ [Sizes.CurveSpan], Platz für Beschriftungen über dem Halten-voll-
+ * Griff), [min] die kleinste, bei der Griffe und Beschriftungen noch sicher Platz haben
+ * ([Sizes.CurveSpanMin]). [fit] wählt für den freien Platz die größte Höhe dazwischen; der Aufrufer
+ * gibt sie der Kurve per Modifier (`Modifier.height`) – nie mehr als [preferred].
+ */
+@Immutable
+data class BreathCurveHeights(val min: Dp, val preferred: Dp) {
+    /** Höhe für [available] freien Platz: so viel wie möglich, aber zwischen [min] und [preferred]. */
+    fun fit(available: Dp): Dp = available.coerceIn(min, preferred)
+}
+
+/** Misst [BreathCurveHeights] mit der aktuellen Schrift (für die Aufteilung des Bildschirms). */
+@Composable
+fun rememberBreathCurveHeights(): BreathCurveHeights {
+    val metrics = rememberCurveMetrics()
+    val density = LocalDensity.current
+    return remember(metrics, density) {
+        with(density) { BreathCurveHeights(min = metrics.minHeight.toDp(), preferred = metrics.preferredHeight.toDp()) }
+    }
+}
 
 /**
  * Zustand der Vorschau unter der Atemkurve: ob sie läuft und wo sie im Atemzug steht ([time],
@@ -181,13 +210,18 @@ fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewStat
  * Wischen auf einem Griff scrollt die Seite und ändert nichts: rastet auf ganze Sekunden,
  * geklemmt auf 1–30 s, Wert über [onChangeSeconds]; spätere Phasen rücken mit. Je Raste ein Tick als Berührungs-Rückmeldung
  * (Android-Einstellung, wie die Rasten des Zeitrings, AUDIO-05). Während des Ziehens zeigt ein
- * gelbes Band über der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
+ * gelbes Band auf der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
  *
  * Vorschau ([preview]): Läuft sie, wandert ein Punkt in Echtzeit über die Kurve. Die Knöpfe
  * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: in den Kopf
  * „Atemzug“), ebenso den Phasennamen und den Ton (`PreviewSoundEffect` mit [CurvePreviewState]).
- * Eine eigene Zeile unter der Kurve gibt es nicht – die Kurve behält ihre Höhe, die Werkzeugleiste
- * des Editors rückt direkt darunter.
+ * Eine eigene Zeile unter der Kurve gibt es nicht – die Werkzeugleiste des Editors rückt direkt
+ * darunter.
+ *
+ * Höhe: bevorzugt [BreathCurveHeights.preferred]; gibt der Aufrufer per [modifier] weniger
+ * (`Modifier.height`, siehe [rememberBreathCurveHeights]), weicht zuerst der Platz für Beschriftungen
+ * über dem Halten-voll-Griff (sie rücken neben den Griff), dann der Abstand „voll“–„leer“, bis
+ * hinab zu [Sizes.CurveSpanMin].
  *
  * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden,
  * …“) ohne liveRegion. Ziehen ist nie Pflicht – Auswahl, Dauer, Entfernen und Hinzufügen bietet
@@ -244,11 +278,12 @@ fun BreathCurveEditor(
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(with(density) { metrics.height.toDp() })
+                .height(with(density) { metrics.preferredHeight.toDp() })
                 .clipToBounds()
                 .semantics {
                     contentDescription = description
                     this[CurveAxisSeconds] = axisTarget
+                    this[CurveHeightRange] = metrics.minHeight..metrics.preferredHeight
                     drag?.let { this[CurveDragPhase] = it.index }
                     bandLabel?.let { this[CurveBandLabel] = it }
                 }
@@ -256,7 +291,7 @@ fun BreathCurveEditor(
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val start = currentPattern
-                        val layout = metrics.layout(size.width.toFloat(), currentAxis, currentAxisTarget)
+                        val layout = metrics.layout(size.width.toFloat(), currentAxis, currentAxisTarget, size.height.toFloat())
                         val handle = nearestHandle(curveHandles(start, layout), down.position, layout.touchRadius)
                         if (handle == null) {
                             // Neben den Griffen: Ein Tipp auf eine Linie wählt ihre Phase (nur
@@ -319,9 +354,11 @@ fun BreathCurveEditor(
                     }
                 },
         ) {
-            val layout = metrics.layout(size.width, axis, axisTarget)
-            drawCurve(pattern, selected, layout, palette, colors.outlineVariant, textColor)
-            drag?.let { drawBand(pattern, it, layout, bandLabel.orEmpty()) }
+            val layout = metrics.layout(size.width, axis, axisTarget, size.height)
+            // Das Band liegt auf der Zeitleiste; Zahlen unter seiner Beschriftung fallen solange weg.
+            val band = drag?.let { bandGeometry(pattern, it, layout, bandLabel.orEmpty(), size.width) }
+            drawCurve(pattern, selected, layout, palette, colors.outlineVariant, textColor, hideNumbersIn = band?.labelRect)
+            band?.let { drawBand(it, layout) }
             if (preview.playing) {
                 drawCircle(colors.onSurface, radius = Sizes.CurveDot.toPx() / 2f, center = pattern.pointAt(preview.time, layout))
             }
@@ -412,9 +449,10 @@ internal fun curveMinorStep(labelStep: Int, pxPerSecond: Float, fineMin: Float):
 }
 
 /**
- * Maße der Kurve, die nur von Dichte und Schrift abhängen (in px). [layout] ergänzt Breite und
- * Achse. Von oben: Beschriftung über dem Halten-voll-Griff, Griff, Linie „voll“, Kurve, Linie
- * „leer“, Halten-leer-Griff, seine Beschriftung, Band des erlaubten Bereichs, Zeitleiste mit Zahlen.
+ * Maße der Kurve, die nur von Dichte und Schrift abhängen (in px). [layout] ergänzt Breite, Höhe
+ * und Achse. Von oben: Beschriftung über dem Halten-voll-Griff (nur bei voller Höhe), Griff, Linie
+ * „voll“, Kurve, Linie „leer“, darunter nur so viel wie der Halten-leer-Griff bzw. das Wort „leer“
+ * braucht, dann die Zeitleiste mit Zahlen; das gelbe Band liegt beim Ziehen auf der Zeitleiste.
  */
 @Immutable
 internal class CurveMetrics(
@@ -433,6 +471,7 @@ internal class CurveMetrics(
     private val hairline: Float,
     private val inset: Float,
     private val span: Float,
+    private val spanMin: Float,
     private val holdOffset: Float,
     private val handle: Float,
     private val handleSelected: Float,
@@ -440,19 +479,39 @@ internal class CurveMetrics(
     private val labelSpacing: Float,
     private val tickSpacing: Float,
 ) {
-    private val yFull = gapTiny + labelHeight + hairline + holdOffset + handle / 2f
-    private val yEmpty = yFull + span
-    private val emptyLabelTop = yEmpty + holdOffset + handle / 2f + hairline
-    private val bandTop = emptyLabelTop + labelHeight + gapTiny
-    private val bandHeight = smallHeight + 2 * hairline
-    private val ticksTop = bandTop + bandHeight + gapTiny
-    private val tickLabelTop = ticksTop + gapSmall + hairline
+    /**
+     * Platz unter „leer“ (und knapp über „voll“): der gewählte Halten-Griff samt Abstand zur Linie
+     * bzw. das Wort an der Linie, dazu `GapTiny`. Die Tippfläche des Griffs darf in die Zeitleiste
+     * reichen, der sichtbare Griff nicht.
+     */
+    private val zone = maxOf(holdOffset + handleSelected / 2f, hairline + smallHeight) + gapTiny
 
-    /** Gesamthöhe der Zeichenfläche. */
-    val height: Float = tickLabelTop + smallHeight + gapTiny
+    /** Über „voll“ bei voller Höhe: zusätzlich die Beschriftung über dem Halten-voll-Griff. */
+    private val topRoomy = maxOf(gapTiny + labelHeight + hairline + holdOffset + handle / 2f, zone)
 
-    /** Lagen für die Breite [width] und die (ggf. gerade animierte) Achse [axis]; [axisTarget] bestimmt den rechten Rand. */
-    fun layout(width: Float, axis: Float, axisTarget: Int = axis.roundToInt()): CurveLayout {
+    /** Unter der Linie „leer“: [zone], Striche und Zahlen der Zeitleiste. */
+    private val bottom = zone + gapSmall + hairline + smallHeight + gapTiny
+
+    /** Volle Höhe: Abstand „voll“–„leer“ [Sizes.CurveSpan], Platz für Beschriftungen über dem Halten-voll-Griff. */
+    val preferredHeight: Float = topRoomy + span + bottom
+
+    /** Kleinste Höhe: Abstand „voll“–„leer“ [Sizes.CurveSpanMin], über „voll“ nur [zone]. */
+    val minHeight: Float = zone + spanMin + bottom
+
+    /**
+     * Lagen für die Breite [width], die Höhe [height] und die (ggf. gerade animierte) Achse
+     * [axis]; [axisTarget] bestimmt den rechten Rand. Fehlt Höhe, weicht zuerst der Platz über dem
+     * Halten-voll-Griff, dann der Abstand „voll“–„leer“ (nie unter [Sizes.CurveSpanMin]).
+     */
+    fun layout(width: Float, axis: Float, axisTarget: Int = axis.roundToInt(), height: Float = preferredHeight): CurveLayout {
+        val curveSpan = (height - zone - bottom).coerceIn(spanMin, span)
+        val yFull = (height - curveSpan - bottom).coerceIn(zone, topRoomy)
+        val yEmpty = yFull + curveSpan
+        val ticksTop = yEmpty + zone
+        val tickLabelTop = ticksTop + gapSmall + hairline
+        // Das Band deckt Striche und Zahlen der Zeitleiste, mit Haarlinie Rand.
+        val bandTop = ticksTop - hairline
+        val bandHeight = tickLabelTop + smallHeight + hairline - bandTop
         // Die breitesten Zahlen: die größte ohne und mit „s“ (nur die letzte trägt es).
         val number = measurer.measure("$axisTarget", smallStyle).size.width
         val withUnit = measurer.measure("$axisTarget$secondsSuffix", smallStyle).size.width
@@ -559,6 +618,7 @@ internal fun rememberCurveMetrics(): CurveMetrics {
                 hairline = Dimens.GapHairline.toPx(),
                 inset = Dimens.CardPadding.toPx(),
                 span = Sizes.CurveSpan.toPx(),
+                spanMin = Sizes.CurveSpanMin.toPx(),
                 holdOffset = Sizes.CurveHoldHandleOffset.toPx(),
                 handle = Sizes.CurveHandle.toPx(),
                 handleSelected = Sizes.CurveHandleSelected.toPx(),
@@ -635,6 +695,7 @@ private fun DrawScope.drawCurve(
     palette: CurvePalette,
     lineColor: Color,
     textColor: Color,
+    hideNumbersIn: Rect? = null,
 ) {
     val levels = pattern.levels()
     val stroke = Sizes.CurveStroke.toPx()
@@ -701,17 +762,20 @@ private fun DrawScope.drawCurve(
     labels.forEach { s ->
         val text = if (s == labels.last()) "$s${layout.secondsSuffix}" else s.toString()
         val result = layout.measurer.measure(text, layout.smallStyle)
-        drawText(result, textColor, Offset(layout.xAt(s.toFloat()) - result.size.width / 2f, layout.tickLabelTop))
+        val topLeft = Offset(layout.xAt(s.toFloat()) - result.size.width / 2f, layout.tickLabelTop)
+        val hidden = hideNumbersIn?.overlaps(Rect(topLeft, Size(result.size.width.toFloat(), result.size.height.toFloat()))) == true
+        if (!hidden) drawText(result, textColor, topLeft)
     }
 }
 
 /**
  * Wo die Beschriftung „4 s“ jeder Phase steht ([sizes] je Phase in px), `null` = weggelassen.
  * Ein/Aus stehen bevorzugt außen neben der Schräge (Ein links oben, Aus rechts oben), sonst innen
- * auf der anderen Seite, notfalls über bzw. unter dem Griff am Ende; ein Halten über (obere
- * Hälfte) bzw. unter seinem Griff, sonst auf der anderen Seite seiner Linie, notfalls seitlich
- * versetzt. Eine Beschriftung darf keinen Griff, keine andere Beschriftung, nicht die Wörter
- * „voll“/„leer“ und nicht deren Linien berühren (alles mit Rand), nicht das Band darunter und
+ * auf der anderen Seite, notfalls über bzw. unter dem Griff am Ende oder rechts neben ihm; ein Halten über (obere
+ * Hälfte) bzw. unter seinem Griff, sonst auf Höhe des Griffs zwischen ihm und der Linie (unter
+ * „leer“ ist nur dafür Platz, über „voll“ bei knapper Höhe ebenso), sonst auf der anderen Seite
+ * seiner Linie, notfalls seitlich versetzt. Eine Beschriftung darf keinen Griff, keine andere Beschriftung, nicht die Wörter
+ * „voll“/„leer“ und nicht deren Linien berühren (alles mit Rand), nicht die Zeitleiste darunter und
  * nicht über den Innenrand ([CurveLayout.gapSmall]) hinaus ragen – passt keine Stelle (viele sehr
  * kurze Phasen), entfällt sie, statt zu überlappen.
  * Die gewählte Phase kommt zuerst dran. Die Werte stehen ohnehin in der Ablauf-Liste und in der
@@ -734,7 +798,7 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
     // Die Linien selbst: Keine Beschriftung liegt auf „voll“ oder „leer“.
     val lineBand = layout.hairline + margin
     listOf(layout.yFull, layout.yEmpty).forEach { y -> blocked += Rect(0f, y - lineBand, width, y + lineBand) }
-    // Innenrand wie Linien und Wörter: nichts reicht bis an die Kartenkante.
+    // Innenrand wie Linien und Wörter: nichts reicht bis an die Kartenkante oder in die Zeitleiste.
     val area = Rect(layout.gapSmall, 0f, width - layout.gapSmall, layout.bandTop)
     val spots = arrayOfNulls<Rect>(pattern.phases.size)
     val order = pattern.phases.indices.sortedBy { it != selected }
@@ -754,22 +818,42 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
                 Offset(midX - gap - w, midY - h),
                 Offset(midX + gap, midY),
                 Offset(to.x - w / 2f, to.y - clear - h),
+                // Knapp über „voll“: rechts neben dem Griff am Ende.
+                Offset(to.x + clear, to.y - lineBand - h),
             )
 
             FreePhaseType.OUT -> listOf(
                 Offset(midX + gap, midY - h),
                 Offset(midX - gap - w, midY),
                 Offset(to.x - w / 2f, to.y + clear),
+                // Unter „leer“ ist nur Platz für den Griff: rechts neben dem Griff am Ende.
+                Offset(to.x + clear, to.y + lineBand),
             )
 
             FreePhaseType.HOLD -> {
+                val upper = levels[i].from >= HALF
                 val above = from.y - reach - h
                 val below = from.y + reach
-                val inner = if (levels[i].from >= HALF) from.y + gap else from.y - gap - h
-                val outer = if (levels[i].from >= HALF) above else below
-                // Seitlich: links neben dem Griff am Ende, auf Höhe der Griffe.
+                val inner = if (upper) from.y + gap else from.y - gap - h
+                val outer = if (upper) above else below
+                // Auf Höhe des Griffs (zwischen Linie und Griff-Mitte), aber nicht auf der Linie:
+                // Unter „leer“ ist nur so viel Platz wie der Griff braucht, über „voll“ bei
+                // knapper Höhe ebenso.
+                val level = if (upper) {
+                    minOf(from.y - layout.holdOffset - h / 2f, from.y - lineBand - h)
+                } else {
+                    maxOf(from.y + layout.holdOffset - h / 2f, from.y + lineBand)
+                }
+                // Seitlich: links neben dem Griff am Ende.
                 val beside = to.x - layout.handle / 2f - margin - gap - w
-                listOf(Offset(midX - w / 2f, outer), Offset(midX - w / 2f, inner), Offset(beside, outer), Offset(beside, inner))
+                listOf(
+                    Offset(midX - w / 2f, outer),
+                    Offset(midX - w / 2f, level),
+                    Offset(midX - w / 2f, inner),
+                    Offset(beside, level),
+                    Offset(beside, outer),
+                    Offset(beside, inner),
+                )
             }
         }
         val spot = candidates
@@ -784,19 +868,30 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
     return spots.toList()
 }
 
-/** Gelbes Band über der Zeitleiste: erlaubter Bereich der gezogenen Phase (Ende = Start + 1 bis 30 s). */
-private fun DrawScope.drawBand(pattern: FreePattern, drag: CurveDrag, layout: CurveLayout, label: String) {
+/** Gelbes Band auf der Zeitleiste ([rect]) und seine Beschriftung [label] auf der Zeile der Zahlen ([labelRect]). */
+private class CurveBand(val rect: Rect, val label: TextLayoutResult, val labelRect: Rect)
+
+/**
+ * Lage des Bands: erlaubter Bereich der gezogenen Phase (Ende = Start + 1 bis 30 s) über Strichen
+ * und Zahlen der Zeitleiste, die Beschriftung mittig darin auf der Zeile der Zahlen (innerhalb des
+ * Innenrands; die Zahlen darunter fallen solange weg, [labelRect] mit `GapSmall` Luft).
+ */
+private fun bandGeometry(pattern: FreePattern, drag: CurveDrag, layout: CurveLayout, label: String, width: Float): CurveBand {
     val start = pattern.startOf(drag.index)
     val left = layout.xAt((start + FreePattern.MIN_SECONDS).toFloat())
     val right = layout.xAt(minOf((start + FreePattern.MAX_SECONDS).toFloat(), maxOf(layout.axis, start + FreePattern.MIN_SECONDS + MIN_BAND_SECONDS)))
-    val radius = CornerRadius(layout.gapTiny, layout.gapTiny)
-    val topLeft = Offset(left, layout.bandTop)
-    val bandSize = Size((right - left).coerceAtLeast(layout.gapTiny), layout.bandHeight)
-    drawRoundRect(WarnAmber.copy(alpha = CHIP_FILL), topLeft, bandSize, radius)
-    drawRoundRect(WarnAmber.copy(alpha = TERTIARY), topLeft, bandSize, radius, style = Stroke(Dimens.BorderThin.toPx()))
+    val rect = Rect(Offset(left, layout.bandTop), Size((right - left).coerceAtLeast(layout.gapTiny), layout.bandHeight))
     val text = layout.measurer.measure(label, layout.smallStyle)
-    val x = ((left + right) / 2f - text.size.width / 2f).coerceIn(layout.gapSmall, (size.width - layout.gapSmall - text.size.width).coerceAtLeast(layout.gapSmall))
-    drawText(text, WarnAmber, Offset(x, layout.bandTop + layout.hairline))
+    val x = ((left + right) / 2f - text.size.width / 2f).coerceIn(layout.gapSmall, (width - layout.gapSmall - text.size.width).coerceAtLeast(layout.gapSmall))
+    val labelRect = Rect(Offset(x, layout.tickLabelTop), Size(text.size.width.toFloat(), text.size.height.toFloat()))
+    return CurveBand(rect, text, labelRect.inflate(layout.gapSmall))
+}
+
+private fun DrawScope.drawBand(band: CurveBand, layout: CurveLayout) {
+    val radius = CornerRadius(layout.gapTiny, layout.gapTiny)
+    drawRoundRect(WarnAmber.copy(alpha = CHIP_FILL), band.rect.topLeft, band.rect.size, radius)
+    drawRoundRect(WarnAmber.copy(alpha = TERTIARY), band.rect.topLeft, band.rect.size, radius, style = Stroke(Dimens.BorderThin.toPx()))
+    drawText(band.label, WarnAmber, Offset(band.labelRect.left + layout.gapSmall, layout.tickLabelTop))
 }
 
 /** Griff: Kreis im Grundton mit Ring in Phasenfarbe; der gewählte größer. */

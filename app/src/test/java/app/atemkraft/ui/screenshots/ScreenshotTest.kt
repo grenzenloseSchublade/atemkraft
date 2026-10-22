@@ -96,6 +96,7 @@ import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.CurveAxisSeconds
+import app.atemkraft.ui.components.CurveHeightRange
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.detail.SafetyDialog
@@ -137,6 +138,7 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -179,8 +181,21 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         private const val STATUS_BAR_DP = 24
         private const val SYSTEM_NAV_DP = 48
 
-        /** Bis zu dieser Schriftgröße stehen im Muster-Editor Kurve und Werkzeugleiste ohne Scrollen da (A54 und größer). */
+        /** Bis zu dieser Schriftgröße prüft der Muster-Editor hart, dass Kurve und Werkzeugleiste ohne Scrollen dastehen. */
         private const val COMPACT_EDITOR_MAX_FONT_SCALE = 1.3f
+
+        /** Kleines Gerät für den Muster-Editor (360 × 600 dp), nur gemessen. */
+        private const val SMALL_HEIGHT_DP = 600
+
+        /** Bottom Sheet der Vorlagen: eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
+        private const val SHEET_TEST = "patternEditorTemplates"
+
+        /**
+         * Akzeptierte Ausnahme (wie S-40 im Meditations-Tab): kompakt360 bei Schrift 1,3 – Kopf
+         * „Atemzug“ (Status zweizeilig) und Werkzeugleiste (gewählte Phase zweizeilig) lassen dort
+         * selbst für die Mindesthöhe der Kurve keinen Platz. Nur gemessen (`KOMPAKT_AUSNAHME`).
+         */
+        private const val COMPACT_EDITOR_EXCEPTION = "KOMPAKT_AUSNAHME"
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
@@ -245,7 +260,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     fun setUp() {
         // Dialoge messen sich am Fenster, nicht am Testknoten: Für sie Gerätegröße statt des
         // hohen Testfensters. Vor setContent, weil der Wechsel die Activity neu erzeugt.
-        if (testName.methodName.startsWith("safetyDialog")) {
+        if (testName.methodName.startsWith("safetyDialog") || testName.methodName.startsWith(SHEET_TEST)) {
             RuntimeEnvironment.setQualifiers("w${windowDp.first}dp-h${windowDp.second}dp-xhdpi")
         }
         // Schriftgröße wie in den Android-Einstellungen, über die echte Konfiguration: Ab
@@ -270,7 +285,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     /**
      * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
      * Mit [tab] liegt der Inhalt wie in der App über Tab-Leiste und Systemleisten ([TabFrame],
-     * dann immer in Gerätehöhe); [noScroll] prüft, dass die Seite bis
+     * dann in Gerätehöhe bzw. [frameHeightDp]); [noScroll] prüft, dass die Seite bis
      * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt. [acceptedScroll] misst denselben Weg für eine
      * akzeptierte Ausnahme (S-40): Befund `SCROLLT_AUSNAHME` in der `.tsv`, der Test schlägt
      * nicht fehl – so bleibt sichtbar, wie weit die Seite dort scrollt.
@@ -283,6 +298,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         heightDp: Int = tallDp,
         widthDp: Int = device.widthDp,
         tab: Tab? = null,
+        frameHeightDp: Int = device.heightDp,
         noScroll: Boolean = false,
         acceptedScroll: Boolean = false,
         screen: Boolean = false,
@@ -291,7 +307,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         content: @Composable () -> Unit,
     ) {
         currentWidthDp = widthDp
-        currentHeightDp = if (tab == null) heightDp else device.heightDp
+        currentHeightDp = if (tab == null) heightDp else frameHeightDp
         current = if (tab == null) content else ({ TabFrame(tab, content) })
         prepare()
         val scale = (fontScale * 100).toInt()
@@ -360,10 +376,12 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     private val compactProblems = mutableListOf<String>()
 
     /**
-     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kurve und Werkzeugleiste (gewählte Phase mit
-     * Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne Scrollen ganz im Bild – auf dem A54
-     * (und größer) bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE]; bei 2,0 und auf 360 × 640 darf
-     * gescrollt werden (nur gemessen).
+     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, Startzeile, „Atemzug“, Kurve und
+     * Werkzeugleiste (gewählte Phase mit Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne
+     * Scrollen ganz im Bild – auf jedem Gerät der Matrix bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE]
+     * hart geprüft (Ausnahme [COMPACT_EDITOR_EXCEPTION]); bei 2,0 und auf dem kleinen Gerät
+     * (360 × [SMALL_HEIGHT_DP]) nur gemessen. Überall ein Fehler: Die Seite scrollt, obwohl die
+     * Mindesthöhe der Kurve gepasst hätte, oder die Kurve ist nicht so hoch, wie der Platz erlaubt.
      */
     @After
     fun editorCompact() {
@@ -374,27 +392,47 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Misst im Muster-Editor, wie weit Kurve und Werkzeugleiste in den sichtbaren Teil der
-     * Scroll-Fläche reichen: Befund `KOMPAKT` mit Unterkante der Werkzeugleiste und verfügbarer
-     * Höhe (beides ab Oberkante der Scroll-Fläche, in dp), `KOMPAKT_FEHLT` als Fehler, wo es
-     * passen muss ([compactProblems]), sonst `KOMPAKT_SCROLLT` (nur gemessen).
+     * Scroll-Fläche reichen, und die Höhe der Kurve gegen ihre Spanne (Mindest- bis volle Höhe):
+     * Befund `KOMPAKT` (passt), `KOMPAKT_FEHLT` als Fehler ([compactProblems]) oder
+     * `KOMPAKT_SCROLLT` (nur gemessen). Fehler, wo [hard]: Es passt nicht, oder die Kurve ist nicht
+     * so hoch wie der freie Platz erlaubt (geklemmt auf ihre Spanne). Ohne [hard] ist es immer noch
+     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Alle Werte
+     * ab Oberkante der Scroll-Fläche, in dp.
      */
-    private fun editorFit(screen: String): List<String> {
+    private fun editorFit(screen: String, hard: Boolean = fontScale <= COMPACT_EDITOR_MAX_FONT_SCALE): List<String> {
         // Ungeschnittene Lage (boundsInRoot wäre auf den sichtbaren Teil beschnitten).
         fun SemanticsNode.unclipped() = Rect(positionInRoot, size.toSize())
         val viewport = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).fetchSemanticsNode().unclipped()
-        val curve = compose.onNode(SemanticsMatcher.keyIsDefined(CurveAxisSeconds)).fetchSemanticsNode().unclipped()
+        val curveNode = compose.onNode(SemanticsMatcher.keyIsDefined(CurveAxisSeconds)).fetchSemanticsNode()
+        val curve = curveNode.unclipped()
+        val range = curveNode.config[CurveHeightRange]
         val toolbar = compose.onNodeWithTag(PATTERN_TOOLBAR_TAG).fetchSemanticsNode().unclipped()
+        // Feste Leiste (Nachtrag 6): Play-Knopf und „+“ der Dauer auf einer Zeile?
+        val app = RuntimeEnvironment.getApplication()
+        val play = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).fetchSemanticsNode().unclipped()
+        val durationPlus = compose.onNodeWithContentDescription("${app.getString(R.string.cd_adjust_duration)}, ${app.getString(R.string.adjust_increase)}").fetchSemanticsNode().unclipped()
+        val barOneLine = abs(play.center.y - durationPlus.center.y) <= 1f
         val density = compose.density.density
         fun dp(px: Float) = (px / density).roundToInt()
-        val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom
-        val required = device.widthDp >= TestMatrix.A54.widthDp && device.heightDp >= TestMatrix.A54.heightDp && fontScale <= COMPACT_EDITOR_MAX_FONT_SCALE
+        // Platz für die Kurve: sichtbare Höhe minus alles darüber und Werkzeugleiste darunter.
+        val free = viewport.height - (curve.top - viewport.top) - (toolbar.bottom - curve.bottom)
+        val expected = free.coerceIn(range.start, range.endInclusive)
+        val heightRight = abs(curve.height - expected) <= 1f
+        val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom + 0.5f
+        val minWouldFit = free >= range.start - 0.5f
+        val exception = device == TestMatrix.COMPACT && fontScale == COMPACT_EDITOR_MAX_FONT_SCALE && !minWouldFit
         val kind = when {
-            fits -> "KOMPAKT"
-            required -> "KOMPAKT_FEHLT"
+            hard && !barOneLine -> "KOMPAKT_FEHLT"
+            fits && heightRight -> "KOMPAKT"
+            (minWouldFit && !fits) || !heightRight -> "KOMPAKT_FEHLT"
+            exception -> COMPACT_EDITOR_EXCEPTION
+            hard -> "KOMPAKT_FEHLT"
             else -> "KOMPAKT_SCROLLT"
         }
-        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp, " +
-            "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp)"
+        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
+            "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
+            "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp), " +
+            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)
     }
@@ -531,10 +569,15 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         Editor { PatternEditorState.new(it, template("Viloma I")) }
     }
 
-    /** Startpunkt aufgeklappt: die sechs Vorlagen in zwei Spalten, „Box“ gewählt. */
+    /**
+     * Startpunkt-Sheet offen (Nachtrag 6): die sechs Vorlagen mit Mini-Kurve, „Box“ markiert. Das
+     * Sheet ist ein eigenes Fenster: Fenster in Gerätegröße ([setUp]), Aufnahme des ganzen Bildschirms.
+     */
     @Test
-    fun patternEditorTemplates() = snap("14_muster_editor_startpunkt_offen", prepare = {
-        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.pattern_editor_start)).performClick()
+    fun patternEditorTemplates() = snap("14_muster_editor_startpunkt_offen", tab = Tab.EIGENE, screen = true, prepare = {
+        val app = RuntimeEnvironment.getApplication()
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "Box")).performClick()
+        compose.waitForIdle()
     }) {
         Editor { PatternEditorState.new(it, template("Box")) }
     }
@@ -587,6 +630,23 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      */
     @Test
     fun patternEditorDevice() = snap("14_muster_editor_geraet", tab = Tab.EIGENE, measure = { editorFit("14_muster_editor_geraet") }) { EditSaved() }
+
+    /**
+     * Kleines Gerät, 360 × [SMALL_HEIGHT_DP] dp (nur auf dem kompakten Gerät der Matrix): gemessen
+     * und dokumentiert, nicht hart geprüft – die Kurve steht dort auf ihrer Mindesthöhe, und wo
+     * auch die nicht reicht, scrollt die Seite ([editorFit]: ein Fehler nur, wenn die Mindesthöhe
+     * gepasst hätte).
+     */
+    @Test
+    fun patternEditorSmall() {
+        assumeTrue(device == TestMatrix.COMPACT)
+        snap(
+            "14_muster_editor_klein600",
+            tab = Tab.EIGENE,
+            frameHeightDp = SMALL_HEIGHT_DP,
+            measure = { editorFit("14_muster_editor_klein600", hard = false) },
+        ) { EditSaved() }
+    }
 
     /**
      * Kompakt im ungünstigen Fall, in Gerätehöhe: intensives Muster (4-7-8 mit Halten voll 12 s,

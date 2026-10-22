@@ -118,10 +118,14 @@
 
     <!-- Muster-Editor „Eigenes Muster“: frei gestaltete Phasenfolge (MUSTER-10, Nachtrag 4). -->
     <string name="pattern_editor_title">Eigenes Muster</string>
-    <!-- Pille „Startpunkt · Box ▾“ mit Vorlagen; dahinter die gewählte Vorlage oder „angepasst“.
-         Rechts daneben die Dauer „− 5 min +“ (geschütztes Leerzeichen: Zahl und Einheit bleiben beisammen). -->
+    <!-- Feste Leiste unten (Nachtrag 6): Startpunkt-Symbol (öffnet die Vorlagen als Bottom Sheet,
+         gesprochen „Startpunkt wählen, aktuell: Box“ bzw. „… angepasst“), Dauer „− 5 min +“
+         (geschütztes Leerzeichen: Zahl und Einheit bleiben beisammen) und der große Play-Knopf
+         „Übung starten, ca. 5 Minuten“ (%1$s = cd_duration_minutes). -->
     <string name="pattern_editor_start">Startpunkt</string>
+    <string name="cd_pattern_editor_start">Startpunkt wählen, aktuell: %1$s</string>
     <string name="pattern_editor_minutes">%1$d\u00A0min</string>
+    <string name="cd_pattern_editor_play">Übung starten, ca. %1$s</string>
     <!-- Abschnitt mit der Atemkurve; kurzer Status hinter dem Titel: „Atemzug · 10 s · 6/min“,
          TalkBack liest die Plural-Form. %2$s = die Rate (pattern_editor_rate_short, für TalkBack
          cd_pattern_editor_rate bzw. _one): Atemzüge pro Minute mit deutschem Komma, gesprochen
@@ -139,7 +143,7 @@
     <string name="pattern_editor_curve_full">voll</string>
     <string name="pattern_editor_curve_empty">leer</string>
     <string name="pattern_editor_curve_seconds">%1$d\u00A0s</string>
-    <!-- Gelbes Band über der Zeitleiste beim Ziehen: erlaubte Dauer der Phase (%1$d = 1, %2$d = 30);
+    <!-- Gelbes Band auf der Zeitleiste beim Ziehen: erlaubte Dauer der Phase (%1$d = 1, %2$d = 30);
          „_beyond“, wenn das Ende des Bereichs rechts außerhalb der Achse liegt. -->
     <string name="pattern_editor_curve_band" tools:ignore="PluralsCandidate">%1$d bis %2$d\u00A0s</string>
     <string name="pattern_editor_curve_band_beyond" tools:ignore="PluralsCandidate">%1$d bis %2$d\u00A0s, Ende rechts außerhalb</string>

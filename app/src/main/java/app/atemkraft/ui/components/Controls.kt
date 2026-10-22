@@ -167,7 +167,7 @@ fun AppTextButton(
  * (Muster-Editor: „+ Ein“ in `secondary`, „+ Aus“ in `BreathExhale`, FARBE-04). [dashed] zeichnet
  * den Rand gestrichelt (Halten); der Button füllt dann die Breite, die der Aufrufer vorgibt.
  * [compact] verkleinert das seitliche Polster (`ListGap` statt 24 dp) für knappe Reihen
- * (Werkzeugleiste des Muster-Editors, `DisclosurePill`); Höhe und Tippfläche bleiben.
+ * (Werkzeugleiste des Muster-Editors); Höhe und Tippfläche bleiben.
  */
 @Composable
 fun AppOutlinedButton(
