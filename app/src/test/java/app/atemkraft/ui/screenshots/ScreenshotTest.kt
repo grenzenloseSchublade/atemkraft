@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -97,7 +97,9 @@ import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.CurveAxisSeconds
 import app.atemkraft.ui.components.CurveHeightRange
+import app.atemkraft.ui.components.HideableTabBar
 import app.atemkraft.ui.components.MiniNowPlayingBar
+import app.atemkraft.ui.components.TabBarSpace
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.glossary.GlossaryScreen
@@ -117,7 +119,6 @@ import app.atemkraft.ui.settings.SettingsUiState
 import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
-import app.atemkraft.ui.theme.NeonMagenta
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.captureScreenRoboImage
@@ -187,15 +188,11 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         /** Kleines Gerät für den Muster-Editor (360 × 600 dp), nur gemessen. */
         private const val SMALL_HEIGHT_DP = 600
 
+        /** Bis zu dieser Schriftgröße bleibt die Tab-Leiste im Muster-Editor auf dem A54 sichtbar. */
+        private const val A54_TAB_BAR_MAX_FONT_SCALE = 1.3f
+
         /** Bottom Sheet der Vorlagen: eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
         private const val SHEET_TEST = "patternEditorTemplates"
-
-        /**
-         * Akzeptierte Ausnahme (wie S-40 im Meditations-Tab): kompakt360 bei Schrift 1,3 – Kopf
-         * „Atemzug“ (Status zweizeilig) und Werkzeugleiste (gewählte Phase zweizeilig) lassen dort
-         * selbst für die Mindesthöhe der Kurve keinen Platz. Nur gemessen (`KOMPAKT_AUSNAHME`).
-         */
-        private const val COMPACT_EDITOR_EXCEPTION = "KOMPAKT_AUSNAHME"
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
@@ -335,19 +332,22 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         current = null
     }
 
+    /** Platz der Tab-Leiste im [TabFrame]: Der Muster-Editor blendet sie bei Platzmangel aus (MUSTER-10). */
+    private val tabBarSpace = TabBarSpace()
+
     /**
      * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
-     * Trennlinie und [AppNavigationBar] mit [selected] markiert, darunter die Systemnavigation
-     * (in der App reicht die Leistenfläche bis dorthin).
+     * Trennlinie und [AppNavigationBar] mit [selected] markiert ([HideableTabBar] wie in
+     * MainActivity: Der Muster-Editor ([Editor]) darf sie über [tabBarSpace] ausblenden), darunter die
+     * Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
      */
     @Composable
     private fun TabFrame(selected: Tab, content: @Composable () -> Unit) {
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Spacer(Modifier.height(STATUS_BAR_DP.dp))
             Box(Modifier.weight(1f).fillMaxWidth()) { content() }
-            // Wie MainActivity (Scaffold-bottomBar).
-            HorizontalDivider(thickness = 1.dp, color = NeonMagenta.copy(alpha = 0.22f))
-            TabNavigation(selected)
+            // Wie MainActivity (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
+            HideableTabBar(tabBarSpace, allowHide = true, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
             Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
         }
     }
@@ -376,12 +376,13 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     private val compactProblems = mutableListOf<String>()
 
     /**
-     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, Startzeile, „Atemzug“, Kurve und
-     * Werkzeugleiste (gewählte Phase mit Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne
-     * Scrollen ganz im Bild – auf jedem Gerät der Matrix bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE]
-     * hart geprüft (Ausnahme [COMPACT_EDITOR_EXCEPTION]); bei 2,0 und auf dem kleinen Gerät
+     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, „Atemzug“, Kurve und Werkzeugleiste
+     * (gewählte Phase mit Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne Scrollen ganz im
+     * Bild – auf jedem Gerät der Matrix bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE] hart geprüft,
+     * wo nötig ohne Tab-Leiste (Nutzer 2026-10-22); bei 2,0 und auf dem kleinen Gerät
      * (360 × [SMALL_HEIGHT_DP]) nur gemessen. Überall ein Fehler: Die Seite scrollt, obwohl die
-     * Mindesthöhe der Kurve gepasst hätte, oder die Kurve ist nicht so hoch, wie der Platz erlaubt.
+     * Mindesthöhe der Kurve gepasst hätte, die Kurve ist nicht so hoch, wie der Platz erlaubt, oder
+     * die Tab-Leiste ist ausgeblendet, obwohl sie gepasst hätte (bzw. umgekehrt).
      */
     @After
     fun editorCompact() {
@@ -396,10 +397,16 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
      * Befund `KOMPAKT` (passt), `KOMPAKT_FEHLT` als Fehler ([compactProblems]) oder
      * `KOMPAKT_SCROLLT` (nur gemessen). Fehler, wo [hard]: Es passt nicht, oder die Kurve ist nicht
      * so hoch wie der freie Platz erlaubt (geklemmt auf ihre Spanne). Ohne [hard] ist es immer noch
-     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Alle Werte
-     * ab Oberkante der Scroll-Fläche, in dp.
+     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Überall
+     * ein Fehler: Die Tab-Leiste ist ausgeblendet, obwohl Kurve (Mindesthöhe) und Werkzeugleiste mit
+     * ihr gepasst hätten, oder umgekehrt; dazu, wo [expectTabBar] gesetzt ist, eine andere Sichtbarkeit.
+     * Alle Werte ab Oberkante der Scroll-Fläche, in dp.
      */
-    private fun editorFit(screen: String, hard: Boolean = fontScale <= COMPACT_EDITOR_MAX_FONT_SCALE): List<String> {
+    private fun editorFit(
+        screen: String,
+        hard: Boolean = fontScale <= COMPACT_EDITOR_MAX_FONT_SCALE,
+        expectTabBar: Boolean? = expectedTabBar(),
+    ): List<String> {
         // Ungeschnittene Lage (boundsInRoot wäre auf den sichtbaren Teil beschnitten).
         fun SemanticsNode.unclipped() = Rect(positionInRoot, size.toSize())
         val viewport = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).fetchSemanticsNode().unclipped()
@@ -420,21 +427,36 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val heightRight = abs(curve.height - expected) <= 1f
         val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom + 0.5f
         val minWouldFit = free >= range.start - 0.5f
-        val exception = device == TestMatrix.COMPACT && fontScale == COMPACT_EDITOR_MAX_FONT_SCALE && !minWouldFit
+        // Tab-Leiste: ausgeblendet genau dann, wenn die Mindesthöhe mit ihr nicht gepasst hätte.
+        val tabBarHidden = tabBarSpace.hidden
+        val gained = if (tabBarHidden) tabBarSpace.heightPx.toFloat() else 0f
+        val tabBarRight = tabBarHidden == (free - gained < range.start - 0.5f) && (expectTabBar == null || expectTabBar != tabBarHidden)
         val kind = when {
+            !tabBarRight -> "KOMPAKT_FEHLT"
             hard && !barOneLine -> "KOMPAKT_FEHLT"
             fits && heightRight -> "KOMPAKT"
             (minWouldFit && !fits) || !heightRight -> "KOMPAKT_FEHLT"
-            exception -> COMPACT_EDITOR_EXCEPTION
             hard -> "KOMPAKT_FEHLT"
             else -> "KOMPAKT_SCROLLT"
         }
-        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
+        val tabBar = if (tabBarHidden) "ausgeblendet (+${dp(gained)} dp)" else "sichtbar"
+        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tTab-Leiste $tabBar, Kurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
             "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
             "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp), " +
             "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)
+    }
+
+    /**
+     * Erwartete Tab-Leiste im Muster-Editor in Gerätehöhe (Nutzer 2026-10-22): Auf dem A54 bleibt sie
+     * bis Schrift 1,3 sichtbar (genug Platz, alles wie vorher), auf kompakt360 bei 1,3 ist sie
+     * ausgeblendet (sonst passte die Kurve nicht); sonst nicht festgelegt (true = sichtbar).
+     */
+    private fun expectedTabBar(): Boolean? = when {
+        device == TestMatrix.A54 && fontScale <= A54_TAB_BAR_MAX_FONT_SCALE -> true
+        device == TestMatrix.COMPACT && fontScale == COMPACT_EDITOR_MAX_FONT_SCALE -> false
+        else -> null
     }
 
     /** LAYOUT-08: Der Meditations-Tab scrollt bis fontScale 1,3 nicht. */
@@ -644,7 +666,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             "14_muster_editor_klein600",
             tab = Tab.EIGENE,
             frameHeightDp = SMALL_HEIGHT_DP,
-            measure = { editorFit("14_muster_editor_klein600", hard = false) },
+            measure = { editorFit("14_muster_editor_klein600", hard = false, expectTabBar = null) },
         ) { EditSaved() }
     }
 
@@ -679,6 +701,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onBack = {},
             // Ohne echten Ton: Die Vorschau-Aufnahme spielt sonst Töne über Robolectric.
             soundOutput = { FakePreviewSoundOutput() },
+            // Tab-Leiste im TabFrame (in Listenhöhe ohne Rahmen ohne Wirkung).
+            tabBar = tabBarSpace,
         )
     }
 

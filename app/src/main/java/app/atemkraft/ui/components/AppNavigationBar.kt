@@ -1,20 +1,34 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import app.atemkraft.ui.theme.DarkSurface
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonMagenta
 import app.atemkraft.ui.theme.OnNeon
 import app.atemkraft.ui.theme.TERTIARY
@@ -67,5 +81,61 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
                 colors = colors,
             )
         }
+    }
+}
+
+/** Deckkraft der Trennlinie über der Tab-Leiste. */
+private const val TAB_DIVIDER_ALPHA = 0.22f
+
+/**
+ * Platz der Tab-Leiste für eine Seite, die sie bei Platzmangel ausblenden darf (MUSTER-10, Nutzer
+ * 2026-10-22: nur der Muster-Editor). Der Rahmen ([HideableTabBar]) misst [heightPx] und setzt
+ * [hidden]; die Seite meldet über [request], ob sie den Platz braucht. Nur die Seite, die das
+ * darf, bekommt ihn als Parameter.
+ */
+@Stable
+class TabBarSpace {
+    /** So viel Höhe (px) nimmt die Leiste samt Trennlinie dem Inhalt, ohne Systemnavigation; 0, solange nie gemessen. */
+    var heightPx by mutableIntStateOf(0)
+        internal set
+
+    /** Wunsch der Seite: Leiste ausblenden ([request]). */
+    var requested by mutableStateOf(false)
+        private set
+
+    /** True, solange die Leiste ausgeblendet ist (setzt [HideableTabBar]). */
+    var hidden by mutableStateOf(false)
+        internal set
+
+    /** Die Seite braucht den Platz der Leiste ([hide]) bzw. nicht. */
+    fun request(hide: Boolean) {
+        requested = hide
+    }
+}
+
+/**
+ * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]). Ausgeblendet, wenn [allowHide]
+ * (die Seite, die das darf, liegt oben) und sie es über [space] wünscht – dann bleibt nur der Platz
+ * der Systemnavigation [systemInsets], die Leiste der Seite sitzt darüber. Verlässt man die Seite
+ * ([allowHide] false), ist die Leiste sofort wieder da.
+ */
+@Composable
+fun HideableTabBar(
+    space: TabBarSpace,
+    allowHide: Boolean,
+    modifier: Modifier = Modifier,
+    systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
+    bar: @Composable () -> Unit,
+) {
+    val hide = allowHide && space.requested
+    SideEffect { space.hidden = hide }
+    if (hide) {
+        Spacer(modifier.windowInsetsBottomHeight(systemInsets))
+        return
+    }
+    val inset by rememberUpdatedState(systemInsets.getBottom(LocalDensity.current))
+    Column(modifier.onSizeChanged { space.heightPx = it.height - inset }) {
+        HorizontalDivider(thickness = Dimens.BorderThin, color = NeonMagenta.copy(alpha = TAB_DIVIDER_ALPHA))
+        bar()
     }
 }

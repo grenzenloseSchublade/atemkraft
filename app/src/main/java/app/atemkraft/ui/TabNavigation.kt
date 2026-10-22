@@ -1,6 +1,9 @@
 package app.atemkraft.ui
 
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 
 /**
@@ -31,3 +34,9 @@ internal fun NavController.switchTab(route: Any) {
         restoreState = true
     }
 }
+
+/**
+ * Ob die Tab-Leiste auf diesem Ziel bei Platzmangel ausgeblendet werden darf: nur im Muster-Editor
+ * (MUSTER-10, Nutzer 2026-10-22). Folgt dem Stapel sofort – zurück oder weiter, ist sie wieder da.
+ */
+internal fun NavDestination?.mayHideTabBar(): Boolean = this?.hierarchy?.any { it.hasRoute(PatternEditorRoute::class) } == true

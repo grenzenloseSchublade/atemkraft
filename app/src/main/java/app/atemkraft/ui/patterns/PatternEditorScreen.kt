@@ -74,8 +74,10 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -130,6 +132,7 @@ import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.StartPlayButton
+import app.atemkraft.ui.components.TabBarSpace
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
@@ -159,7 +162,8 @@ import kotlinx.coroutines.launch
  * Sekunden-Stepper und Papierkorb, gelb gestrichelt getrennt „Neu nach 2:“ mit + Ein / + Halten /
  * + Aus). Ziel: Kurve und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle
  * Höhe, wo Platz ist, sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe
- * ([FirstScreen]). Darunter Hinweis bei intensiven Mustern, „Ablauf“ (eingeklappt, Überblick und TalkBack),
+ * ([FirstScreen]; reicht der Platz dafür mit der Tab-Leiste nicht, blendet der Editor sie aus).
+ * Darunter Hinweis bei intensiven Mustern, „Ablauf“ (eingeklappt, Überblick und TalkBack),
  * Name, „Aus der Yoga-Lehre“; unten fest eine Leiste ([ActionBar], Nachtrag 6): Startpunkt (Vorlagen
  * als Bottom Sheet), Dauer, Zurücksetzen und der große Play-Knopf.
  *
@@ -177,6 +181,8 @@ import kotlinx.coroutines.launch
  *
  * Ton der Vorschau ([rememberPreviewSound]): Klang-Einstellungen der App [cueSettings]; still,
  * solange eine Übung oder Meditation läuft ([otherAudioActive]). [soundOutput] tauschen nur Tests.
+ *
+ * [tabBar]: Platz der Tab-Leiste der App – reicht er nicht, blendet der Editor sie aus ([FirstScreen]).
  */
 @Composable
 fun PatternEditorScreen(
@@ -190,6 +196,7 @@ fun PatternEditorScreen(
     requireSafetyConfirm: Boolean = true,
     onConfirmedSafety: () -> Unit = {},
     soundOutput: (Context) -> PreviewSoundOutput = ::AppPreviewSoundOutput,
+    tabBar: TabBarSpace? = null,
 ) {
     val exercise = state.exercise()
     val config = state.config()
@@ -237,6 +244,7 @@ fun PatternEditorScreen(
                 ) {
                     FirstScreen(
                         viewport = viewport,
+                        tabBar = tabBar,
                         header = {
                             Breath(state, phase = phaseIndex.takeIf { preview.playing }) {
                                 CurvePreviewControls(preview) { PreviewSoundSwitch(sound) }
@@ -311,23 +319,38 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
  * Bildschirmen weniger, nie unter ihre Mindesthöhe ([BreathCurveHeights.fit]); reicht auch die
  * nicht, scrollt die Seite.
  *
+ * Tab-Leiste (Nutzer 2026-10-22): Passen Kopf, Kurve in Mindesthöhe und Werkzeugleiste mit der
+ * Tab-Leiste nicht, bittet der Editor sie über [tabBar] auszublenden; die gewonnene
+ * Höhe bekommt die Kurve. Entschieden einmal je Fenstergröße und Schrift, beim ersten Messen –
+ * ist die Leiste da schon ausgeblendet, zählt ihre Höhe wieder dazu, also fällt die Entscheidung
+ * gleich aus und kippt nicht hin und her.
+ *
  * Kopf und Werkzeugleiste behalten beim Bearbeiten ihre Höhe (Platz für die längsten Texte
  * reserviert), also auch die Kurve – nichts springt beim Auswählen, Hinzufügen oder Entfernen.
  */
 @Composable
 private fun FirstScreen(
     viewport: Int,
+    tabBar: TabBarSpace?,
     header: @Composable () -> Unit,
     curve: @Composable () -> Unit,
     toolbar: @Composable () -> Unit,
 ) {
     val heights = rememberBreathCurveHeights()
+    val window = LocalWindowInfo.current.containerSize
+    val fontScale = LocalDensity.current.fontScale
+    val tabBarDecision = remember(tabBar, window, fontScale) { Decision() }
     Layout(contents = listOf(header, curve, toolbar)) { (headerSlot, curveSlot, toolbarSlot), constraints ->
         val width = constraints.maxWidth
         val loose = Constraints(maxWidth = width)
         val head = headerSlot.map { it.measure(loose) }
         val tools = toolbarSlot.map { it.measure(loose) }
         fun List<Placeable>.height() = sumOf { it.height }
+        if (tabBar != null && viewport != Constraints.Infinity && !tabBarDecision.made) {
+            tabBarDecision.made = true
+            val withTabBar = viewport - if (tabBar.hidden) tabBar.heightPx else 0
+            tabBar.request(withTabBar < head.height() + heights.min.roundToPx() + tools.height())
+        }
         val curveHeight = if (viewport == Constraints.Infinity) {
             heights.preferred.roundToPx()
         } else {
@@ -343,6 +366,11 @@ private fun FirstScreen(
             }
         }
     }
+}
+
+/** Einmal getroffene Entscheidung (Tab-Leiste im [FirstScreen]); kein State, sie löst nichts neu aus. */
+private class Decision {
+    var made = false
 }
 
 /**

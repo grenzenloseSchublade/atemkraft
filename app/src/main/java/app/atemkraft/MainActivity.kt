@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -89,12 +88,15 @@ import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
+import app.atemkraft.ui.components.HideableTabBar
+import app.atemkraft.ui.components.TabBarSpace
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.rememberDetailExercise
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.mayHideTabBar
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MiniMeditationBar
@@ -110,7 +112,6 @@ import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.tapTab
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Motion
-import app.atemkraft.ui.theme.NeonMagenta
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -223,6 +224,9 @@ private fun AtemkraftApp(
     // (A11Y-07, MUSTER-07): Sonst führte Wischen hinter „Beenden“ auf unsichtbare Karten und Tabs.
     val overlayOpen = (sessionActive && sessionExpanded) || (meditationActive && meditationExpanded)
 
+    // Platz der Tab-Leiste, den der Muster-Editor bei Platzmangel für sich beansprucht ([HideableTabBar]).
+    val tabBarSpace = remember { TabBarSpace() }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
         // minimiert erscheinen sie als „Now-Playing"-Mini-Leiste über der Tab-Leiste.
@@ -240,31 +244,33 @@ private fun AtemkraftApp(
                             MiniMeditationBar(state = state, onClick = { meditationExpanded = true })
                         }
                     }
-                    HorizontalDivider(thickness = 1.dp, color = NeonMagenta.copy(alpha = 0.22f))
-                    AppNavigationBar(
-                        listOf(
-                            AppNavItem(
-                                label = stringResource(R.string.tab_breathe),
-                                selected = selectedTab == TopTab.ATMEN,
-                                onClick = { navController.tapTab(AtmenRoute, selected = selectedTab == TopTab.ATMEN) },
-                            ) { Icon(Icons.Filled.Home, contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                            AppNavItem(
-                                label = stringResource(R.string.tab_situations),
-                                selected = selectedTab == TopTab.SITUATIONEN,
-                                onClick = { navController.tapTab(SituationenRoute, selected = selectedTab == TopTab.SITUATIONEN) },
-                            ) { Icon(Icons.Filled.Search, contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                            AppNavItem(
-                                label = stringResource(R.string.tab_own),
-                                selected = selectedTab == TopTab.EIGENE,
-                                onClick = { navController.tapTab(EigeneRoute, selected = selectedTab == TopTab.EIGENE) },
-                            ) { Icon(painterResource(R.drawable.ic_bookmark_filled), contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                            AppNavItem(
-                                label = stringResource(R.string.tab_meditation),
-                                selected = selectedTab == TopTab.MEDITATION,
-                                onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
-                            ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                        ),
-                    )
+                    // Im Muster-Editor nur bei Platzmangel ausgeblendet (MUSTER-10, Nutzer 2026-10-22).
+                    HideableTabBar(tabBarSpace, allowHide = currentDestination.mayHideTabBar()) {
+                        AppNavigationBar(
+                            listOf(
+                                AppNavItem(
+                                    label = stringResource(R.string.tab_breathe),
+                                    selected = selectedTab == TopTab.ATMEN,
+                                    onClick = { navController.tapTab(AtmenRoute, selected = selectedTab == TopTab.ATMEN) },
+                                ) { Icon(Icons.Filled.Home, contentDescription = null) }, // dekorativ: das Label benennt den Tab
+                                AppNavItem(
+                                    label = stringResource(R.string.tab_situations),
+                                    selected = selectedTab == TopTab.SITUATIONEN,
+                                    onClick = { navController.tapTab(SituationenRoute, selected = selectedTab == TopTab.SITUATIONEN) },
+                                ) { Icon(Icons.Filled.Search, contentDescription = null) }, // dekorativ: das Label benennt den Tab
+                                AppNavItem(
+                                    label = stringResource(R.string.tab_own),
+                                    selected = selectedTab == TopTab.EIGENE,
+                                    onClick = { navController.tapTab(EigeneRoute, selected = selectedTab == TopTab.EIGENE) },
+                                ) { Icon(painterResource(R.drawable.ic_bookmark_filled), contentDescription = null) }, // dekorativ: das Label benennt den Tab
+                                AppNavItem(
+                                    label = stringResource(R.string.tab_meditation),
+                                    selected = selectedTab == TopTab.MEDITATION,
+                                    onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
+                                ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) }, // dekorativ: das Label benennt den Tab
+                            ),
+                        )
+                    }
                 }
             },
         ) { innerPadding ->
@@ -477,6 +483,7 @@ private fun AtemkraftApp(
                         onConfirmedSafety = {
                             scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
                         },
+                        tabBar = tabBarSpace,
                     )
                 }
                 pushComposable<SettingsRoute> { entry ->
