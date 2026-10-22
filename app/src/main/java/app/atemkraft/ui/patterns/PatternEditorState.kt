@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.data.PatternBackup
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternComposer
@@ -153,8 +154,11 @@ class PatternEditorState internal constructor(
             else -> suggestedName
         }
 
-    /** Der Name, unter dem gespeichert wird: leer oder nur Leerzeichen → Vorschlagsname. */
-    val savedName: String get() = name.trim().ifEmpty { suggestedName }
+    /**
+     * Der Name, unter dem gespeichert wird – so bereinigt wie im Repository ([PatternBackup.cleanName]),
+     * damit das Lesezeichen nach dem Speichern zum gespeicherten Eintrag passt; leer → Vorschlagsname.
+     */
+    val savedName: String get() = PatternBackup.cleanName(name).ifEmpty { suggestedName }
 
     /** Entspricht der Entwurf dem gespeicherten Eintrag (Lesezeichen gefüllt)? */
     val saved: Boolean get() = savedId != null && snapshot == current()
@@ -253,7 +257,7 @@ class PatternEditorState internal constructor(
 
     companion object {
         /** Höchstlänge des Namens (Nutzerentscheidung 2026-10-22). */
-        const val NAME_MAX = 80
+        const val NAME_MAX = PatternBackup.MAX_NAME
 
         /** Vorgabedauer eines neuen Musters, wie beim Muster des Tages (≈ 5 min). */
         const val DEFAULT_MINUTES = 5
@@ -347,7 +351,7 @@ class PatternEditorState internal constructor(
                 keptName = if (followsNumbers) name.trim() else "",
                 keptFor = spec,
                 savedId = id,
-                snapshot = PatternSnapshot(spec, storedMinutes, name.trim().ifEmpty { suggestedName(namePrefix, spec) }),
+                snapshot = PatternSnapshot(spec, storedMinutes, PatternBackup.cleanName(name).ifEmpty { suggestedName(namePrefix, spec) }),
                 existedBefore = true,
                 fittedOnOpen = fitted != spec,
             )
