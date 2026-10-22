@@ -326,7 +326,6 @@ private fun AtemkraftApp(
                         resolve = { id -> container.exerciseRepository.byId(id) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
                         markedIds = markedExercises,
-                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 composable<EigeneRoute> {
@@ -340,7 +339,6 @@ private fun AtemkraftApp(
                             scope.launch { container.savedPatternsRepository.delete(id) }
                         },
                         onOpenSettings = { navController.navigate(SettingsRoute()) },
-                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 composable<MeditationRoute> {
@@ -361,7 +359,6 @@ private fun AtemkraftApp(
                             meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
                             askNotifications()
                         },
-                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                     )
                 }
                 pushComposable<DetailRoute> { entry ->

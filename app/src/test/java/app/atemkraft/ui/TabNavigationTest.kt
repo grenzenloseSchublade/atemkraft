@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -27,6 +28,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -42,16 +44,22 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import app.atemkraft.R
+import app.atemkraft.data.Situations
+import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.glossary.GlossaryScreen
+import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.SettingsActions
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsUiState
+import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -62,12 +70,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 
 /**
  * Navigation zwischen Tabs und weitergeführten Seiten: Re-Tap auf den markierten Tab
  * ([tapTab]), Tab-Wechsel ([switchTab]) und Zurück über den festen Kopf ([PushHeader]).
- * Der NavHost hat dieselben Routen wie MainActivity; Einstellungen, Glossar, Über und Atemlehre
- * sind die echten Screens, damit der Test auch den festen Zurück-Pfeil prüft. Gerätegröße wie das A54.
+ * Der NavHost hat dieselben Routen wie MainActivity; die vier Tabs, Einstellungen, Glossar, Über und
+ * Atemlehre sind die echten Screens (Kalender zum Logbuch nur im Atmen-Tab), damit der Test auch den festen Zurück-Pfeil prüft. Gerätegröße wie das A54.
  * Darüber liegt wie in MainActivity bei Bedarf ein Session-Overlay; die App darunter ist dann
  * per [inertWhen] für TalkBack und Tastatur nicht da.
  */
@@ -132,9 +141,24 @@ class TabNavigationTest {
     @Composable
     private fun Routes() {
         NavHost(nav, startDestination = AtmenRoute) {
-            composable<AtmenRoute> { Text("Atmen") }
-            composable<SituationenRoute> { Text("Situationen") }
-            // Echter Tab „Eigene“: sein Kopf trägt den Kalender zum Logbuch (Nachtrag 2).
+            // Echte Tabs wie in MainActivity: Nur der Kopf von Atmen trägt den Kalender zum Logbuch
+            // (links neben dem Zahnrad, Nutzer 2026-10-22).
+            composable<AtmenRoute> {
+                HomeScreen(
+                    exercisesByFamily = emptyList(),
+                    programs = emptyList(),
+                    daily = remember { RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 22)) },
+                    dailySaved = false,
+                    onRegenerateDaily = {},
+                    onDailySavedChange = {},
+                    onSelect = { id -> nav.navigate(DetailRoute(id)) },
+                    onOpenSettings = { nav.navigate(SettingsRoute()) },
+                    onOpenLogbook = { nav.navigate(LogbookRoute) { launchSingleTop = true } },
+                )
+            }
+            composable<SituationenRoute> {
+                SituationsScreen(recommendations = Situations.all, resolve = { null }, onSelect = {})
+            }
             composable<EigeneRoute> {
                 OwnPatternsScreen(
                     savedPatterns = emptyList(),
@@ -142,10 +166,18 @@ class TabNavigationTest {
                     onSelect = {},
                     onDeletePattern = {},
                     onOpenSettings = { nav.navigate(SettingsRoute()) },
-                    onOpenLogbook = { nav.navigate(LogbookRoute) { launchSingleTop = true } },
                 )
             }
-            composable<MeditationRoute> { Text("Meditation") }
+            composable<MeditationRoute> {
+                MeditationScreen(
+                    initialConfig = MeditationConfig(),
+                    speechAvailable = true,
+                    gongIntervalMin = 5,
+                    onOpenSettings = { nav.navigate(SettingsRoute(focusMeditation = true)) },
+                    onDurationTick = {},
+                    onStart = {},
+                )
+            }
             composable<SettingsRoute> { entry ->
                 Settings(focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation)
             }
@@ -186,7 +218,10 @@ class TabNavigationTest {
         rule.onAllNodesWithText(TAB_BAR).assertCountEquals(1)
         rule.onAllNodesWithText("Atmen").assertCountEquals(1)
         rule.runOnIdle { focusManager.clearFocus() }
-        repeat(2) { rule.runOnIdle { focusManager.moveFocus(FocusDirection.Next) } }
+        // Der echte Atmen-Tab hat vor der Tab-Leiste eigene Ziele (Kalender, Zahnrad, Tageskarte …).
+        repeat(MAX_FOCUS_STEPS) {
+            if (TAB_BAR !in focusedEver) rule.runOnIdle { focusManager.moveFocus(FocusDirection.Next) }
+        }
         rule.waitForIdle()
         assertTrue("Tab erreicht die App wieder", TAB_BAR in focusedEver)
     }
@@ -308,17 +343,28 @@ class TabNavigationTest {
     }
 
     @Test
-    fun `Kalender im Kopf des Tabs öffnet das Logbuch, Zurück-Pfeil führt zum Tab`() {
-        step { nav.tapTab(EigeneRoute, selected = false) }
+    fun `Kalender im Kopf von Atmen öffnet das Logbuch, Zurück-Pfeil führt zum Tab`() {
         val calendar = rule.onNodeWithContentDescription(string(R.string.settings_log_title))
         calendar.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-        assertEquals("AtmenRoute > EigeneRoute > LogbookRoute", step { calendar.performClick() })
+        // Links neben dem Zahnrad (Nutzer 2026-10-22).
+        val gear = rule.onNodeWithContentDescription(string(R.string.settings_title)).getUnclippedBoundsInRoot()
+        assertTrue("Kalender steht links vom Zahnrad", calendar.getUnclippedBoundsInRoot().right <= gear.left)
+        assertEquals("AtmenRoute > LogbookRoute", step { calendar.performClick() })
         rule.onNodeWithText(string(R.string.log_sessions_none)).assertIsDisplayed()
 
-        assertEquals("AtmenRoute > EigeneRoute", step { backArrow().performClick() })
+        assertEquals("AtmenRoute", step { backArrow().performClick() })
         step { rule.onNodeWithContentDescription(string(R.string.settings_log_title)).performClick() }
         // Re-Tap auf den markierten Tab führt auch aus dem Logbuch zur Tab-Startseite.
-        assertEquals("AtmenRoute > EigeneRoute", step { nav.tapTab(EigeneRoute, selected = true) })
+        assertEquals("AtmenRoute", step { nav.tapTab(AtmenRoute, selected = true) })
+    }
+
+    @Test
+    fun `Situationen, Eigene und Meditation zeigen keinen Kalender im Kopf`() {
+        listOf(SituationenRoute, EigeneRoute, MeditationRoute).forEach { tab ->
+            step { nav.tapTab(tab, selected = false) }
+            rule.onNodeWithText(string(tabTitle.getValue(tab))).assertIsDisplayed()
+            rule.onNodeWithContentDescription(string(R.string.settings_log_title)).assertDoesNotExist()
+        }
     }
 
     @Test
@@ -360,6 +406,12 @@ class TabNavigationTest {
     private companion object {
         const val TAB_BAR = "Tab-Leiste"
         const val OVERLAY_STOP = "Beenden"
+        const val MAX_FOCUS_STEPS = 30
+        val tabTitle = mapOf(
+            SituationenRoute to R.string.tab_situations,
+            EigeneRoute to R.string.own_title,
+            MeditationRoute to R.string.meditation_title,
+        )
     }
 
     private fun backArrow() = rule.onNodeWithContentDescription(string(R.string.action_back))

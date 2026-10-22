@@ -553,7 +553,6 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onSelect = {},
             onDeletePattern = {},
             onOpenSettings = {},
-            onOpenLogbook = {},
         )
     }
 
@@ -594,7 +593,6 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             recommendations = Situations.all,
             resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
             onSelect = {},
-            onOpenLogbook = {},
         )
     }
 
@@ -649,7 +647,6 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onOpenSettings = {},
             onDurationTick = {},
             onStart = {},
-            onOpenLogbook = {},
         )
     }
 

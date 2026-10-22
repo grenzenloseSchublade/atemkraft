@@ -43,7 +43,7 @@ import app.atemkraft.ui.theme.Sizes
  * neben den Situationen. Ohne Muster steht ein kurzer Satz da, darunter derselbe Knopf.
  *
  * Löschen bleibt zweistufig in der Kartenecke (MUSTER-05). Der Kopf gleicht den anderen Tabs:
- * Titel, Untertitel, Kalender zum Logbuch, Zahnrad zu den Einstellungen.
+ * Titel, Untertitel, Zahnrad zu den Einstellungen (den Kalender zum Logbuch trägt nur Atmen).
  */
 @Composable
 fun OwnPatternsScreen(
@@ -52,8 +52,6 @@ fun OwnPatternsScreen(
     onSelect: (String) -> Unit,
     onDeletePattern: (Long) -> Unit,
     onOpenSettings: () -> Unit,
-    // Kalender im Kopf: öffnet das Logbuch; ohne ihn kein Icon (Vorschauen, Tests).
-    onOpenLogbook: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -72,7 +70,6 @@ fun OwnPatternsScreen(
                     title = stringResource(R.string.own_title),
                     subtitle = stringResource(R.string.own_subtitle),
                     action = { SettingsAction(onClick = onOpenSettings) },
-                    onOpenLogbook = onOpenLogbook,
                 )
             }
 

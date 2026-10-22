@@ -63,8 +63,6 @@ fun SituationsScreen(
     resolve: (String) -> Exercise?,
     onSelect: (String) -> Unit,
     markedIds: Set<String> = emptySet(),
-    // Kalender im Kopf: öffnet das Logbuch; ohne ihn kein Icon (Vorschauen, Tests).
-    onOpenLogbook: (() -> Unit)? = null,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
@@ -110,7 +108,6 @@ fun SituationsScreen(
                             }
                         }
                     },
-                    onOpenLogbook = onOpenLogbook,
                     subtitleContent = if (searchOpen) {
                         {
                             SearchField(

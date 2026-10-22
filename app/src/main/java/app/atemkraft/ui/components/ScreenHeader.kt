@@ -26,8 +26,8 @@ import app.atemkraft.ui.theme.SECONDARY
  * Einheitlicher Kopf der Top-Level-Tabs: Screen-Titel, optionaler Untertitel und rechts die
  * Icon-Aktionen, immer an derselben Stelle: außen höchstens eine Aktion ([action], ein
  * `AppIconButton`) – das Zahnrad ([SettingsAction]) bzw. die Lupe im Situationen-Tab –, links
- * daneben der Kalender zum Logbuch ([onOpenLogbook], [LogbookAction], in jedem Tab, Nutzer
- * 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bricht nie im Wort
+ * daneben der Kalender zum Logbuch ([onOpenLogbook], [LogbookAction], nur im Atmen-Tab links neben
+ * dem Zahnrad, Nutzer 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bricht nie im Wort
  * ([WholeWordText]); neben zwei Icons wird er bei großer Schrift notfalls kleiner.
  *
  * [subtitleContent] ersetzt den Untertitel (z. B. durch das [SearchField]): Der Kopf wechselt
@@ -76,8 +76,8 @@ fun ScreenHeader(
 }
 
 /**
- * Kalender für [ScreenHeader]: öffnet das Logbuch (cd „Logbuch“), in jedem Tab links neben der
- * übrigen Kopf-Aktion (Nachtrag 2, Nutzer 2026-10-22).
+ * Kalender für [ScreenHeader]: öffnet das Logbuch (cd „Logbuch“), nur im Atmen-Tab links neben dem
+ * Zahnrad (Nutzer 2026-10-22).
  */
 @Composable
 fun LogbookAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -107,8 +107,8 @@ fun SettingsAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
 private fun ScreenHeaderPreview() {
     AtemkraftTheme {
         ScreenHeader(
-            title = stringResource(R.string.meditation_title),
-            subtitle = stringResource(R.string.meditation_subtitle),
+            title = stringResource(R.string.tab_breathe),
+            subtitle = stringResource(R.string.home_subtitle),
             action = { SettingsAction(onClick = {}) },
             onOpenLogbook = {},
         )
