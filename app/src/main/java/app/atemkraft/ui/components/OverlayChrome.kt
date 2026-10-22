@@ -10,33 +10,22 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.TERTIARY
 
 /**
  * Geteilter Rahmen der Vollbild-Overlays (Atem-Session + Meditation): Hintergrund-Surface mit
@@ -76,43 +65,18 @@ fun OverlayChrome(
                             tint = MaterialTheme.colorScheme.onBackground,
                         )
                     }
-                    SoundSwitch(muted = muted, onToggleMute = onToggleMute)
+                    // Schneller Ton-Schalter für die laufende Sitzung (die Einstellung bleibt
+                    // unberührt); Kreis wie der M3-IconButton daneben, fest wie die Kopfleiste.
+                    SoundSwitch(
+                        on = !muted,
+                        onToggle = { onToggleMute() },
+                        name = stringResource(R.string.action_sound),
+                        size = Dimens.OverlayIconButton,
+                    )
                 }
             }
             Box(modifier = Modifier.weight(1f), content = content)
         }
-    }
-}
-
-/**
- * Schneller Ton-Schalter für die laufende Sitzung (die Einstellung bleibt unberührt). Optik wie
- * der M3-`IconButton` daneben (Kreis [Dimens.OverlayIconButton], Icon 24 dp, fest wie die übrige
- * Kopfleiste), aber `toggleable` mit `Role.Switch`: TalkBack liest „Ton, Schalter, An“. Ohne
- * Live-Region – der fokussierte Schalter sagt seinen neuen Zustand selbst an.
- */
-@Composable
-private fun SoundSwitch(muted: Boolean, onToggleMute: () -> Unit) {
-    val state = stringResource(if (muted) R.string.state_switch_off else R.string.state_switch_on)
-    Box(
-        modifier = Modifier
-            .minimumInteractiveComponentSize()
-            .size(Dimens.OverlayIconButton)
-            .clip(CircleShape)
-            .toggleable(
-                value = !muted,
-                interactionSource = null,
-                indication = ripple(),
-                role = Role.Switch,
-                onValueChange = { onToggleMute() },
-            )
-            .semantics { stateDescription = state },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(if (muted) R.drawable.ic_sound_off else R.drawable.ic_sound_on),
-            contentDescription = stringResource(R.string.action_sound),
-            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (muted) TERTIARY else 1f),
-        )
     }
 }
 

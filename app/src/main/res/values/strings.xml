@@ -143,6 +143,8 @@
     <string name="cd_breath_curve_part">%1$s %2$s</string>
     <string name="cd_preview_play">Vorschau abspielen</string>
     <string name="cd_preview_pause">Vorschau anhalten</string>
+    <!-- Lautsprecher-Schalter der Editor-Vorschau (Role.Switch, Zustand „An“/„Aus“). -->
+    <string name="cd_preview_sound">Ton der Vorschau</string>
     <string name="pattern_editor_fine">Genau einstellen</string>
     <!-- Sichtbar mit Einheit, gesprochen ohne (A11Y-06); phase_hold_full und phase_hold_empty
          heißen beide nur „Halten“. -->
