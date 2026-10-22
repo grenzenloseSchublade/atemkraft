@@ -15,11 +15,13 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
 import app.atemkraft.domain.PatternField
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.rangeFor
 import app.atemkraft.domain.secondsOf
 import app.atemkraft.domain.with
+import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
@@ -30,6 +32,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * Atemkurve des Muster-Editors (MUSTER-10): Ziehen eines Griffs rastet auf ganze Sekunden, meldet
@@ -164,5 +169,44 @@ class BreathCurveEditorTest {
 
     private companion object {
         const val CALM_DESCRIPTION = "Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden"
+    }
+
+    /**
+     * Zeitleiste: Zahlen alle 2 s, solange sie nebeneinander passen; auf 360 dp bei Schrift 2,0
+     * alle 4 s statt übereinander. Zwischen zwei gezeigten Zahlen bleibt immer 2 × GapSmall frei.
+     */
+    @Test
+    @Config(qualifiers = "w360dp-h640dp-xhdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE) // echte Textmaße
+    fun `Zeitleiste zeigt bei grosser Schrift weniger Zahlen statt sie zu ueberlagern`() {
+        // Wie im ScreenshotTest über die echte Konfiguration (nichtlineare Skalierung).
+        RuntimeEnvironment.setFontScale(TestMatrix.MAX_FONT_SCALE)
+        show(calm)
+        // Im Editor: Gerätebreite ohne den Seitenrand links und rechts.
+        val width = with(compose.density) { (360.dp - Dimens.ScreenPadding * 2).toPx() }
+        val layout = metrics.layout(width)
+        assertEquals(4, layout.labelStep)
+        assertLabelsApart(layout)
+    }
+
+    @Test
+    @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `Zeitleiste zeigt auf dem A54 alle 2 s eine Zahl`() {
+        show(calm)
+        val width = curve(CALM_DESCRIPTION).fetchSemanticsNode().size.width.toFloat()
+        val layout = metrics.layout(width)
+        assertEquals(2, layout.labelStep)
+        assertLabelsApart(layout)
+    }
+
+    private fun assertLabelsApart(layout: CurveLayout) {
+        val shown = (0..CURVE_SECONDS step layout.labelStep).map { second ->
+            val w = layout.tickLabels[second].size.width
+            val x = layout.xAt(second.toFloat())
+            x - w / 2f to x + w / 2f
+        }
+        val gap = with(compose.density) { Dimens.GapSmall.toPx() } * 2
+        shown.zipWithNext().forEach { (a, b) -> assertTrue("Zahlen zu dicht: $a / $b", a.second + gap <= b.first) }
     }
 }

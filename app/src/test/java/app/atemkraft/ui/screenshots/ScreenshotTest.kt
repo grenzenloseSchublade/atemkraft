@@ -59,6 +59,10 @@ import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.PatternComposer
+import app.atemkraft.domain.PatternField
+import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
@@ -93,6 +97,9 @@ import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.own.OwnPatternsScreen
+import app.atemkraft.ui.patterns.PatternEditorScreen
+import app.atemkraft.ui.patterns.PatternEditorState
+import app.atemkraft.ui.patterns.rememberPatternEditorState
 import app.atemkraft.ui.session.SessionUiState
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
@@ -170,7 +177,21 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         private val DAY = LocalDate.of(2026, 10, 3)
         private val daily = RandomPatternGenerator.forDate(DAY)
         private val saved = listOf(11L, 42L, 7L).map(RandomPatternGenerator::forSeed)
-            .mapIndexed { i, p -> SavedPattern(id = i + 1L, exercise = p.exercise, spec = p.spec) }
+            .mapIndexed { i, p -> SavedPattern(id = i + 1L, exercise = p.exercise, spec = p.spec) } +
+            customPattern(id = 4L)
+
+        /** Ein im Editor zusammengestelltes Muster mit langem, frei gewähltem Namen. */
+        private fun customPattern(id: Long): SavedPattern {
+            val spec = PatternComposer.propose(PatternWish(activating = false, withHold = true), 0)
+            val name = "Abendruhe nach dem Spaziergang am See"
+            return SavedPattern(
+                id = id,
+                exercise = RandomPatternGenerator.exerciseFrom(spec, "muster-$id", name, PatternOrigin.CUSTOM, minutes = 5),
+                spec = spec,
+                origin = PatternOrigin.CUSTOM,
+                minutes = 5,
+            )
+        }
     }
 
     private val tallDp get() = (TALL_DP * fontScale).toInt()
@@ -417,6 +438,62 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onDailySavedChange = {},
             onSelect = {},
             onOpenSettings = {},
+            onOpenPatternEditor = {},
+        )
+    }
+
+    /** Muster-Editor, neu: ruhig mit Halten (Vorschlag 0), ganze Seite mit Kurve, Steppern, Name. */
+    @Test
+    fun patternEditor() = snap("14_muster_editor") {
+        Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+    }
+
+    /**
+     * Sanft aktivierend mit Halten, Einatmen am Anschlag: „+“ abgeschaltet, Reset im Split-Button,
+     * Kopf „· angepasst“, kein „Halten leer“.
+     */
+    @Test
+    fun patternEditorActive() = snap("14_muster_editor_aktiv") {
+        Editor {
+            PatternEditorState.new(it, PatternWish(activating = true, withHold = true)).apply {
+                set(PatternField.INHALE, rangeFor(PatternField.INHALE)!!.last)
+            }
+        }
+    }
+
+    /** „Aus der Yoga-Lehre“ aufgeklappt: Detail und Verweise in die Atemlehre. */
+    @Test
+    fun patternEditorLore() = snap("14_muster_editor_lehre_offen", prepare = {
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
+    }) {
+        Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+    }
+
+    /**
+     * Ein gespeichertes Muster bearbeiten: Lesezeichen gefüllt, frei gewählter langer Name im
+     * einzeiligen Feld (scrollt waagrecht, bricht nie um).
+     */
+    @Test
+    fun patternEditorEdit() = snap("14_muster_editor_bearbeiten") { EditSaved() }
+
+    /** Dasselbe in Gerätehöhe wie in der App (Tab „Eigene“): Start fest über der Tab-Leiste. */
+    @Test
+    fun patternEditorDevice() = snap("14_muster_editor_geraet", tab = Tab.EIGENE) { EditSaved() }
+
+    @Composable
+    private fun EditSaved() {
+        val custom = saved.last()
+        Editor { PatternEditorState.forEdit(it, custom.id, custom.spec, custom.minutes, custom.exercise.name) }
+    }
+
+    @Composable
+    private fun Editor(create: (namePrefix: String) -> PatternEditorState) {
+        PatternEditorScreen(
+            state = rememberPatternEditorState(create = create),
+            onSavedChange = {},
+            onStart = { _, _ -> },
+            onOpenLore = {},
+            onBack = {},
         )
     }
 
@@ -424,7 +501,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun situations() = snap("02_situationen") { SituationsContent() }
 
-    /** Tab „Eigene“ mit drei Mustern: „Neues Muster“, darunter „Meine Muster“ immer offen. */
+    /** Tab „Eigene“ mit vier Mustern (das letzte im Editor zusammengestellt, langer Name): „Neues Muster“, darunter „Meine Muster“ immer offen. */
     @Test
     fun ownPatterns() = snap("13_eigene", tab = Tab.EIGENE) { OwnPatternsContent() }
 
@@ -447,7 +524,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }) { OwnPatternsContent() }
 
     @Composable
-    private fun OwnPatternsContent(patterns: Int = 3) {
+    private fun OwnPatternsContent(patterns: Int = saved.size) {
         OwnPatternsScreen(
             savedPatterns = saved.take(patterns),
             onNewPattern = {},
@@ -736,6 +813,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                     exercise = exercise,
                     onOpenLore = {},
                     onMarkedChange = if (exercise in BuiltInExercises.all) ({ _: Boolean -> }) else null,
+                    // Stift im Kopf des Tagesmusters (öffnet den Muster-Editor).
+                    onEditPattern = if (exercise in BuiltInExercises.all) null else ({}),
                 )
             }
         }

@@ -224,13 +224,14 @@ class PatternEditorScreenTest {
         toggle
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox))
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_not_saved)))
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
             .performClick()
         assertEquals(listOf(true), saves)
 
-        // Der Aufrufer hat gespeichert und meldet die Id zurück.
+        // Der Aufrufer hat gespeichert und meldet die Id zurück; der eigene Tipp meldet sich per Live-Region.
         compose.runOnIdle { state.markSaved(7) }
-        toggle.assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_saved)))
+        toggle
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_saved)))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
         toggle.performClick()
         assertEquals(listOf(true, false), saves)
     }

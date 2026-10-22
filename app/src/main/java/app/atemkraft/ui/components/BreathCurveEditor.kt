@@ -69,8 +69,11 @@ import kotlin.math.roundToInt
 /** Feste Zeitskala der Atemkurve in Sekunden: Der längste erlaubte Atemzug (13 s) passt, nichts springt. */
 internal const val CURVE_SECONDS = 14
 
-/** Zahlen an der Zeitleiste nur alle so viele Sekunden, Striche jede Sekunde. */
-private const val CURVE_LABEL_STEP = 2
+/**
+ * Zahlen an der Zeitleiste alle so viele Sekunden, Striche jede Sekunde: alle 2 s, und wenn die
+ * Zahlen dafür zu breit sind (schmales Gerät, große Schrift), alle 4 s statt übereinander.
+ */
+private val CURVE_LABEL_STEPS = listOf(2, 4)
 
 /** Lücke der gestrichelten Halten-Phasen im Verhältnis zur Strichlänge (Vorlage 6/5). */
 private const val DASH_GAP_RATIO = 5f / 6f
@@ -314,9 +317,19 @@ internal class CurveMetrics(
     fun layout(width: Float): CurveLayout {
         val first = tickLabels.firstOrNull()?.size?.width ?: 0
         val lastWidth = tickLabels.lastOrNull()?.size?.width ?: 0
+        val x0 = inset + first / 2f
+        val x1 = width - gapSmall - lastWidth / 2f
+        val pxPerSecond = (x1 - x0) / CURVE_SECONDS
+        // Erste Schrittweite, bei der zwischen zwei Zahlen doppelt so viel frei bleibt wie zwischen
+        // Zahl und Einheit – sonst liest sich „10 s 12 s“ als eine Reihe.
+        val labelStep = CURVE_LABEL_STEPS.firstOrNull { step ->
+            val widest = (0..CURVE_SECONDS step step).maxOf { tickLabels[it].size.width }
+            widest + 2 * gapSmall <= step * pxPerSecond
+        } ?: CURVE_LABEL_STEPS.last()
         return CurveLayout(
-            x0 = inset + first / 2f,
-            x1 = width - gapSmall - lastWidth / 2f,
+            x0 = x0,
+            x1 = x1,
+            labelStep = labelStep,
             yFull = yFull,
             yEmpty = yEmpty,
             holdOffset = holdOffset,
@@ -341,6 +354,8 @@ internal class CurveMetrics(
 internal class CurveLayout(
     val x0: Float,
     val x1: Float,
+    /** Zahlen an der Zeitleiste alle so viele Sekunden ([CURVE_LABEL_STEPS]). */
+    val labelStep: Int,
     val yFull: Float,
     val yEmpty: Float,
     val holdOffset: Float,
@@ -370,7 +385,8 @@ internal fun rememberCurveMetrics(): CurveMetrics {
     val measurer: TextMeasurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelMedium
     val smallStyle = MaterialTheme.typography.labelSmall
-    val ticks = (0..CURVE_SECONDS step CURVE_LABEL_STEP).map { stringResource(R.string.pattern_editor_curve_seconds, it) }
+    // Je Sekunde gemessen, damit die Zeitleiste ihre Schrittweite nach der Breite wählen kann.
+    val ticks = (0..CURVE_SECONDS).map { stringResource(R.string.pattern_editor_curve_seconds, it) }
     val full = stringResource(R.string.pattern_editor_curve_full)
     val empty = stringResource(R.string.pattern_editor_curve_empty)
     return remember(density, measurer, labelStyle, smallStyle, ticks, full, empty) {
@@ -481,13 +497,13 @@ private fun DrawScope.drawCurve(
         drawText(text, if (field.isInhaleSide()) inhaleColor else exhaleColor, topLeft)
     }
 
-    // Zeitleiste: Strich je Sekunde (gerade länger), Zahl alle zwei Sekunden.
+    // Zeitleiste: Strich je Sekunde (gerade länger), Zahl alle zwei Sekunden – bei Platzmangel alle vier.
     for (second in 0..CURVE_SECONDS) {
         val x = layout.xAt(second.toFloat())
-        val major = second % CURVE_LABEL_STEP == 0
+        val major = second % 2 == 0
         drawLine(textColor, Offset(x, layout.ticksTop), Offset(x, layout.ticksTop + if (major) layout.gapSmall else layout.gapTiny), thin)
-        if (major) {
-            val label = layout.tickLabels[second / CURVE_LABEL_STEP]
+        if (second % layout.labelStep == 0) {
+            val label = layout.tickLabels[second]
             drawText(label, textColor, Offset(x - label.size.width / 2f, layout.tickLabelTop))
         }
     }

@@ -97,6 +97,8 @@ fun AppIconButton(
  * Name, Rolle und Zustand liest (A11Y-01). Die Live-Region sagt den Wechsel an, ohne dass der
  * Fokus springt (A11Y-04, MUSTER-02) – statt eines ausgegrauten „✓ Gespeichert“. Den Zustand
  * zeigt der Aufrufer im Icon (gefüllt/leer); das Icon trägt die `contentDescription` (ICON-02).
+ * [announce] = false nimmt die Live-Region weg, etwa solange ein anderer Knopf den Zustand als
+ * Nebenwirkung ändert und schon selbst eine Ansage auslöst (eine Ansage je Tipp, A11Y-04).
  */
 @Composable
 fun AppIconToggle(
@@ -104,6 +106,7 @@ fun AppIconToggle(
     onCheckedChange: (Boolean) -> Unit,
     stateDescription: String,
     modifier: Modifier = Modifier,
+    announce: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     Box(
@@ -120,7 +123,7 @@ fun AppIconToggle(
             )
             .semantics {
                 this.stateDescription = stateDescription
-                liveRegion = LiveRegionMode.Polite
+                if (announce) liveRegion = LiveRegionMode.Polite
             },
         contentAlignment = Alignment.Center,
     ) {

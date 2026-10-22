@@ -139,9 +139,10 @@ fun PatternEditorScreen(
 
 /**
  * Lesezeichen im Kopf (MUSTER-02): leer → gefüllt in `secondary`, Zustand per `stateDescription`
- * und Live-Region. Bei einem Muster, das es vor dem Öffnen schon gab, schärft der erste Tipp auf
- * das gefüllte Lesezeichen nur (Papierkorb mit Kreuz in `error`, „‚Name‘ wirklich löschen?“), erst
- * der zweite entfernt es (MUSTER-05).
+ * und Live-Region (nur für den eigenen Tipp, nicht wenn eine Wertänderung es leert). Bei einem
+ * Muster, das es vor dem Öffnen schon gab, schärft der erste Tipp auf das gefüllte Lesezeichen nur
+ * (Papierkorb mit Kreuz in `error`, „‚Name‘ wirklich löschen?“), erst der zweite entfernt es
+ * (MUSTER-05).
  */
 @Composable
 private fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Unit) {
@@ -150,9 +151,16 @@ private fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Un
     // Geänderte Werte leeren das Lesezeichen: Eine halb bestätigte Löschung gilt dann nicht mehr.
     LaunchedEffect(saved) { if (!saved) confirm.disarm() }
     val armed = confirm.armed && saved
+    // Eine Ansage je Tipp (A11Y-04): Die Live-Region gilt nur ab dem eigenen Tipp und nur, bis sich
+    // Phasen, Dauer oder Name ändern. Leert oder füllt eine solche Änderung das Lesezeichen, sagt
+    // also nur der geänderte Wert etwas.
+    val draft = PatternSnapshot(state.spec, state.minutes, state.savedName)
+    var announce by remember(draft) { mutableStateOf(false) }
     AppIconToggle(
         checked = saved,
+        announce = announce,
         onCheckedChange = { checked ->
+            announce = true
             when {
                 checked -> onSavedChange(true)
                 state.existedBefore -> confirm.tap { onSavedChange(false) }

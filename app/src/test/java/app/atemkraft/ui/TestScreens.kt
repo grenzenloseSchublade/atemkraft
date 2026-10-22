@@ -26,6 +26,7 @@ internal fun TestDetail(
     requireSafetyConfirm: Boolean = false,
     onOpenLore: ((patternId: String) -> Unit)? = null,
     onMarkedChange: ((Boolean) -> Unit)? = null,
+    onEditPattern: (() -> Unit)? = null,
 ) = ExerciseDetailScreen(
     exercise = exercise,
     requireSafetyConfirm = requireSafetyConfirm,
@@ -37,6 +38,7 @@ internal fun TestDetail(
     onBack = {},
     onOpenLore = onOpenLore,
     onMarkedChange = onMarkedChange,
+    onEditPattern = onEditPattern,
 )
 
 /** Vollbild der Atem-Session; ohne automatische Ruhe, damit nichts von selbst ausblendet. */
