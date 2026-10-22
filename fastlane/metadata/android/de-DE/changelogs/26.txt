@@ -1,0 +1,6 @@
+- Ruhige Atemübung: Bedienelemente und Statusleiste treten nach wenigen Sekunden zurück
+- Fortschrittsring und Sekunden im Kreis abschaltbar
+- Einstellungen: Hinweise enden vor dem Schalter
+- Atemlehre: kräftigerer Chip-Rand
+- Meditation: gleich starker Rand um ∞ im Zeitring
+- Aktualisierte Build-Werkzeuge und Bibliotheken
