@@ -133,7 +133,8 @@ Passend zur Material-Schrift (seit 2026-10-19): Ränder und Karten-Innenabstand 
 | `MinTouchTarget` | 48 | Mindesthöhe eigener klickbarer Flächen |
 | `PinnedBarElevation` | 3 | tonale Erhöhung der gepinnten Start-Leiste (`PinnedActionBar`, M3-Stufe 2) |
 | `FocusRing` | 2 | Strich des Fokusrings um Atemkreis und Meditationsring (`CircleTapTarget`, nur bei Tastatur/D-Pad; Raster-Ausnahme) |
-| `BorderThin` | 1 | Kartenrand in der Akzentfarbe, nur über `accentBorder(color)` mit `ALPHA_BORDER` (KOMP-03) |
+| `BorderThin` | 1 | Kartenrand in der Akzentfarbe, nur über `accentBorder(color)` mit `ALPHA_BORDER` (KOMP-03); außerdem Rand von `AppOutlinedButton` und des ∞-Knopfs im Zeitring (fest, wächst nicht mit dem Ring) |
+| `BorderChip` | 1,5 | Rand der `LinkChip` in `outline`: 1 dp wirkte auf dem Gerät um die engen Rundungen dünn und ausgefranst (Nutzer 2026-10-22) |
 | `SessionRingStroke` | 3 | Spur und Fortschrittsbogen um den Atemkreis (Raster-Ausnahme) |
 | `SessionMainButton` / `SessionSideButton` | 76 / 56 | Kreise der `SessionControlBar`: Pause/Weiter / „Von vorne“ und „Beenden“; fest, nicht mit der Schrift (Bedienung mit halb geschlossenen Augen), selbst Tippfläche |
 | `SessionMainIcon` / `SessionSideIcon` | 32 / 28 | Icons in diesen Kreisen |

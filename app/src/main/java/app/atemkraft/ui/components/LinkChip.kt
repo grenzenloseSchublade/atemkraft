@@ -7,6 +7,7 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 
 /**
@@ -26,7 +27,11 @@ fun LinkChip(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) 
         modifier = modifier.heightIn(min = Sizes.ChipHeight),
         // Rahmen in outline wie bis M3 1.3; outlineVariant (Standard ab 1.4) ist auf dem dunklen
         // Grund kaum zu sehen, der Chip wirkte dann nicht mehr antippbar.
-        border = SuggestionChipDefaults.suggestionChipBorder(enabled = true, borderColor = MaterialTheme.colorScheme.outline),
+        border = SuggestionChipDefaults.suggestionChipBorder(
+            enabled = true,
+            borderColor = MaterialTheme.colorScheme.outline,
+            borderWidth = Dimens.BorderChip,
+        ),
     )
 }
 

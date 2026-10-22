@@ -57,6 +57,12 @@ object Dimens {
     val BorderThin = 1.dp
 
     /**
+     * Rand der Verweis-Chips: etwas kräftiger als [BorderThin], weil 1 dp um die engen Rundungen
+     * auf dem Gerät dünn und ausgefranst wirkt.
+     */
+    val BorderChip = 1.5.dp
+
+    /**
      * Tonale Erhöhung der gepinnten Start-Leiste (`PinnedActionBar`, M3-Stufe 2): hebt sie über
      * den scrollenden Inhalt, ohne Schatten.
      */
