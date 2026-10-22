@@ -1,6 +1,10 @@
 package app.atemkraft.data
 
+import app.atemkraft.data.local.SavedPatternEntity
+import app.atemkraft.data.local.columnSpec
+import app.atemkraft.data.local.freePattern
 import app.atemkraft.domain.AdjustLimits
+import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.withinGuardrails
 import kotlinx.serialization.Serializable
@@ -18,6 +22,12 @@ import kotlinx.serialization.json.Json
  * erhöhen: Beide sind optional, Dateien von 1.6.8 und älter gelten als gespeicherte Tagesmuster
  * ohne eigene Dauer. Ältere App-Versionen überlesen die Felder (`ignoreUnknownKeys`); ein eigenes
  * Muster zeigt dort die Texte eines gespeicherten Tagesmusters und dauert etwa 5 min.
+ *
+ * Ebenso optional kam `phases` hinzu, die freie Phasenfolge eines eigenen Musters („Frei
+ * gestalten“, Textform von [app.atemkraft.domain.FreePattern.toCompact]). Die vier Felder
+ * tragen dann deren Zusammenfassung: Ältere App-Versionen lesen nur sie (und verwerfen den
+ * Eintrag, wenn die Zusammenfassung ihre Leitplanken verlässt); diese Version nimmt die Folge und
+ * rechnet die vier Felder daraus neu.
  */
 @Serializable
 data class PatternBackupFile(
@@ -45,6 +55,12 @@ data class PatternBackupEntry(
     val origin: String? = null,
     /** Vorgabedauer eigener Muster in Minuten (1–30); null = ≈ 5 min wie beim Muster des Tages. */
     val minutes: Int? = null,
+    /**
+     * Freie Phasenfolge eines eigenen Musters, z. B. „in:4,hold:1,out:6“; null = es gelten die
+     * vier Felder (gespeicherte Tagesmuster, Dateien bis 1.6.8). Nur zusammen mit einer Herkunft
+     * außer „daily“ plausibel.
+     */
+    val phases: String? = null,
 )
 
 @Serializable
@@ -90,7 +106,7 @@ object PatternBackup {
             ?: return null
         if (file.format != FORMAT || file.version !in 1..VERSION) return null
         val candidates = file.patterns.take(MAX_PATTERNS)
-        val valid = candidates.filter { it.isPlausible() }
+        val valid = candidates.filter { it.isPlausible() }.map { it.normalized() }
         return DecodedBackup(
             entries = valid,
             invalid = candidates.size - valid.size,
@@ -98,7 +114,11 @@ object PatternBackup {
         )
     }
 
-    /** Schlüssel für Dubletten: gleiche Herkunft (Zeitpunkt) und gleiche Werte. */
+    /**
+     * Schlüssel für Dubletten: gleiche Herkunft (Zeitpunkt) und gleiche Werte. Mit freier Folge
+     * ([phases], Normalform von [FreePattern.toCompact]) zählen nur Zeitpunkt und Folge – die vier
+     * Felder sind dann bloß deren Zusammenfassung.
+     */
     fun identity(
         createdAtEpochMs: Long,
         inhale: Double,
@@ -106,9 +126,22 @@ object PatternBackup {
         exhale: Double,
         holdEmpty: Double?,
         activating: Boolean,
-    ): String = "$createdAtEpochMs|$inhale|$holdFull|$exhale|$holdEmpty|$activating"
+        phases: String? = null,
+    ): String = if (phases != null) {
+        "$createdAtEpochMs|$phases"
+    } else {
+        "$createdAtEpochMs|$inhale|$holdFull|$exhale|$holdEmpty|$activating"
+    }
 
-    fun PatternBackupEntry.identity(): String = identity(createdAtEpochMs, inhale, holdFull, exhale, holdEmpty, activating)
+    /** Schlüssel einer gespeicherten Zeile; eine unlesbare Folge zählt nicht (dann die vier Felder). */
+    fun identity(row: SavedPatternEntity): String = with(row) {
+        identity(createdAtEpochMs, inhale, holdFull, exhale, holdEmpty, activating, freePattern()?.toCompact())
+    }
+
+    /** Schlüssel eines Datei-Eintrags mit seiner gelesenen Folge [free] (`null` = vier Felder). */
+    fun identity(entry: PatternBackupEntry, free: FreePattern? = FreePattern.parse(entry.phases)): String = with(entry) {
+        identity(createdAtEpochMs, inhale, holdFull, exhale, holdEmpty, activating, free?.toCompact())
+    }
 
     /**
      * Macht aus einer Namenseingabe einen Namen, den auch der Import annimmt: Steuer-, Format- und
@@ -131,12 +164,40 @@ object PatternBackup {
      * stimmt die Beschreibung nicht und das Muster startet ohne Sicherheitsabfrage), Anpassungen
      * in den Grenzen der Stepper, Dauer 1–30 min, Name ohne Steuer-, Format- oder
      * Zeilentrennzeichen. Eine unbekannte Herkunft verwirft nichts, sie gilt als eigenes Muster.
+     *
+     * Mit freier Folge gelten statt der Leitplanken die Regeln der Folge ([FreePattern.parse]:
+     * 2–12 Phasen, je 1–30 s, mindestens ein Ein und ein Aus); die vier Felder prüft die App dann
+     * nicht, sie rechnet sie neu ([normalized]). Eine Folge ohne Herkunft oder bei einem
+     * Tagesmuster schreibt die App nie – der Eintrag wird verworfen.
      */
     private fun PatternBackupEntry.isPlausible(): Boolean = isCleanName(name) &&
         createdAtEpochMs > 0 &&
-        PatternSpec(inhale, holdFull, exhale, holdEmpty, activating).withinGuardrails() &&
+        valuesPlausible() &&
         (minutes == null || minutes in AdjustLimits.MINUTES) &&
         (overrides?.isPlausible() ?: true)
+
+    private fun PatternBackupEntry.valuesPlausible(): Boolean = if (phases == null) {
+        PatternSpec(inhale, holdFull, exhale, holdEmpty, activating).withinGuardrails()
+    } else {
+        origin != null && origin != SavedPatternEntity.ORIGIN_DAILY && FreePattern.parse(phases) != null
+    }
+
+    /**
+     * Ein plausibler Eintrag mit Folge in Normalform: Folge wie [FreePattern.toCompact], die vier
+     * Felder als ihre Zusammenfassung ([columnSpec]). Einträge ohne Folge bleiben, wie sie sind.
+     */
+    private fun PatternBackupEntry.normalized(): PatternBackupEntry {
+        val free = FreePattern.parse(phases) ?: return this
+        val spec = free.columnSpec()
+        return copy(
+            inhale = spec.inhale,
+            holdFull = spec.holdFull,
+            exhale = spec.exhale,
+            holdEmpty = spec.holdEmpty,
+            activating = spec.activating,
+            phases = free.toCompact(),
+        )
+    }
 
     private fun PatternBackupOverrides.isPlausible(): Boolean = (duration == null || duration in AdjustLimits.MINUTES) &&
         (inhale == null || inhale in AdjustLimits.INHALE_S) &&

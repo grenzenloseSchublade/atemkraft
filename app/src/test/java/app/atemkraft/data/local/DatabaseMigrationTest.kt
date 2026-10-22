@@ -68,7 +68,7 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `3 nach 4 behält gespeicherte Muster als Tagesmuster ohne Dauer und das Logbuch`() {
+    fun `3 nach 4 behält gespeicherte Muster als Tagesmuster ohne Dauer und Folge und das Logbuch`() {
         helper.createDatabase(DB_NAME, 3).use { db ->
             db.execSQL(
                 """
@@ -90,7 +90,7 @@ class DatabaseMigrationTest {
 
         helper.runMigrationsAndValidate(DB_NAME, 4, true, *AtemkraftDatabase.MIGRATIONS).use { db ->
             db.query(
-                "SELECT id, name, inhale, holdFull, activating, createdAtEpochMs, origin, minutes FROM saved_patterns ORDER BY id",
+                "SELECT id, name, inhale, holdFull, activating, createdAtEpochMs, origin, minutes, phases FROM saved_patterns ORDER BY id",
             ).use { c ->
                 assertEquals(2, c.count)
                 c.moveToFirst()
@@ -102,6 +102,7 @@ class DatabaseMigrationTest {
                 assertEquals(1759000000000L, c.getLong(5))
                 assertEquals("daily", c.getString(6))
                 assertTrue(c.isNull(7))
+                assertTrue(c.isNull(8))
                 c.moveToNext()
                 assertEquals("Muster 4,5·3", c.getString(1))
                 assertEquals(4.5, c.getDouble(2), 0.0)
@@ -109,6 +110,7 @@ class DatabaseMigrationTest {
                 assertEquals(1, c.getInt(4))
                 assertEquals("daily", c.getString(6))
                 assertTrue(c.isNull(7))
+                assertTrue(c.isNull(8))
             }
             db.query("SELECT exerciseId, exerciseName, durationMs, kind FROM log_entries").use { c ->
                 assertEquals(1, c.count)
@@ -122,7 +124,7 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `2 nach 4 in einem Zug behält das Logbuch`() {
+    fun `2 nach 4 in einem Zug behält das Logbuch und nimmt freie Folgen auf`() {
         helper.createDatabase(DB_NAME, 2).use { db ->
             db.execSQL(
                 """
@@ -144,6 +146,44 @@ class DatabaseMigrationTest {
                 c.moveToFirst()
                 assertEquals(0, c.getInt(0))
             }
+            // Die Spalte für die Phasenfolge ist da: Ein eigenes Muster mit 12 Phasen passt hinein.
+            db.execSQL(
+                """
+                INSERT INTO saved_patterns
+                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
+                VALUES ('Zwölf', 8.0, 4.0, 10.0, 2.0, 0, 1761000000000, 'custom', 10, '$TWELVE_PHASES')
+                """.trimIndent(),
+            )
+            db.query("SELECT origin, minutes, phases FROM saved_patterns").use { c ->
+                c.moveToFirst()
+                assertEquals("custom", c.getString(0))
+                assertEquals(10, c.getInt(1))
+                assertEquals(TWELVE_PHASES, c.getString(2))
+            }
+        }
+    }
+
+    @Test
+    fun `die App liest eine freie Folge aus einer migrierten Datenbank`() = runBlocking {
+        helper.createDatabase(DB_NAME, 3).close()
+        helper.runMigrationsAndValidate(DB_NAME, 4, true, *AtemkraftDatabase.MIGRATIONS).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO saved_patterns
+                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
+                VALUES ('Zwölf', 8.0, 4.0, 10.0, 2.0, 0, 1761000000000, 'custom', 10, '$TWELVE_PHASES')
+                """.trimIndent(),
+            )
+        }
+
+        val room = openWithAppBuilder()
+        try {
+            val row = room.savedPatternDao().snapshot().single()
+            assertEquals(TWELVE_PHASES, row.phases)
+            assertEquals(12, row.freePattern()!!.phases.size)
+            assertEquals(TWELVE_PHASES, row.freePattern()!!.toCompact())
+        } finally {
+            room.close()
         }
     }
 
@@ -165,14 +205,16 @@ class DatabaseMigrationTest {
             assertEquals(listOf("Muster 4·2·6"), rows.map { it.name })
             assertEquals(SavedPatternEntity.ORIGIN_DAILY, rows.single().origin)
             assertNull(rows.single().minutes)
+            assertNull(rows.single().phases)
             assertEquals(PatternOrigin.SAVED_DAILY, rows.single().patternOrigin())
 
             // Nach der Migration lässt sich das Muster wie ein eigenes bearbeiten.
-            val changed = room.savedPatternDao().updateCustom(rows.single().id, "Abend", 4.0, 1.0, 6.0, null, false, 12)
+            val changed = room.savedPatternDao().updateCustom(rows.single().id, "Abend", 4.0, 1.0, 6.0, null, false, 12, "in:4,hold:1,out:6")
             assertEquals(1, changed)
             val updated = room.savedPatternDao().byId(rows.single().id)!!
             assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, updated.origin)
             assertEquals(12, updated.minutes)
+            assertEquals("in:4,hold:1,out:6", updated.phases)
             assertEquals(1759000000000L, updated.createdAtEpochMs)
         } finally {
             room.close()
@@ -209,5 +251,8 @@ class DatabaseMigrationTest {
 
     private companion object {
         const val DB_NAME = "migration-test.db"
+
+        /** Zwölf Phasen (Höchstzahl), mit Stufen beim Ein- und Ausatmen. */
+        const val TWELVE_PHASES = "in:3,hold:1,in:3,hold:1,out:4,hold:2,in:2,in:2,out:3,hold:1,out:3,hold:5"
     }
 }

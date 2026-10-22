@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "99ebec7f0e14b02a3b904d31a5214e42",
+    "identityHash": "aa71f0d880e7e849e79a27130a1b1139",
     "entities": [
       {
         "tableName": "log_entries",
@@ -65,7 +65,7 @@
       },
       {
         "tableName": "saved_patterns",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `inhale` REAL NOT NULL, `holdFull` REAL, `exhale` REAL NOT NULL, `holdEmpty` REAL, `activating` INTEGER NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `origin` TEXT NOT NULL DEFAULT 'daily', `minutes` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `inhale` REAL NOT NULL, `holdFull` REAL, `exhale` REAL NOT NULL, `holdEmpty` REAL, `activating` INTEGER NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `origin` TEXT NOT NULL DEFAULT 'daily', `minutes` INTEGER, `phases` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -124,6 +124,11 @@
             "fieldPath": "minutes",
             "columnName": "minutes",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "phases",
+            "columnName": "phases",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -136,7 +141,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '99ebec7f0e14b02a3b904d31a5214e42')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'aa71f0d880e7e849e79a27130a1b1139')"
     ]
   }
 }

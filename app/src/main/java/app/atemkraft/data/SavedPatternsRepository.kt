@@ -2,14 +2,18 @@ package app.atemkraft.data
 
 import app.atemkraft.data.local.SavedPatternDao
 import app.atemkraft.data.local.SavedPatternEntity
+import app.atemkraft.data.local.columnSpec
+import app.atemkraft.data.local.freePattern
 import app.atemkraft.data.local.patternOrigin
 import app.atemkraft.data.local.toSpec
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.toFreePattern
 import app.atemkraft.domain.withinCreationRules
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +32,11 @@ data class ImportResult(val added: Int, val duplicates: Int)
 /**
  * Ein gespeichertes Muster fürs UI: DB-Id + fertige Übung + Parameter, dazu Herkunft und
  * Vorgabedauer ([minutes], `null` = ≈ 5 min).
+ *
+ * [pattern] ist die Phasenfolge für den Editor: bei eigenen Mustern die gespeicherte freie Folge,
+ * sonst (gespeicherte Tagesmuster, eigene Muster aus dem Editor mit vier Feldern, unlesbare Folge)
+ * die vier Felder als Folge ([toFreePattern]). [spec] sind die vier Felder; bei einer freien Folge
+ * nur deren Zusammenfassung ([columnSpec]) – für den Editor gilt [pattern].
  */
 data class SavedPattern(
     val id: Long,
@@ -35,6 +44,7 @@ data class SavedPattern(
     val spec: PatternSpec,
     val origin: PatternOrigin = PatternOrigin.SAVED_DAILY,
     val minutes: Int? = null,
+    val pattern: FreePattern = spec.toFreePattern(),
 ) {
     val activating: Boolean get() = spec.activating
 }
@@ -110,10 +120,35 @@ class SavedPatternsRepository(
     }
 
     /**
-     * Legt ein im Editor zusammengestelltes Muster an. [spec] muss die Erzeugungsregeln
-     * einhalten, [minutes] in 1–30 liegen. Ein leerer [name] wird zum Vorschlagsnamen
-     * („Eigenes Muster 4·1·6“, siehe [nameFor]). Das Muster ist sofort per
+     * Legt ein im Editor frei gestaltetes Muster an und speichert die Folge ([FreePattern.toCompact])
+     * samt Zusammenfassung in den vier Feldern ([columnSpec]). [pattern] muss gültig sein
+     * ([FreePattern.isValid]), [minutes] in 1–30 liegen. Ein leerer [name] wird zum
+     * Vorschlagsnamen („Eigenes Muster 3·1·6“, siehe [nameFor]). Das Muster ist sofort per
      * [byExerciseId] auflösbar.
+     */
+    suspend fun saveCustom(pattern: FreePattern, minutes: Int, name: String): SavedPattern {
+        requireValid(pattern, minutes)
+        return writeLock.withLock {
+            val entity = entityOf(pattern.columnSpec(), nameFor(pattern, name), SavedPatternEntity.ORIGIN_CUSTOM, minutes)
+                .copy(phases = pattern.toCompact())
+            insertAndCache(entity).toSaved()
+        }
+    }
+
+    /**
+     * Schreibt eine neue Folge, Dauer und Namen in dasselbe Muster (gleiche Id, gleiches
+     * Anlagedatum) und macht es zum eigenen Muster – auch ein gespeichertes Tagesmuster.
+     * Löscht die Detailseiten-Anpassungen des Musters. `null`, wenn es das Muster nicht mehr gibt.
+     */
+    suspend fun update(id: Long, pattern: FreePattern, minutes: Int, name: String): SavedPattern? {
+        requireValid(pattern, minutes)
+        return writeCustom(id, pattern.columnSpec(), pattern.toCompact(), minutes, nameFor(pattern, name))
+    }
+
+    /**
+     * Übergang für den Editor mit vier Feldern: legt ein eigenes Muster ohne Folge an (nur die
+     * vier Felder). [spec] muss die Erzeugungsregeln einhalten, sonst wie die Variante mit
+     * [FreePattern]. Entfällt, sobald der Editor freie Folgen speichert.
      */
     suspend fun saveCustom(spec: PatternSpec, minutes: Int, name: String): SavedPattern {
         requireValid(spec, minutes)
@@ -124,23 +159,27 @@ class SavedPatternsRepository(
     }
 
     /**
-     * Schreibt neue Werte, Dauer und Namen in dasselbe Muster (gleiche Id, gleiches
-     * Anlagedatum) und macht es zum eigenen Muster. Löscht die Detailseiten-Anpassungen des
-     * Musters. `null`, wenn es das Muster nicht mehr gibt.
+     * Übergang für den Editor mit vier Feldern: schreibt neue Werte, Dauer und Namen in dasselbe
+     * Muster und entfernt eine etwaige Folge (es gelten dann die vier Felder). Sonst wie die
+     * Variante mit [FreePattern]. Entfällt, sobald der Editor freie Folgen speichert.
      */
     suspend fun update(id: Long, spec: PatternSpec, minutes: Int, name: String): SavedPattern? {
         requireValid(spec, minutes)
+        return writeCustom(id, spec, phases = null, minutes, nameFor(spec, name))
+    }
+
+    private suspend fun writeCustom(id: Long, spec: PatternSpec, phases: String?, minutes: Int, name: String): SavedPattern? {
         val updated = writeLock.withLock {
-            val finalName = nameFor(spec, name)
             val changed = dao.updateCustom(
                 id = id,
-                name = finalName,
+                name = name,
                 inhale = spec.inhale,
                 holdFull = spec.holdFull,
                 exhale = spec.exhale,
                 holdEmpty = spec.holdEmpty,
                 activating = spec.activating,
                 minutes = minutes,
+                phases = phases,
             )
             if (changed == 0) return@withLock null
             val entity = dao.byId(id) ?: return@withLock null
@@ -152,7 +191,8 @@ class SavedPatternsRepository(
     }
 
     /**
-     * Das Muster mit DB-Id [id] für den Editor (Bearbeiten-Modus); null, wenn es fehlt. Hat die
+     * Das Muster mit DB-Id [id] für den Editor (Bearbeiten-Modus), die Folge steht in
+     * [SavedPattern.pattern]; null, wenn es fehlt. Hat die
      * Detailseite eine eigene Dauer gespeichert, gilt sie als [SavedPattern.minutes]: Die Seite
      * zeigt diese Dauer, und [update] übernimmt sie in die Spalte, bevor es die Anpassung
      * löscht – statt sie still auf die Vorgabe zurückzusetzen.
@@ -197,7 +237,12 @@ class SavedPatternsRepository(
 
     suspend fun isEmpty(): Boolean = dao.snapshot().isEmpty()
 
-    /** Alle gespeicherten Muster samt Anpassung als Export-Datei (älteste zuerst). */
+    /**
+     * Alle gespeicherten Muster samt Anpassung als Export-Datei (älteste zuerst). Eigene Muster
+     * mit freier Folge tragen sie in `phases` (Normalform von [FreePattern.toCompact]) und ihre
+     * Zusammenfassung in den vier Feldern; eine unlesbare Folge wird nicht exportiert, dann
+     * gelten die vier Felder.
+     */
     suspend fun exportFile(
         nowEpochMs: Long,
         overridesOf: suspend (exerciseId: String) -> IntervalOverrides?,
@@ -217,39 +262,43 @@ class SavedPatternsRepository(
                 },
                 origin = SavedPatternEntity.storedOrigin(e.patternOrigin()),
                 minutes = e.minutes,
+                phases = e.freePattern()?.toCompact(),
             )
         },
     )
 
     /**
      * Legt die Einträge an, die es noch nicht gibt (gleiche Herkunft und Werte = Dublette, auch
-     * innerhalb der Datei). Anpassungen landen unter der neuen Id des Musters. Fehlt die
-     * Herkunft (Dateien bis 1.6.8), ist es ein Tagesmuster; ein unbekannter Wert wird „custom“.
+     * innerhalb der Datei; bei freien Folgen zählen Zeitpunkt und Folge). Anpassungen landen
+     * unter der neuen Id des Musters. Fehlt die Herkunft (Dateien bis 1.6.8), ist es ein
+     * Tagesmuster; ein unbekannter Wert wird „custom“. Ein Eintrag mit Folge wird ein eigenes
+     * Muster, die vier Felder schreibt die App aus der Folge neu ([columnSpec]) – die Werte der
+     * Datei dafür zählen nicht. [entries] kommen aus [PatternBackup.decode] (geprüft).
      */
     suspend fun import(
         entries: List<PatternBackupEntry>,
         writeOverrides: suspend (exerciseId: String, overrides: PatternBackupOverrides) -> Unit,
     ): ImportResult {
-        val known = dao.snapshot()
-            .map { PatternBackup.identity(it.createdAtEpochMs, it.inhale, it.holdFull, it.exhale, it.holdEmpty, it.activating) }
-            .toMutableSet()
+        val known = dao.snapshot().map { PatternBackup.identity(it) }.toMutableSet()
         var added = 0
         for (entry in entries) {
-            if (!known.add(with(PatternBackup) { entry.identity() })) continue
+            val free = FreePattern.parse(entry.phases)
+            if (!known.add(PatternBackup.identity(entry, free))) continue
+            val spec = free?.columnSpec() ?: PatternSpec(entry.inhale, entry.holdFull, entry.exhale, entry.holdEmpty, entry.activating)
+            val origin = if (free != null) PatternOrigin.CUSTOM else SavedPatternEntity.originOf(entry.origin ?: SavedPatternEntity.ORIGIN_DAILY)
             val entity = writeLock.withLock {
                 insertAndCache(
                     SavedPatternEntity(
                         name = entry.name.trim(),
-                        inhale = entry.inhale,
-                        holdFull = entry.holdFull,
-                        exhale = entry.exhale,
-                        holdEmpty = entry.holdEmpty,
-                        activating = entry.activating,
+                        inhale = spec.inhale,
+                        holdFull = spec.holdFull,
+                        exhale = spec.exhale,
+                        holdEmpty = spec.holdEmpty,
+                        activating = spec.activating,
                         createdAtEpochMs = entry.createdAtEpochMs,
-                        origin = SavedPatternEntity.storedOrigin(
-                            SavedPatternEntity.originOf(entry.origin ?: SavedPatternEntity.ORIGIN_DAILY),
-                        ),
+                        origin = SavedPatternEntity.storedOrigin(origin),
                         minutes = entry.minutes,
+                        phases = free?.toCompact(),
                     ),
                 )
             }
@@ -271,8 +320,16 @@ class SavedPatternsRepository(
      */
     fun nameFor(spec: PatternSpec, input: String): String = PatternBackup.cleanName(input).ifEmpty { suggestedName(spec) }
 
+    /** Wie [nameFor] für eine freie Folge: Vorschlag „Eigenes Muster 3·1·6“ aus den Sekunden. */
+    fun nameFor(pattern: FreePattern, input: String): String = PatternBackup.cleanName(input).ifEmpty { suggestedName(pattern) }
+
     private fun requireValid(spec: PatternSpec, minutes: Int) {
         require(spec.withinCreationRules()) { "Muster außerhalb der Erzeugungsregeln: $spec" }
+        require(minutes in AdjustLimits.MINUTES) { "Dauer außerhalb 1–30 min: $minutes" }
+    }
+
+    private fun requireValid(pattern: FreePattern, minutes: Int) {
+        require(pattern.isValid()) { "Ungültige freie Folge: ${pattern.validate()}" }
         require(minutes in AdjustLimits.MINUTES) { "Dauer außerhalb 1–30 min: $minutes" }
     }
 
@@ -313,15 +370,27 @@ class SavedPatternsRepository(
 
     private fun SavedPatternEntity.isDaily(): Boolean = patternOrigin() == PatternOrigin.SAVED_DAILY
 
+    /**
+     * Zeile → Muster fürs UI. Eine lesbare Folge ([freePattern]) baut die Übung; fehlt sie oder
+     * ist sie unlesbar (beschädigte Zeile), gelten die vier Felder: Das Muster bleibt in der Liste,
+     * startbar, bearbeitbar und löschbar, statt still zu verschwinden.
+     */
     private fun SavedPatternEntity.toSaved(): SavedPattern {
         val spec = toSpec()
         val origin = patternOrigin()
+        val free = freePattern()
+        val exerciseId = "$ID_PREFIX$id"
         return SavedPattern(
             id = id,
-            exercise = RandomPatternGenerator.exerciseFrom(spec, "$ID_PREFIX$id", name, origin, minutes),
+            exercise = if (free != null) {
+                RandomPatternGenerator.exerciseFrom(free, exerciseId, name, minutes)
+            } else {
+                RandomPatternGenerator.exerciseFrom(spec, exerciseId, name, origin, minutes)
+            },
             spec = spec,
             origin = origin,
             minutes = minutes,
+            pattern = free ?: spec.toFreePattern(),
         )
     }
 
@@ -331,6 +400,9 @@ class SavedPatternsRepository(
 
         /** Vorschlagsname eines eigenen Musters, z. B. „Eigenes Muster 4·1·6“. */
         fun suggestedName(spec: PatternSpec): String = "Eigenes Muster ${RandomPatternGenerator.numbersOf(spec)}"
+
+        /** Vorschlagsname einer freien Folge, z. B. „Eigenes Muster 3·1·6“ ([FreePattern.numbers]). */
+        fun suggestedName(pattern: FreePattern): String = "Eigenes Muster ${pattern.numbers()}"
 
         /** DB-Id aus einer Übungs-Id („muster-7“ → 7); null für andere Übungen. */
         fun idOf(exerciseId: String): Long? = exerciseId.takeIf { it.startsWith(ID_PREFIX) }?.removePrefix(ID_PREFIX)?.toLongOrNull()

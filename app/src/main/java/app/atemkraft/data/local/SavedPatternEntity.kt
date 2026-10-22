@@ -6,6 +6,8 @@ import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +20,12 @@ import kotlinx.coroutines.flow.Flow
  * Unbekannte Werte fallen beim Lesen auf „eigenes Muster“ zurück ([patternOrigin]), wie bei
  * [LogEntryEntity]. [minutes] ist die Vorgabedauer eigener Muster (1–30), `null` = ≈ 5 min.
  * Beide Spalten gibt es seit Schema v4; ältere Zeilen sind gespeicherte Tagesmuster.
+ *
+ * [phases] ist die freie Phasenfolge eines eigenen Musters („Frei gestalten“) in der kompakten
+ * Textform von [FreePattern.toCompact], z. B. „in:4,hold:1,out:6“; `null` bei gespeicherten
+ * Tagesmustern, die bei den vier Feldern bleiben. Bei einer Zeile mit Folge tragen die vier Felder
+ * deren Zusammenfassung ([columnSpec]): für ältere App-Versionen (Backup) und als Rückfall, falls
+ * die Folge einmal nicht lesbar ist. Maßgeblich ist immer die Folge. Auch seit Schema v4.
  */
 @Entity(tableName = "saved_patterns")
 data class SavedPatternEntity(
@@ -31,6 +39,7 @@ data class SavedPatternEntity(
     val createdAtEpochMs: Long,
     @ColumnInfo(defaultValue = ORIGIN_DAILY) val origin: String = ORIGIN_DAILY,
     val minutes: Int? = null,
+    val phases: String? = null,
 ) {
     companion object {
         /** Gespeichertes Muster des Tages (auch alle Zeilen aus Schema v3). */
@@ -48,6 +57,41 @@ data class SavedPatternEntity(
 }
 
 fun SavedPatternEntity.toSpec(): PatternSpec = PatternSpec(inhale, holdFull, exhale, holdEmpty, activating)
+
+/**
+ * Die freie Folge dieser Zeile; `null` bei gespeicherten Tagesmustern, ohne Folge oder wenn sie
+ * nicht lesbar ist bzw. die Regeln nicht einhält ([FreePattern.parse] prüft beides). Dann gelten
+ * die vier Felder ([toSpec]). Eine Folge zählt nur bei eigenen Mustern: Die App schreibt sie nie
+ * zu einem Tagesmuster.
+ */
+fun SavedPatternEntity.freePattern(): FreePattern? = if (patternOrigin() == PatternOrigin.CUSTOM) FreePattern.parse(phases) else null
+
+/**
+ * Zusammenfassung einer freien Folge in den vier festen Feldern (Spalten bzw. Backup-Felder):
+ * Ein und Aus als Summen, Halten ab halb voller Lunge als „Halten voll“, darunter als „Halten
+ * leer“ (dieselbe Grenze wie [FreePattern.intensityReasons]), jeweils summiert, 0 s wird `null`.
+ * [PatternSpec.activating] folgt der Einordnung: mehr Ein als Aus. Nur Ersatz – die Folge selbst
+ * lässt sich daraus nicht zurückgewinnen.
+ */
+fun FreePattern.columnSpec(): PatternSpec {
+    val levels = levels()
+    var holdFull = 0
+    var holdEmpty = 0
+    phases.forEachIndexed { i, phase ->
+        if (phase.type == FreePhaseType.HOLD) {
+            if (levels[i].from >= HALF_FULL) holdFull += phase.seconds else holdEmpty += phase.seconds
+        }
+    }
+    return PatternSpec(
+        inhale = inhaleSeconds.toDouble(),
+        holdFull = holdFull.takeIf { it > 0 }?.toDouble(),
+        exhale = exhaleSeconds.toDouble(),
+        holdEmpty = holdEmpty.takeIf { it > 0 }?.toDouble(),
+        activating = inhaleSeconds > exhaleSeconds,
+    )
+}
+
+private const val HALF_FULL = 0.5f
 
 fun SavedPatternEntity.patternOrigin(): PatternOrigin = SavedPatternEntity.originOf(origin)
 
@@ -69,14 +113,16 @@ interface SavedPatternDao {
     suspend fun byId(id: Long): SavedPatternEntity?
 
     /**
-     * Überschreibt Werte, Name und Dauer eines Musters und macht es zum eigenen Muster.
+     * Überschreibt Werte, Folge ([SavedPatternEntity.phases], `null` = nur die vier Felder), Name
+     * und Dauer eines Musters und macht es zum eigenen Muster.
      * `createdAtEpochMs` bleibt stehen: Es ist Teil der Import-Identität. Liefert die Zahl
      * geänderter Zeilen (0 = das Muster gibt es nicht mehr).
      */
     @Query(
         """
         UPDATE saved_patterns SET name = :name, inhale = :inhale, holdFull = :holdFull, exhale = :exhale,
-            holdEmpty = :holdEmpty, activating = :activating, minutes = :minutes, origin = 'custom'
+            holdEmpty = :holdEmpty, activating = :activating, minutes = :minutes, phases = :phases,
+            origin = 'custom'
         WHERE id = :id
         """,
     )
@@ -89,6 +135,7 @@ interface SavedPatternDao {
         holdEmpty: Double?,
         activating: Boolean,
         minutes: Int?,
+        phases: String?,
     ): Int
 
     @Query("DELETE FROM saved_patterns WHERE id = :id")

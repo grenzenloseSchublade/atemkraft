@@ -74,14 +74,16 @@ abstract class AtemkraftDatabase : RoomDatabase() {
         }
 
         /**
-         * v3 → v4: Herkunft (`origin`) und Vorgabedauer (`minutes`) gespeicherter Muster für den
-         * Muster-Editor. Rein additiv: Alle bisherigen Zeilen sind gespeicherte Tagesmuster
-         * (`'daily'`) ohne eigene Dauer (NULL ≈ 5 min).
+         * v3 → v4: Herkunft (`origin`), Vorgabedauer (`minutes`) und freie Phasenfolge (`phases`)
+         * gespeicherter Muster für den Muster-Editor. Rein additiv: Alle bisherigen Zeilen sind
+         * gespeicherte Tagesmuster (`'daily'`) ohne eigene Dauer (NULL ≈ 5 min) und ohne Folge
+         * (NULL = die vier Felder gelten).
          */
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE saved_patterns ADD COLUMN origin TEXT NOT NULL DEFAULT 'daily'")
                 db.execSQL("ALTER TABLE saved_patterns ADD COLUMN minutes INTEGER")
+                db.execSQL("ALTER TABLE saved_patterns ADD COLUMN phases TEXT")
             }
         }
 

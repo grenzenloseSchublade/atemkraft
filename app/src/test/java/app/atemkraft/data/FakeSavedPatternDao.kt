@@ -32,6 +32,7 @@ open class FakeSavedPatternDao : SavedPatternDao {
         holdEmpty: Double?,
         activating: Boolean,
         minutes: Int?,
+        phases: String?,
     ): Int {
         if (rows.value.none { it.id == id }) return 0
         rows.value = rows.value.map {
@@ -46,6 +47,7 @@ open class FakeSavedPatternDao : SavedPatternDao {
                     holdEmpty = holdEmpty,
                     activating = activating,
                     minutes = minutes,
+                    phases = phases,
                     origin = SavedPatternEntity.ORIGIN_CUSTOM,
                 )
             }
