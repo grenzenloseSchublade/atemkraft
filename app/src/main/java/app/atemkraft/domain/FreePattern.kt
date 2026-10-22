@@ -146,14 +146,14 @@ data class FreePattern(val phases: List<FreePhase>) {
      * sonst „Halten“ (Pause zwischen zwei Stufen).
      */
     fun labelAt(index: Int): String = when (phases[index].type) {
-        FreePhaseType.IN -> "Einatmen"
+        FreePhaseType.IN -> LABEL_IN
 
-        FreePhaseType.OUT -> "Ausatmen"
+        FreePhaseType.OUT -> LABEL_OUT
 
         FreePhaseType.HOLD -> when (holdPositionAt(index)) {
-            HoldPosition.FULL -> "Halten voll"
-            HoldPosition.EMPTY -> "Halten leer"
-            else -> "Halten"
+            HoldPosition.FULL -> LABEL_HOLD_FULL
+            HoldPosition.EMPTY -> LABEL_HOLD_EMPTY
+            else -> LABEL_HOLD
         }
     }
 
@@ -315,6 +315,18 @@ data class FreePattern(val phases: List<FreePhase>) {
         const val INTENSE_HOLD_FULL_SECONDS = 10
         const val INTENSE_HOLD_EMPTY_SECONDS = 8
         const val INTENSE_BREATHS_PER_MINUTE = 20
+
+        private const val LABEL_IN = "Einatmen"
+        private const val LABEL_OUT = "Ausatmen"
+        private const val LABEL_HOLD_FULL = "Halten voll"
+        private const val LABEL_HOLD_EMPTY = "Halten leer"
+        private const val LABEL_HOLD = "Halten"
+
+        /**
+         * Alle Namen, die [labelAt] liefern kann – für Layouts, die Platz für den längsten
+         * reservieren, damit nichts springt, wenn die Auswahl oder die Vorschau die Phase wechselt.
+         */
+        val PHASE_LABELS = listOf(LABEL_IN, LABEL_OUT, LABEL_HOLD_FULL, LABEL_HOLD_EMPTY, LABEL_HOLD)
 
         /** Der Sicherheitssatz für intensive Muster (Editor-Hinweis, Sicherheitsdialog, Texte). */
         const val DIZZINESS_SENTENCE = "Bei Schwindel abbrechen und normal weiteratmen."

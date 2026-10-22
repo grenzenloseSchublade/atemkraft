@@ -10,12 +10,15 @@ import androidx.compose.ui.unit.Dp
 import app.atemkraft.ui.theme.Dimens
 
 /**
- * Reihe gleichrangiger Buttons, deren Beschriftung nie umbricht (LAYOUT-03). Gemessen wird die
+ * Reihe von Buttons, deren Beschriftung nie umbricht (LAYOUT-03); der erste gilt als Primäraktion,
+ * außer [primaryFirst] ist aus (gleichrangige Buttons). Gemessen wird die
  * einzeilige Breite jedes Buttons (`maxIntrinsicWidth`):
  * 1. passen alle in gleich breite Spalten → gleich breit (Normalfall, ruhiges Bild),
  * 2. passen sie nur nach Inhalt verteilt → jeder bekommt seine Breite plus gleichen Anteil am Rest,
  * 3. sonst, wenn die übrigen nebeneinander passen → erster (Primär-)Button allein in voller
- *    Breite, die übrigen darunter in einer Reihe (spart eine Zeile Höhe),
+ *    Breite, die übrigen darunter in einer Reihe (spart eine Zeile Höhe) – nur mit
+ *    [primaryFirst]; ohne ihn (Buttons ohne Rangfolge, Muster-Editor: + Ein / + Halten / + Aus)
+ *    sähe der erste wie eine Hauptaktion aus, dort geht es direkt zu Stufe 4,
  * 4. sonst → alle untereinander in voller Breite, in Lesereihenfolge.
  * Alle Buttons einer Reihe teilen die Zeilenhöhe (einschließlich 48-dp-Tippfläche); sichtbar
  * sind sie gleich hoch, weil ihre Beschriftungen einzeilig sind und dieselbe Mindesthöhe haben.
@@ -30,6 +33,7 @@ fun AdaptiveButtonRow(
     modifier: Modifier = Modifier,
     spacing: Dp = Dimens.ListGap,
     leading: (@Composable () -> Unit)? = null,
+    primaryFirst: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     Layout(contents = listOf(leading ?: {}, content), modifier = modifier) { (leadingMeasurables, measurables), constraints ->
@@ -71,7 +75,7 @@ fun AdaptiveButtonRow(
         }
 
         // Stufe 3: Primär-Button oben, Rest als Reihe darunter.
-        if (n > 2) {
+        if (primaryFirst && n > 2) {
             val restWidths = rowWidths(natural.drop(1), width - gap * (n - 2))
             if (restWidths != null) {
                 val first = measurables[0].measure(Constraints.fixedWidth(width))

@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
@@ -87,6 +88,13 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * (Muster-Editor: Phase der laufenden Vorschau in Phasenfarbe, FARBE-04); sonst `SECONDARY`.
  * [top] ist der Abstand über einem festen Kopf (Standard `SectionHeaderTop`); kleiner nur, wo ein
  * Bildschirm ohne Scrollen auskommen muss (Muster-Editor, „Atemzug“ direkt unter der Startzeile).
+ *
+ * [statusReserve] sind weitere Texte, die der Status im Wechsel zeigen kann (Muster-Editor: der
+ * Phasenname der laufenden Vorschau, der längste Status): Ob der Status hinter oder unter dem
+ * Titel steht und wie hoch er ist, richtet sich dann nach dem längsten von allen – der Kopf
+ * behält seine Höhe, und was darunter steht, springt nicht (LAYOUT-03). Mit [trailingOnTitle]
+ * steht die [trailingAction] (48 dp hoch) mittig auf der ersten Titelzeile wie [chip] und Caret,
+ * statt unten bündig – für Köpfe mit Chip und Knöpfen nebeneinander (Muster-Editor).
  */
 @Composable
 fun SectionHeader(
@@ -103,8 +111,13 @@ fun SectionHeader(
     statusLiveRegion: Boolean = false,
     statusColor: Color? = null,
     top: Dp = Dimens.SectionHeaderTop,
+    statusReserve: List<String> = emptyList(),
+    trailingOnTitle: Boolean = false,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
+    val titleStyle = MaterialTheme.typography.titleLarge
+    val density = LocalDensity.current
+    val titleLine = with(density) { (if (titleStyle.lineHeight.isSpecified) titleStyle.lineHeight else titleStyle.fontSize).toDp() }
     val toggle = if (expanded == null) {
         Modifier
     } else {
@@ -133,9 +146,6 @@ fun SectionHeader(
             // Balken, Caret und [chip] stehen mittig neben der ersten Titelzeile, nicht mittig am
             // ganzen Block: Rutscht der Status darunter (bis zu drei Zeilen), bliebe der Balken
             // sonst neben dem Status stehen.
-            val titleStyle = MaterialTheme.typography.titleLarge
-            val density = LocalDensity.current
-            val titleLine = with(density) { (if (titleStyle.lineHeight.isSpecified) titleStyle.lineHeight else titleStyle.fontSize).toDp() }
             Row(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
@@ -161,6 +171,7 @@ fun SectionHeader(
                     modifier = Modifier.weight(1f),
                     statusLiveRegion = statusLiveRegion,
                     statusColor = statusColor,
+                    statusReserve = statusReserve,
                 )
                 if (chip != null) {
                     Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) { chip() }
@@ -181,7 +192,14 @@ fun SectionHeader(
             }
         }
         // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).
-        if (trailingAction != null) Box(Modifier.flushEnd()) { trailingAction() }
+        if (trailingAction != null && trailingOnTitle) {
+            // Mitte der Knöpfe auf der Mitte der ersten Titelzeile (wie Chip und Caret).
+            val above = if (expanded == null) top else Dimens.GapSmall * 2
+            val shift = (above + titleLine / 2 - Dimens.MinTouchTarget / 2).coerceAtLeast(0.dp)
+            Box(Modifier.align(Alignment.Top).padding(top = shift).flushEnd()) { trailingAction() }
+        } else if (trailingAction != null) {
+            Box(Modifier.flushEnd()) { trailingAction() }
+        }
     }
 }
 
@@ -243,6 +261,9 @@ fun CollapsibleSection(
  * einem Satzzeichen beginnt (LAYOUT-03); passt er auch dort nicht in eine Zeile, steht jeder Teil
  * zwischen den Punkten in einer eigenen Zeile, ohne Punkt. Gemessen wird vorab mit dem
  * [rememberTextMeasurer], so entsteht nur die gezeigte Variante (ein Knoten für TalkBack).
+ * [statusReserve]: Die Variante gilt nur, wenn sie auch für jeden dieser Texte passt, und unter
+ * dem Titel ist der Status so hoch wie der höchste von ihnen – ein Wechsel des Texts ändert die
+ * Höhe nicht.
  */
 @Composable
 private fun TitleWithStatus(
@@ -254,6 +275,7 @@ private fun TitleWithStatus(
     modifier: Modifier = Modifier,
     statusLiveRegion: Boolean = false,
     statusColor: Color? = null,
+    statusReserve: List<String> = emptyList(),
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
     val heading = Modifier.semantics { heading() }
@@ -274,8 +296,8 @@ private fun TitleWithStatus(
         }.first().measure(loose)
         val gap = Dimens.GapTiny.roundToPx()
         val titleWidth = measurer.measure(title, titleStyle, softWrap = false, maxLines = 1).size.width
-        val statusWidth = measurer.measure(status, statusStyle, softWrap = false, maxLines = 1).size.width
-        val inline = titleWidth + gap + statusWidth <= constraints.maxWidth
+        fun lineWidth(text: String) = measurer.measure(text, statusStyle, softWrap = false, maxLines = 1).size.width
+        val inline = (listOf(status) + statusReserve).all { titleWidth + gap + lineWidth(it) <= constraints.maxWidth }
         if (inline) {
             val statusPlaceable = subcompose(StatusSlot.INLINE) {
                 Text(text = status, style = statusStyle, color = shownStatusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
@@ -290,17 +312,22 @@ private fun TitleWithStatus(
                 statusPlaceable.place(titlePlaceable.width + gap, statusTop)
             }
         } else {
-            val single = status.trimStart().removePrefix("·").trimStart()
             // Passt auch darunter nicht alles in eine Zeile, steht jeder Teil („24 s“, „2,5
             // Atemzüge/min“) in einer eigenen Zeile – sonst endete eine Zeile auf „·“.
-            val fits = measurer.measure(single, statusStyle, softWrap = false, maxLines = 1).size.width <= constraints.maxWidth
-            val bare = if (fits) single else single.split(STATUS_SEPARATOR).joinToString("\n")
+            fun below(text: String): String {
+                val single = text.trimStart().removePrefix("·").trimStart()
+                return if (lineWidth(single) <= constraints.maxWidth) single else single.split(STATUS_SEPARATOR).joinToString("\n")
+            }
             val statusPlaceable = subcompose(StatusSlot.BELOW) {
-                WholeWordText(text = bare, style = statusStyle, color = shownStatusColor, modifier = statusSemantics)
+                WholeWordText(text = below(status), style = statusStyle, color = shownStatusColor, modifier = statusSemantics)
             }.first().measure(loose)
+            val reserved = statusReserve.maxOfOrNull { text ->
+                measurer.measure(below(text), statusStyle, constraints = Constraints(maxWidth = constraints.maxWidth)).size.height
+            } ?: 0
+            val statusHeight = maxOf(statusPlaceable.height, reserved)
             // Breite in den Grenzen melden: Unter der Mindestbreite (weight) zentrierte das Layout
             // den Block sonst, und Titel und Status rückten vom Balken ab.
-            layout(constraints.constrainWidth(maxOf(titlePlaceable.width, statusPlaceable.width)), titlePlaceable.height + statusPlaceable.height) {
+            layout(constraints.constrainWidth(maxOf(titlePlaceable.width, statusPlaceable.width)), titlePlaceable.height + statusHeight) {
                 titlePlaceable.place(0, 0)
                 statusPlaceable.place(0, titlePlaceable.height)
             }

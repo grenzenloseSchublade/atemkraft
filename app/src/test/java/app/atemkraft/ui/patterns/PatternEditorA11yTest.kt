@@ -238,6 +238,65 @@ class PatternEditorA11yTest {
     }
 
     @Test
+    fun `nach Einfuegen und Wechsel der Auswahl liest die Zeile wieder die gewaehlte Phase`() {
+        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
+        announcementsAfterTapOn(string(R.string.cd_pattern_add_hold))
+        assertEquals(2, state.selected)
+        val notice = app.getString(R.string.cd_pattern_phase_added, "Halten voll", 3, 5, 12)
+        compose.onNodeWithContentDescription(notice).assertExists()
+
+        // Andere Phase wählen (wie über Ablauf-Liste oder Kurve): Die Ansage ist verbraucht.
+        compose.runOnIdle { state.select(4) }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription(notice).assertDoesNotExist()
+        val selected = app.getString(R.string.cd_pattern_selected, app.getString(R.string.pattern_editor_phase_spoken, 5, state.pattern.labelAt(4)))
+        compose.onNodeWithContentDescription(selected).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
+
+        // Auch nach dem Entfernen und einem Wechsel zurück gilt wieder „Gewählte Phase: …“.
+        announcementsAfterTapOn(app.getString(R.string.cd_pattern_phase_remove, 5))
+        val removed = app.getString(R.string.cd_pattern_phase_removed, 5, 4, 12)
+        compose.onNodeWithContentDescription(removed).assertExists()
+        compose.runOnIdle { state.select(0) }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription(removed).assertDoesNotExist()
+        // Der Stepper der nun gewählten Phase sagt seinen nächsten Wert wieder an.
+        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 1, "Einatmen")
+        val said = announcementsAfterTapOn("$spoken, ${string(R.string.adjust_increase)}")
+        assertEquals(said.toString(), 1, said.size)
+        assertTrue(said.single(), said.single().startsWith("$spoken:"))
+    }
+
+    @Test
+    fun `Zurueckwaehlen einer Phase sagt ihren Wert nicht noch einmal an`() {
+        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
+        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")
+        assertEquals(1, announcementsAfterTapOn("$spoken, ${string(R.string.adjust_increase)}").size)
+        compose.runOnIdle { state.select(2) }
+        compose.waitForIdle()
+        val before = liveRegions()
+        compose.runOnIdle { state.select(1) }
+        compose.waitForIdle()
+        val said = liveRegions().filter { (id, text) -> before[id] != text }.values.toList()
+        assertEquals("Ansagen nach dem Zurückwählen: $said", emptyList<String>(), said)
+    }
+
+    @Test
+    fun `Kippt Entfernen oder Einfuegen die Intensitaet, sagt die Zeile es mit`() {
+        // Ein 1 · Halten 2 · Aus 1: 15 pro Minute; ohne das Halten 30 pro Minute, also intensiv.
+        val state = show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 1, FreePhaseType.HOLD to 2, FreePhaseType.OUT to 1)).apply { select(1) })
+        val removed = announcementsAfterTapOn(app.getString(R.string.cd_pattern_phase_remove, 2)).map { it.substringBefore(" | ") }
+        assertTrue(state.pattern.isIntense)
+        assertEquals(listOf(app.getString(R.string.cd_pattern_phase_removed, 2, 2, 12) + ", ${string(R.string.detail_intense)}"), removed)
+
+        // Halten wieder einfügen: 15 pro Minute, nicht mehr intensiv.
+        compose.runOnIdle { state.select(0) }
+        compose.waitForIdle()
+        val added = announcementsAfterTapOn(string(R.string.cd_pattern_add_hold)).map { it.substringBefore(" | ") }
+        assertTrue(!state.pattern.isIntense)
+        assertEquals(listOf(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 2, 3, 12) + ", ${string(R.string.cd_pattern_not_intense)}"), added)
+    }
+
+    @Test
     fun `Kippt ein Stepper-Tipp ins Intensive, sagt der Wert es mit`() {
         val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
         val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")

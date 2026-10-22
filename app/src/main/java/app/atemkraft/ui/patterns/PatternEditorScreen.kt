@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -114,6 +116,7 @@ import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.components.rememberCurvePreviewState
 import app.atemkraft.ui.detail.SafetyDialog
@@ -257,7 +260,11 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
 /**
  * Erste Zeile: links „Startpunkt · Box ▾“ ([DisclosurePill]; man braucht ihn nur zum Anfang),
  * rechts die Dauer „− 5 min +“ ([CompactStepper], 1–30 min, ändert nie die Folge). Passen beide
- * nicht nebeneinander (große Schrift), steht die Dauer rechtsbündig darunter ([LeadingAndEnd]).
+ * nicht nebeneinander (große Schrift), steht die Dauer rechtsbündig darunter ([LeadingAndEnd]) –
+ * entschieden für die breiteste Pille („angepasst“ oder eine Vorlage), damit die Zeile nicht
+ * umspringt, wenn man die Folge ändert und die Pille „angepasst“ zeigt. Für die Dauer gilt ihr
+ * Wert: Mit „30 min“ reichte der Platz auf dem A54 bei Schrift 1,3 nicht mehr für eine Zeile
+ * (MUSTER-10); sie ändert ihre Breite nur über den eigenen Stepper, beim Schritt 9 ↔ 10 min.
  * Aufgeklappt stehen die Vorlagen als Auswahlreihe im Raster darunter; die Pille nennt die
  * Vorlage, der die Folge gerade entspricht, sonst „angepasst“. Eine Vorlage setzt die Folge und
  * klappt wieder zu.
@@ -315,6 +322,11 @@ private fun StartAndDuration(state: PatternEditorState) {
                     flushEnd = true,
                 )
             },
+            leadingReserve = {
+                (FreePatternTemplates.all.map { it.label } + modified).forEach {
+                    DisclosurePill(label = stringResource(R.string.pattern_editor_start), value = it, expanded = false, onToggle = {})
+                }
+            },
         )
         if (open) {
             SegmentedChoiceRow<FreeTemplate?>(
@@ -335,19 +347,37 @@ private fun StartAndDuration(state: PatternEditorState) {
 
 /**
  * Zwei Teile einer Zeile: [leading] links, [end] rechtsbündig. Passen beide in ihrer natürlichen
- * Breite nebeneinander (mit `GapSmall`), stehen sie in einer Zeile, mittig zueinander, und
- * [leading] bekommt den Rest der Breite; sonst steht [end] rechtsbündig unter [leading] – nichts
+ * Breite nebeneinander (mit `GapTiny`, sichtbar `GapSmall` bis zum Kreis des Steppers), stehen
+ * sie in einer Zeile, mittig zueinander, und [leading] bekommt den Rest der Breite; sonst steht [end] rechtsbündig unter [leading] – nichts
  * wird gekürzt oder zusammengedrückt (LAYOUT-03).
+ *
+ * [leadingReserve] und [endReserve] zeigen, was dort sonst noch stehen kann (andere Namen, längere
+ * Werte), jeweils als Geschwister: Sie werden nur gemessen, nie gezeigt oder vorgelesen. Die
+ * Entscheidung ein- oder zweizeilig gilt für die breitesten davon, damit die Zeile nicht
+ * umspringt, wenn sich der Inhalt ändert, und was darunter steht, nicht mitrückt.
  */
 @Composable
-private fun LeadingAndEnd(leading: @Composable () -> Unit, end: @Composable () -> Unit, modifier: Modifier = Modifier) {
-    Layout(contents = listOf(leading, end), modifier = modifier.fillMaxWidth()) { (leadingMeasurables, endMeasurables), constraints ->
+private fun LeadingAndEnd(
+    leading: @Composable () -> Unit,
+    end: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    leadingReserve: @Composable () -> Unit = {},
+    endReserve: @Composable () -> Unit = {},
+) {
+    // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
+    val unseen = Modifier.inertWhen(true)
+    Layout(
+        contents = listOf(leading, end, { Box(unseen) { leadingReserve() } }, { Box(unseen) { endReserve() } }),
+        modifier = modifier.fillMaxWidth(),
+    ) { (leadingMeasurables, endMeasurables, leadingReserves, endReserves), constraints ->
         val width = constraints.maxWidth
-        val gap = Dimens.GapSmall.roundToPx()
+        // [end] beginnt mit einem Stepper-Knopf, dessen Tippfläche 4 dp über den sichtbaren Kreis
+        // hinausreicht: GapTiny sieht so aus wie GapSmall.
+        val gap = Dimens.GapTiny.roundToPx()
         val first = leadingMeasurables.single()
         val second = endMeasurables.single()
-        val endWidth = second.maxIntrinsicWidth(Constraints.Infinity)
-        val oneLine = first.maxIntrinsicWidth(Constraints.Infinity) + gap + endWidth <= width
+        fun widest(measurable: Measurable, reserves: List<Measurable>) = (reserves + measurable).maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
+        val oneLine = widest(first, leadingReserves) + gap + widest(second, endReserves) <= width
         val endPlaceable = second.measure(Constraints(maxWidth = width))
         if (oneLine) {
             val leadingPlaceable = first.measure(Constraints(maxWidth = width - gap - endPlaceable.width))
@@ -370,7 +400,9 @@ private fun LeadingAndEnd(leading: @Composable () -> Unit, end: @Composable () -
  * „Atemzug“: Länge eines Durchlaufs und Atemzüge pro Minute als kurzer Status am Kopf
  * („· 10 s · 6/min“, TalkBack in Worten), bei einem intensiven Muster dazu „intensiv“
  * (`CharacterChip`). Läuft die Vorschau, steht statt des Status die Phase [phase] in ihrer Farbe
- * (ohne Live-Region, sie wechselt im Takt). Rechts die Knöpfe der Vorschau ([controls]).
+ * (ohne Live-Region, sie wechselt im Takt). Rechts die Knöpfe der Vorschau ([controls]), mittig
+ * auf der Titelzeile wie der Chip. Der Kopf behält seine Höhe: Lage des Status und Platz des Chips
+ * sind für alle Texte und beide Zustände reserviert.
  */
 @Composable
 private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable () -> Unit) {
@@ -380,13 +412,19 @@ private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable
     // Genau „1“ in der Einzahl: „1 Atemzug pro Minute“ (wie die Texte der Domain).
     val spokenRate = if (rate == "1") stringResource(R.string.cd_pattern_editor_rate_one) else stringResource(R.string.cd_pattern_editor_rate, rate)
     val running = phase?.takeIf { it in pattern.phases.indices }
+    val resting = stringResource(R.string.pattern_editor_cycle, total, stringResource(R.string.pattern_editor_rate_short, rate))
+    // Platz für alles, was der Status zeigen kann: den ruhenden Status, einen breiten zweistelligen
+    // (gleich breite Ziffern) und jeden Phasennamen der Vorschau – so ändert der Kopf seine Höhe
+    // weder bei Play/Pause noch beim Phasenwechsel oder beim Bearbeiten der Sekunden.
+    val widest = stringResource(R.string.pattern_editor_cycle, WIDEST_CYCLE_SECONDS, stringResource(R.string.pattern_editor_rate_short, WIDEST_RATE))
+    val reserve = listOf(resting, widest) + FreePattern.PHASE_LABELS.map { "· $it" }
     val status: String
     val statusDescription: String
     if (running != null) {
         statusDescription = pattern.labelAt(running)
         status = "· $statusDescription"
     } else {
-        status = stringResource(R.string.pattern_editor_cycle, total, stringResource(R.string.pattern_editor_rate_short, rate))
+        status = resting
         statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, spokenRate)
     }
     SectionHeader(
@@ -397,13 +435,20 @@ private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable
         smallStatus = true,
         statusColor = running?.let { phaseColor(pattern, it, inhale = MaterialTheme.colorScheme.secondary) },
         // Der Chip steht neben der Titelzeile, mit Abstand zum Status (auch wenn der umbricht).
-        chip = if (pattern.isIntense) {
-            { CharacterChip(intense = true, activating = false) }
-        } else {
-            null
+        // Sein Platz bleibt auch ohne ihn frei (unsichtbar, nicht vorgelesen): Kippt das Muster
+        // ins Intensive, rutscht der Status nicht unter den Titel und Kurve und Werkzeugleiste
+        // rücken nicht unter dem Finger weg.
+        chip = {
+            val intense = pattern.isIntense
+            Box(Modifier.alpha(if (intense) 1f else 0f).inertWhen(!intense)) {
+                CharacterChip(intense = true, activating = false)
+            }
         },
         // Eng unter der Startzeile: Kurve und Werkzeugleiste sollen ohne Scrollen ganz dastehen (Nachtrag 5).
         top = Dimens.GapSmall,
+        statusReserve = reserve,
+        // Play und Ton mittig auf der Titelzeile, auf einer Linie mit dem Chip.
+        trailingOnTitle = true,
         trailingAction = controls,
     )
 }
@@ -416,13 +461,14 @@ private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable
  * (TalkBack, Switch Access).
  *
  * Einfügen und Entfernen sagt die Zeile der gewählten Phase einmal an („Halten voll als Phase 3
- * eingefügt, 5 von 12 Phasen“), der Stepper der nun gewählten Phase schweigt dabei. Wird der
- * fokussierte Knopf abgeschaltet, geht der Tastatur-Fokus auf den Gegenpart ([ToolbarFocus]).
+ * eingefügt, 5 von 12 Phasen“, kippt die Intensität: „…, intensiv“), der Stepper der nun
+ * gewählten Phase schweigt dabei. Wählt man danach eine andere Phase, gilt wieder „Gewählte
+ * Phase: …“. Wird der fokussierte Knopf abgeschaltet, geht der Tastatur-Fokus auf den Gegenpart ([ToolbarFocus]).
  */
 @Composable
 private fun Toolbar(state: PatternEditorState, focus: ToolbarFocus) {
     val pattern = state.pattern
-    LaunchedEffect(pattern) { focus.forgetUnless(pattern) }
+    LaunchedEffect(pattern, state.selected) { focus.forgetUnless(pattern, state.selected) }
     LaunchedEffect(focus.pending) {
         focus.pending?.let {
             it.requestFocus()
@@ -451,32 +497,31 @@ private fun SelectedPhase(state: PatternEditorState, focus: ToolbarFocus) {
     val phase = pattern.phases[index]
     val colors = MaterialTheme.colorScheme
     val label = pattern.labelAt(index)
-    val notice = focus.noticeFor(pattern)
+    val notice = focus.noticeFor(pattern, index)
     val spokenPhase = stringResource(R.string.pattern_editor_phase_spoken, index + 1, label)
     val selectedText = stringResource(R.string.cd_pattern_selected, spokenPhase)
     val removedText = stringResource(R.string.cd_pattern_phase_removed, index + 1, pattern.phases.size - 1, FreePattern.MAX_PHASES)
     val intense = stringResource(R.string.detail_intense)
+    val intensity = intensityChange()
     var trashFocused by remember { mutableStateOf(false) }
     // Der Wert sagt sich nur nach einem Tipp auf den eigenen Stepper an (A11Y-04): Wählt man eine
-    // andere Phase, eine Vorlage oder zieht man an der Kurve, wechselt er still.
-    var tapped by remember { mutableStateOf<Pair<Int, FreePattern>?>(null) }
+    // andere Phase, eine Vorlage oder zieht man an der Kurve, wechselt er still – auch wenn man
+    // danach zu dieser Phase zurückkehrt (ein Wechsel der Auswahl vergisst den Tipp).
+    var tapped by remember(index) { mutableStateOf<FreePattern?>(null) }
     LeadingAndEnd(
         leading = {
-            Row(
+            PhaseTitle(
+                index = index,
+                label = label,
+                color = phaseColor(pattern, index, inhale = colors.secondary),
                 modifier = Modifier
-                    .heightIn(min = Dimens.MinTouchTarget)
                     // Ein Knoten: „Gewählte Phase: 2. Halten voll“; nach Einfügen oder Entfernen
-                    // sagt er das einmal an (A11Y-04), bis sich die Folge wieder ändert.
+                    // sagt er das einmal an (A11Y-04), bis sich Folge oder Auswahl wieder ändern.
                     .semantics(mergeDescendants = true) {
                         contentDescription = notice ?: selectedText
                         if (notice != null) liveRegion = LiveRegionMode.Polite
                     },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-            ) {
-                PhaseNumber(index, background = colors.surface)
-                WholeWordText(text = label, style = MaterialTheme.typography.titleSmall, color = phaseColor(pattern, index, inhale = colors.secondary))
-            }
+            )
         },
         end = {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -485,7 +530,7 @@ private fun SelectedPhase(state: PatternEditorState, focus: ToolbarFocus) {
                     range = FreePattern.SECONDS_RANGE,
                     onChange = {
                         state.setSeconds(index, it)
-                        tapped = index to state.pattern
+                        tapped = state.pattern
                     },
                     valueText = stringResource(R.string.pattern_editor_curve_seconds, phase.seconds),
                     spokenLabel = spokenPhase,
@@ -493,15 +538,16 @@ private fun SelectedPhase(state: PatternEditorState, focus: ToolbarFocus) {
                     // Kippt das Muster ins Intensive, hört man es mit dem Wert (eine Ansage je Tipp).
                     spokenSuffix = intense.takeIf { pattern.isIntense },
                     // Nach Einfügen oder Entfernen sagt die Zeile der Phase an, nicht der Stepper.
-                    announce = notice == null && tapped == (index to pattern),
+                    announce = notice == null && tapped == pattern,
                 )
                 val removable = state.canRemove(index)
                 // Glyph an der Innenkante der Karte (LAYOUT-07).
                 Box(Modifier.flushEnd(inCard = true)) {
                     AppIconButton(
                         onClick = {
+                            val before = state.pattern
                             state.remove(index)
-                            focus.notice(state.pattern, removedText)
+                            focus.notice(state.pattern, state.selected, removedText + intensity(before, state.pattern))
                             // Ist der Papierkorb der nun gewählten Phase aus, geht ein Tastatur-
                             // Fokus auf „+ Ein“ (A11Y-07).
                             if (trashFocused && !state.canRemove(state.selected)) focus.pending = focus.addIn
@@ -520,7 +566,60 @@ private fun SelectedPhase(state: PatternEditorState, focus: ToolbarFocus) {
                 }
             }
         },
+        // Ein- oder zweizeilig nach dem längsten Namen mit zweistelliger Nummer und „30 s“: Die
+        // Werkzeugleiste behält ihre Höhe, wenn man eine andere Phase wählt.
+        leadingReserve = {
+            FreePattern.PHASE_LABELS.forEach { PhaseTitle(index = FreePattern.MAX_PHASES - 1, label = it, color = colors.onSurface) }
+        },
+        endReserve = {
+            val most = FreePattern.SECONDS_RANGE.last
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CompactStepper(
+                    value = most,
+                    range = FreePattern.SECONDS_RANGE,
+                    onChange = {},
+                    valueText = stringResource(R.string.pattern_editor_curve_seconds, most),
+                    spokenLabel = "",
+                )
+                Box(Modifier.flushEnd(inCard = true)) {
+                    AppIconButton(onClick = {}) {
+                        Icon(Icons.Filled.Delete, contentDescription = null) // dekorativ: Platzhalter, nur gemessen
+                    }
+                }
+            }
+        },
     )
+}
+
+/** Nummer und Name einer Phase in [color], mindestens 48 dp hoch (Zeile der gewählten Phase). */
+@Composable
+private fun PhaseTitle(index: Int, label: String, color: Color, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.heightIn(min = Dimens.MinTouchTarget),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        PhaseNumber(index, background = MaterialTheme.colorScheme.surface)
+        WholeWordText(text = label, style = MaterialTheme.typography.titleSmall, color = color)
+    }
+}
+
+/**
+ * Zusatz zur Ansage nach Einfügen oder Entfernen, wenn das Muster dadurch ins Intensive kippt
+ * („…, intensiv“) oder es nicht mehr ist („…, nicht mehr intensiv“) – wie beim Stepper
+ * (`spokenSuffix`): Chip und Hinweiskarte erscheinen still, die Ansage trägt den Wechsel.
+ */
+@Composable
+private fun intensityChange(): (FreePattern, FreePattern) -> String {
+    val intense = stringResource(R.string.detail_intense)
+    val notIntense = stringResource(R.string.cd_pattern_not_intense)
+    return { before, after ->
+        when {
+            before.isIntense == after.isIntense -> ""
+            after.isIntense -> ", $intense"
+            else -> ", $notIntense"
+        }
+    }
 }
 
 /**
@@ -534,29 +633,44 @@ private fun AddRow(state: PatternEditorState, focus: ToolbarFocus) {
     val colors = MaterialTheme.colorScheme
     val selected = state.selected
     val where = stringResource(R.string.pattern_editor_add_after_short, selected + 1)
+    val widest = stringResource(R.string.pattern_editor_add_after_short, FreePattern.MAX_PHASES)
     val spokenWhere = stringResource(R.string.cd_pattern_add_after, selected + 1, state.pattern.labelAt(selected))
     val enabled = state.canAdd
     val resources = LocalResources.current
     var buttonFocused by remember { mutableStateOf(false) }
+    val intensity = intensityChange()
     // Einfügen: Die Zeile der gewählten Phase sagt an, was wohin kam. Schaltet die zwölfte Phase
     // die Knöpfe ab, geht ein Tastatur-Fokus auf den Papierkorb der neuen Phase (A11Y-07).
     val add = { type: FreePhaseType ->
+        val before = state.pattern
         state.add(type)
         val at = state.selected
         val count = state.pattern.phases.size
-        focus.notice(state.pattern, resources.getString(R.string.cd_pattern_phase_added, state.pattern.labelAt(at), at + 1, count, FreePattern.MAX_PHASES))
+        val added = resources.getString(R.string.cd_pattern_phase_added, state.pattern.labelAt(at), at + 1, count, FreePattern.MAX_PHASES)
+        focus.notice(state.pattern, at, added + intensity(before, state.pattern))
         if (buttonFocused && !state.canAdd) focus.pending = focus.trash
     }
     AdaptiveButtonRow(
         spacing = Dimens.GapSmall,
+        // Die drei Knöpfe sind gleichrangig: keiner steht allein in voller Breite über den anderen.
+        primaryFirst = false,
         modifier = Modifier.fillMaxWidth().onFocusChanged { buttonFocused = it.hasFocus },
         leading = {
-            WholeWordText(
-                text = where,
-                modifier = Modifier.semantics { contentDescription = spokenWhere },
-                style = MaterialTheme.typography.labelMedium,
-                color = WarnAmber,
-            )
+            // Platz für „Neu nach 12:“: Mit zweistelliger Nummer rutschte die Beschriftung sonst
+            // über die Knöpfe, und die Werkzeugleiste würde beim Wechsel der Auswahl höher.
+            Box {
+                WholeWordText(
+                    text = widest,
+                    modifier = Modifier.alpha(0f).inertWhen(true),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                WholeWordText(
+                    text = where,
+                    modifier = Modifier.semantics { contentDescription = spokenWhere },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = WarnAmber,
+                )
+            }
         },
     ) {
         AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled, onClick = { add(FreePhaseType.IN) }, modifier = Modifier.focusRequester(focus.addIn))
@@ -896,24 +1010,31 @@ private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
  * wenn der fokussierte Knopf abgeschaltet wird (Papierkorb nach dem Entfernen → „+ Ein“; die
  * zwölfte Phase schaltet die Hinzufügen-Knöpfe ab → Papierkorb); [pending] fokussiert nach der
  * nächsten Komposition. [notice] merkt sich die Ansage zu Einfügen bzw. Entfernen samt der Folge
- * danach; sie gilt nur, solange die Folge so bleibt ([noticeFor]).
+ * und der gewählten Phase danach; sie gilt nur, solange beide so bleiben ([noticeFor]).
  */
 @Stable
 private class ToolbarFocus {
     val trash = FocusRequester()
     val addIn = FocusRequester()
     var pending by mutableStateOf<FocusRequester?>(null)
-    private var lastNotice by mutableStateOf<Pair<FreePattern, String>?>(null)
+    private var lastNotice by mutableStateOf<Notice?>(null)
 
-    fun notice(after: FreePattern, text: String) {
-        lastNotice = after to text
+    fun notice(after: FreePattern, selected: Int, text: String) {
+        lastNotice = Notice(after, selected, text)
     }
 
-    fun noticeFor(pattern: FreePattern): String? = lastNotice?.takeIf { it.first == pattern }?.second
+    fun noticeFor(pattern: FreePattern, selected: Int): String? = lastNotice?.takeIf { it.matches(pattern, selected) }?.text
 
-    /** Weicht die Folge ab, ist die Ansage verbraucht – auch wenn man später zu ihr zurückkehrt. */
-    fun forgetUnless(pattern: FreePattern) {
-        if (lastNotice?.first != pattern) lastNotice = null
+    /**
+     * Weicht die Folge oder die Auswahl ab, ist die Ansage verbraucht – auch wenn man später zu
+     * beiden zurückkehrt.
+     */
+    fun forgetUnless(pattern: FreePattern, selected: Int) {
+        if (lastNotice?.matches(pattern, selected) == false) lastNotice = null
+    }
+
+    private data class Notice(val after: FreePattern, val selected: Int, val text: String) {
+        fun matches(pattern: FreePattern, selected: Int) = after == pattern && this.selected == selected
     }
 }
 
@@ -936,6 +1057,13 @@ private const val TEMPLATE_COLUMNS = 2
 
 /** Test-Tag der Werkzeugleiste (gewählte Phase und Hinzufügen) – für die Messung „ohne Scrollen sichtbar“. */
 internal const val PATTERN_TOOLBAR_TAG = "pattern_editor_toolbar"
+
+/**
+ * Breitester ruhender Status „· 88 s · 88,8/min“ für den Platz am Kopf „Atemzug“: Die Ziffern der
+ * Schrift sind gleich breit, also deckt er jede zweistellige Länge und jede Rate ab.
+ */
+private const val WIDEST_CYCLE_SECONDS = 88
+private const val WIDEST_RATE = "88,8"
 
 /** Ab halb voll gehört ein Halten zur Einatmen-Seite (wie die Kurve). */
 private const val HALF = 0.5f

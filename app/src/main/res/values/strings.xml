@@ -163,6 +163,8 @@
          gewählten Phase: %1$s = Name der neuen Phase, %2$d = ihre Nummer, %3$d/%4$d = Phasen von höchstens. -->
     <string name="cd_pattern_phase_added" tools:ignore="PluralsCandidate">%1$s als Phase %2$d eingefügt, %3$d von %4$d Phasen</string>
     <string name="cd_pattern_phase_removed" tools:ignore="PluralsCandidate">Phase %1$d entfernt, %2$d von %3$d Phasen</string>
+    <!-- Zusatz zur Ansage nach Einfügen/Entfernen, wenn das Muster dadurch nicht mehr intensiv ist (Gegenstück: detail_intense). -->
+    <string name="cd_pattern_not_intense">nicht mehr intensiv</string>
     <!-- Zweite Zeile der Werkzeugleiste: „Neu nach 2:“ (gesprochen „Neue Phase kommt hinter Phase 2,
          Halten voll“) mit drei Knöpfen. -->
     <string name="pattern_editor_add_after_short" tools:ignore="PluralsCandidate">Neu nach %1$d:</string>
