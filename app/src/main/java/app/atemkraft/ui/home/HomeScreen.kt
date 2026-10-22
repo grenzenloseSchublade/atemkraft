@@ -35,8 +35,10 @@ import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CharacterChip
+import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.InfoChip
 import app.atemkraft.ui.components.PersonalMarkIndicator
 import app.atemkraft.ui.components.ScreenHeader
@@ -45,6 +47,7 @@ import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TitleWithChips
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -61,6 +64,8 @@ fun HomeScreen(
     onSelect: (String) -> Unit,
     onOpenSettings: () -> Unit,
     markedIds: Set<String> = emptySet(),
+    // Einstieg in den Muster-Editor unter der Tageskarte; ohne ihn kein Link.
+    onOpenPatternEditor: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -103,6 +108,16 @@ fun HomeScreen(
                     onClick = { onSelect(daily.exercise.id) },
                     onSavedChange = onDailySavedChange,
                 )
+                // Eigener Weg zum Editor neben der Karte, nicht in ihr: Die Karte behält ihre
+                // eine Aktion (KOMP-02). Bündig: Das Polster des Text-Buttons ragt in den Rand.
+                if (onOpenPatternEditor != null) {
+                    AppTextButton(onClick = onOpenPatternEditor, modifier = Modifier.flushStart()) {
+                        ForwardLinkText(
+                            text = stringResource(R.string.home_own_pattern_link),
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
+                }
             }
 
             exercisesByFamily.forEach { (family, exercises) ->

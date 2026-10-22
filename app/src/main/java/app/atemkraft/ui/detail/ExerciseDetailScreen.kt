@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,12 +36,14 @@ import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
+import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
+import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.Bullet
@@ -62,6 +67,7 @@ import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
 import kotlin.math.roundToInt
@@ -87,6 +93,11 @@ fun ExerciseDetailScreen(
     // Persönliche Markierung „tut mir gut“; ohne [onMarkedChange] (Muster) kein Schalter.
     marked: Boolean = false,
     onMarkedChange: ((Boolean) -> Unit)? = null,
+    // Stift im Kopf generierter Muster: öffnet den Muster-Editor (Phasen ändert man nur dort).
+    // [editDescription] = Wortlaut für TalkBack; null = nach Herkunft („Als eigenes Muster
+    // anpassen“ beim Muster des Tages, sonst „Muster bearbeiten“).
+    onEditPattern: (() -> Unit)? = null,
+    editDescription: String? = null,
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
@@ -116,9 +127,13 @@ fun ExerciseDetailScreen(
         }
     }
 
-    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore).
+    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore). Generierte
+    // Muster ändern ihre Phasen nur im Editor (Leitplanken): Von alten Anpassungen gilt dort
+    // nur noch die Dauer.
     LaunchedEffect(savedIntervals) {
-        savedIntervals?.let(adjust::applyStored)
+        savedIntervals?.let { stored ->
+            adjust.applyStored(if (exercise.generated) IntervalOverrides(duration = stored.duration) else stored)
+        }
     }
 
     // Grobe Gesamtdauer der aktuell eingestellten Session (Runden/Minuten + Intervalle) –
@@ -134,10 +149,24 @@ fun ExerciseDetailScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Name und Markierung stehen fest wie der Titel jeder anderen Seite; lange Namen
             // („Nadi Shodhana (Wechselatmung)“) werden im Kopf zweizeilig, nie im Wort.
+            // Der Slot trägt eine Aktion: die Markierung bei Übungen, der Stift bei generierten Mustern.
+            val editLabel = editDescription ?: stringResource(
+                if (exercise.id == RandomPatternGenerator.ID) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
+            )
             PushHeader(
                 onBack = onBack,
                 title = exercise.name,
-                action = onMarkedChange?.let { onChange -> { PersonalMarkToggle(marked = marked, onMarkedChange = onChange) } },
+                action = when {
+                    onMarkedChange != null -> {
+                        { PersonalMarkToggle(marked = marked, onMarkedChange = onMarkedChange) }
+                    }
+
+                    onEditPattern != null && exercise.generated -> {
+                        { EditPatternButton(description = editLabel, onClick = onEditPattern) }
+                    }
+
+                    else -> null
+                },
             )
             Column(
                 modifier = Modifier
@@ -287,19 +316,21 @@ fun ExerciseDetailScreen(
                             adjust.duration = it
                             persistAdjustments()
                         },
-                        inhale = defaults.inhale?.let { default ->
+                        // Generierte Muster: nur die Dauer – Phasen ändert der Stift (Editor), sonst
+                        // ließen die weiteren Grenzen der Detailseite die Leitplanken hinter sich.
+                        inhale = defaults.inhale?.takeUnless { exercise.generated }?.let { default ->
                             PhaseAdjust(adjust.inhale ?: default, default, AdjustLimits.INHALE_S) {
                                 adjust.inhale = it
                                 persistAdjustments()
                             }
                         },
-                        hold = defaults.hold?.let { default ->
+                        hold = defaults.hold?.takeUnless { exercise.generated }?.let { default ->
                             PhaseAdjust(adjust.hold ?: default, default, AdjustLimits.HOLD_S) {
                                 adjust.hold = it
                                 persistAdjustments()
                             }
                         },
-                        exhale = defaults.exhale?.let { default ->
+                        exhale = defaults.exhale?.takeUnless { exercise.generated }?.let { default ->
                             PhaseAdjust(adjust.exhale ?: default, default, AdjustLimits.EXHALE_S) {
                                 adjust.exhale = it
                                 persistAdjustments()
@@ -361,6 +392,18 @@ fun ExerciseDetailScreen(
                 onStart(adjust.config())
             },
             onDismiss = { showSafety = false },
+        )
+    }
+}
+
+/** Stift im Kopf generierter Muster: öffnet den Muster-Editor, Name in [description] (ICON-02). */
+@Composable
+private fun EditPatternButton(description: String, onClick: () -> Unit) {
+    AppIconButton(onClick = onClick) {
+        Icon(
+            Icons.Filled.Edit,
+            contentDescription = description,
+            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
         )
     }
 }

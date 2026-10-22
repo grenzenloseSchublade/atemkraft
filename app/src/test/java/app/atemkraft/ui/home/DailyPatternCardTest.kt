@@ -12,6 +12,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -68,6 +69,7 @@ class DailyPatternCardTest {
                     },
                     onSelect = { events += "start:$it" },
                     onOpenSettings = {},
+                    onOpenPatternEditor = { events += "editor" },
                 )
             }
         }
@@ -124,5 +126,23 @@ class DailyPatternCardTest {
         val duration = app.getString(R.string.duration_approx, daily.exercise.defaultMinutes())
         assertEquals("ca. ${daily.exercise.defaultMinutes()} min", duration)
         compose.onNodeWithText(DOT_SEPARATOR + duration, substring = true).assertExists()
+    }
+
+    @Test
+    fun `Link zum Muster-Editor steht unter der Karte, die Karte behaelt genau eine Aktion`() {
+        val card = compose.onNodeWithText(daily.exercise.name, substring = true).fetchSemanticsNode().boundsInRoot
+        val link = compose.onNodeWithText(app.getString(R.string.home_own_pattern_link))
+        link.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        val linkBounds = link.fetchSemanticsNode().boundsInRoot
+        assertTrue("Link ${linkBounds.top} unter Karte ${card.bottom}", linkBounds.top >= card.bottom - 0.5f)
+
+        // Bedienbar innerhalb der Karte: die Karte selbst und das Lesezeichen – sonst nichts.
+        val inCard = compose.onAllNodes(hasClickAction(), useUnmergedTree = true).fetchSemanticsNodes()
+            .map { it.boundsInRoot }
+            .filter { it.top >= card.top - 0.5f && it.bottom <= card.bottom + 0.5f && it.left >= card.left - 0.5f && it.right <= card.right + 0.5f }
+        assertEquals(2, inCard.size)
+
+        link.performClick()
+        assertEquals(listOf("editor"), events)
     }
 }
