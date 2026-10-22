@@ -166,6 +166,8 @@ fun AppTextButton(
  * [color] und [borderColor] färben Beschriftung und Rand, wenn die Aktion eine Bedeutung trägt
  * (Muster-Editor: „+ Ein“ in `secondary`, „+ Aus“ in `BreathExhale`, FARBE-04). [dashed] zeichnet
  * den Rand gestrichelt (Halten); der Button füllt dann die Breite, die der Aufrufer vorgibt.
+ * [compact] verkleinert das seitliche Polster (`ListGap` statt 24 dp) für knappe Reihen
+ * (Werkzeugleiste des Muster-Editors, `DisclosurePill`); Höhe und Tippfläche bleiben.
  */
 @Composable
 fun AppOutlinedButton(
@@ -175,9 +177,11 @@ fun AppOutlinedButton(
     color: Color = MaterialTheme.colorScheme.primary,
     borderColor: Color = MaterialTheme.colorScheme.outline,
     dashed: Boolean = false,
+    compact: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
+    val padding = if (compact) PaddingValues(horizontal = Dimens.ListGap, vertical = Dimens.GapSmall) else ButtonDefaults.ContentPadding
     val edge = if (enabled) borderColor else MaterialTheme.colorScheme.onSurface.copy(alpha = OUTLINE_DISABLED)
     OutlinedButton(
         onClick = onClick,
@@ -190,7 +194,7 @@ fun AppOutlinedButton(
         border = if (dashed) null else BorderStroke(Dimens.BorderThin, edge),
         // Gestrichelt: Der Rand liegt auf einer inneren Zeile, die die ganze Fläche füllt; sie trägt
         // das Polster selbst.
-        contentPadding = if (dashed) PaddingValues() else ButtonDefaults.ContentPadding,
+        contentPadding = if (dashed) PaddingValues() else padding,
     ) {
         if (dashed) {
             Row(
@@ -198,7 +202,7 @@ fun AppOutlinedButton(
                     .fillMaxWidth()
                     .heightIn(min = Sizes.ButtonHeight)
                     .dashedBorder(edge, shape)
-                    .padding(ButtonDefaults.ContentPadding),
+                    .padding(padding),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
                 content = content,

@@ -10,7 +10,6 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -36,12 +35,13 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * TalkBack im Muster-Editor (MUSTER-10, A11Y-04, Nachtrag 4): Die Lesereihenfolge folgt der Seite –
- * Startpunkt, Dauer, Atemzug mit Kurve und Vorschau, Ablauf, „Phase hinzufügen“, Name, „Aus der
- * Yoga-Lehre“, Start –, jeder Stepper-Tipp löst genau eine Ansage aus (den neuen Wert; weder
- * Einordnung, Status am Kopf, Kurve noch Lesezeichen melden sich dazu), und alles ist ohne Ziehen
- * bedienbar: die Kurve ist ein Knoten ohne Live-Region, Auswahl, Sekunden, Entfernen und
- * Hinzufügen gehen über die Ablauf-Liste.
+ * TalkBack im Muster-Editor (MUSTER-10, A11Y-04, Nachtrag 4 und 5): Die Lesereihenfolge folgt der
+ * Seite – Startpunkt, Dauer, Atemzug mit Vorschau-Knöpfen, Kurve, Werkzeugleiste (gewählte Phase,
+ * Sekunden, Papierkorb, „Neu nach …“, Hinzufügen), Ablauf, Name, „Aus der Yoga-Lehre“, Start –,
+ * jeder Stepper-Tipp löst genau eine Ansage aus (den neuen Wert; weder Einordnung, Status am Kopf,
+ * Kurve noch Lesezeichen melden sich dazu), eine Vorlage nur eine (die Pille), und alles ist ohne
+ * Ziehen bedienbar: die Kurve ist ein Knoten ohne Live-Region, Auswahl über die Ablauf-Liste,
+ * Sekunden, Entfernen und Hinzufügen über die Werkzeugleiste.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -123,19 +123,16 @@ class PatternEditorA11yTest {
             string(R.string.pattern_editor_start),
             "${string(R.string.cd_adjust_duration)}, ${string(R.string.adjust_increase)}",
             string(R.string.pattern_editor_breath),
-            app.getString(R.string.cd_breath_curve, box.spokenDescription()),
             string(R.string.cd_preview_play),
             string(R.string.cd_preview_sound),
-            string(R.string.pattern_editor_sequence),
-            // Die Zeilen lesen sich als „Nummer, Name, Sekunden“.
-            "1, Einatmen",
-            "2, Halten voll",
-            app.getString(R.string.cd_pattern_phase_remove, 2),
+            app.getString(R.string.cd_breath_curve, box.spokenDescription()),
+            app.getString(R.string.cd_pattern_selected, app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")),
             "${app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")}, ${string(R.string.adjust_increase)}",
-            "4, Halten leer",
-            string(R.string.pattern_editor_add),
+            app.getString(R.string.cd_pattern_phase_remove, 2),
+            app.getString(R.string.cd_pattern_add_after, 2, "Halten voll"),
             string(R.string.cd_pattern_add_in),
             string(R.string.cd_pattern_add_out),
+            string(R.string.pattern_editor_sequence),
             string(R.string.pattern_editor_name_label),
             string(R.string.detail_lore),
             string(R.string.action_start),
@@ -169,7 +166,7 @@ class PatternEditorA11yTest {
 
     /** Dauer und die Sekunden der gewählten Phase: jeder Knopf einmal, jeweils genau eine Ansage. */
     private fun tapEveryStepper(state: PatternEditorState) {
-        val selected = requireNotNull(state.selected)
+        val selected = state.selected
         val steppers = listOf(
             string(R.string.cd_adjust_duration),
             app.getString(R.string.pattern_editor_phase_spoken, selected + 1, state.pattern.labelAt(selected)),
@@ -195,11 +192,17 @@ class PatternEditorA11yTest {
     fun `ohne Ziehen bedienbar – waehlen, Sekunden, entfernen, hinzufuegen`() {
         val state = show(PatternEditorState.new(prefix))
         fun click(description: String) = compose.onNodeWithContentDescription(description).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
-
-        // Phase 2 (Ausatmen) wählen, wie TalkBack es tut: Doppeltipp = Klick-Aktion der Zeile.
-        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Ausatmen"))
+        fun row(label: String) = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText(label))
             .performScrollTo()
             .performSemanticsAction(SemanticsActions.OnClick)
+
+        // „Ablauf“ aufklappen, dann wie TalkBack wählen: Doppeltipp = Klick-Aktion der Zeile.
+        compose.onNode(hasText(string(R.string.pattern_editor_sequence)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription))
+            .performScrollTo()
+            .performSemanticsAction(SemanticsActions.OnClick)
+        row("Einatmen")
+        assertEquals(0, state.selected)
+        row("Ausatmen")
         assertEquals(1, state.selected)
         click("${app.getString(R.string.pattern_editor_phase_spoken, 2, "Ausatmen")}, ${string(R.string.adjust_increase)}")
         assertEquals(free(FreePhaseType.IN to 4, FreePhaseType.OUT to 7), state.pattern)
@@ -215,13 +218,13 @@ class PatternEditorA11yTest {
     }
 
     @Test
-    fun `Einfuegen und Entfernen sagt der Kopf Ablauf genau einmal an`() {
+    fun `Einfuegen und Entfernen sagt die gewaehlte Phase genau einmal an`() {
         val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
-        // Gesprochen wird die Beschreibung, der sichtbare Text („· 5 von 12 Phasen“) nicht.
+        // Gesprochen wird die Beschreibung, der sichtbare Text („3 Halten voll“) nicht.
         val added = announcementsAfterTapOn(string(R.string.cd_pattern_add_hold)).map { it.substringBefore(" | ") }
         assertEquals(listOf(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 3, 5, 12)), added)
 
-        // Mittlere Phase entfernen: Der Stepper der nachrückenden Phase schweigt, der Kopf sagt es.
+        // Mittlere Phase entfernen: Der Stepper der nachrückenden Phase schweigt, die Zeile sagt es.
         state.select(1)
         compose.waitForIdle()
         val removed = announcementsAfterTapOn(app.getString(R.string.cd_pattern_phase_remove, 2)).map { it.substringBefore(" | ") }
@@ -259,12 +262,12 @@ class PatternEditorA11yTest {
         val said = liveRegions().filter { (id, spoken) -> before[id] != spoken }.values.toList()
         // Eine Ansage: der Kopf selbst (zusammengeführt liest TalkBack „Startpunkt, Viloma I, eingeklappt“).
         assertEquals(said.toString(), 1, said.size)
-        header.assert(hasContentDescription("Viloma I", substring = true))
+        header.assert(hasText("Viloma I"))
         header.assertIsFocused()
     }
 
     @Test
-    fun `Tastatur - letzte Phase entfernt oder zwoelfte eingefuegt, der Fokus geht auf die gewaehlte Zeile`() {
+    fun `Tastatur - Papierkorb oder Hinzufuegen abgeschaltet, der Fokus geht auf den Gegenpart`() {
         val state = show(PatternEditorState.new(prefix, box).apply { select(3) })
         compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
         val trash = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 4))
@@ -272,8 +275,9 @@ class PatternEditorA11yTest {
         trash.assertIsFocused()
         trash.performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
+        // Nun ist „Ausatmen“ gewählt, das einzige Aus: Sein Papierkorb ist aus, der Fokus auf „+ Ein“.
         assertEquals(2, state.selected)
-        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Ausatmen")).assertIsFocused()
+        compose.onNodeWithContentDescription(string(R.string.cd_pattern_add_in)).assertIsFocused()
 
         repeat(8) { compose.runOnIdle { state.add(FreePhaseType.HOLD) } }
         val addOut = compose.onNodeWithContentDescription(string(R.string.cd_pattern_add_out))
@@ -281,6 +285,7 @@ class PatternEditorA11yTest {
         addOut.performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(12, state.pattern.phases.size)
-        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Ausatmen") and SemanticsMatcher.expectValue(SemanticsProperties.Selected, true)).assertIsFocused()
+        // Die zwölfte Phase schaltet die Knöpfe ab: Fokus auf den Papierkorb der neuen Phase.
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, state.selected + 1)).assertIsFocused()
     }
 }

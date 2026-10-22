@@ -39,11 +39,11 @@ class PatternEditorStateTest {
     // ---- Startwerte ----
 
     @Test
-    fun `neues Muster startet mit 4·6, ohne Auswahl und 5 min`() {
+    fun `neues Muster startet mit 4·6, letzte Phase gewaehlt und 5 min`() {
         val state = PatternEditorState.new(prefix)
         assertEquals(free(IN to 4, OUT to 6), state.pattern)
         assertEquals("4·6", state.template?.label)
-        assertNull(state.selected)
+        assertEquals(1, state.selected)
         assertEquals(5, state.minutes)
         assertEquals("Eigenes Muster 4·6", state.name)
         assertFalse(state.modified)
@@ -75,6 +75,8 @@ class PatternEditorStateTest {
         assertTrue(state.saved)
         assertTrue(state.existedBefore)
         assertEquals("muster-7", state.exercise().id)
+        // Auch beim Bearbeiten ist die letzte Phase gewählt.
+        assertEquals(2, state.selected)
     }
 
     @Test
@@ -98,18 +100,17 @@ class PatternEditorStateTest {
     // ---- Auswahl, Sekunden ----
 
     @Test
-    fun `Auswahl per Tipp, nochmal hebt sie auf, ausserhalb der Folge gibt es keine`() {
+    fun `es ist immer eine Phase gewaehlt, ausserhalb der Folge bleibt die Auswahl`() {
         val state = PatternEditorState.new(prefix)
-        state.toggleSelection(1)
-        assertEquals(1, state.selected)
-        state.toggleSelection(1)
-        assertNull(state.selected)
+        state.select(0)
+        assertEquals(0, state.selected)
+        // Dieselbe noch einmal hebt die Auswahl nicht auf (Nachtrag 5).
         state.select(0)
         assertEquals(0, state.selected)
         state.select(9)
-        assertNull(state.selected)
-        state.toggleSelection(5)
-        assertNull(state.selected)
+        assertEquals(0, state.selected)
+        state.select(-1)
+        assertEquals(0, state.selected)
     }
 
     @Test
@@ -126,14 +127,14 @@ class PatternEditorStateTest {
     // ---- Hinzufügen und Entfernen ----
 
     @Test
-    fun `Hinzufuegen kommt hinter die Auswahl, ohne Auswahl ans Ende, die neue ist gewaehlt`() {
+    fun `Hinzufuegen kommt hinter die Auswahl, die neue ist gewaehlt`() {
         val state = PatternEditorState.new(prefix)
         state.select(0)
         state.add(HOLD)
         assertEquals(free(IN to 4, HOLD to 2, OUT to 6), state.pattern)
         assertEquals(1, state.selected)
 
-        state.select(null)
+        state.select(2)
         state.add(IN)
         assertEquals(free(IN to 4, HOLD to 2, OUT to 6, IN to 4), state.pattern)
         assertEquals(3, state.selected)
@@ -186,25 +187,25 @@ class PatternEditorStateTest {
                 0 -> state.add(FreePhaseType.entries[random.nextInt(3)])
                 1 -> state.remove(random.nextInt(size))
                 2 -> state.setSeconds(random.nextInt(size), random.nextInt(-5, 40))
-                3 -> state.toggleSelection(random.nextInt(size + 1))
+                3 -> state.select(random.nextInt(-1, size + 1))
                 4 -> state.applyTemplate(FreePatternTemplates.all[random.nextInt(FreePatternTemplates.all.size)])
                 else -> state.reset()
             }
             assertTrue("${state.pattern}", state.pattern.isValid())
-            state.selected?.let { assertTrue(it in state.pattern.phases.indices) }
+            assertTrue(state.selected in state.pattern.phases.indices)
         }
     }
 
     // ---- Vorlagen, Reset ----
 
     @Test
-    fun `Vorlage setzt die Folge und hebt die Auswahl auf, Minuten bleiben`() {
+    fun `Vorlage setzt die Folge und waehlt ihre letzte Phase, Minuten bleiben`() {
         val state = PatternEditorState.new(prefix, minutes = 9)
-        state.select(1)
+        state.select(0)
         state.applyTemplate(template("4-7-8"))
         assertEquals(free(IN to 4, HOLD to 7, OUT to 8), state.pattern)
         assertEquals("4-7-8", state.template?.label)
-        assertNull(state.selected)
+        assertEquals(2, state.selected)
         assertEquals(9, state.minutes)
         assertEquals("Eigenes Muster 4·7·8", state.name)
         // Eine Änderung macht daraus „angepasst“.
@@ -221,7 +222,7 @@ class PatternEditorStateTest {
         state.reset()
         assertEquals(FreePattern.DEFAULT, state.pattern)
         assertFalse(state.modified)
-        assertNull(state.selected)
+        assertEquals(1, state.selected)
         assertEquals(12, state.minutes)
     }
 

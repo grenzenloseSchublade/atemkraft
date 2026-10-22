@@ -83,7 +83,10 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * `GapSmall` Abstand zum Titel und mittig auf dessen erster Zeile – auch wenn der Status
  * darunter mehrzeilig wird. Titel und Status messen gegen die Breite neben ihm.
  * [statusLiveRegion] macht den Status zur Live-Region (A11Y-04), nur solange er gerade eine
- * eigene Änderung ansagt (Muster-Editor: Phase eingefügt bzw. entfernt).
+ * eigene Änderung ansagt. [statusColor] färbt den Status, wenn er gerade etwas mit Bedeutung zeigt
+ * (Muster-Editor: Phase der laufenden Vorschau in Phasenfarbe, FARBE-04); sonst `SECONDARY`.
+ * [top] ist der Abstand über einem festen Kopf (Standard `SectionHeaderTop`); kleiner nur, wo ein
+ * Bildschirm ohne Scrollen auskommen muss (Muster-Editor, „Atemzug“ direkt unter der Startzeile).
  */
 @Composable
 fun SectionHeader(
@@ -98,6 +101,8 @@ fun SectionHeader(
     smallStatus: Boolean = false,
     chip: (@Composable () -> Unit)? = null,
     statusLiveRegion: Boolean = false,
+    statusColor: Color? = null,
+    top: Dp = Dimens.SectionHeaderTop,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val toggle = if (expanded == null) {
@@ -116,7 +121,7 @@ fun SectionHeader(
             }
     }
     val inner = if (expanded == null) {
-        Modifier.padding(top = Dimens.SectionHeaderTop, bottom = Dimens.GapSmall)
+        Modifier.padding(top = top, bottom = Dimens.GapSmall)
     } else {
         Modifier.padding(vertical = Dimens.GapSmall)
     }
@@ -155,6 +160,7 @@ fun SectionHeader(
                     statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
                     statusLiveRegion = statusLiveRegion,
+                    statusColor = statusColor,
                 )
                 if (chip != null) {
                     Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) { chip() }
@@ -247,6 +253,7 @@ private fun TitleWithStatus(
     statusStyle: TextStyle,
     modifier: Modifier = Modifier,
     statusLiveRegion: Boolean = false,
+    statusColor: Color? = null,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
     val heading = Modifier.semantics { heading() }
@@ -254,7 +261,7 @@ private fun TitleWithStatus(
         WholeWordText(text = title, style = titleStyle, color = color, modifier = modifier.then(heading))
         return
     }
-    val statusColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
+    val shownStatusColor = statusColor ?: MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
     val statusSemantics = Modifier.semantics {
         if (statusDescription != null) contentDescription = statusDescription
         if (statusLiveRegion) liveRegion = LiveRegionMode.Polite
@@ -271,7 +278,7 @@ private fun TitleWithStatus(
         val inline = titleWidth + gap + statusWidth <= constraints.maxWidth
         if (inline) {
             val statusPlaceable = subcompose(StatusSlot.INLINE) {
-                Text(text = status, style = statusStyle, color = statusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
+                Text(text = status, style = statusStyle, color = shownStatusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
             }.first().measure(loose)
             // Auf gemeinsamer Grundlinie wie früher in der FlowRow (alignByBaseline).
             val baseline = maxOf(titlePlaceable[FirstBaseline], statusPlaceable[FirstBaseline])
@@ -289,7 +296,7 @@ private fun TitleWithStatus(
             val fits = measurer.measure(single, statusStyle, softWrap = false, maxLines = 1).size.width <= constraints.maxWidth
             val bare = if (fits) single else single.split(STATUS_SEPARATOR).joinToString("\n")
             val statusPlaceable = subcompose(StatusSlot.BELOW) {
-                WholeWordText(text = bare, style = statusStyle, color = statusColor, modifier = statusSemantics)
+                WholeWordText(text = bare, style = statusStyle, color = shownStatusColor, modifier = statusSemantics)
             }.first().measure(loose)
             // Breite in den Grenzen melden: Unter der Mindestbreite (weight) zentrierte das Layout
             // den Block sonst, und Titel und Status rückten vom Balken ab.

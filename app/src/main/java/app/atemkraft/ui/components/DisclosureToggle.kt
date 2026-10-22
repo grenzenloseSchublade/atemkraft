@@ -11,8 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.tooling.preview.Preview
+import app.atemkraft.R
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
@@ -61,5 +65,47 @@ fun DisclosureToggle(
         }
         // TextButton zentriert seinen Inhalt; der Rest der Zeile schiebt ihn an den Anfang.
         Spacer(Modifier.weight(1f))
+    }
+}
+
+/**
+ * Kleiner Aufklapp-Knopf als Pille für knappe Zeilen (Muster-Editor: „Startpunkt · Box ▾“ neben
+ * der Dauer): [label] leise, dahinter [value] als aktueller Stand, am Ende der Caret
+ * ([ExpandCaret] in `IconInButton`). Optik wie [AppOutlinedButton] (`compact`, Rand `outline`,
+ * Beschriftung `onBackground`), sichtbar `ButtonHeight` hoch, Tippfläche 48 dp. Text in
+ * `labelMedium`, bricht nur zwischen Wörtern um. TalkBack liest „Startpunkt Box, eingeklappt,
+ * Schaltfläche“ (Zustand per `stateDescription`); den Inhalt zeigt der Aufrufer darunter.
+ */
+@Composable
+fun DisclosurePill(
+    label: String,
+    value: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val state = expandedStateText(expanded)
+    val colors = MaterialTheme.colorScheme
+    AppOutlinedButton(
+        onClick = onToggle,
+        modifier = modifier.semantics { stateDescription = state },
+        color = colors.onBackground,
+        borderColor = colors.outline,
+        compact = true,
+    ) {
+        WholeWordText(text = label, style = MaterialTheme.typography.labelMedium, color = colors.onBackground.copy(alpha = SECONDARY))
+        Spacer(Modifier.width(Dimens.GapTiny))
+        WholeWordText(text = value, style = MaterialTheme.typography.labelMedium, color = colors.onBackground)
+        Spacer(Modifier.width(Dimens.GapTiny))
+        // Der Caret hat Luft in seinem Glyph: Er rückt um diese an den Rand, statt Polster zu verschenken.
+        ExpandCaret(expanded = expanded, tint = colors.onBackground, size = Sizes.IconInButton, modifier = Modifier.flushEnd(Dimens.GapTiny))
+    }
+}
+
+@Preview
+@Composable
+private fun DisclosurePillPreview() {
+    AtemkraftTheme {
+        DisclosurePill(label = stringResource(R.string.pattern_editor_start), value = "Box", expanded = false, onToggle = {})
     }
 }

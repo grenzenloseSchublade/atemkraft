@@ -22,6 +22,7 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
@@ -327,33 +328,41 @@ class BreathCurveEditorTest {
         ).assertExists()
     }
 
-    /**
-     * Laufende Vorschau auf 360 dp bei Schrift 2,0: Statt „Griffe ziehen“ steht der Phasenname,
-     * und auch der längste („Halten voll“) wird nicht abgeschnitten und bricht nie im Wort.
-     */
     @Test
-    @Config(qualifiers = "w360dp-h640dp-xhdpi")
-    @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    fun `laufende Vorschau zeigt den Phasennamen statt des Hinweises, nie im Wort geschnitten`() {
-        RuntimeEnvironment.setFontScale(TestMatrix.MAX_FONT_SCALE)
-        show(BOX, Modifier.width(360.dp - Dimens.ScreenPadding * 2))
-        val hint = RuntimeEnvironment.getApplication().getString(R.string.pattern_editor_curve_hint)
-        compose.onNodeWithText(hint).assertExists()
-
-        // Uhr erst anhalten, dann den Klick direkt auslösen: Die Vorschau läuft endlos, mit
-        // laufender Uhr würde der Test nie still.
-        compose.mainClock.autoAdvance = false
-        compose.onNodeWithContentDescription("Vorschau abspielen").performSemanticsAction(SemanticsActions.OnClick)
+    fun `Tipp auf eine Linie waehlt ihre Phase, daneben und beim Wischen nichts`() {
+        show(BOX)
+        val layout = layoutNow()
+        // Mitte der Ausatmen-Linie (8 bis 12 s, voll → leer), fern aller Griffe.
+        val middle = Offset(layout.xAt(10f), layout.yAt(0.5f))
+        assertNull(nearestHandle(curveHandles(BOX, layout), middle, layout.touchRadius))
+        curve().performTouchInput { click(middle) }
         compose.waitForIdle()
-        // Box 4·4·4·4: Halten voll von 4 bis 8 s.
-        compose.mainClock.advanceTimeBy(5_000L)
-        compose.onNodeWithText(hint).assertDoesNotExist()
-        val layouts = mutableListOf<TextLayoutResult>()
-        compose.onNodeWithText("Halten voll").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
-        val layout = layouts.single()
-        assertFalse("abgeschnitten", layout.didOverflowWidth)
-        assertFalse("im Wort umbrochen", breaksInsideWord(layout))
-        compose.onNodeWithContentDescription("Vorschau anhalten").assertExists()
+        assertEquals(listOf<Int?>(2), selections)
+        assertTrue(calls.isEmpty())
+
+        // Mehr als eine halbe Tippfläche über der Linie: keine Auswahl.
+        selections.clear()
+        curve().performTouchInput { click(middle - Offset(0f, layout.touchRadius * 1.5f)) }
+        // Auf der Linie, aber gewischt (Scrollen): keine Auswahl, keine Änderung.
+        curve().performTouchInput {
+            down(middle)
+            repeat(6) { moveBy(Offset(0f, -layout.touchRadius / 2f)) }
+            up()
+        }
+        compose.waitForIdle()
+        assertTrue(selections.isEmpty())
+        assertTrue(calls.isEmpty())
+        assertEquals(0, ticks)
+    }
+
+    @Test
+    fun `Vorschau-Knoepfe stehen ausserhalb der Kurve und schalten die Vorschau`() {
+        val preview = CurvePreviewState()
+        compose.setContent { AtemkraftTheme { CurvePreviewControls(preview) } }
+        compose.onNodeWithContentDescription("Vorschau abspielen").performClick()
+        assertTrue(preview.playing)
+        compose.onNodeWithContentDescription("Vorschau anhalten").performClick()
+        assertFalse(preview.playing)
     }
 
     @Test

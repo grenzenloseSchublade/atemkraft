@@ -19,25 +19,55 @@ import app.atemkraft.ui.theme.Dimens
  * 4. sonst → alle untereinander in voller Breite, in Lesereihenfolge.
  * Alle Buttons einer Reihe teilen die Zeilenhöhe (einschließlich 48-dp-Tippfläche); sichtbar
  * sind sie gleich hoch, weil ihre Beschriftungen einzeilig sind und dieselbe Mindesthöhe haben.
+ *
+ * [leading] ist eine kurze Beschriftung vor der Reihe (Muster-Editor: „Neu nach 2:“). Passen
+ * Beschriftung (einzeilig) und Buttons nach Stufe 1 oder 2 nebeneinander, steht sie links davor,
+ * mittig zur Reihe; sonst steht sie in voller Breite darüber (darf dort zwischen Wörtern
+ * umbrechen) und die Buttons verteilen sich darunter wie ohne sie.
  */
 @Composable
 fun AdaptiveButtonRow(
     modifier: Modifier = Modifier,
     spacing: Dp = Dimens.ListGap,
+    leading: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Layout(content = content, modifier = modifier) { measurables, constraints ->
+    Layout(contents = listOf(leading ?: {}, content), modifier = modifier) { (leadingMeasurables, measurables), constraints ->
         val gap = spacing.roundToPx()
         val n = measurables.size
-        if (n == 0) return@Layout layout(0, 0) {}
         val width = constraints.maxWidth
+        val label = leadingMeasurables.firstOrNull()
+        if (n == 0) {
+            val placeable = label?.measure(Constraints(maxWidth = width))
+            return@Layout layout(placeable?.width ?: 0, placeable?.height ?: 0) { placeable?.placeRelative(0, 0) }
+        }
         val natural = measurables.map { it.maxIntrinsicWidth(Constraints.Infinity) }
+
+        // Beschriftung links vor der Reihe, wenn beides in eine Zeile passt.
+        if (label != null) {
+            val labelWidth = label.maxIntrinsicWidth(Constraints.Infinity)
+            val inline = rowWidths(natural, width - labelWidth - gap - gap * (n - 1))
+            if (inline != null) {
+                val row = placeRow(measurables, inline, gap)
+                val labelPlaceable = label.measure(Constraints(maxWidth = labelWidth))
+                val height = maxOf(row.height, labelPlaceable.height)
+                return@Layout layout(width, height) {
+                    labelPlaceable.placeRelative(0, (height - labelPlaceable.height) / 2)
+                    row.place(this, (height - row.height) / 2, x0 = labelWidth + gap)
+                }
+            }
+        }
+        val labelPlaceable = label?.measure(Constraints(maxWidth = width))
+        val top = labelPlaceable?.let { it.height + gap } ?: 0
         val available = width - gap * (n - 1)
 
         val widths = rowWidths(natural, available)
         if (widths != null) {
             val row = placeRow(measurables, widths, gap)
-            return@Layout layout(width, row.height) { row.place(this, 0) }
+            return@Layout layout(width, top + row.height) {
+                labelPlaceable?.placeRelative(0, 0)
+                row.place(this, top)
+            }
         }
 
         // Stufe 3: Primär-Button oben, Rest als Reihe darunter.
@@ -46,19 +76,21 @@ fun AdaptiveButtonRow(
             if (restWidths != null) {
                 val first = measurables[0].measure(Constraints.fixedWidth(width))
                 val rest = placeRow(measurables.drop(1), restWidths, gap)
-                val height = first.height + gap + rest.height
+                val height = top + first.height + gap + rest.height
                 return@Layout layout(width, height) {
-                    first.placeRelative(0, 0)
-                    rest.place(this, first.height + gap)
+                    labelPlaceable?.placeRelative(0, 0)
+                    first.placeRelative(0, top)
+                    rest.place(this, top + first.height + gap)
                 }
             }
         }
 
         // Stufe 4: alle untereinander.
         val placeables = measurables.map { it.measure(Constraints.fixedWidth(width)) }
-        val height = placeables.sumOf { it.height } + gap * (n - 1)
+        val height = top + placeables.sumOf { it.height } + gap * (n - 1)
         layout(width, height) {
-            var y = 0
+            labelPlaceable?.placeRelative(0, 0)
+            var y = top
             placeables.forEach { p ->
                 p.placeRelative(0, y)
                 y += p.height + gap
@@ -83,8 +115,8 @@ private fun rowWidths(natural: List<Int>, available: Int): List<Int>? {
 }
 
 private class MeasuredRow(val placeables: List<Placeable>, val height: Int, val gap: Int) {
-    fun place(scope: Placeable.PlacementScope, y: Int) = with(scope) {
-        var x = 0
+    fun place(scope: Placeable.PlacementScope, y: Int, x0: Int = 0) = with(scope) {
+        var x = x0
         placeables.forEach { p ->
             p.placeRelative(x, y + (height - p.height) / 2)
             x += p.width + gap

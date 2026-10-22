@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
@@ -28,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -46,6 +48,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import app.atemkraft.R
 import app.atemkraft.cue.FakePreviewSoundOutput
 import app.atemkraft.cue.tts.VoiceCatalog
@@ -92,6 +95,7 @@ import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
+import app.atemkraft.ui.components.CurveAxisSeconds
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.detail.SafetyDialog
@@ -100,6 +104,7 @@ import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.own.OwnPatternsScreen
+import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
 import app.atemkraft.ui.patterns.PatternEditorScreen
 import app.atemkraft.ui.patterns.PatternEditorState
 import app.atemkraft.ui.patterns.rememberPatternEditorState
@@ -132,6 +137,7 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlin.math.roundToInt
 
 /**
  * Screenshots aller Screens auf typischen Gerätebreiten und Schriftgrößen (A-12, LAYOUT-03).
@@ -172,6 +178,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         // Tab-Leiste (80 dp) und Trennlinie rendert TabFrame echt.
         private const val STATUS_BAR_DP = 24
         private const val SYSTEM_NAV_DP = 48
+
+        /** Bis zu dieser Schriftgröße stehen im Muster-Editor Kurve und Werkzeugleiste ohne Scrollen da (A54 und größer). */
+        private const val COMPACT_EDITOR_MAX_FONT_SCALE = 1.3f
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
@@ -278,6 +287,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         acceptedScroll: Boolean = false,
         screen: Boolean = false,
         prepare: () -> Unit = {},
+        measure: () -> List<String> = { emptyList() },
         content: @Composable () -> Unit,
     ) {
         currentWidthDp = widthDp
@@ -299,9 +309,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         val checked = fontScale <= NO_SCROLL_MAX_FONT_SCALE
         val scrolls = if (noScroll && checked) scrollFindings(name) else emptyList()
         val acceptedScrolls = if (acceptedScroll && checked) scrollFindings(name, ACCEPTED_SCROLL) else emptyList()
+        val measured = measure()
         // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
         File(dir).mkdirs()
-        File("$dir/$name.tsv").writeText((findings + controls + scrolls + acceptedScrolls).joinToString("") { "$it\n" })
+        File("$dir/$name.tsv").writeText((findings + controls + scrolls + acceptedScrolls + measured).joinToString("") { "$it\n" })
         wordBreaks += findings
         controlProblems += controls
         scrollProblems += scrolls
@@ -346,6 +357,47 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     private val wordBreaks = mutableListOf<String>()
     private val controlProblems = mutableListOf<String>()
     private val scrollProblems = mutableListOf<String>()
+    private val compactProblems = mutableListOf<String>()
+
+    /**
+     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kurve und Werkzeugleiste (gewählte Phase mit
+     * Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne Scrollen ganz im Bild – auf dem A54
+     * (und größer) bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE]; bei 2,0 und auf 360 × 640 darf
+     * gescrollt werden (nur gemessen).
+     */
+    @After
+    fun editorCompact() {
+        if (compactProblems.isNotEmpty()) {
+            fail("Muster-Editor: Kurve oder Werkzeugleiste nicht ohne Scrollen sichtbar (MUSTER-10):\n" + compactProblems.joinToString("\n"))
+        }
+    }
+
+    /**
+     * Misst im Muster-Editor, wie weit Kurve und Werkzeugleiste in den sichtbaren Teil der
+     * Scroll-Fläche reichen: Befund `KOMPAKT` mit Unterkante der Werkzeugleiste und verfügbarer
+     * Höhe (beides ab Oberkante der Scroll-Fläche, in dp), `KOMPAKT_FEHLT` als Fehler, wo es
+     * passen muss ([compactProblems]), sonst `KOMPAKT_SCROLLT` (nur gemessen).
+     */
+    private fun editorFit(screen: String): List<String> {
+        // Ungeschnittene Lage (boundsInRoot wäre auf den sichtbaren Teil beschnitten).
+        fun SemanticsNode.unclipped() = Rect(positionInRoot, size.toSize())
+        val viewport = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).fetchSemanticsNode().unclipped()
+        val curve = compose.onNode(SemanticsMatcher.keyIsDefined(CurveAxisSeconds)).fetchSemanticsNode().unclipped()
+        val toolbar = compose.onNodeWithTag(PATTERN_TOOLBAR_TAG).fetchSemanticsNode().unclipped()
+        val density = compose.density.density
+        fun dp(px: Float) = (px / density).roundToInt()
+        val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom
+        val required = device.widthDp >= TestMatrix.A54.widthDp && device.heightDp >= TestMatrix.A54.heightDp && fontScale <= COMPACT_EDITOR_MAX_FONT_SCALE
+        val kind = when {
+            fits -> "KOMPAKT"
+            required -> "KOMPAKT_FEHLT"
+            else -> "KOMPAKT_SCROLLT"
+        }
+        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp, " +
+            "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp)"
+        if (kind == "KOMPAKT_FEHLT") compactProblems += line
+        return listOf(line)
+    }
 
     /** LAYOUT-08: Der Meditations-Tab scrollt bis fontScale 1,3 nicht. */
     @After
@@ -453,18 +505,20 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
-    /** Muster-Editor wie beim ersten Öffnen: 4·6, Startpunkt zu, keine Phase gewählt, Einfügemarke am Ende. */
+    /** Muster-Editor wie beim ersten Öffnen: 4·6, Startpunkt zu, letzte Phase gewählt (Werkzeugleiste „Ausatmen“, „Neu nach 2:“), Ablauf zu. */
     @Test
     fun patternEditor() = snap("14_muster_editor") {
         Editor { PatternEditorState.new(it) }
     }
 
     /**
-     * Vorlage „Box“, zweite Phase gewählt: Zeile mit Stepper „Sekunden“ und Papierkorb, Griff
-     * dicker, Einfügemarke darunter, „Phase hinzufügen · nach 2 · Halten voll“.
+     * Vorlage „Box“, zweite Phase gewählt: Werkzeugleiste „2 Halten voll − 4 s +“ mit Papierkorb,
+     * „Neu nach 2:“, Griff und Linie dicker; „Ablauf“ aufgeklappt mit der gewählten Zeile.
      */
     @Test
-    fun patternEditorSelection() = snap("14_muster_editor_auswahl") {
+    fun patternEditorSelection() = snap("14_muster_editor_auswahl", prepare = {
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.pattern_editor_sequence)).performClick()
+    }) {
         Editor { PatternEditorState.new(it, template("Box")).apply { select(1) } }
     }
 
@@ -503,8 +557,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     /**
-     * Vorschau der Kurve läuft (Uhr fest, Punkt in „Halten voll“): Phasenname statt „Griffe
-     * ziehen“, bricht bei großer Schrift nur zwischen Wörtern um, nie im Wort (LAYOUT-03).
+     * Vorschau der Kurve läuft (Uhr fest, Punkt in „Halten voll“): Phasenname in Phasenfarbe am
+     * Kopf „Atemzug“ statt des Status, bricht bei großer Schrift nur zwischen Wörtern um (LAYOUT-03).
      */
     @Test
     fun patternEditorPreview() = snap("14_muster_editor_vorschau", prepare = {
@@ -527,9 +581,27 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Test
     fun patternEditorEdit() = snap("14_muster_editor_bearbeiten") { EditSaved() }
 
-    /** Dasselbe in Gerätehöhe wie in der App (Tab „Eigene“): Start fest über der Tab-Leiste. */
+    /**
+     * Dasselbe in Gerätehöhe wie in der App (Tab „Eigene“): Start fest über der Tab-Leiste. Kurve
+     * und Werkzeugleiste stehen ohne Scrollen ganz da ([editorFit], Nachtrag 5).
+     */
     @Test
-    fun patternEditorDevice() = snap("14_muster_editor_geraet", tab = Tab.EIGENE) { EditSaved() }
+    fun patternEditorDevice() = snap("14_muster_editor_geraet", tab = Tab.EIGENE, measure = { editorFit("14_muster_editor_geraet") }) { EditSaved() }
+
+    /**
+     * Kompakt im ungünstigen Fall, in Gerätehöhe: intensives Muster (4-7-8 mit Halten voll 12 s,
+     * Chip „intensiv“ am Kopf „Atemzug“), Startpunkt „angepasst“, längster Phasenname „Halten voll“
+     * in der Werkzeugleiste – Kurve und Werkzeugleiste trotzdem ohne Scrollen ([editorFit]).
+     */
+    @Test
+    fun patternEditorCompact() = snap("14_muster_editor_kompakt", tab = Tab.EIGENE, measure = { editorFit("14_muster_editor_kompakt") }) {
+        Editor {
+            PatternEditorState.new(it, template("4-7-8")).apply {
+                setSeconds(1, 12)
+                select(1)
+            }
+        }
+    }
 
     @Composable
     private fun EditSaved() {

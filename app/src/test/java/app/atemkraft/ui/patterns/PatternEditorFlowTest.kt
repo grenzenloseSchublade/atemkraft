@@ -166,10 +166,15 @@ class PatternEditorFlowTest {
 
     private fun stepper(spoken: String, action: Int) = rule.onNodeWithContentDescription("$spoken, ${string(action)}")
 
-    /** Zeile der Ablauf-Liste mit dem Phasennamen [label] wählen. */
-    private fun selectRow(label: String) = rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText(label))
-        .performScrollTo()
-        .performClick()
+    /** „Ablauf“ aufklappen (eingeklappt beim Öffnen) und die Zeile mit dem Phasennamen [label] wählen. */
+    private fun selectRow(label: String) {
+        rule.onNode(hasText(string(R.string.pattern_editor_sequence)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription))
+            .performScrollTo()
+            .performClick()
+        rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText(label))
+            .performScrollTo()
+            .performClick()
+    }
 
     @Test
     fun `Detail - Stift - Werte aendern - Speichern - Zurueck zeigt die neuen Werte`() {

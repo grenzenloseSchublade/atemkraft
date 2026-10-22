@@ -8,25 +8,20 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,7 +52,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -181,22 +175,23 @@ fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewStat
  * mindestens [Sizes.CurveTickMinSpacing] auseinander liegen, „s“ nur an der letzten Zahl.
  *
  * Griff am Ende jeder Phase (Ein-/Aus-Ende auf der Kurve, Halten über bzw. unter seiner Linie,
- * Tippfläche ≥ 48 dp, bei Überlappung gewinnt der nächste). Antippen wählt die Phase ([onSelect]),
- * horizontales Ziehen ändert ihre Dauer – erst nach der waagrechten Touch-Slop, ein senkrechtes
+ * Tippfläche ≥ 48 dp, bei Überlappung gewinnt der nächste). Antippen eines Griffs oder einer Linie
+ * (bis eine halbe Tippfläche daneben, [nearestSegment]) wählt die Phase ([onSelect]),
+ * horizontales Ziehen an einem Griff ändert ihre Dauer – erst nach der waagrechten Touch-Slop, ein senkrechtes
  * Wischen auf einem Griff scrollt die Seite und ändert nichts: rastet auf ganze Sekunden,
  * geklemmt auf 1–30 s, Wert über [onChangeSeconds]; spätere Phasen rücken mit. Je Raste ein Tick als Berührungs-Rückmeldung
  * (Android-Einstellung, wie die Rasten des Zeitrings, AUDIO-05). Während des Ziehens zeigt ein
  * gelbes Band über der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
  *
- * Darunter die Vorschau ([preview]): Play/Pause lässt einen Punkt in Echtzeit über die Kurve
- * laufen, daneben der Phasenname (statt des Hinweises „Griffe ziehen“). Der Ton kommt vom Aufrufer
- * (`PreviewSoundEffect` mit [CurvePreviewState]), sein Lautsprecher-Schalter steht in
- * [previewTrailing] am Ende der Zeile. Bei abgeschalteten System-Animationen entfallen Knopf und
- * Schalter (MOTION-02).
+ * Vorschau ([preview]): Läuft sie, wandert ein Punkt in Echtzeit über die Kurve. Die Knöpfe
+ * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: in den Kopf
+ * „Atemzug“), ebenso den Phasennamen und den Ton (`PreviewSoundEffect` mit [CurvePreviewState]).
+ * Eine eigene Zeile unter der Kurve gibt es nicht – die Kurve behält ihre Höhe, die Werkzeugleiste
+ * des Editors rückt direkt darunter.
  *
  * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden,
- * …“) ohne liveRegion; der Hinweis „Griffe ziehen“ ist für Screenreader ausgeblendet. Ziehen ist nie Pflicht – Auswahl, Dauer und Entfernen bietet der Aufrufer
- * in der Ablauf-Liste darunter.
+ * …“) ohne liveRegion. Ziehen ist nie Pflicht – Auswahl, Dauer, Entfernen und Hinzufügen bietet
+ * der Aufrufer daneben (Werkzeugleiste, Ablauf-Liste).
  */
 @Composable
 fun BreathCurveEditor(
@@ -206,7 +201,6 @@ fun BreathCurveEditor(
     onChangeSeconds: (index: Int, seconds: Int) -> Unit,
     modifier: Modifier = Modifier,
     preview: CurvePreviewState = rememberCurvePreviewState(),
-    previewTrailing: @Composable RowScope.() -> Unit = {},
 ) {
     val currentPattern by rememberUpdatedState(pattern)
     val currentOnSelect by rememberUpdatedState(onSelect)
@@ -233,8 +227,7 @@ fun BreathCurveEditor(
             stringResource(R.string.pattern_editor_curve_band, FreePattern.MIN_SECONDS, FreePattern.MAX_SECONDS)
         }
     }
-    // Vorschau: nur mit System-Animationen (MOTION-02); die Zeit läuft in Echtzeit im Kreis.
-    val animationsEnabled = remember { ValueAnimator.areAnimatorsEnabled() }
+    // Vorschau: Die Zeit läuft in Echtzeit im Kreis (Knöpfe nur mit System-Animationen, MOTION-02).
     LaunchedEffect(preview, preview.playing) {
         if (!preview.playing) return@LaunchedEffect
         var last = withFrameNanos { it }
@@ -246,9 +239,7 @@ fun BreathCurveEditor(
             }
         }
     }
-    val phaseNow by remember(pattern) { derivedStateOf { pattern.phaseIndexAt(preview.time) } }
-
-    Column(modifier = modifier.background(colors.surface, MaterialTheme.shapes.medium)) {
+    Box(modifier = modifier.background(colors.surface, MaterialTheme.shapes.medium)) {
         val density = LocalDensity.current
         Canvas(
             modifier = Modifier
@@ -267,7 +258,18 @@ fun BreathCurveEditor(
                         val start = currentPattern
                         val layout = metrics.layout(size.width.toFloat(), currentAxis, currentAxisTarget)
                         val handle = nearestHandle(curveHandles(start, layout), down.position, layout.touchRadius)
-                            ?: return@awaitEachGesture
+                        if (handle == null) {
+                            // Neben den Griffen: Ein Tipp auf eine Linie wählt ihre Phase (nur
+                            // ein Tipp, kein Zug; ein Wischen bleibt beim Scrollen der Seite).
+                            val line = nearestSegment(start, layout, down.position, layout.touchRadius / 2f) ?: return@awaitEachGesture
+                            val up = waitForUpOrCancellation() ?: return@awaitEachGesture
+                            if ((up.position - down.position).getDistance() <= viewConfiguration.touchSlop) {
+                                up.consume()
+                                preview.pause()
+                                currentOnSelect(line)
+                            }
+                            return@awaitEachGesture
+                        }
                         val index = handle.index
                         // Erst ein waagrechter Zug über die Touch-Slop gehört der Kurve; ein
                         // senkrechtes Wischen bleibt beim Scrollen der Seite und ändert nichts.
@@ -328,49 +330,33 @@ fun BreathCurveEditor(
                 drawHandle(handle, selected = handle.index == selected, color = palette.colorOf(pattern, handle.index), fill = colors.background)
             }
         }
+    }
+}
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = Dimens.MinTouchTarget)
-                .padding(start = if (animationsEnabled) Dimens.GapTiny else Dimens.CardPadding, end = if (animationsEnabled) Dimens.GapTiny else Dimens.ListGap),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (animationsEnabled) {
-                AppIconButton(onClick = preview::toggle) {
-                    if (preview.playing) {
-                        Icon(painterResource(R.drawable.ic_pause), contentDescription = stringResource(R.string.cd_preview_pause), tint = palette.inhale)
-                    } else {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_preview_play), tint = palette.inhale)
-                    }
-                }
-            }
-            // Läuft die Vorschau, steht dort der Phasenname (ohne liveRegion, er wechselt im Takt),
-            // sonst der Hinweis „Griffe ziehen“ – beim Zuschauen ist er nicht gefragt. Beide
-            // brechen nur zwischen Wörtern um, nie im Wort (LAYOUT-03).
-            if (preview.playing && phaseNow in pattern.phases.indices) {
-                WholeWordText(
-                    text = pattern.labelAt(phaseNow),
-                    modifier = Modifier.weight(1f).padding(start = Dimens.GapSmall),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.colorOf(pattern, phaseNow),
-                )
+/**
+ * Knöpfe der Kurven-Vorschau: Play/Pause ([AppIconButton] in `secondary`, „Vorschau abspielen“ /
+ * „Vorschau anhalten“) startet [preview] am Anfang des Atemzugs, dahinter [trailing] (Muster-
+ * Editor: Lautsprecher-Schalter). Bei abgeschalteten System-Animationen (Animator-Skala 0) fehlt
+ * die ganze Gruppe (MOTION-02) – ohne Bewegung zeigte die Vorschau nichts.
+ */
+@Composable
+fun CurvePreviewControls(
+    preview: CurvePreviewState,
+    modifier: Modifier = Modifier,
+    trailing: @Composable RowScope.() -> Unit = {},
+) {
+    val animationsEnabled = remember { ValueAnimator.areAnimatorsEnabled() }
+    if (!animationsEnabled) return
+    val tint = MaterialTheme.colorScheme.secondary
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        AppIconButton(onClick = preview::toggle) {
+            if (preview.playing) {
+                Icon(painterResource(R.drawable.ic_pause), contentDescription = stringResource(R.string.cd_preview_pause), tint = tint)
             } else {
-                CompositionLocalProvider(LocalContentColor provides colors.onSurface) {
-                    HintText(
-                        text = stringResource(R.string.pattern_editor_curve_hint),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = Dimens.GapSmall, end = if (animationsEnabled) Dimens.GapSmall else Dimens.GapTiny)
-                            .wrapContentWidth(Alignment.End)
-                            // Für TalkBack und Switch Access keine Anweisung, die sie nicht ausführen
-                            // können: Die Kurve hat dort keine Griffe, bedient wird über den Ablauf.
-                            .semantics { hideFromAccessibility() },
-                    )
-                }
+                Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_preview_play), tint = tint)
             }
-            if (animationsEnabled) previewTrailing()
         }
+        trailing()
     }
 }
 
@@ -615,6 +601,32 @@ internal fun nearestHandle(handles: List<CurveHandle>, position: Offset, radius:
     .filter { it.second <= radius }
     .minByOrNull { it.second }
     ?.first
+
+/**
+ * Die Phase, deren Linie [position] höchstens [radius] px nahe kommt (Abstand zur Strecke vom
+ * Beginn zum Ende der Phase); bei mehreren die nächste, sonst null.
+ */
+internal fun nearestSegment(pattern: FreePattern, layout: CurveLayout, position: Offset, radius: Float): Int? {
+    val levels = pattern.levels()
+    var start = 0
+    return pattern.phases.mapIndexed { i, phase ->
+        val from = Offset(layout.xAt(start.toFloat()), layout.yAt(levels[i].from))
+        start += phase.seconds
+        val to = Offset(layout.xAt(start.toFloat()), layout.yAt(levels[i].to))
+        i to distanceToSegment(position, from, to)
+    }
+        .filter { it.second <= radius }
+        .minByOrNull { it.second }
+        ?.first
+}
+
+/** Abstand von [p] zur Strecke [a]–[b] in px. */
+private fun distanceToSegment(p: Offset, a: Offset, b: Offset): Float {
+    val ab = b - a
+    val lengthSquared = ab.x * ab.x + ab.y * ab.y
+    val t = if (lengthSquared == 0f) 0f else (((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / lengthSquared).coerceIn(0f, 1f)
+    return (p - (a + ab * t)).getDistance()
+}
 
 private fun DrawScope.drawCurve(
     pattern: FreePattern,

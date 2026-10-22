@@ -40,10 +40,12 @@ data class PatternSnapshot(val pattern: FreePattern, val minutes: Int, val name:
  * Bearbeiten-Funktionen der Domain ([FreePattern.withSeconds], [FreePattern.inserted],
  * [FreePattern.removed]), die nur gültige Folgen liefern.
  *
- * - [selected] ist die gewählte Phase (Ablauf-Liste, Griff der Kurve) oder keine. Neue Phasen
- *   kommen dahinter, ohne Auswahl ans Ende ([add]); die neue ist danach gewählt.
+ * - [selected] ist die gewählte Phase (Werkzeugleiste, Linie oder Griff der Kurve, Ablauf-Liste).
+ *   **Es ist immer eine gewählt** (Nachtrag 5): beim Öffnen die letzte, nach dem Entfernen die
+ *   Nachbarin, nach einer Vorlage oder dem Reset wieder die letzte. Neue Phasen kommen dahinter
+ *   ([add]); die neue ist danach gewählt.
  * - „Startpunkt“ zeigt die Vorlage, der die Folge gerade entspricht ([template], Wertvergleich),
- *   sonst „angepasst“. [applyTemplate] setzt die Folge und hebt die Auswahl auf.
+ *   sonst „angepasst“. [applyTemplate] setzt die Folge und wählt ihre letzte Phase.
  * - [reset] setzt die Folge auf den Stand beim Öffnen ([initial]) zurück, die Minuten bleiben.
  * - Der Name folgt dem Vorschlagsnamen der aktuellen Zahlen („Eigenes Muster 4·1·6“), bis die
  *   Person selbst tippt ([updateName], höchstens [NAME_MAX] Zeichen). Leer gespeichert heißt
@@ -59,7 +61,7 @@ class PatternEditorState internal constructor(
     val namePrefix: String,
     pattern: FreePattern,
     val initial: FreePattern,
-    selected: Int?,
+    selected: Int,
     minutes: Int,
     typedName: String,
     nameEdited: Boolean,
@@ -73,10 +75,10 @@ class PatternEditorState internal constructor(
     var pattern: FreePattern by mutableStateOf(pattern)
         private set
 
-    private var selectedValue: Int? by mutableStateOf(selected?.takeIf { it in pattern.phases.indices })
+    private var selectedValue: Int by mutableIntStateOf(selected.takeIf { it in pattern.phases.indices } ?: pattern.phases.lastIndex)
 
-    /** Die gewählte Phase (Index in [pattern]); null = keine. */
-    val selected: Int? get() = selectedValue
+    /** Die gewählte Phase (Index in [pattern]); es ist immer eine gewählt. */
+    val selected: Int get() = selectedValue
 
     private var minutesValue: Int by mutableIntStateOf(minutes.coerceIn(AdjustLimits.MINUTES))
 
@@ -167,14 +169,9 @@ class PatternEditorState internal constructor(
     /** Die Anpassung für den Start: nur die Dauer, die Phasen stecken schon in [exercise]. */
     fun config(): SessionConfig = SessionConfig(minutes = minutes)
 
-    /** Phase [index] wählen; dieselbe noch einmal hebt die Auswahl auf (Ablauf-Liste). */
-    fun toggleSelection(index: Int) {
-        selectedValue = if (selectedValue == index) null else index.takeIf { it in pattern.phases.indices }
-    }
-
-    /** Phase [index] wählen bzw. mit null die Auswahl aufheben (Griff der Kurve). */
-    fun select(index: Int?) {
-        selectedValue = index?.takeIf { it in pattern.phases.indices }
+    /** Phase [index] wählen (Werkzeugleiste, Kurve, Ablauf-Liste); außerhalb der Folge bleibt die Auswahl. */
+    fun select(index: Int) {
+        if (index in pattern.phases.indices) selectedValue = index
     }
 
     /** Phase [index] auf [seconds] setzen, geklemmt auf 1–30 s. */
@@ -183,8 +180,8 @@ class PatternEditorState internal constructor(
     }
 
     /**
-     * Neue Phase vom Typ [type] hinter der gewählten (ohne Auswahl am Ende), Ein und Aus mit 4 s,
-     * Halten mit 2 s; die neue ist danach gewählt. Bei 12 Phasen geschieht nichts.
+     * Neue Phase vom Typ [type] hinter der gewählten, Ein und Aus mit 4 s, Halten mit 2 s; die
+     * neue ist danach gewählt. Bei 12 Phasen geschieht nichts.
      */
     fun add(type: FreePhaseType) {
         if (!pattern.canAdd) return
@@ -206,16 +203,16 @@ class PatternEditorState internal constructor(
         selectedValue = index.coerceAtMost(pattern.phases.lastIndex)
     }
 
-    /** Folge auf die Vorlage [template] setzen, Auswahl aufheben; Minuten und Name bleiben. */
+    /** Folge auf die Vorlage [template] setzen, ihre letzte Phase wählen; Minuten und Name bleiben. */
     fun applyTemplate(template: FreeTemplate) {
         pattern = template.pattern
-        selectedValue = null
+        selectedValue = pattern.phases.lastIndex
     }
 
-    /** Folge zurück auf den Stand beim Öffnen; Minuten und Name bleiben. */
+    /** Folge zurück auf den Stand beim Öffnen, letzte Phase gewählt; Minuten und Name bleiben. */
     fun reset() {
         pattern = initial
-        selectedValue = null
+        selectedValue = pattern.phases.lastIndex
     }
 
     /** Name aus dem Textfeld, auf [NAME_MAX] Zeichen gekürzt; ab jetzt folgt er nicht mehr den Zahlen. */
@@ -271,7 +268,7 @@ class PatternEditorState internal constructor(
             namePrefix = namePrefix,
             pattern = pattern,
             initial = pattern,
-            selected = null,
+            selected = pattern.phases.lastIndex,
             minutes = minutes,
             typedName = "",
             nameEdited = false,
@@ -313,7 +310,7 @@ class PatternEditorState internal constructor(
                 namePrefix = namePrefix,
                 pattern = pattern,
                 initial = pattern,
-                selected = null,
+                selected = pattern.phases.lastIndex,
                 minutes = storedMinutes,
                 typedName = if (followsNumbers) "" else name,
                 nameEdited = !followsNumbers,
@@ -327,8 +324,9 @@ class PatternEditorState internal constructor(
 
         /**
          * Sichert den ganzen Zustand über Konfigurationswechsel und Prozesstod. Nur Bundle-Typen
-         * ohne null: Folgen in Textform ([FreePattern.toCompact]), keine Auswahl und keine Id als
-         * −1 (Room vergibt Ids ab 1). Eine unlesbare Folge (kann nicht vorkommen) wird zur Vorgabe.
+         * ohne null: Folgen in Textform ([FreePattern.toCompact]), keine Id als −1 (Room vergibt
+         * Ids ab 1). Eine unlesbare Folge (kann nicht vorkommen) wird zur Vorgabe, eine Auswahl
+         * außerhalb der Folge zur letzten Phase.
          */
         fun saver(namePrefix: String): Saver<PatternEditorState, *> = listSaver(
             save = { state ->
@@ -336,7 +334,7 @@ class PatternEditorState internal constructor(
                 listOf(
                     state.pattern.toCompact(),
                     state.initial.toCompact(),
-                    state.selected ?: NO_SELECTION,
+                    state.selected,
                     state.minutes,
                     state.typedName,
                     state.nameEdited,
@@ -361,7 +359,7 @@ class PatternEditorState internal constructor(
                     namePrefix = namePrefix,
                     pattern = decode(list[PATTERN]),
                     initial = decode(list[INITIAL]),
-                    selected = (list[SELECTED] as Int).takeIf { it != NO_SELECTION },
+                    selected = list[SELECTED] as Int,
                     minutes = list[MINUTES] as Int,
                     typedName = list[TYPED_NAME] as String,
                     nameEdited = list[NAME_EDITED] as Boolean,
@@ -375,7 +373,6 @@ class PatternEditorState internal constructor(
         )
 
         private const val NO_ID = -1L
-        private const val NO_SELECTION = -1
         private const val PATTERN = 0
         private const val INITIAL = 1
         private const val SELECTED = 2

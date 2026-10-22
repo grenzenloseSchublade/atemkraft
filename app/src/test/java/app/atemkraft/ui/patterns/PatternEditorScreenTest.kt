@@ -2,6 +2,7 @@ package app.atemkraft.ui.patterns
 
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
@@ -20,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import app.atemkraft.R
 import app.atemkraft.cue.FakePreviewSoundOutput
@@ -38,7 +40,6 @@ import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -48,10 +49,11 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Muster-Editor „Frei gestalten“ (MUSTER-10, Nachtrag 4): Startpunkt eingeklappt mit Vorlagen,
- * Ablauf-Liste (Auswahl, Sekunden, Entfernen, Einfügemarke), Hinzufügen hinter der Auswahl bis 12
- * Phasen, „intensiv“ mit Hinweis und Sicherheitsdialog, Ton-Schalter der Vorschau, Einordnung ohne
- * Live-Region, Lesezeichen, Name, Start mit dem Entwurf.
+ * Muster-Editor „Frei gestalten“ (MUSTER-10, Nachtrag 4 und 5): Startpunkt als Pille mit Vorlagen,
+ * Dauer daneben, Werkzeugleiste (gewählte Phase mit Sekunden und Papierkorb, Hinzufügen hinter
+ * der Auswahl bis 12 Phasen), Ablauf-Liste eingeklappt und synchron, Vorschau im Kopf „Atemzug“,
+ * „intensiv“ mit Hinweis und Sicherheitsdialog, Ton-Schalter, Einordnung ohne Live-Region,
+ * Lesezeichen, Name, Start mit dem Entwurf.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -109,26 +111,36 @@ class PatternEditorScreenTest {
             SemanticsMatcher("sichtbar") { it.size.width > 0 },
     )
 
+    /** „Ablauf“ aufklappen (beim Öffnen eingeklappt). */
+    private fun openSequence() {
+        compose.onNode(hasText(string(R.string.pattern_editor_sequence)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription))
+            .performScrollTo()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_collapsed)))
+            .performClick()
+    }
+
     // ---- Startpunkt ----
 
     @Test
     fun `Startpunkt ist eingeklappt, nennt die Vorlage und klappt nach der Wahl wieder zu`() {
         val state = show(PatternEditorState.new(prefix))
-        val header = compose.onNode(hasText(string(R.string.pattern_editor_start)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription))
-        header.assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_collapsed)))
-        compose.onNodeWithContentDescription("4·6").assertExists()
+        val pill = compose.onNode(hasText(string(R.string.pattern_editor_start)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription))
+        pill.assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.state_collapsed)))
+            .assert(hasText("4·6"))
         visibleSegment("Box").assertDoesNotExist()
 
-        header.performClick()
+        pill.performClick()
         visibleSegment("4·6").assertIsSelected()
         visibleSegment("Seufzer").assertIsNotSelected().performClick()
         assertEquals(template("Seufzer").pattern, state.pattern)
+        // Nach einer Vorlage ist ihre letzte Phase gewählt.
+        assertEquals(2, state.selected)
         visibleSegment("Box").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Seufzer").assertExists()
+        pill.assert(hasText("Seufzer"))
 
         // Eine Änderung macht aus der Vorlage „angepasst“.
         compose.runOnIdle { state.setSeconds(0, 5) }
-        compose.onNodeWithContentDescription(string(R.string.adjust_modified)).assertExists()
+        pill.assert(hasText(string(R.string.adjust_modified)))
     }
 
     // ---- Dauer ----
@@ -136,60 +148,73 @@ class PatternEditorScreenTest {
     @Test
     fun `die Dauer aendert die Folge nicht`() {
         val state = show(PatternEditorState.new(prefix))
+        compose.onNodeWithText("5\u00A0min").assertExists()
         stepButton(string(R.string.cd_adjust_duration), R.string.adjust_increase).performClick()
         assertEquals(6, state.minutes)
         assertEquals(FreePattern.DEFAULT, state.pattern)
+        compose.onNodeWithText("6\u00A0min").assertExists()
         compose.onNodeWithText(string(R.string.action_start), substring = true).assert(hasText(app.getString(R.string.duration_approx, 6), substring = true))
     }
 
-    // ---- Ablauf ----
+    // ---- Werkzeugleiste und Ablauf ----
 
     @Test
-    fun `Zeile antippen waehlt sie, die gewaehlte traegt Stepper und Papierkorb, nochmal hebt die Auswahl auf`() {
+    fun `Werkzeugleiste zeigt die gewaehlte Phase, die Ablauf-Liste waehlt synchron, ein zweiter Tipp hebt nichts auf`() {
         val state = show(PatternEditorState.new(prefix, template("Box").pattern))
-        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")
-        stepButton(spoken, R.string.adjust_increase).assertDoesNotExist()
+        // Beim Öffnen ist die letzte Phase gewählt: Stepper und Papierkorb gehören zu ihr.
+        val last = app.getString(R.string.pattern_editor_phase_spoken, 4, "Halten leer")
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_selected, last)).assertExists()
+        stepButton(last, R.string.adjust_increase).assertExists()
 
+        openSequence()
+        row(4, "Halten leer").assertIsSelected()
         row(2, "Halten voll").performScrollTo().assertIsNotSelected().performClick()
         assertEquals(1, state.selected)
         row(2, "Halten voll").assertIsSelected()
+        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")
+        stepButton(last, R.string.adjust_increase).assertDoesNotExist()
         stepButton(spoken, R.string.adjust_increase).performScrollTo().performClick()
         assertEquals(5, state.pattern.phases[1].seconds)
+        compose.onNodeWithText("5\u00A0s").assertExists()
         compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 2)).assertIsEnabled()
 
         row(2, "Halten voll").performClick()
-        assertNull(state.selected)
-        stepButton(spoken, R.string.adjust_increase).assertDoesNotExist()
+        assertEquals(1, state.selected)
+        stepButton(spoken, R.string.adjust_increase).assertExists()
     }
 
     @Test
     fun `Papierkorb ist aus, wenn die Folge danach ungueltig waere, sonst entfernt er die Phase`() {
         val state = show(PatternEditorState.new(prefix))
-        row(1, "Einatmen").performScrollTo().performClick()
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 1)).assertIsNotEnabled()
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 2)).assertIsNotEnabled()
 
         compose.runOnIdle { state.applyTemplate(template("Box")) }
-        row(4, "Halten leer").performScrollTo().performClick()
         compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 4)).performClick()
         assertEquals(free(FreePhaseType.IN to 4, FreePhaseType.HOLD to 4, FreePhaseType.OUT to 4), state.pattern)
         assertEquals(2, state.selected)
+        // Die Zeile der nun gewählten Phase sagt das Entfernen einmal an.
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_removed, 4, 3, 12)).assertExists()
     }
 
     @Test
-    fun `Hinzufuegen kommt hinter die gewaehlte Phase, die Karte nennt die Stelle`() {
+    fun `Hinzufuegen kommt hinter die gewaehlte Phase, die Leiste nennt die Stelle`() {
         val state = show(PatternEditorState.new(prefix))
-        compose.onNodeWithText(string(R.string.pattern_editor_add_end), substring = true).performScrollTo()
-        compose.onNodeWithText(string(R.string.pattern_editor_insert_here)).assertExists()
+        compose.onNodeWithText(app.getString(R.string.pattern_editor_add_after_short, 2)).assertExists()
+            .assert(hasContentDescription(app.getString(R.string.cd_pattern_add_after, 2, "Ausatmen")))
 
+        openSequence()
         row(1, "Einatmen").performScrollTo().performClick()
-        compose.onNodeWithText(app.getString(R.string.pattern_editor_add_after, 1, "Einatmen"), substring = true).assertExists()
+        compose.onNodeWithText(app.getString(R.string.pattern_editor_add_after_short, 1)).assertExists()
         compose.onNodeWithContentDescription(string(R.string.cd_pattern_add_hold)).performScrollTo().performClick()
         assertEquals(free(FreePhaseType.IN to 4, FreePhaseType.HOLD to 2, FreePhaseType.OUT to 6), state.pattern)
         assertEquals(1, state.selected)
-        compose.onNodeWithText(app.getString(R.string.pattern_editor_add_after, 2, "Halten voll"), substring = true).assertExists()
-        // Der Kopf „Ablauf“ nennt einmal, was wohin kam; nach der nächsten Änderung nur die Zahl.
-        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 2, 3, 12)).assertExists()
+        compose.onNodeWithText(app.getString(R.string.pattern_editor_add_after_short, 2)).assertExists()
+        // Die gewählte Phase nennt einmal, was wohin kam; nach der nächsten Änderung nur sich selbst.
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 2, 3, 12))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
         compose.runOnIdle { state.setSeconds(1, 3) }
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_selected, app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
         compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_sequence_count, 3, 12)).assertExists()
     }
 
@@ -202,6 +227,27 @@ class PatternEditorScreenTest {
         listOf(R.string.cd_pattern_add_in, R.string.cd_pattern_add_hold, R.string.cd_pattern_add_out).forEach {
             compose.onNodeWithContentDescription(string(it)).assertIsNotEnabled()
         }
+    }
+
+    // ---- Vorschau ----
+
+    @Test
+    fun `laufende Vorschau zeigt die Phase am Kopf Atemzug statt des Status`() {
+        show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 4, FreePhaseType.HOLD to 1, FreePhaseType.OUT to 6)))
+        val status = app.getString(R.string.pattern_editor_cycle, 11, app.getString(R.string.pattern_editor_rate_short, "5,5"))
+        compose.onNodeWithText(status).assertExists()
+
+        // Uhr erst anhalten, dann den Klick direkt auslösen: Die Vorschau läuft endlos.
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithContentDescription(string(R.string.cd_preview_play)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(PREVIEW_IN_HOLD_MS)
+        compose.onNodeWithText(status).assertDoesNotExist()
+        compose.onNodeWithText("· Halten voll").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
+
+        compose.onNodeWithContentDescription(string(R.string.cd_preview_pause)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.mainClock.advanceTimeBy(PREVIEW_STEP_MS)
+        compose.onNodeWithText(status).assertExists()
     }
 
     // ---- Intensiv ----
@@ -384,9 +430,15 @@ class PatternEditorScreenTest {
     }
 
     @Test
-    fun `ein Atemzug pro Minute steht in der Einzahl`() {
+    fun `ein Atemzug pro Minute steht gesprochen in der Einzahl`() {
         show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 30, FreePhaseType.OUT to 30)))
-        compose.onNodeWithText(string(R.string.pattern_editor_rate_one), substring = true).assertExists()
+        compose.onNodeWithText(app.getString(R.string.pattern_editor_rate_short, "1"), substring = true).assertExists()
         compose.onNodeWithContentDescription(string(R.string.cd_pattern_editor_rate_one), substring = true).assertExists()
+    }
+
+    private companion object {
+        /** 4,5 s nach Play: mitten in „Halten voll“ von 4·1·6. */
+        const val PREVIEW_IN_HOLD_MS = 4_500L
+        const val PREVIEW_STEP_MS = 100L
     }
 }

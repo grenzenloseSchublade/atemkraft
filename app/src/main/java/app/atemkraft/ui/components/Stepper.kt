@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -87,6 +88,33 @@ fun Stepper(
     }
 }
 
+/**
+ * Stepper ohne sichtbares Label („−  5 min  +“) für knappe Zeilen, in denen der Zusammenhang das
+ * Label trägt (Muster-Editor: Dauer neben dem Startpunkt, Sekunden der gewählten Phase in der
+ * Werkzeugleiste). [valueText] ist der sichtbare Wert samt Einheit („5 min“, „4 s“, `titleSmall`); TalkBack
+ * hört wie beim [Stepper] [spokenLabel] mit dem Wert in Worten ([valueUnit]) und optional
+ * [spokenSuffix]. Knöpfe und Tippflächen wie beim [Stepper], kein eigenes Polster. [flushEnd]:
+ * Am Zeilenende steht der sichtbare Kreis von „+“ bündig an der Inhaltskante (LAYOUT-07).
+ */
+@Composable
+fun CompactStepper(
+    value: Int,
+    range: IntRange,
+    onChange: (Int) -> Unit,
+    valueText: String,
+    spokenLabel: String,
+    modifier: Modifier = Modifier,
+    @PluralsRes valueUnit: Int? = null,
+    spokenSuffix: String? = null,
+    announce: Boolean = true,
+    flushEnd: Boolean = false,
+) {
+    val spokenValue = if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
+    val valueDescription = stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue).let { if (spokenSuffix != null) "$it, $spokenSuffix" else it }
+    val edge = if (flushEnd) Modifier.flushEnd((Dimens.MinTouchTarget - Sizes.IconButtonSize) / 2) else Modifier
+    StepButtons(spokenLabel, valueDescription, value, range, onChange, announce, modifier.then(edge), valueText, MaterialTheme.typography.titleSmall)
+}
+
 @Composable
 private fun StepperLabel(label: String, modifier: Modifier = Modifier) {
     Text(
@@ -111,6 +139,8 @@ private fun StepButtons(
     onChange: (Int) -> Unit,
     announce: Boolean,
     modifier: Modifier = Modifier,
+    valueText: String = value.toString(),
+    valueStyle: TextStyle = MaterialTheme.typography.titleMedium,
 ) {
     val decreaseLabel = stringResource(R.string.adjust_decrease)
     val increaseLabel = stringResource(R.string.adjust_increase)
@@ -132,12 +162,12 @@ private fun StepButtons(
             Icon(painterResource(R.drawable.ic_remove), contentDescription = "$label, $decreaseLabel")
         }
         Text(
-            text = value.toString(),
-            style = MaterialTheme.typography.titleMedium,
+            text = valueText,
+            style = valueStyle,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             // Mindestbreite statt fester Breite: bei großer System-Schrift / dreistelligen
-            // Werten wächst die Box, statt den Wert abzuschneiden.
+            // Werten (oder mit Einheit, „30 s“) wächst die Box, statt den Wert abzuschneiden.
             modifier = Modifier
                 .widthIn(min = Sizes.StepperValueMinWidth)
                 .semantics {
@@ -157,6 +187,14 @@ private fun StepButtons(
         ) {
             Icon(Icons.Filled.Add, contentDescription = "$label, $increaseLabel")
         }
+    }
+}
+
+@Preview
+@Composable
+private fun CompactStepperPreview() {
+    AtemkraftTheme {
+        CompactStepper(value = 5, range = 1..30, onChange = {}, valueText = stringResource(R.string.pattern_editor_minutes, 5), spokenLabel = stringResource(R.string.cd_adjust_duration))
     }
 }
 
