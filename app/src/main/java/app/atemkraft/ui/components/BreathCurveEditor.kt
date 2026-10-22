@@ -1,6 +1,7 @@
 package app.atemkraft.ui.components
 
 import android.animation.ValueAnimator
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -8,6 +9,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -22,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -32,7 +35,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -44,102 +50,197 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
-import app.atemkraft.domain.PatternField
-import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.rangeFor
-import app.atemkraft.domain.secondsOf
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePhase
+import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.ui.theme.ALPHA_CURVE_FILL
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.BreathExhale
+import app.atemkraft.ui.theme.CHIP_FILL
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.WarnAmber
+import kotlin.math.floor
 import kotlin.math.roundToInt
-
-/** Feste Zeitskala der Atemkurve in Sekunden: Der längste erlaubte Atemzug (13 s) passt, nichts springt. */
-internal const val CURVE_SECONDS = 14
+import kotlin.math.roundToLong
 
 /**
- * Zahlen an der Zeitleiste alle so viele Sekunden, Striche jede Sekunde: alle 2 s, und wenn die
- * Zahlen dafür zu breit sind (schmales Gerät, große Schrift), alle 4 s statt übereinander.
+ * Schrittweiten der Zahlen an der Zeitleiste in Sekunden: Es gilt die kleinste, bei der zwei
+ * Zahlen mindestens [Sizes.CurveLabelMinSpacing] auseinander stehen und zwischen ihnen mindestens
+ * `GapSmall` frei bleibt (gemessen an der größten Zahl, mit und ohne „s“).
  */
-private val CURVE_LABEL_STEPS = listOf(2, 4)
+internal val CURVE_LABEL_STEPS = listOf(1, 2, 5, 10, 15, 30, 60)
 
 /** Lücke der gestrichelten Halten-Phasen im Verhältnis zur Strichlänge (Vorlage 6/5). */
 private const val DASH_GAP_RATIO = 5f / 6f
 
+/** Ab halb voll gehört ein Halten zur Einatmen-Seite (Cyan, Griff über der Linie). */
+private const val HALF = 0.5f
+
+/** Feine Striche zwischen den Zahlen ab Schritt 10 s: ein Fünftel des Schritts. */
+private const val MINOR_DIVISOR = 5
+
+private const val MINOR_FROM_STEP = 10
+
 private const val NANOS_PER_SECOND = 1_000_000_000f
+private const val MILLIS_PER_SECOND = 1000f
+
+/** Kleinste sichtbare Breite des Bands, auch wenn der erlaubte Bereich rechts aus der Achse läuft. */
+private const val MIN_BAND_SECONDS = 0.25f
+
+/** Rundungsrest beim Vergleich mit der (animierten) Achse. */
+private const val AXIS_EPSILON = 1e-3f
+
+/** Nur für Tests: die Phase, deren Griff gerade gezogen wird (fehlt ohne Ziehen). */
+internal val CurveDragPhase = SemanticsPropertyKey<Int>("CurveDragPhase")
+
+/** Nur für Tests: Zielwert der Zeitachse in Sekunden (ändert sich erst nach dem Loslassen). */
+internal val CurveAxisSeconds = SemanticsPropertyKey<Int>("CurveAxisSeconds")
+
+/** Nur für Tests: Beschriftung des gelben Bands, solange es zu sehen ist. */
+internal val CurveBandLabel = SemanticsPropertyKey<String>("CurveBandLabel")
 
 /**
- * Atemkurve des Muster-Editors (MUSTER-10): ein Atemzug als Kurve, Hauptbedienung des Editors.
- * x = Zeit auf fester Skala 0–[CURVE_SECONDS] s, y = Lungenfüllung (leer unten, voll oben).
- * Einatmen durchgezogen in `secondary`, Halten voll gestrichelt `secondary`, Ausatmen durchgezogen
- * [BreathExhale], Halten leer gestrichelt [BreathExhale] – dieselbe Farbsprache wie die
- * Rhythmusbalken der Atemlehre (FARBE-04). Je Phase „4 s“ in Phasenfarbe, darunter eine Zeitleiste.
+ * Zustand der Vorschau unter der Atemkurve: ob sie läuft und wo sie im Atemzug steht ([time],
+ * Sekunden ab Beginn des Durchlaufs). Hochgezogen, damit der Aufrufer sie anhalten kann (Seite
+ * nicht mehr sichtbar) und den Ton danach taktet:
  *
- * Griffe an den Phasenenden ziehen horizontal; der Wert rastet auf ganze Sekunden, ist auf
- * [rangeFor] geklemmt (ein ungültiges Muster entsteht nie) und kommt über [onChange]; spätere
- * Phasen rücken mit. Je Raste ein Tick als Berührungs-Rückmeldung (Android-Einstellung, wie die
- * Rasten des Zeitrings, AUDIO-05). Ein Feld ohne Wertebereich (Halten leer bei „sanft aktivierend“)
- * hat keinen Griff.
+ * ```
+ * val phase by remember(pattern) { derivedStateOf { preview.phaseIndexIn(pattern) } }
+ * PreviewSoundEffect(sound, preview.playing, phase) { /* PhaseAudio mit preview.remainingMillisIn(pattern) */ }
+ * ```
+ * Anlegen mit [rememberCurvePreviewState].
+ */
+@Stable
+class CurvePreviewState internal constructor() {
+    /** Läuft die Vorschau? */
+    var playing by mutableStateOf(false)
+        private set
+
+    /** Zeit im Atemzug in Sekunden (0, solange die Vorschau nicht lief). */
+    var time by mutableFloatStateOf(0f)
+        internal set
+
+    /** Startet die Vorschau am Anfang des Atemzugs (wie die Vorlage). */
+    fun play() {
+        time = 0f
+        playing = true
+    }
+
+    /** Hält die Vorschau an (Ziehen, Seite verlassen, App im Hintergrund). */
+    fun pause() {
+        playing = false
+    }
+
+    /** Wechselt zwischen [play] und [pause]. */
+    fun toggle() = if (playing) pause() else play()
+
+    /** Index der Phase von [pattern], in der die Vorschau steht. */
+    fun phaseIndexIn(pattern: FreePattern): Int = pattern.phaseIndexAt(time)
+
+    /** Restdauer der aktuellen Phase von [pattern] in ms (für den Dauerton beim Einschalten mitten in der Phase). */
+    fun remainingMillisIn(pattern: FreePattern): Long {
+        val index = phaseIndexIn(pattern)
+        val end = pattern.startOf(index) + (pattern.phases.getOrNull(index)?.seconds ?: 0)
+        return ((end - time) * MILLIS_PER_SECOND).roundToLong().coerceAtLeast(0L)
+    }
+}
+
+/** Legt den Zustand der Vorschau für [BreathCurveEditor] an. */
+@Composable
+fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewState() }
+
+/**
+ * Atemkurve des Muster-Editors (MUSTER-10, Nachtrag 4 „Frei gestalten“): die freie Phasenfolge
+ * [pattern] als Kurve, Hauptbedienung des Editors. x = Zeit, y = Lungenfüllung (leer unten, voll
+ * oben); mehrere Ein bzw. Aus hintereinander steigen in Stufen ([FreePattern.levels]). Einatmen
+ * durchgezogen in `secondary`, Ausatmen durchgezogen in [BreathExhale], Halten gestrichelt in der
+ * Farbe seiner Höhe (ab halb voll `secondary`, darunter [BreathExhale]) – dieselbe Farbsprache wie
+ * die Rhythmusbalken der Atemlehre (FARBE-04). Je Phase „4 s“ in Phasenfarbe, darunter eine
+ * Zeitleiste; die gewählte Phase [selected] ist dicker gezeichnet, ihr Griff größer.
  *
- * Darunter die Vorschau: Play/Pause lässt einen Punkt in Echtzeit über die Kurve laufen, daneben
- * der Phasenname (statt des Hinweises „Griffe ziehen“, `HintText`); nur sichtbar, kein Ton. Bei
- * abgeschalteten System-Animationen entfällt der Knopf (MOTION-02).
+ * Zeitachse: max(12, gerade(Gesamt + 6)) s ([FreePattern.axisSeconds]), neu erst nach dem
+ * Loslassen (oder wenn sich die Folge anders ändert) und dann sanft animiert – während des Ziehens
+ * springt nichts. Zahlen im Schritt aus [CURVE_LABEL_STEPS], feine Striche je Sekunde, solange sie
+ * mindestens [Sizes.CurveTickMinSpacing] auseinander liegen, „s“ nur an der letzten Zahl.
  *
- * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden, …“)
- * ohne liveRegion; Ziehen ist nie Pflicht – dieselben Werte stellt der Aufrufer als Stepper
- * („Genau einstellen“) direkt darunter bereit.
+ * Griff am Ende jeder Phase (Ein-/Aus-Ende auf der Kurve, Halten über bzw. unter seiner Linie,
+ * Tippfläche ≥ 48 dp, bei Überlappung gewinnt der nächste). Antippen wählt die Phase ([onSelect]),
+ * horizontales Ziehen ändert ihre Dauer: rastet auf ganze Sekunden, geklemmt auf 1–30 s, Wert über
+ * [onChangeSeconds]; spätere Phasen rücken mit. Je Raste ein Tick als Berührungs-Rückmeldung
+ * (Android-Einstellung, wie die Rasten des Zeitrings, AUDIO-05). Während des Ziehens zeigt ein
+ * gelbes Band über der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
+ *
+ * Darunter die Vorschau ([preview]): Play/Pause lässt einen Punkt in Echtzeit über die Kurve
+ * laufen, daneben der Phasenname (statt des Hinweises „Griffe ziehen“). Der Ton kommt vom Aufrufer
+ * (`PreviewSoundEffect` mit [CurvePreviewState]), sein Lautsprecher-Schalter steht in
+ * [previewTrailing] am Ende der Zeile. Bei abgeschalteten System-Animationen entfallen Knopf und
+ * Schalter (MOTION-02).
+ *
+ * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden,
+ * …“) ohne liveRegion; Ziehen ist nie Pflicht – Auswahl, Dauer und Entfernen bietet der Aufrufer
+ * in der Ablauf-Liste darunter.
  */
 @Composable
 fun BreathCurveEditor(
-    spec: PatternSpec,
-    onChange: (PatternField, Int) -> Unit,
+    pattern: FreePattern,
+    selected: Int?,
+    onSelect: (Int?) -> Unit,
+    onChangeSeconds: (index: Int, seconds: Int) -> Unit,
     modifier: Modifier = Modifier,
+    preview: CurvePreviewState = rememberCurvePreviewState(),
+    previewTrailing: @Composable RowScope.() -> Unit = {},
 ) {
-    val currentSpec by rememberUpdatedState(spec)
-    val currentOnChange by rememberUpdatedState(onChange)
+    val currentPattern by rememberUpdatedState(pattern)
+    val currentOnSelect by rememberUpdatedState(onSelect)
+    val currentOnChange by rememberUpdatedState(onChangeSeconds)
     val haptic = LocalHapticFeedback.current
     val colors = MaterialTheme.colorScheme
-    val inhaleColor = colors.secondary
-    val exhaleColor = BreathExhale
+    val palette = CurvePalette(inhale = colors.secondary, exhale = BreathExhale)
     val metrics = rememberCurveMetrics()
-    val measurer = rememberTextMeasurer()
-    val labelStyle = MaterialTheme.typography.labelMedium
     val textColor = colors.onSurface.copy(alpha = TERTIARY)
 
-    val description = curveDescription(spec)
-    val phaseLabels = PatternField.entries.associateWith { field ->
-        val text = stringResource(R.string.pattern_editor_curve_seconds, spec.secondsOf(field))
-        remember(text, labelStyle, measurer) { measurer.measure(text, labelStyle) }
-    }
+    // Ziehen: welche Phase, und die Achse, die bis zum Loslassen stehen bleibt.
+    var drag by remember { mutableStateOf<CurveDrag?>(null) }
+    val axisTarget = drag?.axis ?: pattern.axisSeconds()
+    val axis by animateFloatAsState(axisTarget.toFloat(), label = "curveAxis")
+    val currentAxis by rememberUpdatedState(axis)
+    val currentAxisTarget by rememberUpdatedState(axisTarget)
 
+    val description = stringResource(R.string.cd_breath_curve, pattern.spokenDescription())
+    val bandLabel = drag?.let { d ->
+        val start = pattern.startOf(d.index)
+        if (start + FreePattern.MAX_SECONDS > d.axis) {
+            stringResource(R.string.pattern_editor_curve_band_beyond, FreePattern.MIN_SECONDS, FreePattern.MAX_SECONDS)
+        } else {
+            stringResource(R.string.pattern_editor_curve_band, FreePattern.MIN_SECONDS, FreePattern.MAX_SECONDS)
+        }
+    }
     // Vorschau: nur mit System-Animationen (MOTION-02); die Zeit läuft in Echtzeit im Kreis.
     val animationsEnabled = remember { ValueAnimator.areAnimatorsEnabled() }
-    var playing by remember { mutableStateOf(false) }
-    var time by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(playing) {
-        if (!playing) return@LaunchedEffect
+    LaunchedEffect(preview, preview.playing) {
+        if (!preview.playing) return@LaunchedEffect
         var last = withFrameNanos { it }
         while (true) {
             withFrameNanos { now ->
-                val cycle = currentSpec.cycleSeconds().toFloat()
-                time = if (cycle > 0f) (time + (now - last) / NANOS_PER_SECOND) % cycle else 0f
+                val cycle = currentPattern.totalSeconds.toFloat()
+                preview.time = if (cycle > 0f) (preview.time + (now - last) / NANOS_PER_SECOND) % cycle else 0f
                 last = now
             }
         }
     }
-    val phaseNow by remember { derivedStateOf { currentSpec.phaseAt(time) } }
+    val phaseNow by remember(pattern) { derivedStateOf { pattern.phaseIndexAt(preview.time) } }
 
     Column(modifier = modifier.background(colors.surface, MaterialTheme.shapes.medium)) {
         val density = LocalDensity.current
@@ -147,151 +248,171 @@ fun BreathCurveEditor(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(with(density) { metrics.height.toDp() })
-                .semantics { contentDescription = description }
-                .pointerInput(metrics) {
+                .clipToBounds()
+                .semantics {
+                    contentDescription = description
+                    this[CurveAxisSeconds] = axisTarget
+                    drag?.let { this[CurveDragPhase] = it.index }
+                    bandLabel?.let { this[CurveBandLabel] = it }
+                }
+                .pointerInput(metrics, preview) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
-                        val layout = metrics.layout(size.width.toFloat())
-                        val start = currentSpec
+                        val start = currentPattern
+                        val layout = metrics.layout(size.width.toFloat(), currentAxis, currentAxisTarget)
                         val handle = nearestHandle(curveHandles(start, layout), down.position, layout.touchRadius)
                             ?: return@awaitEachGesture
                         down.consume()
-                        playing = false
-                        val field = handle.field
-                        val phaseStart = layout.xAt(start.startOf(field).toFloat())
-                        // Griffstelle relativ zum Phasenende: Wer neben die Mitte greift (oder den
-                        // versetzten 0-s-Griff), verschiebt nichts, bis der Finger zieht.
-                        val grab = down.position.x - layout.xAt((start.startOf(field) + start.secondsOf(field)).toFloat())
-                        var last = start.secondsOf(field)
-                        drag(down.id) { change ->
-                            change.consume()
-                            val range = currentSpec.rangeFor(field) ?: return@drag
-                            val value = ((change.position.x - grab - phaseStart) / layout.pxPerSecond).roundToInt().coerceIn(range)
-                            if (value != last) {
-                                last = value
-                                currentOnChange(field, value)
-                                haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                        preview.pause()
+                        val index = handle.index
+                        currentOnSelect(index)
+                        drag = CurveDrag(index, currentAxisTarget)
+                        val phaseStart = layout.xAt(start.startOf(index).toFloat())
+                        // Griffstelle relativ zum Phasenende: Wer neben die Mitte greift, verschiebt
+                        // nichts, bis der Finger zieht.
+                        val grab = down.position.x - handle.center.x
+                        var last = start.phases[index].seconds
+                        try {
+                            drag(down.id) { change ->
+                                change.consume()
+                                val value = ((change.position.x - grab - phaseStart) / layout.pxPerSecond)
+                                    .roundToInt()
+                                    .coerceIn(FreePattern.SECONDS_RANGE)
+                                if (value != last) {
+                                    last = value
+                                    currentOnChange(index, value)
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                }
                             }
+                        } finally {
+                            // Erst jetzt rechnet die Achse neu (sanft animiert).
+                            drag = null
                         }
                     }
                 },
         ) {
-            val layout = metrics.layout(size.width)
-            drawCurve(
-                spec = spec,
-                layout = layout,
-                inhaleColor = inhaleColor,
-                exhaleColor = exhaleColor,
-                lineColor = colors.outlineVariant,
-                textColor = textColor,
-                phaseLabels = phaseLabels,
-            )
-            if (playing) {
-                drawCircle(colors.onSurface, radius = Sizes.CurveDot.toPx() / 2f, center = spec.pointAt(time, layout))
+            val layout = metrics.layout(size.width, axis, axisTarget)
+            drawCurve(pattern, selected, layout, palette, colors.outlineVariant, textColor)
+            drag?.let { drawBand(pattern, it, layout, bandLabel.orEmpty()) }
+            if (preview.playing) {
+                drawCircle(colors.onSurface, radius = Sizes.CurveDot.toPx() / 2f, center = pattern.pointAt(preview.time, layout))
             }
-            curveHandles(spec, layout).forEach { drawHandle(it, layout, if (it.field.isInhaleSide()) inhaleColor else exhaleColor, colors.background) }
+            // Der gewählte Griff zuletzt, damit er über Nachbarn liegt.
+            curveHandles(pattern, layout).sortedBy { it.index == selected }.forEach { handle ->
+                drawHandle(handle, selected = handle.index == selected, color = palette.colorOf(pattern, handle.index), fill = colors.background)
+            }
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = Dimens.MinTouchTarget)
-                .padding(start = if (animationsEnabled) Dimens.GapTiny else Dimens.CardPadding, end = Dimens.ListGap),
+                .padding(start = if (animationsEnabled) Dimens.GapTiny else Dimens.CardPadding, end = if (animationsEnabled) Dimens.GapTiny else Dimens.ListGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (animationsEnabled) {
-                AppIconButton(onClick = { playing = !playing }) {
-                    if (playing) {
-                        Icon(painterResource(R.drawable.ic_pause), contentDescription = stringResource(R.string.cd_preview_pause), tint = inhaleColor)
+                AppIconButton(onClick = preview::toggle) {
+                    if (preview.playing) {
+                        Icon(painterResource(R.drawable.ic_pause), contentDescription = stringResource(R.string.cd_preview_pause), tint = palette.inhale)
                     } else {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_preview_play), tint = inhaleColor)
+                        Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.cd_preview_play), tint = palette.inhale)
                     }
                 }
             }
             // Läuft die Vorschau, steht dort der Phasenname (ohne liveRegion, er wechselt im Takt),
             // sonst der Hinweis „Griffe ziehen“ – beim Zuschauen ist er nicht gefragt. Beide
             // brechen nur zwischen Wörtern um, nie im Wort (LAYOUT-03).
-            if (playing) {
+            if (preview.playing && phaseNow in pattern.phases.indices) {
                 WholeWordText(
-                    text = phaseName(phaseNow),
+                    text = pattern.labelAt(phaseNow),
                     modifier = Modifier.weight(1f).padding(start = Dimens.GapSmall),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (phaseNow.isInhaleSide()) inhaleColor else exhaleColor,
+                    color = palette.colorOf(pattern, phaseNow),
                 )
             } else {
                 CompositionLocalProvider(LocalContentColor provides colors.onSurface) {
                     HintText(
                         text = stringResource(R.string.pattern_editor_curve_hint),
-                        modifier = Modifier.weight(1f).padding(start = Dimens.GapSmall).wrapContentWidth(Alignment.End),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = Dimens.GapSmall, end = if (animationsEnabled) Dimens.GapSmall else Dimens.GapTiny)
+                            .wrapContentWidth(Alignment.End),
                     )
                 }
             }
+            if (animationsEnabled) previewTrailing()
         }
     }
 }
 
-/** TalkBack-Text der Kurve: „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, …“; Halten 0 entfällt. */
-@Composable
-private fun curveDescription(spec: PatternSpec): String {
-    val parts = PatternField.entries.mapNotNull { field ->
-        val seconds = spec.secondsOf(field)
-        if (seconds <= 0) return@mapNotNull null
-        stringResource(
-            R.string.cd_breath_curve_part,
-            phaseName(field),
-            pluralStringResource(R.plurals.cd_duration_seconds, seconds, seconds),
-        )
-    }
-    return stringResource(R.string.cd_breath_curve, parts.joinToString(", "))
+/** Ein laufender Zug: Phase [index], und die Achse [axis] in Sekunden, die bis zum Loslassen gilt. */
+private data class CurveDrag(val index: Int, val axis: Int)
+
+/** Die beiden Phasenfarben der Kurve. */
+@Immutable
+private class CurvePalette(val inhale: Color, val exhale: Color) {
+    /** Farbe der Phase [index]: Ein Cyan, Aus Koralle, Halten nach seiner Höhe (ab halb voll Cyan). */
+    fun colorOf(pattern: FreePattern, index: Int): Color = if (pattern.isInhaleSide(index)) inhale else exhale
 }
 
-/** Name einer Phase für Vorschau und TalkBack; Halten mit „voll“/„leer“, weil beide sonst nur „Halten“ heißen. */
-@Composable
-private fun phaseName(field: PatternField): String = stringResource(
-    when (field) {
-        PatternField.INHALE -> R.string.phase_inhale
-        PatternField.HOLD_FULL -> R.string.cd_hold_full
-        PatternField.EXHALE -> R.string.phase_exhale
-        PatternField.HOLD_EMPTY -> R.string.cd_hold_empty
-    },
-)
+/** Cyan-Seite: Einatmen, oder ein Halten ab halb voll. */
+private fun FreePattern.isInhaleSide(index: Int): Boolean = when (phases[index].type) {
+    FreePhaseType.IN -> true
+    FreePhaseType.OUT -> false
+    FreePhaseType.HOLD -> levels()[index].from >= HALF
+}
 
-/** Cyan-Seite (Einatmen, Halten voll) oder Koralle-Seite (Ausatmen, Halten leer). */
-private fun PatternField.isInhaleSide(): Boolean = this == PatternField.INHALE || this == PatternField.HOLD_FULL
+/** Beginn der Phase [index] in Sekunden ab Beginn des Durchlaufs. */
+internal fun FreePattern.startOf(index: Int): Int = phases.take(index.coerceIn(0, phases.size)).sumOf { it.seconds }
 
-/** Beginn der Phase [field] in Sekunden ab Beginn des Atemzugs. */
-internal fun PatternSpec.startOf(field: PatternField): Int = PatternField.entries.takeWhile { it != field }.sumOf { secondsOf(it) }
-
-/** Länge eines Atemzugs in ganzen Sekunden. */
-internal fun PatternSpec.cycleSeconds(): Int = PatternField.entries.sumOf { secondsOf(it) }
-
-/** Phase zum Zeitpunkt [time] (Sekunden ab Beginn des Atemzugs); Halten mit 0 s wird übersprungen. */
-internal fun PatternSpec.phaseAt(time: Float): PatternField = PatternField.entries.firstOrNull { time < startOf(it) + secondsOf(it) } ?: PatternField.HOLD_EMPTY
+/** Index der Phase zum Zeitpunkt [time] (Sekunden ab Beginn des Durchlaufs); hinter dem Ende die letzte. */
+internal fun FreePattern.phaseIndexAt(time: Float): Int {
+    var end = 0
+    phases.forEachIndexed { i, phase ->
+        end += phase.seconds
+        if (time < end) return i
+    }
+    return phases.lastIndex.coerceAtLeast(0)
+}
 
 /** Ort des Vorschau-Punkts auf der Kurve zum Zeitpunkt [time]. */
-private fun PatternSpec.pointAt(time: Float, layout: CurveLayout): Offset {
-    val field = phaseAt(time)
-    val progress = ((time - startOf(field)) / secondsOf(field).coerceAtLeast(1)).coerceIn(0f, 1f)
-    val y = when (field) {
-        PatternField.INHALE -> layout.yEmpty - (layout.yEmpty - layout.yFull) * progress
-        PatternField.HOLD_FULL -> layout.yFull
-        PatternField.EXHALE -> layout.yFull + (layout.yEmpty - layout.yFull) * progress
-        PatternField.HOLD_EMPTY -> layout.yEmpty
-    }
-    return Offset(layout.xAt(time), y)
+private fun FreePattern.pointAt(time: Float, layout: CurveLayout): Offset {
+    val index = phaseIndexAt(time)
+    val level = levels()[index]
+    val progress = ((time - startOf(index)) / phases[index].seconds.coerceAtLeast(1)).coerceIn(0f, 1f)
+    return Offset(layout.xAt(time), layout.yAt(level.from + (level.to - level.from) * progress))
+}
+
+/** Zahlen-Schritt der Zeitleiste: der kleinste aus [CURVE_LABEL_STEPS], bei dem Zahlen [minSpacing] px auseinander liegen. */
+internal fun curveLabelStep(pxPerSecond: Float, minSpacing: Float): Int = CURVE_LABEL_STEPS.firstOrNull { it * pxPerSecond >= minSpacing } ?: CURVE_LABEL_STEPS.last()
+
+/**
+ * Abstand der Striche in Sekunden: je Sekunde, solange die Striche [fineMin] px auseinander
+ * liegen; sonst ab Schritt 10 s ein Fünftel des Schritts, darunter nur an den Zahlen.
+ */
+internal fun curveMinorStep(labelStep: Int, pxPerSecond: Float, fineMin: Float): Int = when {
+    pxPerSecond >= fineMin -> 1
+    labelStep >= MINOR_FROM_STEP -> labelStep / MINOR_DIVISOR
+    else -> labelStep
 }
 
 /**
- * Maße der Kurve, die nur von Dichte und Schrift abhängen (in px). [layout] ergänzt die Breite.
- * Von oben: Beschriftung „Halten voll“, Halten-voll-Griff, Linie „voll“, Kurve, Linie „leer“,
- * Halten-leer-Griff, seine Beschriftung, Zeitleiste mit Zahlen.
+ * Maße der Kurve, die nur von Dichte und Schrift abhängen (in px). [layout] ergänzt Breite und
+ * Achse. Von oben: Beschriftung über dem Halten-voll-Griff, Griff, Linie „voll“, Kurve, Linie
+ * „leer“, Halten-leer-Griff, seine Beschriftung, Band des erlaubten Bereichs, Zeitleiste mit Zahlen.
  */
 @Immutable
 internal class CurveMetrics(
+    private val measurer: TextMeasurer,
+    /** Stil der Beschriftung „4 s“ an den Phasen. */
+    val phaseStyle: TextStyle,
+    /** Stil der Zahlen, der Linien „voll“/„leer“ und des Bands. */
+    val smallStyle: TextStyle,
+    private val secondsSuffix: String,
+    private val fullLabel: String,
+    private val emptyLabel: String,
     private val labelHeight: Float,
-    private val tickLabels: List<TextLayoutResult>,
-    private val fullLabel: TextLayoutResult,
-    private val emptyLabel: TextLayoutResult,
+    private val smallHeight: Float,
     private val gapTiny: Float,
     private val gapSmall: Float,
     private val hairline: Float,
@@ -299,100 +420,121 @@ internal class CurveMetrics(
     private val span: Float,
     private val holdOffset: Float,
     private val handle: Float,
-    private val zeroShift: Float,
     private val touch: Float,
+    private val labelSpacing: Float,
+    private val tickSpacing: Float,
 ) {
     private val yFull = gapTiny + labelHeight + hairline + holdOffset + handle / 2f
     private val yEmpty = yFull + span
     private val emptyLabelTop = yEmpty + holdOffset + handle / 2f + hairline
-    private val ticksTop = emptyLabelTop + labelHeight + gapTiny
+    private val bandTop = emptyLabelTop + labelHeight + gapTiny
+    private val bandHeight = smallHeight + 2 * hairline
+    private val ticksTop = bandTop + bandHeight + gapTiny
     private val tickLabelTop = ticksTop + gapSmall + hairline
 
     /** Gesamthöhe der Zeichenfläche. */
-    val height: Float = tickLabelTop + (tickLabels.maxOfOrNull { it.size.height } ?: 0) + gapTiny
+    val height: Float = tickLabelTop + smallHeight + gapTiny
 
-    fun layout(width: Float): CurveLayout {
-        val first = tickLabels.firstOrNull()?.size?.width ?: 0
-        val lastWidth = tickLabels.lastOrNull()?.size?.width ?: 0
-        val x0 = inset + first / 2f
-        val x1 = width - gapSmall - lastWidth / 2f
-        val pxPerSecond = (x1 - x0) / CURVE_SECONDS
-        // Erste Schrittweite, bei der zwischen zwei Zahlen doppelt so viel frei bleibt wie zwischen
-        // Zahl und Einheit – sonst liest sich „10 s 12 s“ als eine Reihe.
-        val labelStep = CURVE_LABEL_STEPS.firstOrNull { step ->
-            val widest = (0..CURVE_SECONDS step step).maxOf { tickLabels[it].size.width }
-            widest + 2 * gapSmall <= step * pxPerSecond
-        } ?: CURVE_LABEL_STEPS.last()
+    /** Lagen für die Breite [width] und die (ggf. gerade animierte) Achse [axis]; [axisTarget] bestimmt den rechten Rand. */
+    fun layout(width: Float, axis: Float, axisTarget: Int = axis.roundToInt()): CurveLayout {
+        // Die breitesten Zahlen: die größte ohne und mit „s“ (nur die letzte trägt es).
+        val number = measurer.measure("$axisTarget", smallStyle).size.width
+        val withUnit = measurer.measure("$axisTarget$secondsSuffix", smallStyle).size.width
+        val x0 = inset + measurer.measure("0", smallStyle).size.width / 2f
+        val x1 = width - gapSmall - withUnit / 2f
+        val pxPerSecond = (x1 - x0) / axis.coerceAtLeast(1f)
+        val step = curveLabelStep(pxPerSecond, maxOf(labelSpacing, (number + withUnit) / 2f + gapSmall))
         return CurveLayout(
             x0 = x0,
             x1 = x1,
-            labelStep = labelStep,
+            axis = axis,
+            pxPerSecond = pxPerSecond,
+            labelStep = step,
+            minorStep = curveMinorStep(step, pxPerSecond, tickSpacing),
             yFull = yFull,
             yEmpty = yEmpty,
             holdOffset = holdOffset,
-            zeroShift = zeroShift,
             handle = handle,
             touchRadius = touch / 2f,
-            holdLabelTop = gapTiny,
-            emptyLabelTop = emptyLabelTop,
+            bandTop = bandTop,
+            bandHeight = bandHeight,
             ticksTop = ticksTop,
             tickLabelTop = tickLabelTop,
             gapTiny = gapTiny,
             gapSmall = gapSmall,
             hairline = hairline,
-            tickLabels = tickLabels,
+            measurer = measurer,
+            phaseStyle = phaseStyle,
+            smallStyle = smallStyle,
+            secondsSuffix = secondsSuffix,
             fullLabel = fullLabel,
             emptyLabel = emptyLabel,
         )
     }
 }
 
-/** Alle Lagen der Kurve in px für eine Breite (siehe [CurveMetrics]). */
+/** Alle Lagen der Kurve in px für eine Breite und Achse (siehe [CurveMetrics]). */
 internal class CurveLayout(
     val x0: Float,
     val x1: Float,
+    /** Länge der Zeitachse in Sekunden (während der Animation auch dazwischen). */
+    val axis: Float,
+    val pxPerSecond: Float,
     /** Zahlen an der Zeitleiste alle so viele Sekunden ([CURVE_LABEL_STEPS]). */
     val labelStep: Int,
+    /** Striche an der Zeitleiste alle so viele Sekunden ([curveMinorStep]). */
+    val minorStep: Int,
     val yFull: Float,
     val yEmpty: Float,
     val holdOffset: Float,
-    val zeroShift: Float,
     val handle: Float,
     val touchRadius: Float,
-    val holdLabelTop: Float,
-    val emptyLabelTop: Float,
+    val bandTop: Float,
+    val bandHeight: Float,
     val ticksTop: Float,
     val tickLabelTop: Float,
     val gapTiny: Float,
     val gapSmall: Float,
     val hairline: Float,
-    val tickLabels: List<TextLayoutResult>,
-    val fullLabel: TextLayoutResult,
-    val emptyLabel: TextLayoutResult,
+    val measurer: TextMeasurer,
+    val phaseStyle: TextStyle,
+    val smallStyle: TextStyle,
+    val secondsSuffix: String,
+    /** Beschriftung der Linien „voll“ und „leer“. */
+    val fullLabel: String,
+    val emptyLabel: String,
 ) {
-    val pxPerSecond: Float = (x1 - x0) / CURVE_SECONDS
-
     fun xAt(seconds: Float): Float = x0 + seconds * pxPerSecond
+
+    /** Höhe zum Füllstand [level] (0 = leer, 1 = voll). */
+    fun yAt(level: Float): Float = yEmpty - (yEmpty - yFull) * level
+
+    /** Die Zahlen der Zeitleiste in Sekunden; die letzte trägt das „s“. */
+    fun labelSeconds(): List<Int> = (0..floor(axis + AXIS_EPSILON).toInt() step labelStep).toList()
 }
 
 /** Misst die Beschriftungen der Kurve mit der aktuellen Schrift; auch für Tests, die Griffe treffen wollen. */
 @Composable
 internal fun rememberCurveMetrics(): CurveMetrics {
     val density = LocalDensity.current
-    val measurer: TextMeasurer = rememberTextMeasurer()
+    val measurer: TextMeasurer = rememberTextMeasurer(cacheSize = MEASURE_CACHE)
     val labelStyle = MaterialTheme.typography.labelMedium
     val smallStyle = MaterialTheme.typography.labelSmall
-    // Je Sekunde gemessen, damit die Zeitleiste ihre Schrittweite nach der Breite wählen kann.
-    val ticks = (0..CURVE_SECONDS).map { stringResource(R.string.pattern_editor_curve_seconds, it) }
+    // „ s“ mit geschütztem Leerzeichen aus der Vorlage „%1$d s“, damit Zahl und Einheit beisammen bleiben.
+    val suffix = stringResource(R.string.pattern_editor_curve_seconds, 0).removePrefix("0")
     val full = stringResource(R.string.pattern_editor_curve_full)
     val empty = stringResource(R.string.pattern_editor_curve_empty)
-    return remember(density, measurer, labelStyle, smallStyle, ticks, full, empty) {
+    return remember(density, measurer, labelStyle, smallStyle, suffix, full, empty) {
         with(density) {
             CurveMetrics(
-                labelHeight = measurer.measure(ticks.last(), labelStyle).size.height.toFloat(),
-                tickLabels = ticks.map { measurer.measure(it, smallStyle) },
-                fullLabel = measurer.measure(full, smallStyle),
-                emptyLabel = measurer.measure(empty, smallStyle),
+                measurer = measurer,
+                phaseStyle = labelStyle,
+                smallStyle = smallStyle,
+                secondsSuffix = suffix,
+                fullLabel = full,
+                emptyLabel = empty,
+                labelHeight = measurer.measure("30$suffix", labelStyle).size.height.toFloat(),
+                smallHeight = measurer.measure("30$suffix", smallStyle).size.height.toFloat(),
                 gapTiny = Dimens.GapTiny.toPx(),
                 gapSmall = Dimens.GapSmall.toPx(),
                 hairline = Dimens.GapHairline.toPx(),
@@ -400,32 +542,37 @@ internal fun rememberCurveMetrics(): CurveMetrics {
                 span = Sizes.CurveSpan.toPx(),
                 holdOffset = Sizes.CurveHoldHandleOffset.toPx(),
                 handle = Sizes.CurveHandle.toPx(),
-                zeroShift = Sizes.CurveZeroShift.toPx(),
                 touch = Dimens.MinTouchTarget.toPx(),
+                labelSpacing = Sizes.CurveLabelMinSpacing.toPx(),
+                tickSpacing = Sizes.CurveTickMinSpacing.toPx(),
             )
         }
     }
 }
 
-/** Ein Griff: Feld, Mittelpunkt in px und ob er für ein Halten mit 0 s versetzt sitzt. */
-internal data class CurveHandle(val field: PatternField, val center: Offset, val zero: Boolean)
+/** Zahlen, Phasen-Beschriftungen und Band einer Kurve mit 12 Phasen passen in den Cache. */
+private const val MEASURE_CACHE = 48
+
+/** Ein Griff: Phase [index] und Mittelpunkt in px. */
+internal data class CurveHandle(val index: Int, val center: Offset)
 
 /**
- * Griffe der Kurve: Einatmen-Ende auf der Linie „voll“, Ausatmen-Ende auf „leer“, Halten voll
- * darüber, Halten leer darunter; ein Halten mit 0 s rückt nach rechts. Felder ohne Wertebereich
- * ([rangeFor] `null`, z. B. Halten leer bei „sanft aktivierend“) haben keinen Griff.
+ * Griffe der Kurve, einer am Ende jeder Phase: Ein- und Aus-Ende auf der Kurve, ein Halten ab
+ * halb voll über seiner Linie, darunter unter ihr.
  */
-internal fun curveHandles(spec: PatternSpec, layout: CurveLayout): List<CurveHandle> = PatternField.entries.filter { spec.rangeFor(it) != null }.map { field ->
-    val hold = field == PatternField.HOLD_FULL || field == PatternField.HOLD_EMPTY
-    val zero = hold && spec.secondsOf(field) == 0
-    val end = layout.xAt((spec.startOf(field) + spec.secondsOf(field)).toFloat())
-    val y = when (field) {
-        PatternField.INHALE -> layout.yFull
-        PatternField.HOLD_FULL -> layout.yFull - layout.holdOffset
-        PatternField.EXHALE -> layout.yEmpty
-        PatternField.HOLD_EMPTY -> layout.yEmpty + layout.holdOffset
+internal fun curveHandles(pattern: FreePattern, layout: CurveLayout): List<CurveHandle> {
+    val levels = pattern.levels()
+    var end = 0
+    return pattern.phases.mapIndexed { i, phase ->
+        end += phase.seconds
+        val y = layout.yAt(levels[i].to)
+        val shift = when {
+            phase.type != FreePhaseType.HOLD -> 0f
+            levels[i].to >= HALF -> -layout.holdOffset
+            else -> layout.holdOffset
+        }
+        CurveHandle(i, Offset(layout.xAt(end.toFloat()), y + shift))
     }
-    CurveHandle(field, Offset(end + if (zero) layout.zeroShift else 0f, y), zero)
 }
 
 /** Der Griff, dessen Tippfläche (Kreis mit [radius]) [position] trifft; bei Überlappung der nächste. */
@@ -436,18 +583,17 @@ internal fun nearestHandle(handles: List<CurveHandle>, position: Offset, radius:
     ?.first
 
 private fun DrawScope.drawCurve(
-    spec: PatternSpec,
+    pattern: FreePattern,
+    selected: Int?,
     layout: CurveLayout,
-    inhaleColor: Color,
-    exhaleColor: Color,
+    palette: CurvePalette,
     lineColor: Color,
     textColor: Color,
-    phaseLabels: Map<PatternField, TextLayoutResult>,
 ) {
-    val ends = PatternField.entries.map { layout.xAt((spec.startOf(it) + spec.secondsOf(it)).toFloat()) }
-    val (xIn, xHold, xEx, xEmpty) = ends
+    val levels = pattern.levels()
     val stroke = Sizes.CurveStroke.toPx()
     val holdStroke = Sizes.CurveHoldStroke.toPx()
+    val selectedStroke = Sizes.CurveStrokeSelected.toPx()
     val dash = Sizes.CurveDash.toPx()
     val dashed = PathEffect.dashPathEffect(floatArrayOf(dash, dash * DASH_GAP_RATIO))
     val thin = Dimens.BorderThin.toPx()
@@ -455,89 +601,122 @@ private fun DrawScope.drawCurve(
     // Zarte Füllung unter der Kurve (Lungenfüllung).
     val fill = Path().apply {
         moveTo(layout.x0, layout.yEmpty)
-        lineTo(xIn, layout.yFull)
-        lineTo(xHold, layout.yFull)
-        lineTo(xEx, layout.yEmpty)
+        var t = 0
+        pattern.phases.forEachIndexed { i, phase ->
+            lineTo(layout.xAt(t.toFloat()), layout.yAt(levels[i].from))
+            t += phase.seconds
+            lineTo(layout.xAt(t.toFloat()), layout.yAt(levels[i].to))
+        }
+        lineTo(layout.xAt(t.toFloat()), layout.yEmpty)
         close()
     }
-    drawPath(fill, inhaleColor.copy(alpha = ALPHA_CURVE_FILL))
+    drawPath(fill, palette.inhale.copy(alpha = ALPHA_CURVE_FILL))
 
     // Linien „voll“ und „leer“ (dekorativ) mit ihrer Beschriftung links.
     listOf(layout.yFull, layout.yEmpty).forEach { y ->
         drawLine(lineColor, Offset(layout.gapSmall, y), Offset(size.width - layout.gapSmall, y), strokeWidth = thin)
     }
-    drawText(layout.fullLabel, textColor, Offset(layout.gapSmall, layout.yFull - layout.hairline - layout.fullLabel.size.height))
-    drawText(layout.emptyLabel, textColor, Offset(layout.gapSmall, layout.yEmpty + layout.hairline))
+    val full = layout.measurer.measure(layout.fullLabel, layout.smallStyle)
+    val empty = layout.measurer.measure(layout.emptyLabel, layout.smallStyle)
+    drawText(full, textColor, Offset(layout.gapSmall, layout.yFull - layout.hairline - full.size.height))
+    drawText(empty, textColor, Offset(layout.gapSmall, layout.yEmpty + layout.hairline))
 
-    // Phasen: Ein-/Ausatmen durchgezogen, Halten gestrichelt.
-    drawLine(inhaleColor, Offset(layout.x0, layout.yEmpty), Offset(xIn, layout.yFull), stroke, StrokeCap.Round)
-    if (xHold > xIn) drawLine(inhaleColor, Offset(xIn, layout.yFull), Offset(xHold, layout.yFull), holdStroke, StrokeCap.Round, dashed)
-    drawLine(exhaleColor, Offset(xHold, layout.yFull), Offset(xEx, layout.yEmpty), stroke, StrokeCap.Round)
-    if (xEmpty > xEx) drawLine(exhaleColor, Offset(xEx, layout.yEmpty), Offset(xEmpty, layout.yEmpty), holdStroke, StrokeCap.Round, dashed)
-
-    // Beschriftung „4 s“ je Phase in Phasenfarbe: Ein- und Ausatmen neben der Schräge, Halten
-    // über bzw. unter dem Abschnitt.
-    val midY = (layout.yFull + layout.yEmpty) / 2f
-    phaseLabels.forEach { (field, text) ->
-        if (spec.secondsOf(field) <= 0) return@forEach
-        val from = layout.xAt(spec.startOf(field).toFloat())
-        val to = layout.xAt((spec.startOf(field) + spec.secondsOf(field)).toFloat())
-        val mid = (from + to) / 2f
-        val w = text.size.width
-        val h = text.size.height
-        val topLeft = when (field) {
-            PatternField.INHALE -> Offset(mid - layout.gapSmall - w, midY - h)
-            PatternField.EXHALE -> Offset(mid + layout.gapSmall, midY - h)
-            PatternField.HOLD_FULL -> Offset(mid - w / 2f, layout.holdLabelTop)
-            PatternField.HOLD_EMPTY -> Offset(mid - w / 2f, layout.emptyLabelTop)
+    // Phasen: Ein-/Ausatmen durchgezogen, Halten gestrichelt; die gewählte dicker. Daneben „4 s“.
+    var t = 0
+    pattern.phases.forEachIndexed { i, phase ->
+        val from = Offset(layout.xAt(t.toFloat()), layout.yAt(levels[i].from))
+        t += phase.seconds
+        val to = Offset(layout.xAt(t.toFloat()), layout.yAt(levels[i].to))
+        val color = palette.colorOf(pattern, i)
+        val hold = phase.type == FreePhaseType.HOLD
+        val width = when {
+            i == selected -> selectedStroke
+            hold -> holdStroke
+            else -> stroke
         }
-        drawText(text, if (field.isInhaleSide()) inhaleColor else exhaleColor, topLeft)
+        drawLine(color, from, to, width, StrokeCap.Round, if (hold) dashed else null)
+        drawPhaseLabel(phase, from, to, layout, color, upper = levels[i].from >= HALF)
     }
 
-    // Zeitleiste: Strich je Sekunde (gerade länger), Zahl alle zwei Sekunden – bei Platzmangel alle vier.
-    for (second in 0..CURVE_SECONDS) {
+    // Zeitleiste: feine Striche, längere an den Zahlen; „s“ nur an der letzten Zahl.
+    val labels = layout.labelSeconds()
+    var second = 0
+    while (second <= layout.axis + AXIS_EPSILON) {
         val x = layout.xAt(second.toFloat())
-        val major = second % 2 == 0
+        val major = second % layout.labelStep == 0
         drawLine(textColor, Offset(x, layout.ticksTop), Offset(x, layout.ticksTop + if (major) layout.gapSmall else layout.gapTiny), thin)
-        if (second % layout.labelStep == 0) {
-            val label = layout.tickLabels[second]
-            drawText(label, textColor, Offset(x - label.size.width / 2f, layout.tickLabelTop))
-        }
+        second += layout.minorStep
     }
-
-    // Führungslinien der Griffe, dezent; gestrichelt bei einem Halten mit 0 s.
-    curveHandles(spec, layout).forEach { handle ->
-        val color = (if (handle.field.isInhaleSide()) inhaleColor else exhaleColor).copy(alpha = TERTIARY)
-        drawLine(
-            color,
-            Offset(handle.center.x, layout.yFull - layout.holdOffset),
-            Offset(handle.center.x, layout.yEmpty + layout.holdOffset),
-            thin,
-            pathEffect = if (handle.zero) dashed else null,
-        )
+    labels.forEach { s ->
+        val text = if (s == labels.last()) "$s${layout.secondsSuffix}" else s.toString()
+        val result = layout.measurer.measure(text, layout.smallStyle)
+        drawText(result, textColor, Offset(layout.xAt(s.toFloat()) - result.size.width / 2f, layout.tickLabelTop))
     }
 }
 
-/** Griff: Kreis im Grundton mit Ring in Phasenfarbe; bei 0 s gestrichelter Ring. */
-private fun DrawScope.drawHandle(handle: CurveHandle, layout: CurveLayout, color: Color, fill: Color) {
+/** „4 s“ an einer Phase: Ein/Aus neben der Schräge, Halten über (obere Hälfte) bzw. unter seinem Griff. */
+private fun DrawScope.drawPhaseLabel(
+    phase: FreePhase,
+    from: Offset,
+    to: Offset,
+    layout: CurveLayout,
+    color: Color,
+    upper: Boolean,
+) {
+    val text = layout.measurer.measure("${phase.seconds}${layout.secondsSuffix}", layout.phaseStyle)
+    val w = text.size.width
+    val h = text.size.height
+    val midX = (from.x + to.x) / 2f
+    val midY = (from.y + to.y) / 2f
+    val reach = layout.holdOffset + layout.handle / 2f + layout.hairline
+    val topLeft = when (phase.type) {
+        FreePhaseType.IN -> Offset(midX - layout.gapSmall - w, midY - h)
+        FreePhaseType.OUT -> Offset(midX + layout.gapSmall, midY - h)
+        FreePhaseType.HOLD -> if (upper) Offset(midX - w / 2f, from.y - reach - h) else Offset(midX - w / 2f, from.y + reach)
+    }
+    drawText(text, color, topLeft)
+}
+
+/** Gelbes Band über der Zeitleiste: erlaubter Bereich der gezogenen Phase (Ende = Start + 1 bis 30 s). */
+private fun DrawScope.drawBand(pattern: FreePattern, drag: CurveDrag, layout: CurveLayout, label: String) {
+    val start = pattern.startOf(drag.index)
+    val left = layout.xAt((start + FreePattern.MIN_SECONDS).toFloat())
+    val right = layout.xAt(minOf((start + FreePattern.MAX_SECONDS).toFloat(), maxOf(layout.axis, start + FreePattern.MIN_SECONDS + MIN_BAND_SECONDS)))
+    val radius = CornerRadius(layout.gapTiny, layout.gapTiny)
+    val topLeft = Offset(left, layout.bandTop)
+    val bandSize = Size((right - left).coerceAtLeast(layout.gapTiny), layout.bandHeight)
+    drawRoundRect(WarnAmber.copy(alpha = CHIP_FILL), topLeft, bandSize, radius)
+    drawRoundRect(WarnAmber.copy(alpha = TERTIARY), topLeft, bandSize, radius, style = Stroke(Dimens.BorderThin.toPx()))
+    val text = layout.measurer.measure(label, layout.smallStyle)
+    val x = ((left + right) / 2f - text.size.width / 2f).coerceIn(layout.gapSmall, (size.width - layout.gapSmall - text.size.width).coerceAtLeast(layout.gapSmall))
+    drawText(text, WarnAmber, Offset(x, layout.bandTop + layout.hairline))
+}
+
+/** Griff: Kreis im Grundton mit Ring in Phasenfarbe; der gewählte größer. */
+private fun DrawScope.drawHandle(handle: CurveHandle, selected: Boolean, color: Color, fill: Color) {
     val ring = Sizes.CurveHoldStroke.toPx()
-    val radius = layout.handle / 2f
+    val radius = (if (selected) Sizes.CurveHandleSelected else Sizes.CurveHandle).toPx() / 2f
     drawCircle(fill, radius = radius, center = handle.center)
-    drawCircle(
-        color,
-        radius = radius - ring / 2f,
-        center = handle.center,
-        style = Stroke(
-            width = ring,
-            pathEffect = if (handle.zero) PathEffect.dashPathEffect(floatArrayOf(Dimens.GapHairline.toPx(), ring)) else null,
-        ),
-    )
+    drawCircle(color, radius = radius - ring / 2f, center = handle.center, style = Stroke(width = ring))
 }
 
 @Preview
 @Composable
 private fun BreathCurveEditorPreview() {
     AtemkraftTheme {
-        BreathCurveEditor(spec = PatternSpec(inhale = 4.0, holdFull = 1.0, exhale = 6.0, holdEmpty = null, activating = false), onChange = { _, _ -> })
+        BreathCurveEditor(
+            pattern = FreePattern(
+                listOf(
+                    FreePhase(FreePhaseType.IN, 3),
+                    FreePhase(FreePhaseType.OUT, 3),
+                    FreePhase(FreePhaseType.IN, 4),
+                    FreePhase(FreePhaseType.HOLD, 2),
+                    FreePhase(FreePhaseType.OUT, 8),
+                ),
+            ),
+            selected = 3,
+            onSelect = {},
+            onChangeSeconds = { _, _ -> },
+        )
     }
 }

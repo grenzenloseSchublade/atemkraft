@@ -136,11 +136,13 @@
     <string name="pattern_editor_curve_empty">leer</string>
     <string name="pattern_editor_curve_seconds">%1$d\u00A0s</string>
     <string name="pattern_editor_curve_hint">Griffe ziehen</string>
-    <!-- TalkBack: die Kurve ist ein Knoten. %1$s = Phasen mit „, “ verbunden, je Phase
-         cd_breath_curve_part aus Name (phase_inhale, cd_hold_full, phase_exhale, cd_hold_empty)
-         und cd_duration_seconds: „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“. -->
+    <!-- Gelbes Band über der Zeitleiste beim Ziehen: erlaubte Dauer der Phase (%1$d = 1, %2$d = 30);
+         „_beyond“, wenn das Ende des Bereichs rechts außerhalb der Achse liegt. -->
+    <string name="pattern_editor_curve_band">%1$d bis %2$d\u00A0s</string>
+    <string name="pattern_editor_curve_band_beyond">%1$d bis %2$d\u00A0s, Ende rechts außerhalb</string>
+    <!-- TalkBack: die Kurve ist ein Knoten. %1$s = die Folge in Worten (FreePattern.spokenDescription):
+         „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“. -->
     <string name="cd_breath_curve">Atemkurve: %1$s</string>
-    <string name="cd_breath_curve_part">%1$s %2$s</string>
     <string name="cd_preview_play">Vorschau abspielen</string>
     <string name="cd_preview_pause">Vorschau anhalten</string>
     <!-- Lautsprecher-Schalter der Editor-Vorschau (Role.Switch, Zustand „An“/„Aus“). -->

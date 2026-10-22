@@ -55,8 +55,8 @@ object Sizes {
      */
     val SegmentIconReserve = 26.dp
 
-    // Atemkurve des Muster-Editors (`BreathCurveEditor`, Vorlage „Graph.dc.html“). Die Breite
-    // folgt dem Platz, die Zeitskala ist fest (0–14 s); Beschriftungen wachsen mit der Schrift.
+    // Atemkurve des Muster-Editors (`BreathCurveEditor`, Vorlage „Frei.dc.html“). Die Breite
+    // folgt dem Platz, die Zeitachse der Länge der Folge; Beschriftungen wachsen mit der Schrift.
 
     /** Abstand der Linien „voll“ und „leer“, also die Höhe der Kurve (88). */
     val CurveSpan = 88.dp
@@ -67,11 +67,20 @@ object Sizes {
     /** Halten-Griffe sitzen so weit über (voll) bzw. unter (leer) ihrer Linie (16). */
     val CurveHoldHandleOffset = 16.dp
 
-    /** Ein Halten-Griff bei 0 s rückt so weit nach rechts, damit er neben dem Nachbargriff greifbar bleibt (14). */
-    val CurveZeroShift = 14.dp
+    /** Griff der gewählten Phase, etwas größer als [CurveHandle] (22). */
+    val CurveHandleSelected = 22.dp
+
+    /** Mindestabstand zweier Zahlen an der Zeitleiste; danach richtet sich ihr Schritt (30, Schwelle der Vorlage). */
+    val CurveLabelMinSpacing = 30.dp
+
+    /** Feine Striche je Sekunde nur, solange sie mindestens so weit auseinander liegen (6, Schwelle der Vorlage). */
+    val CurveTickMinSpacing = 6.dp
 
     /** Strich von Ein- und Ausatmen (4). */
     val CurveStroke = 4.dp
+
+    /** Strich der gewählten Phase, dicker als [CurveStroke] (6). */
+    val CurveStrokeSelected = 6.dp
 
     /** Strich der gestrichelten Halten-Phasen und Ring der Griffe (3, Raster-Ausnahme). */
     val CurveHoldStroke = 3.dp

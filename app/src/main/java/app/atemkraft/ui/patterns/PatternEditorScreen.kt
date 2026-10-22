@@ -49,6 +49,8 @@ import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.estimatedTotalSeconds
+import app.atemkraft.domain.secondsOf
+import app.atemkraft.domain.toFreePattern
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
@@ -233,7 +235,17 @@ private fun Breath(state: PatternEditorState) {
             statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, cycle, cycle),
         )
         // Die Kurve bringt ihre eigene Fläche mit (surface, shapes.medium) – keine Karte drumherum.
-        BreathCurveEditor(spec = state.spec, onChange = state::set, modifier = Modifier.fillMaxWidth())
+        // Übergang bis zum Umbau auf freie Folgen: die vier Felder als Folge (Halten 0 fällt weg),
+        // jede Phase der Kurve zurück auf ihr Feld; set() klemmt auf die Erzeugungsregeln.
+        val spec = state.spec
+        val fields = PatternField.entries.filter { it == PatternField.INHALE || it == PatternField.EXHALE || spec.secondsOf(it) > 0 }
+        BreathCurveEditor(
+            pattern = spec.toFreePattern(),
+            selected = null,
+            onSelect = {},
+            onChangeSeconds = { index, seconds -> fields.getOrNull(index)?.let { state.set(it, seconds) } },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
