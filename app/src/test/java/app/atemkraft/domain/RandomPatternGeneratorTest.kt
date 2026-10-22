@@ -135,10 +135,8 @@ class RandomPatternGeneratorTest {
         }
     }
 
-    /** Alle Wunsch-Vorschläge des Editors: jedes Muster, das ein eigenes Muster werden kann. */
-    private val composerSpecs: List<PatternSpec> = listOf(false, true).flatMap { activating ->
-        listOf(false, true).flatMap { PatternComposer.candidates(PatternWish(activating, it)) }
-    }
+    /** Alle Muster in den Erzeugungsregeln: jedes, das als Vier-Felder-Muster gespeichert sein kann. */
+    private val composerSpecs: List<PatternSpec> = creationRuleSpecs
 
     /** Die Dauer eines eigenen Musters steckt in `repeat`, nicht in einem Override (sonst „angepasst“). */
     @Test
@@ -213,7 +211,7 @@ class RandomPatternGeneratorTest {
 
     @Test
     fun `Texte je Herkunft`() {
-        val spec = PatternComposer.propose(PatternWish(activating = false, withHold = true), 0)
+        val spec = calmWithHold
         val custom = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Eigenes Muster", PatternOrigin.CUSTOM, 5)
         val saved = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Tagesmuster", PatternOrigin.SAVED_DAILY, 5)
         assertEquals("Dieses Muster hast du selbst zusammengestellt – in den Leitplanken der App.", custom.effect)
@@ -230,7 +228,7 @@ class RandomPatternGeneratorTest {
         assertTrue(saved.lore!!.detail.startsWith("Das Muster stammt aus einem Muster des Tages;"))
         // Die Regelzeile nennt die Zahlen der Erzeugungsregeln.
         assertTrue(custom.effectDetail!!, custom.effectDetail!!.contains("4,6 bis 6,7 Atemzügen pro Minute"))
-        val active = PatternComposer.propose(PatternWish(activating = true, withHold = false), 0)
+        val active = activeWithoutHold
         val customActive = RandomPatternGenerator.exerciseFrom(active, "muster-1", "Eigenes Muster", PatternOrigin.CUSTOM)
         assertTrue(customActive.effectDetail!!, customActive.effectDetail!!.contains("6,7 bis 10 Atemzügen pro Minute"))
     }

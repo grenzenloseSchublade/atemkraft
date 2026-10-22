@@ -1,16 +1,16 @@
 package app.atemkraft.data
 
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.PatternComposer
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
+import app.atemkraft.domain.calmWithHold
+import app.atemkraft.domain.creationRuleSpecs
 import app.atemkraft.domain.withinCreationRules
 import app.atemkraft.domain.withinGuardrails
 import org.junit.Assert.fail
@@ -38,12 +38,10 @@ class ContentRulesTest {
     /** Muster des Tages, Seeds 0–6. */
     private val daily: List<Exercise> = (0L..6L).map { RandomPatternGenerator.forSeed(it).exercise }
 
-    /** Alle Vorschläge des Muster-Editors: jedes Muster, das ein eigenes Muster werden kann. */
-    private val composerSpecs = listOf(false, true).flatMap { activating ->
-        listOf(false, true).flatMap { PatternComposer.candidates(PatternWish(activating, it)) }
-    }
+    /** Alle Muster in den Erzeugungsregeln: jedes, das als Vier-Felder-Muster gespeichert sein kann. */
+    private val composerSpecs = creationRuleSpecs
 
-    /** Eigene Muster (Herkunft CUSTOM) über alle Composer-Kandidaten. */
+    /** Ältere eigene Muster mit vier Feldern (Herkunft CUSTOM) über alle diese Specs. */
     private val custom: List<Exercise> = composerSpecs.map { spec ->
         RandomPatternGenerator.exerciseFrom(
             spec,
@@ -636,7 +634,7 @@ class ContentRulesTest {
             }
         }
         // Ein Muster nach den Erzeugungsregeln nennt sie weiter, samt Ausatmen höchstens 8 s.
-        val calm = PatternComposer.propose(PatternWish(activating = false, withHold = true), 0)
+        val calm = calmWithHold
         val detail = RandomPatternGenerator.exerciseFrom(calm, "muster-1", "x", PatternOrigin.CUSTOM, 5).effectDetail.orEmpty()
         if ("4,6 bis 6,7" !in detail || "höchstens ${PatternRules.EXHALE_MAX}\u00A0s" !in detail) fail("Regeln fehlen: $detail")
     }

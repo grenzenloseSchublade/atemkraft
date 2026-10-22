@@ -14,7 +14,6 @@ import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.toFreePattern
-import app.atemkraft.domain.withinCreationRules
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -143,29 +142,6 @@ class SavedPatternsRepository(
     suspend fun update(id: Long, pattern: FreePattern, minutes: Int, name: String): SavedPattern? {
         requireValid(pattern, minutes)
         return writeCustom(id, pattern.columnSpec(), pattern.toCompact(), minutes, nameFor(pattern, name))
-    }
-
-    /**
-     * Übergang für den Editor mit vier Feldern: legt ein eigenes Muster ohne Folge an (nur die
-     * vier Felder). [spec] muss die Erzeugungsregeln einhalten, sonst wie die Variante mit
-     * [FreePattern]. Entfällt, sobald der Editor freie Folgen speichert.
-     */
-    suspend fun saveCustom(spec: PatternSpec, minutes: Int, name: String): SavedPattern {
-        requireValid(spec, minutes)
-        return writeLock.withLock {
-            val entity = entityOf(spec, nameFor(spec, name), SavedPatternEntity.ORIGIN_CUSTOM, minutes)
-            insertAndCache(entity).toSaved()
-        }
-    }
-
-    /**
-     * Übergang für den Editor mit vier Feldern: schreibt neue Werte, Dauer und Namen in dasselbe
-     * Muster und entfernt eine etwaige Folge (es gelten dann die vier Felder). Sonst wie die
-     * Variante mit [FreePattern]. Entfällt, sobald der Editor freie Folgen speichert.
-     */
-    suspend fun update(id: Long, spec: PatternSpec, minutes: Int, name: String): SavedPattern? {
-        requireValid(spec, minutes)
-        return writeCustom(id, spec, phases = null, minutes, nameFor(spec, name))
     }
 
     private suspend fun writeCustom(id: Long, spec: PatternSpec, phases: String?, minutes: Int, name: String): SavedPattern? {
@@ -316,17 +292,9 @@ class SavedPatternsRepository(
 
     /**
      * Name eines eigenen Musters: die bereinigte Eingabe ([PatternBackup.cleanName], höchstens
-     * 80 Zeichen), bei leerer Eingabe der Vorschlag „Eigenes Muster 4·1·6“.
+     * 80 Zeichen), bei leerer Eingabe der Vorschlag „Eigenes Muster 3·1·6“ aus den Sekunden.
      */
-    fun nameFor(spec: PatternSpec, input: String): String = PatternBackup.cleanName(input).ifEmpty { suggestedName(spec) }
-
-    /** Wie [nameFor] für eine freie Folge: Vorschlag „Eigenes Muster 3·1·6“ aus den Sekunden. */
     fun nameFor(pattern: FreePattern, input: String): String = PatternBackup.cleanName(input).ifEmpty { suggestedName(pattern) }
-
-    private fun requireValid(spec: PatternSpec, minutes: Int) {
-        require(spec.withinCreationRules()) { "Muster außerhalb der Erzeugungsregeln: $spec" }
-        require(minutes in AdjustLimits.MINUTES) { "Dauer außerhalb 1–30 min: $minutes" }
-    }
 
     private fun requireValid(pattern: FreePattern, minutes: Int) {
         require(pattern.isValid()) { "Ungültige freie Folge: ${pattern.validate()}" }
@@ -397,9 +365,6 @@ class SavedPatternsRepository(
     companion object {
         /** Übungs-Id-Präfix gespeicherter Muster (z. B. „muster-7“). */
         const val ID_PREFIX = "muster-"
-
-        /** Vorschlagsname eines eigenen Musters, z. B. „Eigenes Muster 4·1·6“. */
-        fun suggestedName(spec: PatternSpec): String = "Eigenes Muster ${RandomPatternGenerator.numbersOf(spec)}"
 
         /** Vorschlagsname einer freien Folge, z. B. „Eigenes Muster 3·1·6“ ([FreePattern.numbers]). */
         fun suggestedName(pattern: FreePattern): String = "Eigenes Muster ${pattern.numbers()}"

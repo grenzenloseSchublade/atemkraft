@@ -116,20 +116,17 @@
     <string name="cd_pattern_edit">Muster bearbeiten</string>
     <string name="cd_pattern_adapt_daily">Als eigenes Muster anpassen</string>
 
-    <!-- Muster-Editor „Eigenes Muster“: Wünsche → Vorschlag → Atemkurve und genau einstellen (MUSTER-10). -->
+    <!-- Muster-Editor „Eigenes Muster“: frei gestaltete Phasenfolge (MUSTER-10, Nachtrag 4). -->
     <string name="pattern_editor_title">Eigenes Muster</string>
-    <string name="pattern_editor_wishes">Wünsche</string>
-    <string name="cd_pattern_suggest">Anderer Vorschlag</string>
-    <string name="pattern_editor_character">Charakter</string>
-    <string name="pattern_editor_hold">Halten</string>
-    <string name="pattern_editor_hold_without">ohne</string>
-    <string name="pattern_editor_hold_with">mit</string>
-    <!-- Abschnitt mit der Atemkurve; Status hinter dem Titel: „Atemzug · 10 s“, TalkBack liest die Plural-Form. -->
+    <!-- Einklappbarer Startpunkt mit Vorlagen; Status hinter dem Titel: gewählte Vorlage oder „angepasst“. -->
+    <string name="pattern_editor_start">Startpunkt</string>
+    <!-- Abschnitt mit der Atemkurve; Status hinter dem Titel: „Atemzug · 10 s · 6 Atemzüge/min“,
+         TalkBack liest die Plural-Form. %2$s = Atemzüge pro Minute mit deutschem Komma. -->
     <string name="pattern_editor_breath">Atemzug</string>
-    <string name="pattern_editor_cycle">· %1$d\u00A0s</string>
+    <string name="pattern_editor_cycle" tools:ignore="PluralsCandidate">· %1$d\u00A0s\u00A0· %2$s Atemzüge/min</string>
     <plurals name="cd_pattern_editor_cycle">
-        <item quantity="one">ein Atemzug %1$d Sekunde</item>
-        <item quantity="other">ein Atemzug %1$d Sekunden</item>
+        <item quantity="one">%1$d Sekunde je Durchlauf, %2$s Atemzüge pro Minute</item>
+        <item quantity="other">%1$d Sekunden je Durchlauf, %2$s Atemzüge pro Minute</item>
     </plurals>
     <!-- Beschriftung in der Kurve: Linien „voll“/„leer“, je Phase „4 s“ in Phasenfarbe, Hinweis darunter. -->
     <string name="pattern_editor_curve_full">voll</string>
@@ -147,18 +144,26 @@
     <string name="cd_preview_pause">Vorschau anhalten</string>
     <!-- Lautsprecher-Schalter der Editor-Vorschau (Role.Switch, Zustand „An“/„Aus“). -->
     <string name="cd_preview_sound">Ton der Vorschau</string>
-    <string name="pattern_editor_fine">Genau einstellen</string>
-    <!-- Sichtbar mit Einheit, gesprochen ohne (A11Y-06); phase_hold_full und phase_hold_empty
-         heißen beide nur „Halten“. -->
-    <string name="adjust_hold_full">Halten voll (s)</string>
-    <string name="adjust_hold_empty">Halten leer (s)</string>
-    <string name="cd_hold_full">Halten voll</string>
-    <string name="cd_hold_empty">Halten leer</string>
-    <!-- Stepper-Wert 0 bei Halten: gesprochen „Halten voll: aus“ statt „0 Sekunden“. -->
-    <string name="stepper_value_off">aus</string>
-    <!-- Regel des gewählten Charakters in Worten unter den Steppern (Grenzen = Erzeugungsregeln). -->
-    <string name="pattern_editor_rule_calm">Ruhig: Ausatmen mindestens so lang wie Einatmen und höchstens 8\u00A0s, ein Atemzug 9 bis 13\u00A0s, Halten voll bis 4\u00A0s, leer bis 2\u00A0s. 0 heißt ohne Halten.</string>
-    <string name="pattern_editor_rule_active">Sanft aktivierend: Einatmen länger als Ausatmen, ein Atemzug 6 bis 9\u00A0s, Halten voll bis 2\u00A0s. 0 heißt ohne Halten.</string>
+    <!-- Ablauf-Liste: Status „· 3 von 12 Phasen“; je Zeile Nummer, Name und Sekunden. -->
+    <string name="pattern_editor_sequence">Ablauf</string>
+    <string name="pattern_editor_sequence_count" tools:ignore="PluralsCandidate">· %1$d von %2$d Phasen</string>
+    <string name="cd_pattern_editor_sequence_count" tools:ignore="PluralsCandidate">%1$d von %2$d Phasen</string>
+    <!-- Gewählte Zeile: Stepper „Sekunden“ (gesprochen „2. Halten voll“) und Papierkorb. -->
+    <string name="pattern_editor_seconds">Sekunden</string>
+    <string name="pattern_editor_phase_spoken">%1$d. %2$s</string>
+    <string name="cd_pattern_phase_remove" tools:ignore="PluralsCandidate">Phase %1$d entfernen</string>
+    <string name="pattern_editor_insert_here">neue Phase kommt hierhin</string>
+    <!-- Karte „Phase hinzufügen · nach 2 · Halten voll“ mit drei Knöpfen; der Trennpunkt steht im Code. -->
+    <string name="pattern_editor_add">Phase hinzufügen</string>
+    <string name="pattern_editor_add_after">nach %1$d\u00A0· %2$s</string>
+    <string name="pattern_editor_add_end">am Ende</string>
+    <string name="pattern_editor_add_in">+ Ein</string>
+    <string name="pattern_editor_add_hold">+ Halten</string>
+    <string name="pattern_editor_add_out">+ Aus</string>
+    <string name="cd_pattern_add_in">Einatmen hinzufügen</string>
+    <string name="cd_pattern_add_hold">Halten hinzufügen</string>
+    <string name="cd_pattern_add_out">Ausatmen hinzufügen</string>
+    <string name="pattern_editor_add_hint">Tippe im Ablauf eine Phase an, um dahinter einzufügen. Jede Phase 1 bis 30\u00A0s, bis zu 12 Phasen; mehrere Ein- oder Ausatmen hintereinander werden zu Stufen.</string>
     <!-- Name frei wählbar (höchstens 80 Zeichen), vorausgefüllt mit dem Vorschlagsnamen. -->
     <string name="pattern_editor_name">Name</string>
     <string name="pattern_editor_name_label">Name des Musters</string>

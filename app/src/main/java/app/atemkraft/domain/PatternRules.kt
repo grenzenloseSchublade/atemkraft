@@ -2,15 +2,16 @@ package app.atemkraft.domain
 
 import kotlin.math.roundToInt
 
-/** Die vier einstellbaren Phasen eines Musters (Editor-Stepper, Kurven-Griffe). */
+/** Die vier Phasen eines Musters des Tages ([PatternSpec]). */
 enum class PatternField { INHALE, HOLD_FULL, EXHALE, HOLD_EMPTY }
 
 /**
- * Erzeugungsregeln für Muster, die die App selbst entstehen lässt: Muster des Tages und
- * Muster-Editor („Eigenes Muster“). Eine Quelle für Generator, Editor und Tests.
+ * Erzeugungsregeln für das Muster des Tages, das die App selbst entstehen lässt. Eine Quelle für
+ * Generator und Tests. Eigene Muster aus dem Editor sind freie Folgen mit eigenen, festen Grenzen
+ * ([FreePattern]); für sie gelten diese Stil-Regeln nicht (Nachtrag 4 „Frei gestalten“).
  *
  * Bewusst eine strengere Teilmenge der Import-Leitplanken ([withinGuardrails]): Leitplanken
- * (Import) ⊇ Erzeugungsregeln. Ein im Editor erstelltes Muster wird beim Import also nie
+ * (Import) ⊇ Erzeugungsregeln. Ein gespeichertes Muster des Tages wird beim Import also nie
  * verworfen und startet nie ohne Sicherheitsabfrage. Unterschiede zu den Leitplanken:
  * - nur ganze Sekunden (Leitplanken: Vielfache von 0,5 s);
  * - ruhig: Atemzug 9–13 s, ≈ 4,6–6,7 Atemzüge pro Minute (Leitplanken: 8,5–13 s);
@@ -32,28 +33,6 @@ object PatternRules {
     const val ACTIVE_HOLD_FULL_MAX = 2
     const val ACTIVE_CYCLE_MIN = 6
     const val ACTIVE_CYCLE_MAX = 9
-
-    /**
-     * Suchbereich für [rangeFor]: Keine Phase kann länger sein als der längste erlaubte
-     * Atemzug, darüber gibt es also sicher keinen gültigen Wert.
-     */
-    internal val SEARCH_RANGE = 0..CALM_CYCLE_MAX
-}
-
-/**
- * Setzt [field] auf [seconds] ganze Sekunden. Ein Halten mit 0 s heißt „ohne Halten“ und wird
- * zu `null`, damit es im Muster gar nicht erst als Phase auftaucht.
- */
-fun PatternSpec.with(field: PatternField, seconds: Int): PatternSpec {
-    val value = seconds.toDouble()
-    // Nur genau 0 heißt „ohne“; negative Werte bleiben stehen und fallen durch die Regeln.
-    val hold = value.takeIf { seconds != 0 }
-    return when (field) {
-        PatternField.INHALE -> copy(inhale = value)
-        PatternField.HOLD_FULL -> copy(holdFull = hold)
-        PatternField.EXHALE -> copy(exhale = value)
-        PatternField.HOLD_EMPTY -> copy(holdEmpty = hold)
-    }
 }
 
 /**
@@ -69,7 +48,7 @@ fun PatternSpec.secondsOf(field: PatternField): Int = when (field) {
 
 /**
  * Hält das Muster die Erzeugungsregeln ein (siehe [PatternRules])? Ein vorhandenes Halten muss
- * mindestens 1 s lang sein; 0 s schreibt man als `null` (siehe [with]).
+ * mindestens 1 s lang sein; 0 s schreibt man als `null`.
  */
 fun PatternSpec.withinCreationRules(): Boolean {
     val phases = listOfNotNull(inhale, holdFull, exhale, holdEmpty)
@@ -93,20 +72,4 @@ fun PatternSpec.withinCreationRules(): Boolean {
             cycle >= PatternRules.CALM_CYCLE_MIN &&
             cycle <= PatternRules.CALM_CYCLE_MAX
     }
-}
-
-/**
- * Die Werte, die [field] bei sonst unveränderten Phasen annehmen darf: kleinster bis größter
- * Wert v, für den `with(field, v)` die Erzeugungsregeln einhält. Jede Regel ist in v linear,
- * deshalb ist die Menge lückenlos; bei einem gültigen Muster enthält sie den aktuellen Wert.
- *
- * `null` heißt „nicht wählbar“: Halten leer bei sanft aktivierenden Mustern, oder es gibt gar
- * keinen gültigen Wert (nur bei einem Muster, das die Regeln schon in anderen Phasen verletzt).
- * Die Grenzen sind dynamisch (z. B. Einatmen 6 erst ab Ausatmen 6), Stepper und Kurven-Griffe
- * klemmen darauf, sodass ein ungültiges Muster nie entsteht.
- */
-fun PatternSpec.rangeFor(field: PatternField): IntRange? {
-    if (activating && field == PatternField.HOLD_EMPTY) return null
-    val valid = PatternRules.SEARCH_RANGE.filter { with(field, it).withinCreationRules() }
-    return if (valid.isEmpty()) null else valid.first()..valid.last()
 }

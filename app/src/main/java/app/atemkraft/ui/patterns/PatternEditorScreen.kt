@@ -1,22 +1,29 @@
 package app.atemkraft.ui.patterns
 
+import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,38 +31,64 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
+import app.atemkraft.cue.AppPreviewSoundOutput
+import app.atemkraft.cue.PreviewSoundOutput
 import app.atemkraft.data.Atemlehre
+import app.atemkraft.data.CueSettings
 import app.atemkraft.data.PatternBackup
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.PatternField
-import app.atemkraft.domain.PatternWish
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.domain.FreeTemplate
+import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.estimatedTotalSeconds
-import app.atemkraft.domain.secondsOf
-import app.atemkraft.domain.toFreePattern
+import app.atemkraft.playback.PhaseAudio
+import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
+import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.BreathCurveEditor
+import app.atemkraft.ui.components.CharacterChip
+import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
@@ -66,20 +99,30 @@ import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.Stepper
-import app.atemkraft.ui.components.SubLabel
-import app.atemkraft.ui.components.choiceGroupHeading
+import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.dashedBorder
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberArmedConfirm
+import app.atemkraft.ui.components.rememberCurvePreviewState
+import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.SegmentSelected
+import app.atemkraft.ui.theme.Sizes
+import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.WarnAmber
 
 /**
- * Muster-Editor „Eigenes Muster“ (MUSTER-10), Push-Seite. Von oben: Kopf mit Lesezeichen,
- * Wünsche (Charakter, Halten, Dauer), Atemzug als Kurve mit Griffen, darunter „Genau einstellen“
- * mit einem Stepper je Phase, Regel und Musterzeile, Name, „Aus der Yoga-Lehre“; unten fest
- * „Starten · ca. N min“ mit Reset.
+ * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“), Push-Seite. Von oben:
+ * Kopf mit Lesezeichen, „Startpunkt“ (eingeklappt, Vorlagen), Dauer, „Atemzug“ mit Status und
+ * ggf. „intensiv“ samt Atemkurve und Vorschau (Play/Pause, Phasenname, Ton-Schalter), „Ablauf“
+ * als Liste der Phasen (Auswahl, Sekunden, Entfernen, Einfügemarke), „Phase hinzufügen“,
+ * Hinweis bei intensiven Mustern, Name, „Aus der Yoga-Lehre“; unten fest „Starten · ca. N min“
+ * mit Reset auf den Stand beim Öffnen.
  *
  * Die Seite liest und ändert nur [state] (ARC-7). Was gespeichert wird, entscheidet der Aufrufer:
  * [onSavedChange] (true = speichern bzw. denselben Eintrag aktualisieren, false = aus „Meine
@@ -88,8 +131,13 @@ import app.atemkraft.ui.theme.SECONDARY
  * schon vor dem Öffnen gab, entfernt das Lesezeichen nur zweistufig (MUSTER-05); ein in dieser
  * Sitzung angelegtes nimmt ein erneuter Tipp sofort wieder heraus (KOMP-02).
  *
- * [onStart] probiert den Entwurf ohne Speichern aus (Übung mit Herkunft CUSTOM und die Dauer als
- * [SessionConfig]); die Seite bleibt dabei offen. [onOpenLore] öffnet eine Karte der Atemlehre.
+ * [onStart] probiert den Entwurf ohne Speichern aus (Übung und Dauer als [SessionConfig]); die
+ * Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem Sicherheitsdialog, wenn
+ * [requireSafetyConfirm] (wie auf der Detailseite: noch nie bestätigt oder Hinweis eingeschaltet);
+ * die Bestätigung meldet [onConfirmedSafety]. [onOpenLore] öffnet eine Karte der Atemlehre.
+ *
+ * Ton der Vorschau ([rememberPreviewSound]): Klang-Einstellungen der App [cueSettings]; still,
+ * solange eine Übung oder Meditation läuft ([otherAudioActive]). [soundOutput] tauschen nur Tests.
  */
 @Composable
 fun PatternEditorScreen(
@@ -98,11 +146,33 @@ fun PatternEditorScreen(
     onStart: (Exercise, SessionConfig) -> Unit,
     onOpenLore: (patternId: String) -> Unit,
     onBack: () -> Unit,
+    cueSettings: CueSettings = CueSettings(),
+    otherAudioActive: Boolean = false,
+    requireSafetyConfirm: Boolean = true,
+    onConfirmedSafety: () -> Unit = {},
+    soundOutput: (Context) -> PreviewSoundOutput = ::AppPreviewSoundOutput,
 ) {
     val exercise = state.exercise()
     val config = state.config()
     val estimatedSeconds = remember(exercise, config) { exercise.adjusted(config).estimatedTotalSeconds() }
     val approx = stringResource(R.string.duration_approx, ((estimatedSeconds + HALF_MINUTE) / SECONDS_PER_MINUTE).coerceAtLeast(1))
+
+    // Vorschau unter der Kurve und ihr Ton: hält an, wenn die Seite verdeckt wird oder die App in
+    // den Hintergrund geht; der Ton folgt der Phase, in der der Punkt gerade steht.
+    val preview = rememberCurvePreviewState()
+    val sound = rememberPreviewSound(cueSettings, otherAudioActive, onHide = preview::pause, output = soundOutput)
+    val pattern = state.pattern
+    val phaseIndex by remember(pattern) { derivedStateOf { preview.phaseIndexIn(pattern) } }
+    PreviewSoundEffect(sound, preview.playing, phaseIndex) {
+        phaseAudio(state.exercise(), phaseIndex, preview.remainingMillisIn(state.pattern))
+    }
+
+    // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
+    var showSafety by rememberSaveable { mutableStateOf(false) }
+    val start = {
+        preview.pause()
+        onStart(exercise, config)
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -117,9 +187,22 @@ fun PatternEditorScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
-                Wishes(state)
-                Breath(state)
-                FineTuning(state)
+                StartingPoint(state)
+                Duration(state)
+                Breath(state) {
+                    BreathCurveEditor(
+                        pattern = pattern,
+                        selected = state.selected,
+                        onSelect = state::select,
+                        onChangeSeconds = state::setSeconds,
+                        modifier = Modifier.fillMaxWidth(),
+                        preview = preview,
+                        previewTrailing = { PreviewSoundSwitch(sound) },
+                    )
+                }
+                Sequence(state)
+                AddPhase(state)
+                pattern.intensityNote()?.let { IntenseNote(it) }
                 NameSection(state)
                 Lore(exercise, onOpenLore)
                 Spacer(Modifier.height(Dimens.ScreenBottom))
@@ -128,11 +211,368 @@ fun PatternEditorScreen(
                 StartSplitButton(
                     label = stringResource(R.string.action_start_duration, stringResource(R.string.action_start), approx),
                     resetVisible = state.modified,
-                    onStart = { onStart(exercise, config) },
+                    onStart = { if (exercise.caution && requireSafetyConfirm) showSafety = true else start() },
                     onReset = state::reset,
                 )
             }
         }
+    }
+
+    if (showSafety) {
+        SafetyDialog(
+            cautions = exercise.cautions,
+            onConfirm = {
+                showSafety = false
+                onConfirmedSafety()
+                start()
+            },
+            onDismiss = { showSafety = false },
+        )
+    }
+}
+
+/** Ton der Phase [index] von [exercise] (Typ und Füllstand wie in der Übung), Restdauer [remainingMs]. */
+private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): PhaseAudio {
+    val phase = exercise.segments.firstOrNull()?.phases?.getOrNull(index)
+        ?: return PhaseAudio(PhaseType.INHALE, remainingMs, open = false)
+    return PhaseAudio(phase.type, remainingMs, open = false, level = phase.level)
+}
+
+/**
+ * „Startpunkt“: eingeklappt, man braucht ihn nur zum Anfang. Der Kopf nennt die Vorlage, der die
+ * Folge gerade entspricht, sonst „angepasst“; aufgeklappt die Vorlagen als Auswahlreihe im
+ * Raster. Eine Vorlage setzt die Folge und klappt den Abschnitt wieder zu.
+ */
+@Composable
+private fun StartingPoint(state: PatternEditorState) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val template = state.template
+    val modified = stringResource(R.string.adjust_modified)
+    CollapsibleSection(
+        title = stringResource(R.string.pattern_editor_start),
+        color = headingColor(0),
+        expanded = open,
+        onExpandedChange = { open = it },
+        status = "· ${template?.label ?: modified}",
+        statusDescription = template?.label ?: modified,
+        smallStatus = true,
+        contentSpacing = Dimens.GapSmall,
+    ) {
+        SegmentedChoiceRow<FreeTemplate?>(
+            items = FreePatternTemplates.all,
+            selected = template,
+            onSelect = { picked ->
+                picked?.let(state::applyTemplate)
+                open = false
+            },
+            // Ohne eigenen Gruppennamen: Der aufklappbare Kopf „Startpunkt“ steht direkt darüber.
+            columns = TEMPLATE_COLUMNS,
+        ) { it?.label.orEmpty() }
+    }
+}
+
+/** Dauer in Minuten (1–30); sie ändert nie die Folge. */
+@Composable
+private fun Duration(state: PatternEditorState) {
+    Card(modifier = Modifier.fillMaxWidth().padding(top = Dimens.GapSmall)) {
+        Stepper(
+            label = stringResource(R.string.adjust_minutes),
+            value = state.minutes,
+            range = AdjustLimits.MINUTES,
+            onChange = { state.minutes = it },
+            vertical = Dimens.GapSmall,
+            spokenLabel = stringResource(R.string.cd_adjust_duration),
+            valueUnit = R.plurals.cd_duration_minutes,
+        )
+    }
+}
+
+/**
+ * „Atemzug“: Länge eines Durchlaufs und Atemzüge pro Minute als Status am Kopf, bei einem
+ * intensiven Muster dazu „intensiv“ (`CharacterChip`); darunter die Kurve ([curve]).
+ */
+@Composable
+private fun Breath(state: PatternEditorState, curve: @Composable () -> Unit) {
+    val pattern = state.pattern
+    val total = pattern.totalSeconds
+    val rate = pattern.breathsPerMinuteText()
+    Column(Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = stringResource(R.string.pattern_editor_breath),
+            color = headingColor(1),
+            status = stringResource(R.string.pattern_editor_cycle, total, rate),
+            statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, rate),
+            smallStatus = true,
+            trailingAction = if (pattern.isIntense) {
+                {
+                    // Die Hülle des Kopfs ragt für Icon-Buttons um TouchOverhang über die Kante;
+                    // der Chip steht bündig an der Inhaltskante und auf der Grundlinie des Titels.
+                    Box(Modifier.padding(end = Sizes.TouchOverhang, bottom = Dimens.GapSmall)) {
+                        CharacterChip(intense = true, activating = false)
+                    }
+                }
+            } else {
+                null
+            },
+        )
+        curve()
+    }
+}
+
+/**
+ * „Ablauf“: jede Phase eine Zeile (Nummer, Strich in Phasenfarbe – Halten gestrichelt –, Name,
+ * Sekunden). Ein Tipp wählt sie, ein zweiter hebt die Auswahl auf. Die gewählte Zeile trägt den
+ * Papierkorb und einen Stepper „Sekunden“ – so ist alles ohne Ziehen bedienbar (TalkBack, Switch
+ * Access). Unter der gewählten Zeile, ohne Auswahl unter der letzten, zeigt eine gelb
+ * gestrichelte Marke, wo eine neue Phase hinkommt.
+ */
+@Composable
+private fun Sequence(state: PatternEditorState) {
+    val pattern = state.pattern
+    val count = pattern.phases.size
+    val insertAt = state.selected ?: pattern.phases.lastIndex
+    Column(Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = stringResource(R.string.pattern_editor_sequence),
+            color = headingColor(2),
+            status = stringResource(R.string.pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),
+            statusDescription = stringResource(R.string.cd_pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),
+            smallStatus = true,
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+                .padding(Dimens.GapTiny),
+            verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline),
+        ) {
+            pattern.phases.indices.forEach { index ->
+                PhaseRow(state, index)
+                if (index == insertAt) InsertMarker()
+            }
+        }
+    }
+}
+
+/** Eine Zeile der Ablauf-Liste; gewählt mit Fläche, Rand, Papierkorb und Stepper. */
+@Composable
+private fun PhaseRow(state: PatternEditorState, index: Int) {
+    val pattern = state.pattern
+    val phase = pattern.phases[index]
+    val selected = state.selected == index
+    val colors = MaterialTheme.colorScheme
+    val color = phaseColor(pattern, index, inhale = colors.secondary)
+    val label = pattern.labelAt(index)
+    val shape = MaterialTheme.shapes.small
+    val spokenSeconds = pluralStringResource(R.plurals.cd_duration_seconds, phase.seconds, phase.seconds)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .then(if (selected) Modifier.background(colors.secondaryContainer).border(Dimens.BorderThin, SegmentSelected, shape) else Modifier),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = Dimens.MinTouchTarget)
+                    .selectable(selected = selected, onClick = { state.toggleSelection(index) })
+                    .padding(horizontal = Dimens.GapSmall),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+            ) {
+                // Fläche statt Zuschnitt: Bei großer Schrift ragt eine zweistellige Nummer sonst
+                // in die runden Ecken und verlöre Glyphen (LAYOUT-03).
+                Box(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = Sizes.IconDefault, minHeight = Sizes.IconDefault)
+                        .background(colors.surfaceVariant, CircleShape)
+                        .padding(horizontal = Dimens.GapHairline),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurface.copy(alpha = SECONDARY),
+                    )
+                }
+                PhaseMark(color = color, dashed = phase.type == FreePhaseType.HOLD)
+                WholeWordText(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurface,
+                )
+                // Sichtbar „4 s“, gesprochen „4 Sekunden“ (A11Y-06).
+                Text(
+                    text = stringResource(R.string.pattern_editor_curve_seconds, phase.seconds),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = color,
+                    modifier = Modifier.semantics { text = AnnotatedString(spokenSeconds) },
+                )
+            }
+            if (selected) {
+                val removable = state.canRemove(index)
+                AppIconButton(onClick = { state.remove(index) }, enabled = removable) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.cd_pattern_phase_remove, index + 1),
+                        tint = if (removable) colors.error else colors.onSurface.copy(alpha = TERTIARY),
+                    )
+                }
+            }
+        }
+        if (selected) {
+            Stepper(
+                label = stringResource(R.string.pattern_editor_seconds),
+                value = phase.seconds,
+                range = FreePattern.SECONDS_RANGE,
+                onChange = { state.setSeconds(index, it) },
+                horizontal = Dimens.GapSmall,
+                vertical = Dimens.GapHairline,
+                spokenLabel = stringResource(R.string.pattern_editor_phase_spoken, index + 1, label),
+                valueUnit = R.plurals.cd_duration_seconds,
+            )
+        }
+    }
+}
+
+/** Farbe der Phase [index] wie in der Kurve: Ein [inhale], Aus [BreathExhale], Halten nach seiner Höhe. */
+private fun phaseColor(pattern: FreePattern, index: Int, inhale: Color): Color = when (pattern.phases[index].type) {
+    FreePhaseType.IN -> inhale
+    FreePhaseType.OUT -> BreathExhale
+    FreePhaseType.HOLD -> if (pattern.levels()[index].from >= HALF) inhale else BreathExhale
+}
+
+/** Strich in Phasenfarbe: Ein und Aus gefüllt, Halten als gestrichelter Umriss (FARBE-04, wie die Atemlehre). */
+@Composable
+private fun PhaseMark(color: Color, dashed: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(width = Dimens.GapTiny, height = Sizes.IconDefault)
+            .drawBehind {
+                val radius = CornerRadius(Dimens.GapHairline.toPx())
+                if (!dashed) {
+                    drawRoundRect(color = color, cornerRadius = radius)
+                } else {
+                    val stroke = Dimens.GapHairline.toPx()
+                    val dash = Dimens.GapTiny.toPx()
+                    drawRoundRect(
+                        color = color,
+                        topLeft = Offset(stroke / 2, stroke / 2),
+                        size = Size(size.width - stroke, size.height - stroke),
+                        cornerRadius = radius,
+                        style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash / 2))),
+                    )
+                }
+            },
+    )
+}
+
+/** Gelb gestrichelte Einfügemarke „neue Phase kommt hierhin“, eingerückt bis zum Strich der Zeilen. */
+@Composable
+private fun InsertMarker() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = Dimens.GapSmall * 2 + Sizes.IconDefault, end = Dimens.GapSmall, top = Dimens.GapHairline, bottom = Dimens.GapHairline),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(Dimens.GapHairline)
+                .drawBehind {
+                    val dash = Dimens.GapTiny.toPx()
+                    drawLine(
+                        color = WarnAmber,
+                        start = Offset(0f, size.height / 2),
+                        end = Offset(size.width, size.height / 2),
+                        strokeWidth = size.height,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
+                    )
+                },
+        )
+        WholeWordText(
+            text = stringResource(R.string.pattern_editor_insert_here),
+            style = MaterialTheme.typography.labelSmall,
+            color = WarnAmber,
+        )
+    }
+}
+
+/**
+ * „Phase hinzufügen · nach 2 · Halten voll“ (gestrichelter Rahmen): + Ein / + Halten / + Aus in
+ * den Phasenfarben, neue Phasen kommen hinter die gewählte (sonst ans Ende). Bei 12 Phasen sind
+ * die Knöpfe abgeschaltet.
+ */
+@Composable
+private fun AddPhase(state: PatternEditorState) {
+    val pattern = state.pattern
+    val selected = state.selected
+    val colors = MaterialTheme.colorScheme
+    val where = if (selected == null) {
+        stringResource(R.string.pattern_editor_add_end)
+    } else {
+        stringResource(R.string.pattern_editor_add_after, selected + 1, pattern.labelAt(selected))
+    }
+    val title = stringResource(R.string.pattern_editor_add)
+    val statusStyle = MaterialTheme.typography.labelMedium
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Dimens.ListGap)
+            .dashedBorder(colors.outline, MaterialTheme.shapes.medium)
+            .padding(Dimens.ListGap),
+        verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        // Der Trennpunkt hängt am Titel (geschütztes Leerzeichen): Keine Zeile beginnt mit „·“.
+        Text(
+            text = buildAnnotatedString {
+                append("$title · ")
+                withStyle(statusStyle.toSpanStyle().copy(color = colors.onBackground.copy(alpha = SECONDARY))) { append(where) }
+            },
+            style = MaterialTheme.typography.titleSmall,
+            color = colors.onBackground,
+        )
+        val enabled = state.canAdd
+        AdaptiveButtonRow(spacing = Dimens.GapSmall) {
+            AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled) { state.add(FreePhaseType.IN) }
+            AddButton(R.string.pattern_editor_add_hold, R.string.cd_pattern_add_hold, colors.onSurfaceVariant, enabled, dashed = true) { state.add(FreePhaseType.HOLD) }
+            AddButton(R.string.pattern_editor_add_out, R.string.cd_pattern_add_out, BreathExhale, enabled) { state.add(FreePhaseType.OUT) }
+        }
+        HintText(stringResource(R.string.pattern_editor_add_hint))
+    }
+}
+
+/** Ein Knopf „+ Ein“ usw.: sichtbar kurz, gesprochen „Einatmen hinzufügen“. */
+@Composable
+private fun AddButton(label: Int, spoken: Int, color: Color, enabled: Boolean, dashed: Boolean = false, onClick: () -> Unit) {
+    val description = stringResource(spoken)
+    AppOutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = description },
+        enabled = enabled,
+        color = color,
+        borderColor = color,
+        dashed = dashed,
+    ) {
+        Text(stringResource(label), maxLines = 1, softWrap = false)
+    }
+}
+
+/** Hinweiskarte bei intensiven Mustern: Gründe und Sicherheitssatz ([FreePattern.intensityNote]). */
+@Composable
+private fun IntenseNote(text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Dimens.ListGap)
+            .border(accentBorder(WarnAmber), MaterialTheme.shapes.small)
+            .padding(Dimens.CardPadding),
+    ) {
+        BodyText("⚠ $text", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -153,7 +593,7 @@ private fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Un
     // Eine Ansage je Tipp (A11Y-04): Die Live-Region gilt nur ab dem eigenen Tipp und nur, bis sich
     // Phasen, Dauer oder Name ändern. Leert oder füllt eine solche Änderung das Lesezeichen, sagt
     // also nur der geänderte Wert etwas.
-    val draft = PatternSnapshot(state.spec, state.minutes, state.savedName)
+    val draft = PatternSnapshot(state.pattern, state.minutes, state.savedName)
     var announce by remember(draft) { mutableStateOf(false) }
     AppIconToggle(
         checked = saved,
@@ -182,110 +622,6 @@ private fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Un
                 tint = if (saved) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             )
         }
-    }
-}
-
-/** Wünsche: Charakter und Halten setzen sofort den typischen Vorschlag, die Dauer nie die Phasen. */
-@Composable
-private fun Wishes(state: PatternEditorState) {
-    val wish = state.wish
-    Column(Modifier.fillMaxWidth()) {
-        SectionHeader(title = stringResource(R.string.pattern_editor_wishes), color = headingColor(0)) {
-            AppIconButton(onClick = state::nextSuggestion) {
-                Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.cd_pattern_suggest), tint = headingColor(0))
-            }
-        }
-        val character = stringResource(R.string.pattern_editor_character)
-        SubLabel(character, Modifier.choiceGroupHeading(), color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(Dimens.GapSmall))
-        SegmentedChoiceRow(listOf(false, true), wish.activating, state::chooseCharacter, groupLabel = character) { activating ->
-            stringResource(if (activating) R.string.daily_pattern_gentle_up else R.string.detail_calm)
-        }
-        Spacer(Modifier.height(Dimens.SectionGap))
-        val hold = stringResource(R.string.pattern_editor_hold)
-        SubLabel(hold, Modifier.choiceGroupHeading(), color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(Dimens.GapSmall))
-        SegmentedChoiceRow(listOf(false, true), wish.withHold, state::chooseHold, groupLabel = hold) { withHold ->
-            stringResource(if (withHold) R.string.pattern_editor_hold_with else R.string.pattern_editor_hold_without)
-        }
-        Spacer(Modifier.height(Dimens.SectionGap))
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Stepper(
-                label = stringResource(R.string.adjust_minutes),
-                value = state.minutes,
-                range = AdjustLimits.MINUTES,
-                onChange = { state.minutes = it },
-                vertical = Dimens.GapSmall,
-                spokenLabel = stringResource(R.string.cd_adjust_duration),
-                valueUnit = R.plurals.cd_duration_minutes,
-            )
-        }
-    }
-}
-
-/** Atemzug als Kurve (Hauptbedienung); die Länge des Atemzugs steht als Status am Kopf. */
-@Composable
-private fun Breath(state: PatternEditorState) {
-    val cycle = PatternField.entries.sumOf { state.secondsOf(it) }
-    Column(Modifier.fillMaxWidth()) {
-        SectionHeader(
-            title = stringResource(R.string.pattern_editor_breath),
-            color = headingColor(1),
-            status = stringResource(R.string.pattern_editor_cycle, cycle),
-            statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, cycle, cycle),
-        )
-        // Die Kurve bringt ihre eigene Fläche mit (surface, shapes.medium) – keine Karte drumherum.
-        // Übergang bis zum Umbau auf freie Folgen: die vier Felder als Folge (Halten 0 fällt weg),
-        // jede Phase der Kurve zurück auf ihr Feld; set() klemmt auf die Erzeugungsregeln.
-        val spec = state.spec
-        val fields = PatternField.entries.filter { it == PatternField.INHALE || it == PatternField.EXHALE || spec.secondsOf(it) > 0 }
-        BreathCurveEditor(
-            pattern = spec.toFreePattern(),
-            selected = null,
-            onSelect = {},
-            onChangeSeconds = { index, seconds -> fields.getOrNull(index)?.let { state.set(it, seconds) } },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-/**
- * „Genau einstellen“: je Phase ein Stepper mit den Grenzen der Erzeugungsregeln ([PatternEditorState.rangeFor]);
- * ein Feld ohne Wertebereich (Halten leer bei „sanft aktivierend“) entfällt. Halten 0 heißt ohne
- * und wird „aus“ gesprochen. Darunter die Regel des Charakters in Worten; eine eigene
- * Musterzeile gibt es nicht – die Werte stehen in den Steppern, die Dauer im Start-Knopf.
- */
-@Composable
-private fun FineTuning(state: PatternEditorState) {
-    val modified = stringResource(R.string.adjust_modified)
-    Column(Modifier.fillMaxWidth()) {
-        SectionHeader(
-            title = stringResource(R.string.pattern_editor_fine),
-            color = headingColor(2),
-            status = if (state.modified) "· $modified" else null,
-            statusDescription = modified,
-            smallStatus = true,
-        )
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(vertical = Dimens.GapTiny)) {
-                PatternField.entries.forEach { field ->
-                    val range = state.rangeFor(field) ?: return@forEach
-                    val hold = field == PatternField.HOLD_FULL || field == PatternField.HOLD_EMPTY
-                    Stepper(
-                        label = stringResource(field.label()),
-                        value = state.secondsOf(field),
-                        range = range,
-                        onChange = { state.set(field, it) },
-                        vertical = Dimens.GapTiny,
-                        spokenLabel = stringResource(field.spokenLabel()),
-                        valueUnit = R.plurals.cd_duration_seconds,
-                        zeroSpoken = if (hold) stringResource(R.string.stepper_value_off) else null,
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(Dimens.GapSmall))
-        HintText(stringResource(if (state.spec.activating) R.string.pattern_editor_rule_active else R.string.pattern_editor_rule_calm))
     }
 }
 
@@ -400,28 +736,20 @@ internal fun nameInput(raw: String): String = buildString {
     }
 }
 
-private fun PatternField.label(): Int = when (this) {
-    PatternField.INHALE -> R.string.adjust_inhale
-    PatternField.HOLD_FULL -> R.string.adjust_hold_full
-    PatternField.EXHALE -> R.string.adjust_exhale
-    PatternField.HOLD_EMPTY -> R.string.adjust_hold_empty
-}
+/** Spalten der Vorlagen-Auswahl: sechs Vorlagen in drei Reihen, auch bei großer Schrift einzeilig. */
+private const val TEMPLATE_COLUMNS = 2
 
-private fun PatternField.spokenLabel(): Int = when (this) {
-    PatternField.INHALE -> R.string.phase_inhale
-    PatternField.HOLD_FULL -> R.string.cd_hold_full
-    PatternField.EXHALE -> R.string.phase_exhale
-    PatternField.HOLD_EMPTY -> R.string.cd_hold_empty
-}
+/** Ab halb voll gehört ein Halten zur Einatmen-Seite (wie die Kurve). */
+private const val HALF = 0.5f
 
 private const val SECONDS_PER_MINUTE = 60
 private const val HALF_MINUTE = 30
 
-@Preview(heightDp = 1400)
+@Preview(heightDp = 1600)
 @Composable
 private fun PatternEditorScreenPreview() {
     AtemkraftTheme {
-        val state = rememberPatternEditorState { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+        val state = rememberPatternEditorState { PatternEditorState.new(it, FreePatternTemplates.all[2].pattern) }
         PatternEditorScreen(state = state, onSavedChange = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {})
     }
 }

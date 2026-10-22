@@ -4,10 +4,9 @@ import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.domain.EvidenceLevel.LITTLE_STUDIED
 import app.atemkraft.domain.EvidenceLevel.STUDIED
 import app.atemkraft.domain.EvidenceLevel.WELL_SUPPORTED
-import app.atemkraft.domain.PatternComposer
 import app.atemkraft.domain.PatternOrigin
-import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.creationRuleSpecs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -66,9 +65,7 @@ class EvidenceLevelTest {
     /** Eigene und gespeicherte Muster sind nicht untersucht (TEXT-07, MUSTER-06). */
     @Test
     fun `eigene und gespeicherte Muster haben keine Studienlage und keine Vorsicht`() {
-        val specs = listOf(false, true).flatMap { activating ->
-            listOf(false, true).flatMap { PatternComposer.candidates(PatternWish(activating, it)) }
-        }
+        val specs = creationRuleSpecs
         specs.forEach { spec ->
             listOf(PatternOrigin.CUSTOM, PatternOrigin.SAVED_DAILY).forEach { origin ->
                 val e = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "Muster", origin, 5)

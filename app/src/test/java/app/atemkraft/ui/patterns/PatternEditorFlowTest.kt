@@ -29,9 +29,13 @@ import app.atemkraft.data.FakeSavedPatternDao
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.data.local.SavedPatternEntity
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.PatternSpec
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePhase
+import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionConfig
+import app.atemkraft.domain.toFreePattern
 import app.atemkraft.ui.DetailRoute
 import app.atemkraft.ui.EigeneRoute
 import app.atemkraft.ui.PatternEditorRoute
@@ -134,9 +138,16 @@ class PatternEditorFlowTest {
         )
     }
 
-    private fun spec(inhale: Int, holdFull: Int?, exhale: Int) = PatternSpec(inhale.toDouble(), holdFull?.toDouble(), exhale.toDouble(), null, activating = false)
+    /** Freie Folge Ein [inhale], Halten [hold] (ohne bei null), Aus [exhale]. */
+    private fun free(inhale: Int, hold: Int?, exhale: Int) = FreePattern(
+        listOfNotNull(
+            FreePhase(FreePhaseType.IN, inhale),
+            hold?.let { FreePhase(FreePhaseType.HOLD, it) },
+            FreePhase(FreePhaseType.OUT, exhale),
+        ),
+    )
 
-    private fun saveCustom(spec: PatternSpec, name: String) = runBlocking { repo.saveCustom(spec, 5, name).id }
+    private fun saveCustom(pattern: FreePattern, name: String) = runBlocking { repo.saveCustom(pattern, 5, name).id }
 
     private fun string(id: Int) = rule.activity.getString(id)
 
@@ -153,11 +164,16 @@ class PatternEditorFlowTest {
 
     private fun back() = rule.onNodeWithContentDescription(string(R.string.action_back))
 
-    private fun stepper(spoken: Int, action: Int) = rule.onNodeWithContentDescription("${string(spoken)}, ${string(action)}")
+    private fun stepper(spoken: String, action: Int) = rule.onNodeWithContentDescription("$spoken, ${string(action)}")
+
+    /** Zeile der Ablauf-Liste mit dem Phasennamen [label] wählen. */
+    private fun selectRow(label: String) = rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText(label))
+        .performScrollTo()
+        .performClick()
 
     @Test
     fun `Detail - Stift - Werte aendern - Speichern - Zurueck zeigt die neuen Werte`() {
-        val id = saveCustom(spec(4, 1, 6), "")
+        val id = saveCustom(free(4, 1, 6), "")
         show()
         step { nav.navigate(DetailRoute("muster-$id")) }
         rule.onNodeWithText("Eigenes Muster 4·1·6").assertIsDisplayed()
@@ -165,13 +181,14 @@ class PatternEditorFlowTest {
         val editor = step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_edit)).performClick() }
         assertEquals("EigeneRoute > DetailRoute > PatternEditorRoute", editor)
         bookmark().assertIsDisplayed()
-        stepper(R.string.phase_exhale, R.string.adjust_increase).performScrollTo().performClick()
+        selectRow("Ausatmen")
+        stepper(rule.activity.getString(R.string.pattern_editor_phase_spoken, 3, "Ausatmen"), R.string.adjust_increase).performScrollTo().performClick()
         step { bookmark().performClick() }
 
-        // Dieselbe Zeile, neue Werte, Name folgt den Zahlen.
+        // Dieselbe Zeile, neue Folge, Name folgt den Zahlen.
         val row = dao.rows.value.single()
         assertEquals(id, row.id)
-        assertEquals(7.0, row.exhale, 0.0)
+        assertEquals("in:4,hold:1,out:7", row.phases)
         assertEquals("Eigenes Muster 4·1·7", row.name)
         assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, row.origin)
 
@@ -184,12 +201,12 @@ class PatternEditorFlowTest {
 
     @Test
     fun `Offene Detailseite folgt dem Repository, geloescht geht sie zurueck`() {
-        val id = saveCustom(spec(4, 1, 6), "Abendruhe")
+        val id = saveCustom(free(4, 1, 6), "Abendruhe")
         show()
         step { nav.navigate(DetailRoute("muster-$id")) }
         rule.onNodeWithText("Abendruhe").assertIsDisplayed()
 
-        step { runBlocking { repo.update(id, spec(4, 2, 6), 8, "Morgenruhe") } }
+        step { runBlocking { repo.update(id, free(4, 2, 6), 8, "Morgenruhe") } }
         rule.onNodeWithText("Morgenruhe").assertIsDisplayed()
 
         assertEquals("EigeneRoute", step { runBlocking { repo.delete(id) } })
@@ -227,7 +244,7 @@ class PatternEditorFlowTest {
 
     @Test
     fun `Bestehendes Muster im Editor zweistufig entfernt - Zurueck ueberspringt die leere Detailseite`() {
-        val id = saveCustom(spec(4, 1, 6), "Abendruhe")
+        val id = saveCustom(free(4, 1, 6), "Abendruhe")
         show()
         step { nav.navigate(DetailRoute("muster-$id")) }
         step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_edit)).performClick() }
@@ -250,35 +267,41 @@ class PatternEditorFlowTest {
 
         val row = dao.rows.value.single()
         assertEquals(SavedPatternEntity.ORIGIN_CUSTOM, row.origin)
-        assertEquals(PatternEditorState.fitToCreationRules(daily.spec).exhale, row.exhale, 0.0)
         val saved = runBlocking { repo.loadForEdit(row.id)!! }
+        assertEquals("als freie Folge gespeichert", daily.spec.toFreePattern(), saved.pattern)
+        assertEquals(daily.spec.toFreePattern().toCompact(), row.phases)
         assertFalse("Lesezeichen der Tageskarte bleibt leer", repo.isDailySaved(daily, listOf(saved)))
     }
 
     @Test
     fun `Nach dem Bearbeiten startet die Detailseite das neue Muster ohne alte Phasen und mit der neuen Dauer`() {
-        val id = saveCustom(spec(4, null, 6), "")
+        val id = saveCustom(free(4, null, 6), "")
         show()
         step { nav.navigate(DetailRoute("muster-$id")) }
         step { rule.onNodeWithContentDescription(string(R.string.cd_pattern_edit)).performClick() }
+        // Startpunkt aufklappen und die Vorlage „Wechsel“ wählen.
+        step { rule.onNodeWithText(string(R.string.pattern_editor_start)).performClick() }
         step {
             rule.onNode(
-                hasText(string(R.string.daily_pattern_gentle_up)) and
+                hasText("Wechsel") and
                     SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton) and
                     SemanticsMatcher("sichtbar") { it.size.width > 0 },
             ).performClick()
         }
-        repeat(5) { stepper(R.string.cd_adjust_duration, R.string.adjust_increase).performScrollTo().performClick() }
+        repeat(5) { stepper(string(R.string.cd_adjust_duration), R.string.adjust_increase).performScrollTo().performClick() }
         step { bookmark().performClick() }
         val row = dao.rows.value.single()
-        assertTrue(row.activating)
+        assertEquals("in:3,out:3,in:4,hold:2,out:8", row.phases)
         assertEquals(10, row.minutes)
 
         assertEquals("EigeneRoute > DetailRoute", step { back().performClick() })
         step { rule.onNodeWithText(string(R.string.action_start), substring = true).performClick() }
         val (exercise, config) = detailStarts.single()
         assertEquals("muster-$id", exercise.id)
-        assertTrue(exercise.activating)
+        assertEquals(
+            listOf(PhaseType.INHALE, PhaseType.EXHALE, PhaseType.INHALE, PhaseType.HOLD_FULL, PhaseType.EXHALE),
+            exercise.segments.single().phases.map { it.type },
+        )
         assertEquals(SessionConfig(minutes = 10), config)
     }
 
@@ -294,7 +317,7 @@ class PatternEditorFlowTest {
         step { bookmark().performClick() }
 
         val saved = runBlocking { repo.loadForEdit(dao.rows.value.single().id)!! }
-        assertEquals(PatternEditorState.fitToCreationRules(shown.spec), saved.spec)
+        assertEquals(shown.spec.toFreePattern(), saved.pattern)
     }
 
     @Test

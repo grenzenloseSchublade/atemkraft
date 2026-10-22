@@ -1,10 +1,13 @@
 package app.atemkraft.data
 
 import app.atemkraft.data.local.SavedPatternEntity
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePhase
+import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.PatternOrigin
-import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -30,11 +33,11 @@ class SavedPatternsRepositoryTest {
     private val daily = RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5))
     private val other = RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 6))
 
-    /** ruhig, mit Halten: 4·1·6 (Vorschlag 0 des Editors). */
-    private val calm = PatternSpec(inhale = 4.0, holdFull = 1.0, exhale = 6.0, holdEmpty = null, activating = false)
+    /** Freie Folge Ein 4, Halten 1, Aus 6 (Langhana). */
+    private val calm = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.HOLD, 1), FreePhase(FreePhaseType.OUT, 6)))
 
-    /** sanft aktivierend: 4·3. */
-    private val active = PatternSpec(inhale = 4.0, holdFull = null, exhale = 3.0, holdEmpty = null, activating = true)
+    /** Freie Folge Ein 4, Aus 3 (Brmhana). */
+    private val active = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.OUT, 3)))
 
     @Test
     fun `Doppeltipp auf das Lesezeichen legt das Tagesmuster nur einmal an`() = runBlocking {
@@ -77,10 +80,11 @@ class SavedPatternsRepositoryTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun `saveCustom lehnt ein Muster ausserhalb der Erzeugungsregeln ab`() {
+    fun `saveCustom lehnt eine ungueltige Folge ab`() {
         runBlocking {
-            // 4,5 s: in den Import-Leitplanken, aber keine ganze Sekunde
-            SavedPatternsRepository(FakeSavedPatternDao()).saveCustom(calm.copy(inhale = 4.5), minutes = 5, name = "")
+            // Kein Ausatmen: keine gültige freie Folge.
+            val onlyIn = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.IN, 4)))
+            SavedPatternsRepository(FakeSavedPatternDao()).saveCustom(onlyIn, minutes = 5, name = "")
         }
     }
 
@@ -122,7 +126,7 @@ class SavedPatternsRepositoryTest {
         assertEquals("Eigenes Muster 4·1·6", after.name)
         assertEquals(listOf("muster-${before.id}"), cleared)
         assertEquals(PatternOrigin.CUSTOM, updated!!.origin)
-        assertEquals(calm, updated.spec)
+        assertEquals(calm, updated.pattern)
         assertEquals(updated.exercise, repo.byExerciseId("muster-${before.id}"))
     }
 
@@ -139,7 +143,7 @@ class SavedPatternsRepositoryTest {
     fun `Lesezeichen am Tagesmuster laesst ein eigenes Muster mit gleichen Zahlen und Namen unberuehrt`() = runBlocking {
         val dao = FakeSavedPatternDao()
         val repo = SavedPatternsRepository(dao)
-        val custom = repo.saveCustom(daily.spec, minutes = 5, name = repo.savedName(daily))
+        val custom = repo.saveCustom(daily.spec.toFreePattern(), minutes = 5, name = repo.savedName(daily))
 
         assertFalse(repo.isDailySaved(daily, repo.patterns.first()))
         repo.save(daily)
@@ -159,13 +163,7 @@ class SavedPatternsRepositoryTest {
 
         for (minutes in listOf(1, 3, 5, 10, 30)) {
             val saved = repo.saveCustom(calm, minutes = minutes, name = "Mein Muster")
-            val expected = RandomPatternGenerator.exerciseFrom(
-                calm,
-                "muster-${saved.id}",
-                "Mein Muster",
-                PatternOrigin.CUSTOM,
-                minutes,
-            )
+            val expected = RandomPatternGenerator.exerciseFrom(calm, "muster-${saved.id}", "Mein Muster", minutes)
             assertEquals(expected, saved.exercise)
             assertTrue("$minutes min", abs(saved.exercise.defaultMinutes() - minutes) <= 1)
         }
@@ -233,7 +231,7 @@ class SavedPatternsRepositoryTest {
 
         // Bearbeiten: der alte Stand mit „A“ kommt noch einmal an, der Cache bleibt bei „B“.
         val stale = dao.rows.value
-        repo.update(saved.id, calm.copy(exhale = 7.0), minutes = 5, name = "B")
+        repo.update(saved.id, calm.withSeconds(2, 7), minutes = 5, name = "B")
         db.emit(stale)
         assertEquals("B", repo.byExerciseId(exerciseId)?.name)
         db.emit(dao.rows.value)
@@ -279,7 +277,7 @@ class SavedPatternsRepositoryTest {
         val loaded = repo.loadForEdit(id)!!
         assertEquals(15, loaded.minutes)
 
-        repo.update(id, daily.spec, loaded.minutes!!, name = "Nur umbenannt")
+        repo.update(id, loaded.pattern, loaded.minutes!!, name = "Nur umbenannt")
         assertEquals(15, dao.rows.value.single().minutes)
         assertTrue(overrides.isEmpty())
         assertEquals(15, repo.loadForEdit(id)!!.minutes)

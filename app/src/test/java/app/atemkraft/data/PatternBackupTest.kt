@@ -4,6 +4,7 @@ import app.atemkraft.data.local.SavedPatternEntity
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -69,7 +70,7 @@ class PatternBackupTest {
         val source = FakeSavedPatternDao()
         val sourceRepo = SavedPatternsRepository(source)
         sourceRepo.save(RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5)))
-        sourceRepo.saveCustom(PatternSpec(4.0, 1.0, 6.0, null, false), minutes = 12, name = "Abend")
+        sourceRepo.saveCustom(PatternSpec(4.0, 1.0, 6.0, null, false).toFreePattern(), minutes = 12, name = "Abend")
         val file = sourceRepo.exportFile(nowEpochMs = 3_000) { null }
         val text = PatternBackup.encode(file)
 

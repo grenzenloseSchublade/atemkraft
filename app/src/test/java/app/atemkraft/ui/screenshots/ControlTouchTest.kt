@@ -390,37 +390,6 @@ class ControlTouchTest(private val fontScale: Float) {
         minus.assertIsFocused()
     }
 
-    @Test
-    fun `Stepper sagt den Wert 0 als aus, mit genau einer Live-Region`() {
-        // Halten im Muster-Editor: 0 heißt „ohne Halten“. Sichtbar bleibt die „0“, TalkBack hört
-        // „Halten voll: aus“ statt „0 Sekunden“; andere Werte behalten die Einheit.
-        val app = RuntimeEnvironment.getApplication()
-        val spoken = app.getString(R.string.cd_hold_full)
-        var value by mutableIntStateOf(1)
-        show {
-            Box(Modifier.width(340.dp)) {
-                Stepper(
-                    label = app.getString(R.string.adjust_hold_full),
-                    value = value,
-                    range = 0..4,
-                    onChange = { value = it },
-                    spokenLabel = spoken,
-                    valueUnit = R.plurals.cd_duration_seconds,
-                    zeroSpoken = app.getString(R.string.stepper_value_off),
-                )
-            }
-        }
-        compose.onNodeWithContentDescription("$spoken: 1 Sekunde").assertExists()
-        compose.onNodeWithContentDescription("$spoken, ${app.getString(R.string.adjust_decrease)}")
-            .performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals(0, value)
-        compose.onNodeWithContentDescription("$spoken: ${app.getString(R.string.stepper_value_off)}")
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-        compose.onNodeWithText("0").assertExists()
-        compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion), useUnmergedTree = true)
-            .assertCountEquals(1)
-    }
-
     @OptIn(ExperimentalComposeUiApi::class)
     @Test
     fun `Segment-Gruppe traegt ihre Ueberschrift als Namen, TalkBack liest sie einmal`() {

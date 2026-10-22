@@ -2,15 +2,16 @@ package app.atemkraft.ui.patterns
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
-import app.atemkraft.domain.PatternComposer
-import app.atemkraft.domain.PatternField
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.domain.FreePhase
+import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.domain.FreePhaseType.HOLD
+import app.atemkraft.domain.FreePhaseType.IN
+import app.atemkraft.domain.FreePhaseType.OUT
 import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.PatternWish
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
-import app.atemkraft.domain.secondsOf
-import app.atemkraft.domain.withinCreationRules
-import app.atemkraft.domain.withinGuardrails
 import app.atemkraft.ui.PatternEditorRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,284 +21,242 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
 
-/** Zustand des Muster-Editors: Startwerte, Wünsche, Klemmen, Name, Lesezeichen, Einpassung, Saver. */
+/**
+ * Zustand des Muster-Editors (Nachtrag 4 „Frei gestalten“): Startwerte, Vorlagen, Auswahl,
+ * Hinzufügen hinter der Auswahl, Entfernen-Grenzen, 12er-Grenze, Intensität, Name, Lesezeichen,
+ * Saver.
+ */
 class PatternEditorStateTest {
 
     private val prefix = "Eigenes Muster"
 
     private fun spec(inhale: Number, holdFull: Number?, exhale: Number, holdEmpty: Number?, activating: Boolean = false) = PatternSpec(inhale.toDouble(), holdFull?.toDouble(), exhale.toDouble(), holdEmpty?.toDouble(), activating)
 
+    private fun free(vararg phases: Pair<FreePhaseType, Int>) = FreePattern(phases.map { (type, seconds) -> FreePhase(type, seconds) })
+
+    private fun template(label: String) = FreePatternTemplates.all.single { it.label == label }
+
     // ---- Startwerte ----
 
     @Test
-    fun `neues Muster startet mit dem typischen Vorschlag ruhig ohne Halten und 5 min`() {
+    fun `neues Muster startet mit 4·6, ohne Auswahl und 5 min`() {
         val state = PatternEditorState.new(prefix)
-        assertEquals(spec(4, null, 6, null), state.spec)
-        assertEquals(state.spec, state.suggestion)
-        assertEquals(PatternWish(activating = false, withHold = false), state.wish)
-        assertEquals(0, state.variant)
+        assertEquals(free(IN to 4, OUT to 6), state.pattern)
+        assertEquals("4·6", state.template?.label)
+        assertNull(state.selected)
         assertEquals(5, state.minutes)
+        assertEquals("Eigenes Muster 4·6", state.name)
         assertFalse(state.modified)
         assertFalse(state.saved)
         assertNull(state.savedId)
-        assertFalse(state.existedBefore)
-        assertFalse(state.fittedOnOpen)
-        assertEquals("Eigenes Muster 4·6", state.name)
-        assertEquals(RandomPatternGenerator.DRAFT_ID, state.exercise().id)
     }
 
     @Test
-    fun `aus dem Tagesmuster sind die Ausgangswerte der Vorschlag`() {
-        val daily = spec(4, 2, 6, null)
-        val state = PatternEditorState.fromDaily(prefix, daily)
-        assertEquals(daily, state.spec)
-        assertEquals(daily, state.suggestion)
-        assertEquals(PatternComposer.wishOf(daily), state.wish)
-        assertEquals(PatternComposer.candidates(state.wish).indexOf(daily), state.variant)
-        assertFalse(state.modified)
-        assertFalse(state.saved)
-        assertFalse(state.fittedOnOpen)
-        assertEquals("Eigenes Muster 4·2·6", state.name)
+    fun `das Muster des Tages wird zur freien Folge`() {
+        val state = PatternEditorState.fromDaily(prefix, spec(4, 2, 6, 1))
+        assertEquals(free(IN to 4, HOLD to 2, OUT to 6, HOLD to 1), state.pattern)
+        assertEquals(state.pattern, state.initial)
+        assertNull(state.template)
+        assertNull(state.savedId)
+        // Ältere Werte mit halben Sekunden werden gerundet, sanft aktivierend ohne Halten leer.
+        val active = PatternEditorState.fromDaily(prefix, spec(4.5, null, 3, null, activating = true))
+        assertEquals(free(IN to 5, OUT to 3), active.pattern)
     }
 
     @Test
     fun `Bearbeiten startet gespeichert mit Id, Dauer und Name`() {
-        val stored = spec(4, 1, 6, null)
-        val state = PatternEditorState.forEdit(prefix, id = 7, spec = stored, minutes = 12, name = "Abendruhe")
-        assertEquals(stored, state.spec)
-        assertEquals(stored, state.suggestion)
-        assertEquals(PatternComposer.wishOf(stored), state.wish)
-        assertEquals(12, state.minutes)
+        val stored = free(IN to 3, IN to 1, OUT to 6)
+        val state = PatternEditorState.forEdit(prefix, id = 7, pattern = stored, minutes = 12, name = "Abendruhe")
+        assertEquals(stored, state.pattern)
+        assertEquals("Seufzer", state.template?.label)
         assertEquals(7L, state.savedId)
-        assertTrue(state.existedBefore)
-        assertTrue(state.saved)
+        assertEquals(12, state.minutes)
         assertEquals("Abendruhe", state.name)
-        assertTrue(state.nameEdited)
+        assertTrue(state.saved)
+        assertTrue(state.existedBefore)
         assertEquals("muster-7", state.exercise().id)
-        assertEquals("Abendruhe", state.exercise().name)
     }
 
     @Test
     fun `Bearbeiten ohne gespeicherte Dauer nimmt 5 min und bleibt gespeichert`() {
-        val state = PatternEditorState.forEdit(prefix, 3, spec(4, null, 6, null), minutes = null, name = "Tagesmuster 4·6")
+        val state = PatternEditorState.forEdit(prefix, id = 3, pattern = FreePattern.DEFAULT, minutes = null, name = "x")
         assertEquals(5, state.minutes)
         assertTrue(state.saved)
     }
 
     @Test
     fun `ein Zahlen-Name bleibt bis zur ersten Aenderung und folgt dann den Zahlen`() {
-        val state = PatternEditorState.forEdit(prefix, 3, spec(4, 2, 6, null), 5, "Tagesmuster 4·2·6")
+        val state = PatternEditorState.forEdit(prefix, 4, free(IN to 4, HOLD to 2, OUT to 6), 5, "Tagesmuster 4·2·6")
+        assertEquals("Tagesmuster 4·2·6", state.name)
         assertFalse(state.nameEdited)
+        state.setSeconds(2, 7)
+        assertEquals("Eigenes Muster 4·2·7", state.name)
+        state.setSeconds(2, 6)
         assertEquals("Tagesmuster 4·2·6", state.name)
-        assertTrue(state.saved)
-        state.set(PatternField.HOLD_FULL, 1)
-        assertEquals("Eigenes Muster 4·1·6", state.name)
-        state.set(PatternField.HOLD_FULL, 2)
-        assertEquals("Tagesmuster 4·2·6", state.name)
-        assertTrue(state.saved)
     }
 
-    // ---- Wünsche ----
+    // ---- Auswahl, Sekunden ----
 
     @Test
-    fun `Wunschwechsel erzeugt einen gueltigen passenden Vorschlag`() {
+    fun `Auswahl per Tipp, nochmal hebt sie auf, ausserhalb der Folge gibt es keine`() {
         val state = PatternEditorState.new(prefix)
-        state.chooseCharacter(true)
-        assertTrue(state.spec.activating)
-        assertTrue(state.spec.exhale < state.spec.inhale)
-        assertTrue(state.spec.withinCreationRules())
-        assertEquals(state.spec, state.suggestion)
-        assertEquals(spec(4, null, 3, null, activating = true), state.spec)
-
-        state.chooseHold(true)
-        assertEquals(PatternWish(activating = true, withHold = true), state.wish)
-        assertEquals(spec(4, 1, 3, null, activating = true), state.spec)
-
-        state.chooseCharacter(false)
-        assertFalse(state.spec.activating)
-        assertTrue(state.spec.exhale > state.spec.inhale)
-        assertEquals(spec(4, 1, 6, null), state.spec)
+        state.toggleSelection(1)
+        assertEquals(1, state.selected)
+        state.toggleSelection(1)
+        assertNull(state.selected)
+        state.select(0)
+        assertEquals(0, state.selected)
+        state.select(9)
+        assertNull(state.selected)
+        state.toggleSelection(5)
+        assertNull(state.selected)
     }
 
     @Test
-    fun `ohne setzt beide Halten auf null`() {
-        val state = PatternEditorState.fromDaily(prefix, spec(4, 2, 6, 1))
-        state.chooseHold(false)
-        assertNull(state.spec.holdFull)
-        assertNull(state.spec.holdEmpty)
-        assertFalse(state.wish.withHold)
-    }
-
-    @Test
-    fun `aktivierend entfernt Halten leer`() {
-        val state = PatternEditorState.fromDaily(prefix, spec(4, 1, 6, 2))
-        state.chooseCharacter(true)
-        assertNull(state.spec.holdEmpty)
-        assertNull(state.rangeFor(PatternField.HOLD_EMPTY))
-        state.set(PatternField.HOLD_EMPTY, 2)
-        assertNull(state.spec.holdEmpty)
-    }
-
-    @Test
-    fun `gleicher Wunsch erneut gewaehlt behaelt die Feinwerte`() {
+    fun `Sekunden werden auf 1 bis 30 geklemmt`() {
         val state = PatternEditorState.new(prefix)
-        state.set(PatternField.EXHALE, 7)
-        val before = state.spec
-        state.chooseCharacter(false)
-        state.chooseHold(false)
-        assertEquals(before, state.spec)
+        state.setSeconds(0, 0)
+        assertEquals(1, state.pattern.phases[0].seconds)
+        state.setSeconds(1, 99)
+        assertEquals(30, state.pattern.phases[1].seconds)
         assertTrue(state.modified)
+        assertNull(state.template)
+    }
+
+    // ---- Hinzufügen und Entfernen ----
+
+    @Test
+    fun `Hinzufuegen kommt hinter die Auswahl, ohne Auswahl ans Ende, die neue ist gewaehlt`() {
+        val state = PatternEditorState.new(prefix)
+        state.select(0)
+        state.add(HOLD)
+        assertEquals(free(IN to 4, HOLD to 2, OUT to 6), state.pattern)
+        assertEquals(1, state.selected)
+
+        state.select(null)
+        state.add(IN)
+        assertEquals(free(IN to 4, HOLD to 2, OUT to 6, IN to 4), state.pattern)
+        assertEquals(3, state.selected)
+
+        state.add(OUT)
+        assertEquals(free(IN to 4, HOLD to 2, OUT to 6, IN to 4, OUT to 4), state.pattern)
+        assertEquals(4, state.selected)
     }
 
     @Test
-    fun `nextSuggestion blaettert ohne Wiederholung durch alle passenden Muster`() {
-        for (wish in allWishes) {
-            val state = PatternEditorState.new(prefix, wish)
-            val all = PatternComposer.candidates(wish)
-            val seen = mutableListOf(state.spec)
-            repeat(all.size - 1) {
-                state.nextSuggestion()
-                assertEquals(state.spec, state.suggestion)
-                seen += state.spec
+    fun `bei 12 Phasen ist Schluss`() {
+        val state = PatternEditorState.new(prefix)
+        repeat(20) { state.add(HOLD) }
+        assertEquals(FreePattern.MAX_PHASES, state.pattern.phases.size)
+        assertFalse(state.canAdd)
+        val before = state.pattern
+        state.add(IN)
+        assertEquals(before, state.pattern)
+        assertTrue(state.pattern.isValid())
+    }
+
+    @Test
+    fun `Entfernen nur, wenn die Folge gueltig bleibt, danach ist die Nachbarphase gewaehlt`() {
+        val state = PatternEditorState.new(prefix)
+        // 4·6: zwei Phasen, das einzige Ein und das einzige Aus – nichts darf weg.
+        assertFalse(state.canRemove(0))
+        assertFalse(state.canRemove(1))
+        state.remove(0)
+        assertEquals(FreePattern.DEFAULT, state.pattern)
+
+        state.applyTemplate(template("Box"))
+        assertTrue(state.canRemove(1))
+        assertFalse(state.canRemove(0))
+        state.remove(1)
+        assertEquals(free(IN to 4, OUT to 4, HOLD to 4), state.pattern)
+        assertEquals(1, state.selected)
+        // Die letzte Phase entfernt: gewählt ist die neue letzte.
+        state.remove(2)
+        assertEquals(free(IN to 4, OUT to 4), state.pattern)
+        assertEquals(1, state.selected)
+    }
+
+    @Test
+    fun `kein erreichbarer Zustand ist ungueltig`() {
+        val random = Random(7)
+        val state = PatternEditorState.new(prefix)
+        repeat(2000) {
+            val size = state.pattern.phases.size
+            when (random.nextInt(6)) {
+                0 -> state.add(FreePhaseType.entries[random.nextInt(3)])
+                1 -> state.remove(random.nextInt(size))
+                2 -> state.setSeconds(random.nextInt(size), random.nextInt(-5, 40))
+                3 -> state.toggleSelection(random.nextInt(size + 1))
+                4 -> state.applyTemplate(FreePatternTemplates.all[random.nextInt(FreePatternTemplates.all.size)])
+                else -> state.reset()
             }
-            assertEquals("$wish", all.size, seen.toSet().size)
-            assertEquals(all.toSet(), seen.toSet())
-            state.nextSuggestion()
-            assertEquals(seen.first(), state.spec)
+            assertTrue("${state.pattern}", state.pattern.isValid())
+            state.selected?.let { assertTrue(it in state.pattern.phases.indices) }
         }
     }
 
+    // ---- Vorlagen, Reset ----
+
     @Test
-    fun `nextSuggestion nach Samana beginnt die Liste vorn`() {
-        val samana = spec(5, 1, 5, null)
-        val state = PatternEditorState.fromDaily(prefix, samana)
-        assertEquals(-1, state.variant)
-        state.nextSuggestion()
-        assertEquals(PatternComposer.propose(PatternWish(false, true), 0), state.spec)
-        assertEquals(0, state.variant)
+    fun `Vorlage setzt die Folge und hebt die Auswahl auf, Minuten bleiben`() {
+        val state = PatternEditorState.new(prefix, minutes = 9)
+        state.select(1)
+        state.applyTemplate(template("4-7-8"))
+        assertEquals(free(IN to 4, HOLD to 7, OUT to 8), state.pattern)
+        assertEquals("4-7-8", state.template?.label)
+        assertNull(state.selected)
+        assertEquals(9, state.minutes)
+        assertEquals("Eigenes Muster 4·7·8", state.name)
+        // Eine Änderung macht daraus „angepasst“.
+        state.setSeconds(0, 5)
+        assertNull(state.template)
     }
 
     @Test
-    fun `Halten per Stepper stellt den Wunsch auf mit und nextSuggestion folgt ihm`() {
+    fun `Reset setzt die Folge auf den Stand beim Oeffnen, Minuten bleiben`() {
         val state = PatternEditorState.new(prefix)
-        state.set(PatternField.HOLD_FULL, 1)
-        assertTrue(state.wish.withHold)
-        state.nextSuggestion()
-        assertEquals(PatternComposer.propose(PatternWish(false, true), 0), state.spec)
-        state.nextSuggestion()
-        assertEquals(PatternComposer.propose(PatternWish(false, true), 1), state.spec)
-    }
-
-    // ---- Klemmen und Invariante ----
-
-    @Test
-    fun `set ausserhalb der Grenzen wird geklemmt`() {
-        val state = PatternEditorState.new(prefix)
-        state.set(PatternField.EXHALE, 99)
-        assertEquals(state.rangeFor(PatternField.EXHALE)!!.last, state.secondsOf(PatternField.EXHALE))
-        state.set(PatternField.INHALE, -5)
-        assertEquals(state.rangeFor(PatternField.INHALE)!!.first, state.secondsOf(PatternField.INHALE))
-        state.set(PatternField.HOLD_FULL, 50)
-        assertEquals(state.rangeFor(PatternField.HOLD_FULL)!!.last, state.secondsOf(PatternField.HOLD_FULL))
-        assertTrue(state.spec.withinCreationRules())
-    }
-
-    @Test
-    fun `kein erreichbarer Zustand verletzt die Erzeugungsregeln`() {
-        val random = Random(20261022)
-        val starts = listOf(
-            PatternEditorState.new(prefix),
-            PatternEditorState.fromDaily(prefix, spec(4.5, 1.5, 6.5, null)),
-            PatternEditorState.forEdit(prefix, 1, spec(4, 1, 4, null, activating = true), 5, "x"),
-        )
-        for (state in starts) {
-            repeat(3000) {
-                when (random.nextInt(6)) {
-                    0, 1 -> state.set(PatternField.entries.random(random), random.nextInt(-3, 16))
-                    2 -> state.chooseCharacter(random.nextBoolean())
-                    3 -> state.chooseHold(random.nextBoolean())
-                    4 -> state.nextSuggestion()
-                    else -> state.reset()
-                }
-                assertTrue("${state.spec}", state.spec.withinCreationRules())
-                assertTrue("${state.suggestion}", state.suggestion.withinCreationRules())
-                for (field in PatternField.entries) {
-                    state.rangeFor(field)?.let { assertTrue(state.secondsOf(field) in it) }
-                }
-            }
-        }
-    }
-
-    // ---- angepasst, Reset, Minuten ----
-
-    @Test
-    fun `modified und reset`() {
-        val state = PatternEditorState.new(prefix)
-        state.set(PatternField.EXHALE, 7)
-        assertTrue(state.modified)
+        state.add(HOLD)
         state.minutes = 12
+        assertTrue(state.modified)
         state.reset()
+        assertEquals(FreePattern.DEFAULT, state.pattern)
         assertFalse(state.modified)
-        assertEquals(state.suggestion, state.spec)
+        assertNull(state.selected)
         assertEquals(12, state.minutes)
     }
 
     @Test
-    fun `Minuten aendern weder Vorschlag noch Muster und werden geklemmt`() {
+    fun `Minuten aendern die Folge nicht und werden geklemmt`() {
         val state = PatternEditorState.new(prefix)
-        val spec = state.spec
-        val suggestion = state.suggestion
-        state.minutes = 20
-        assertEquals(spec, state.spec)
-        assertEquals(suggestion, state.suggestion)
-        assertFalse(state.modified)
         state.minutes = 0
         assertEquals(1, state.minutes)
-        state.minutes = 31
+        state.minutes = 99
         assertEquals(30, state.minutes)
-        assertEquals(30, state.config().minutes)
+        assertEquals(FreePattern.DEFAULT, state.pattern)
+        assertTrue(kotlin.math.abs(state.exercise().defaultMinutes() - 30) <= 1)
+    }
+
+    // ---- Intensität ----
+
+    @Test
+    fun `langes Halten voll macht das Muster intensiv, die Uebung fragt dann nach`() {
+        val state = PatternEditorState.new(prefix, template("4-7-8").pattern)
+        assertFalse(state.pattern.isIntense)
+        assertFalse(state.exercise().caution)
+        state.setSeconds(1, 11)
+        assertTrue(state.pattern.isIntense)
+        assertTrue(state.exercise().caution)
+        assertTrue(state.exercise().cautions.isNotEmpty())
+        assertNotNull(state.pattern.intensityNote())
     }
 
     @Test
-    fun `die Uebung hat die eingestellte Dauer`() {
+    fun `schnelles Atmen ueber 20 pro Minute ist intensiv`() {
         val state = PatternEditorState.new(prefix)
-        for (minutes in listOf(1, 3, 5, 10, 30)) {
-            state.minutes = minutes
-            assertTrue("$minutes", kotlin.math.abs(state.exercise().defaultMinutes() - minutes) <= 1)
-        }
-    }
-
-    // ---- Lesezeichen ----
-
-    @Test
-    fun `saved wird nach einer Wertaenderung false und markSaved fuellt es wieder`() {
-        val state = PatternEditorState.new(prefix)
-        state.markSaved(42)
-        assertTrue(state.saved)
-        assertEquals("muster-42", state.exercise().id)
-        state.set(PatternField.EXHALE, 7)
-        assertFalse(state.saved)
-        state.markSaved(42)
-        assertTrue(state.saved)
-        state.minutes = 9
-        assertFalse(state.saved)
-        state.markSaved(42)
-        state.updateName("Morgens")
-        assertFalse(state.saved)
-        state.markSaved(42)
-        assertTrue(state.saved)
-        assertEquals("Morgens", state.snapshot?.name)
-    }
-
-    @Test
-    fun `markRemoved leert das Lesezeichen und macht das Muster sofort umkehrbar`() {
-        val state = PatternEditorState.forEdit(prefix, 5, spec(4, 1, 6, null), 5, "Eigenes Muster 4·1·6")
-        assertTrue(state.existedBefore)
-        state.markRemoved()
-        assertFalse(state.saved)
-        assertNull(state.savedId)
-        assertFalse(state.existedBefore)
-        assertEquals(RandomPatternGenerator.DRAFT_ID, state.exercise().id)
+        state.setSeconds(0, 1)
+        state.setSeconds(1, 1)
+        assertTrue(state.pattern.isIntense)
+        assertTrue(state.exercise().caution)
     }
 
     // ---- Name ----
@@ -305,158 +264,96 @@ class PatternEditorStateTest {
     @Test
     fun `Name folgt den Zahlen bis getippt wird`() {
         val state = PatternEditorState.new(prefix)
-        state.set(PatternField.EXHALE, 7)
-        assertEquals("Eigenes Muster 4·7", state.name)
-        state.updateName("Mein Abend")
-        state.set(PatternField.EXHALE, 6)
-        assertEquals("Mein Abend", state.name)
-        assertEquals("Mein Abend", state.savedName)
+        state.add(HOLD)
+        assertEquals("Eigenes Muster 4·6·2", state.name)
+        state.updateName("Abendruhe")
+        state.setSeconds(0, 5)
+        assertEquals("Abendruhe", state.name)
+        assertTrue(state.nameEdited)
     }
 
     @Test
     fun `Name hat hoechstens 80 Zeichen, leer heisst Vorschlagsname`() {
         val state = PatternEditorState.new(prefix)
-        state.updateName("a".repeat(100))
+        state.updateName("x".repeat(120))
         assertEquals(PatternEditorState.NAME_MAX, state.name.length)
         state.updateName("   ")
-        assertEquals("   ", state.name)
         assertEquals("Eigenes Muster 4·6", state.savedName)
         assertEquals("Eigenes Muster 4·6", state.exercise().name)
     }
 
-    // ---- Einordnung ----
+    // ---- Lesezeichen ----
 
     @Test
-    fun `Einordnung wechselt bei Ein gleich Aus zu Samana`() {
-        val state = PatternEditorState.new(prefix, PatternWish(activating = false, withHold = true))
-        assertEquals("langhana", state.exercise().lore?.patternId)
-        assertEquals(listOf("halten-voll"), state.exercise().lore?.morePatternIds)
-        state.set(PatternField.EXHALE, state.secondsOf(PatternField.INHALE))
-        assertEquals(state.spec.inhale, state.spec.exhale, 0.0)
-        assertEquals("samana", state.exercise().lore?.patternId)
-        state.chooseCharacter(true)
-        assertEquals("brmhana", state.exercise().lore?.patternId)
-        assertTrue(state.exercise().generated)
-    }
-
-    // ---- Einpassung alter Muster ----
-
-    @Test
-    fun `Muster in den Regeln bleiben beim Oeffnen unveraendert`() {
-        for (wish in allWishes) {
-            for (candidate in PatternComposer.candidates(wish)) {
-                assertEquals(candidate, PatternEditorState.fitToCreationRules(candidate))
-            }
-        }
-    }
-
-    @Test
-    fun `alte Muster werden gerundet und auf die Regeln geklemmt`() {
-        // Halbe Sekunden: kaufmännisch gerundet.
-        assertEquals(spec(5, null, 7, null), PatternEditorState.fitToCreationRules(spec(4.5, null, 6.5, null)))
-        // Rundung sprengt den Atemzug (12,5 → 14 s): Ausatmen wird zuerst geklemmt.
-        assertEquals(spec(5, 2, 6, null), PatternEditorState.fitToCreationRules(spec(4.5, 1.5, 6.5, null)))
-        // Aktivierend mit Ein = Aus: Ausatmen wird kürzer (Brmhana).
-        assertEquals(spec(4, null, 3, null, true), PatternEditorState.fitToCreationRules(spec(4, null, 4, null, true)))
-        // Ruhiger Atemzug 8,5 s → 9 s.
-        assertEquals(spec(4, null, 5, null), PatternEditorState.fitToCreationRules(spec(3.5, null, 5, null)))
-        // Rundung sprengt den Atemzug (13 → 15 s): Einatmen wird geklemmt.
-        val wide = PatternEditorState.fitToCreationRules(spec(4.5, 1.5, 5.5, 1.5))
-        assertTrue("$wide", wide.withinCreationRules())
-        // Werte weit außerhalb: typischer Vorschlag zu den Wünschen.
-        assertEquals(
-            PatternComposer.propose(PatternWish(false, false), 0),
-            PatternEditorState.fitToCreationRules(spec(Double.NaN, null, 6, null)),
-        )
-    }
-
-    @Test
-    fun `jedes Muster in den Import-Leitplanken laesst sich einpassen`() {
-        val halves = (0..16).map { it / 2.0 }
-        var fitted = 0
-        for (activating in listOf(false, true)) {
-            for (inhale in halves) {
-                for (exhale in halves) {
-                    for (full in halves.filter { it <= 4 }) {
-                        for (empty in halves.filter { it <= 2 }) {
-                            val original = spec(inhale, full.takeIf { it > 0 }, exhale, empty.takeIf { it > 0 }, activating)
-                            if (!original.withinGuardrails()) continue
-                            val result = PatternEditorState.fitToCreationRules(original)
-                            assertTrue("$original → $result", result.withinCreationRules())
-                            assertEquals(activating, result.activating)
-                            if (original.withinCreationRules()) assertEquals(original, result) else fitted++
-                            // Höchstens zwei Sekunden je Phase verschoben (sonst wäre es kein Einpassen).
-                            PatternField.entries.forEach { field ->
-                                val before = original.rangeForValue(field)
-                                val after = result.rangeForValue(field)
-                                assertTrue("$original → $result ($field)", kotlin.math.abs(after - before) <= 2.0)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        assertTrue(fitted > 0)
-    }
-
-    @Test
-    fun `eingepasstes Muster beim Bearbeiten startet mit leerem Lesezeichen`() {
-        val stored = spec(4.5, null, 6.5, null)
-        val state = PatternEditorState.forEdit(prefix, 9, stored, 5, "Tagesmuster 4,5·6,5")
-        assertTrue(state.fittedOnOpen)
-        assertEquals(spec(5, null, 7, null), state.spec)
-        assertFalse(state.modified)
-        assertFalse(state.saved)
-        assertEquals("Eigenes Muster 5·7", state.name)
-        state.markSaved(9)
+    fun `saved wird nach einer Aenderung false und markSaved fuellt es wieder`() {
+        val state = PatternEditorState.new(prefix)
+        state.markSaved(5)
         assertTrue(state.saved)
+        state.add(OUT)
+        assertFalse(state.saved)
+        state.markSaved(5)
+        assertTrue(state.saved)
+        state.minutes = 6
+        assertFalse(state.saved)
     }
 
     @Test
-    fun `eingepasstes Tagesmuster wird uebernommen`() {
-        val state = PatternEditorState.fromDaily(prefix, spec(4, 1, 4, null, activating = true))
-        assertTrue(state.fittedOnOpen)
-        assertTrue(state.spec.withinCreationRules())
-        assertTrue(state.spec.activating)
+    fun `markRemoved leert das Lesezeichen und macht das Muster sofort umkehrbar`() {
+        val state = PatternEditorState.forEdit(prefix, 7, FreePattern.DEFAULT, 5, "x")
+        state.markRemoved()
+        assertNull(state.savedId)
+        assertNull(state.snapshot)
+        assertFalse(state.saved)
+        assertFalse(state.existedBefore)
+    }
+
+    @Test
+    fun `Lesezeichen merkt sich den geschriebenen Stand, nicht den nach dem Schreiben`() {
+        val state = PatternEditorState.new(prefix)
+        // Stand vor dem Schreiben festhalten, während des Schreibens zieht die Kurve weiter.
+        val written = state.draft()
+        state.setSeconds(1, 7)
+        state.markSaved(42, written)
+        assertEquals(42L, state.savedId)
+        assertFalse(state.saved)
+        // Zurück auf den geschriebenen Stand: Lesezeichen wieder gefüllt.
+        state.setSeconds(1, 6)
+        assertTrue(state.saved)
     }
 
     // ---- Saver ----
 
     @Test
     fun `Saver sichert den ganzen Zustand`() {
-        val state = PatternEditorState.forEdit(prefix, 11, spec(4, 2, 6, null), 8, "Tagesmuster 4·2·6").apply {
-            nextSuggestion()
-            set(PatternField.EXHALE, secondsOf(PatternField.EXHALE) + 1)
+        val edited = PatternEditorState.forEdit(prefix, 11, free(IN to 4, HOLD to 2, OUT to 6), 8, "Tagesmuster 4·2·6").apply {
+            select(1)
+            add(HOLD)
             minutes = 14
         }
-        val restored = roundTrip(state)
-        assertSameState(state, restored)
+        val restored = roundTrip(edited)
+        assertSameState(edited, restored)
         assertEquals("Eigenes Muster", restored.namePrefix)
 
-        val named = PatternEditorState.new(prefix, PatternWish(true, true)).apply {
+        val named = PatternEditorState.new(prefix, template("Viloma I").pattern).apply {
             updateName("Wach")
             markSaved(3)
             markRemoved()
         }
         assertSameState(named, roundTrip(named))
 
-        val saved = PatternEditorState.forEdit(prefix, 4, spec(4, 1, 6, 1), null, "Eigenes Muster 4·1·6·1")
+        val saved = PatternEditorState.forEdit(prefix, 4, free(IN to 4, HOLD to 1, OUT to 6, HOLD to 1), null, "Eigenes Muster 4·1·6·1")
         val restoredSaved = roundTrip(saved)
         assertTrue(restoredSaved.saved)
         assertEquals("Eigenes Muster 4·1·6·1", restoredSaved.name)
-        restoredSaved.set(PatternField.HOLD_EMPTY, 2)
+        restoredSaved.setSeconds(3, 2)
         assertFalse(restoredSaved.saved)
         assertEquals("Eigenes Muster 4·1·6·2", restoredSaved.name)
-        assertSameState(saved, roundTrip(saved))
-
-        val fitted = PatternEditorState.forEdit(prefix, 5, spec(4.5, null, 6.5, null), 5, "x")
-        assertSameState(fitted, roundTrip(fitted))
     }
 
     private fun assertSameState(expected: PatternEditorState, actual: PatternEditorState) {
-        assertEquals(expected.spec, actual.spec)
-        assertEquals(expected.suggestion, actual.suggestion)
-        assertEquals(expected.variant, actual.variant)
+        assertEquals(expected.pattern, actual.pattern)
+        assertEquals(expected.initial, actual.initial)
+        assertEquals(expected.selected, actual.selected)
         assertEquals(expected.minutes, actual.minutes)
         assertEquals(expected.name, actual.name)
         assertEquals(expected.nameEdited, actual.nameEdited)
@@ -464,16 +361,12 @@ class PatternEditorStateTest {
         assertEquals(expected.snapshot, actual.snapshot)
         assertEquals(expected.saved, actual.saved)
         assertEquals(expected.existedBefore, actual.existedBefore)
-        assertEquals(expected.fittedOnOpen, actual.fittedOnOpen)
         assertEquals(expected.modified, actual.modified)
         assertEquals(expected.exercise(), actual.exercise())
-        // Nach dem Wiederherstellen blättert „Anderer Vorschlag“ an derselben Stelle weiter.
-        expected.nextSuggestion()
-        actual.nextSuggestion()
-        assertEquals(expected.spec, actual.spec)
-        // Der Name folgt nach dem Wiederherstellen denselben Regeln.
-        expected.set(PatternField.EXHALE, expected.rangeFor(PatternField.EXHALE)!!.last)
-        actual.set(PatternField.EXHALE, actual.rangeFor(PatternField.EXHALE)!!.last)
+        // Nach dem Wiederherstellen gelten dieselben Regeln: Hinzufügen hinter der Auswahl, Name.
+        expected.add(OUT)
+        actual.add(OUT)
+        assertEquals(expected.pattern, actual.pattern)
         assertEquals(expected.name, actual.name)
     }
 
@@ -485,29 +378,6 @@ class PatternEditorStateTest {
         assertNotNull(saved)
         (saved as List<*>).forEach { assertNotNull("Saver-Liste ohne null", it) }
         return requireNotNull(saver.restore(saved))
-    }
-
-    private fun PatternSpec.rangeForValue(field: PatternField): Double = when (field) {
-        PatternField.INHALE -> inhale
-        PatternField.HOLD_FULL -> holdFull ?: 0.0
-        PatternField.EXHALE -> exhale
-        PatternField.HOLD_EMPTY -> holdEmpty ?: 0.0
-    }
-
-    private val allWishes = listOf(false, true).flatMap { a -> listOf(false, true).map { PatternWish(a, it) } }
-
-    @Test
-    fun `Lesezeichen merkt sich den geschriebenen Stand, nicht den nach dem Schreiben`() {
-        val state = PatternEditorState.new(prefix)
-        // Stand vor dem Schreiben festhalten, während des Schreibens zieht die Kurve weiter.
-        val written = state.draft()
-        state.set(PatternField.EXHALE, state.secondsOf(PatternField.EXHALE) + 1)
-        state.markSaved(42, written)
-        assertEquals(42L, state.savedId)
-        assertFalse(state.saved)
-        // Zurück auf den geschriebenen Stand: Lesezeichen wieder gefüllt.
-        state.set(PatternField.EXHALE, written.spec.secondsOf(PatternField.EXHALE))
-        assertTrue(state.saved)
     }
 
     @Test

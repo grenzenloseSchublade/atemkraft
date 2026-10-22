@@ -114,11 +114,6 @@ class FreePatternStorageTest {
         assertEquals(RandomPatternGenerator.exerciseFrom(viloma, "muster-$id", "Stufen", 12), updated.exercise)
         assertEquals(listOf("muster-$id"), cleared)
         assertNull(repo.update(999, viloma, minutes = 5, name = ""))
-
-        val calm = PatternSpec(4.0, 1.0, 6.0, null, false)
-        repo.update(id, calm, minutes = 5, name = "Vier Felder")
-        assertNull(dao.rows.value.single().phases)
-        assertEquals(calm.toFreePattern(), repo.loadForEdit(id)!!.pattern)
     }
 
     @Test
@@ -173,7 +168,20 @@ class FreePatternStorageTest {
         sourceRepo.save(RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5)))
         sourceRepo.saveCustom(viloma, minutes = 7, name = "Stufen")
         sourceRepo.saveCustom(twelve, minutes = 20, name = "Zwölf")
-        sourceRepo.saveCustom(PatternSpec(4.0, 1.0, 6.0, null, false), minutes = 5, name = "Vier Felder")
+        // Ein älteres eigenes Muster nur mit vier Feldern (Editor vor „Frei gestalten“).
+        source.insert(
+            SavedPatternEntity(
+                name = "Vier Felder",
+                inhale = 4.0,
+                holdFull = 1.0,
+                exhale = 6.0,
+                holdEmpty = null,
+                activating = false,
+                createdAtEpochMs = System.currentTimeMillis(),
+                origin = SavedPatternEntity.ORIGIN_CUSTOM,
+                minutes = 5,
+            ),
+        )
         val file = sourceRepo.exportFile(nowEpochMs = 3_000) { null }
         val text = PatternBackup.encode(file)
 

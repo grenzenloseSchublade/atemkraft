@@ -2,15 +2,12 @@ package app.atemkraft.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * Erzeugungsregeln über das ganze Gitter (Einatmen 2..8, Ausatmen 2..8, Halten voll 0..4,
- * Halten leer 0..2, beide Charaktere): Teilmenge der Import-Leitplanken, nachgezählte Mengen,
- * lückenlose Stepper-Grenzen.
+ * Halten leer 0..2, beide Charaktere): Teilmenge der Import-Leitplanken, nachgezählte Mengen.
  */
 class PatternRulesTest {
 
@@ -42,7 +39,7 @@ class PatternRulesTest {
 
     private fun PatternSpec.hasHold() = holdFull != null || holdEmpty != null
 
-    /** Jedes Editor-Muster besteht den Import: kein Verwerfen, keine Sicherheitsabfrage. */
+    /** Jedes erzeugte Muster besteht den Import: kein Verwerfen, keine Sicherheitsabfrage. */
     @Test
     fun `Erzeugungsregeln sind eine Teilmenge der Leitplanken`() {
         valid.forEach { assertTrue("$it", it.withinGuardrails()) }
@@ -86,69 +83,6 @@ class PatternRulesTest {
     }
 
     @Test
-    fun `rangeFor ist lueckenlos enthaelt den Wert und die Nachbarn sind ungueltig`() {
-        valid.forEach { spec ->
-            PatternField.entries.forEach { field ->
-                if (spec.activating && field == PatternField.HOLD_EMPTY) return@forEach
-                val range = spec.rangeFor(field)
-                assertNotNull("$spec $field", range)
-                range!!
-                assertTrue("$spec $field: ${spec.secondsOf(field)} in $range", spec.secondsOf(field) in range)
-                range.forEach { v -> assertTrue("$spec $field=$v", spec.with(field, v).withinCreationRules()) }
-                assertFalse("$spec $field=${range.first - 1}", spec.with(field, range.first - 1).withinCreationRules())
-                assertFalse("$spec $field=${range.last + 1}", spec.with(field, range.last + 1).withinCreationRules())
-            }
-        }
-    }
-
-    @Test
-    fun `rangeFor findet jeden gueltigen Wert im Suchbereich`() {
-        valid.forEach { spec ->
-            PatternField.entries.forEach { field ->
-                // Halten leer bei aktivierend: nur „ohne“ ist gültig, der Stepper entfällt (null).
-                if (spec.activating && field == PatternField.HOLD_EMPTY) return@forEach
-                val range = spec.rangeFor(field)
-                (-2..30).filter { spec.with(field, it).withinCreationRules() }.forEach { v ->
-                    assertTrue("$spec $field=$v nicht in $range", range != null && v in range)
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `Halten leer ist bei aktivierend nicht waehlbar`() {
-        active.forEach { assertNull("$it", it.rangeFor(PatternField.HOLD_EMPTY)) }
-        calm.forEach { assertNotNull("$it", it.rangeFor(PatternField.HOLD_EMPTY)) }
-    }
-
-    /** Beispiel aus dem Plan: Einatmen 6 ist bei 4·6 nur bis zur Grenze Aus ≥ Ein erlaubt. */
-    @Test
-    fun `rangeFor Beispiele`() {
-        val calm46 = spec(4, 0, 6, 0, activating = false)
-        assertEquals(3..6, calm46.rangeFor(PatternField.INHALE))
-        assertEquals(5..8, calm46.rangeFor(PatternField.EXHALE))
-        assertEquals(0..3, calm46.rangeFor(PatternField.HOLD_FULL))
-        assertEquals(0..2, calm46.rangeFor(PatternField.HOLD_EMPTY))
-        val active413 = spec(4, 1, 3, 0, activating = true)
-        assertEquals(2..3, active413.rangeFor(PatternField.EXHALE))
-        assertEquals(4..5, active413.rangeFor(PatternField.INHALE))
-        assertEquals(0..2, active413.rangeFor(PatternField.HOLD_FULL))
-    }
-
-    @Test
-    fun `with Halten 0 ergibt null und secondsOf liest es als 0`() {
-        val base = spec(4, 2, 6, 1, activating = false)
-        assertNull(base.with(PatternField.HOLD_FULL, 0).holdFull)
-        assertNull(base.with(PatternField.HOLD_EMPTY, 0).holdEmpty)
-        assertEquals(0, base.with(PatternField.HOLD_FULL, 0).secondsOf(PatternField.HOLD_FULL))
-        assertEquals(0, base.with(PatternField.HOLD_EMPTY, 0).secondsOf(PatternField.HOLD_EMPTY))
-        PatternField.entries.forEach { field ->
-            (1..8).forEach { v -> assertEquals(v, base.with(field, v).secondsOf(field)) }
-        }
-        assertEquals(base, base.with(PatternField.INHALE, 4))
-    }
-
-    @Test
     fun `halbe Sekunden Halten 0 und aktivierend gleich lang sind keine Erzeugung`() {
         assertTrue(PatternSpec(4.5, null, 6.0, null, false).withinGuardrails())
         assertFalse(PatternSpec(4.5, null, 6.0, null, false).withinCreationRules())
@@ -161,7 +95,7 @@ class PatternRulesTest {
         assertEquals(5, PatternSpec(4.5, null, 6.0, null, false).secondsOf(PatternField.INHALE))
     }
 
-    /** Das Muster des Tages folgt denselben Regeln wie der Editor. */
+    /** Das Muster des Tages folgt den Erzeugungsregeln. */
     @Test
     fun `jedes Tagesmuster erfuellt die Erzeugungsregeln`() {
         (0L until 5000L).forEach { seed ->

@@ -47,6 +47,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.cue.FakePreviewSoundOutput
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.BuiltInExercises
@@ -57,12 +58,14 @@ import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.domain.FreePhase
+import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
-import app.atemkraft.domain.PatternComposer
-import app.atemkraft.domain.PatternField
 import app.atemkraft.domain.PatternOrigin
-import app.atemkraft.domain.PatternWish
+import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
@@ -183,18 +186,22 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             .mapIndexed { i, p -> SavedPattern(id = i + 1L, exercise = p.exercise, spec = p.spec) } +
             customPattern(id = 4L)
 
-        /** Ein im Editor zusammengestelltes Muster mit langem, frei gewähltem Namen. */
+        /** Ein im Editor frei gestaltetes Muster (Ein 4, Halten 1, Aus 6) mit langem, frei gewähltem Namen. */
         private fun customPattern(id: Long): SavedPattern {
-            val spec = PatternComposer.propose(PatternWish(activating = false, withHold = true), 0)
+            val pattern = FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.HOLD, 1), FreePhase(FreePhaseType.OUT, 6)))
             val name = "Abendruhe nach dem Spaziergang am See"
             return SavedPattern(
                 id = id,
-                exercise = RandomPatternGenerator.exerciseFrom(spec, "muster-$id", name, PatternOrigin.CUSTOM, minutes = 5),
-                spec = spec,
+                exercise = RandomPatternGenerator.exerciseFrom(pattern, "muster-$id", name, minutes = 5),
+                spec = PatternSpec(4.0, 1.0, 6.0, null, activating = false),
                 origin = PatternOrigin.CUSTOM,
                 minutes = 5,
+                pattern = pattern,
             )
         }
+
+        /** Vorlage „Startpunkt“ nach ihrer Beschriftung. */
+        private fun template(label: String) = FreePatternTemplates.all.single { it.label == label }.pattern
     }
 
     private val tallDp get() = (TALL_DP * fontScale).toInt()
@@ -446,23 +453,30 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         )
     }
 
-    /** Muster-Editor, neu: ruhig mit Halten (Vorschlag 0), ganze Seite mit Kurve, Steppern, Name. */
+    /**
+     * Muster-Editor mit der Vorlage „Box“, zweite Phase gewählt: Startpunkt zu, Kurve, Ablauf mit
+     * Stepper „Sekunden“, Papierkorb und Einfügemarke, „Phase hinzufügen · nach 2 · Halten voll“.
+     */
     @Test
     fun patternEditor() = snap("14_muster_editor") {
-        Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+        Editor { PatternEditorState.new(it, template("Box")).apply { select(1) } }
+    }
+
+    /** Startpunkt aufgeklappt: die sechs Vorlagen in zwei Reihen, „Box“ gewählt. */
+    @Test
+    fun patternEditorTemplates() = snap("14_muster_editor_startpunkt", prepare = {
+        compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.pattern_editor_start)).performClick()
+    }) {
+        Editor { PatternEditorState.new(it, template("Box")) }
     }
 
     /**
-     * Sanft aktivierend mit Halten, Einatmen am Anschlag: „+“ abgeschaltet, Reset im Split-Button,
-     * Kopf „· angepasst“, kein „Halten leer“.
+     * Intensiv (4-7-8 mit Halten voll 12 s): „intensiv“ am Kopf „Atemzug“, Hinweiskarte mit
+     * Gründen, Startpunkt „angepasst“, Reset im Split-Button.
      */
     @Test
-    fun patternEditorActive() = snap("14_muster_editor_aktiv") {
-        Editor {
-            PatternEditorState.new(it, PatternWish(activating = true, withHold = true)).apply {
-                set(PatternField.INHALE, rangeFor(PatternField.INHALE)!!.last)
-            }
-        }
+    fun patternEditorIntense() = snap("14_muster_editor_intensiv") {
+        Editor { PatternEditorState.new(it, template("4-7-8")).apply { setSeconds(1, 12) } }
     }
 
     /** „Aus der Yoga-Lehre“ aufgeklappt: Detail und Verweise in die Atemlehre. */
@@ -470,7 +484,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     fun patternEditorLore() = snap("14_muster_editor_lehre_offen", prepare = {
         compose.onNodeWithText(RuntimeEnvironment.getApplication().getString(R.string.detail_lore)).performClick()
     }) {
-        Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+        Editor { PatternEditorState.new(it) }
     }
 
     /**
@@ -488,7 +502,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         // 4·1·6: Halten voll von 4 bis 5 s – der längste Phasenname.
         compose.mainClock.advanceTimeBy(PREVIEW_AT_MS)
     }) {
-        Editor { PatternEditorState.new(it, PatternWish(activating = false, withHold = true)) }
+        Editor { PatternEditorState.new(it, FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.HOLD, 1), FreePhase(FreePhaseType.OUT, 6)))) }
     }
 
     /**
@@ -505,7 +519,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     @Composable
     private fun EditSaved() {
         val custom = saved.last()
-        Editor { PatternEditorState.forEdit(it, custom.id, custom.spec, custom.minutes, custom.exercise.name) }
+        Editor { PatternEditorState.forEdit(it, custom.id, custom.pattern, custom.minutes, custom.exercise.name) }
     }
 
     @Composable
@@ -516,6 +530,8 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
             onStart = { _, _ -> },
             onOpenLore = {},
             onBack = {},
+            // Ohne echten Ton: Die Vorschau-Aufnahme spielt sonst Töne über Robolectric.
+            soundOutput = { FakePreviewSoundOutput() },
         )
     }
 

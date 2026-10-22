@@ -469,6 +469,14 @@ private fun AtemkraftApp(
                         onMissing = {
                             if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
                         },
+                        // Vorschau-Ton mit den Klängen der App, still neben einer laufenden Übung.
+                        cueSettings = cueSettings,
+                        otherAudioActive = sessionActive || meditationActive,
+                        // Intensive eigene Muster: derselbe Sicherheitsdialog wie auf der Detailseite.
+                        requireSafetyConfirm = !safetySettings.acknowledged || safetySettings.showWarning,
+                        onConfirmedSafety = {
+                            scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
+                        },
                     )
                 }
                 pushComposable<SettingsRoute> { entry ->

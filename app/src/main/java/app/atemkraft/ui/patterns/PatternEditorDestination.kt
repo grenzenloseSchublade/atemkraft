@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.domain.Exercise
@@ -31,9 +32,10 @@ import kotlinx.coroutines.sync.withLock
  * schreibt das Lesezeichen ins [repository].
  *
  * Startwerte:
- * - ohne Argumente ein neues Muster (ruhig, ohne Halten, 5 min),
- * - [fromDaily]: die Zahlen des Musters des Tages ([dailySpec]),
- * - [patternId]: das gespeicherte Muster ([SavedPatternsRepository.loadForEdit]). Gibt es das
+ * - ohne Argumente ein neues Muster (Vorlage 4·6, 5 min),
+ * - [fromDaily]: die Zahlen des Musters des Tages ([dailySpec]) als freie Folge,
+ * - [patternId]: die Folge des gespeicherten Musters ([SavedPatternsRepository.loadForEdit],
+ *   `SavedPattern.pattern`; ältere Muster mit vier Feldern als Folge). Gibt es das
  *   nicht (mehr), ruft die Seite [onMissing] (zurück statt leerer Seite, CODE-05). Nach einem
  *   Konfigurationswechsel gilt der gesicherte Entwurf, auch wenn das Muster inzwischen entfernt ist.
  *
@@ -44,7 +46,10 @@ import kotlinx.coroutines.sync.withLock
  * Doppeltipp legt so nur einen Eintrag an. Das Lesezeichen merkt sich genau den geschriebenen
  * Stand ([PatternEditorState.draft]), nicht den nach dem Schreiben.
  *
- * [onStart] startet den Entwurf ohne Speichern; der Aufrufer lässt den Editor dabei offen.
+ * [onStart] startet den Entwurf ohne Speichern; der Aufrufer lässt den Editor dabei offen. Ein
+ * intensives Muster fragt vorher den Sicherheitsdialog ab, wenn [requireSafetyConfirm]; die
+ * Bestätigung meldet [onConfirmedSafety]. [cueSettings] und [otherAudioActive] (Atem-Übung oder
+ * Meditation läuft, auch minimiert) steuern den Ton der Vorschau.
  */
 @Composable
 internal fun PatternEditorDestination(
@@ -57,6 +62,10 @@ internal fun PatternEditorDestination(
     onOpenLore: (patternId: String) -> Unit,
     onBack: () -> Unit,
     onMissing: () -> Unit,
+    cueSettings: CueSettings = CueSettings(),
+    otherAudioActive: Boolean = false,
+    requireSafetyConfirm: Boolean = true,
+    onConfirmedSafety: () -> Unit = {},
 ) {
     val writes = remember { Mutex() }
     val missing by rememberUpdatedState(onMissing)
@@ -69,6 +78,10 @@ internal fun PatternEditorDestination(
             onStart = onStart,
             onOpenLore = onOpenLore,
             onBack = onBack,
+            cueSettings = cueSettings,
+            otherAudioActive = otherAudioActive,
+            requireSafetyConfirm = requireSafetyConfirm,
+            onConfirmedSafety = onConfirmedSafety,
         )
     }
 
@@ -99,7 +112,7 @@ internal fun PatternEditorDestination(
             val found = (current as? EditLoad.Found)?.pattern
             val state = rememberPatternEditorState(patternId) { prefix ->
                 if (found != null) {
-                    PatternEditorState.forEdit(prefix, found.id, found.spec, found.minutes, found.exercise.name)
+                    PatternEditorState.forEdit(prefix, found.id, found.pattern, found.minutes, found.exercise.name)
                 } else {
                     PatternEditorState.new(prefix)
                 }
@@ -131,9 +144,9 @@ private suspend fun write(
     val draft = state.draft()
     val id = state.savedId
     val stored = if (id == null) {
-        repository.saveCustom(draft.spec, draft.minutes, draft.name)
+        repository.saveCustom(draft.pattern, draft.minutes, draft.name)
     } else {
-        repository.update(id, draft.spec, draft.minutes, draft.name)
+        repository.update(id, draft.pattern, draft.minutes, draft.name)
     }
     if (stored == null) onMissing() else state.markSaved(stored.id, draft)
 }

@@ -22,7 +22,7 @@ data class PatternSpec(
  * Bewusst weiter als der heutige Generator: 0,5-s-Werte und aktivierende Muster mit gleich
  * langem Ein- und Ausatmen erzeugte er bis Version 1.6.2; gespeicherte und exportierte Muster
  * aus dieser Zeit bleiben gültig. Leitplanken (Import) ⊇ Erzeugungsregeln
- * ([withinCreationRules], Generator und Muster-Editor): ruhig hier Atemzug 8,5–13 s, bei der
+ * ([withinCreationRules], Muster des Tages): ruhig hier Atemzug 8,5–13 s, bei der
  * Erzeugung 9–13 s.
  */
 fun PatternSpec.withinGuardrails(): Boolean {
@@ -276,7 +276,7 @@ object RandomPatternGenerator {
         effectDetail = "Das Muster stammt aus einem Muster des Tages. ${limitsSentence(spec)}$STUDY_NOTE",
     )
 
-    /** Eigenes Muster aus dem Editor: ehrlich selbst zusammengestellt, ohne Evidenzbehauptung. */
+    /** Älteres eigenes Muster mit vier Feldern (Editor vor „Frei gestalten“): ehrlich selbst zusammengestellt, ohne Evidenzbehauptung. */
     private fun customTexts(hint: String, character: String, spec: PatternSpec) = OriginTexts(
         shortDescription = "$hint – $character.${bellyInvitation(spec.activating)} " +
             "Von dir zusammengestellt, in den Leitplanken der App.",
@@ -398,8 +398,8 @@ object RandomPatternGenerator {
 
     /**
      * Einordnung eines Musters in die Atemlehre: folgt nur dem Verhältnis der Phasen, nicht einer
-     * Quelle. Eine Logik für Muster des Tages, gespeicherte und eigene Muster und die
-     * Live-Einordnung im Muster-Editor.
+     * Quelle. Eine Logik für Muster des Tages und gespeicherte Muster mit vier Feldern; freie
+     * Folgen ordnet [atemlehreRefs] mit [FreePattern] ein.
      *
      * - Ausatmen kürzer als Einatmen → „brmhana“, länger → „langhana“, gleich → „samana“. Auch
      *   aktivierende Muster mit gleich langem Ein- und Ausatmen (gespeichert bis 1.6.2) sind

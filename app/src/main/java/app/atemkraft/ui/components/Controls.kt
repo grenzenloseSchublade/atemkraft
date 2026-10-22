@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -160,28 +162,51 @@ fun AppTextButton(
  * Aktion – so liest er sich nicht als ungewähltes Segment. Mindesthöhe [Sizes.ButtonHeight],
  * wächst bei großer Schrift mit, Tippfläche 48 dp; Form `shapes.large` wie [AppTextButton]
  * (LAYOUT-03). Die Breite gibt der Aufrufer vor (`AdaptiveButtonRow`).
+ *
+ * [color] und [borderColor] färben Beschriftung und Rand, wenn die Aktion eine Bedeutung trägt
+ * (Muster-Editor: „+ Ein“ in `secondary`, „+ Aus“ in `BreathExhale`, FARBE-04). [dashed] zeichnet
+ * den Rand gestrichelt (Halten); der Button füllt dann die Breite, die der Aufrufer vorgibt.
  */
 @Composable
 fun AppOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    color: Color = MaterialTheme.colorScheme.primary,
+    borderColor: Color = MaterialTheme.colorScheme.outline,
+    dashed: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val shape = MaterialTheme.shapes.large
+    val edge = if (enabled) borderColor else MaterialTheme.colorScheme.onSurface.copy(alpha = OUTLINE_DISABLED)
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = Sizes.ButtonHeight),
-        shape = MaterialTheme.shapes.large,
+        shape = shape,
         enabled = enabled,
         // Rand und Beschriftung ausdrücklich: M3 1.4 nimmt sonst outlineVariant und onSurfaceVariant,
         // dann sähe der Button aus wie ein ungewähltes Segment. Deaktiviert wie M3 (12 %).
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-        border = BorderStroke(
-            Dimens.BorderThin,
-            if (enabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface.copy(alpha = OUTLINE_DISABLED),
-        ),
-        content = content,
-    )
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+        border = if (dashed) null else BorderStroke(Dimens.BorderThin, edge),
+        // Gestrichelt: Der Rand liegt auf einer inneren Zeile, die die ganze Fläche füllt; sie trägt
+        // das Polster selbst.
+        contentPadding = if (dashed) PaddingValues() else ButtonDefaults.ContentPadding,
+    ) {
+        if (dashed) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Sizes.ButtonHeight)
+                    .dashedBorder(edge, shape)
+                    .padding(ButtonDefaults.ContentPadding),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                content = content,
+            )
+        } else {
+            content()
+        }
+    }
 }
 
 /** Deckkraft des Rands eines deaktivierten [AppOutlinedButton] (M3-Wert). */
