@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,9 +28,11 @@ import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
@@ -38,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -74,6 +78,12 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Genau
  * einstellen · angepasst“, MUSTER-02). Passt er nicht mehr hinter den Titel, steht er darunter,
  * ohne den führenden Punkt.
+ *
+ * [chip] ist ein Zustands-Chip am Kopf (z. B. „intensiv“ im Muster-Editor): rechts, mit
+ * `GapSmall` Abstand zum Titel und mittig auf dessen erster Zeile – auch wenn der Status
+ * darunter mehrzeilig wird. Titel und Status messen gegen die Breite neben ihm.
+ * [statusLiveRegion] macht den Status zur Live-Region (A11Y-04), nur solange er gerade eine
+ * eigene Änderung ansagt (Muster-Editor: Phase eingefügt bzw. entfernt).
  */
 @Composable
 fun SectionHeader(
@@ -86,6 +96,8 @@ fun SectionHeader(
     status: String? = null,
     statusDescription: String? = null,
     smallStatus: Boolean = false,
+    chip: (@Composable () -> Unit)? = null,
+    statusLiveRegion: Boolean = false,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val toggle = if (expanded == null) {
@@ -113,17 +125,25 @@ fun SectionHeader(
         verticalAlignment = Alignment.Bottom,
     ) {
         Column(modifier = Modifier.weight(1f).then(inner)) {
+            // Balken, Caret und [chip] stehen mittig neben der ersten Titelzeile, nicht mittig am
+            // ganzen Block: Rutscht der Status darunter (bis zu drei Zeilen), bliebe der Balken
+            // sonst neben dem Status stehen.
+            val titleStyle = MaterialTheme.typography.titleLarge
+            val density = LocalDensity.current
+            val titleLine = with(density) { (if (titleStyle.lineHeight.isSpecified) titleStyle.lineHeight else titleStyle.fontSize).toDp() }
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
             ) {
-                Box(
-                    modifier = Modifier
-                        // Balken so hoch wie die Schrift – folgt der Systemschriftgröße.
-                        .size(width = 4.dp, height = with(LocalDensity.current) { MaterialTheme.typography.titleLarge.fontSize.toDp() })
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(color),
-                )
+                Box(Modifier.height(titleLine), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            // Balken so hoch wie die Schrift – folgt der Systemschriftgröße.
+                            .size(width = 4.dp, height = with(density) { titleStyle.fontSize.toDp() })
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(color),
+                    )
+                }
                 // LAYOUT-03: Das Suffix steht direkt hinter dem Titel und rutscht in die nächste
                 // Zeile, statt ihn zu kürzen, wenn der Platz nicht reicht – dann ohne führenden
                 // Punkt, denn keine Zeile beginnt mit einem Satzzeichen ([TitleWithStatus]).
@@ -134,8 +154,16 @@ fun SectionHeader(
                     statusDescription = statusDescription,
                     statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
+                    statusLiveRegion = statusLiveRegion,
                 )
-                if (expanded != null) ExpandCaret(expanded = expanded, tint = color)
+                if (chip != null) {
+                    Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) { chip() }
+                }
+                if (expanded != null) {
+                    Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
+                        ExpandCaret(expanded = expanded, tint = color)
+                    }
+                }
             }
             if (teaser != null) {
                 Text(
@@ -160,6 +188,8 @@ fun SectionHeader(
  * ohne Leerraum darüber); bis `SectionHeaderTop` fehlt der Rest, abzüglich [spacingAbove], den
  * die umgebende Liste schon setzt (`spacedBy`). So steht er so weit vom Abschnitt darüber wie
  * ein fester Kopf. [contentSpacing] trennt Kopf und Inhalt sowie die Inhaltsteile.
+ * [headerModifier] gilt für die Kopfzeile selbst (Tippfläche), z. B. ein `FocusRequester`, wenn
+ * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07).
  *
  * Für die Atemlehre und den Situationen-Tab. Nicht im Meditations-Tab: Dort kostete jede
  * Höhenänderung den Zeitring Platz (LAYOUT-08).
@@ -171,6 +201,7 @@ fun CollapsibleSection(
     expanded: Boolean?,
     onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    headerModifier: Modifier = Modifier,
     teaser: String? = null,
     status: String? = null,
     statusDescription: String? = null,
@@ -187,7 +218,7 @@ fun CollapsibleSection(
         SectionHeader(
             title = title,
             color = color,
-            modifier = Modifier.padding(top = topFill),
+            modifier = Modifier.padding(top = topFill).then(headerModifier),
             teaser = teaser,
             expanded = expanded,
             onExpandedChange = onExpandedChange,
@@ -215,6 +246,7 @@ private fun TitleWithStatus(
     statusDescription: String?,
     statusStyle: TextStyle,
     modifier: Modifier = Modifier,
+    statusLiveRegion: Boolean = false,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
     val heading = Modifier.semantics { heading() }
@@ -223,7 +255,10 @@ private fun TitleWithStatus(
         return
     }
     val statusColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
-    val statusSemantics = Modifier.semantics { if (statusDescription != null) contentDescription = statusDescription }
+    val statusSemantics = Modifier.semantics {
+        if (statusDescription != null) contentDescription = statusDescription
+        if (statusLiveRegion) liveRegion = LiveRegionMode.Polite
+    }
     val measurer = rememberTextMeasurer()
     SubcomposeLayout(modifier) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)

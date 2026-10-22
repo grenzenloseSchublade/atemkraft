@@ -109,25 +109,35 @@ fun rememberPreviewSound(
  * Fortsetzen oder Einschalten die Restdauer). Ein neuer Index ist ein Phasenbeginn (Wechselton);
  * Einschalten des Tons mitten in der Phase setzt nur den Dauerton fort. Pause und Verlassen
  * machen still.
+ *
+ * Ändert sich die Folge während der Vorschau, kann derselbe Index auf eine andere Phase zeigen:
+ * Eine neue [revision] (die Folge) sendet die Phase neu; ist dabei ihre Art [phaseKind] (Typ und
+ * Füllstand) eine andere, gilt das als Phasenbeginn mit Wechselton, sonst läuft der Ton mit der
+ * neuen Restdauer weiter.
  */
 @Composable
 fun PreviewSoundEffect(
     sound: PreviewSoundState,
     playing: Boolean,
     phaseIndex: Int,
+    phaseKind: Any? = null,
+    revision: Any? = null,
     phase: () -> PhaseAudio,
 ) {
     val currentPhase by rememberUpdatedState(phase)
     val last = remember { intArrayOf(NO_PHASE) }
+    val lastKind = remember { arrayOfNulls<Any?>(1) }
     val soundOn = sound.soundOn
-    LaunchedEffect(sound, playing, phaseIndex, soundOn) {
+    LaunchedEffect(sound, playing, phaseIndex, phaseKind, revision, soundOn) {
         if (!playing) {
             last[0] = NO_PHASE
+            lastKind[0] = null
             sound.stop()
             return@LaunchedEffect
         }
-        val begins = phaseIndex != last[0]
+        val begins = phaseIndex != last[0] || phaseKind != lastKind[0]
         last[0] = phaseIndex
+        lastKind[0] = phaseKind
         if (soundOn) sound.onPhase(currentPhase(), phaseBegins = begins) else sound.stop()
     }
     DisposableEffect(sound) { onDispose { sound.stop() } }

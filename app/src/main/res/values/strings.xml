@@ -121,12 +121,18 @@
     <!-- Einklappbarer Startpunkt mit Vorlagen; Status hinter dem Titel: gewählte Vorlage oder „angepasst“. -->
     <string name="pattern_editor_start">Startpunkt</string>
     <!-- Abschnitt mit der Atemkurve; Status hinter dem Titel: „Atemzug · 10 s · 6 Atemzüge/min“,
-         TalkBack liest die Plural-Form. %2$s = Atemzüge pro Minute mit deutschem Komma. -->
+         TalkBack liest die Plural-Form. %2$s = die Rate (pattern_editor_rate bzw. _one, für
+         TalkBack cd_pattern_editor_rate bzw. _one): Atemzüge pro Minute mit deutschem Komma,
+         genau „1“ in der Einzahl; „Atemzüge/min“ bricht nicht am Schrägstrich (Wortverbinder U+2060). -->
     <string name="pattern_editor_breath">Atemzug</string>
-    <string name="pattern_editor_cycle" tools:ignore="PluralsCandidate">· %1$d\u00A0s\u00A0· %2$s\u00A0Atemzüge/min</string>
+    <string name="pattern_editor_cycle" tools:ignore="PluralsCandidate">· %1$d\u00A0s\u00A0· %2$s</string>
+    <string name="pattern_editor_rate" tools:ignore="PluralsCandidate">%1$s\u00A0Atemzüge\u2060/\u2060min</string>
+    <string name="pattern_editor_rate_one">1\u00A0Atemzug\u2060/\u2060min</string>
+    <string name="cd_pattern_editor_rate" tools:ignore="PluralsCandidate">%1$s Atemzüge pro Minute</string>
+    <string name="cd_pattern_editor_rate_one">1 Atemzug pro Minute</string>
     <plurals name="cd_pattern_editor_cycle">
-        <item quantity="one">%1$d Sekunde je Durchlauf, %2$s Atemzüge pro Minute</item>
-        <item quantity="other">%1$d Sekunden je Durchlauf, %2$s Atemzüge pro Minute</item>
+        <item quantity="one">%1$d Sekunde je Durchlauf, %2$s</item>
+        <item quantity="other">%1$d Sekunden je Durchlauf, %2$s</item>
     </plurals>
     <!-- Beschriftung in der Kurve: Linien „voll“/„leer“, je Phase „4 s“ in Phasenfarbe, Hinweis darunter. -->
     <string name="pattern_editor_curve_full">voll</string>
@@ -153,6 +159,10 @@
     <string name="pattern_editor_phase_spoken">%1$d. %2$s</string>
     <string name="cd_pattern_phase_remove" tools:ignore="PluralsCandidate">Phase %1$d entfernen</string>
     <string name="pattern_editor_insert_here">neue Phase kommt hierhin</string>
+    <!-- TalkBack nach „+ Ein/+ Halten/+ Aus“ bzw. dem Papierkorb, einmal als Live-Region am Kopf
+         „Ablauf“: %1$s = Name der neuen Phase, %2$d = ihre Nummer, %3$d/%4$d = Phasen von höchstens. -->
+    <string name="cd_pattern_phase_added" tools:ignore="PluralsCandidate">%1$s als Phase %2$d eingefügt, %3$d von %4$d Phasen</string>
+    <string name="cd_pattern_phase_removed" tools:ignore="PluralsCandidate">Phase %1$d entfernt, %2$d von %3$d Phasen</string>
     <!-- Karte „Phase hinzufügen · nach 2 · Halten voll“ mit drei Knöpfen; der Trennpunkt steht im Code. -->
     <string name="pattern_editor_add">Phase hinzufügen</string>
     <string name="pattern_editor_add_after">nach %1$d\u00A0· %2$s</string>

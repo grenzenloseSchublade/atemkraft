@@ -1,11 +1,16 @@
 package app.atemkraft.ui.patterns
 
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -50,8 +55,11 @@ class PatternEditorA11yTest {
 
     private fun string(id: Int) = app.getString(id)
 
+    private lateinit var inputMode: InputModeManager
+
     private fun show(state: PatternEditorState): PatternEditorState {
         compose.setContent {
+            inputMode = LocalInputModeManager.current
             AtemkraftTheme {
                 PatternEditorScreen(
                     state = state,
@@ -204,5 +212,75 @@ class PatternEditorA11yTest {
         click(string(R.string.cd_pattern_add_in))
         assertEquals(3, state.pattern.phases.size)
         assertTrue(state.pattern.isValid())
+    }
+
+    @Test
+    fun `Einfuegen und Entfernen sagt der Kopf Ablauf genau einmal an`() {
+        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
+        // Gesprochen wird die Beschreibung, der sichtbare Text („· 5 von 12 Phasen“) nicht.
+        val added = announcementsAfterTapOn(string(R.string.cd_pattern_add_hold)).map { it.substringBefore(" | ") }
+        assertEquals(listOf(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 3, 5, 12)), added)
+
+        // Mittlere Phase entfernen: Der Stepper der nachrückenden Phase schweigt, der Kopf sagt es.
+        state.select(1)
+        compose.waitForIdle()
+        val removed = announcementsAfterTapOn(app.getString(R.string.cd_pattern_phase_remove, 2)).map { it.substringBefore(" | ") }
+        assertEquals(listOf(app.getString(R.string.cd_pattern_phase_removed, 2, 4, 12)), removed)
+
+        // Der nächste Stepper-Tipp sagt wieder nur seinen Wert an.
+        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, state.pattern.labelAt(1))
+        val said = announcementsAfterTapOn("$spoken, ${string(R.string.adjust_increase)}")
+        assertEquals(1, said.size)
+        assertTrue(said.single(), said.single().startsWith("$spoken:"))
+    }
+
+    @Test
+    fun `Kippt ein Stepper-Tipp ins Intensive, sagt der Wert es mit`() {
+        val state = show(PatternEditorState.new(prefix, box).apply { select(1) })
+        val spoken = app.getString(R.string.pattern_editor_phase_spoken, 2, "Halten voll")
+        val plus = "$spoken, ${string(R.string.adjust_increase)}"
+        repeat(6) { compose.onNodeWithContentDescription(plus).performScrollTo().performSemanticsAction(SemanticsActions.OnClick) }
+        assertEquals(10, state.pattern.phases[1].seconds)
+        val said = announcementsAfterTapOn(plus)
+        assertEquals(1, said.size)
+        assertTrue(said.single(), said.single().substringBefore(" | ").endsWith(", ${string(R.string.detail_intense)}"))
+    }
+
+    @Test
+    fun `Vorlage gewaehlt - der Kopf Startpunkt sagt einmal an und bekommt den Tastatur-Fokus`() {
+        show(PatternEditorState.new(prefix))
+        compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
+        val header = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription) and hasText(string(R.string.pattern_editor_start), substring = true))
+        header.performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        val before = liveRegions()
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Viloma I")).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        val said = liveRegions().filter { (id, spoken) -> before[id] != spoken }.values.toList()
+        // Eine Ansage: der Kopf selbst (zusammengeführt liest TalkBack „Startpunkt, Viloma I, eingeklappt“).
+        assertEquals(said.toString(), 1, said.size)
+        header.assert(hasContentDescription("Viloma I", substring = true))
+        header.assertIsFocused()
+    }
+
+    @Test
+    fun `Tastatur - letzte Phase entfernt oder zwoelfte eingefuegt, der Fokus geht auf die gewaehlte Zeile`() {
+        val state = show(PatternEditorState.new(prefix, box).apply { select(3) })
+        compose.runOnIdle { inputMode.requestInputMode(InputMode.Keyboard) }
+        val trash = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_remove, 4))
+        trash.performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
+        trash.assertIsFocused()
+        trash.performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(2, state.selected)
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Ausatmen")).assertIsFocused()
+
+        repeat(8) { compose.runOnIdle { state.add(FreePhaseType.HOLD) } }
+        val addOut = compose.onNodeWithContentDescription(string(R.string.cd_pattern_add_out))
+        addOut.performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
+        addOut.performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(12, state.pattern.phases.size)
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and hasText("Ausatmen") and SemanticsMatcher.expectValue(SemanticsProperties.Selected, true)).assertIsFocused()
     }
 }

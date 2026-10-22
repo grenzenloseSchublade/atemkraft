@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -54,6 +57,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -178,8 +182,9 @@ fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewStat
  *
  * Griff am Ende jeder Phase (Ein-/Aus-Ende auf der Kurve, Halten über bzw. unter seiner Linie,
  * Tippfläche ≥ 48 dp, bei Überlappung gewinnt der nächste). Antippen wählt die Phase ([onSelect]),
- * horizontales Ziehen ändert ihre Dauer: rastet auf ganze Sekunden, geklemmt auf 1–30 s, Wert über
- * [onChangeSeconds]; spätere Phasen rücken mit. Je Raste ein Tick als Berührungs-Rückmeldung
+ * horizontales Ziehen ändert ihre Dauer – erst nach der waagrechten Touch-Slop, ein senkrechtes
+ * Wischen auf einem Griff scrollt die Seite und ändert nichts: rastet auf ganze Sekunden,
+ * geklemmt auf 1–30 s, Wert über [onChangeSeconds]; spätere Phasen rücken mit. Je Raste ein Tick als Berührungs-Rückmeldung
  * (Android-Einstellung, wie die Rasten des Zeitrings, AUDIO-05). Während des Ziehens zeigt ein
  * gelbes Band über der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
  *
@@ -190,7 +195,7 @@ fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewStat
  * Schalter (MOTION-02).
  *
  * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden,
- * …“) ohne liveRegion; Ziehen ist nie Pflicht – Auswahl, Dauer und Entfernen bietet der Aufrufer
+ * …“) ohne liveRegion; der Hinweis „Griffe ziehen“ ist für Screenreader ausgeblendet. Ziehen ist nie Pflicht – Auswahl, Dauer und Entfernen bietet der Aufrufer
  * in der Ablauf-Liste darunter.
  */
 @Composable
@@ -263,9 +268,27 @@ fun BreathCurveEditor(
                         val layout = metrics.layout(size.width.toFloat(), currentAxis, currentAxisTarget)
                         val handle = nearestHandle(curveHandles(start, layout), down.position, layout.touchRadius)
                             ?: return@awaitEachGesture
-                        down.consume()
-                        preview.pause()
                         val index = handle.index
+                        // Erst ein waagrechter Zug über die Touch-Slop gehört der Kurve; ein
+                        // senkrechtes Wischen bleibt beim Scrollen der Seite und ändert nichts.
+                        var first: PointerInputChange? = null
+                        val dragStart = awaitHorizontalTouchSlopOrCancellation(down.id) { change, _ ->
+                            change.consume()
+                            first = change
+                        }
+                        if (dragStart == null) {
+                            // Losgelassen, ohne dass der Finger wanderte oder die Seite scrollte:
+                            // ein Tipp wählt den Griff.
+                            val up = currentEvent.changes.firstOrNull { it.id == down.id }
+                            val still = up != null && (up.position - down.position).getDistance() <= viewConfiguration.touchSlop
+                            if (up != null && still && up.changedToUp() && !up.isConsumed) {
+                                up.consume()
+                                preview.pause()
+                                currentOnSelect(index)
+                            }
+                            return@awaitEachGesture
+                        }
+                        preview.pause()
                         currentOnSelect(index)
                         drag = CurveDrag(index, currentAxisTarget)
                         val phaseStart = layout.xAt(start.startOf(index).toFloat())
@@ -273,18 +296,20 @@ fun BreathCurveEditor(
                         // nichts, bis der Finger zieht.
                         val grab = down.position.x - handle.center.x
                         var last = start.phases[index].seconds
-                        try {
-                            drag(down.id) { change ->
-                                change.consume()
-                                val value = ((change.position.x - grab - phaseStart) / layout.pxPerSecond)
-                                    .roundToInt()
-                                    .coerceIn(FreePattern.SECONDS_RANGE)
-                                if (value != last) {
-                                    last = value
-                                    currentOnChange(index, value)
-                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                                }
+                        val follow = { change: PointerInputChange ->
+                            change.consume()
+                            val value = ((change.position.x - grab - phaseStart) / layout.pxPerSecond)
+                                .roundToInt()
+                                .coerceIn(FreePattern.SECONDS_RANGE)
+                            if (value != last) {
+                                last = value
+                                currentOnChange(index, value)
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
                             }
+                        }
+                        try {
+                            first?.let(follow)
+                            drag(dragStart.id, follow)
                         } finally {
                             // Erst jetzt rechnet die Achse neu (sanft animiert).
                             drag = null
@@ -337,7 +362,10 @@ fun BreathCurveEditor(
                         modifier = Modifier
                             .weight(1f)
                             .padding(start = Dimens.GapSmall, end = if (animationsEnabled) Dimens.GapSmall else Dimens.GapTiny)
-                            .wrapContentWidth(Alignment.End),
+                            .wrapContentWidth(Alignment.End)
+                            // Für TalkBack und Switch Access keine Anweisung, die sie nicht ausführen
+                            // können: Die Kurve hat dort keine Griffe, bedient wird über den Ablauf.
+                            .semantics { hideFromAccessibility() },
                     )
                 }
             }
@@ -670,8 +698,10 @@ private fun DrawScope.drawCurve(
  * Ein/Aus stehen bevorzugt außen neben der Schräge (Ein links oben, Aus rechts oben), sonst innen
  * auf der anderen Seite, notfalls über bzw. unter dem Griff am Ende; ein Halten über (obere
  * Hälfte) bzw. unter seinem Griff, sonst auf der anderen Seite seiner Linie, notfalls seitlich
- * versetzt. Eine Beschriftung darf keinen Griff (mit Rand), keine andere Beschriftung, nicht die
- * Wörter „voll“/„leer“ und nicht das Band darunter berühren und nicht aus der Fläche ragen – passt keine Stelle (viele sehr kurze Phasen), entfällt sie, statt zu überlappen.
+ * versetzt. Eine Beschriftung darf keinen Griff, keine andere Beschriftung, nicht die Wörter
+ * „voll“/„leer“ und nicht deren Linien berühren (alles mit Rand), nicht das Band darunter und
+ * nicht über den Innenrand ([CurveLayout.gapSmall]) hinaus ragen – passt keine Stelle (viele sehr
+ * kurze Phasen), entfällt sie, statt zu überlappen.
  * Die gewählte Phase kommt zuerst dran. Die Werte stehen ohnehin in der Ablauf-Liste und in der
  * Beschreibung für TalkBack.
  */
@@ -683,12 +713,17 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
         val r = (if (h.index == selected) layout.handleSelected else layout.handle) / 2f + margin
         Rect(h.center, r)
     }.toMutableList()
-    // Die Wörter „voll“ und „leer“ an den Linien bleiben frei.
+    // Die Wörter „voll“ und „leer“ an den Linien bleiben frei, mit Abstand: Ein „2 s“ direkt
+    // dahinter läse sich als „leer 2 s“.
     val full = layout.measurer.measure(layout.fullLabel, layout.smallStyle).size
     val empty = layout.measurer.measure(layout.emptyLabel, layout.smallStyle).size
-    blocked += Rect(Offset(layout.gapSmall, layout.yFull - layout.hairline - full.height), Size(full.width.toFloat(), full.height.toFloat()))
-    blocked += Rect(Offset(layout.gapSmall, layout.yEmpty + layout.hairline), Size(empty.width.toFloat(), empty.height.toFloat()))
-    val area = Rect(0f, 0f, width, layout.bandTop)
+    blocked += Rect(Offset(layout.gapSmall, layout.yFull - layout.hairline - full.height), Size(full.width.toFloat(), full.height.toFloat())).inflate(layout.gapSmall)
+    blocked += Rect(Offset(layout.gapSmall, layout.yEmpty + layout.hairline), Size(empty.width.toFloat(), empty.height.toFloat())).inflate(layout.gapSmall)
+    // Die Linien selbst: Keine Beschriftung liegt auf „voll“ oder „leer“.
+    val lineBand = layout.hairline + margin
+    listOf(layout.yFull, layout.yEmpty).forEach { y -> blocked += Rect(0f, y - lineBand, width, y + lineBand) }
+    // Innenrand wie Linien und Wörter: nichts reicht bis an die Kartenkante.
+    val area = Rect(layout.gapSmall, 0f, width - layout.gapSmall, layout.bandTop)
     val spots = arrayOfNulls<Rect>(pattern.phases.size)
     val order = pattern.phases.indices.sortedBy { it != selected }
     val reach = layout.holdOffset + layout.handle / 2f + layout.hairline
@@ -730,7 +765,8 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
             .firstOrNull { r -> r.left >= area.left && r.right <= area.right && r.top >= area.top && r.bottom <= area.bottom && blocked.none { it.overlaps(r) } }
         if (spot != null) {
             spots[i] = spot
-            blocked += spot
+            // Mit Rand: Zwei Beschriftungen stoßen nie Kante an Kante.
+            blocked += spot.inflate(margin)
         }
     }
     return spots.toList()

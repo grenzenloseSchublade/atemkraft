@@ -19,7 +19,8 @@ import kotlinx.coroutines.flow.Flow
  * [origin] ist die Herkunft als String ([ORIGIN_DAILY], [ORIGIN_CUSTOM]), nie das Enum direkt:
  * Unbekannte Werte fallen beim Lesen auf „eigenes Muster“ zurück ([patternOrigin]), wie bei
  * [LogEntryEntity]. [minutes] ist die Vorgabedauer eigener Muster (1–30), `null` = ≈ 5 min.
- * Beide Spalten gibt es seit Schema v4; ältere Zeilen sind gespeicherte Tagesmuster.
+ * Beide Spalten gibt es seit Schema v4 (v5 gleicht nur frühe Entwicklungsstände aus); ältere
+ * Zeilen sind gespeicherte Tagesmuster.
  *
  * [phases] ist die freie Phasenfolge eines eigenen Musters („Frei gestalten“) in der kompakten
  * Textform von [FreePattern.toCompact], z. B. „in:4,hold:1,out:6“; `null` bei gespeicherten

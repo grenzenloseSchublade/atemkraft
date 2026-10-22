@@ -187,6 +187,9 @@ class PatternEditorScreenTest {
         assertEquals(free(FreePhaseType.IN to 4, FreePhaseType.HOLD to 2, FreePhaseType.OUT to 6), state.pattern)
         assertEquals(1, state.selected)
         compose.onNodeWithText(app.getString(R.string.pattern_editor_add_after, 2, "Halten voll"), substring = true).assertExists()
+        // Der Kopf „Ablauf“ nennt einmal, was wohin kam; nach der nächsten Änderung nur die Zahl.
+        compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_phase_added, "Halten voll", 2, 3, 12)).assertExists()
+        compose.runOnIdle { state.setSeconds(1, 3) }
         compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_sequence_count, 3, 12)).assertExists()
     }
 
@@ -378,5 +381,12 @@ class PatternEditorScreenTest {
         compose.waitForIdle()
         assertEquals(template("Box").pattern, state.pattern)
         compose.onNode(hasContentDescription(reset)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `ein Atemzug pro Minute steht in der Einzahl`() {
+        show(PatternEditorState.new(prefix, free(FreePhaseType.IN to 30, FreePhaseType.OUT to 30)))
+        compose.onNodeWithText(string(R.string.pattern_editor_rate_one), substring = true).assertExists()
+        compose.onNodeWithContentDescription(string(R.string.cd_pattern_editor_rate_one), substring = true).assertExists()
     }
 }

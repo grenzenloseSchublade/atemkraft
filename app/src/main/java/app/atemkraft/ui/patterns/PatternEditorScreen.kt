@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -51,11 +54,14 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -64,6 +70,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
@@ -166,12 +173,16 @@ fun PatternEditorScreen(
     val sound = rememberPreviewSound(cueSettings, otherAudioActive, onHide = preview::pause, output = soundOutput)
     val pattern = state.pattern
     val phaseIndex by remember(pattern) { derivedStateOf { preview.phaseIndexIn(pattern) } }
-    PreviewSoundEffect(sound, preview.playing, phaseIndex) {
+    // Ändert sich die Folge, während die Vorschau läuft, folgt der Ton der Phase, die jetzt an
+    // diesem Index steht (Art = Typ und Füllstand; eine andere Art gibt einen Wechselton).
+    val phaseKind = exercise.segments.firstOrNull()?.phases?.getOrNull(phaseIndex)?.let { it.type to it.level }
+    PreviewSoundEffect(sound, preview.playing, phaseIndex, phaseKind = phaseKind, revision = pattern) {
         phaseAudio(state.exercise(), phaseIndex, preview.remainingMillisIn(state.pattern))
     }
 
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
     var showSafety by rememberSaveable { mutableStateOf(false) }
+    val sequenceFocus = remember { SequenceFocus() }
     val start = {
         preview.pause()
         onStart(exercise, config)
@@ -203,8 +214,8 @@ fun PatternEditorScreen(
                         previewTrailing = { PreviewSoundSwitch(sound) },
                     )
                 }
-                Sequence(state)
-                AddPhase(state)
+                Sequence(state, sequenceFocus)
+                AddPhase(state, sequenceFocus)
                 pattern.intensityNote()?.let { IntenseNote(it) }
                 NameSection(state)
                 Lore(exercise, onOpenLore)
@@ -251,22 +262,45 @@ private fun StartingPoint(state: PatternEditorState) {
     var open by rememberSaveable { mutableStateOf(false) }
     val template = state.template
     val modified = stringResource(R.string.adjust_modified)
+    // Eine Wahl klappt den Abschnitt zu und nimmt das gewählte Segment weg: Der Fokus geht auf den
+    // Kopf (Tastatur, D-Pad, A11Y-07), und der Kopf sagt einmal an, was jetzt gilt („Startpunkt,
+    // Viloma I, eingeklappt“) – nur bis zur nächsten Änderung der Folge oder einem Tipp auf den Kopf.
+    val headerFocus = remember { FocusRequester() }
+    var picked by remember { mutableStateOf<FreePattern?>(null) }
+    var focusHeader by remember { mutableStateOf(false) }
+    val announce = picked != null && picked == state.pattern
+    // Weicht die Folge ab, ist die Ansage verbraucht – auch wenn man später zu ihr zurückkehrt.
+    LaunchedEffect(state.pattern) { if (picked != state.pattern) picked = null }
+    LaunchedEffect(focusHeader) {
+        if (focusHeader) {
+            headerFocus.requestFocus()
+            focusHeader = false
+        }
+    }
     CollapsibleSection(
         title = stringResource(R.string.pattern_editor_start),
         color = headingColor(0),
         expanded = open,
-        onExpandedChange = { open = it },
+        onExpandedChange = {
+            picked = null
+            open = it
+        },
         status = "· ${template?.label ?: modified}",
         statusDescription = template?.label ?: modified,
         smallStatus = true,
         contentSpacing = Dimens.GapSmall,
+        headerModifier = Modifier
+            .focusRequester(headerFocus)
+            .semantics { if (announce) liveRegion = LiveRegionMode.Polite },
     ) {
         SegmentedChoiceRow<FreeTemplate?>(
             items = FreePatternTemplates.all,
             selected = template,
-            onSelect = { picked ->
-                picked?.let(state::applyTemplate)
+            onSelect = { choice ->
+                choice?.let(state::applyTemplate)
+                picked = state.pattern
                 open = false
+                focusHeader = true
             },
             // Ohne eigenen Gruppennamen: Der aufklappbare Kopf „Startpunkt“ steht direkt darüber.
             columns = TEMPLATE_COLUMNS,
@@ -274,10 +308,13 @@ private fun StartingPoint(state: PatternEditorState) {
     }
 }
 
-/** Dauer in Minuten (1–30); sie ändert nie die Folge. */
+/**
+ * Dauer in Minuten (1–30); sie ändert nie die Folge. Abstand wie zu einem Abschnittskopf: Sie
+ * gehört nicht zum „Startpunkt“ darüber, auch nicht, wenn er eingeklappt ist.
+ */
 @Composable
 private fun Duration(state: PatternEditorState) {
-    Card(modifier = Modifier.fillMaxWidth().padding(top = Dimens.GapSmall)) {
+    Card(modifier = Modifier.fillMaxWidth().padding(top = Dimens.SectionHeaderTop)) {
         Stepper(
             label = stringResource(R.string.adjust_minutes),
             value = state.minutes,
@@ -299,21 +336,20 @@ private fun Breath(state: PatternEditorState, curve: @Composable () -> Unit) {
     val pattern = state.pattern
     val total = pattern.totalSeconds
     val rate = pattern.breathsPerMinuteText()
+    // Genau „1“ in der Einzahl: „1 Atemzug/min“ (wie die Texte der Domain).
+    val one = rate == "1"
+    val shownRate = if (one) stringResource(R.string.pattern_editor_rate_one) else stringResource(R.string.pattern_editor_rate, rate)
+    val spokenRate = if (one) stringResource(R.string.cd_pattern_editor_rate_one) else stringResource(R.string.cd_pattern_editor_rate, rate)
     Column(Modifier.fillMaxWidth()) {
         SectionHeader(
             title = stringResource(R.string.pattern_editor_breath),
             color = headingColor(1),
-            status = stringResource(R.string.pattern_editor_cycle, total, rate),
-            statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, rate),
+            status = stringResource(R.string.pattern_editor_cycle, total, shownRate),
+            statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, spokenRate),
             smallStatus = true,
-            trailingAction = if (pattern.isIntense) {
-                {
-                    // Die Hülle des Kopfs ragt für Icon-Buttons um TouchOverhang über die Kante;
-                    // der Chip steht bündig an der Inhaltskante und auf der Grundlinie des Titels.
-                    Box(Modifier.padding(end = Sizes.TouchOverhang, bottom = Dimens.GapSmall)) {
-                        CharacterChip(intense = true, activating = false)
-                    }
-                }
+            // Der Chip steht neben der Titelzeile, mit Abstand zum Status (auch wenn der umbricht).
+            chip = if (pattern.isIntense) {
+                { CharacterChip(intense = true, activating = false) }
             } else {
                 null
             },
@@ -330,17 +366,28 @@ private fun Breath(state: PatternEditorState, curve: @Composable () -> Unit) {
  * gestrichelte Marke, wo eine neue Phase hinkommt.
  */
 @Composable
-private fun Sequence(state: PatternEditorState) {
+private fun Sequence(state: PatternEditorState, focus: SequenceFocus) {
     val pattern = state.pattern
     val count = pattern.phases.size
     val insertAt = state.selected ?: pattern.phases.lastIndex
+    val notice = focus.noticeFor(pattern)
+    LaunchedEffect(pattern) { focus.forgetUnless(pattern) }
+    LaunchedEffect(focus.pendingRowFocus, state.selected) {
+        if (focus.pendingRowFocus && state.selected != null) {
+            focus.row.requestFocus()
+            focus.pendingRowFocus = false
+        }
+    }
     Column(Modifier.fillMaxWidth()) {
         SectionHeader(
             title = stringResource(R.string.pattern_editor_sequence),
             color = headingColor(2),
             status = stringResource(R.string.pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),
-            statusDescription = stringResource(R.string.cd_pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),
+            // Nach Einfügen oder Entfernen sagt der Status das einmal an (A11Y-04), bis sich die
+            // Folge wieder ändert; sonst nur die Zahl der Phasen.
+            statusDescription = notice ?: stringResource(R.string.cd_pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),
             smallStatus = true,
+            statusLiveRegion = notice != null,
         )
         Column(
             modifier = Modifier
@@ -350,16 +397,20 @@ private fun Sequence(state: PatternEditorState) {
             verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline),
         ) {
             pattern.phases.indices.forEach { index ->
-                PhaseRow(state, index)
+                PhaseRow(state, index, focus)
                 if (index == insertAt) InsertMarker()
             }
         }
     }
 }
 
-/** Eine Zeile der Ablauf-Liste; gewählt mit Fläche, Rand, Papierkorb und Stepper. */
+/**
+ * Eine Zeile der Ablauf-Liste; gewählt mit Fläche, Rand, Papierkorb und Stepper. Verschwindet der
+ * fokussierte Papierkorb (letzte Phase entfernt) oder wird er abgeschaltet, geht der Fokus auf die
+ * nun gewählte Zeile (A11Y-07); angesagt wird das Entfernen am Kopf „Ablauf“.
+ */
 @Composable
-private fun PhaseRow(state: PatternEditorState, index: Int) {
+private fun PhaseRow(state: PatternEditorState, index: Int, focus: SequenceFocus) {
     val pattern = state.pattern
     val phase = pattern.phases[index]
     val selected = state.selected == index
@@ -368,6 +419,9 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
     val label = pattern.labelAt(index)
     val shape = MaterialTheme.shapes.small
     val spokenSeconds = pluralStringResource(R.plurals.cd_duration_seconds, phase.seconds, phase.seconds)
+    val removedText = stringResource(R.string.cd_pattern_phase_removed, index + 1, pattern.phases.size - 1, FreePattern.MAX_PHASES)
+    val intense = stringResource(R.string.detail_intense)
+    var trashFocused by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -379,6 +433,7 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = Dimens.MinTouchTarget)
+                    .then(if (selected) Modifier.focusRequester(focus.row) else Modifier)
                     .selectable(selected = selected, onClick = { state.toggleSelection(index) })
                     .padding(horizontal = Dimens.GapSmall),
                 verticalAlignment = Alignment.CenterVertically,
@@ -416,7 +471,18 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
             }
             if (selected) {
                 val removable = state.canRemove(index)
-                AppIconButton(onClick = { state.remove(index) }, enabled = removable) {
+                AppIconButton(
+                    onClick = {
+                        state.remove(index)
+                        focus.notice(state.pattern, removedText)
+                        // Fokus ging mit dem Knopf verloren (letzte Zeile) oder der Knopf der
+                        // nachrückenden Phase ist abgeschaltet: auf die gewählte Zeile.
+                        val selectedNow = state.selected
+                        if (trashFocused && (selectedNow != index || !state.canRemove(index))) focus.pendingRowFocus = true
+                    },
+                    modifier = Modifier.onFocusChanged { trashFocused = it.hasFocus },
+                    enabled = removable,
+                ) {
                     Icon(
                         Icons.Filled.Delete,
                         contentDescription = stringResource(R.string.cd_pattern_phase_remove, index + 1),
@@ -435,6 +501,10 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
                 vertical = Dimens.GapHairline,
                 spokenLabel = stringResource(R.string.pattern_editor_phase_spoken, index + 1, label),
                 valueUnit = R.plurals.cd_duration_seconds,
+                // Kippt das Muster ins Intensive, hört man es mit dem Wert (eine Ansage je Tipp).
+                spokenSuffix = intense.takeIf { pattern.isIntense },
+                // Nach dem Entfernen sagt der Kopf „Ablauf“ an, nicht die nachrückende Phase.
+                announce = focus.noticeFor(pattern) == null,
             )
         }
     }
@@ -488,7 +558,7 @@ private fun InsertMarker() {
             .padding(start = Dimens.GapSmall * 2 + Sizes.IconDefault, end = Dimens.GapSmall, top = Dimens.GapHairline, bottom = Dimens.GapHairline),
     ) {
         val textWidth = with(LocalDensity.current) { measurer.measure(text, style, softWrap = false, maxLines = 1).size.width.toDp() }
-        val label: @Composable () -> Unit = { WholeWordText(text = text, style = style, color = WarnAmber) }
+        val label: @Composable () -> Unit = { WholeWordText(text = text, style = style, color = WarnAmber, textAlign = TextAlign.End) }
         if (maxWidth - textWidth - Dimens.GapSmall >= Dimens.MinTouchTarget) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                 DashedMark(Modifier.weight(1f))
@@ -528,7 +598,7 @@ private fun DashedMark(modifier: Modifier = Modifier) {
  * die Knöpfe abgeschaltet.
  */
 @Composable
-private fun AddPhase(state: PatternEditorState) {
+private fun AddPhase(state: PatternEditorState, focus: SequenceFocus) {
     val pattern = state.pattern
     val selected = state.selected
     val colors = MaterialTheme.colorScheme
@@ -568,10 +638,24 @@ private fun AddPhase(state: PatternEditorState) {
             }
         }
         val enabled = state.canAdd
-        AdaptiveButtonRow(spacing = Dimens.GapSmall) {
-            AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled) { state.add(FreePhaseType.IN) }
-            AddButton(R.string.pattern_editor_add_hold, R.string.cd_pattern_add_hold, colors.onSurfaceVariant, enabled, dashed = true) { state.add(FreePhaseType.HOLD) }
-            AddButton(R.string.pattern_editor_add_out, R.string.cd_pattern_add_out, BreathExhale, enabled) { state.add(FreePhaseType.OUT) }
+        val resources = LocalResources.current
+        var buttonFocused by remember { mutableStateOf(false) }
+        // Einfügen: Der Kopf „Ablauf“ sagt an, was wohin kam. Schaltet die zwölfte Phase die
+        // Knöpfe ab, geht ein Tastatur-Fokus auf die neue Phase (A11Y-07).
+        val add = { type: FreePhaseType ->
+            state.add(type)
+            val at = state.selected
+            if (at != null) {
+                val count = state.pattern.phases.size
+                focus.notice(state.pattern, resources.getString(R.string.cd_pattern_phase_added, state.pattern.labelAt(at), at + 1, count, FreePattern.MAX_PHASES))
+            }
+            if (buttonFocused && !state.canAdd) focus.pendingRowFocus = true
+        }
+        val tracked = Modifier.onFocusChanged { buttonFocused = it.hasFocus }
+        AdaptiveButtonRow(spacing = Dimens.GapSmall, modifier = tracked) {
+            AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled) { add(FreePhaseType.IN) }
+            AddButton(R.string.pattern_editor_add_hold, R.string.cd_pattern_add_hold, colors.onSurfaceVariant, enabled, dashed = true) { add(FreePhaseType.HOLD) }
+            AddButton(R.string.pattern_editor_add_out, R.string.cd_pattern_add_out, BreathExhale, enabled) { add(FreePhaseType.OUT) }
         }
         HintText(stringResource(R.string.pattern_editor_add_hint))
     }
@@ -750,6 +834,30 @@ private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Fokus und Ansagen der Ablauf-Liste (A11Y-04, A11Y-07): [row] liegt auf der gewählten Zeile;
+ * [pendingRowFocus] fokussiert sie nach der nächsten Komposition (der Knopf mit dem Fokus ist
+ * verschwunden oder abgeschaltet). [notice] merkt sich die Ansage zu Einfügen bzw. Entfernen samt
+ * der Folge danach; sie gilt nur, solange die Folge so bleibt ([noticeFor]).
+ */
+@Stable
+private class SequenceFocus {
+    val row = FocusRequester()
+    var pendingRowFocus by mutableStateOf(false)
+    private var lastNotice by mutableStateOf<Pair<FreePattern, String>?>(null)
+
+    fun notice(after: FreePattern, text: String) {
+        lastNotice = after to text
+    }
+
+    fun noticeFor(pattern: FreePattern): String? = lastNotice?.takeIf { it.first == pattern }?.second
+
+    /** Weicht die Folge ab, ist die Ansage verbraucht – auch wenn man später zu ihr zurückkehrt. */
+    fun forgetUnless(pattern: FreePattern) {
+        if (lastNotice?.first != pattern) lastNotice = null
     }
 }
 

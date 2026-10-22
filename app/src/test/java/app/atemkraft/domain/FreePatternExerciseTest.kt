@@ -145,7 +145,7 @@ class FreePatternExerciseTest {
         }
         val calm = exercise(template("4·6"))
         assertEquals(
-            "Einatmen 4\u00A0s${DOT_SEPARATOR}Ausatmen 6\u00A0s. 6 Atemzüge pro Minute, von dir selbst zusammengestellt.",
+            "Einatmen\u00A04\u00A0s${DOT_SEPARATOR}Ausatmen\u00A06\u00A0s. 6 Atemzüge pro Minute, von dir selbst zusammengestellt.",
             calm.shortDescription,
         )
         assertTrue(calm.instructionHint!!.contains("Bauch"))
@@ -163,12 +163,25 @@ class FreePatternExerciseTest {
         val exercise = exercise(intense)
         assertTrue(exercise.caution)
         assertEquals(FreePattern.DIZZINESS_SENTENCE, exercise.cautions.first())
-        assertTrue(exercise.cautions.any { it.contains("Halten nach dem Einatmen über 10 s") })
+        assertTrue(exercise.cautions.any { it.contains("Halten mit eher voller Lunge über 10\u00A0s am Stück") })
+        // Wie Wim Hof und Viloma: ärztliche Abklärung, bei langem Halten „nie pressen“.
+        assertTrue(exercise.cautions.any { it.contains("ärztlich abklären") && it.contains("Schwangerschaft") })
+        assertTrue(exercise.cautions.any { it.contains("nie pressen") })
+        assertFalse(exercise(pattern(IN to 1, OUT to 1)).cautions.any { it.contains("pressen") })
         assertTrue(exercise.effect.contains(FreePattern.DIZZINESS_SENTENCE))
         assertTrue(exercise.shortDescription.endsWith(FreePattern.DIZZINESS_SENTENCE))
         assertTrue(exercise.effectDetail!!.contains("Sicherheitshinweis"))
         assertFalse(exercise.instructionHint!!.contains("Bauch"))
         assertNotNull(intense.intensityNote())
+    }
+
+    @Test
+    fun `Lauf ueber das Ende der Folge springt nicht und teilt die Stufen`() {
+        // Ein 4 · Aus 6 · Ein 4: das letzte und das erste Ein sind zwei Stufen eines Atemzugs.
+        val phases = exercise(pattern(IN to 4, OUT to 6, IN to 4)).segments.single().phases
+        assertEquals(listOf("2. Stufe", null, "1. Stufe"), phases.map { it.note })
+        assertEquals(BreathLevel(0.5f, 1f), phases[0].level)
+        assertEquals(BreathLevel(0f, 0.5f), phases[2].level)
     }
 
     @Test

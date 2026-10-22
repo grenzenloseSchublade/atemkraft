@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Logbuch und gespeicherte Muster. Jede Schemaänderung braucht eine explizite [Migration], das
  * exportierte Schema unter app/schemas/ und einen Fall in DatabaseMigrationTest (SEC-STORE-03).
  */
-@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 4, exportSchema = true)
+@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 5, exportSchema = true)
 abstract class AtemkraftDatabase : RoomDatabase() {
 
     abstract fun logbookDao(): LogbookDao
@@ -87,8 +87,29 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v4 → v5: kein neues Feld, nur Ausgleich für unveröffentlichte Entwicklungsstände. Ein
+         * früher Stand von v4 hatte `origin` und `minutes`, aber noch nicht `phases`; v4 mit
+         * `phases` hätte denselben Versionsstand mit anderem Schema, Room bräche beim Öffnen ab.
+         * Ergänzt daher jede fehlende Spalte von [MIGRATION_3_4] und lässt vorhandene in Ruhe –
+         * Logbuch und gespeicherte Muster bleiben. Von v3 aus (alle Releases) ändert sie nichts.
+         */
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val columns = buildSet {
+                    db.query("PRAGMA table_info(saved_patterns)").use { c ->
+                        val name = c.getColumnIndexOrThrow("name")
+                        while (c.moveToNext()) add(c.getString(name))
+                    }
+                }
+                if ("origin" !in columns) db.execSQL("ALTER TABLE saved_patterns ADD COLUMN origin TEXT NOT NULL DEFAULT 'daily'")
+                if ("minutes" !in columns) db.execSQL("ALTER TABLE saved_patterns ADD COLUMN minutes INTEGER")
+                if ("phases" !in columns) db.execSQL("ALTER TABLE saved_patterns ADD COLUMN phases TEXT")
+            }
+        }
+
         /** Alle Migrationen in Reihenfolge; App und Migrationstest nutzen dieselbe Liste. */
-        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 
         fun build(context: Context): AtemkraftDatabase = Room.databaseBuilder(
             context.applicationContext,

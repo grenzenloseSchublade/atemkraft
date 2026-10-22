@@ -436,8 +436,9 @@ object RandomPatternGenerator {
      *
      * [minutes] wie bei [exerciseFrom] (`null` ≈ 5 min); bei Durchläufen über eine Minute stimmt
      * die Vorgabedauer nur auf ganze Durchläufe genau. Ein intensives Muster
-     * ([FreePattern.isIntense]) bekommt [Exercise.caution] und Sicherheitshinweise, also denselben
-     * Sicherheitsdialog vor dem Start wie Wim Hof. [Exercise.activating] ist gesetzt, wenn die
+     * ([FreePattern.isIntense]) bekommt [Exercise.caution] und Sicherheitshinweise (auch den Satz
+     * zur ärztlichen Abklärung wie bei Wim Hof und Viloma), also denselben Sicherheitsdialog vor
+     * dem Start. [Exercise.activating] ist gesetzt, wenn die
      * Einordnung Brmhana ist (mehr Ein als Aus). Wirft bei einer ungültigen Folge.
      */
     fun exerciseFrom(pattern: FreePattern, id: String, name: String, minutes: Int? = null): Exercise {
@@ -538,13 +539,16 @@ object RandomPatternGenerator {
 
     /**
      * Stufennummer je Ein bzw. Aus, wenn es zu einem Lauf aus mehreren gehört (Halten dazwischen
-     * zählt nicht, wie bei [FreePattern.levels]); sonst und bei Halten `null`.
+     * zählt nicht, zyklisch wie bei [FreePattern.levels]: ein Lauf darf über das Ende der Folge
+     * reichen); sonst und bei Halten `null`.
      */
     private fun stageNumbers(pattern: FreePattern): List<Int?> {
         val runIds = IntArray(pattern.phases.size) { -1 }
         var run = -1
         var previous: FreePhaseType? = null
-        pattern.phases.forEachIndexed { i, phase ->
+        val order = pattern.cycleOrder()
+        order.forEach { i ->
+            val phase = pattern.phases[i]
             if (phase.type != FreePhaseType.HOLD) {
                 if (phase.type != previous) run++
                 runIds[i] = run
@@ -553,13 +557,12 @@ object RandomPatternGenerator {
         }
         val sizes = runIds.filter { it >= 0 }.groupingBy { it }.eachCount()
         val seen = mutableMapOf<Int, Int>()
-        return runIds.map { id ->
-            if (id < 0 || (sizes[id] ?: 0) < 2) {
-                null
-            } else {
-                (seen.getOrElse(id) { 0 } + 1).also { seen[id] = it }
-            }
+        val stages = arrayOfNulls<Int>(pattern.phases.size)
+        order.forEach { i ->
+            val id = runIds[i]
+            if (id >= 0 && (sizes[id] ?: 0) >= 2) stages[i] = (seen.getOrElse(id) { 0 } + 1).also { seen[id] = it }
         }
+        return stages.toList()
     }
 
     /** „6 Atemzüge pro Minute“, „1 Atemzug pro Minute“, „4,6 Atemzüge pro Minute“. */
@@ -579,7 +582,8 @@ object RandomPatternGenerator {
         if (reasons.isNotEmpty()) {
             append(
                 "Es gilt als intensiv (${reasons.joinToString(", ") { it.text }}), deshalb erscheint " +
-                    "vor dem Start ein Sicherheitshinweis. ${FreePattern.DIZZINESS_SENTENCE} ",
+                    "vor dem Start ein Sicherheitshinweis, solange er in den Einstellungen nicht " +
+                    "abgeschaltet ist. ${FreePattern.DIZZINESS_SENTENCE} ",
             )
         }
         append(
@@ -588,13 +592,20 @@ object RandomPatternGenerator {
         )
     }
 
-    /** Sicherheitshinweise intensiver eigener Muster; der erste steht auf der Detailseite oben. */
-    private fun freeCautions(reasons: List<IntensityReason>): List<String> = listOf(
-        FreePattern.DIZZINESS_SENTENCE,
-        "Intensiv durch: ${reasons.joinToString(", ") { it.text }}.",
-        "Nur im Sitzen oder Liegen – nie im oder am Wasser, beim Fahren oder Stehen.",
-        "Nur, wenn du dich gesund und ausgeruht fühlst.",
-    )
+    /**
+     * Sicherheitshinweise intensiver eigener Muster; der erste steht auf der Detailseite oben. Wie
+     * bei Wim Hof und Viloma gehört die ärztliche Abklärung dazu, bei langem Halten „nie pressen“.
+     */
+    private fun freeCautions(reasons: List<IntensityReason>): List<String> = buildList {
+        add(FreePattern.DIZZINESS_SENTENCE)
+        add("Intensiv durch: ${reasons.joinToString(", ") { it.text }}.")
+        add("Nur im Sitzen oder Liegen – nie im oder am Wasser, beim Fahren oder Stehen.")
+        add("Nur, wenn du dich gesund und ausgeruht fühlst.")
+        add("Bei Epilepsie, Herz-Kreislauf- oder Lungenerkrankung oder in der Schwangerschaft vorher ärztlich abklären.")
+        if (IntensityReason.LONG_HOLD_FULL in reasons || IntensityReason.LONG_HOLD_EMPTY in reasons) {
+            add("Beim Halten nie pressen – wird es unangenehm, gleich weiteratmen.")
+        }
+    }
 
     /** Einordnung einer freien Folge mit Teaser und Detail (siehe [atemlehreRefs] für freie Folgen). */
     private fun loreFor(pattern: FreePattern, refs: AtemlehreRefs): YogaLore {

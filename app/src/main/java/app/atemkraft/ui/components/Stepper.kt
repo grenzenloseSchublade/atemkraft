@@ -48,7 +48,10 @@ import app.atemkraft.ui.theme.Sizes
  *
  * TalkBack hört Name und Einheit ausgeschrieben (A11Y-06): [spokenLabel] ist das Label ohne
  * sichtbare Einheit („Einatmen“ statt „Einatmen (s)“), [valueUnit] ein Plural für den Wert
- * („4 Sekunden“); ohne ihn die blanke Zahl.
+ * („4 Sekunden“); ohne ihn die blanke Zahl. [spokenSuffix] hängt an die Ansage des Werts einen
+ * Zustand an, den die Änderung mit sich bringt („…: 11 Sekunden, intensiv“) – so bleibt es eine
+ * Ansage je Tipp. [announce] = false nimmt die Live-Region weg, solange ein anderer Knoten die
+ * Änderung schon ansagt (Muster-Editor: Phase entfernt).
  */
 @Composable
 fun Stepper(
@@ -61,6 +64,8 @@ fun Stepper(
     vertical: Dp = Dimens.CardPadding,
     spokenLabel: String = label,
     @PluralsRes valueUnit: Int? = null,
+    spokenSuffix: String? = null,
+    announce: Boolean = true,
 ) {
     // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
     // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
@@ -77,7 +82,8 @@ fun Stepper(
         // statt „+“ aus der Zeile zu drücken.
         StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
         val spokenValue = if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
-        StepButtons(spokenLabel, stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue), value, range, onChange)
+        val valueDescription = stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue).let { if (spokenSuffix != null) "$it, $spokenSuffix" else it }
+        StepButtons(spokenLabel, valueDescription, value, range, onChange, announce)
     }
 }
 
@@ -103,6 +109,7 @@ private fun StepButtons(
     value: Int,
     range: IntRange,
     onChange: (Int) -> Unit,
+    announce: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val decreaseLabel = stringResource(R.string.adjust_decrease)
@@ -135,7 +142,7 @@ private fun StepButtons(
                 .widthIn(min = Sizes.StepperValueMinWidth)
                 .semantics {
                     contentDescription = valueDescription
-                    liveRegion = LiveRegionMode.Polite
+                    if (announce) liveRegion = LiveRegionMode.Polite
                 },
         )
         AppIconButton(

@@ -18,6 +18,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -178,6 +179,28 @@ class BreathCurveEditorTest {
         curve().assert(SemanticsMatcher.keyNotDefined(CurveBandLabel))
         curve().assert(SemanticsMatcher.keyNotDefined(CurveDragPhase))
         curve().assert(SemanticsMatcher.expectValue(CurveAxisSeconds, 26))
+    }
+
+    @Test
+    fun `Senkrechtes Wischen auf einem Griff aendert nichts, ein Tipp waehlt ihn`() {
+        show(BOX)
+        val layout = layoutNow()
+        val handle = curveHandles(BOX, layout).single { it.index == 2 }
+        curve().performTouchInput {
+            down(handle.center)
+            // Leicht schräg nach oben, wie beim Scrollen.
+            repeat(6) { moveBy(Offset(layout.pxPerSecond / 16f, -layout.touchRadius / 2f)) }
+            up()
+        }
+        compose.waitForIdle()
+        assertTrue(calls.isEmpty())
+        assertTrue(selections.isEmpty())
+        assertEquals(0, ticks)
+
+        curve().performTouchInput { click(handle.center) }
+        compose.waitForIdle()
+        assertTrue(calls.isEmpty())
+        assertEquals(listOf<Int?>(2), selections)
     }
 
     @Test
@@ -374,7 +397,16 @@ class BreathCurveEditorTest {
                 curveHandles(p, layout).forEach { h ->
                     assertFalse("Beschriftung $a über Griff ${h.index}", a.overlaps(Rect(h.center, layout.handle / 2f)))
                 }
-                assertTrue("in der Fläche über dem Band", a.left >= 0f && a.right <= width && a.top >= 0f && a.bottom <= layout.bandTop)
+                assertTrue("in der Fläche über dem Band, mit Innenrand", a.left >= layout.gapSmall && a.right <= width - layout.gapSmall && a.top >= 0f && a.bottom <= layout.bandTop)
+                // Nicht auf den Linien „voll“/„leer“ und mit Abstand zu ihren Wörtern.
+                listOf(layout.yFull, layout.yEmpty).forEach { y -> assertFalse("Beschriftung $a auf einer Linie", a.top <= y + layout.hairline && a.bottom >= y - layout.hairline) }
+                val fullWord = layout.measurer.measure(layout.fullLabel, layout.smallStyle).size
+                val emptyWord = layout.measurer.measure(layout.emptyLabel, layout.smallStyle).size
+                val words = listOf(
+                    Rect(Offset(layout.gapSmall, layout.yFull - layout.hairline - fullWord.height), Size(fullWord.width.toFloat(), fullWord.height.toFloat())),
+                    Rect(Offset(layout.gapSmall, layout.yEmpty + layout.hairline), Size(emptyWord.width.toFloat(), emptyWord.height.toFloat())),
+                )
+                words.forEach { word -> assertFalse("Beschriftung $a klebt an $word", a.overlaps(word.inflate(layout.gapTiny))) }
             }
             if (p == BOX) assertEquals("Box: alle vier", 4, placed.size)
             sel?.let { assertTrue("die gewählte Phase ist beschriftet", spots[it] != null) }

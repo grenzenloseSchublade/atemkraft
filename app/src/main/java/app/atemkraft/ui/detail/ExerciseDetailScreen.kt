@@ -127,14 +127,17 @@ fun ExerciseDetailScreen(
         }
     }
 
-    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore). Generierte
-    // Muster ändern ihre Phasen nur im Editor (Leitplanken): Von alten Anpassungen gilt dort
-    // nur noch die Dauer.
+    // Gespeicherte und eigene Muster ändern ihre Phasen nur im Editor (MUSTER-10); das Muster des
+    // Tages behält seine Phasen-Stepper wie in v1.6 (nicht gespeichert, siehe persistIntervals).
+    val phasesInEditor = exercise.generated && exercise.id != RandomPatternGenerator.ID
+
+    // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore). Bei
+    // gespeicherten und eigenen Mustern gilt von alten Anpassungen nur noch die Dauer.
     // Schlüssel auch [adjust]: Ein neu begonnener Zustand (Muster im Editor geändert) prüft die
     // gespeicherte Anpassung erneut.
     LaunchedEffect(savedIntervals, adjust) {
         savedIntervals?.let { stored ->
-            adjust.applyStored(if (exercise.generated) IntervalOverrides(duration = stored.duration) else stored)
+            adjust.applyStored(if (phasesInEditor) IntervalOverrides(duration = stored.duration) else stored)
         }
     }
 
@@ -318,21 +321,21 @@ fun ExerciseDetailScreen(
                             adjust.duration = it
                             persistAdjustments()
                         },
-                        // Generierte Muster: nur die Dauer – Phasen ändert der Stift (Editor), sonst
-                        // ließen die weiteren Grenzen der Detailseite die Leitplanken hinter sich.
-                        inhale = defaults.inhale?.takeUnless { exercise.generated }?.let { default ->
+                        // Gespeicherte und eigene Muster: nur die Dauer – Phasen ändert der Stift
+                        // (Editor), sonst überstimmten Anpassungen die gespeicherte Folge.
+                        inhale = defaults.inhale?.takeUnless { phasesInEditor }?.let { default ->
                             PhaseAdjust(adjust.inhale ?: default, default, AdjustLimits.INHALE_S) {
                                 adjust.inhale = it
                                 persistAdjustments()
                             }
                         },
-                        hold = defaults.hold?.takeUnless { exercise.generated }?.let { default ->
+                        hold = defaults.hold?.takeUnless { phasesInEditor }?.let { default ->
                             PhaseAdjust(adjust.hold ?: default, default, AdjustLimits.HOLD_S) {
                                 adjust.hold = it
                                 persistAdjustments()
                             }
                         },
-                        exhale = defaults.exhale?.takeUnless { exercise.generated }?.let { default ->
+                        exhale = defaults.exhale?.takeUnless { phasesInEditor }?.let { default ->
                             PhaseAdjust(adjust.exhale ?: default, default, AdjustLimits.EXHALE_S) {
                                 adjust.exhale = it
                                 persistAdjustments()

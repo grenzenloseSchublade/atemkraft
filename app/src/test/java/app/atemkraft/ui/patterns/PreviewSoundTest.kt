@@ -56,9 +56,11 @@ class PreviewSoundTest {
     private var shown by mutableStateOf(true)
     private var hiddenCalls = 0
 
-    private val phases = listOf(
-        PhaseAudio(PhaseType.INHALE, 4_000L, open = false),
-        PhaseAudio(PhaseType.EXHALE, 6_000L, open = false),
+    private var phases by mutableStateOf(
+        listOf(
+            PhaseAudio(PhaseType.INHALE, 4_000L, open = false),
+            PhaseAudio(PhaseType.EXHALE, 6_000L, open = false),
+        ),
     )
 
     private val switch get() = compose.onNodeWithContentDescription(app.getString(R.string.cd_preview_sound))
@@ -70,7 +72,8 @@ class PreviewSoundTest {
                 AtemkraftTheme {
                     if (shown) {
                         val sound = rememberPreviewSound(settings, onHide = { hiddenCalls++ }, output = { output })
-                        PreviewSoundEffect(sound, playing, index) { phases[index % phases.size] }
+                        val current = phases[index % phases.size]
+                        PreviewSoundEffect(sound, playing, index, phaseKind = current.type, revision = phases) { current }
                         PreviewSoundSwitch(sound)
                     }
                 }
@@ -142,6 +145,30 @@ class PreviewSoundTest {
         index = 2
         compose.waitForIdle()
         assertEquals(listOf("cue INHALE"), output.sounds)
+    }
+
+    @Test
+    fun `Folge aendert sich bei gleichem Index - Ton folgt der neuen Phase`() {
+        playing = true
+        compose.waitForIdle()
+        // Andere Art an derselben Stelle (Phase davor entfernt): Wechselton der neuen Phase.
+        phases = listOf(PhaseAudio(PhaseType.EXHALE, 6_000L, open = false), PhaseAudio(PhaseType.INHALE, 4_000L, open = false))
+        compose.waitForIdle()
+        assertEquals(listOf("cue INHALE", "cue EXHALE"), output.sounds)
+        // Nur die Dauer geändert: kein neuer Wechselton.
+        phases = listOf(PhaseAudio(PhaseType.EXHALE, 7_000L, open = false), PhaseAudio(PhaseType.INHALE, 4_000L, open = false))
+        compose.waitForIdle()
+        assertEquals(listOf("cue INHALE", "cue EXHALE"), output.sounds)
+    }
+
+    @Test
+    fun `Dauerton folgt einer geaenderten Folge mit neuer Dauer`() {
+        settings = CueSettings(soundMode = SoundMode.CONTINUOUS)
+        playing = true
+        compose.waitForIdle()
+        phases = listOf(PhaseAudio(PhaseType.HOLD_FULL, 2_000L, open = false), PhaseAudio(PhaseType.EXHALE, 6_000L, open = false))
+        compose.waitForIdle()
+        assertEquals(listOf("continuous INHALE 4000", "continuous HOLD_FULL 2000"), output.sounds)
     }
 
     @Test

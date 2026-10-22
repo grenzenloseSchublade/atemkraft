@@ -194,8 +194,8 @@ class PatternEditorFlowTest {
 
         assertEquals("EigeneRoute > DetailRoute", step { back().performClick() })
         rule.onNodeWithText("Eigenes Muster 4·1·7").assertIsDisplayed()
-        rule.onAllNodesWithText("Ausatmen 7\u00A0s", substring = true).assertCountEquals(2)
-        rule.onAllNodesWithText("Ausatmen 6\u00A0s", substring = true).assertCountEquals(0)
+        rule.onAllNodesWithText("Ausatmen\u00A07\u00A0s", substring = true).assertCountEquals(2)
+        rule.onAllNodesWithText("Ausatmen\u00A06\u00A0s", substring = true).assertCountEquals(0)
         rule.onNodeWithText("Eigenes Muster 4·1·6").assertDoesNotExist()
     }
 

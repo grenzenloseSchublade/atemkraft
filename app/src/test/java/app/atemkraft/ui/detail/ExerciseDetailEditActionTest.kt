@@ -34,8 +34,9 @@ import java.time.LocalDate
 
 /**
  * Einstieg in den Muster-Editor auf der Detailseite: Der Stift sitzt nur bei generierten Mustern
- * im Kopf (Wortlaut nach Herkunft), eingebaute Übungen behalten ihren Slot. Generierte Muster
- * bieten nur die Dauer an, ihre Phasen ändert man im Editor (Leitplanken, Nutzer 2026-10-22).
+ * im Kopf (Wortlaut nach Herkunft), eingebaute Übungen behalten ihren Slot. Gespeicherte und
+ * eigene Muster bieten nur die Dauer an, ihre Phasen ändert man im Editor (Nutzer 2026-10-22);
+ * das Muster des Tages behält seine Phasen-Stepper.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -127,7 +128,15 @@ class ExerciseDetailEditActionTest {
     }
 
     @Test
-    fun `Generierte Muster bieten nur die Dauer an, keine Phasen-Stepper`() {
+    fun `Muster des Tages behaelt Phasen anpassen wie in v1_6`() {
+        show { Detail(daily) }
+        compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
+        compose.onNodeWithText(app.getString(R.string.adjust_inhale)).assertExists()
+        compose.onNodeWithText(app.getString(R.string.adjust_exhale)).assertExists()
+    }
+
+    @Test
+    fun `Gespeicherte Muster bieten nur die Dauer an, keine Phasen-Stepper`() {
         show { Detail(saved) }
         compose.onNodeWithText(app.getString(R.string.adjust_minutes)).assertExists()
         compose.onNodeWithText(app.getString(R.string.adjust_intervals)).assertDoesNotExist()

@@ -22,7 +22,8 @@ import org.robolectric.annotation.Config
  * ist eine fehlerhafte Migration nicht zu retten: Das Logbuch muss jeden Versionssprung überstehen.
  *
  * 2.json stammt aus v1.3.1 (letzter Stand vor „Meine Muster“), 3.json aus v1.6.8 (letzter Stand
- * vor dem Muster-Editor), 4.json erzeugt der aktuelle Build.
+ * vor dem Muster-Editor), 4.json und 5.json (gleiches Schema, nur Ausgleich früher
+ * Entwicklungsstände von v4) erzeugt der aktuelle Build.
  * Schema v1 gab es nur in v0.2, das nie öffentlich war; dafür gibt es keinen Fall.
  * Eigene [Application], damit der App-Start nicht nebenher die echte Datenbank öffnet.
  */
@@ -239,6 +240,66 @@ class DatabaseMigrationTest {
             assertEquals(listOf("box-4-4-4-4"), entries.map { it.exerciseId })
         } finally {
             room.close()
+        }
+    }
+
+    @Test
+    fun `fruehes v4 ohne Folge-Spalte bekommt sie mit 5, Muster und Logbuch bleiben`() = runBlocking {
+        // Früher Entwicklungsstand von v4: origin und minutes, aber noch kein phases.
+        helper.createDatabase(DB_NAME, 3).use { db ->
+            db.execSQL("ALTER TABLE saved_patterns ADD COLUMN origin TEXT NOT NULL DEFAULT 'daily'")
+            db.execSQL("ALTER TABLE saved_patterns ADD COLUMN minutes INTEGER")
+            db.execSQL(
+                """
+                INSERT INTO saved_patterns
+                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes)
+                VALUES ('Abend', 4.0, 1.0, 6.0, NULL, 0, 1761000000000, 'custom', 12)
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO log_entries
+                    (exerciseId, exerciseName, family, startedAtEpochMs, durationMs, roundsCompleted, kind)
+                VALUES ('box-4-4-4-4', 'Box-Atmung', 'BALANCE', 1700000000000, 240000, 15, 'BREATHING')
+                """.trimIndent(),
+            )
+            db.execSQL("PRAGMA user_version = 4")
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 5, true, *AtemkraftDatabase.MIGRATIONS).use { db ->
+            db.query("SELECT name, origin, minutes, phases FROM saved_patterns").use { c ->
+                c.moveToFirst()
+                assertEquals("Abend", c.getString(0))
+                assertEquals("custom", c.getString(1))
+                assertEquals(12, c.getInt(2))
+                assertTrue(c.isNull(3))
+            }
+        }
+        val room = openWithAppBuilder()
+        try {
+            assertEquals(listOf("box-4-4-4-4"), room.logbookDao().all().first().map { it.exerciseId })
+            assertEquals(listOf("Abend"), room.savedPatternDao().snapshot().map { it.name })
+        } finally {
+            room.close()
+        }
+    }
+
+    @Test
+    fun `4 mit Folge-Spalte nach 5 aendert nichts`() {
+        helper.createDatabase(DB_NAME, 4).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO saved_patterns
+                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
+                VALUES ('Zwölf', 8.0, 4.0, 10.0, 2.0, 0, 1761000000000, 'custom', 10, '$TWELVE_PHASES')
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, 5, true, *AtemkraftDatabase.MIGRATIONS).use { db ->
+            db.query("SELECT phases FROM saved_patterns").use { c ->
+                c.moveToFirst()
+                assertEquals(TWELVE_PHASES, c.getString(0))
+            }
         }
     }
 

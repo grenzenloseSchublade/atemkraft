@@ -44,8 +44,16 @@ data class SavedPattern(
     val origin: PatternOrigin = PatternOrigin.SAVED_DAILY,
     val minutes: Int? = null,
     val pattern: FreePattern = spec.toFreePattern(),
+    val freeSequence: Boolean = false,
 ) {
     val activating: Boolean get() = spec.activating
+
+    /**
+     * Die kurze Musterzeile für Karten: bei einer freien Folge die Folge selbst ([FreePattern.hint]),
+     * nicht deren Vier-Felder-Zusammenfassung [spec] – die erfände Phasen, die es nicht gibt.
+     */
+    val patternLine: String
+        get() = if (freeSequence) pattern.hint() else RandomPatternGenerator.hintFor(spec)
 }
 
 /**
@@ -359,6 +367,7 @@ class SavedPatternsRepository(
             origin = origin,
             minutes = minutes,
             pattern = free ?: spec.toFreePattern(),
+            freeSequence = free != null,
         )
     }
 

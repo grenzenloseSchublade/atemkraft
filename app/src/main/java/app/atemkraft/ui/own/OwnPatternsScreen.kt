@@ -128,7 +128,7 @@ private fun SavedPatternCard(
     onDelete: () -> Unit,
 ) {
     val name = pattern.exercise.name
-    PatternCard(exercise = pattern.exercise, spec = pattern.spec, onClick = onClick) {
+    PatternCard(exercise = pattern.exercise, patternLine = pattern.patternLine, onClick = onClick) {
         ConfirmIconButton(
             name = name,
             description = stringResource(R.string.cd_pattern_delete, name),

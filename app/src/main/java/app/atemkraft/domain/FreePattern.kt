@@ -17,11 +17,13 @@ enum class FreePatternProblem { TOO_FEW_PHASES, TOO_MANY_PHASES, SECONDS_OUT_OF_
 
 /**
  * Warum ein frei gestaltetes Muster als intensiv gilt ([FreePattern.intensityReasons]); [text] ist
- * die Begründung in Worten für Hinweiskarte und Sicherheitshinweis.
+ * die Begründung in Worten für Hinweiskarte und Sicherheitshinweis. Die Halte-Gründe nennen den
+ * Füllstand, nicht die Reihenfolge: Eine Pause zwischen zwei Stufen (Viloma) steht nach einem
+ * Einatmen, kann aber mit eher leerer Lunge sein.
  */
 enum class IntensityReason(val text: String) {
-    LONG_HOLD_FULL("Halten nach dem Einatmen über ${FreePattern.INTENSE_HOLD_FULL_SECONDS} s"),
-    LONG_HOLD_EMPTY("Halten nach dem Ausatmen über ${FreePattern.INTENSE_HOLD_EMPTY_SECONDS} s"),
+    LONG_HOLD_FULL("Halten mit eher voller Lunge über ${FreePattern.INTENSE_HOLD_FULL_SECONDS} s am Stück"),
+    LONG_HOLD_EMPTY("Halten mit eher leerer Lunge über ${FreePattern.INTENSE_HOLD_EMPTY_SECONDS} s am Stück"),
     FAST_BREATHING("mehr als ${FreePattern.INTENSE_BREATHS_PER_MINUTE} Atemzüge pro Minute"),
 }
 
@@ -61,34 +63,57 @@ data class FreePattern(val phases: List<FreePhase>) {
     fun isValid(): Boolean = validate().isEmpty()
 
     /**
-     * Füllstand der Lunge je Phase von Anfang bis Ende (0 = leer, 1 = voll), wie `levels()` im
-     * Design „Frei gestalten“: Beginnt die Folge (nach etwaigem Halten) mit Aus, startet sie voll,
-     * sonst leer. Ein Ein steigt um seinen Anteil am restlichen Weg bis voll – geteilt durch die
-     * Zahl der Ein bis zum nächsten Aus (Halten dazwischen zählt nicht) –, ein Aus fällt
-     * entsprechend bis leer. Das letzte Ein eines Laufs endet also genau bei voll, das letzte Aus
-     * genau bei leer. Halten behält den Füllstand.
+     * Füllstand der Lunge je Phase (0 = leer, 1 = voll), wie `levels()` im Design „Frei gestalten“,
+     * aber zyklisch betrachtet – die Folge wiederholt sich ja: Ein Ein steigt um seinen Anteil am
+     * restlichen Weg bis voll – geteilt durch die Zahl der Ein bis zum nächsten Aus (Halten
+     * dazwischen zählt nicht) –, ein Aus fällt entsprechend bis leer. Das letzte Ein eines Laufs
+     * endet also genau bei voll, das letzte Aus genau bei leer; Halten behält den Füllstand.
+     *
+     * Ein Lauf darf über das Ende der Folge reichen: Bei „Ein 4 · Aus 6 · Ein 4“ sind das letzte
+     * und das erste Ein zwei Stufen eines Atemzugs (0 → ½ am Ende, ½ → 1 am Anfang). So springt der
+     * Füllstand beim Wiederholen nie ([cycleOrder]). Beginnt die Folge mit einem Lauf, startet sie
+     * leer (Ein) bzw. voll (Aus) wie im Design.
      */
     fun levels(): List<BreathLevel> {
-        val first = phases.firstOrNull { it.type != FreePhaseType.HOLD }?.type
-        var level = if (first == FreePhaseType.OUT) 1.0 else 0.0
-        return phases.mapIndexed { index, phase ->
+        if (phases.isEmpty()) return emptyList()
+        val order = cycleOrder()
+        val result = arrayOfNulls<BreathLevel>(phases.size)
+        var level = if (phases[order.first()].type == FreePhaseType.OUT) 1.0 else 0.0
+        order.forEachIndexed { position, index ->
+            val phase = phases[index]
             val start = level
             if (phase.type != FreePhaseType.HOLD) {
-                val remaining = runLength(index)
+                val remaining = runLength(order, position)
                 val target = if (phase.type == FreePhaseType.IN) 1.0 else 0.0
                 // Das letzte Glied des Laufs landet exakt am Ziel, ohne Rundungsrest.
                 level = if (remaining == 1) target else level + (target - level) / remaining
             }
-            BreathLevel(start.toFloat(), level.toFloat())
+            result[index] = BreathLevel(start.toFloat(), level.toFloat())
         }
+        return result.map { checkNotNull(it) }
     }
 
-    /** Wie viele Phasen vom Typ der Phase [index] ab dort noch folgen, bis der Gegentyp kommt. */
-    private fun runLength(index: Int): Int {
-        val type = phases[index].type
+    /**
+     * Die Phasen-Indizes in der Reihenfolge eines Durchlaufs, zyklisch so gedreht, dass sie mit dem
+     * Anfang eines Laufs beginnen: mit der ersten Ein- oder Aus-Phase, vor der (über das Ende der
+     * Folge hinweg, Halten übersprungen) der Gegentyp steht. Ein Lauf oder ein Block aus Halten
+     * reicht in dieser Reihenfolge nie über ihr Ende. Bei Folgen, deren erstes und letztes Ein/Aus
+     * verschieden sind, ist das die Folge selbst ab dem ersten Ein/Aus.
+     */
+    fun cycleOrder(): List<Int> {
+        val breaths = phases.indices.filter { phases[it].type != FreePhaseType.HOLD }
+        val start = breaths.indices.firstOrNull { k ->
+            phases[breaths[k]].type != phases[breaths[(k - 1 + breaths.size) % breaths.size]].type
+        }?.let { breaths[it] } ?: breaths.firstOrNull() ?: 0
+        return phases.indices.map { (start + it) % phases.size }
+    }
+
+    /** Wie viele Phasen vom Typ der Phase an [position] in [order] ab dort noch folgen, bis der Gegentyp kommt. */
+    private fun runLength(order: List<Int>, position: Int): Int {
+        val type = phases[order[position]].type
         var count = 0
-        for (m in index until phases.size) {
-            when (phases[m].type) {
+        for (m in position until order.size) {
+            when (phases[order[m]].type) {
                 type -> count++
                 FreePhaseType.HOLD -> Unit
                 else -> return count
@@ -139,7 +164,7 @@ data class FreePattern(val phases: List<FreePhase>) {
      * Muster in Worten, z. B. „Einatmen 4 s · Halten voll 1 s · Ausatmen 6 s“, mit geschütztem
      * Leerzeichen vor „s“ (TEXT-10) und [DOT_SEPARATOR].
      */
-    fun hint(): String = phases.indices.joinToString(DOT_SEPARATOR) { "${labelAt(it)} ${phases[it].seconds} s" }
+    fun hint(): String = phases.indices.joinToString(DOT_SEPARATOR) { "${labelAt(it)} ${phases[it].seconds} s" }
 
     /** Beschreibung für TalkBack, z. B. „Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“. */
     fun spokenDescription(): String = phases.indices.joinToString(", ") {
@@ -149,14 +174,16 @@ data class FreePattern(val phases: List<FreePhase>) {
 
     /**
      * Zahl der Atemzüge je Durchlauf: jeder Lauf von Ein (Halten dazwischen zählt nicht) ist ein
-     * Atemzug, wie im Design.
+     * Atemzug, wie im Design – zyklisch gezählt ([cycleOrder]), damit ein Lauf über das Ende der
+     * Folge nicht doppelt zählt.
      */
     fun breathCount(): Int {
         var runs = 0
         var previous: FreePhaseType? = null
-        phases.forEach { phase ->
-            if (phase.type == FreePhaseType.IN && previous != FreePhaseType.IN) runs++
-            if (phase.type != FreePhaseType.HOLD) previous = phase.type
+        cycleOrder().forEach { index ->
+            val type = phases[index].type
+            if (type == FreePhaseType.IN && previous != FreePhaseType.IN) runs++
+            if (type != FreePhaseType.HOLD) previous = type
         }
         return runs
     }
@@ -172,23 +199,31 @@ data class FreePattern(val phases: List<FreePhase>) {
 
     /**
      * Warum das Muster als intensiv gilt, in fester Reihenfolge; leer heißt nicht intensiv.
-     * Wie im Design: Ein Halten zählt als „nach dem Einatmen“, wenn die Lunge mindestens halb
-     * voll ist, sonst als „nach dem Ausatmen“. Intensiv ist Halten voll über 10 s, Halten leer
-     * über 8 s oder mehr als 20 Atemzüge pro Minute (ganzzahlig verglichen, ohne Rundung).
+     * Gezählt wird, wie lange man am Stück nicht atmet: Halten direkt hintereinander – auch über
+     * das Ende der Folge zum Anfang ([cycleOrder]) – zählen zusammen. Wie im Design gehört ein
+     * Halten zur oberen Schwelle, wenn die Lunge mindestens halb voll ist, sonst zur unteren.
+     * Intensiv ist Halten voll über 10 s, Halten leer über 8 s oder mehr als 20 Atemzüge pro
+     * Minute (ganzzahlig verglichen, ohne Rundung).
      */
     fun intensityReasons(): List<IntensityReason> {
         val levels = levels()
         var longestFull = 0
         var longestEmpty = 0
-        phases.forEachIndexed { i, phase ->
-            if (phase.type == FreePhaseType.HOLD) {
-                if (levels[i].from >= HALF) {
-                    longestFull = maxOf(longestFull, phase.seconds)
-                } else {
-                    longestEmpty = maxOf(longestEmpty, phase.seconds)
-                }
+        var block = 0
+        var blockFull = false
+        fun endBlock() {
+            if (blockFull) longestFull = maxOf(longestFull, block) else longestEmpty = maxOf(longestEmpty, block)
+            block = 0
+        }
+        cycleOrder().forEach { i ->
+            if (phases[i].type == FreePhaseType.HOLD) {
+                if (block == 0) blockFull = levels[i].from >= HALF
+                block += phases[i].seconds
+            } else if (block > 0) {
+                endBlock()
             }
         }
+        if (block > 0) endBlock()
         return buildList {
             if (longestFull > INTENSE_HOLD_FULL_SECONDS) add(IntensityReason.LONG_HOLD_FULL)
             if (longestEmpty > INTENSE_HOLD_EMPTY_SECONDS) add(IntensityReason.LONG_HOLD_EMPTY)
@@ -204,13 +239,15 @@ data class FreePattern(val phases: List<FreePhase>) {
 
     /**
      * Text der Hinweiskarte im Editor, `null` wenn nicht intensiv: „Intensiv: <Gründe>. Vor dem
-     * Start erscheint ein Sicherheitshinweis. Bei Schwindel abbrechen und normal weiteratmen.“
+     * Start erscheint ein Sicherheitshinweis, solange er in den Einstellungen nicht abgeschaltet
+     * ist. Bei Schwindel abbrechen und normal weiteratmen.“ – ehrlich, denn wer ihn bestätigt und
+     * dann abgeschaltet hat, sieht ihn nicht mehr.
      */
     fun intensityNote(): String? {
         val reasons = intensityReasons()
         if (reasons.isEmpty()) return null
         return "Intensiv: ${reasons.joinToString(", ") { it.text }}. Vor dem Start erscheint ein " +
-            "Sicherheitshinweis wie bei Wim Hof. $DIZZINESS_SENTENCE"
+            "Sicherheitshinweis, solange er in den Einstellungen nicht abgeschaltet ist. $DIZZINESS_SENTENCE"
     }
 
     /** Feste Länge der Zeitachse der Atemkurve: max(12, gerade Zahl ≥ Gesamtdauer + 6) Sekunden. */

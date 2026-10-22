@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -63,7 +66,7 @@ fun StartSplitButton(
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {
         Button(onClick = onStart, modifier = Modifier.weight(1f).heightIn(min = Sizes.ButtonHeight).focusRequester(startFocus)) {
-            Text(label)
+            StartLabel(label)
         }
         AnimatedVisibility(
             visible = resetVisible,
@@ -98,6 +101,25 @@ fun StartSplitButton(
         }
     }
 }
+
+/**
+ * Beschriftung „Starten · ca. 5 min“: passt sie nicht in eine Zeile (großer Schrift, Reset
+ * daneben), stehen Start und Dauer ohne Punkt in zwei Zeilen – keine Zeile endet auf „·“
+ * (LAYOUT-03, wie die Status-Zeilen der Abschnittsköpfe).
+ */
+@Composable
+private fun StartLabel(label: String) {
+    val style = LocalTextStyle.current
+    val measurer = rememberTextMeasurer()
+    BoxWithConstraints(contentAlignment = Alignment.Center) {
+        val fits = measurer.measure(label, style, softWrap = false, maxLines = 1).size.width <= constraints.maxWidth
+        val shown = if (fits) label else label.split(LABEL_SEPARATOR).joinToString("\n")
+        Text(shown, textAlign = TextAlign.Center)
+    }
+}
+
+/** Trennpunkt zwischen Start und Dauer, mit (auch geschützten) Leerzeichen drumherum. */
+private val LABEL_SEPARATOR = Regex("[\\s\u00A0]*·[\\s\u00A0]*")
 
 @Preview
 @Composable

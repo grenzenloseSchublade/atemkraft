@@ -30,7 +30,6 @@ import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
@@ -211,7 +210,7 @@ private fun DailyPatternCard(
     onClick: () -> Unit,
     onSavedChange: (Boolean) -> Unit,
 ) {
-    PatternCard(exercise = daily.exercise, spec = daily.spec, onClick = onClick) {
+    PatternCard(exercise = daily.exercise, patternLine = RandomPatternGenerator.hintFor(daily.spec), onClick = onClick) {
         // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Meine Muster“ – der
         // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
         // erneutes Tippen nimmt das Muster wieder heraus.
@@ -239,12 +238,13 @@ private fun DailyPatternCard(
  * [action] ist die eine weitere Aktion (KOMP-02) und liegt als Overlay in der Kartenecke statt
  * in der Titelzeile: Die volle 48-dp-Tippfläche liegt über dem Karten-Padding, die Karte wird
  * nicht höher als ihr Text. Der Text hält rechts die Breite der Tippfläche frei, damit nichts
- * darunter liegt.
+ * darunter liegt. [patternLine] ist die kurze Musterzeile (Muster des Tages aus seinen vier
+ * Feldern, eigene Muster ihre Folge); der Chip zeigt „intensiv“, wenn die Übung `caution` trägt.
  */
 @Composable
 fun PatternCard(
     exercise: Exercise,
-    spec: PatternSpec,
+    patternLine: String,
     onClick: () -> Unit,
     action: @Composable () -> Unit,
 ) {
@@ -267,13 +267,14 @@ fun PatternCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 ) {
-                    CharacterChip(intense = false, activating = exercise.activating)
+                    // Ein eigenes intensives Muster sieht schon in der Liste so aus wie auf der Detailseite.
+                    CharacterChip(intense = exercise.caution, activating = exercise.activating)
                 }
                 Spacer(Modifier.height(Dimens.GapTiny))
                 // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
                 // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
                 Text(
-                    text = RandomPatternGenerator.hintFor(spec) + DOT_SEPARATOR +
+                    text = patternLine + DOT_SEPARATOR +
                         stringResource(R.string.duration_approx, exercise.defaultMinutes()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),

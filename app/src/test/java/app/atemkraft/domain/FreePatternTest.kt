@@ -140,6 +140,38 @@ class FreePatternTest {
     }
 
     @Test
+    fun `Halten hintereinander zaehlen zusammen`() {
+        // Dreimal 10 s Halten voll = 30 s am Stück.
+        assertEquals(listOf(IntensityReason.LONG_HOLD_FULL), pattern(IN to 4, HOLD to 10, HOLD to 10, OUT to 4).intensityReasons())
+        assertEquals(listOf(IntensityReason.LONG_HOLD_FULL), pattern(IN to 4, HOLD to 10, HOLD to 10, HOLD to 10, OUT to 4).intensityReasons())
+        // Zweimal 8 s Halten leer = 16 s.
+        assertEquals(listOf(IntensityReason.LONG_HOLD_EMPTY), pattern(OUT to 4, HOLD to 8, HOLD to 8, IN to 4).intensityReasons())
+        // Halten am Ende und am Anfang stoßen beim Wiederholen aneinander: 10 s leer.
+        assertEquals(listOf(IntensityReason.LONG_HOLD_EMPTY), FreePattern.parse("hold:5,in:4,out:4,hold:5")!!.intensityReasons())
+        // Getrennte Halten zählen einzeln.
+        assertTrue(pattern(IN to 4, HOLD to 6, OUT to 4, HOLD to 6).intensityReasons().isEmpty())
+    }
+
+    @Test
+    fun `Lauf ueber das Ende der Folge wird zyklisch geteilt`() {
+        // Ein 4 · Aus 6 · Ein 4: letztes und erstes Ein sind ein Atemzug in zwei Stufen, kein Sprung.
+        val p = pattern(IN to 4, OUT to 6, IN to 4)
+        assertLevels(listOf(0.5 to 1.0, 1.0 to 0.0, 0.0 to 0.5), p.levels())
+        assertEquals(1, p.breathCount())
+        assertEquals(listOf(1, 2, 0), p.cycleOrder())
+        // Ein 1 · Aus 1 · Ein 1 = ein Atemzug in 3 s = 20/min, also nicht intensiv.
+        assertTrue(pattern(IN to 1, OUT to 1, IN to 1).intensityReasons().isEmpty())
+        // Über alle Folgen: Das Ende eines Durchlaufs ist der Anfang des nächsten.
+        listOf(p, pattern(OUT to 3, IN to 4, OUT to 3), pattern(HOLD to 2, IN to 3, OUT to 4, IN to 2, HOLD to 1)).plus(FreePatternTemplates.all.map { it.pattern }).forEach { free ->
+            val levels = free.levels()
+            levels.indices.forEach { i ->
+                val next = levels[(i + 1) % levels.size]
+                assertEquals("$free Phase $i", levels[i].to, next.from, 1e-5f)
+            }
+        }
+    }
+
+    @Test
     fun `Intensitaet Tempo erst ueber 20 Atemzuege pro Minute`() {
         // 3 s je Atemzug = genau 20/min: noch nicht intensiv.
         assertTrue(pattern(IN to 1, OUT to 2).intensityReasons().isEmpty())
@@ -155,7 +187,12 @@ class FreePatternTest {
         // 5 Atemzüge in 30 s = 10/min: nur die Haltegründe.
         assertEquals(listOf(IntensityReason.LONG_HOLD_FULL, IntensityReason.LONG_HOLD_EMPTY), all.intensityReasons())
         val note = all.intensityNote()!!
-        assertTrue(note, note.startsWith("Intensiv: Halten nach dem Einatmen über 10 s, Halten nach dem Ausatmen über 8 s."))
+        assertTrue(
+            note,
+            note.startsWith("Intensiv: Halten mit eher voller Lunge über 10\u00A0s am Stück, Halten mit eher leerer Lunge über 8\u00A0s am Stück."),
+        )
+        // Ehrlich: Der Hinweis lässt sich in den Einstellungen abschalten.
+        assertTrue(note, note.contains("solange er in den Einstellungen nicht abgeschaltet ist"))
         assertTrue(note.endsWith(FreePattern.DIZZINESS_SENTENCE))
         assertNull(template("4·6").intensityNote())
     }
@@ -275,7 +312,8 @@ class FreePatternTest {
     fun `Worte und Ansage`() {
         val p = pattern(IN to 4, HOLD to 1, OUT to 6)
         assertEquals("4·1·6", p.numbers())
-        assertEquals("Einatmen 4\u00A0s${DOT_SEPARATOR}Halten voll 1\u00A0s${DOT_SEPARATOR}Ausatmen 6\u00A0s", p.hint())
+        // Name und Wert bleiben zusammen (geschütztes Leerzeichen), mehrwortige Namen dürfen umbrechen.
+        assertEquals("Einatmen\u00A04\u00A0s${DOT_SEPARATOR}Halten voll\u00A01\u00A0s${DOT_SEPARATOR}Ausatmen\u00A06\u00A0s", p.hint())
         assertEquals("Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden", p.spokenDescription())
     }
 }
