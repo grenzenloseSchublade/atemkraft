@@ -18,6 +18,9 @@ object Sizes {
     /** Sichtbare Mindesthöhe der Auswahl-Chips (M3 32). */
     val ChipHeight = 32.dp
 
+    /** Breite des M3-Switch (SwitchTokens.TrackWidth): Der Hinweis einer `ToggleRow` endet davor. */
+    val SwitchWidth = 52.dp
+
     /** Sichtbarer Kreis von `AppIconButton` und Stepper-Knöpfen (M3 40); Tippfläche bleibt 48. */
     val IconButtonSize = 40.dp
 

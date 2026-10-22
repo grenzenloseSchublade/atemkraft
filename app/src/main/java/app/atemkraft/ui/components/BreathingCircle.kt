@@ -36,7 +36,8 @@ import app.atemkraft.ui.theme.SynthCircleEdge
  * flackern. Bei deaktivierter System-Animation bleibt der Schimmer einfach statisch.
  *
  * Außen eine dünne Spur am maximalen Umfang; [progress] (0..1, Gesamtsitzung) zeichnet darauf
- * einen Cyan-Bogen ab 12 Uhr im Uhrzeigersinn – dieselbe Sprache wie der Zeitring. null = nur Spur.
+ * einen Cyan-Bogen ab 12 Uhr im Uhrzeigersinn – dieselbe Sprache wie der Zeitring. null = nur Spur;
+ * [ring] = false lässt Spur und Bogen ganz weg (ruhige Session), der Kreis bleibt gleich groß.
  * Der Kreis bleibt auch voll eingeatmet knapp innerhalb der Spur, damit der Bogen lesbar ist.
  */
 @Composable
@@ -44,6 +45,7 @@ fun BreathingCircle(
     fraction: Float,
     modifier: Modifier = Modifier,
     progress: Float? = null,
+    ring: Boolean = true,
     content: @Composable () -> Unit = {},
 ) {
     val scale = lerp(MIN_SCALE, MAX_SCALE, fraction.coerceIn(0f, 1f))
@@ -79,20 +81,22 @@ fun BreathingCircle(
                 center = center,
             )
             // Dünne Spur am Außenrand und Fortschrittsbogen der Gesamtsitzung darauf.
-            val stroke = Dimens.SessionRingStroke.toPx()
-            val trackRadius = maxRadius - stroke / 2f
-            drawCircle(color = trackColor, radius = trackRadius, center = center, style = Stroke(stroke))
-            val sweep = (progress ?: 0f).coerceIn(0f, 1f) * FULL_TURN
-            if (sweep > 0f) {
-                drawArc(
-                    color = arcColor,
-                    startAngle = ARC_START,
-                    sweepAngle = sweep,
-                    useCenter = false,
-                    topLeft = center - Offset(trackRadius, trackRadius),
-                    size = Size(trackRadius * 2f, trackRadius * 2f),
-                    style = Stroke(stroke, cap = StrokeCap.Round),
-                )
+            if (ring) {
+                val stroke = Dimens.SessionRingStroke.toPx()
+                val trackRadius = maxRadius - stroke / 2f
+                drawCircle(color = trackColor, radius = trackRadius, center = center, style = Stroke(stroke))
+                val sweep = (progress ?: 0f).coerceIn(0f, 1f) * FULL_TURN
+                if (sweep > 0f) {
+                    drawArc(
+                        color = arcColor,
+                        startAngle = ARC_START,
+                        sweepAngle = sweep,
+                        useCenter = false,
+                        topLeft = center - Offset(trackRadius, trackRadius),
+                        size = Size(trackRadius * 2f, trackRadius * 2f),
+                        style = Stroke(stroke, cap = StrokeCap.Round),
+                    )
+                }
             }
             // Gefüllter, synthwave-lila Kreis, der mit dem Atem wächst/schrumpft.
             drawCircle(

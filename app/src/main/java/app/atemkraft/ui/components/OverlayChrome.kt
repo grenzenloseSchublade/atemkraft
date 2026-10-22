@@ -4,11 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -35,8 +40,9 @@ import app.atemkraft.ui.theme.TERTIARY
 
 /**
  * Geteilter Rahmen der Vollbild-Overlays (Atem-Session + Meditation): Hintergrund-Surface mit
- * safeDrawingPadding, oben Minimieren-Chevron (˅) links und In-Session-Stummschalter rechts,
- * darunter der eigentliche Inhalt. [chromeVisible] = false blendet die Kopfleiste sanft aus
+ * sicherem Rand (safeDrawing plus Systemleisten, auch wenn die Ruhe-Ansicht sie ausblendet –
+ * sonst rückte der Inhalt nach oben, [HideSystemBars]), oben Minimieren-Chevron (˅) links und
+ * In-Session-Stummschalter rechts, darunter der eigentliche Inhalt. [chromeVisible] = false blendet die Kopfleiste sanft aus
  * (Ruhe-Ansicht der Atem-Session, [HideableSlot]); ihr Platz bleibt, der Inhalt springt nicht.
  *
  * Für TalkBack ist das Overlay ein eigener Bereich mit [title] als `paneTitle` (Übungsname bzw.
@@ -57,7 +63,7 @@ fun OverlayChrome(
         modifier = modifier.fillMaxSize().semantics { paneTitle = title },
         color = MaterialTheme.colorScheme.background,
     ) {
-        Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(StableInsets)) {
             HideableSlot(visible = chromeVisible) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -109,3 +115,9 @@ private fun SoundSwitch(muted: Boolean, onToggleMute: () -> Unit) {
         )
     }
 }
+
+/** Rand der Overlays, unabhängig davon, ob die Systemleisten gerade zu sehen sind. */
+private val StableInsets: WindowInsets
+    @OptIn(ExperimentalLayoutApi::class)
+    @Composable
+    get() = WindowInsets.safeDrawing.union(WindowInsets.systemBarsIgnoringVisibility)

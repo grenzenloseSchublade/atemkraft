@@ -185,9 +185,10 @@ fun AppOutlinedButton(
 private const val OUTLINE_DISABLED = 0.12f
 
 /**
- * Schalterzeile (A11Y-03): Die ganze Zeile schaltet um (`Role.Switch`, Name = [label]), der
- * Schalter steht in der Zeile seines Namens, [hint] darunter. Der Switch ist nur Anzeige
- * und steht bündig an der Inhaltskante.
+ * Schalterzeile (A11Y-03): Die ganze Zeile schaltet um (`Role.Switch`, Name = [label]). Der
+ * Schalter steht in der Zeile seines Namens (LAYOUT-07), [hint] darunter in derselben Spalte wie
+ * der Name: Er läuft nie unter den Schalter. Der Switch ist nur Anzeige und steht bündig an der
+ * Inhaltskante.
  */
 @Composable
 fun ToggleRow(
@@ -221,7 +222,7 @@ fun ToggleRow(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(Dimens.GapSmall))
+            Spacer(Modifier.width(SWITCH_GAP))
             Switch(
                 checked = checked,
                 onCheckedChange = null,
@@ -234,10 +235,14 @@ fun ToggleRow(
                 text = hint,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                modifier = Modifier.padding(end = Sizes.SwitchWidth + SWITCH_GAP),
             )
         }
     }
 }
+
+/** Abstand Name ↔ Schalter; der Hinweis hält ihn ebenfalls. */
+private val SWITCH_GAP = Dimens.SectionGap
 
 @Preview
 @Composable

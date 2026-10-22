@@ -63,6 +63,7 @@ import app.atemkraft.cue.tts.VoiceGender
 import app.atemkraft.cue.tts.VoiceQuality
 import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.Refs
+import app.atemkraft.data.SessionDisplay
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.GONG_INTERVAL_CHOICES
 import app.atemkraft.domain.SoundMode
@@ -152,7 +153,8 @@ fun SettingsScreen(
                 }
 
                 // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
-                // Bedeutung (FARBE-07): Wissen 0, Klang 1, Atmen 2, Sitzung 3, Meditation 4, Daten 5.
+                // Bedeutung (FARBE-07): Wissen 0, Klang 1, Atmen 2, Sitzung 3, Während der Atemübung 4,
+                // Meditation 5, Daten 6.
                 // Wissen zuerst: Atemlehre und Glossar sollen nicht unter den Karten verschwinden.
                 KnowledgeCard(onOpenAtemlehre = onOpenAtemlehre, onOpenGlossary = onOpenGlossary)
 
@@ -163,14 +165,10 @@ fun SettingsScreen(
                 AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
 
                 Spacer(Modifier.height(Dimens.ListGap))
-                SessionCard(
-                    state.haptics,
-                    state.showSafetyWarning,
-                    state.showNextPhase,
-                    actions::setHaptics,
-                    actions::setShowSafetyWarning,
-                    actions::setShowNextPhase,
-                )
+                SessionCard(state.haptics, state.showSafetyWarning, actions::setHaptics, actions::setShowSafetyWarning)
+
+                Spacer(Modifier.height(Dimens.ListGap))
+                SessionDisplayCard(state.sessionDisplay, actions)
 
                 Spacer(Modifier.height(Dimens.ListGap))
                 // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
@@ -256,7 +254,7 @@ private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () ->
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(5))
+            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(6))
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_data_hint))
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -446,10 +444,8 @@ private fun AtmenCard(
 private fun SessionCard(
     haptics: Boolean,
     showSafetyWarning: Boolean,
-    showNextPhase: Boolean,
     onToggleHaptics: (Boolean) -> Unit,
     onToggleSafety: (Boolean) -> Unit,
-    onToggleNextPhase: (Boolean) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
@@ -463,11 +459,42 @@ private fun SessionCard(
                 onCheckedChange = onToggleSafety,
                 hint = stringResource(R.string.settings_safety_hint),
             )
+        }
+    }
+}
+
+/** Was die laufende Atem-Session zeigt; alles abschaltbar für eine möglichst ruhige Ansicht. */
+@Composable
+private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+            CardTitle(stringResource(R.string.settings_display_title), color = headingColor(4))
+            Spacer(Modifier.height(Dimens.GapTiny))
+            ToggleRow(
+                label = stringResource(R.string.settings_auto_calm),
+                checked = display.autoCalm,
+                onCheckedChange = actions::setAutoCalm,
+                hint = stringResource(R.string.settings_auto_calm_hint),
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+            ToggleRow(
+                label = stringResource(R.string.settings_progress),
+                checked = display.showProgress,
+                onCheckedChange = actions::setShowProgress,
+                hint = stringResource(R.string.settings_progress_hint),
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+            ToggleRow(
+                label = stringResource(R.string.settings_seconds),
+                checked = display.showSeconds,
+                onCheckedChange = actions::setShowSeconds,
+                hint = stringResource(R.string.settings_seconds_hint),
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
             ToggleRow(
                 label = stringResource(R.string.settings_next_phase),
-                checked = showNextPhase,
-                onCheckedChange = onToggleNextPhase,
+                checked = display.showNextPhase,
+                onCheckedChange = actions::setShowNextPhase,
                 hint = stringResource(R.string.settings_next_phase_hint),
             )
         }
@@ -489,7 +516,7 @@ private fun MeditationCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(4))
+            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(5))
 
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())

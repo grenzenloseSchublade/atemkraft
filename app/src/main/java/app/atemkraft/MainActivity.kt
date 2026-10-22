@@ -65,6 +65,7 @@ import androidx.navigation.toRoute
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
+import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
@@ -145,8 +146,8 @@ private fun AtemkraftApp(
         .collectAsStateWithLifecycle(initialValue = SafetySettings())
     val logEntries by container.logbookRepository.entries
         .collectAsStateWithLifecycle(initialValue = emptyList())
-    val showNextPhase by container.settingsRepository.showNextPhase
-        .collectAsStateWithLifecycle(initialValue = true)
+    val sessionDisplay by container.settingsRepository.sessionDisplay
+        .collectAsStateWithLifecycle(initialValue = SessionDisplay())
     // Hier oben gesammelt (nicht erst im Tab), damit der gespeicherte Zustand beim ersten
     // Öffnen der Situationen schon da ist und „Meine Muster“ nicht sichtbar umspringt.
     val savedPatternsExpanded by container.settingsRepository.savedPatternsExpanded
@@ -458,7 +459,7 @@ private fun AtemkraftApp(
             SessionHost(sessionViewModel.state) { state ->
                 SessionOverlay(
                     state = state,
-                    showNextPhase = showNextPhase,
+                    display = sessionDisplay,
                     onMinimize = { sessionExpanded = false },
                     onToggleMute = sessionViewModel::toggleMute,
                     onTogglePause = {

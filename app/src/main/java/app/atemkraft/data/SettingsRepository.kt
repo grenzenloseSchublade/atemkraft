@@ -46,6 +46,17 @@ data class SafetySettings(
     val acknowledged: Boolean = false,
 )
 
+/**
+ * Was die laufende Atem-Session zeigt (Karte „Während der Atemübung“). [autoCalm] blendet die
+ * Bedienelemente nach wenigen Sekunden von selbst aus (Ruhe-Ansicht, SessionOverlay).
+ */
+data class SessionDisplay(
+    val showNextPhase: Boolean = true,
+    val showProgress: Boolean = true,
+    val showSeconds: Boolean = true,
+    val autoCalm: Boolean = true,
+)
+
 /** Vom Nutzer angepasste Session-Werte einer Übung: Dauer (Minuten bzw. Runden) und
  *  Phasenlängen in Sekunden; null = nicht angepasst bzw. Phase nicht vorhanden. */
 data class IntervalOverrides(
@@ -123,6 +134,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val SHOW_SAFETY = booleanPreferencesKey("show_safety_warning")
         val SAFETY_ACK = booleanPreferencesKey("safety_acknowledged")
         val SHOW_NEXT = booleanPreferencesKey("show_next_phase")
+        val SHOW_PROGRESS = booleanPreferencesKey("show_session_progress")
+        val SHOW_SECONDS = booleanPreferencesKey("show_session_seconds")
+        val AUTO_CALM = booleanPreferencesKey("session_auto_calm")
         val MED_MODE = stringPreferencesKey("med_mode_name")
         val MED_MODE_ORDINAL = intPreferencesKey("med_mode")
         val MED_MINUTES = intPreferencesKey("med_minutes")
@@ -240,8 +254,14 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         store.edit { it[Keys.MED_GONG_INTERVAL] = minutes.coerceIn(GONG_INTERVAL_MIN_MINUTES, GONG_INTERVAL_MAX_MINUTES) }
     }
 
-    val showNextPhase: Flow<Boolean> = data.map { prefs ->
-        prefs[Keys.SHOW_NEXT] ?: true
+    val sessionDisplay: Flow<SessionDisplay> = data.map { prefs ->
+        val defaults = SessionDisplay()
+        SessionDisplay(
+            showNextPhase = prefs[Keys.SHOW_NEXT] ?: defaults.showNextPhase,
+            showProgress = prefs[Keys.SHOW_PROGRESS] ?: defaults.showProgress,
+            showSeconds = prefs[Keys.SHOW_SECONDS] ?: defaults.showSeconds,
+            autoCalm = prefs[Keys.AUTO_CALM] ?: defaults.autoCalm,
+        )
     }
 
     val cueSettings: Flow<CueSettings> = data.map { prefs ->
@@ -290,6 +310,18 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setShowNextPhase(enabled: Boolean) {
         store.edit { it[Keys.SHOW_NEXT] = enabled }
+    }
+
+    suspend fun setShowProgress(enabled: Boolean) {
+        store.edit { it[Keys.SHOW_PROGRESS] = enabled }
+    }
+
+    suspend fun setShowSeconds(enabled: Boolean) {
+        store.edit { it[Keys.SHOW_SECONDS] = enabled }
+    }
+
+    suspend fun setAutoCalm(enabled: Boolean) {
+        store.edit { it[Keys.AUTO_CALM] = enabled }
     }
 
     // Angepasste Phasenlängen je Übung (dynamische Keys pro Übungs-Id). Das Muster des Tages

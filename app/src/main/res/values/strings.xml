@@ -144,7 +144,13 @@
     </plurals>
     <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe unter „Begriffe erklärt“. Bei Erkrankungen vorher ärztlich abklären.</string>
     <string name="settings_next_phase">Nächste Phase anzeigen</string>
-    <string name="settings_next_phase_hint">Blendet während der Atemübung dezent die kommende Phase ein – hilfreich für den Anfang.</string>
+    <string name="settings_next_phase_hint">Zeigt dezent die kommende Phase – hilfreich für den Anfang.</string>
+    <string name="settings_auto_calm">Automatisch ausblenden</string>
+    <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück. Ein Tipp neben den Kreis holt sie wieder.</string>
+    <string name="settings_progress">Fortschrittsring</string>
+    <string name="settings_progress_hint">Zeigt am Rand des Kreises, wie weit die Übung ist.</string>
+    <string name="settings_seconds">Sekunden im Kreis</string>
+    <string name="settings_seconds_hint">Zählt jede Phase mit. Aus: nur das Phasenwort, den Takt gibt der Kreis.</string>
     <string name="settings_about">Mit Quellen, aber keine ärztliche Empfehlung.</string>
 
     <!-- Sicherheits-Dialog -->
@@ -276,6 +282,7 @@
     <string name="settings_tone_title">Klang</string>
     <string name="settings_breathing_title">Atmen</string>
     <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
+    <string name="settings_display_title">Während der Atemübung</string>
     <string name="settings_meditation_title">Meditation</string>
     <string name="settings_reset_notice">Einstellungen wurden zurückgesetzt, weil ihre Datei beschädigt war. Logbuch, Muster und geladene Stimmen sind noch da; wähle hier neu, was du anders hattest.</string>
     <string name="settings_data_title">Daten</string>

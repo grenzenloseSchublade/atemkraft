@@ -53,6 +53,7 @@ import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.SavedPattern
+import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
@@ -693,7 +694,6 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
                 volume = ToneVolume.entries.first(),
                 haptics = true,
                 showSafetyWarning = true,
-                showNextPhase = true,
                 gongIntervalMin = 5,
                 gongLong = false,
                 voiceStates = voices,
@@ -814,7 +814,7 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
 
     /**
      * Vollbild-Session in echter Gerätehöhe: Vorbereitung, Phase mit Anleitungszeile, offene Phase,
-     * Pause, Ruhe-Ansicht (Tipp neben den Kreis), Ende mit Bilanz (mit und ohne Runden). Alle Zustände kommen aus den Daten der
+     * Pause, Ruhe-Ansicht (Tipp neben den Kreis, auch ohne Ring und Sekunden), Ende mit Bilanz (mit und ohne Runden). Alle Zustände kommen aus den Daten der
      * Übung ([sessionAt]), so wie das SessionViewModel sie setzt – keine Kombination, die es nicht gibt.
      */
     @Test
@@ -866,6 +866,10 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
         snap("09_session_ruhig", heightDp = device.heightDp, prepare = {
             compose.onNodeWithTag(SHOT).performTouchInput { click(Offset(left + 4.dp.toPx(), centerY)) }
         }) { SessionShot(inhale) }
+        // Ganz ruhig: Ring und Sekunden abgeschaltet, Bedienelemente ausgeblendet – nur Kreis und Wort.
+        snap("09_session_ganz_ruhig", heightDp = device.heightDp, prepare = {
+            compose.onNodeWithTag(SHOT).performTouchInput { click(Offset(left + 4.dp.toPx(), centerY)) }
+        }) { SessionShot(inhale, SessionDisplay(showProgress = false, showSeconds = false, autoCalm = false)) }
     }
 
     /**
@@ -917,9 +921,9 @@ class ScreenshotTest(private val device: Device, private val fontScale: Float) {
     }
 
     @Composable
-    private fun SessionShot(state: SessionUiState) = TestSessionOverlay(
+    private fun SessionShot(state: SessionUiState, display: SessionDisplay = SessionDisplay(autoCalm = false)) = TestSessionOverlay(
         state = state,
-        showNextPhase = true,
+        display = display,
     )
 
     /** Laufende Meditation in Gerätehöhe: Vorbereitung, Timer läuft, Pause, Ende. */

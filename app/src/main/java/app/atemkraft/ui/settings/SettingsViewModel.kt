@@ -14,6 +14,7 @@ import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.LogbookRepository
+import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.SoundMode
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Alles, was die Einstellungen zeigen. Die Standardwerte sind dieselben wie im
- * [SettingsRepository] (Gong-Abstand 5 min, Gong lang, nächste Phase an), damit nichts springt,
+ * [SettingsRepository] (Gong-Abstand 5 min, Gong lang, Session-Anzeige komplett an), damit nichts springt,
  * falls die gespeicherten Werte einen Augenblick später kommen.
  */
 data class SettingsUiState(
@@ -37,7 +38,7 @@ data class SettingsUiState(
     val volume: ToneVolume = CueSettings().volume,
     val haptics: Boolean = CueSettings().haptics,
     val showSafetyWarning: Boolean = true,
-    val showNextPhase: Boolean = true,
+    val sessionDisplay: SessionDisplay = SessionDisplay(),
     val gongIntervalMin: Int = GONG_INTERVAL_DEFAULT_MINUTES,
     val gongLong: Boolean = CueSettings().gongLong,
     val voiceStates: Map<String, VoiceDownloadState> = emptyMap(),
@@ -57,6 +58,9 @@ interface SettingsActions {
     fun setHaptics(enabled: Boolean)
     fun setShowSafetyWarning(enabled: Boolean)
     fun setShowNextPhase(enabled: Boolean)
+    fun setShowProgress(enabled: Boolean)
+    fun setShowSeconds(enabled: Boolean)
+    fun setAutoCalm(enabled: Boolean)
     fun setGongInterval(minutes: Int)
     fun setGongLong(long: Boolean)
     fun previewGong()
@@ -86,14 +90,14 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val state: StateFlow<SettingsUiState> = combine(
-        combine(settings.cueSettings, settings.safetySettings, settings.showNextPhase, settings.gongIntervalMin) { cue, safety, next, interval ->
+        combine(settings.cueSettings, settings.safetySettings, settings.sessionDisplay, settings.gongIntervalMin) { cue, safety, display, interval ->
             SettingsUiState(
                 soundMode = cue.soundMode,
                 transition = cue.transition,
                 volume = cue.volume,
                 haptics = cue.haptics,
                 showSafetyWarning = safety.showWarning,
-                showNextPhase = next,
+                sessionDisplay = display,
                 gongIntervalMin = interval,
                 gongLong = cue.gongLong,
             )
@@ -129,6 +133,12 @@ class SettingsViewModel(
         override fun setShowSafetyWarning(enabled: Boolean) = write { settings.setShowSafetyWarning(enabled) }
 
         override fun setShowNextPhase(enabled: Boolean) = write { settings.setShowNextPhase(enabled) }
+
+        override fun setShowProgress(enabled: Boolean) = write { settings.setShowProgress(enabled) }
+
+        override fun setShowSeconds(enabled: Boolean) = write { settings.setShowSeconds(enabled) }
+
+        override fun setAutoCalm(enabled: Boolean) = write { settings.setAutoCalm(enabled) }
 
         override fun setGongInterval(minutes: Int) = write { settings.setGongIntervalMin(minutes) }
 

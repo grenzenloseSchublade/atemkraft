@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.data.SessionDisplay
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.playback.SessionStatus
@@ -76,7 +77,8 @@ import kotlin.math.ceil
 /**
  * Zeigt die laufende Session: Start-Countdown, Atemkreis mit Fortschrittsbogen, im Kreis nur
  * Phasenwort und Sekunden, darunter fest die Anleitungszeile, Steuerung und – optional, dezent –
- * die kommende Phase. Am Ende „✓ Geschafft“, die offene Frage und eine kurze Bilanz.
+ * die kommende Phase. Bogen, Sekunden und kommende Phase schaltet [display] ab (der Countdown
+ * vor dem Start zählt immer). Am Ende „✓ Geschafft“, die offene Frage und eine kurze Bilanz.
  * [controlsVisible] = false ist die Ruhe-Ansicht ([SessionOverlay]): alles außer Kreis, Wort,
  * Sekunden und Bogen blendet aus, ohne dass der Kreis springt.
  * [onTapHaptic] spielt den Tipp-Tick beim Antippen des Kreises; ob er vibriert, entscheidet
@@ -85,7 +87,7 @@ import kotlin.math.ceil
 @Composable
 fun SessionScreen(
     state: SessionUiState,
-    showNextPhase: Boolean,
+    display: SessionDisplay,
     onTogglePause: () -> Unit,
     onTapHaptic: () -> Unit,
     onContinue: () -> Unit,
@@ -107,7 +109,7 @@ fun SessionScreen(
         } else {
             ActiveContent(
                 state = state,
-                showNextPhase = showNextPhase,
+                display = display,
                 controlsVisible = controlsVisible,
                 onTogglePause = onTogglePause,
                 onTapHaptic = onTapHaptic,
@@ -122,7 +124,7 @@ fun SessionScreen(
 @Composable
 private fun ActiveContent(
     state: SessionUiState,
-    showNextPhase: Boolean,
+    display: SessionDisplay,
     controlsVisible: Boolean,
     onTogglePause: () -> Unit,
     onTapHaptic: () -> Unit,
@@ -141,7 +143,12 @@ private fun ActiveContent(
         phaseDisplayLabel(state.phaseType, state.phaseLabel)
     }
     val fraction = circleFraction(state)
-    val secondsText = if (preparing) state.countdown.toString() else secondsText(state)
+    val secondsText = when {
+        preparing -> state.countdown.toString()
+        display.showSeconds -> secondsText(state)
+        else -> ""
+    }
+    val showNextPhase = display.showNextPhase
     val note = if (preparing) null else state.phaseNote
 
     // Tap-Flash (geteilt mit der Meditation): großes Pause/Play-Symbol beim Antippen; die
@@ -246,7 +253,7 @@ private fun ActiveContent(
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(contentAlignment = Alignment.Center) {
-                BreathingCircle(fraction = fraction, progress = state.progress, modifier = Modifier.size(side))
+                BreathingCircle(fraction = fraction, progress = state.progress, ring = display.showProgress, modifier = Modifier.size(side))
                 // Tippfläche ist der Kreis bis zur Spur: Ecken und Rand daneben gehören zur
                 // Ruhe-Ansicht (SessionOverlay). Laufend/pausiert = Pause/Weiter, offener Hold =
                 // weiter; im Countdown tut der Tipp nichts, fällt aber auch nicht zur Ruhe-Ansicht

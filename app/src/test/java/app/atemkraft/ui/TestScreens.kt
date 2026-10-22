@@ -2,6 +2,7 @@ package app.atemkraft.ui
 
 import androidx.compose.runtime.Composable
 import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.data.SessionDisplay
 import app.atemkraft.domain.Exercise
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.ui.detail.ExerciseDetailScreen
@@ -37,11 +38,11 @@ internal fun TestDetail(
     onMarkedChange = onMarkedChange,
 )
 
-/** Vollbild der Atem-Session. */
+/** Vollbild der Atem-Session; ohne automatische Ruhe, damit nichts von selbst ausblendet. */
 @Composable
 internal fun TestSessionOverlay(
     state: SessionUiState,
-    showNextPhase: Boolean = false,
+    display: SessionDisplay = SessionDisplay(showNextPhase = false, autoCalm = false),
     onMinimize: () -> Unit = {},
     onToggleMute: () -> Unit = {},
     onTogglePause: () -> Unit = {},
@@ -51,7 +52,7 @@ internal fun TestSessionOverlay(
     onStop: () -> Unit = {},
 ) = SessionOverlay(
     state = state,
-    showNextPhase = showNextPhase,
+    display = display,
     onMinimize = onMinimize,
     onToggleMute = onToggleMute,
     onTogglePause = onTogglePause,

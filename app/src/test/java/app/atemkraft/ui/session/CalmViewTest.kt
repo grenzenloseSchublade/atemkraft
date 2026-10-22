@@ -9,6 +9,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import app.atemkraft.R
+import app.atemkraft.data.SessionDisplay
+import app.atemkraft.domain.PhaseType
 import app.atemkraft.playback.SessionStatus
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestSessionOverlay
@@ -25,7 +27,8 @@ import org.robolectric.annotation.Config
 /**
  * Ruhe-Ansicht der Atem-Session ([SessionOverlay]): Ein Tipp neben den Kreis blendet die
  * Bedienelemente aus und wieder ein; der Tipp auf den Kreis bleibt Pause/Weiter. In der Pause,
- * im Countdown auf dem Kreis und mit TalkBack (Touch-Erkundung) bleibt alles sichtbar.
+ * im Countdown auf dem Kreis und mit TalkBack (Touch-Erkundung) bleibt alles sichtbar. Mit
+ * automatischer Ruhe blendet die laufende Übung nach [AUTO_CALM_DELAY_MS] ohne Berührung aus.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -37,12 +40,20 @@ class CalmViewTest {
     private val app = RuntimeEnvironment.getApplication()
     private val events = mutableListOf<String>()
 
-    private fun show(status: SessionStatus) {
+    private fun show(status: SessionStatus, display: SessionDisplay = SessionDisplay(autoCalm = false)) {
         compose.setContent {
             AtemkraftTheme {
                 TestSessionOverlay(
-                    state = SessionUiState(exerciseName = "Test", status = status, roundIndex = 2, roundCount = 8),
-                    showNextPhase = true,
+                    state = SessionUiState(
+                        exerciseName = "Test",
+                        status = status,
+                        roundIndex = 2,
+                        roundCount = 8,
+                        phaseType = PhaseType.INHALE,
+                        phaseTotalMs = 4_000L,
+                        remainingMs = 2_400L,
+                    ),
+                    display = display,
                     onTogglePause = { events += "pause" },
                     onContinue = { events += "weiter" },
                 )
@@ -106,5 +117,40 @@ class CalmViewTest {
         show(SessionStatus.WAITING_FOR_USER)
         circle.performClick()
         assertEquals(listOf("weiter"), events)
+    }
+
+    @Test
+    fun `Automatische Ruhe blendet nach der Wartezeit aus, ein Tipp holt alles zurück`() {
+        show(SessionStatus.RUNNING, SessionDisplay(autoCalm = true))
+        compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS - 1_000L)
+        stop.assertExists()
+        compose.mainClock.advanceTimeBy(2_000L)
+        stop.assertDoesNotExist()
+        tapBeside()
+        stop.assertExists()
+        // Der Tipp startet die Wartezeit neu.
+        compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS - 1_000L)
+        stop.assertExists()
+        compose.mainClock.advanceTimeBy(2_000L)
+        stop.assertDoesNotExist()
+    }
+
+    @Test
+    fun `Automatische Ruhe greift nicht im Countdown`() {
+        show(SessionStatus.PREPARING, SessionDisplay(autoCalm = true))
+        compose.mainClock.advanceTimeBy(AUTO_CALM_DELAY_MS * 2)
+        stop.assertExists()
+    }
+
+    @Test
+    fun `Mit Sekunden zählt der Kreis die Phase mit`() {
+        show(SessionStatus.RUNNING)
+        compose.onNodeWithText("3").assertExists()
+    }
+
+    @Test
+    fun `Ohne Sekunden steht nur das Phasenwort im Kreis`() {
+        show(SessionStatus.RUNNING, SessionDisplay(showSeconds = false, autoCalm = false))
+        compose.onNodeWithText("3").assertDoesNotExist()
     }
 }
