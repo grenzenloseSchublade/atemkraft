@@ -15,7 +15,8 @@ import app.atemkraft.ui.theme.Dimens
  * Titel mit nachgestellten Chips (Evidenz-Tag, Charakter, Info). Als FlowRow: passt ein Chip
  * nicht mehr neben den Titel, rutscht er in die nächste Zeile. Eine `Row` mit
  * `weight(fill = false)` misst die Chips zuerst und lässt dem Titel nur den Rest – bei 384 dp
- * und fontScale 1,1 brach so „Resonanz-Atmung“ mitten im Wort um.
+ * und fontScale 1,1 brach so „Resonanz-Atmung“ mitten im Wort um. Der Titel ist ein Name (Übung
+ * oder eigenes Muster) und steht wörtlich, ohne Sanskrit-Auszeichnung (TEXT-14).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,6 +37,7 @@ fun TitleWithChips(
             style = style,
             color = color,
             modifier = Modifier.align(Alignment.CenterVertically),
+            marks = false,
         )
         // null statt leerer Row: ein leeres Item bekäme sonst Abstand bzw. eine Leerzeile.
         if (chips == null) return@FlowRow

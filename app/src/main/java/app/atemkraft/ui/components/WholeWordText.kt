@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -31,7 +32,9 @@ import androidx.compose.ui.unit.isSpecified
  * auch dafür wird höchstens bis [minScale] verkleinert.
  *
  * Für Titel, Namen und Beschriftungen; Fließtext wird stattdessen so formuliert, dass kein
- * Wort die Zeile sprengt. Sanskrit-Auszeichnung („*vāyus*“) wird kursiv ([sanskritText]).
+ * Wort die Zeile sprengt. Sanskrit-Auszeichnung („*vāyus*“) wird kursiv ([sanskritText]); mit
+ * [marks] `false` bleibt der Text wörtlich – für Namen, die der Nutzer selbst eingibt (eigene
+ * Muster), in denen ein „*“ einfach ein Zeichen ist.
  */
 @Composable
 fun WholeWordText(
@@ -44,6 +47,7 @@ fun WholeWordText(
     singleLine: Boolean = false,
     sharedScale: Float? = null,
     onSharedScaleTooBig: (Float) -> Unit = {},
+    marks: Boolean = true,
 ) {
     // Neu messen, wenn sich Text, Stil, Schriftgröße oder Bildschirmbreite ändern.
     val config = LocalConfiguration.current
@@ -52,7 +56,7 @@ fun WholeWordText(
     val scale = sharedScale ?: ownScale
     var ready by remember(text, style, config.fontScale, windowWidth) { mutableStateOf(false) }
 
-    val shown = remember(text) { sanskritText(text) }
+    val shown = remember(text, marks) { if (marks) sanskritText(text) else AnnotatedString(text) }
     Text(
         text = shown,
         modifier = modifier.drawWithContent { if (ready) drawContent() },

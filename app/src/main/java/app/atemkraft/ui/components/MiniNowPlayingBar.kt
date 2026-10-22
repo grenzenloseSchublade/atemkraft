@@ -28,7 +28,8 @@ import app.atemkraft.ui.theme.Sizes
  *
  * Nichts wird gekürzt (LAYOUT-03): Ein langer Übungsname bricht an Wortgrenzen um, statt auf
  * eine unleserliche Größe zu schrumpfen – die Leiste wird dann höher. Der kurze Status („Läuft ·
- * 3:12“) bleibt einzeilig und verkleinert sich notfalls.
+ * 3:12“) bleibt einzeilig und verkleinert sich notfalls. Der Titel (auch ein eigener Mustername)
+ * steht wörtlich, ohne Sanskrit-Auszeichnung (TEXT-14).
  */
 @Composable
 fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -53,6 +54,7 @@ fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit, mo
                     text = title,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = SECONDARY),
+                    marks = false,
                 )
                 WholeWordText(
                     text = statusText,

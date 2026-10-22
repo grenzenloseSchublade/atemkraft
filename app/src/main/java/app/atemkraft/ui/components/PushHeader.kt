@@ -32,7 +32,8 @@ import app.atemkraft.ui.theme.Dimens
  * der Detailseite), wächst die Zeile mit. [action] steht rechts außen, ihr Icon bündig zur
  * Inhaltskante wie der Pfeil links; der Titel nimmt nur die Breite dazwischen (`weight`).
  * [titleContent] ersetzt [title] durch einen eigenen Titelbereich in derselben Breite (Muster-Editor:
- * Name des Musters, zum Umbenennen antippbar, Nachtrag 7).
+ * Name des Musters, zum Umbenennen antippbar, Nachtrag 7). Der Titel – Seitentitel oder Name,
+ * auch eines eigenen Musters – steht wörtlich, ohne Sanskrit-Auszeichnung (TEXT-14).
  */
 @Composable
 fun PushHeader(
@@ -63,6 +64,7 @@ fun PushHeader(
                 modifier = Modifier
                     .weight(1f)
                     .semantics { heading() },
+                marks = false,
             )
         }
         if (action != null) {

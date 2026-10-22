@@ -313,10 +313,12 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
             verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny),
         ) {
             Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                // Name wörtlich, auch ein eigener mit „*“ (ohne Sanskrit-Auszeichnung, TEXT-14).
                 WholeWordText(
                     text = entry.exerciseName,
                     style = nameStyle,
                     color = MaterialTheme.colorScheme.onSurface,
+                    marks = false,
                 )
                 Text(
                     text = time,

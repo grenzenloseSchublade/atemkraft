@@ -357,11 +357,13 @@ private fun SessionTitle(state: SessionUiState) {
     val titleStyle = MaterialTheme.typography.titleSmall
     val roundColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
     val name: @Composable () -> Unit = {
+        // Name wörtlich, auch ein eigener mit „*“ (ohne Sanskrit-Auszeichnung, TEXT-14).
         WholeWordText(
             text = state.exerciseName,
             style = titleStyle,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
+            marks = false,
         )
     }
     if (state.roundCount <= 1) {
