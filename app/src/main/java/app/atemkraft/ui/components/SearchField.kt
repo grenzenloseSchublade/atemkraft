@@ -121,11 +121,12 @@ fun SearchField(
 /**
  * Setzt für alle Textfelder in [content] `IME_FLAG_NO_PERSONALIZED_LEARNING`: Die Tastatur
  * merkt sich die Eingaben nicht (Gboard, SwiftKey u. a. halten sich daran). Compose bietet
- * dafür keine `KeyboardOptions`, nur diesen Eingriff in die Eingabe-Sitzung.
+ * dafür keine `KeyboardOptions`, nur diesen Eingriff in die Eingabe-Sitzung. Auch das Namensfeld
+ * des Muster-Editors nutzt ihn.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun NoPersonalizedLearning(content: @Composable () -> Unit) {
+internal fun NoPersonalizedLearning(content: @Composable () -> Unit) {
     InterceptPlatformTextInput(interceptor = NoLearningInterceptor, content = content)
 }
 
