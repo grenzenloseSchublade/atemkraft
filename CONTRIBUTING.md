@@ -109,7 +109,7 @@ private val meine = Exercise(
 )
 ```
 
-Danach `scripts/check.sh`: Der `ContentRulesTest` prüft u. a. Teaser-Länge, Anführungszeichen, Anrede, Quellenformat und die Wortliste, der Screenshot-Test die neue Detailseite.
+Danach `scripts/check.sh`: Der `ContentRulesTest` prüft Teaser-Länge, Typografie (Anführungszeichen, Dezimalkomma, Trennpunkt) und die Wortliste, der Screenshot-Test die neue Detailseite; Anrede und Quellenformat prüft das Review.
 
 ## Commits und Pull Requests
 

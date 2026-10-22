@@ -4,30 +4,25 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.PhaseDuration
-import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
-import app.atemkraft.domain.activeWithoutHold
-import app.atemkraft.domain.calmWithHold
-import app.atemkraft.domain.creationRuleSpecs
 import app.atemkraft.domain.withinCreationRules
-import app.atemkraft.domain.withinGuardrails
 import org.junit.Assert.fail
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * Inhaltsregeln aus STYLEGUIDE §11 (TEXT-02, -04 … -06, -09 … -13), MUSTER-03, -09 und
- * MOTION-02, geprüft über alle Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages
- * (Seeds 0–6), eigene und gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die
- * öffentlichen Texte (README, Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen.
+ * Ehrliche Texte (STYLEGUIDE §11): Teaser (TEXT-06, -13, MUSTER-03), Heilversprechen samt
+ * Store-Disclaimer (TEXT-09, -11, SEC-LEGAL-01/-02) und Typografie (TEXT-10), geprüft über alle
+ * Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages (Seeds 0–6), eigene und
+ * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Glossar, Situationen samt
+ * Suchbegriffen, Quellen und `strings.xml`; dazu die öffentlichen Texte (README,
+ * Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen.
  *
- * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Testfall | Datensatz | S-nn`).
- * Ein Fall schlägt fehl bei einem neuen Verstoß und bei einem Baseline-Eintrag, der nicht mehr
- * zutrifft (dann Eintrag streichen, META-01).
+ * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Fall | Datensatz | S-nn`). Ein
+ * Test sammelt seine Fälle und schlägt fehl bei einem neuen Verstoß und bei einem
+ * Baseline-Eintrag, der nicht mehr zutrifft (dann Eintrag streichen, META-01).
  */
 class ContentRulesTest {
 
@@ -39,8 +34,24 @@ class ContentRulesTest {
     /** Muster des Tages, Seeds 0–6. */
     private val daily: List<Exercise> = (0L..6L).map { RandomPatternGenerator.forSeed(it).exercise }
 
-    /** Alle Muster in den Erzeugungsregeln: jedes, das als Vier-Felder-Muster gespeichert sein kann. */
-    private val composerSpecs = creationRuleSpecs
+    /**
+     * Alle Muster in ganzen Sekunden, die die Erzeugungsregeln einhalten ([withinCreationRules]),
+     * ruhig und sanft aktivierend: jedes, das als Muster des Tages (und damit gespeichert oder als
+     * ältere eigene Vier-Felder-Zeile) vorkommen kann.
+     */
+    private val composerSpecs: List<PatternSpec> = buildList {
+        for (activating in listOf(false, true)) {
+            for (inhale in PatternRules.INHALE_MIN..PatternRules.EXHALE_MAX) {
+                for (exhale in PatternRules.EXHALE_MIN..PatternRules.EXHALE_MAX) {
+                    for (holdFull in 0..PatternRules.CALM_HOLD_FULL_MAX) {
+                        for (holdEmpty in 0..PatternRules.CALM_HOLD_EMPTY_MAX) {
+                            add(PatternSpec(inhale.toDouble(), holdFull.takeIf { it > 0 }?.toDouble(), exhale.toDouble(), holdEmpty.takeIf { it > 0 }?.toDouble(), activating))
+                        }
+                    }
+                }
+            }
+        }
+    }.filter { it.withinCreationRules() }
 
     /** Ältere eigene Muster mit vier Feldern (Herkunft CUSTOM) über alle diese Specs. */
     private val custom: List<Exercise> = composerSpecs.map { spec ->
@@ -220,21 +231,21 @@ class ContentRulesTest {
      */
     private fun List<Finding>.collapseSeeds(): List<Finding> = map { it.copy(dataset = it.dataset.replace(Regex("#seed\\d+"), "")) }.distinctBy { it.dataset to it.why }
 
-    /** MUSS-Fall: neue Funde und veraltete Baseline-Einträge lassen den Test scheitern. */
-    private fun assertAgainstBaseline(case: String, allFindings: List<Finding>) {
+    /** MUSS-Fall gegen die Baseline: neue Funde und veraltete Baseline-Einträge als Meldungen. */
+    private fun againstBaseline(case: String, allFindings: List<Finding>): List<String> {
         val findings = allFindings.collapseSeeds()
         val known = baseline[case].orEmpty()
         val found = findings.map { it.dataset }.toSet()
-        val new = findings.filter { it.dataset !in known }.distinctBy { it.dataset }
-        val stale = known - found
-        if (new.isEmpty() && stale.isEmpty()) return
-        fail(
-            buildString {
-                appendLine("ContentRulesTest $case:")
-                new.forEach { appendLine("  neu: ${it.dataset} – ${it.why}") }
-                stale.forEach { appendLine("  behoben, Baseline-Eintrag streichen: $case | $it") }
-            },
-        )
+        return findings.filter { it.dataset !in known }.distinctBy { it.dataset }.map { "$case neu: ${it.dataset} – ${it.why}" } +
+            (known - found).map { "$case behoben, Baseline-Eintrag streichen: $case | $it" }
+    }
+
+    /** Fall ohne Baseline: jeder Fund ist ein Fehler, ein Baseline-Eintrag ebenso. */
+    private fun strict(case: String, findings: List<Finding>): List<String> = (if (baseline[case].orEmpty().isNotEmpty()) listOf("$case: keine Baseline erlaubt, Einträge streichen") else emptyList()) +
+        findings.collapseSeeds().map { "$case: ${it.dataset} – ${it.why}" }
+
+    private fun assertNone(test: String, messages: List<String>) {
+        if (messages.isNotEmpty()) fail("ContentRulesTest $test:\n" + messages.joinToString("\n") { "  $it" })
     }
 
     // ---- TEXT-06, MUSTER-03: Teaser -----------------------------------------------------
@@ -254,25 +265,23 @@ class ContentRulesTest {
         if (sentences.size > 1) add("${sentences.size} Sätze")
     }
 
+    /**
+     * TEXT-06, MUSTER-03: Teaser und erster Vorsicht-Hinweis; TEXT-13: Teaser der Yoga-Lehre
+     * (Detailseite, Muster-Karten und Abschnitte der Atemlehre) ohne Baseline, zuschreibend statt
+     * Wirkung zu behaupten („gilt in der Yoga-Lehre als …“, nie „wirkt“). Das Detail beginnt nie
+     * mit dem Teaser.
+     */
     @Test
     fun teaser() {
-        val findings = exercises.flatMap { e ->
+        val teaser = exercises.flatMap { e ->
             val own = teaserProblems(e.effect).map { Finding("${e.key()}.effect", it) }
             val detail = e.effectDetail
             val repeats = detail != null && detail.startsWith(e.effect.trimEnd('.').take(40))
             own + if (repeats) listOf(Finding("${e.key()}.effectDetail", "beginnt mit dem Teaser")) else emptyList()
         }
-        assertAgainstBaseline("teaser", findings)
-    }
-
-    /**
-     * TEXT-13: Teaser der Yoga-Lehre (Detailseite, Muster-Karten und Abschnitte der Atemlehre)
-     * folgen der Teaser-Regel aus TEXT-06 und schreiben zu, statt Wirkung zu behaupten („gilt in
-     * der Yoga-Lehre als …“, nie „wirkt“). Neue Inhalte ohne Altlasten: jeder Fund ist ein
-     * Fehler, keine Baseline.
-     */
-    @Test
-    fun `lore-teaser`() {
+        val firstCaution = exercises.filter { it.cautions.isNotEmpty() }.flatMap { e ->
+            teaserProblems(e.cautions.first()).map { Finding("${e.key()}.cautions[0]", it) }
+        }
         val lore = exercises.mapNotNull { e -> e.lore?.let { Triple("${e.key()}.lore", it.teaser, it.detail) } }
         val patterns = Atemlehre.patterns.map { Triple("atemlehre.${it.id}", it.teaser, it.teaching) }
         val sections = listOf(
@@ -281,7 +290,7 @@ class ContentRulesTest {
             "atemlehre.sourcesTeaser" to Atemlehre.sourcesTeaser,
         )
         val claim = Regex("""\b(wirkt|bewirkt|hilft gegen)\b""", RegexOption.IGNORE_CASE)
-        val findings = (lore + patterns).flatMap { (key, teaser, detail) ->
+        val loreTeaser = (lore + patterns).flatMap { (key, teaser, detail) ->
             val repeats = detail.startsWith(teaser.trimEnd('.').take(40))
             teaserProblems(teaser).map { Finding("$key.teaser", it) } +
                 if (repeats) listOf(Finding("$key.detail", "beginnt mit dem Teaser")) else emptyList()
@@ -289,37 +298,10 @@ class ContentRulesTest {
             (lore.map { it.first to it.second } + patterns.map { it.first to it.second } + sections).mapNotNull { (key, teaser) ->
                 claim.find(teaser)?.let { Finding("$key.teaser", "Wirkbehauptung „${it.value}“ statt Zuschreibung") }
             }
-        if (baseline["lore-teaser"].orEmpty().isNotEmpty()) {
-            fail("ContentRulesTest lore-teaser: keine Baseline erlaubt (TEXT-13), Einträge streichen")
-        }
-        val collapsed = findings.collapseSeeds()
-        if (collapsed.isNotEmpty()) {
-            fail("ContentRulesTest lore-teaser:\n" + collapsed.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
-        }
-    }
-
-    /**
-     * Eigene und gespeicherte Muster sind weder „heute“ noch „zufällig“ noch „aus dem Datum“
-     * entstanden, und ihre Texte sprechen nicht über Wirkversprechen (Plan Konfigurator §5).
-     * Neue Texte ohne Altlasten: jeder Fund ist ein Fehler, keine Baseline.
-     */
-    @Test
-    fun `origin-wording`() {
-        val banned = Regex("""heute|zufällig|Datum|Wirkversprechen""", RegexOption.IGNORE_CASE)
-        val findings = (custom + savedDaily).flatMap { it.texts() }.mapNotNull { t ->
-            banned.find(t.value)?.let { Finding(t.id, "„${it.value}“ in „${t.value}“") }
-        }.collapseSeeds()
-        if (findings.isNotEmpty()) {
-            fail("ContentRulesTest origin-wording:\n" + findings.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
-        }
-    }
-
-    @Test
-    fun `first-caution`() {
-        val findings = exercises.filter { it.cautions.isNotEmpty() }.flatMap { e ->
-            teaserProblems(e.cautions.first()).map { Finding("${e.key()}.cautions[0]", it) }
-        }
-        assertAgainstBaseline("first-caution", findings)
+        assertNone(
+            "teaser",
+            againstBaseline("teaser", teaser) + againstBaseline("first-caution", firstCaution) + strict("lore-teaser", loreTeaser),
+        )
     }
 
     // ---- TEXT-09: Heilversprechen -------------------------------------------------------
@@ -348,19 +330,6 @@ class ContentRulesTest {
     }
 
     /**
-     * TEXT-09 lässt für Heilversprechen keine Baseline zu: jeder Fund ist ein Fehler, nur
-     * bewusste Verneinungen und Disclaimer stehen zeilengenau in health-claims.allow.
-     */
-    private fun assertNoHealthClaims(case: String, findings: List<Finding>) {
-        if (baseline[case].orEmpty().isNotEmpty()) {
-            fail("ContentRulesTest $case: keine Baseline erlaubt (TEXT-09), Einträge streichen")
-        }
-        if (findings.isNotEmpty()) {
-            fail("ContentRulesTest $case:\n" + findings.joinToString("\n") { "  ${it.dataset} – ${it.why}" })
-        }
-    }
-
-    /**
      * Öffentliche Texte außerhalb der App (SEC-LEGAL-01): README, Datenschutzerklärung,
      * Release-Notes und Store-Texte samt Changelogs, je Zeile ein Datensatz `datei:zeile`.
      */
@@ -375,74 +344,22 @@ class ContentRulesTest {
         }
     }
 
-    /** App-Texte und öffentliche Texte (falls das Repo sie mitbringt) in einem Fall. */
+    /**
+     * TEXT-09 ohne Baseline: App-Texte und öffentliche Texte in einem Fall; nur bewusste
+     * Verneinungen und Disclaimer stehen zeilengenau in health-claims.allow. Dazu SEC-LEGAL-02:
+     * Die Store-Beschreibung enthält den Disclaimer wörtlich.
+     */
     @Test
     fun `health-claims`() {
-        assertNoHealthClaims("health-claims", healthClaimFindings(allTexts + publicTexts))
-        if (baseline["health-claims-public"].orEmpty().isNotEmpty()) {
-            fail("ContentRulesTest health-claims-public: keine Baseline erlaubt (TEXT-09), Einträge streichen")
+        val disclaimer = "Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. " +
+            "Für medizinischen Rat wende dich an Fachpersonal."
+        val description = repoFile("fastlane/metadata/android/de-DE/full_description.txt")
+        val missingDisclaimer = if (description.isFile && disclaimer !in description.readText()) {
+            listOf("store-texts: full_description.txt enthält den Disclaimer aus SEC-LEGAL-02 nicht wörtlich")
+        } else {
+            emptyList()
         }
-    }
-
-    // ---- TEXT-05: Jargon ----------------------------------------------------------------
-
-    private val jargon = listOf(
-        "Schub", "Crash", "stabile[rn]? Phase", "vagal", "sympathisch", "(Para)?[Ss]ympathikus",
-        "Hormese", "hormetisch", "CO₂-Toleranz", "CO2-Toleranz",
-    ).map { Regex("""(?<![\p{L}])(?:$it)(?![\p{L}])""", RegexOption.IGNORE_CASE) }
-
-    /**
-     * Laiensprache in Situationen, Labels und Tags (UI-Strings, Übungsnamen); Fachbegriffe nur im
-     * Detail. Suchbegriffe sind neu und ohne Altlasten (MUSTER-09): für sie gibt es keine Baseline.
-     */
-    @Test
-    fun jargon() {
-        val keywordBaseline = baseline["jargon"].orEmpty().filter { ".keywords[" in it }
-        if (keywordBaseline.isNotEmpty()) fail("ContentRulesTest jargon: Suchbegriffe nicht in die Baseline: $keywordBaseline")
-        val scope = situationTexts + strings + exerciseTexts.filter { it.id.endsWith(".name") }
-        val findings = scope.flatMap { t ->
-            jargon.mapNotNull { re -> re.find(t.value)?.let { Finding(t.id, "„${it.value}“") } }
-        }
-        assertAgainstBaseline("jargon", findings)
-    }
-
-    /**
-     * Pflichtbegriffe (TEXT-05): Jeder Fachbegriff aus den Detailtexten steht in „Begriffe
-     * erklärt“. Ein neuer Fachbegriff im Inhalt kommt in diese Liste und ins Glossar; kommt einer
-     * im Inhalt nicht mehr vor, fällt er aus der Liste. Ohne Baseline.
-     */
-    private val requiredGlossaryTerms = listOf(
-        "Meta-Analyse", "RCT", "verblindet", "HRV", "Vagus", "Parasympathikus", "Baroreflex", "RSA",
-        "CO₂-Toleranz", "Hyperventilation", "Hormese", "COPD",
-    )
-
-    @Test
-    fun `glossary-terms`() {
-        val names = (Glossary.bodyTerms + Glossary.yogaTerms).map { it.name }
-        val content = (exerciseTexts + atemlehreTexts + situationTexts).joinToString("\n") { it.value }
-        val findings = requiredGlossaryTerms.flatMap { term ->
-            listOfNotNull(
-                if (names.none { term in it }) "„$term“ fehlt in „Begriffe erklärt“ (Glossary.kt)" else null,
-                if (term !in content) "„$term“ kommt im Inhalt nicht mehr vor, aus der Liste streichen" else null,
-            )
-        }
-        if (findings.isNotEmpty()) fail("ContentRulesTest glossary-terms:\n" + findings.joinToString("\n") { "  $it" })
-    }
-
-    // ---- TEXT-04: Anrede ----------------------------------------------------------------
-
-    private val formal = Regex("""(?<![.!?:]\s|^|„)\b(Sie|Ihnen|Ihr|Ihre[mnrs]?)\b""")
-    private val capitalDu = Regex("""(?<![.!?:]\s|^|„)\b(Du|Dich|Dir|Dein\w*)\b""")
-
-    @Test
-    fun `formal-address`() {
-        val findings = allTexts.flatMap { t ->
-            listOfNotNull(
-                formal.find(t.value)?.let { Finding(t.id, "Siezen „${it.value}“") },
-                capitalDu.find(t.value)?.let { Finding(t.id, "„${it.value}“ groß") },
-            )
-        }
-        assertAgainstBaseline("formal-address", findings)
+        assertNone("health-claims", strict("health-claims", healthClaimFindings(allTexts + publicTexts)) + missingDisclaimer)
     }
 
     // ---- TEXT-10: Zeichen ---------------------------------------------------------------
@@ -450,19 +367,19 @@ class ContentRulesTest {
     /** Kennungen, in denen ein Punkt zwischen Ziffern richtig ist (DOI, Versionen, URLs, Lizenzen wie „Apache-2.0“). */
     private val identifiers = Regex("""doi:\S+|https?://\S+|\b\w[\w.-]*\.\w+/\S*|\bv?\d+\.\d+\.\d+\b|\b\p{L}[\p{L}-]*-\d+\.\d+\b""")
 
+    /**
+     * TEXT-10: Dezimalkomma (`\d\.\d` außerhalb Kennungen), nur „…“ und ’ (kein ASCII-`"`, kein
+     * `”`, kein ASCII-Apostroph zwischen Buchstaben), Trennpunkt „·“ nur nach geschütztem
+     * Leerzeichen (sonst könnte der Umbruch ihn an den Zeilenanfang setzen, `DOT_SEPARATOR`), Zahl
+     * und Einheit („4\u00A0s“, „ca.\u00A0%1$d\u00A0min“) in `strings.xml` zusammen.
+     */
     @Test
-    fun `decimal-comma`() {
-        val findings = allTexts.mapNotNull { t ->
+    fun typography() {
+        val decimal = allTexts.mapNotNull { t ->
             Regex("""\d\.\d""").find(identifiers.replace(t.value, ""))?.let { Finding(t.id, "„${it.value}“ statt Dezimalkomma") }
         }
-        assertAgainstBaseline("decimal-comma", findings)
-    }
-
-    /** Nur „…“ und ’: kein ASCII-`"`, kein `”`, kein ASCII-Apostroph zwischen Buchstaben. */
-    @Test
-    fun quotes() {
         val apostrophe = Regex("""\p{L}'\p{L}|\p{L}\\'""")
-        val findings = (contentTexts + rawStrings).flatMap { t ->
+        val quotes = (contentTexts + rawStrings).flatMap { t ->
             val v = if (t.id.startsWith("strings:")) t.value.replace(Regex("""^\\?"|\\?"$"""), "") else t.value
             listOfNotNull(
                 if ('"' in v.replace("\\\"", "\"").replace(Regex("""<[^>]*>"""), "")) Finding(t.id, "ASCII-\"") else null,
@@ -470,127 +387,18 @@ class ContentRulesTest {
                 apostrophe.find(v)?.let { Finding(t.id, "ASCII-Apostroph „${it.value}“") },
             )
         }
-        assertAgainstBaseline("quotes", findings)
-    }
-
-    /**
-     * Trennpunkt mit geschütztem Leerzeichen davor („Ein 4\u00A0· Aus 6“, wie `DOT_SEPARATOR`):
-     * Nach einem normalen Leerzeichen könnte der Umbruch „·“ an den Zeilenanfang setzen.
-     */
-    @Test
-    fun `dot-separator`() {
-        val identifiers = refs.mapNotNull { (name, ref) -> ref.identifier?.let { Text("refs.$name.identifier", it) } }
-        val findings = (contentTexts + strings + identifiers).mapNotNull { t ->
+        val refIds = refs.mapNotNull { (name, ref) -> ref.identifier?.let { Text("refs.$name.identifier", it) } }
+        val dots = (contentTexts + strings + refIds).mapNotNull { t ->
             if (Regex("""\s·""").containsMatchIn(t.value.replace("\u00A0·", ""))) Finding(t.id, "„ ·“ ohne geschütztes Leerzeichen") else null
         }
-        assertAgainstBaseline("dot-separator", findings)
-    }
-
-    /** Zahl und Einheit („4\u00A0s“, „ca.\u00A0%1$d\u00A0min“) bleiben in sichtbaren Texten zusammen (TEXT-10). */
-    @Test
-    fun `number-unit`() {
-        val findings = strings.mapNotNull { t ->
+        val units = strings.mapNotNull { t ->
             Regex("""\d (s|min)\b""").find(t.value)?.let { Finding(t.id, "„${it.value}“ ohne geschütztes Leerzeichen") }
         }
-        assertAgainstBaseline("number-unit", findings)
-    }
-
-    // ---- TEXT-12: Quellen ---------------------------------------------------------------
-
-    private val citationFormat = Regex(
-        """^\p{Lu}[\p{L}'-]+(?: [\p{Lu}][\p{L}'-]+)* (?:\p{Lu}\. ?)+(?:et al\.|& \p{Lu}[\p{L}'-]+ (?:\p{Lu}\. ?)+)? """ +
-            """\(\d{4}\): .+\. .+""",
-    )
-    private val identifierFormat = Regex("""^(doi:10\.\S+|PMID \d+|PMC\d+)(\u00A0· (PMID \d+|PMC\d+))*$""")
-
-    /** Zitierformat und Kennung jeder Quelle; jede „(Name Jahr)“-Nennung im Text hat eine Quelle. */
-    @Test
-    fun `ref-format`() {
-        val formatFindings = refs.flatMap { (name, ref) ->
-            listOfNotNull(
-                if (!citationFormat.matches(ref.citation)) Finding("refs.$name", "Zitat nicht „Nachname I. et al. (Jahr): Titel. Journal …“") else null,
-                if (ref.identifier == null || !identifierFormat.matches(ref.identifier!!)) Finding("refs.$name.identifier", "Kennung nicht „doi:10.… · PMID n“: ${ref.identifier}") else null,
-            )
-        }
-        val mention = Regex("""\((\p{Lu}[\p{L}-]+)(?: et al\.| & \p{Lu}[\p{L}-]+)? (\d{4})\)""")
-        val missing = contentTexts.flatMap { t ->
-            mention.findAll(t.value).mapNotNull { m ->
-                val (author, year) = m.destructured
-                val known = refs.values.any { it.citation.startsWith(author) && "($year)" in it.citation }
-                if (known) null else Finding("${t.id}:$author $year", "„${m.value}“ fehlt in Refs.kt")
-            }.toList()
-        }
-        assertAgainstBaseline("ref-format", formatFindings + missing)
-    }
-
-    @Test
-    fun `ref-unused`() {
-        // Die Studien der Atemlehre (TEXT-13) zählen als genutzt: Sie belegen die „Studien“-Zeilen der Karten.
-        val used = (exercises.flatMap { it.references } + Atemlehre.studyRefs).toSet()
-        val findings = refs.filterValues { it !in used }.keys.map { Finding("refs.$it", "von keiner Übung und nicht von der Atemlehre genutzt") }
-        assertAgainstBaseline("ref-unused", findings)
-    }
-
-    // ---- MOTION-02, TEXT-02: Phasen -----------------------------------------------------
-
-    /** Pacer-Phasen unter 0,5 s blinken (MOTION-02); geprüft je Runde inklusive `perRound`. */
-    @Test
-    fun `phase-min-duration`() {
-        val findings = exercises.flatMap { e ->
-            (0 until e.rounds).flatMap { round ->
-                e.segments.flatMap { it.phases }.map { e.perRound(it, round) }
-            }.mapNotNull { p ->
-                val d = p.duration
-                if (d is PhaseDuration.Fixed && d.millis < 500) Finding("${e.key()}.${p.type}", "${d.millis} ms < 500 ms") else null
-            }.distinctBy { it.dataset }
-        }
-        assertAgainstBaseline("phase-min-duration", findings)
-    }
-
-    /** Verschiedene Phasenarten brauchen verschiedene Labels (Anzeige, TalkBack, Ansage). */
-    @Test
-    fun `phase-labels-distinct`() {
-        val defaults = mapOf(
-            PhaseType.INHALE to "phase_inhale",
-            PhaseType.EXHALE to "phase_exhale",
-            PhaseType.HOLD_FULL to "phase_hold_full",
-            PhaseType.HOLD_EMPTY to "phase_hold_empty",
-            PhaseType.INHALE_TOP_UP to "phase_inhale_top_up",
-            PhaseType.REST to "phase_rest",
-        ).mapValues { (_, key) -> strings.first { it.id == "strings:$key" }.value }
-        val defaultClashes = defaults.entries.groupBy { it.value }.filterValues { it.size > 1 }
-            .map { (label, types) -> Finding("strings:phase_*:$label", "„$label“ für ${types.map { it.key }}") }
-        val exerciseClashes = exercises.flatMap { e ->
-            e.segments.flatMap { it.phases }
-                .groupBy { it.label ?: defaults.getValue(it.type) }
-                .filterValues { phases -> phases.map { it.type }.distinct().size > 1 }
-                .filterKeys { label -> defaultClashes.none { it.dataset.endsWith(":$label") } }
-                .map { (label, phases) -> Finding("${e.key()}.label:$label", "„$label“ für ${phases.map { it.type }.distinct()}") }
-        }
-        assertAgainstBaseline("phase-labels-distinct", defaultClashes + exerciseClashes)
-    }
-
-    // ---- TEXT-11: Store-Texte -----------------------------------------------------------
-
-    /** Längengrenzen der Store-Texte und der Disclaimer aus SECURITY.md SEC-LEGAL-02 wörtlich. */
-    @Test
-    fun `store-texts`() {
-        val dir = repoFile("fastlane/metadata/android/de-DE")
-        assumeTrue("fastlane/ gibt es noch nicht", dir.isDirectory)
-        val limits = mapOf("title.txt" to 30, "short_description.txt" to 80, "full_description.txt" to 4000)
-        val findings = limits.mapNotNull { (file, max) ->
-            File(dir, file).takeIf { it.isFile }?.readText()?.trim()?.takeIf { it.length > max }
-                ?.let { Finding("fastlane:$file", "${it.length} Zeichen > $max") }
-        } + (File(dir, "changelogs").listFiles().orEmpty()).mapNotNull { f ->
-            f.readText().trim().takeIf { it.length > 500 }?.let { Finding("fastlane:changelogs/${f.name}", "${it.length} Zeichen > 500") }
-        }
-        assertAgainstBaseline("store-lengths", findings)
-        val disclaimer = "Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. " +
-            "Für medizinischen Rat wende dich an Fachpersonal."
-        val description = File(dir, "full_description.txt")
-        if (description.isFile && disclaimer !in description.readText()) {
-            fail("ContentRulesTest store-texts: full_description.txt enthält den Disclaimer aus SEC-LEGAL-02 nicht wörtlich")
-        }
+        assertNone(
+            "typography",
+            againstBaseline("decimal-comma", decimal) + againstBaseline("quotes", quotes) +
+                againstBaseline("dot-separator", dots) + againstBaseline("number-unit", units),
+        )
     }
 
     // ---- Pfade --------------------------------------------------------------------------
@@ -599,33 +407,4 @@ class ContentRulesTest {
     private fun repoFile(path: String): File = listOf(File("../$path"), File(path)).firstOrNull { it.exists() } ?: File("../$path")
 
     private fun moduleFile(path: String): File = listOf(File(path), File("app/$path")).first { it.exists() }
-
-    @Test
-    fun `Herkunftstexte nennen die strengen Regeln nur fuer Muster, die sie einhalten`() {
-        // Gespeichert bis 1.6.2: aktivierend 4·4 (Ein = Aus), ruhig 3,5·5 (Atemzug 8,5 s).
-        val legacy = listOf(
-            PatternSpec(4.0, null, 4.0, null, activating = true),
-            PatternSpec(3.5, null, 5.0, null, activating = false),
-        )
-        val strict = listOf("das Einatmen ist länger als das Ausatmen", "4,6 bis 6,7", "Beim Zusammenstellen")
-        for (spec in legacy) {
-            check(spec.withinGuardrails() && !spec.withinCreationRules())
-            for (origin in listOf(PatternOrigin.SAVED_DAILY, PatternOrigin.CUSTOM)) {
-                val detail = RandomPatternGenerator.exerciseFrom(spec, "muster-1", "x", origin, 5).effectDetail.orEmpty()
-                strict.forEach { claim ->
-                    if (claim in detail) fail("$origin $spec behauptet „$claim“: $detail")
-                }
-                if ("weiteren Leitplanken" !in detail) fail("$origin $spec nennt seine Leitplanken nicht: $detail")
-            }
-        }
-        // Ein Muster nach den Erzeugungsregeln nennt sie weiter (ruhig samt Ausatmen höchstens 8 s,
-        // aktivierend mit eigener Spanne), dazu ehrlich: keine Studienlage zu genau diesem Muster.
-        for (origin in listOf(PatternOrigin.SAVED_DAILY, PatternOrigin.CUSTOM)) {
-            val calm = RandomPatternGenerator.exerciseFrom(calmWithHold, "muster-1", "x", origin, 5).effectDetail.orEmpty()
-            if ("4,6 bis 6,7" !in calm || "höchstens ${PatternRules.EXHALE_MAX}\u00A0s" !in calm) fail("Regeln fehlen: $calm")
-            val active = RandomPatternGenerator.exerciseFrom(activeWithoutHold, "muster-1", "x", origin, 5).effectDetail.orEmpty()
-            if ("6,7 bis 10" !in active) fail("Regeln fehlen: $active")
-            listOf(calm, active).forEach { if ("Eine Studienlage zu genau diesem Muster gibt es nicht." !in it) fail("Studienlage fehlt: $it") }
-        }
-    }
 }

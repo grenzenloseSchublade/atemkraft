@@ -43,7 +43,7 @@ internal object TextClipFindings {
     private const val TOLERANCE_DP = 0.5f
 
     // Element hinter `Modifier.clip(shape)` / `graphicsLayer(shape = …, clip = true)` (kein
-    // offizielles API; der Selbsttest in ControlTouchTest meldet, wenn ein Update es umbenennt).
+    // offizielles API: nach einem Compose-Update prüfen, ob der Name noch stimmt).
     private const val CLIP_ELEMENT = "GraphicsLayerElement"
 
     /** Texte des Knotens, die eine runde Form anschneidet (leer = alles sichtbar). */

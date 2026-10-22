@@ -41,7 +41,6 @@ import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import app.atemkraft.R
-import app.atemkraft.cue.FakePreviewSoundOutput
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
@@ -51,6 +50,7 @@ import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.components.AppNavItem
@@ -124,7 +124,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         private const val A54_TAB_BAR_MAX_FONT_SCALE = 1.3f
 
         /** Bottom Sheet der Vorlagen: eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
-        internal const val SHEET_TEST = "patternEditorTemplates"
+        private const val SHEET_TEST = "patternEditorTemplates"
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
@@ -177,9 +177,8 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     @get:Rule
     val testName = TestName()
 
-    /** Fenster (Breite, Höhe in dp) der Dialog-Aufnahmen: Gerätegröße, quer getauscht. */
-    protected val windowDp get() =
-        if (testName.methodName.startsWith("safetyDialogQuer")) device.heightDp to device.widthDp else device.widthDp to device.heightDp
+    /** Fenster (Breite, Höhe in dp) der Dialog-Aufnahmen: Gerätegröße. */
+    protected val windowDp get() = device.widthDp to device.heightDp
 
     @Before
     fun setUp() {
@@ -488,7 +487,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             onOpenLore = {},
             onBack = {},
             // Ohne echten Ton: Die Vorschau-Aufnahme spielt sonst Töne über Robolectric.
-            soundOutput = { FakePreviewSoundOutput() },
+            soundOutput = { SilentPreviewSound },
             // Tab-Leiste im TabFrame (in Listenhöhe ohne Rahmen ohne Wirkung).
             tabBar = tabBarSpace,
         )

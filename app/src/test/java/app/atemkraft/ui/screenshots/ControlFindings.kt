@@ -24,8 +24,8 @@ import java.util.Locale
  * - `AUSSERHALB`: das Element ragt links oder rechts aus dem Bild.
  */
 internal object ControlFindings {
-    // Klassennamen der Modifier-Elemente aus compose-foundation (kein offizielles API; der
-    // Selbsttest in ControlTouchTest meldet, wenn ein Update die Erkennung bricht).
+    // Klassennamen der Modifier-Elemente aus compose-foundation (kein offizielles API: nach einem
+    // Compose-Update prüfen, ob die Erkennung noch greift).
     private val CLICK_ELEMENTS = setOf(
         "ClickableElement",
         "CombinedClickableElement",

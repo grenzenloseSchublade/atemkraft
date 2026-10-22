@@ -1,7 +1,0 @@
-# Bekannte Verstöße gegen FARBE-03/-04 (ThemeContrastTest), Format: Testfall | Token-Paar | S-nn
-kontrast | WeekRow-Punkt α0.12 auf Card | S-15
-kontrast | WeekRow-Punkt α0.4 auf Card | S-15
-kontrast | SecondaryContainer auf Card | S-18
-delta-e | primary ↔ EvidenceCaution | S-18
-delta-e | primary ↔ SessionButtonPink | S-18
-delta-e | EvidenceCaution ↔ SessionButtonPink | S-18
