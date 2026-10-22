@@ -65,6 +65,7 @@ import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
@@ -76,10 +77,11 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Atemlehre: wie die Yoga-Tradition Einatmen, Ausatmen und Halten deutet (TEXT-13). Vier
- * Phasen, Grundregeln, Muster-Karten mit Rhythmusbild, weitere Einflüsse, Quellen. Lehre, keine
+ * Phasen, die fünf vāyus (Bild und Liste, [VayusContent]), Grundregeln, Muster-Karten mit
+ * Rhythmusbild, weitere Einflüsse, Quellen. Sanskrit steht kursiv (TEXT-14, [sanskritText]). Lehre, keine
  * Studienlage – was Studien sagen, steht je Karte unter „Studien“.
  *
- * Gliederung: eine Überschrift je Abschnitt (`SectionHeader`); Grundregeln, Einflüsse und
+ * Gliederung: eine Überschrift je Abschnitt (`SectionHeader`); vāyus, Grundregeln, Einflüsse und
  * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster stehen eine Ebene tiefer unter
  * „Die Muster“, jedes in einer eigenen Karte mit `ExpanderSection` (Rhythmusbild und Titel gehören
  * sichtbar zusammen).
@@ -123,15 +125,20 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 Spacer(Modifier.height(Dimens.SectionGap))
                 HintText(Atemlehre.intro)
 
-                // Köpfe reihum nach ihrer Lage (FARBE-07): Phasen 0, Grundregeln 1, Muster 2, Einflüsse 3, Quellen 4.
+                // Köpfe reihum nach ihrer Lage (FARBE-07): Phasen 0, vāyus 1, Grundregeln 2, Muster 3,
+                // Einflüsse 4, Quellen 5.
                 SectionHeader(title = stringResource(R.string.atemlehre_phases), color = headingColor(0))
                 PhasesCard(Atemlehre.phases)
 
-                ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, headingColor(1)) {
+                ExpandableSection(stringResource(R.string.atemlehre_vayus), Atemlehre.vayusTeaser, headingColor(1)) {
+                    VayusContent()
+                }
+
+                ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, headingColor(2)) {
                     RulesContent()
                 }
 
-                SectionHeader(title = stringResource(R.string.atemlehre_patterns), color = headingColor(2))
+                SectionHeader(title = stringResource(R.string.atemlehre_patterns), color = headingColor(3))
                 // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
                 // Balken zu welchem Titel gehört. Die Karten stehen direkt in der Scroll-Spalte, ihre
                 // Lage dient als Sprungziel.
@@ -152,10 +159,10 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                     }
                 }
 
-                ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, headingColor(3)) {
+                ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, headingColor(4)) {
                     InfluencesContent(onOpenExercise)
                 }
-                ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, headingColor(4)) {
+                ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, headingColor(5)) {
                     SourcesContent()
                 }
                 Spacer(Modifier.height(Dimens.ScreenBottom))
@@ -210,7 +217,7 @@ private fun PatternCard(
     }
 }
 
-/** Die vier Phasen in einer Karte: Farbmarke wie im Rhythmusbild, Name · Sanskrit, Bedeutung. */
+/** Die vier Phasen in einer Karte: Farbmarke wie im Rhythmusbild, Name · Sanskrit (kursiv), Bedeutung. */
 @Composable
 private fun PhasesCard(phases: List<LorePhase>) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -222,7 +229,10 @@ private fun PhasesCard(phases: List<LorePhase>) {
             phases.forEach { phase ->
                 val name = buildAnnotatedString {
                     append(phase.name)
-                    withStyle(SpanStyle(color = dim)) { append(DOT_SEPARATOR + phase.sanskrit) }
+                    withStyle(SpanStyle(color = dim)) {
+                        append(DOT_SEPARATOR)
+                        append(sanskritText(phase.sanskrit))
+                    }
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -237,7 +247,7 @@ private fun PhasesCard(phases: List<LorePhase>) {
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = phase.meaning,
+                            text = sanskritText(phase.meaning),
                             style = MaterialTheme.typography.bodySmall,
                             color = dim,
                         )
@@ -258,8 +268,8 @@ private fun RulesContent() {
             Atemlehre.rules.forEach { (lead, rest) ->
                 Bullet(
                     buildAnnotatedString {
-                        withStyle(bold) { append(lead) }
-                        append(rest)
+                        withStyle(bold) { append(sanskritText(lead)) }
+                        append(sanskritText(rest))
                     },
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = BODY),
                 )

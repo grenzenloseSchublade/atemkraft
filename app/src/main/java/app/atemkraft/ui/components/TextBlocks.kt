@@ -24,11 +24,12 @@ import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Fließtext: Beschreibungen, Detail- und Expander-Text, Glossar, Über – `bodySmall` in `BODY`.
- * [style] nur für die Kurzbeschreibung eine Stufe größer (`bodyMedium`).
+ * [style] nur für die Kurzbeschreibung eine Stufe größer (`bodyMedium`). Sanskrit kursiv
+ * ([sanskritText]).
  */
 @Composable
 fun BodyText(text: String, modifier: Modifier = Modifier, style: TextStyle = MaterialTheme.typography.bodySmall) {
-    Text(text = text, style = style, color = LocalContentColor.current.copy(alpha = BODY), modifier = modifier)
+    Text(text = sanskritText(text), style = style, color = LocalContentColor.current.copy(alpha = BODY), modifier = modifier)
 }
 
 /**
@@ -81,10 +82,10 @@ fun Bullet(text: AnnotatedString, modifier: Modifier = Modifier, color: Color = 
     }
 }
 
-/** [Bullet] für schlichten Text. */
+/** [Bullet] für schlichten Text (Sanskrit kursiv, [sanskritText]). */
 @Composable
 fun Bullet(text: String, modifier: Modifier = Modifier, color: Color = LocalContentColor.current) {
-    Bullet(AnnotatedString(text), modifier, color)
+    Bullet(sanskritText(text), modifier, color)
 }
 
 private const val BULLET_GLYPH = "•"

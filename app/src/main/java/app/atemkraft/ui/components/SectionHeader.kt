@@ -184,7 +184,7 @@ fun SectionHeader(
             }
             if (teaser != null) {
                 Text(
-                    text = teaser,
+                    text = sanskritText(teaser),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
                     modifier = Modifier.padding(top = Dimens.GapSmall),
@@ -295,7 +295,7 @@ private fun TitleWithStatus(
             WholeWordText(text = title, style = titleStyle, color = color, modifier = heading)
         }.first().measure(loose)
         val gap = Dimens.GapTiny.roundToPx()
-        val titleWidth = measurer.measure(title, titleStyle, softWrap = false, maxLines = 1).size.width
+        val titleWidth = measurer.measure(sanskritText(title), titleStyle, softWrap = false, maxLines = 1).size.width
         fun lineWidth(text: String) = measurer.measure(text, statusStyle, softWrap = false, maxLines = 1).size.width
         val inline = (listOf(status) + statusReserve).all { titleWidth + gap + lineWidth(it) <= constraints.maxWidth }
         if (inline) {

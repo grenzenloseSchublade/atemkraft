@@ -125,3 +125,45 @@ val BreathExhale = Color(0xFFFF9E7A)
  * (ThemeContrastTest).
  */
 val HeadingRing = listOf(NeonMagenta, BreathExhale, FamilyBalance, FamilySympathetic, FamilyFunctional)
+
+// Die fünf vāyus im Bild der Atemlehre (`VayuFigure`, Design Vayus.dc.html, Nutzer 2026-10-22).
+// Je vāyu ein vorhandener Ton; die Farbe gilt nur im Bild und in seiner Liste, jede Fläche trägt
+// dort ihren Namen (FARBE-05). Wie der Kopf-Ring keine Semantikfarbe: Gelb ist hier nicht
+// Warnung, Grün nicht Familie D (FARBE-04). prāṇa (aufnehmen) Cyan wie das Einatmen, apāna
+// (abgeben) Koralle wie das Ausatmen. Alle fünf ≥ 4,5:1 auf `surface` (ThemeContrastTest).
+val VayuPrana = NeonCyan
+val VayuApana = BreathExhale
+val VayuSamana = NeonYellow
+val VayuUdana = FamilyBalance
+val VayuVyana = FamilyFunctional
+
+/** Grundfläche der Piktogramm-Figur, einen Hauch heller als `surface` (dekorativ). */
+val VayuFigureFill = Color(0xFF241A47)
+
+/** Umriss der Piktogramm-Figur: gedämpftes Lavendel, ≥ 3:1 auf `surface` (Grafik, FARBE-03). */
+val VayuFigureOutline = Color(0xFF8C7BC4)
+
+/**
+ * Deckkraft eines Elements im vāyu-Bild je Zustand: [selected] gewählt, [idle] nichts gewählt,
+ * [dimmed] ein anderer vāyu gewählt. Werte aus dem freigegebenen Design.
+ */
+class VayuAlpha(val selected: Float, val idle: Float, val dimmed: Float)
+
+/** Farbfeld eines vāyu (prāṇa, apāna, samāna, udāna), auf die Figur zugeschnitten. */
+val VayuFieldAlpha = VayuAlpha(selected = 0.95f, idle = 0.55f, dimmed = 0.10f)
+
+/** Farbfeld von vyāna: die ganze Figur, deshalb leiser. */
+val VayuWholeAlpha = VayuAlpha(selected = 0.32f, idle = 0.10f, dimmed = 0.04f)
+
+/** Aura von vyāna um die Figur. */
+val VayuAuraAlpha = VayuAlpha(selected = 0.90f, idle = 0.35f, dimmed = 0.08f)
+
+/** Strömungslinien: Gedimmte verschwinden ganz, damit die gewählte Richtung allein steht. */
+val VayuLineAlpha = VayuAlpha(selected = 1f, idle = 0.55f, dimmed = 0f)
+
+/** Beschriftung im Bild samt Führungslinie; gedimmt nur, solange ein anderer gewählt ist. */
+val VayuLabelAlpha = VayuAlpha(selected = 1f, idle = 1f, dimmed = 0.30f)
+
+/** Ruhiges Pulsieren der gewählten Fläche und Aura (Vorlage: 0,55 ↔ 0,95). */
+const val VAYU_PULSE_LOW = 0.55f
+const val VAYU_PULSE_HIGH = 0.95f

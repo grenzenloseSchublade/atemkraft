@@ -8,6 +8,7 @@ import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.withinCreationRules
+import app.atemkraft.domain.withoutMarks
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
@@ -28,8 +29,13 @@ class ContentRulesTest {
 
     // ---- Datensätze ----------------------------------------------------------------------
 
-    /** Ein Text mit stabilem Namen für Baseline und Meldung, z. B. `buteyko.effect`. */
-    private data class Text(val id: String, val value: String)
+    /**
+     * Ein Text mit stabilem Namen für Baseline und Meldung, z. B. `buteyko.effect`. Geprüft wird
+     * der gelesene Wortlaut [value], ohne die Sternchen der Sanskrit-Auszeichnung (TEXT-14).
+     */
+    private data class Text(val id: String, private val raw: String) {
+        val value: String get() = raw.withoutMarks()
+    }
 
     /** Muster des Tages, Seeds 0–6. */
     private val daily: List<Exercise> = (0L..6L).map { RandomPatternGenerator.forSeed(it).exercise }
@@ -132,6 +138,15 @@ class ContentRulesTest {
                 add(Text("atemlehre.phase[$i].sanskrit", p.sanskrit))
                 add(Text("atemlehre.phase[$i].meaning", p.meaning))
             }
+            add(Text("atemlehre.vayusTeaser", Atemlehre.vayusTeaser))
+            add(Text("atemlehre.vayusIntro", Atemlehre.vayusIntro))
+            Atemlehre.vayus.forEach { v ->
+                val k = "atemlehre.vayu.${v.vayu}"
+                add(Text("$k.name", v.name))
+                add(Text("$k.place", v.place))
+                add(Text("$k.text", v.text))
+            }
+            add(Text("atemlehre.vayusSource", Atemlehre.vayusSource))
             add(Text("atemlehre.rulesTeaser", Atemlehre.rulesTeaser))
             Atemlehre.rules.forEachIndexed { i, (core, rest) -> add(Text("atemlehre.rules[$i]", core + rest)) }
             add(Text("atemlehre.samanaNote", Atemlehre.samanaNote))
@@ -255,9 +270,11 @@ class ContentRulesTest {
 
     /**
      * Teaser-Regel aus TEXT-06: ein geschlossener Satz, endet auf „.“, ≤ 95 Zeichen. Ob ein
-     * finites Verb vorkommt, lässt sich nicht verlässlich automatisch prüfen (R-TEXT).
+     * finites Verb vorkommt, lässt sich nicht verlässlich automatisch prüfen (R-TEXT). Gezählt
+     * wird der gelesene Wortlaut ohne die Sternchen der Sanskrit-Auszeichnung (TEXT-14).
      */
-    private fun teaserProblems(text: String): List<String> = buildList {
+    private fun teaserProblems(marked: String): List<String> = buildList {
+        val text = marked.withoutMarks()
         if (!text.trimEnd().endsWith(".")) add("endet nicht auf „.“")
         if (text.length > 95) add("${text.length} Zeichen > 95")
         val sentences = abbreviations.replace(text.trimEnd().removeSuffix("."), "")
@@ -285,6 +302,7 @@ class ContentRulesTest {
         val lore = exercises.mapNotNull { e -> e.lore?.let { Triple("${e.key()}.lore", it.teaser, it.detail) } }
         val patterns = Atemlehre.patterns.map { Triple("atemlehre.${it.id}", it.teaser, it.teaching) }
         val sections = listOf(
+            "atemlehre.vayusTeaser" to Atemlehre.vayusTeaser,
             "atemlehre.rulesTeaser" to Atemlehre.rulesTeaser,
             "atemlehre.influencesTeaser" to Atemlehre.influencesTeaser,
             "atemlehre.sourcesTeaser" to Atemlehre.sourcesTeaser,

@@ -137,9 +137,9 @@ object BuiltInExercises {
         family = BreathingFamily.DOWNREGULATE,
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
-            teaser = "Andrew Weil leitet 4-7-8 aus dem Pranayama ab: voll halten, dann lange lösen.",
+            teaser = "Andrew Weil leitet 4-7-8 aus dem *prāṇāyāma* ab: voll halten, dann lange lösen.",
             detail = "Nach der Atemlehre verbindet das Muster zwei Richtungen: Das Halten mit voller Lunge " +
-                "(Antara Kumbhaka) gilt als sammelnd, das doppelt so lange Ausatmen als Langhana, also " +
+                "(*antara kumbhaka*) gilt als sammelnd, das doppelt so lange Ausatmen als *laṅghana*, also " +
                 "beruhigend. Das Verhältnis ähnelt dem klassischen 1 : 4 : 2, mit kürzerem Halten.",
             patternId = "halten-voll",
             source = "Swami Kuvalayananda: Pranayama",
@@ -185,7 +185,7 @@ object BuiltInExercises {
             teaser = "Langes, summendes Ausatmen gilt in der Yoga-Lehre als beruhigend und nach innen lenkend.",
             detail = "Bhramari heißt „Biene“. Die Hatha Yoga Pradipika beschreibt das Einatmen mit dem Brummen der " +
                 "männlichen und das langsame Ausatmen mit dem Summen der weiblichen Biene; die Übung soll den " +
-                "Geist nach innen führen. Nach der Atemlehre ist das Muster Langhana: Das Ausatmen ist doppelt " +
+                "Geist nach innen führen. Nach der Atemlehre ist das Muster *laṅghana*: Das Ausatmen ist doppelt " +
                 "so lang wie das Einatmen.",
             patternId = "langhana",
             source = "Hatha Yoga Pradipika 2,68",
@@ -258,8 +258,8 @@ object BuiltInExercises {
             teaser = "In der Yoga-Lehre gilt Sitali als kühlend: Die Luft strömt über die feuchte Zunge.",
             detail = "Die Hatha Yoga Pradipika beschreibt, wie der Atem über die Zunge eingesogen und dann " +
                 "angehalten wird; in der App ohne Halten. Nach der Atemlehre kommen zwei kühlende Züge " +
-                "zusammen: der Weg über die Zunge und das längere Ausatmen (Langhana). Ayurveda rät dazu bei " +
-                "Hitze und Reizbarkeit (Pitta).",
+                "zusammen: der Weg über die Zunge und das längere Ausatmen (*laṅghana*). Ayurveda rät dazu bei " +
+                "Hitze und Reizbarkeit (*pitta*).",
             patternId = "langhana",
             source = "Hatha Yoga Pradipika 2,57–2,58",
         ),
@@ -366,8 +366,8 @@ object BuiltInExercises {
             teaser = "In der Hatha-Lehre zählt Kapalabhati zu den Reinigungen; es gilt als wärmend und klärend.",
             detail = "Kapalabhati heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika zählt es zu den sechs " +
                 "Reinigungen und vergleicht es mit dem Blasebalg eines Schmieds. Nach der Atemlehre ist " +
-                "schnelles Atmen Feuer: Es soll Agni anfachen, das innere Feuer am Nabel, und gilt als stark " +
-                "belebend (Brmhana).",
+                "schnelles Atmen Feuer: Es soll *agni* anfachen, das innere Feuer am Nabel, und gilt als stark " +
+                "belebend (*bṛṃhaṇa*).",
             patternId = "kapalabhati",
             source = "Hatha Yoga Pradipika 2,35",
         ),
@@ -436,11 +436,11 @@ object BuiltInExercises {
         family = BreathingFamily.BALANCE,
         evidence = EvidenceLevel.LITTLE_STUDIED,
         lore = YogaLore(
-            teaser = "In Stufen einatmen gilt in der Atemlehre als sanftes Brmhana: aufbauend, ohne zu drängen.",
+            teaser = "In Stufen einatmen gilt in der Atemlehre als sanftes *bṛṃhaṇa*: aufbauend, ohne zu drängen.",
             detail = "Viloma heißt „gegen den Strich“: Der Atem fließt nicht in einem Zug, sondern mit Pausen. " +
                 "Iyengar beschreibt als erste Stufe das Einatmen in Abschnitten von 2–3 s mit ebenso langen " +
                 "Pausen, danach langsam und tief aus; für Anfänger und im Liegen. Nach der Atemlehre betont " +
-                "das schrittweise Einatmen das Aufnehmende (Brmhana). Die Hatha Yoga Pradipika kennt Viloma nicht.",
+                "das schrittweise Einatmen das Aufnehmende (*bṛṃhaṇa*). Die Hatha Yoga Pradipika kennt Viloma nicht.",
             patternId = "viloma-ein",
             source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
             morePatternIds = listOf("brmhana"),
@@ -474,10 +474,10 @@ object BuiltInExercises {
         family = BreathingFamily.DOWNREGULATE,
         evidence = EvidenceLevel.LITTLE_STUDIED,
         lore = YogaLore(
-            teaser = "In Stufen ausatmen gilt in der Atemlehre als sanftes Langhana: lösend und leicht.",
+            teaser = "In Stufen ausatmen gilt in der Atemlehre als sanftes *laṅghana*: lösend und leicht.",
             detail = "Bei der zweiten Stufe des Viloma atmet man in einem Zug ein und in Abschnitten mit kurzen " +
                 "Pausen aus. Iyengar beschreibt sie für Anfänger im Liegen und nennt als Erfahrung „Leichtigkeit“. " +
-                "Nach der Atemlehre betont das schrittweise Ausatmen das Loslassen (Langhana).",
+                "Nach der Atemlehre betont das schrittweise Ausatmen das Loslassen (*laṅghana*).",
             patternId = "viloma-aus",
             source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
             morePatternIds = listOf("langhana"),
@@ -511,9 +511,9 @@ object BuiltInExercises {
         family = BreathingFamily.BALANCE,
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
-            teaser = "Alle Phasen gleich lang heißt im Yoga Sama Vritti, der gleichmäßige Atem.",
-            detail = "Sama Vritti nennt B. K. S. Iyengar das Atmen in gleich langen Phasen, auch mit Pausen; " +
-                "ungleiche Verhältnisse heißen Vishama Vritti. Fülle und Leere bekommen gleich viel Raum, die " +
+            teaser = "Alle Phasen gleich lang heißt im Yoga *sama vṛtti*, der gleichmäßige Atem.",
+            detail = "*sama vṛtti* nennt B. K. S. Iyengar das Atmen in gleich langen Phasen, auch mit Pausen; " +
+                "ungleiche Verhältnisse heißen *viṣama vṛtti*. Fülle und Leere bekommen gleich viel Raum, die " +
                 "Lehre sieht darin Ordnung für den Geist. Die Box-Atmung selbst ist eine moderne Form.",
             patternId = "sama-vritti",
             source = "B. K. S. Iyengar: Light on Pranayama",
@@ -553,8 +553,8 @@ object BuiltInExercises {
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
             teaser = "Die Yoga-Lehre sieht in der Wechselatmung den Ausgleich von Sonne (rechts) und Mond (links).",
-            detail = "Nadi Shodhana heißt „Reinigung der Kanäle“. Nach der Lehre fließt Prana durch zwei " +
-                "Hauptkanäle: Ida links, Mond, kühlend; Pingala rechts, Sonne, wärmend. Der Wechsel soll " +
+            detail = "Nadi Shodhana heißt „Reinigung der Kanäle“. Nach der Lehre fließt *prāṇa* durch zwei " +
+                "Hauptkanäle: *iḍā* links, Mond, kühlend; *piṅgalā* rechts, Sonne, wärmend. Der Wechsel soll " +
                 "beide ausgleichen. Die Hatha Yoga Pradipika übt ihn mit langem Halten, spätere Lehrer oft " +
                 "im Maß 1 : 4 : 2; in der App ohne Halten.",
             patternId = "samana",
@@ -601,11 +601,11 @@ object BuiltInExercises {
         family = BreathingFamily.BALANCE,
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
-            teaser = "SKY verbindet klassische Pranayamas: Ujjayi, Bhastrika und Atmen in wechselndem Tempo.",
+            teaser = "SKY verbindet klassische *prāṇāyāmas*: Ujjayi, Bhastrika und Atmen in wechselndem Tempo.",
             detail = "Ujjayi, das Atmen mit leicht verengter Kehle, gilt in der Hatha-Lehre als wärmend und " +
                 "sammelnd. Bhastrika, der „Blasebalg“, gilt als Feuer. Der Hauptteil, die Kriya, wechselt " +
-                "langsame, mittlere und schnelle Atemzyklen; nach der Atemlehre wechseln damit Langhana und " +
-                "Brmhana. Das Programm stammt aus den 1980er-Jahren (Art of Living).",
+                "langsame, mittlere und schnelle Atemzyklen; nach der Atemlehre wechseln damit *laṅghana* und " +
+                "*bṛṃhaṇa*. Das Programm stammt aus den 1980er-Jahren (Art of Living).",
             patternId = "feuer",
             source = "Hatha Yoga Pradipika 2,51–2,53; 2,59–2,67",
         ),

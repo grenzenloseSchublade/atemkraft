@@ -47,6 +47,7 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.domain.buildTimeline
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.sessionSummary
+import app.atemkraft.domain.withoutMarks
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
@@ -165,7 +166,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * Weitergeführte Seiten: Logbuch mit allen Gruppen; Einstellungen mit allen längsten Varianten
      * (Hinweis nach zurückgesetzten Einstellungen, „Keine Stimme gewählt“, Stimmen-Katalog offen
      * samt Quelle, „Beim Handywechsel?“ offen, längste Daten-Rückmeldungen, leeres Logbuch);
-     * Glossar; Über mit Lizenzen; Atemlehre mit aufgeklappten Köpfen und der Karte „Feuer“;
+     * Glossar; Über mit Lizenzen; Atemlehre mit aufgeklappten Köpfen (samt den fünf vāyus) und der Karte „Feuer“;
      * Mini-Leiste mit längstem Namen und längstem Phasenwort.
      */
     @Test
@@ -178,8 +179,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("06_glossar") { GlossaryScreen(onBack = {}) }
         snap("07_ueber_lizenzen") { AboutScreen(onBack = {}, licensesExpanded = true) }
         snap("12_atemlehre_offen", prepare = {
-            listOf(R.string.atemlehre_rules, R.string.atemlehre_influences, R.string.atemlehre_sources).forEach {
-                compose.onNodeWithText(app.getString(it)).performClick()
+            listOf(R.string.atemlehre_vayus, R.string.atemlehre_rules, R.string.atemlehre_influences, R.string.atemlehre_sources).forEach {
+                compose.onNodeWithText(app.getString(it).withoutMarks()).performClick()
             }
         }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer") }
         snap("11_mini_leiste", heightDp = 160) {

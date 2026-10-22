@@ -70,6 +70,20 @@ data class LorePhase(
     val meaning: String,
 )
 
+/** Die fünf *vāyus* der Lehre (Praśna-Upaniṣad 3): Kennung für Ort, Farbe und Richtung im Bild. */
+enum class Vayu { PRANA, APANA, SAMANA, UDANA, VYANA }
+
+/**
+ * Ein *vāyu* in der Atemlehre: [name] mit Sanskrit-Auszeichnung („*prāṇa*“), [place] im Körper
+ * nach der Lehre, [text] ein zuschreibender Satz zu Richtung und Deutung.
+ */
+data class LoreVayu(
+    val vayu: Vayu,
+    val name: String,
+    val place: String,
+    val text: String,
+)
+
 /** Ein Eintrag unter „Weitere Einflüsse“ (Atemweg, Tageszeit, Typ). */
 data class LoreInfluence(
     val label: String,

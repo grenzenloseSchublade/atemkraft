@@ -66,12 +66,13 @@ fun ForwardChevron(tint: Color, modifier: Modifier = Modifier) {
  * Atemlehre“). Der Text hält rechts die Breite des Chevrons frei, der Chevron liegt darüber
  * an der Endkante: Er behält seine volle Größe, auch wenn die Beschriftung bei großer Schrift
  * umbricht (LAYOUT-05) – als Icon neben dem Text in der Button-Reihe bekäme er dann 0 dp, als
- * Inline-Inhalt rutschte er allein in eine neue Zeile.
+ * Inline-Inhalt rutschte er allein in eine neue Zeile. Sanskrit kursiv („*laṅghana* in der
+ * Atemlehre“, [sanskritText]).
  */
 @Composable
 fun ForwardLinkText(text: String, color: Color, modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.CenterEnd) {
-        Text(text = text, color = color, modifier = Modifier.padding(end = Sizes.IconInButton))
+        Text(text = sanskritText(text), color = color, modifier = Modifier.padding(end = Sizes.IconInButton))
         ForwardChevron(tint = color)
     }
 }

@@ -3,10 +3,12 @@ package app.atemkraft.data
 import app.atemkraft.domain.LoreInfluence
 import app.atemkraft.domain.LorePattern
 import app.atemkraft.domain.LorePhase
+import app.atemkraft.domain.LoreVayu
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.RhythmStep
+import app.atemkraft.domain.Vayu
 
 /**
  * Inhalte der Seite „Atemlehre“: wie die Yoga-Lehre Einatmen, Ausatmen und Halten deutet
@@ -14,8 +16,13 @@ import app.atemkraft.domain.RhythmStep
  * [LorePattern.studies] mit Quelle in [studyRefs].
  *
  * Grundlage: Krishnamacharya/Desikachar (Brmhana, Langhana, Samana), Hatha Yoga Pradipika,
- * Patanjalis Yoga-Sutra, Iyengar, Kuvalayananda. Verse deutsch zitiert („2,68“), geprüft gegen
- * die Übersetzung auf ashtangayoga.info (2026-10-17).
+ * Patanjalis Yoga-Sutra, Iyengar, Kuvalayananda, für die fünf vāyus die Praśna-Upaniṣad (3. Frage).
+ * Verse deutsch zitiert („2,68“), geprüft gegen die Übersetzung auf ashtangayoga.info (2026-10-17).
+ *
+ * Sanskrit-Begriffe stehen klein, in IAST-Umschrift und zwischen Sternchen (TEXT-14, „*prāṇa*“),
+ * die UI setzt sie kursiv. Namen von Übungen und Atemtechniken (Nadi Shodhana, Bhramari, Sitali,
+ * Ujjayi, Bhastrika, Kapalabhati, Viloma), Personen und Texttitel bleiben aufrecht in ihrer
+ * gängigen Schreibweise: Sie sind Eigennamen wie „Box-Atmung“ und stehen so als Titel in der App.
  */
 object Atemlehre {
 
@@ -23,11 +30,27 @@ object Atemlehre {
         "keine Studienlage; was Studien sagen, steht jeweils unter „Studien“."
 
     val phases = listOf(
-        LorePhase(PhaseType.INHALE, "Einatmen", "Puraka", "Aufnehmen. In der Lehre Prana: Kraft kommt herein."),
-        LorePhase(PhaseType.HOLD_FULL, "Halten voll", "Antara Kumbhaka", "Fülle bewahren, sammeln."),
-        LorePhase(PhaseType.EXHALE, "Ausatmen", "Rechaka", "Loslassen. In der Lehre Apana: Verbrauchtes geht hinaus."),
-        LorePhase(PhaseType.HOLD_EMPTY, "Halten leer", "Bahya Kumbhaka", "Leere zulassen, still werden."),
+        LorePhase(PhaseType.INHALE, "Einatmen", "*pūraka*", "Aufnehmen. In der Lehre *prāṇa*: Kraft kommt herein."),
+        LorePhase(PhaseType.HOLD_FULL, "Halten voll", "*antara kumbhaka*", "Fülle bewahren, sammeln."),
+        LorePhase(PhaseType.EXHALE, "Ausatmen", "*recaka*", "Loslassen. In der Lehre *apāna*: Verbrauchtes geht hinaus."),
+        LorePhase(PhaseType.HOLD_EMPTY, "Halten leer", "*bāhya kumbhaka*", "Leere zulassen, still werden."),
     )
+
+    // ---- Die fünf vāyus ----
+
+    val vayusTeaser = "In der Yoga-Lehre fließt der Atem als *prāṇa* in fünf Strömungen, den *vāyus* („Winde“)."
+    val vayusIntro = "Jede hat ihren Ort und ihre Richtung. Ein Bild der Lehre, keine Anatomie."
+
+    /** Reihenfolge der Liste wie im Design: aufnehmen, abgeben, Mitte, oben, ganz. */
+    val vayus = listOf(
+        LoreVayu(Vayu.PRANA, "*prāṇa*", "Brustraum, Kopf", "Nach innen: gilt als die aufnehmende Kraft – Einatmen, Sinneseindrücke."),
+        LoreVayu(Vayu.APANA, "*apāna*", "Becken, unterer Bauch", "Nach unten und außen: gilt als die abgebende Kraft – Ausatmen, Ausscheiden."),
+        LoreVayu(Vayu.SAMANA, "*samāna*", "Nabelmitte", "Zur Mitte hin: gilt als die verdauende, ausgleichende Kraft zwischen Ein und Aus."),
+        LoreVayu(Vayu.UDANA, "*udāna*", "Hals, Kopf", "Nach oben: gilt als die Kraft von Stimme, Ausdruck und Aufrichtung."),
+        LoreVayu(Vayu.VYANA, "*vyāna*", "ganzer Körper", "Von der Mitte nach außen: gilt als die verteilende Kraft, die alles durchströmt."),
+    )
+    val vayusSource = "Quelle der Lehre: u. a. Praśna-Upaniṣad 3; spätere Hatha-Texte. Orte und Richtungen " +
+        "werden je nach Schule etwas verschieden beschrieben."
 
     // ---- Grundregeln ----
 
@@ -35,12 +58,12 @@ object Atemlehre {
 
     /** Je Regel: fett gesetzter Kern, dann die Erläuterung. */
     val rules = listOf(
-        "Längeres Einatmen ist Brmhana" to " („nähren“): gilt als belebend und wärmend.",
-        "Längeres Ausatmen ist Langhana" to " („leicht machen“): gilt als beruhigend und kühlend.",
-        "Halten verstärkt die Phase davor." to " Voll halten vertieft Brmhana, leer halten vertieft Langhana.",
+        "Längeres Einatmen ist *bṛṃhaṇa*" to " („nähren“): gilt als belebend und wärmend.",
+        "Längeres Ausatmen ist *laṅghana*" to " („leicht machen“): gilt als beruhigend und kühlend.",
+        "Halten verstärkt die Phase davor." to " Voll halten vertieft *bṛṃhaṇa*, leer halten vertieft *laṅghana*.",
         "Tempo dosiert." to " Schnell gilt als Feuer und Hitze, langsam als fein und still.",
     )
-    val samanaNote = "Sind Ein- und Ausatmen gleich lang, heißt das Samana: Ausgleich."
+    val samanaNote = "Sind Ein- und Ausatmen gleich lang, heißt das *samāna*: Ausgleich."
     val rulesCheck = "Prüfstein aus der Lehre von Krishnamacharya und Desikachar: Wird das " +
         "Ausatmen nach dem Halten hastig oder rau, war das Verhältnis zu ehrgeizig. Langsam steigern."
 
@@ -55,11 +78,11 @@ object Atemlehre {
         LorePattern(
             id = "langhana",
             title = "Ein kurz, Aus lang",
-            linkName = "Langhana",
+            linkName = "*laṅghana*",
             rhythm = listOf(inhale(4.0), exhale(6.0)),
             counts = "z. B. Ein 4\u00A0· Aus 6",
-            teaser = "Langhana: Längeres Ausatmen gilt in der Yoga-Lehre als beruhigend und kühlend.",
-            teaching = "Der Schwerpunkt liegt beim Loslassen (Apana). Langhana heißt „leicht " +
+            teaser = "*laṅghana*: Längeres Ausatmen gilt in der Yoga-Lehre als beruhigend und kühlend.",
+            teaching = "Der Schwerpunkt liegt beim Loslassen (*apāna*). *laṅghana* heißt „leicht " +
                 "machen, reduzieren“. Die Lehre setzt es ein, wenn zu viel da ist: Hitze, Unruhe, " +
                 "Ärger, kreisende Gedanken. Das Ausatmen wird schrittweise verlängert, bis es etwa " +
                 "doppelt so lang ist wie das Einatmen.",
@@ -73,13 +96,13 @@ object Atemlehre {
         LorePattern(
             id = "brmhana",
             title = "Ein lang, Aus kurz",
-            linkName = "Brmhana",
+            linkName = "*bṛṃhaṇa*",
             // Spiegelbild von Langhana (Ein 4 · Aus 6), gleich lang wie Samana (5 · 5): Die drei
             // Balken dauern je 10 s, Ein und Aus lassen sich direkt vergleichen (Nutzer 2026-10-21).
             rhythm = listOf(inhale(6.0), exhale(4.0)),
             counts = "z. B. Ein 6\u00A0· Aus 4",
-            teaser = "Brmhana: Längeres Einatmen gilt in der Yoga-Lehre als belebend und wärmend.",
-            teaching = "Der Schwerpunkt liegt beim Aufnehmen (Prana). Brmhana heißt „nähren, " +
+            teaser = "*bṛṃhaṇa*: Längeres Einatmen gilt in der Yoga-Lehre als belebend und wärmend.",
+            teaching = "Der Schwerpunkt liegt beim Aufnehmen (*prāṇa*). *bṛṃhaṇa* heißt „nähren, " +
                 "ausdehnen“. Die Lehre setzt es ein, wenn zu wenig da ist: Müdigkeit, Schwere, " +
                 "Antriebslosigkeit, Kältegefühl. Die Brust weitet sich, der Körper richtet sich auf.",
             typical = "Morgens, bei Müdigkeit, Schwere oder Trägheit.",
@@ -91,10 +114,10 @@ object Atemlehre {
         LorePattern(
             id = "samana",
             title = "Ein gleich Aus, langsam",
-            linkName = "Samana",
+            linkName = "*samāna*",
             rhythm = listOf(inhale(5.0), exhale(5.0)),
             counts = "z. B. Ein 5\u00A0· Aus 5",
-            teaser = "Samana: Gleich langes, langsames Atmen gilt als ausgleichend und sammelnd.",
+            teaser = "*samāna*: Gleich langes, langsames Atmen gilt als ausgleichend und sammelnd.",
             teaching = "Weder aufbauen noch reduzieren: Ein- und Ausatmen halten sich die Waage. " +
                 "Patanjali beschreibt das Ziel als Atem, der „lang und fein“ wird (Yoga-Sutra " +
                 "2,50). Gilt als Grundlage, bevor man Verhältnisse verschiebt, und als Vorbereitung " +
@@ -115,8 +138,8 @@ object Atemlehre {
             counts = "je etwa 1 s, kräftig",
             teaser = "Schnelles, kräftiges Atmen gilt in der Yoga-Lehre als Feuer: stark wärmend.",
             teaching = "Bhastrika, der „Blasebalg“: Ein- und Ausatmen gleich kräftig und schnell. " +
-                "Nach der Lehre facht es Agni an, das innere Feuer am Nabel. Die Hatha Yoga " +
-                "Pradipika (2,59–2,67) zählt es zu ihren acht Kumbhakas; dort folgt dem Blasebalg " +
+                "Nach der Lehre facht es *agni* an, das innere Feuer am Nabel. Die Hatha Yoga " +
+                "Pradipika (2,59–2,67) zählt es zu ihren acht *kumbhakas*; dort folgt dem Blasebalg " +
                 "ein Halten.",
             typical = "Bei Trägheit und Kälte, im Sitzen.",
             studies = "Schnelles Atmen senkte in einer Studie die Herzratenvariabilität, es " +
@@ -134,7 +157,7 @@ object Atemlehre {
             counts = "Stoß aus, Einatmen von selbst",
             teaser = "Kurze, aktive Ausatemstöße gelten in der Yoga-Lehre als wärmend und klärend.",
             teaching = "Kapalabhati heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika (2,35) " +
-                "zählt es zu den sechs Reinigungen (Shatkarma) und vergleicht es mit dem Blasebalg " +
+                "zählt es zu den sechs Reinigungen (*ṣaṭkarma*) und vergleicht es mit dem Blasebalg " +
                 "eines Schmieds: Ein- und Ausatmen sehr schnell. Heute wird meist nur das Ausatmen " +
                 "aktiv geübt, das Einatmen geschieht von selbst.",
             typical = "Bei Trägheit, morgens.",
@@ -148,17 +171,17 @@ object Atemlehre {
             linkName = "Halten voll",
             rhythm = listOf(inhale(4.0), holdFull(4.0), exhale(6.0)),
             counts = "z. B. Ein 4\u00A0· Halten 4\u00A0· Aus 6",
-            teaser = "Halten nach dem Einatmen vertieft Brmhana: Fülle bewahren, Kraft sammeln.",
-            teaching = "Antara Kumbhaka hält Prana im Körper. Die Hatha-Lehre sieht im Halten den " +
-                "Kern des Pranayama: „Bewegt sich der Atem, bewegt sich der Geist; ist der Atem " +
+            teaser = "Halten nach dem Einatmen vertieft *bṛṃhaṇa*: Fülle bewahren, Kraft sammeln.",
+            teaching = "*antara kumbhaka* hält *prāṇa* im Körper. Die Hatha-Lehre sieht im Halten den " +
+                "Kern des *prāṇāyāma*: „Bewegt sich der Atem, bewegt sich der Geist; ist der Atem " +
                 "still, wird der Geist still“ (Hatha Yoga Pradipika 2,2). Traditionell mit " +
-                "gesenktem Kinn (Jalandhara Bandha). Die Kehle bleibt weich, nicht pressen.",
+                "gesenktem Kinn (*jālandhara bandha*). Die Kehle bleibt weich, nicht pressen.",
             typical = "Zum Sammeln und Konzentrieren.",
             studies = "Zum Halten selbst gibt es kaum Daten. Pressen bei geschlossener Kehle lässt " +
                 "den Blutdruck schwanken.",
             exerciseIds = listOf("4-7-8", RandomPatternGenerator.ID),
             appNote = "4-7-8 verbindet volles Halten mit langem Ausatmen: erst sammeln, dann loslassen.",
-            origin = "Die Zuordnung zu Brmhana folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
+            origin = "Die Zuordnung zu *bṛṃhaṇa* folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
         ),
         LorePattern(
             id = "halten-leer",
@@ -168,28 +191,28 @@ object Atemlehre {
             // und Aus stehen untereinander, nur der Ort des Haltens unterscheidet sich (Nutzer 2026-10-21).
             rhythm = listOf(inhale(4.0), exhale(6.0), holdEmpty(4.0)),
             counts = "z. B. Ein 4\u00A0· Aus 6\u00A0· Halten 4",
-            teaser = "Halten nach dem Ausatmen vertieft Langhana: Leere zulassen, still werden.",
-            teaching = "Bahya Kumbhaka gilt als feiner und anspruchsvoller als das Halten mit " +
+            teaser = "Halten nach dem Ausatmen vertieft *laṅghana*: Leere zulassen, still werden.",
+            teaching = "*bāhya kumbhaka* gilt als feiner und anspruchsvoller als das Halten mit " +
                 "voller Lunge. Patanjali nennt Ausatmen und Anhalten als Weg zu einem klaren Geist " +
                 "(Yoga-Sutra 1,34). Desikachar beschreibt die Pause nach dem Ausatmen als Zeit, in " +
                 "der das innere Feuer Verbrauchtes verbrennt. Traditionell mit eingezogenem Bauch " +
-                "(Uddiyana Bandha).",
+                "(*uḍḍīyāna bandha*).",
             typical = "Für Geübte, in ruhiger Verfassung.",
             studies = "Kaum Daten. Mit leerer Lunge ist der Sauerstoffvorrat klein, Atemnot kommt früher.",
             exerciseIds = listOf("box-4-4-4-4", RandomPatternGenerator.ID),
             appNote = "Bei der Box-Atmung ist die leere Pause kurz. Wim Hof hält ebenfalls leer, " +
                 "aber nach schnellem Atmen; das ist ein anderer Zusammenhang.",
-            origin = "Die Zuordnung zu Langhana folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
+            origin = "Die Zuordnung zu *laṅghana* folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
         ),
         LorePattern(
             id = "sama-vritti",
             title = "Alle vier Phasen gleich",
-            linkName = "Sama Vritti",
+            linkName = "*sama vṛtti*",
             rhythm = listOf(inhale(4.0), holdFull(4.0), exhale(4.0), holdEmpty(4.0)),
             counts = "z. B. 4\u00A0· 4\u00A0· 4\u00A0· 4",
-            teaser = "Alle vier Phasen gleich lang heißt Sama Vritti: Ordnung und Gleichmaß.",
-            teaching = "Sama Vritti, der gleichmäßige Atem, in der Form mit Pausen: Fülle und Leere " +
-                "bekommen gleich viel Raum. B. K. S. Iyengar stellt ihm Vishama Vritti gegenüber, " +
+            teaser = "Alle vier Phasen gleich lang heißt *sama vṛtti*: Ordnung und Gleichmaß.",
+            teaching = "*sama vṛtti*, der gleichmäßige Atem, in der Form mit Pausen: Fülle und Leere " +
+                "bekommen gleich viel Raum. B. K. S. Iyengar stellt ihm *viṣama vṛtti* gegenüber, " +
                 "das Atmen in ungleichen Verhältnissen. Die Lehre sieht darin eine Struktur, die " +
                 "den Geist ordnet.",
             typical = "Zum Fokussieren, wenn es drunter und drüber geht.",
@@ -204,7 +227,7 @@ object Atemlehre {
             rhythm = listOf(inhale(4.0), holdFull(16.0), exhale(8.0)),
             counts = "z. B. Ein 4\u00A0· Halten 16\u00A0· Aus 8",
             teaser = "1 : 4 : 2 gilt als klassisches Maß: kurz aufnehmen, lange halten, doppelt so lang lösen.",
-            teaching = "Gezählt wird in Matras, einer traditionellen Zeiteinheit. Kuvalayananda " +
+            teaching = "Gezählt wird in *mātrās*, einer traditionellen Zeiteinheit. Kuvalayananda " +
                 "nennt 1 : 4 : 2 das „meistbevorzugte“ Maß und rät Anfängern zu 1 : 2 : 2. Geübt " +
                 "wird es meist in der Wechselatmung. Die Hatha Yoga Pradipika beschreibt Stufen " +
                 "der Übung: Anfangs schwitzt der Übende, später zittert er (2,12).",
@@ -212,7 +235,7 @@ object Atemlehre {
             studies = "Als Verhältnis nicht untersucht. Lange Pausen sind nichts für den Einstieg.",
             exerciseIds = listOf("nadi-shodhana"),
             appNote = "In der App ohne Halten.",
-            origin = "Wo das Maß zuerst steht, ist unklar; genannt wird die Shandilya-Upanishad, nicht geprüft.",
+            origin = "Wo das Maß zuerst steht, ist unklar; genannt wird die Śāṇḍilya-Upaniṣad, nicht geprüft.",
         ),
         // Viloma I und II je als eigene Karte wie die beiden Halten-Karten: gegensätzliche
         // Richtung, eigener Rhythmus (Nutzer 2026-10-21). Werte wie die Übungen in der App.
@@ -222,10 +245,10 @@ object Atemlehre {
             linkName = "Viloma I",
             rhythm = listOf(inhale(2.0), holdFull(2.0), inhale(2.0), holdFull(2.0), inhale(2.0), exhale(8.0)),
             counts = "z. B. Ein in drei Stufen\u00A0· Aus 8",
-            teaser = "Einatmen in Stufen gilt als sanftes Brmhana: aufbauen, ohne zu drängen.",
+            teaser = "Einatmen in Stufen gilt als sanftes *bṛṃhaṇa*: aufbauen, ohne zu drängen.",
             teaching = "Viloma heißt „gegen den Strich“: Das Einatmen wird in kleine Abschnitte mit " +
                 "kurzen Pausen geteilt, danach fließt das Ausatmen in einem Zug. Stufen beim " +
-                "Einatmen gelten als aufbauend (Brmhana). Iyengar teilt in Abschnitte von 2–3 s " +
+                "Einatmen gelten als aufbauend (*bṛṃhaṇa*). Iyengar teilt in Abschnitte von 2–3 s " +
                 "mit ebenso langen Pausen, bis die Lunge voll ist. Die Pausen sind kurzes Halten, " +
                 "aber mitten im Einatmen statt nach dem vollen Atemzug.",
             typical = "Zum Einstieg, im Liegen, wenn lange Phasen noch nicht gehen.",
@@ -239,10 +262,10 @@ object Atemlehre {
             linkName = "Viloma II",
             rhythm = listOf(inhale(6.0), exhale(2.0), holdEmpty(2.0), exhale(2.0), holdEmpty(2.0), exhale(2.0)),
             counts = "z. B. Ein 6\u00A0· Aus in drei Stufen",
-            teaser = "Ausatmen in Stufen gilt als sanftes Langhana: loslassen, leicht werden.",
+            teaser = "Ausatmen in Stufen gilt als sanftes *laṅghana*: loslassen, leicht werden.",
             teaching = "Umgekehrt zu Viloma I: Das Einatmen fließt in einem Zug, das Ausatmen wird in " +
                 "Abschnitte mit kurzen Pausen geteilt, bis die Lunge leer ist. Stufen beim " +
-                "Ausatmen gelten als lösend (Langhana). Iyengar beschreibt die Übung für Anfänger " +
+                "Ausatmen gelten als lösend (*laṅghana*). Iyengar beschreibt die Übung für Anfänger " +
                 "im Liegen und nennt als Erfahrung „Leichtigkeit“. Die Pausen sind kurzes Halten, " +
                 "aber mitten im Ausatmen statt nach dem leeren Atemzug.",
             typical = "Zum Einstieg, im Liegen, zum Loslassen.",
@@ -260,16 +283,16 @@ object Atemlehre {
     val influences = listOf(
         LoreInfluence(
             "Atemweg",
-            "Rechtes Nasenloch: Sonne (Pingala), gilt als wärmend. Linkes Nasenloch: Mond (Ida), " +
+            "Rechtes Nasenloch: Sonne (*piṅgalā*), gilt als wärmend. Linkes Nasenloch: Mond (*iḍā*), " +
                 "gilt als kühlend. Über die gerollte Zunge (Sitali): kühlend. Mit leicht verengter " +
                 "Kehle (Ujjayi): wärmend und sammelnd. Summend (Bhramari): lenkt nach innen.",
             listOf("sitali", "bhramari", "nadi-shodhana"),
         ),
-        LoreInfluence("Tageszeit", "Morgens eher Brmhana, abends eher Langhana."),
+        LoreInfluence("Tageszeit", "Morgens eher *bṛṃhaṇa*, abends eher *laṅghana*."),
         LoreInfluence(
             "Typ (Ayurveda)",
-            "Bei Hitze und Reizbarkeit (Pitta) Langhana. Bei Schwere und Trägheit (Kapha) " +
-                "Brmhana. Bei Unruhe und Zerstreutheit (Vata) gleichmäßig und langsam, ohne lange Pausen.",
+            "Bei Hitze und Reizbarkeit (*pitta*) *laṅghana*. Bei Schwere und Trägheit (*kapha*) " +
+                "*bṛṃhaṇa*. Bei Unruhe und Zerstreutheit (*vāta*) gleichmäßig und langsam, ohne lange Pausen.",
         ),
     )
     val influencesQuote = "„Wie man Löwe, Elefant und Tiger nur langsam zähmt, so auch den Atem“ " +

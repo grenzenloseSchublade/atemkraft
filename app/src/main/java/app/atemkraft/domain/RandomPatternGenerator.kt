@@ -379,9 +379,9 @@ object RandomPatternGenerator {
 
     /** Teaser der Einordnung je Hauptkarte (≤ 95 Zeichen, zuschreibend formuliert). */
     private fun teaserFor(patternId: String): String = when (patternId) {
-        "brmhana" -> "Längeres Einatmen gilt in der Yoga-Lehre als Brmhana: belebend und wärmend."
-        "langhana" -> "Längeres Ausatmen gilt in der Yoga-Lehre als Langhana: beruhigend und kühlend."
-        else -> "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als Samana: ausgleichend."
+        "brmhana" -> "Längeres Einatmen gilt in der Yoga-Lehre als *bṛṃhaṇa*: belebend und wärmend."
+        "langhana" -> "Längeres Ausatmen gilt in der Yoga-Lehre als *laṅghana*: beruhigend und kühlend."
+        else -> "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als *samāna*: ausgleichend."
     }
 
     /** Satz zum Halten nach dem Einatmen, mit führendem Leerzeichen. */

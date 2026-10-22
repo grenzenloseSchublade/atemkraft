@@ -90,43 +90,70 @@ object Glossary {
         ),
     )
 
-    /** Aus der Yoga-Lehre: Begriffe der Tradition, zuschreibend erklärt (keine Wirkbehauptung). */
+    /**
+     * Aus der Yoga-Lehre: Begriffe der Tradition, zuschreibend erklärt (keine Wirkbehauptung).
+     * Sanskrit klein, kursiv und mit Längenzeichen (TEXT-14). Jede Angabe steht nur einmal: Was
+     * *prāṇa* ist, sagt sein eigener Eintrag; die fünf *vāyus* je kurz, das Bild dazu in der Atemlehre.
+     */
     val yogaTerms = listOf(
         GlossaryTerm(
-            "Pranayama",
-            "Die Lenkung des Atems im Yoga; das Wort verbindet Prana (Lebenskraft) mit Ayama " +
-                "(Ausdehnung). Bei Patanjali die vierte Stufe des Yoga-Wegs.",
+            "*prāṇāyāma*",
+            "Die Lenkung des Atems im Yoga; das Wort verbindet *prāṇa* mit *āyāma* (Ausdehnung). " +
+                "Bei Patanjali die vierte Stufe des Yoga-Wegs.",
         ),
         GlossaryTerm(
-            "Puraka\u00A0· Rechaka\u00A0· Kumbhaka",
-            "Einatmen, Ausatmen und Anhalten. Antara Kumbhaka ist das Halten mit voller, Bahya " +
-                "Kumbhaka das Halten mit leerer Lunge.",
+            "*pūraka*\u00A0· *recaka*\u00A0· *kumbhaka*",
+            "Einatmen, Ausatmen und Anhalten. *antara kumbhaka* ist das Halten mit voller, " +
+                "*bāhya kumbhaka* das Halten mit leerer Lunge.",
         ),
         GlossaryTerm(
-            "Brmhana\u00A0· Langhana\u00A0· Samana",
-            "Längeres Einatmen gilt als nährend und belebend (Brmhana), längeres Ausatmen als " +
-                "beruhigend und kühlend (Langhana), gleich langes als ausgleichend (Samana). Begriffe " +
+            "*bṛṃhaṇa*\u00A0· *laṅghana*\u00A0· *samāna*",
+            "Längeres Einatmen gilt als nährend und belebend (*bṛṃhaṇa*), längeres Ausatmen als " +
+                "beruhigend und kühlend (*laṅghana*), gleich langes als ausgleichend (*samāna*). Begriffe " +
                 "aus der Lehre von Krishnamacharya und Desikachar.",
         ),
         GlossaryTerm(
-            "Prana\u00A0· Apana",
-            "Zwei Strömungen der Lebenskraft: Prana nimmt auf und gehört zum Einatmen, Apana lässt " +
-                "los und gehört zum Ausatmen.",
+            "*vāyu*",
+            "„Wind“: In der Yoga-Lehre fließt *prāṇa* in fünf Strömungen, den *vāyus*, jede mit " +
+                "eigenem Ort und eigener Richtung. Ein Bild der Lehre, keine Anatomie.",
         ),
         GlossaryTerm(
-            "Ida\u00A0· Pingala",
-            "Zwei Hauptkanäle der Lebenskraft: Ida links, Mond, kühlend; Pingala rechts, Sonne, " +
-                "wärmend. Die Wechselatmung soll sie ausgleichen.",
+            "*prāṇa*",
+            "Die Lebenskraft, die nach der Lehre mit dem Atem in den Körper kommt. Als *vāyu* die " +
+                "aufnehmende Strömung im Brustraum, nach innen.",
         ),
         GlossaryTerm(
-            "Sama Vritti\u00A0· Vishama Vritti",
-            "Atmen in gleich langen Phasen (Sama Vritti) oder in ungleichen Verhältnissen " +
-                "(Vishama Vritti).",
+            "*apāna*",
+            "Der *vāyu* in Becken und unterem Bauch, nach unten und außen; gilt als die abgebende " +
+                "Kraft: Ausatmen, Ausscheiden.",
         ),
         GlossaryTerm(
-            "Bandha",
-            "Ein Muskelverschluss, der beim Anhalten die Lebenskraft lenken soll, etwa das gesenkte " +
-                "Kinn (Jalandhara) oder der eingezogene Bauch (Uddiyana).",
+            "*samāna*",
+            "Der *vāyu* der Nabelmitte, zur Mitte hin; gilt als die verdauende, ausgleichende Kraft.",
+        ),
+        GlossaryTerm(
+            "*udāna*",
+            "Der *vāyu* in Hals und Kopf, nach oben; gilt als die Kraft von Stimme und Aufrichtung.",
+        ),
+        GlossaryTerm(
+            "*vyāna*",
+            "Der *vāyu*, der den ganzen Körper durchzieht, von der Mitte nach außen; gilt als die " +
+                "verteilende Kraft.",
+        ),
+        GlossaryTerm(
+            "*iḍā*\u00A0· *piṅgalā*",
+            "Zwei Hauptkanäle (*nāḍīs*) von *prāṇa*: *iḍā* links, Mond, kühlend; *piṅgalā* rechts, " +
+                "Sonne, wärmend. Die Wechselatmung soll sie ausgleichen.",
+        ),
+        GlossaryTerm(
+            "*sama vṛtti*\u00A0· *viṣama vṛtti*",
+            "Atmen in gleich langen Phasen (*sama vṛtti*) oder in ungleichen Verhältnissen " +
+                "(*viṣama vṛtti*).",
+        ),
+        GlossaryTerm(
+            "*bandha*",
+            "Ein Muskelverschluss, der beim Anhalten *prāṇa* lenken soll, etwa das gesenkte Kinn " +
+                "(*jālandhara bandha*) oder der eingezogene Bauch (*uḍḍīyāna bandha*).",
         ),
     )
 }

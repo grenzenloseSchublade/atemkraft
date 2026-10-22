@@ -78,7 +78,7 @@ fun ExpanderSection(
                     color = accent,
                 )
                 Text(
-                    text = appetizer,
+                    text = sanskritText(appetizer),
                     // Eine Rolle für beide Zustände (kein Reflow beim Aufklappen); Betonung nur
                     // über die Deckkraft: zugeklappt Sekundärtext wie jeder Teaser, aufgeklappt
                     // (und ohne Inhalt) Fließtext.

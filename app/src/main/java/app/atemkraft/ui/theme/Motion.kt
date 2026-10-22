@@ -28,4 +28,13 @@ object Motion {
      * still, dann verschwindet es ohne Übergang (MOTION-02).
      */
     val TapFlashStatic = 500L
+
+    /** vāyu-Bild: Strömungslinien rücken in dieser Zeit um zwei Strich-Abstände weiter (ruhig). */
+    val VayuFlow = 2400
+
+    /** vāyu-Bild: Linien der gewählten Strömung fließen schneller. */
+    val VayuFlowSelected = 1100
+
+    /** vāyu-Bild: ein Pulsieren der gewählten Fläche, hin und zurück. */
+    val VayuPulse = 2600
 }

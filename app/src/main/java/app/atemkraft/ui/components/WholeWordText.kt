@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.isSpecified
  * auch dafür wird höchstens bis [minScale] verkleinert.
  *
  * Für Titel, Namen und Beschriftungen; Fließtext wird stattdessen so formuliert, dass kein
- * Wort die Zeile sprengt.
+ * Wort die Zeile sprengt. Sanskrit-Auszeichnung („*vāyus*“) wird kursiv ([sanskritText]).
  */
 @Composable
 fun WholeWordText(
@@ -52,8 +52,9 @@ fun WholeWordText(
     val scale = sharedScale ?: ownScale
     var ready by remember(text, style, config.fontScale, windowWidth) { mutableStateOf(false) }
 
+    val shown = remember(text) { sanskritText(text) }
     Text(
-        text = text,
+        text = shown,
         modifier = modifier.drawWithContent { if (ready) drawContent() },
         style = if (scale < 1f) {
             style.copy(
@@ -99,8 +100,15 @@ fun badBreakAt(text: String, end: Int): Boolean {
     val after = text[end]
     if (after == DOT) return true
     if (before.isWhitespace()) return false
-    return (before.isLetterOrDigit() && after.isLetterOrDigit()) || after in NO_LINE_START
+    return (before.isWordChar() && after.isWordChar()) || after in NO_LINE_START
 }
+
+/**
+ * Teil eines Worts: Buchstabe, Ziffer oder Längenzeichen. Vorkomponierte Zeichen der
+ * Sanskrit-Umschrift („ā“, „ṅ“, TEXT-14) sind Buchstaben; ein nachgestelltes Kombinationszeichen
+ * (U+0304 …) zählt mit, damit „a|̄“ als Bruch im Wort gilt und nicht als Wortgrenze.
+ */
+private fun Char.isWordChar(): Boolean = isLetterOrDigit() || Character.getType(this) == Character.NON_SPACING_MARK.toInt()
 
 private const val NO_LINE_START = "-‐‑–—)]}.,;:!?…“”\"'»«/%" // Abweichung TEXT-10: Zeichenliste, kein UI-Text
 private const val DOT = '·'

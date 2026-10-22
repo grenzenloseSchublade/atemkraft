@@ -103,4 +103,7 @@ object Sizes {
     /** Mini-Kurve je Vorlage im Startpunkt-Sheet des Muster-Editors: Breite (64) und Höhe (24 = [IconDefault]). */
     val MiniCurveWidth = 64.dp
     val MiniCurveHeight = IconDefault
+
+    /** Höchstbreite des vāyu-Bilds der Atemlehre (352, Breite der Vorlage); schmaler skaliert es mit. */
+    val VayuFigureMaxWidth = 352.dp
 }
