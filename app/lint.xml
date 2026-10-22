@@ -5,4 +5,10 @@
     <issue id="ObsoleteSdkInt">
         <ignore path="src/main/res/mipmap-anydpi-v26" />
     </issue>
+    <!-- Vorübergehend (Konfigurator, Welle 1): Die Texte für den Muster-Editor und seine
+         Einstiege stehen schon in strings.xml, benutzt werden sie erst in Welle 2 (WP5–WP8).
+         Danach fällt diese Ausnahme ersatzlos weg; was dann noch unbenutzt ist, wird gelöscht. -->
+    <issue id="UnusedResources">
+        <ignore regexp="R\.(string|plurals)\.(home_own_pattern_link|cd_pattern_edit|cd_pattern_adapt_daily|pattern_editor_\w+|cd_pattern_suggest|cd_pattern_editor_cycle|cd_breath_curve|cd_breath_curve_part|cd_preview_play|cd_preview_pause|adjust_hold_full|adjust_hold_empty|cd_hold_full|cd_hold_empty|stepper_value_off)\b" />
+    </issue>
 </lint>

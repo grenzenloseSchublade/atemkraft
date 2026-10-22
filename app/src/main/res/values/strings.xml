@@ -159,9 +159,6 @@
     <string name="pattern_editor_name">Name</string>
     <string name="pattern_editor_name_label">Name des Musters</string>
 
-    <!-- Logbuch als Push-Seite, erreichbar über die Zeile „Logbuch“ in der Karte „Daten“. -->
-    <string name="logbook_title">Logbuch</string>
-
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
     <string name="settings_safety_hint">Wird vor intensiven Übungen gezeigt, beim ersten Mal immer.</string>

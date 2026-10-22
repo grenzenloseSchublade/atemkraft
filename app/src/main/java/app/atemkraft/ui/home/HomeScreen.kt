@@ -194,7 +194,7 @@ private fun DailyPatternCard(
     onSavedChange: (Boolean) -> Unit,
 ) {
     PatternCard(exercise = daily.exercise, spec = daily.spec, onClick = onClick) {
-        // Gespeicherte Muster erscheinen im Situationen-Tab unter „Meine Muster“ – der
+        // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Meine Muster“ – der
         // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
         // erneutes Tippen nimmt das Muster wieder heraus.
         AppIconToggle(
