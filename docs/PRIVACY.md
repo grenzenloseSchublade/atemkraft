@@ -53,7 +53,7 @@ Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läu
 
 ## Export und Import
 
-Ab Version 1.6.0 kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Art, Zeitpunkt des Speicherns und die Anpassungen dieser Muster sowie den Zeitpunkt des Exports, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
+Ab Version 1.6.0 kannst du unter *Einstellungen → Daten* („Muster exportieren“) deine gespeicherten Muster als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen, Art, Herkunft (Muster des Tages oder eigenes Muster), Dauer, Zeitpunkt des Speicherns und die Anpassungen dieser Muster sowie den Zeitpunkt des Exports, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
 
 Mit „Muster importieren“ liest die App eine Datei, die du in der Dateiauswahl wählst, einmal ein und übernimmt daraus nur gültige Muster und deren Anpassungen. Auch hier behält sie keinen Zugriff auf die Datei.
 

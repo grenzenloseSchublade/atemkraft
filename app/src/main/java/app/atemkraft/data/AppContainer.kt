@@ -19,10 +19,14 @@ class AppContainer(context: Context) {
 
     private val database = AtemkraftDatabase.build(context)
 
-    val savedPatternsRepository: SavedPatternsRepository =
-        SavedPatternsRepository(database.savedPatternDao())
-    val exerciseRepository: ExerciseRepository = ExerciseRepository(savedPatternsRepository)
     val settingsRepository: SettingsRepository = SettingsRepository(context)
+
+    /** Beim Bearbeiten eines Musters fallen dessen Detailseiten-Anpassungen weg. */
+    val savedPatternsRepository: SavedPatternsRepository = SavedPatternsRepository(
+        dao = database.savedPatternDao(),
+        clearOverrides = settingsRepository::clearExerciseIntervals,
+    )
+    val exerciseRepository: ExerciseRepository = ExerciseRepository(savedPatternsRepository)
     val logbookRepository: LogbookRepository = LogbookRepository(database.logbookDao())
 
     /** Katalog neuronaler Stimmen (Download/Verwaltung); Modelle werden bei Bedarf nachgeladen. */

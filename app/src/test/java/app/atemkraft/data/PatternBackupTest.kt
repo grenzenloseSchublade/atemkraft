@@ -1,10 +1,16 @@
 package app.atemkraft.data
 
 import app.atemkraft.data.local.SavedPatternEntity
+import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.PatternSpec
+import app.atemkraft.domain.RandomPatternGenerator
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 /** SEC-STORE-01/-02: Export/Import gespeicherter Muster – Round-Trip und Import als nicht vertrauenswürdige Eingabe. */
 class PatternBackupTest {
@@ -41,6 +47,82 @@ class PatternBackupTest {
             target.rows.value.map { it.copy(id = 0) },
         )
         assertEquals(mapOf("muster-1" to PatternBackupOverrides(duration = 7, inhale = 5)), written)
+    }
+
+    @Test
+    fun `eine Datei von 1_6_8 ohne Herkunft und Dauer wird zu gespeicherten Tagesmustern`() = runBlocking {
+        val decoded = PatternBackup.decode(V1_FILE_1_6_8)!!
+        assertEquals(0, decoded.invalid)
+        assertEquals(listOf(null, null), decoded.entries.map { it.origin })
+
+        val dao = FakeSavedPatternDao()
+        val written = mutableMapOf<String, PatternBackupOverrides>()
+        SavedPatternsRepository(dao).import(decoded.entries) { id, o -> written[id] = o }
+
+        assertEquals(listOf(SavedPatternEntity.ORIGIN_DAILY, SavedPatternEntity.ORIGIN_DAILY), dao.rows.value.map { it.origin })
+        assertEquals(listOf(null, null), dao.rows.value.map { it.minutes })
+        assertEquals(mapOf("muster-2" to PatternBackupOverrides(duration = 8)), written)
+    }
+
+    @Test
+    fun `eigenes Muster mit Dauer uebersteht Export und Import, Version bleibt 1`() = runBlocking {
+        val source = FakeSavedPatternDao()
+        val sourceRepo = SavedPatternsRepository(source)
+        sourceRepo.save(RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5)))
+        sourceRepo.saveCustom(PatternSpec(4.0, 1.0, 6.0, null, false), minutes = 12, name = "Abend")
+        val file = sourceRepo.exportFile(nowEpochMs = 3_000) { null }
+        val text = PatternBackup.encode(file)
+
+        assertEquals(1, file.version)
+        assertTrue(text.contains("\"origin\": \"custom\""))
+        assertTrue(text.contains("\"minutes\": 12"))
+
+        val target = FakeSavedPatternDao()
+        val targetRepo = SavedPatternsRepository(target)
+        val result = targetRepo.import(PatternBackup.decode(text)!!.entries) { _, _ -> }
+
+        assertEquals(ImportResult(added = 2, duplicates = 0), result)
+        assertEquals(source.rows.value.map { it.copy(id = 0) }, target.rows.value.map { it.copy(id = 0) })
+        val custom = targetRepo.patterns.first().single { it.origin == PatternOrigin.CUSTOM }
+        assertEquals(12, custom.minutes)
+        assertEquals("Abend", custom.exercise.name)
+
+        // Erneuter Import derselben Datei: alles Dubletten.
+        assertEquals(
+            ImportResult(added = 0, duplicates = 2),
+            targetRepo.import(PatternBackup.decode(text)!!.entries) { _, _ -> },
+        )
+    }
+
+    @Test
+    fun `Dauer ausserhalb 1 bis 30 Minuten wird verworfen, unbekannte Herkunft wird eigenes Muster`() = runBlocking {
+        fun entry(extra: String) = """{"name":"M","inhale":4.0,"exhale":6.0,"activating":false,"createdAtEpochMs":1$extra}"""
+        val text = """{"format":"atemkraft-muster","version":1,"exportedAtEpochMs":0,"patterns":[
+            ${entry(""","minutes":0""")},
+            ${entry(""","minutes":31""")},
+            ${entry(""","minutes":30,"origin":"custom"""")},
+            ${entry(""","origin":"zukunft"""").replace("\"createdAtEpochMs\":1", "\"createdAtEpochMs\":2")}
+        ]}"""
+
+        val decoded = PatternBackup.decode(text)!!
+
+        assertEquals(2, decoded.invalid)
+        assertEquals(listOf(30, null), decoded.entries.map { it.minutes })
+
+        val dao = FakeSavedPatternDao()
+        SavedPatternsRepository(dao).import(decoded.entries) { _, _ -> }
+        assertEquals(
+            listOf(SavedPatternEntity.ORIGIN_CUSTOM, SavedPatternEntity.ORIGIN_CUSTOM),
+            dao.rows.value.map { it.origin },
+        )
+    }
+
+    @Test
+    fun `cleanName macht Namen importfest`() {
+        assertEquals("Morgen frisch", PatternBackup.cleanName(" Morgen\n\tfrisch\u200B "))
+        assertEquals("", PatternBackup.cleanName("\u202E \u0000"))
+        assertEquals(PatternBackup.MAX_NAME, PatternBackup.cleanName("y".repeat(200)).length)
+        assertEquals("a b", PatternBackup.cleanName("a" + " ".repeat(5) + "b"))
     }
 
     @Test
@@ -132,5 +214,43 @@ class PatternBackupTest {
 
         assertEquals(0, decoded.entries.size)
         assertEquals(names.size, decoded.invalid)
+    }
+
+    private companion object {
+        /** Export aus Version 1.6.8 (vor dem Muster-Editor): ohne `origin` und `minutes`. */
+        val V1_FILE_1_6_8 = """
+            {
+                "format": "atemkraft-muster",
+                "version": 1,
+                "exportedAtEpochMs": 1760000000000,
+                "patterns": [
+                    {
+                        "name": "Muster 4·2·6",
+                        "inhale": 4.0,
+                        "holdFull": 2.0,
+                        "exhale": 6.0,
+                        "holdEmpty": null,
+                        "activating": false,
+                        "createdAtEpochMs": 1759000000000,
+                        "overrides": null
+                    },
+                    {
+                        "name": "Muster 4·3",
+                        "inhale": 4.0,
+                        "holdFull": null,
+                        "exhale": 3.0,
+                        "holdEmpty": null,
+                        "activating": true,
+                        "createdAtEpochMs": 1759500000000,
+                        "overrides": {
+                            "duration": 8,
+                            "inhale": null,
+                            "hold": null,
+                            "exhale": null
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
     }
 }

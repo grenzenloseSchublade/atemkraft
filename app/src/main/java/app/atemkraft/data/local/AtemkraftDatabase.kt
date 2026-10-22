@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Logbuch und gespeicherte Muster. Jede Schemaänderung braucht eine explizite [Migration], das
  * exportierte Schema unter app/schemas/ und einen Fall in DatabaseMigrationTest (SEC-STORE-03).
  */
-@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 3, exportSchema = true)
+@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 4, exportSchema = true)
 abstract class AtemkraftDatabase : RoomDatabase() {
 
     abstract fun logbookDao(): LogbookDao
@@ -73,8 +73,20 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v3 → v4: Herkunft (`origin`) und Vorgabedauer (`minutes`) gespeicherter Muster für den
+         * Muster-Editor. Rein additiv: Alle bisherigen Zeilen sind gespeicherte Tagesmuster
+         * (`'daily'`) ohne eigene Dauer (NULL ≈ 5 min).
+         */
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE saved_patterns ADD COLUMN origin TEXT NOT NULL DEFAULT 'daily'")
+                db.execSQL("ALTER TABLE saved_patterns ADD COLUMN minutes INTEGER")
+            }
+        }
+
         /** Alle Migrationen in Reihenfolge; App und Migrationstest nutzen dieselbe Liste. */
-        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 
         fun build(context: Context): AtemkraftDatabase = Room.databaseBuilder(
             context.applicationContext,

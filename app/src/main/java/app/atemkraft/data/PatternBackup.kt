@@ -7,10 +7,17 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * Datei-Format für Export/Import gespeicherter Muster (JSON). Bewusst nur Werte, keine Seeds,
- * Texte oder Wiederholungszahlen – die baut [app.atemkraft.domain.RandomPatternGenerator.exerciseFrom]
- * beim Laden neu. Eine Import-Datei ist nicht vertrauenswürdige Eingabe: [PatternBackup.decode]
- * begrenzt Größe und Anzahl und verwirft unplausible Einträge, statt abzubrechen.
+ * Datei-Format für Export/Import gespeicherter Muster (JSON). Bewusst nur Werte, Herkunft und
+ * Dauer, keine Seeds, Texte oder Wiederholungszahlen – die baut
+ * [app.atemkraft.domain.RandomPatternGenerator.exerciseFrom] beim Laden aus Werten, Herkunft
+ * (`origin`) und Dauer (`minutes`) neu. Eine Import-Datei ist nicht vertrauenswürdige Eingabe:
+ * [PatternBackup.decode] begrenzt Größe und Anzahl und verwirft unplausible Einträge, statt
+ * abzubrechen.
+ *
+ * `origin` und `minutes` kamen mit dem Muster-Editor hinzu, ohne die [PatternBackup.VERSION] zu
+ * erhöhen: Beide sind optional, Dateien von 1.6.8 und älter gelten als gespeicherte Tagesmuster
+ * ohne eigene Dauer. Ältere App-Versionen überlesen die Felder (`ignoreUnknownKeys`); ein eigenes
+ * Muster zeigt dort die Texte eines gespeicherten Tagesmusters und dauert etwa 5 min.
  */
 @Serializable
 data class PatternBackupFile(
@@ -31,6 +38,13 @@ data class PatternBackupEntry(
     val createdAtEpochMs: Long,
     /** Session-Anpassung des Musters (Dauer in Minuten, Phasen in Sekunden); null = nie angepasst. */
     val overrides: PatternBackupOverrides? = null,
+    /**
+     * Herkunft: „daily“ (gespeichertes Muster des Tages) oder „custom“ (eigenes Muster). Fehlt
+     * sie, ist es ein Tagesmuster (Dateien bis 1.6.8); ein unbekannter Wert gilt als eigenes Muster.
+     */
+    val origin: String? = null,
+    /** Vorgabedauer eigener Muster in Minuten (1–30); null = ≈ 5 min wie beim Muster des Tages. */
+    val minutes: Int? = null,
 )
 
 @Serializable
@@ -54,7 +68,9 @@ object PatternBackup {
     /** Obergrenzen gegen manipulierte oder versehentlich gewählte große Dateien. */
     const val MAX_BYTES = 512 * 1024
     const val MAX_PATTERNS = 500
-    private const val MAX_NAME = 80
+
+    /** Höchstlänge eines Musternamens (Import und Editor). */
+    const val MAX_NAME = 80
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -95,13 +111,31 @@ object PatternBackup {
     fun PatternBackupEntry.identity(): String = identity(createdAtEpochMs, inhale, holdFull, exhale, holdEmpty, activating)
 
     /**
+     * Macht aus einer Namenseingabe einen Namen, den auch der Import annimmt: Steuer-, Format- und
+     * Zeilentrennzeichen werden zu Leerzeichen, Leerraum wird zusammengefasst, höchstens
+     * [MAX_NAME] Zeichen. Ein leeres Ergebnis heißt „kein Name“ (der Aufrufer setzt einen Vorschlag).
+     */
+    fun cleanName(raw: String): String = raw
+        .map { if (it.isHiddenOrBreaking()) ' ' else it }
+        .joinToString("")
+        .split(WHITESPACE)
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+        .take(MAX_NAME)
+        .trimEnd()
+
+    private val WHITESPACE = Regex("\\s+")
+
+    /**
      * Nur was die App selbst erzeugen könnte: Werte in den Leitplanken des Generators (sonst
      * stimmt die Beschreibung nicht und das Muster startet ohne Sicherheitsabfrage), Anpassungen
-     * in den Grenzen der Stepper, Name ohne Steuer-, Format- oder Zeilentrennzeichen.
+     * in den Grenzen der Stepper, Dauer 1–30 min, Name ohne Steuer-, Format- oder
+     * Zeilentrennzeichen. Eine unbekannte Herkunft verwirft nichts, sie gilt als eigenes Muster.
      */
     private fun PatternBackupEntry.isPlausible(): Boolean = isCleanName(name) &&
         createdAtEpochMs > 0 &&
         PatternSpec(inhale, holdFull, exhale, holdEmpty, activating).withinGuardrails() &&
+        (minutes == null || minutes in AdjustLimits.MINUTES) &&
         (overrides?.isPlausible() ?: true)
 
     private fun PatternBackupOverrides.isPlausible(): Boolean = (duration == null || duration in AdjustLimits.MINUTES) &&
