@@ -54,4 +54,31 @@ object Sizes {
      * Icon 18 + Abstand 8. `SegmentedChoiceRow` (ohne Häkchen) gibt ihn an die Beschriftung zurück.
      */
     val SegmentIconReserve = 26.dp
+
+    // Atemkurve des Muster-Editors (`BreathCurveEditor`, Vorlage „Graph.dc.html“). Die Breite
+    // folgt dem Platz, die Zeitskala ist fest (0–14 s); Beschriftungen wachsen mit der Schrift.
+
+    /** Abstand der Linien „voll“ und „leer“, also die Höhe der Kurve (88). */
+    val CurveSpan = 88.dp
+
+    /** Sichtbarer Griff an einem Phasenende (18); die Tippfläche ist [Dimens.MinTouchTarget]. */
+    val CurveHandle = 18.dp
+
+    /** Halten-Griffe sitzen so weit über (voll) bzw. unter (leer) ihrer Linie (16). */
+    val CurveHoldHandleOffset = 16.dp
+
+    /** Ein Halten-Griff bei 0 s rückt so weit nach rechts, damit er neben dem Nachbargriff greifbar bleibt (14). */
+    val CurveZeroShift = 14.dp
+
+    /** Strich von Ein- und Ausatmen (4). */
+    val CurveStroke = 4.dp
+
+    /** Strich der gestrichelten Halten-Phasen und Ring der Griffe (3, Raster-Ausnahme). */
+    val CurveHoldStroke = 3.dp
+
+    /** Strichlänge der Halten-Phasen (6; die Lücke ist 5/6 davon, wie in der Vorlage). */
+    val CurveDash = 6.dp
+
+    /** Punkt der Vorschau, der über die Kurve wandert (14). */
+    val CurveDot = 14.dp
 }

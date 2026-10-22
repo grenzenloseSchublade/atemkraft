@@ -107,6 +107,9 @@ const val ALPHA_HEAT_NONE = 0.12f
 const val ALPHA_HEAT_LOW = 0.40f
 const val ALPHA_HEAT_MID = 0.70f
 
+/** Zarte Füllung unter der Atemkurve des Muster-Editors (`secondary`, dekorativ). */
+const val ALPHA_CURVE_FILL = 0.08f
+
 /**
  * Ausatmen in den Rhythmusbildern der Atemlehre (Koralle), Einatmen ist Cyan (FARBE-04). Derselbe
  * Ton steht im Ring der Abschnittsköpfe ([HeadingRing]); Köpfe tragen keine Bedeutung (FARBE-07).
