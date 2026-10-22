@@ -149,6 +149,7 @@ class TabNavigationTest {
                 )
             }
             composable<DetailRoute> { Text("Detail") }
+            composable<PatternEditorRoute> { Text("Editor") }
         }
     }
 
@@ -209,6 +210,20 @@ class TabNavigationTest {
             val expected = if (tab == AtmenRoute) "AtmenRoute" else "AtmenRoute > ${tab::class.simpleName}"
             assertEquals(expected, step { nav.tapTab(tab, selected = true) })
         }
+    }
+
+    @Test
+    fun `erneuter Tipp auf den Tab führt aus dem Muster-Editor zur Tab-Startseite`() {
+        // Tab „Eigene“ › Neues Muster.
+        step { nav.tapTab(EigeneRoute, selected = false) }
+        step { nav.navigate(PatternEditorRoute()) }
+        assertEquals("AtmenRoute > EigeneRoute", step { nav.tapTab(EigeneRoute, selected = true) })
+
+        // Atmen › Detail des gespeicherten Musters › Stift.
+        step { nav.tapTab(AtmenRoute, selected = false) }
+        step { nav.navigate(DetailRoute("muster-7")) }
+        step { nav.navigate(PatternEditorRoute(patternId = 7)) }
+        assertEquals("AtmenRoute", step { nav.tapTab(AtmenRoute, selected = true) })
     }
 
     @Test

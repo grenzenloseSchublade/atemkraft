@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 
 /**
  * Type-safe Navigation-Routen. Tabs: Atmen, Situationen, Eigene, Meditation. Push-Seiten mit
- * festem Kopf: Detail, Einstellungen, Logbuch, Glossar, Über, Atemlehre.
+ * festem Kopf: Detail, Muster-Editor („Eigenes Muster“), Einstellungen, Logbuch, Glossar, Über,
+ * Atemlehre.
  */
 @Serializable
 object AtmenRoute
@@ -39,3 +40,11 @@ data class AtemlehreRoute(val focus: String? = null)
 
 @Serializable
 data class DetailRoute(val exerciseId: String)
+
+/**
+ * Muster-Editor „Eigenes Muster“. Ohne Argumente ein neues Muster (Tab „Eigene“, Link im
+ * Atmen-Tab); [fromDaily]: die Zahlen des Musters des Tages (Stift auf dessen Detailseite);
+ * [patternId]: ein gespeichertes Muster bearbeiten (DB-Id, Stift auf seiner Detailseite).
+ */
+@Serializable
+data class PatternEditorRoute(val patternId: Long? = null, val fromDaily: Boolean = false)

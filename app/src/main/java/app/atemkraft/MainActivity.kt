@@ -65,6 +65,7 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SafetySettings
+import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.Situations
@@ -81,6 +82,7 @@ import app.atemkraft.ui.EigeneRoute
 import app.atemkraft.ui.GlossaryRoute
 import app.atemkraft.ui.LogbookRoute
 import app.atemkraft.ui.MeditationRoute
+import app.atemkraft.ui.PatternEditorRoute
 import app.atemkraft.ui.SettingsRoute
 import app.atemkraft.ui.SituationenRoute
 import app.atemkraft.ui.about.AboutScreen
@@ -89,6 +91,7 @@ import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
+import app.atemkraft.ui.detail.rememberDetailExercise
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.log.LogbookScreen
@@ -96,6 +99,7 @@ import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MiniMeditationBar
 import app.atemkraft.ui.own.OwnPatternsScreen
+import app.atemkraft.ui.patterns.PatternEditorDestination
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.session.SessionViewModel
@@ -286,12 +290,11 @@ private fun AtemkraftApp(
                         mutableStateOf(container.exerciseRepository.daily())
                     }
                     // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
-                    // selben Tag und Namensgleichheit mit einem früher gespeicherten Muster ab.
+                    // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
+                    // ein eigenes Muster mit gleichen Zahlen zählt nicht (Herkunft).
                     val savedPatterns by container.savedPatternsRepository.patterns
                         .collectAsStateWithLifecycle(initialValue = emptyList())
-                    val dailySaved = savedPatterns.any {
-                        it.exercise.name == container.savedPatternsRepository.savedName(dailyPattern)
-                    }
+                    val dailySaved = container.savedPatternsRepository.isDailySaved(dailyPattern, savedPatterns)
                     HomeScreen(
                         daily = dailyPattern,
                         dailySaved = dailySaved,
@@ -313,6 +316,7 @@ private fun AtemkraftApp(
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
                         onOpenSettings = { navController.navigate(SettingsRoute()) },
                         markedIds = markedExercises,
+                        onOpenPatternEditor = { navController.navigate(PatternEditorRoute()) },
                     )
                 }
                 composable<SituationenRoute> {
@@ -328,8 +332,7 @@ private fun AtemkraftApp(
                         .collectAsStateWithLifecycle(initialValue = emptyList())
                     OwnPatternsScreen(
                         savedPatterns = savedPatterns,
-                        // Editor folgt: Bis die Route „Eigenes Muster“ verdrahtet ist, tut der Knopf nichts.
-                        onNewPattern = {},
+                        onNewPattern = { navController.navigate(PatternEditorRoute()) },
                         onSelect = { id -> navController.navigate(DetailRoute(id)) },
                         onDeletePattern = { id ->
                             scope.launch { container.savedPatternsRepository.delete(id) }
@@ -359,17 +362,28 @@ private fun AtemkraftApp(
                 }
                 pushComposable<DetailRoute> { entry ->
                     val id = entry.toRoute<DetailRoute>().exerciseId
-                    // Einmal auflösen: Seite, Start und „Von vorne“ zeigen dasselbe Muster, auch wenn
-                    // das Tagesmuster um Mitternacht wechselt (ARC-5).
-                    val exercise = remember(id) { container.exerciseRepository.byId(id) }
+                    // Eingebaute Übungen und das Tagesmuster einmal auflösen (ARC-5); gespeicherte
+                    // Muster folgen der DB und zeigen nach dem Bearbeiten im Editor die neuen Werte.
+                    val lookup = rememberDetailExercise(
+                        id = id,
+                        resolve = container.exerciseRepository::byId,
+                        live = { exerciseId ->
+                            SavedPatternsRepository.idOf(exerciseId)?.let { container.savedPatternsRepository.observe(exerciseId) }
+                        },
+                    )
+                    val exercise = lookup.exercise
                     if (exercise == null) {
-                        // Unauflösbare Route (z. B. gelöschtes oder noch nicht geladenes Muster):
-                        // zurück statt leerer Screen (CODE-05) – nur, solange dieses Ziel oben liegt.
-                        LaunchedEffect(entry.id) {
-                            if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
+                        // Unauflösbare Route (z. B. gelöschtes Muster): zurück statt leerer Screen
+                        // (CODE-05) – nur, solange dieses Ziel oben liegt. Lädt das Muster noch, bleibt
+                        // die Seite kurz leer.
+                        if (lookup.missing) {
+                            LaunchedEffect(entry.id) {
+                                if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
+                            }
                         }
                         return@pushComposable
                     }
+                    val savedPatternId = SavedPatternsRepository.idOf(id)
                     val requireSafety = exercise.caution &&
                         (!safetySettings.acknowledged || safetySettings.showWarning)
                     // Intervall-Anpassungen pro Übung merken – außer beim Muster des Tages: dessen
@@ -413,6 +427,41 @@ private fun AtemkraftApp(
                             { marked -> scope.launch { container.settingsRepository.setExerciseMarked(id, marked) } }
                         } else {
                             null
+                        },
+                        // Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen,
+                        // ein gespeichertes bearbeiten.
+                        onEditPattern = when {
+                            id == RandomPatternGenerator.ID -> {
+                                { navController.navigate(PatternEditorRoute(fromDaily = true)) }
+                            }
+
+                            savedPatternId != null -> {
+                                { navController.navigate(PatternEditorRoute(patternId = savedPatternId)) }
+                            }
+
+                            else -> null
+                        },
+                    )
+                }
+                pushComposable<PatternEditorRoute> { entry ->
+                    val route = entry.toRoute<PatternEditorRoute>()
+                    PatternEditorDestination(
+                        patternId = route.patternId,
+                        fromDaily = route.fromDaily,
+                        repository = container.savedPatternsRepository,
+                        dailySpec = { container.exerciseRepository.daily().spec },
+                        scope = scope,
+                        // Ausprobieren ohne Speichern: Der Editor bleibt unter der Session offen –
+                        // probieren, nachstellen, noch einmal probieren.
+                        onStart = { exercise, config ->
+                            sessionViewModel.start(exercise, config)
+                            sessionExpanded = true
+                        },
+                        onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
+                        onBack = { navController.popBackStack() },
+                        // Muster gelöscht: zurück, nur solange der Editor oben liegt (CODE-05).
+                        onMissing = {
+                            if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
                         },
                     )
                 }
