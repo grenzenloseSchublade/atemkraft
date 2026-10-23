@@ -1,0 +1,6 @@
+- Atmen: Befinden zuerst, Anlässe in zwei Zeilen, Filter, Takt und Dauer auf den Karten
+- Neuer Tab Lernen; eigenes Muster übersichtlicher
+- Ein Ablauf zur Zeit, „Danach in die Stille“, pünktliche Töne
+- Sicherheitshinweise und Studienangaben geprüft
+- TalkBack und große Schrift verbessert
+- Kleinere APKs je Prozessor

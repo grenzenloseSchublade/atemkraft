@@ -1,6 +1,6 @@
 # Veröffentlichung in Google Play und F-Droid
 
-Stand: 2026-10-24, App-Version 2.5.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
+Stand: 2026-10-24, App-Version 2.6.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
 
 Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Links im Text, abgerufen am 2026-10-23). Store-Regeln ändern sich; vor jedem Schritt die verlinkte Seite noch einmal lesen. Keine Rechtsberatung.
 
@@ -19,7 +19,7 @@ Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Li
 
 Vor dem Start muss der Nutzer entscheiden:
 
-1. **Release-Politik wieder öffnen.** Seit 2026-10-19 wird nur lokal versioniert; v1.7.0 bis v2.5.0 sind weder gepusht noch getaggt. F-Droid baut ausschließlich aus öffentlichen Tags, Play braucht das zwar nicht, aber Quelltext und Store-Version sollen übereinstimmen (GPL-Bestandteile, siehe unten). Ohne Push und Tag geht nur Play.
+1. **Release-Politik wieder öffnen** – entschieden 2026-10-24: Releases sind wieder öffentlich. v1.7.0 bis v2.5.0 blieben lokal und ungetaggt; v2.6.0 ist das erste öffentliche Release mit allen Änderungen seither (Push, annotierter Tag, GitHub-Release mit APKs). F-Droid baut ausschließlich aus öffentlichen Tags.
 2. **IzzyOnDroid.** Die Aufnahmeregeln lehnen Apps ab, deren Code ganz oder teilweise mit generativer KI entstanden ist („Vibe-coded apps will be rejected“, [Inclusion Policy, Abschnitt AI](https://izzyondroid.org/docs/general/AppInclusionPolicy/)). Atemkraft wird offen mit Claude entwickelt (Co-Authored-By in den Commits). Verschweigen widerspräche deren Regeln. Empfehlung: IzzyOnDroid nicht einreichen; wer die GitHub-APKs automatisch aktualisieren will, nutzt [Obtainium](https://obtainium.imranr.dev/).
 3. **Lizenzangabe – entschieden 2026-10-24.** Quelltext MIT, APK als Ganzes GPL-3.0-or-later, weil sie über sherpa-onnx statisch gelinktes eSpeak NG enthält ([THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md#gpl), SEC-LEGAL-03). So steht es in Store-Angaben und F-Droid-Rezept. GPL-3-Apps in Play sind verbreitet (Signal, Termux), juristisch aber nicht unumstritten; das ist bewusst in Kauf genommen.
 4. **Nicht-freie Stimmen – entschieden.** Miro und Dii (CC BY-NC-ND 4.0) bleiben samt Hörproben in der APK (Nutzerentscheidung 2026-10-08, bestätigt 2026-10-24); in F-Droid führt das zum Warnhinweis *NonFreeAssets*. Kerstin beruht auf einem Basismodell mit CC-BY-NC-SA-Trainingsdaten, Thorsten auf einem mit Forschungslizenz; App und Lizenzliste nennen das seit 2026-10-24 in der Kurzlizenz. Offen bleibt, ob man die beiden vorsorglich als „nur nicht kommerziell“ kennzeichnet.
@@ -163,9 +163,9 @@ Repo: https://github.com/grenzenloseSchublade/atemkraft.git
 Binaries: https://github.com/grenzenloseSchublade/atemkraft/releases/download/v%v/atemkraft-v%v.apk
 
 Builds:
-  - versionName: 2.5.0
-    versionCode: 37
-    commit: v2.5.0
+  - versionName: 2.6.0
+    versionCode: 38
+    commit: v2.6.0
     subdir: app
     gradle:
       - yes
@@ -176,8 +176,8 @@ AllowedAPKSigningKeys: 75022defe65aa24e223f3e79880f09f423456757002ff0b33ba2ae29b
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 2.5.0
-CurrentVersionCode: 37
+CurrentVersion: 2.6.0
+CurrentVersionCode: 38
 ```
 
 Ob *NonFreeNet* für einen optionalen Download von GitHub nötig ist, entscheidet der Prüfer; die TTS-App SherpaTTS trägt es für ihren Download von Hugging Face.

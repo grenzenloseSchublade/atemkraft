@@ -2,7 +2,7 @@
 
 Was in der App steckt, was sie auf Wunsch lädt und unter welchen Bedingungen. Gegenstück in der App: *Einstellungen → Über Atemkraft → Lizenzen*.
 
-- **Stand:** 2026-10-24, gilt für App-Version 2.0.2 bis 2.5.0 (`versionCode` 31 bis 37; die Abhängigkeiten sind dazwischen gleich) und `main`. Seit 1.6.0 sind die Laufzeit-Abhängigkeiten aktualisiert (§ 1); das sherpa-onnx-AAR ist dieselbe Datei wie bisher, kommt aber seit 2026-10-24 von JitPack statt aus `app/libs/` (§ 2).
+- **Stand:** 2026-10-24, gilt für App-Version 2.0.2 bis 2.6.0 (`versionCode` 31 bis 38; die Abhängigkeiten sind dazwischen gleich) und `main`. Seit 1.6.0 sind die Laufzeit-Abhängigkeiten aktualisiert (§ 1); das sherpa-onnx-AAR ist dieselbe Datei wie bisher, kommt aber seit 2026-10-24 von JitPack statt aus `app/libs/` (§ 2).
 - **Belege:** Lizenzangaben aus Maven-POMs, `LICENSE`/`COPYING`-Dateien der Upstream-Repos am genannten Tag oder Commit und den Modellkarten der Stimmen. Die Laufzeit-Abhängigkeiten sind am 2026-10-23 mit `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` am Stand 2.0.2 neu erhoben, ihre Lizenzen aus den POMs und die NOTICE-Texte aus den JARs bzw. den Upstream-Repos am Tag der jeweiligen Version übernommen. Der Inhalt der APK ist mit `unzip -l` an Release-Builds von 2.0.2 und 2.5.0 geprüft (2.5.0 am 2026-10-24, vor und nach dem Wechsel auf JitPack; Unterschied nur die nicht mehr mitgelieferte C- und C++-API, § 2), die gebündelten Bibliotheken über die Build-Skripte von sherpa-onnx v1.13.6 (samt der von dort geladenen Bibliotheken) und Zeichenketten in `libsherpa-onnx-jni.so` und `libsherpa-onnx-c-api.so`.
 - **Keine Rechtsberatung.** Die Einordnungen unten geben Lizenztexte und veröffentlichte Auffassungen wieder.
 

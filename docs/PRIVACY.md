@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), gleich über welche Bezugsquelle du sie installierst: GitHub-Releases dieses Repos, Google Play oder F-Droid (siehe [Bezugsquellen](#bezugsquellen)).
 
-- **Stand:** 2026-10-24. Gilt ab Version 2.5.0, geprüft gegen diese Version und den Quellcode auf `main` an diesem Tag. Punkte, die erst in der Version nach 2.5.0 dazukommen, sind als solche markiert. Wie sich frühere Versionen unterscheiden, steht im [Anhang](#fruehere-versionen).
+- **Stand:** 2026-10-24. Gilt ab Version 2.6.0, geprüft gegen diese Version und den Quellcode auf `main` an diesem Tag. Wie sich frühere Versionen unterscheiden, steht im [Anhang](#fruehere-versionen).
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
@@ -26,7 +26,7 @@ Die Befindens-Suche „Wie fühlst du dich?“ im Tab „Atmen“ wird nicht ges
 Das Logbuch kann Rückschlüsse auf dein Befinden zulassen, weil manche Übungen zu bestimmten Anlässen passen. Es steht deshalb nicht in der Export-Datei und nicht im Cloud-Backup; mitgenommen wird es nur bei einer Übertragung beim Handywechsel, die du selbst startest (siehe [Handywechsel](#wechsel)).
 
 <a id="deinstallieren"></a>
-**Beim Deinstallieren** löscht Android alle Daten der App. Ab der Version nach 2.5.0 bietet Android ab Android 10 dabei an, die Daten zu behalten (Kästchen „App-Daten behalten“ o. Ä., je nach Hersteller und Weg des Deinstallierens). Wählst du das, bleiben Logbuch, Muster, Einstellungen und Stimmen im Speicher deines Geräts, nicht in einer Cloud; installierst du Atemkraft mit derselben Signatur neu, sind sie wieder da. Entfernen kannst du sie dann, indem du die App wieder installierst und den App-Speicher löschst.
+**Beim Deinstallieren** löscht Android alle Daten der App. Ab Version 2.6.0 bietet Android ab Android 10 dabei an, die Daten zu behalten (Kästchen „App-Daten behalten“ o. Ä., je nach Hersteller und Weg des Deinstallierens). Wählst du das, bleiben Logbuch, Muster, Einstellungen und Stimmen im Speicher deines Geräts, nicht in einer Cloud; installierst du Atemkraft mit derselben Signatur neu, sind sie wieder da. Entfernen kannst du sie dann, indem du die App wieder installierst und den App-Speicher löschst.
 
 <a id="netz"></a>
 ## Stimm-Download – die einzige Netzverbindung
