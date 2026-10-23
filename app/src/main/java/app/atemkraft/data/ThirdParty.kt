@@ -37,5 +37,6 @@ object ThirdParty {
         ThirdPartyComponent("Apache Commons Compress, IO, Lang, Codec", "Apache-2.0", "The Apache Software Foundation"),
         ThirdPartyComponent("Okio", "Apache-2.0", "Square"),
         ThirdPartyComponent("Guava ListenableFuture", "Apache-2.0", "Google"),
+        ThirdPartyComponent("JSpecify", "Apache-2.0", "The JSpecify Authors"),
     )
 }
