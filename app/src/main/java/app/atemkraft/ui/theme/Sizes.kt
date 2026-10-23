@@ -52,6 +52,13 @@ object Sizes {
      */
     val TouchOverhang = (Dimens.MinTouchTarget - IconDefault) / 2
 
+    /**
+     * Überstand der 48-dp-Tippfläche über einen [IconButtonSize]-Kreis auf jeder Seite (4): Um ihn
+     * rückt ein Stepper ab bzw. meldet sich schmaler, damit der sichtbare Kreis von „+“ an der
+     * Inhaltskante steht (LAYOUT-07).
+     */
+    val CircleOverhang = (Dimens.MinTouchTarget - IconButtonSize) / 2
+
     /** Mindestbreite des Stepper-Werts, damit „−“/„+“ bei 1–3 Ziffern nicht springen (48). */
     val StepperValueMinWidth = 48.dp
 

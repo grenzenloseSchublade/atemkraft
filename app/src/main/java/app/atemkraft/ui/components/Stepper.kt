@@ -70,7 +70,7 @@ fun Stepper(
 ) {
     // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
     // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
-    val inset = (Dimens.MinTouchTarget - Sizes.IconButtonSize) / 2
+    val inset = Sizes.CircleOverhang
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -111,7 +111,7 @@ fun CompactStepper(
 ) {
     val spokenValue = if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
     val valueDescription = stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue).let { if (spokenSuffix != null) "$it, $spokenSuffix" else it }
-    val edge = if (flushEnd) Modifier.flushEnd((Dimens.MinTouchTarget - Sizes.IconButtonSize) / 2) else Modifier
+    val edge = if (flushEnd) Modifier.flushEnd(Sizes.CircleOverhang) else Modifier
     StepButtons(spokenLabel, valueDescription, value, range, onChange, announce, modifier.then(edge), valueText, MaterialTheme.typography.titleSmall)
 }
 
