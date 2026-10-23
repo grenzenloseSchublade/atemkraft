@@ -20,10 +20,12 @@ import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -60,13 +62,10 @@ data class SavedPattern(
 
 /**
  * Vom Nutzer gespeicherte Atemmuster (Room): gespeicherte Muster des Tages und eigene Muster aus
- * dem Editor. Hält zusätzlich einen synchronen Cache der aktuellen Liste, damit
- * [ExerciseRepository.byId] gespeicherte Übungen ohne Suspend-Aufruf auflösen kann
- * (Session-Start ist synchron).
- *
- * Der Cache folgt der DB, nimmt eigene Schreibvorgänge aber sofort auf: Ein gerade gespeichertes
- * oder geändertes Muster ist direkt danach auflösbar, und ein später eintreffender älterer
- * DB-Stand überschreibt es nicht, bis die DB den Schreibvorgang selbst liefert.
+ * dem Editor. Hält zusätzlich den letzten DB-Stand der Liste ([current]), damit
+ * [ExerciseRepository.byId] gespeicherte Übungen ohne Suspend-Aufruf auflösen kann (erster Wert
+ * der Detailseite, Logbuch). Wer einem Muster folgen muss, nutzt [observe] bzw. [patterns]; was
+ * gerade geschrieben wurde, geben [saveCustom] und [update] selbst zurück.
  *
  * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update]
  *   ruft es auf, sonst überstimmen alte Anpassungen die neuen Werte.
@@ -80,21 +79,11 @@ class SavedPatternsRepository(
     scope: CoroutineScope = supervisedScope(Dispatchers.IO),
 ) {
 
-    @Volatile
-    private var cached: List<SavedPattern> = emptyList()
-
-    /** Zuletzt von der DB gelieferter Stand und eigene, noch nicht bestätigte Schreibvorgänge. */
-    private val cacheLock = Any()
-    private var dbRows: List<SavedPatternEntity> = emptyList()
-    private val pendingWrites = mutableMapOf<Long, SavedPatternEntity>()
-    private val pendingDeletes = mutableSetOf<Long>()
-
     /** Aktuelle Liste, neueste zuerst (für die Liste „Eigene Kreationen“). */
     val patterns: Flow<List<SavedPattern>> = dao.all().map { list -> list.map { it.toSaved() } }
 
-    init {
-        scope.launch { dao.all().collect { onDbRows(it) } }
-    }
+    /** Letzter DB-Stand für [byExerciseId]; leer, bis die DB zum ersten Mal antwortet. */
+    private val current: StateFlow<List<SavedPattern>> = patterns.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     /** Anzeigename, unter dem dieses Tagesmuster gespeichert wird/wurde. */
     fun savedName(daily: DailyPattern): String = daily.exercise.name.replace("Tagesmuster", "Muster")
@@ -117,14 +106,14 @@ class SavedPatternsRepository(
 
     /**
      * Speichert das Tagesmuster; ein gespeichertes Tagesmuster gleichen Namens wird nicht doppelt
-     * angelegt (eigene Muster zählen nicht). Geprüft wird in der DB, nicht im Cache: Der hinkt
+     * angelegt (eigene Muster zählen nicht). Geprüft wird in der DB, nicht in [current]: Das hinkt
      * direkt nach dem vorigen Speichern noch hinterher.
      */
     suspend fun save(daily: DailyPattern) {
         writeLock.withLock {
             val name = savedName(daily)
             if (dao.snapshot().any { it.isDaily() && it.name == name }) return
-            insertAndCache(entityOf(daily.spec, name, SavedPatternEntity.ORIGIN_DAILY, minutes = null))
+            insert(entityOf(daily.spec, name, SavedPatternEntity.ORIGIN_DAILY, minutes = null))
         }
     }
 
@@ -132,15 +121,14 @@ class SavedPatternsRepository(
      * Legt ein im Editor frei gestaltetes Muster an und speichert die Folge ([FreePattern.toCompact])
      * samt Zusammenfassung in den vier Feldern ([columnSpec]). [pattern] muss gültig sein
      * ([FreePattern.isValid]), [minutes] in 1–30 liegen. Ein leerer [name] wird zum
-     * Vorschlagsnamen („Eigenes Muster 3·1·6“, siehe [nameFor]). Das Muster ist sofort per
-     * [byExerciseId] auflösbar.
+     * Vorschlagsnamen („Eigenes Muster 3·1·6“, siehe [nameFor]). Gibt das angelegte Muster zurück.
      */
     suspend fun saveCustom(pattern: FreePattern, minutes: Int, name: String): SavedPattern {
         requireValid(pattern, minutes)
         return writeLock.withLock {
             val entity = entityOf(pattern.columnSpec(), nameFor(pattern, name), SavedPatternEntity.ORIGIN_CUSTOM, minutes)
                 .copy(phases = pattern.toCompact())
-            insertAndCache(entity).toSaved()
+            insert(entity).toSaved()
         }
     }
 
@@ -168,9 +156,7 @@ class SavedPatternsRepository(
                 phases = phases,
             )
             if (changed == 0) return@withLock null
-            val entity = dao.byId(id) ?: return@withLock null
-            remember(entity)
-            entity
+            dao.byId(id)
         } ?: return null
         clearOverrides(ExerciseIds.saved(id))
         return updated.toSaved()
@@ -200,24 +186,18 @@ class SavedPatternsRepository(
     }
 
     suspend fun delete(id: Long) {
-        writeLock.withLock {
-            dao.delete(id)
-            forget(id)
-        }
+        writeLock.withLock { dao.delete(id) }
     }
 
     /**
      * Nimmt das Tagesmuster wieder heraus (Lesezeichen abgewählt). Gesucht wird per Name und
-     * Herkunft in der DB, nicht im Cache: Der hinkt direkt nach dem Speichern noch hinterher.
+     * Herkunft in der DB, nicht in [current]: Das hinkt direkt nach dem Speichern noch hinterher.
      * Ein eigenes Muster mit gleichem Namen bleibt stehen.
      */
     suspend fun unsave(daily: DailyPattern) {
         writeLock.withLock {
             val name = savedName(daily)
-            dao.snapshot().filter { it.isDaily() && it.name == name }.forEach {
-                dao.delete(it.id)
-                forget(it.id)
-            }
+            dao.snapshot().filter { it.isDaily() && it.name == name }.forEach { dao.delete(it.id) }
         }
     }
 
@@ -273,7 +253,7 @@ class SavedPatternsRepository(
             val spec = free?.columnSpec() ?: PatternSpec(entry.inhale, entry.holdFull, entry.exhale, entry.holdEmpty, entry.activating)
             val origin = if (free != null) PatternOrigin.CUSTOM else SavedPatternEntity.originOf(entry.origin ?: SavedPatternEntity.ORIGIN_DAILY)
             val entity = writeLock.withLock {
-                insertAndCache(
+                insert(
                     SavedPatternEntity(
                         name = entry.name.trim(),
                         inhale = spec.inhale,
@@ -294,10 +274,10 @@ class SavedPatternsRepository(
         return ImportResult(added = added, duplicates = entries.size - added)
     }
 
-    /** Synchrone Auflösung für den Session-Start ([ExerciseRepository.byId]). */
+    /** Synchrone Auflösung aus dem letzten DB-Stand ([ExerciseRepository.byId]). */
     fun byExerciseId(exerciseId: String): Exercise? {
         val id = ExerciseIds.savedIdOf(exerciseId) ?: return null
-        return cached.firstOrNull { it.id == id }?.exercise
+        return current.value.firstOrNull { it.id == id }?.exercise
     }
 
     /**
@@ -311,40 +291,7 @@ class SavedPatternsRepository(
         require(minutes in AdjustLimits.MINUTES) { "Dauer außerhalb 1–30 min: $minutes" }
     }
 
-    private suspend fun insertAndCache(entity: SavedPatternEntity): SavedPatternEntity {
-        val stored = entity.copy(id = dao.insert(entity))
-        remember(stored)
-        return stored
-    }
-
-    /** Eigener Schreibvorgang: sofort in den Cache, bis die DB ihn bestätigt. */
-    private fun remember(entity: SavedPatternEntity) = synchronized(cacheLock) {
-        pendingDeletes.remove(entity.id)
-        pendingWrites[entity.id] = entity
-        rebuildCache()
-    }
-
-    private fun forget(id: Long) = synchronized(cacheLock) {
-        pendingWrites.remove(id)
-        pendingDeletes.add(id)
-        rebuildCache()
-    }
-
-    /**
-     * Neuer DB-Stand. Eigene Schreibvorgänge gelten als bestätigt, sobald die DB sie genau so
-     * liefert; bis dahin überstimmen sie den (womöglich älteren) DB-Stand.
-     */
-    private fun onDbRows(rows: List<SavedPatternEntity>) = synchronized(cacheLock) {
-        dbRows = rows
-        pendingWrites.values.removeAll { pending -> pending in rows }
-        pendingDeletes.removeAll { id -> rows.none { it.id == id } }
-        rebuildCache()
-    }
-
-    private fun rebuildCache() {
-        val merged = dbRows.filterNot { it.id in pendingDeletes || it.id in pendingWrites } + pendingWrites.values
-        cached = merged.sortedByDescending { it.createdAtEpochMs }.map { it.toSaved() }
-    }
+    private suspend fun insert(entity: SavedPatternEntity): SavedPatternEntity = entity.copy(id = dao.insert(entity))
 
     private fun SavedPatternEntity.isDaily(): Boolean = patternOrigin() == PatternOrigin.SAVED_DAILY
 
