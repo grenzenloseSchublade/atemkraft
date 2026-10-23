@@ -209,6 +209,28 @@ def ui_literal_hits(lines: list[str]) -> list[int]:
     return hits
 
 
+# Feature-Pakete unter ui/ greifen nur auf Gemeinsames zu; Ausnahmen mit Begründung in CODE-01.
+UI_SHARED = {"theme", "components", "navigation"}
+UI_FEATURE_EXCEPTIONS = {("own", "app.atemkraft.ui.log.LogHistoryCard")}  # Verlaufskarte im Tab „Eigene“
+UI_FEATURE_IMPORT = re.compile(r"^import (app\.atemkraft\.ui\.(\w+)\.[\w.]+)", re.MULTILINE)
+
+
+def ui_feature_import(check: Check) -> dict[str, list[int]]:
+    """CODE-01: `ui/<feature>` importiert aus `ui/` nur theme, components, navigation und sich selbst."""
+    hits: dict[str, list[int]] = {}
+    for f in files_for(check.include, check.exclude):
+        feature = f[len(SRC + "ui/"):].split("/")[0]
+        if feature in UI_SHARED or "/" not in f[len(SRC + "ui/"):]:
+            continue
+        text = (ROOT / f).read_text(encoding="utf-8")
+        for m in UI_FEATURE_IMPORT.finditer(text):
+            target = m.group(2)
+            if target in UI_SHARED or target == feature or (feature, m.group(1)) in UI_FEATURE_EXCEPTIONS:
+                continue
+            hits.setdefault(f, []).append(text.count("\n", 0, m.start()) + 1)
+    return hits
+
+
 SCREEN_PARAMS_MAX = 8
 SCREEN_FUN = re.compile(r"^(?:internal\s+|public\s+)?fun\s+(\w+(?:Screen|Overlay))\s*\(", re.MULTILINE)
 
@@ -555,6 +577,7 @@ CHECKS: list[Check] = [
            r"^import kotlinx\.coroutines\.CoroutineScope$"],
           exclude=[SRC + "ui/*Destination.kt", SRC + "ui/*ViewModel.kt", SRC + "ui/settings/PatternTransfer.kt"]),
     Check("screen-params", "CODE-02", [SRC + "ui/*.kt"], custom=screen_params),
+    Check("ui-feature-import", "CODE-01", [SRC + "ui/*.kt"], custom=ui_feature_import),
     Check("ordinal-persist", "CODE-05", [SRC + "data/*.kt"], [r"\.ordinal\b"]),
     Check("todo-unlinked", "CODE-06", [SRC + "*.kt"], [r"//\s*TODO(?!\((S|A)-\d+\))"], skip_comments=False),
     # Sicherheit (docs/SECURITY.md, Automatische Prüfung): Null-Toleranz, ohne Baseline.
