@@ -28,13 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
@@ -58,6 +53,7 @@ import app.atemkraft.ui.components.ExerciseChips
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.Labeled
+import app.atemkraft.ui.components.PhaseMark
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
@@ -364,36 +360,18 @@ private fun RhythmBar(steps: List<RhythmStep>) {
     }
 }
 
-/** Ein Phasen-Abschnitt: Einatmen Cyan, Ausatmen Koralle gefüllt; Halten als gestrichelter Umriss. */
+/** Ein Phasen-Abschnitt ([PhaseMark]): Einatmen Cyan, Ausatmen Koralle gefüllt; Halten als gestrichelter Umriss. */
 @Composable
 private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: Boolean = false) {
     // secondary = Cyan (Theme.kt); Ausatmen in eigenem Ton (Koralle), nie in der Markenfarbe.
-    val inhale = MaterialTheme.colorScheme.secondary
-    val exhale = BreathExhale
     val base: Color = when (type) {
-        PhaseType.INHALE, PhaseType.INHALE_TOP_UP, PhaseType.HOLD_FULL -> inhale
-        PhaseType.EXHALE, PhaseType.HOLD_EMPTY -> exhale
+        PhaseType.INHALE, PhaseType.INHALE_TOP_UP, PhaseType.HOLD_FULL -> MaterialTheme.colorScheme.secondary
+        PhaseType.EXHALE, PhaseType.HOLD_EMPTY -> BreathExhale
         PhaseType.REST -> MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY)
     }
-    val color = if (passive) base.copy(alpha = TERTIARY) else base
-    val dashed = type == PhaseType.HOLD_FULL || type == PhaseType.HOLD_EMPTY
-    Box(
-        modifier = modifier.drawBehind {
-            val radius = CornerRadius(Dimens.GapHairline.toPx())
-            if (!dashed) {
-                drawRoundRect(color = color, cornerRadius = radius)
-            } else {
-                val stroke = Dimens.GapHairline.toPx()
-                val dash = Dimens.GapTiny.toPx()
-                // Strich nach innen versetzt, damit der Umriss so breit ist wie ein gefüllter Abschnitt.
-                drawRoundRect(
-                    color = color,
-                    topLeft = Offset(stroke / 2, stroke / 2),
-                    size = Size(size.width - stroke, size.height - stroke),
-                    cornerRadius = radius,
-                    style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash / 2))),
-                )
-            }
-        },
+    PhaseMark(
+        color = if (passive) base.copy(alpha = TERTIARY) else base,
+        dashed = type == PhaseType.HOLD_FULL || type == PhaseType.HOLD_EMPTY,
+        modifier = modifier,
     )
 }

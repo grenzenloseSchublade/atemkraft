@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -37,6 +36,7 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
+import app.atemkraft.ui.components.HoldDash
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
@@ -114,7 +114,6 @@ private fun TemplateRow(template: FreeTemplate, selected: Boolean, onClick: () -
 private fun MiniCurve(pattern: FreePattern, inhale: Color) {
     Canvas(Modifier.size(width = Sizes.MiniCurveWidth, height = Sizes.MiniCurveHeight)) {
         val stroke = Dimens.GapHairline.toPx()
-        val dash = Dimens.GapTiny.toPx()
         val levels = pattern.levels()
         val perSecond = size.width / pattern.totalSeconds.coerceAtLeast(1)
         val top = stroke
@@ -132,7 +131,7 @@ private fun MiniCurve(pattern: FreePattern, inhale: Color) {
                 end = to,
                 strokeWidth = stroke,
                 cap = StrokeCap.Round,
-                pathEffect = if (hold) PathEffect.dashPathEffect(floatArrayOf(dash, dash / 2)) else null,
+                pathEffect = if (hold) HoldDash.pathEffect(this) else null,
             )
         }
     }

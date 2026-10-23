@@ -25,12 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -41,6 +38,7 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.PhaseMark
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.patterns.curve.phaseColor
@@ -107,7 +105,8 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
         horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
     ) {
         PhaseNumber(index, background = colors.surfaceVariant)
-        PhaseMark(color = color, dashed = phase.type == FreePhaseType.HOLD)
+        // Strich in Phasenfarbe, Halten gestrichelt (wie die Atemlehre).
+        PhaseMark(color = color, dashed = phase.type == FreePhaseType.HOLD, modifier = Modifier.size(width = Dimens.GapTiny, height = Sizes.IconDefault))
         WholeWordText(
             text = pattern.labelAt(index),
             modifier = Modifier.weight(1f),
@@ -140,31 +139,6 @@ internal fun PhaseNumber(index: Int, background: Color) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
         )
     }
-}
-
-/** Strich in Phasenfarbe: Ein und Aus gefüllt, Halten als gestrichelter Umriss (FARBE-04, wie die Atemlehre). */
-@Composable
-private fun PhaseMark(color: Color, dashed: Boolean) {
-    Box(
-        modifier = Modifier
-            .size(width = Dimens.GapTiny, height = Sizes.IconDefault)
-            .drawBehind {
-                val radius = CornerRadius(Dimens.GapHairline.toPx())
-                if (!dashed) {
-                    drawRoundRect(color = color, cornerRadius = radius)
-                } else {
-                    val stroke = Dimens.GapHairline.toPx()
-                    val dash = Dimens.GapTiny.toPx()
-                    drawRoundRect(
-                        color = color,
-                        topLeft = Offset(stroke / 2, stroke / 2),
-                        size = Size(size.width - stroke, size.height - stroke),
-                        cornerRadius = radius,
-                        style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash / 2))),
-                    )
-                }
-            },
-    )
 }
 
 /** Gelb gestrichelte Linie zwischen gewählter Phase und „Neu nach …“: Dort kommt die neue Phase hin. */
