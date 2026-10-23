@@ -1,7 +1,6 @@
 package app.atemkraft.domain
 
 import java.util.Locale
-import kotlin.math.roundToInt
 
 /** Art einer Phase in einem frei gestalteten Muster: Einatmen, Halten oder Ausatmen. */
 enum class FreePhaseType { IN, HOLD, OUT }
@@ -204,10 +203,7 @@ data class FreePattern(val phases: List<FreePhase>) {
     fun breathsPerMinute(): Double = if (totalSeconds <= 0) 0.0 else breathCount() * 60.0 / totalSeconds
 
     /** Atemzüge pro Minute auf eine Nachkommastelle mit deutschem Komma („6“, „4,6“). */
-    fun breathsPerMinuteText(): String {
-        val tenths = (breathsPerMinute() * 10).roundToInt()
-        return if (tenths % 10 == 0) (tenths / 10).toString() else "${tenths / 10},${tenths % 10}"
-    }
+    fun breathsPerMinuteText(): String = breathsPerMinute().formatDecimal()
 
     /**
      * Warum das Muster als intensiv gilt, in fester Reihenfolge; leer heißt nicht intensiv.
@@ -329,11 +325,12 @@ data class FreePattern(val phases: List<FreePhase>) {
         const val INTENSE_HOLD_EMPTY_SECONDS = 8
         const val INTENSE_BREATHS_PER_MINUTE = 20
 
-        private const val LABEL_IN = "Einatmen"
-        private const val LABEL_OUT = "Ausatmen"
-        private const val LABEL_HOLD_FULL = "Halten voll"
-        private const val LABEL_HOLD_EMPTY = "Halten leer"
-        private const val LABEL_HOLD = "Halten"
+        // Namen aus [PhaseNames] (spiegelt strings.xml `phase_*`).
+        private const val LABEL_IN = PhaseNames.INHALE
+        private const val LABEL_OUT = PhaseNames.EXHALE
+        private const val LABEL_HOLD_FULL = PhaseNames.HOLD_FULL
+        private const val LABEL_HOLD_EMPTY = PhaseNames.HOLD_EMPTY
+        private const val LABEL_HOLD = PhaseNames.HOLD
 
         /**
          * Alle Namen, die [labelAt] liefern kann – für Layouts, die Platz für den längsten

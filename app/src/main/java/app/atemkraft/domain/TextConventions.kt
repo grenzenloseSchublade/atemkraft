@@ -1,5 +1,8 @@
 package app.atemkraft.domain
 
+import kotlin.math.abs
+import kotlin.math.roundToInt
+
 /**
  * Trennpunkt zwischen Teilen einer Zeile („Einatmen 4 s · Ausatmen 6 s“, „5 Sitzungen · 40 min“).
  * Das geschützte Leerzeichen vor dem Punkt hält ihn am Zeilenende: Bei großer Schrift beginnt
@@ -38,9 +41,32 @@ fun String.asDotSuffix(): String = "· $this"
  * negative Werte gelten als 0:00. Geteilt von Meditations-Overlay, Mini-Leiste und Benachrichtigung.
  */
 fun formatClock(ms: Long): String {
-    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
-    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
+    val (minutes, seconds) = minutesSecondsOf(ms)
+    return "%d:%02d".format(minutes, seconds)
 }
+
+/**
+ * Ganze Minuten und Restsekunden einer Dauer in Millisekunden, abgerundet auf volle Sekunden;
+ * negative Werte gelten als 0:00. Gemeinsam für [formatClock], Bilanz und Logbuch („6:05 min“,
+ * gesprochen „6 Minuten 5 Sekunden“).
+ */
+fun minutesSecondsOf(ms: Long): Pair<Int, Int> {
+    val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+    return (totalSeconds / 60L).toInt() to (totalSeconds % 60L).toInt()
+}
+
+/**
+ * Zahl auf eine Nachkommastelle gerundet, mit deutschem Komma und ohne unnötige Null (TEXT-10):
+ * „6“, „4,5“, „4,6“. Für Sekunden mit halben Werten und Atemzüge pro Minute in Domain-Texten.
+ */
+fun Double.formatDecimal(): String {
+    val tenths = (this * TENTHS).roundToInt()
+    val whole = tenths / TENTHS
+    val rest = abs(tenths % TENTHS)
+    return if (rest == 0) whole.toString() else "$whole,$rest"
+}
+
+private const val TENTHS = 10
 
 /**
  * Auszeichnung für Sanskrit in Datentexten und Strings (TEXT-14): Ein Begriff steht zwischen

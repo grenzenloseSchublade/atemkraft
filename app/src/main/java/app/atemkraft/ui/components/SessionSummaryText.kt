@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.domain.minutesSecondsOf
 
 /**
  * Teile der kurzen Bilanz für den Ende-Bildschirm ([FinishedPanel]), z. B. „8 Runden“, „6:24 min“,
@@ -24,8 +25,8 @@ fun sessionSummaryParts(durationMs: Long, rounds: Int? = null, breaths: Int? = n
  */
 @Composable
 fun durationClockText(durationMs: Long): String {
-    val totalSeconds = (durationMs / 1000L).coerceAtLeast(0L)
-    return stringResource(R.string.session_summary_duration, totalSeconds / 60L, totalSeconds % 60L)
+    val (minutes, seconds) = minutesSecondsOf(durationMs)
+    return stringResource(R.string.session_summary_duration, minutes, seconds)
 }
 
 /**
@@ -34,9 +35,7 @@ fun durationClockText(durationMs: Long): String {
  */
 @Composable
 fun spokenDuration(durationMs: Long): String {
-    val totalSeconds = (durationMs / 1000L).coerceAtLeast(0L)
-    val minutes = (totalSeconds / 60L).toInt()
-    val seconds = (totalSeconds % 60L).toInt()
+    val (minutes, seconds) = minutesSecondsOf(durationMs)
     val min = pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes)
     val sec = pluralStringResource(R.plurals.cd_duration_seconds, seconds, seconds)
     return when {

@@ -35,8 +35,7 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
-import app.atemkraft.domain.adjusted
-import app.atemkraft.domain.estimatedTotalSeconds
+import app.atemkraft.domain.approxMinutes
 import app.atemkraft.playback.PhaseAudio
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
@@ -100,8 +99,7 @@ fun PatternEditorScreen(
 ) {
     val exercise = state.exercise()
     val config = state.config()
-    val estimatedSeconds = remember(exercise, config) { exercise.adjusted(config).estimatedTotalSeconds() }
-    val approxMinutes = ((estimatedSeconds + HALF_MINUTE) / SECONDS_PER_MINUTE).coerceAtLeast(1)
+    val approxMinutes = remember(exercise, config) { exercise.approxMinutes(config) }
 
     // Vorschau der Kurve und ihr Ton: hält an, wenn die Seite verdeckt wird oder die App in den
     // Hintergrund geht; der Ton folgt der Phase, in der der Punkt gerade steht.
@@ -294,9 +292,6 @@ private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
 
 /** Test-Tag der Werkzeugleiste (gewählte Phase und Hinzufügen) – für die Messung „ohne Scrollen sichtbar“. */
 internal const val PATTERN_TOOLBAR_TAG = "pattern_editor_toolbar"
-
-private const val SECONDS_PER_MINUTE = 60
-private const val HALF_MINUTE = 30
 
 @Preview(heightDp = 1600)
 @Composable

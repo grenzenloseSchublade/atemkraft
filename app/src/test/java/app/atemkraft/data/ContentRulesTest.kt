@@ -7,6 +7,7 @@ import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PatternTexts
+import app.atemkraft.domain.PhaseNames
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
@@ -476,10 +477,21 @@ class ContentRulesTest {
         val units = strings.mapNotNull { t ->
             Regex("""\d (s|min)\b""").find(t.value)?.let { Finding(t.id, "„${it.value}“ ohne geschütztes Leerzeichen") }
         }
+        // Die Phasennamen der Domain (PhaseNames) spiegeln strings.xml.
+        val phaseNames = mapOf(
+            "phase_inhale" to PhaseNames.INHALE,
+            "phase_exhale" to PhaseNames.EXHALE,
+            "phase_hold_full" to PhaseNames.HOLD,
+            "phase_hold_empty" to PhaseNames.HOLD,
+        ).mapNotNull { (key, name) ->
+            val value = strings.firstOrNull { it.id == "strings:$key" }?.value
+            if (value != name) Finding("strings:$key", "„$value“ statt „$name“ wie PhaseNames") else null
+        }
         assertNone(
             "typography",
             againstBaseline("decimal-comma", decimal) + againstBaseline("quotes", quotes) +
-                againstBaseline("dot-separator", dots) + againstBaseline("number-unit", units),
+                againstBaseline("dot-separator", dots) + againstBaseline("number-unit", units) +
+                strict("phase-names", phaseNames),
         )
     }
 

@@ -67,6 +67,18 @@ fun Exercise.estimatedTotalSeconds(): Int {
     return (millis / 1000L).toInt()
 }
 
+/**
+ * Gesamtdauer mit [config] in ganzen Minuten für „ca. N min“, kaufmännisch gerundet, mindestens 1
+ * ([estimatedTotalSeconds] der angepassten Übung). Detailseite und Muster-Editor zeigen dieselbe
+ * Zahl. Bei offenen Phasen ([hasOpenPhases]) ist das nur die Untergrenze.
+ */
+fun Exercise.approxMinutes(config: SessionConfig): Int = minutesRounded(adjusted(config).estimatedTotalSeconds())
+
+/** Sekunden in ganzen Minuten, ab einer halben aufgerundet, mindestens 1. */
+fun minutesRounded(seconds: Int): Int = ((seconds + SECONDS_PER_MINUTE / 2) / SECONDS_PER_MINUTE).coerceAtLeast(1)
+
+private const val SECONDS_PER_MINUTE = 60
+
 /** true, wenn die Übung offene Phasen enthält (Gesamtdauer dann nur Näherung/Untergrenze). */
 val Exercise.hasOpenPhases: Boolean
     get() = segments.any { seg -> seg.phases.any { it.duration !is PhaseDuration.Fixed } }

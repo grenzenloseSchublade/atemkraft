@@ -1,7 +1,5 @@
 package app.atemkraft.domain
 
-import kotlin.math.roundToInt
-
 /**
  * Deutsche Inhaltstexte generierter und eigener Muster: Kurzform, Phasen in Worten, Texte je
  * Herkunft ([PatternOrigin]), Grenzen-Sätze und Sicherheitshinweise. domain/ kennt keine
@@ -20,10 +18,10 @@ object PatternTexts {
      * zwischen „1" und „s" um (TEXT-10). Teile werden mit [DOT_SEPARATOR] verbunden.
      */
     fun hintFor(spec: PatternSpec): String = buildList {
-        add("Einatmen ${spec.inhale.fmt()}${NBSP}s")
-        spec.holdFull?.let { add("Halten ${it.fmt()}${NBSP}s") }
-        add("Ausatmen ${spec.exhale.fmt()}${NBSP}s")
-        spec.holdEmpty?.let { add("Halten ${it.fmt()}${NBSP}s") }
+        add("${PhaseNames.INHALE} ${spec.inhale.fmt()}${NBSP}s")
+        spec.holdFull?.let { add("${PhaseNames.HOLD} ${it.fmt()}${NBSP}s") }
+        add("${PhaseNames.EXHALE} ${spec.exhale.fmt()}${NBSP}s")
+        spec.holdEmpty?.let { add("${PhaseNames.HOLD} ${it.fmt()}${NBSP}s") }
     }.joinToString(DOT_SEPARATOR)
 
     /** Geschütztes Leerzeichen zwischen Zahl und Einheit. */
@@ -124,7 +122,7 @@ object PatternTexts {
     }
 
     /** Atemzüge pro Minute bei [cycleSeconds], auf eine Nachkommastelle („4,6“, „10“). */
-    private fun breathsPerMinute(cycleSeconds: Number): String = ((60.0 / cycleSeconds.toDouble() * 10).roundToInt() / 10.0).fmt()
+    private fun breathsPerMinute(cycleSeconds: Number): String = (60.0 / cycleSeconds.toDouble()).formatDecimal()
 
     /**
      * Keine Evidenzbehauptung für ein einzelnes Muster (TEXT-07): Die Grenzen folgen der
@@ -195,8 +193,8 @@ object PatternTexts {
         }
     }
 
-    /** „4" bzw. „4,5" (deutsches Komma, ohne unnötige Null). */
-    private fun Double.fmt(): String = if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
+    /** „4" bzw. „4,5" (deutsches Komma, ohne unnötige Null, [formatDecimal]). */
+    private fun Double.fmt(): String = formatDecimal()
 
     /**
      * Bauchatmungs-EMPFEHLUNG der ruhigen Muster (kein Zufall beim Atemort) – bewusst als
