@@ -14,7 +14,7 @@ import app.atemkraft.ui.components.MiniNowPlayingBar
 fun MiniMeditationBar(state: MeditationUiState, onClick: () -> Unit) {
     val title = stringResource(R.string.meditation_title)
     val statusText = when (state.status) {
-        MeditationStatus.FINISHED -> stringResource(R.string.meditation_done_title)
+        MeditationStatus.FINISHED -> stringResource(R.string.session_done_title)
 
         MeditationStatus.PAUSED -> stringResource(R.string.session_paused)
 

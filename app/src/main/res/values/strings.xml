@@ -516,7 +516,6 @@
     <string name="cd_meditation_dial_fine">Feinwahl</string>
     <string name="cd_meditation_dial_less">Eine Minute weniger</string>
     <string name="cd_meditation_dial_more">Eine Minute mehr</string>
-    <string name="meditation_done_title">Sitzung beendet</string>
     <string name="cd_meditation_ring">Meditations-Ring</string>
     <!-- Ein Kanal für beide Sitzungsarten (Meditation und Atemübung, PlaybackService). -->
     <string name="session_notification_channel">Laufende Sitzung</string>
