@@ -99,6 +99,9 @@ class SessionAudioCoordinator(
      * abgegeben – unabhängig davon, ob die Abschluss-Abfrage schon bestätigt wurde.
      */
     private suspend fun applyStatus(status: SessionStatus, cfg: CueSettings, muted: Boolean) {
+        // „Nochmal“/neuer Start: Ein noch klingender Abschluss-Gong blendet kurz aus, statt in die
+        // neue Übung hineinzuklingen.
+        if (status == SessionStatus.PREPARING) tonePlayer.silenceGong()
         val inSession = status != SessionStatus.IDLE && status != SessionStatus.FINISHED
         val audible = (status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER) &&
             !muted

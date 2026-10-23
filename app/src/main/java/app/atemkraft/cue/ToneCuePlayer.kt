@@ -5,7 +5,12 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import app.atemkraft.domain.ToneVolume
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -18,11 +23,25 @@ import kotlin.math.sin
  *
  * Läuft über den Medien-Stream (USAGE_MEDIA), damit die Töne auch im Vibrationsmodus
  * hörbar sind und über die normale Medien-Lautstärke geregelt werden. Aufrufe sind
- * nicht-blockierend (eigener Thread).
+ * nicht-blockierend.
+ *
+ * **Zeitverhalten:** Phasen-Töne und Gong laufen auf getrennten Threads. Ein Phasen-Ton belegt
+ * seinen Thread nur für Synthese und Track-Aufbau; den Track räumt ein späterer Auftrag weg. So
+ * kommt der erste Ton nach „Nochmal“ nie hinter einem 6–13 s langen Gong, und 0,5-s-Phasen
+ * (Feueratmung) stauen sich nicht. Ein noch wartender Ton entfällt, sobald ein neuerer kommt. Ein
+ * neuer Gong (oder [silenceGong]) blendet einen noch klingenden kurz aus, statt hinter ihm zu warten.
  */
 class ToneCuePlayer {
 
-    private val executor = Executors.newSingleThreadExecutor()
+    /** Kurze Wechseltöne: Aufbau sofort, Freigabe zeitversetzt auf demselben Thread. */
+    private val cueExecutor = Executors.newSingleThreadScheduledExecutor()
+
+    /** Gong: eigener Thread, er hält ihn für die ganze Ausklangdauer. */
+    private val gongExecutor = Executors.newSingleThreadExecutor()
+
+    /** Laufende Nummer je Auftrag: Ein Auftrag, der nicht mehr der neueste ist, entfällt bzw. blendet aus. */
+    private val cueSerial = AtomicLong()
+    private val gongSerial = AtomicLong()
 
     @Volatile
     private var released = false
@@ -38,7 +57,7 @@ class ToneCuePlayer {
         gongLong = long
     }
 
-    private val gongBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val gongBusy = AtomicBoolean(false)
 
     /**
      * Vorhören in den Einstellungen: spielt den Gong im gewünschten Profil genau einmal;
@@ -48,13 +67,7 @@ class ToneCuePlayer {
         if (released) return
         if (!gongBusy.compareAndSet(false, true)) return
         gongLong = long
-        executor.execute {
-            try {
-                synthesizeAndPlayGong()
-            } finally {
-                gongBusy.set(false)
-            }
-        }
+        playGong(long) { gongBusy.set(false) }
     }
 
     /** Gesamt-Wiedergabedauer des Gongs (Ton + Stille) fürs aktuelle Profil – für Warte-/Fokus-Timing. */
@@ -66,31 +79,82 @@ class ToneCuePlayer {
 
     fun play(event: CueEvent) {
         if (released) return
-        executor.execute {
-            when (event) {
-                CueEvent.INHALE -> synthesizeAndPlay(528.0, durationMs = 180)
-                CueEvent.EXHALE -> synthesizeAndPlay(396.0, durationMs = 180)
-                CueEvent.HOLD -> synthesizeAndPlay(440.0, durationMs = 180)
-                CueEvent.FINISH -> synthesizeAndPlayGong()
+        when (event) {
+            CueEvent.INHALE -> playCue(528.0)
+            CueEvent.EXHALE -> playCue(396.0)
+            CueEvent.HOLD -> playCue(440.0)
+            CueEvent.FINISH -> playGong(gongLong)
+        }
+    }
+
+    /** Blendet einen noch klingenden Gong kurz aus (eine neue Sitzung beginnt); ein wartender entfällt. */
+    fun silenceGong() {
+        gongSerial.incrementAndGet()
+    }
+
+    /** Kurzer Wechselton (Synthese: [synthesizeCue]); der Auftrag kehrt nach dem Start des Tracks zurück. */
+    private fun playCue(frequencyHz: Double) {
+        val serial = cueSerial.incrementAndGet()
+        submit(cueExecutor) {
+            // Überholt, bevor er dran war: lieber auslassen als verspätet nachspielen.
+            if (released || serial != cueSerial.get()) return@submit
+            val track = startTrack(synthesizeCue(frequencyHz, CUE_MS, volumeScale)) ?: return@submit
+            // Reserve über die Puffer-Dauer hinaus: stop() darf nie in noch klingendes Audio fallen
+            // (HAL-/Bluetooth-Latenz). Das Pufferende ist ohnehin Stille.
+            try {
+                cueExecutor.schedule({ stopAndRelease(track) }, (CUE_MS + RELEASE_RESERVE_MS).toLong(), TimeUnit.MILLISECONDS)
+            } catch (_: RejectedExecutionException) {
+                stopAndRelease(track) // freigegeben, während der Ton anlief
             }
         }
     }
 
-    /** Abschluss-Gong im gewählten Profil (Synthese: [synthesizeGong]). */
-    private fun synthesizeAndPlayGong() {
-        if (released) return
-        val long = gongLong
-        playSamples(synthesizeGong(long, volumeScale), gongTotalMsFor(long))
+    /** Gong im Profil [long] (Synthese: [synthesizeGong]); [onDone] läuft in jedem Fall danach. */
+    private fun playGong(long: Boolean, onDone: () -> Unit = {}) {
+        val serial = gongSerial.incrementAndGet() // ein noch klingender Gong blendet jetzt aus
+        val accepted = submit(gongExecutor) {
+            try {
+                if (!released && serial == gongSerial.get()) {
+                    ringOut(synthesizeGong(long, volumeScale), gongTotalMsFor(long), serial)
+                }
+            } finally {
+                onDone()
+            }
+        }
+        if (!accepted) onDone()
     }
 
-    /** Kurzer Wechselton (Synthese: [synthesizeCue]). */
-    private fun synthesizeAndPlay(frequencyHz: Double, durationMs: Int) {
-        if (released) return
-        playSamples(synthesizeCue(frequencyHz, durationMs, volumeScale), durationMs)
+    /**
+     * Spielt den Gong und wartet in kurzen Schritten bis zu seinem Ende. Ist [serial] überholt (neuer
+     * Gong, [silenceGong]), blendet er kurz aus statt hart abzubrechen.
+     */
+    private fun ringOut(samples: ShortArray, durationMs: Int, serial: Long) {
+        val track = startTrack(samples) ?: return
+        try {
+            val endAt = System.nanoTime() + (durationMs + RELEASE_RESERVE_MS) * NANOS_PER_MS
+            while (System.nanoTime() < endAt) {
+                if (released || serial != gongSerial.get()) {
+                    fadeOut(track)
+                    break
+                }
+                Thread.sleep(POLL_MS)
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        } finally {
+            stopAndRelease(track)
+        }
     }
 
-    /** Spielt fertige Samples blockierend über einen MODE_STATIC-Track ab. */
-    private fun playSamples(samples: ShortArray, durationMs: Int) {
+    private fun fadeOut(track: AudioTrack) {
+        for (step in FADE_STEPS - 1 downTo 0) {
+            track.setVolume(step.toFloat() / FADE_STEPS)
+            Thread.sleep(POLL_MS)
+        }
+    }
+
+    /** Baut einen MODE_STATIC-Track mit [samples] und startet ihn; null, wenn das Gerät keinen hergibt. */
+    private fun startTrack(samples: ShortArray): AudioTrack? {
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -100,37 +164,57 @@ class ToneCuePlayer {
             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
             .build()
-
-        val track = AudioTrack(
-            attributes,
-            format,
-            samples.size * 2,
-            AudioTrack.MODE_STATIC,
-            AudioManager.AUDIO_SESSION_ID_GENERATE,
-        )
-        try {
+        // Fehlt ein Track (Audio-Ressourcen erschöpft), kostet das einen Ton, nicht die App.
+        val track = runCatching {
+            AudioTrack(attributes, format, samples.size * 2, AudioTrack.MODE_STATIC, AudioManager.AUDIO_SESSION_ID_GENERATE)
+        }.getOrNull() ?: return null
+        return try {
             track.write(samples, 0, samples.size)
             track.play()
-            // Großzügige Reserve über die Puffer-Dauer hinaus: stop() darf nie in noch klingendes
-            // Audio fallen (HAL-/Bluetooth-Latenz). Das Pufferende ist ohnehin Stille.
-            Thread.sleep((durationMs + 300).toLong())
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-        } finally {
-            runCatching { track.stop() }
+            track
+        } catch (_: IllegalStateException) {
             track.release()
+            null
         }
     }
 
-    /** Gibt den Hintergrund-Thread frei. Nach Aufruf werden keine Töne mehr gespielt. */
+    private fun stopAndRelease(track: AudioTrack) {
+        runCatching { track.stop() }
+        track.release()
+    }
+
+    /** Reiht [task] ein; false, wenn der Player schon freigegeben ist (kein Absturz, N-4). */
+    private fun submit(executor: Executor, task: () -> Unit): Boolean = try {
+        executor.execute(task)
+        true
+    } catch (_: RejectedExecutionException) {
+        false
+    }
+
+    /** Gibt die Hintergrund-Threads frei. Nach Aufruf werden keine Töne mehr gespielt. */
     fun release() {
         released = true
-        executor.shutdown()
+        cueExecutor.shutdown()
+        gongExecutor.shutdown()
     }
 
     internal companion object {
         const val SAMPLE_RATE = 44100
         const val AMPLITUDE = 0.5 * Short.MAX_VALUE
+
+        /** Länge der Wechseltöne. */
+        const val CUE_MS = 180
+
+        /** Reserve nach dem Pufferende, bevor ein Track gestoppt wird (HAL-/Bluetooth-Latenz). */
+        const val RELEASE_RESERVE_MS = 300
+
+        /** Takt, in dem ein klingender Gong prüft, ob er ausblenden soll; zugleich Schritt der Ausblende. */
+        const val POLL_MS = 20L
+
+        /** Ausblende eines überholten Gongs: 8 Schritte à [POLL_MS]. */
+        const val FADE_STEPS = 8
+
+        const val NANOS_PER_MS = 1_000_000L
 
         /** Ton-Fenster „voller Ausklang": Grundton tau 1,6 s → bei 11,5 s ≈ -62 dB (weit unter hörbar). */
         const val GONG_TONE_LONG_MS = 11500
