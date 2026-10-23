@@ -9,10 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,11 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -53,15 +46,15 @@ import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
-import app.atemkraft.ui.components.AppNavItem
-import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.CurveAxisSeconds
 import app.atemkraft.ui.components.CurveHeightRange
-import app.atemkraft.ui.components.HideableTabBar
 import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
+import app.atemkraft.ui.navigation.AppTabBar
+import app.atemkraft.ui.navigation.HideableTabBar
+import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
 import app.atemkraft.ui.patterns.PatternEditorScreen
 import app.atemkraft.ui.patterns.PatternEditorState
@@ -84,6 +77,9 @@ import java.io.File
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+/** Tabs der unteren Leiste: dieselbe Liste wie in der App ([TopTab]). */
+internal typealias Tab = TopTab
 
 /**
  * Gemeinsamer Rahmen der Screenshot-Gates ([ScreenshotTest] über die Breiten, [DeviceFitTest]
@@ -200,9 +196,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         }
     }
 
-    /** Tabs der unteren Leiste, in der Reihenfolge der App (MainActivity). */
-    protected enum class Tab { ATMEN, SITUATIONEN, EIGENE, MEDITATION, LERNEN }
-
     /**
      * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
      * Mit [tab] liegt der Inhalt wie in der App über Tab-Leiste und Systemleisten ([TabFrame],
@@ -259,7 +252,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
     /**
      * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
-     * Trennlinie und [AppNavigationBar] mit [selected] markiert – ohne [tabBar] eingeklappt wie eine
+     * Trennlinie und [AppTabBar] mit [selected] markiert – ohne [tabBar] eingeklappt wie eine
      * Seite der Tiefe ([HideableTabBar]; der Knopf dazu schwebt über dem Inhalt) –, darunter die
      * Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
      */
@@ -268,29 +261,16 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Spacer(Modifier.height(STATUS_BAR_DP.dp))
             Box(Modifier.weight(1f).fillMaxWidth()) { content() }
-            // Wie MainActivity (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
+            // Wie der Rahmen der App (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
             HideableTabBar(visible = tabBar, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
             Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
         }
     }
 
-    /** Die vier Tabs wie in MainActivity (Icons und Beschriftungen). */
+    /** Die Tab-Leiste der App ([AppTabBar] aus [TopTab]: Icons, Beschriftungen, Reihenfolge). */
     @Composable
     private fun TabNavigation(selected: Tab) {
-        AppNavigationBar(
-            Tab.entries.map { tab ->
-                val (label, icon) = when (tab) {
-                    Tab.ATMEN -> R.string.tab_breathe to rememberVectorPainter(Icons.Filled.Home)
-                    Tab.SITUATIONEN -> R.string.tab_situations to rememberVectorPainter(Icons.Filled.Search)
-                    Tab.EIGENE -> R.string.tab_own to painterResource(R.drawable.ic_bookmark_filled)
-                    Tab.MEDITATION -> R.string.tab_meditation to painterResource(R.drawable.ic_meditation)
-                    Tab.LERNEN -> R.string.tab_learn to painterResource(R.drawable.ic_learn)
-                }
-                AppNavItem(label = stringResource(label), selected = tab == selected, onClick = {}) {
-                    Icon(icon, contentDescription = null)
-                }
-            },
-        )
+        AppTabBar(selected = selected, onTap = {})
     }
 
     private val wordBreaks = mutableListOf<String>()

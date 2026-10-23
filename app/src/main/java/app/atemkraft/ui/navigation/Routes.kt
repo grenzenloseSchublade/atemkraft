@@ -1,4 +1,4 @@
-package app.atemkraft.ui
+package app.atemkraft.ui.navigation
 
 import app.atemkraft.domain.PatternSpec
 import kotlinx.serialization.Serializable

@@ -1,4 +1,4 @@
-package app.atemkraft.ui.components
+package app.atemkraft.ui.navigation
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonMagenta
 import app.atemkraft.ui.theme.OnNeon
@@ -123,81 +124,6 @@ private const val TAB_DIVIDER_ALPHA = 0.22f
 
 /** Kleinste Beschriftung der Tabs (Anteil der Rolle), damit fünf Namen bei Schrift 2,0 ganz bleiben. */
 private const val NAV_LABEL_MIN_SCALE = 0.4f
-
-/**
- * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Jede neue Seite startet mit
- * der Leiste ([enter]); scrollt der Inhalt mehr als [threshold] px nach unten, klappt sie ein
- * ([collapsed]). Der Knopf auf der Oberkante der untersten Leiste ([TabBarToggle]) klappt sie auf
- * und wieder zu ([toggle]) – danach entscheidet der Nutzer, Scrollen klappt auf dieser Seite nicht
- * mehr ein. Die Scroll-Wege aller Seiten misst [connection] zentral im Rahmen der App; auf den fünf
- * Tabs selbst bleibt die Leiste immer stehen (das entscheidet der Aufrufer).
- *
- * Wo der Knopf sitzt: auf der Oberkante einer Startleiste, wenn die Seite eine hat
- * ([PinnedActionBar] meldet sich mit [anchorPinnedBar] an), sonst auf der Oberkante der unteren
- * Leisten ([bottomBarTop]). Beides in px im Fenster.
- */
-@Stable
-class TabBarState(private val threshold: Float) {
-    var collapsed by mutableStateOf(false)
-        private set
-    private var byHand = false
-    private var travelled = 0f
-
-    /** Oberkante der unteren Leisten (Mini-Leiste, Tab-Leiste bzw. Systemnavigation), px im Fenster. */
-    var bottomBarTop by mutableFloatStateOf(Float.NaN)
-
-    // Startleisten der gerade gezeigten Seiten: Beim Seitenwechsel stehen kurz zwei da, es gilt die
-    // zuletzt angemeldete.
-    private val pinnedOwners = mutableStateListOf<Any>()
-    private val pinnedTops = mutableStateMapOf<Any, Float>()
-
-    /** Ob der Knopf auf einer Startleiste sitzt (sonst auf den unteren Leisten). */
-    val anchoredToPinnedBar: Boolean
-        get() = pinnedOwners.lastOrNull()?.let { it in pinnedTops } == true
-
-    /** Oberkante, auf der der Knopf sitzt: die jüngste Startleiste, sonst die unteren Leisten. */
-    val anchorTop: Float
-        get() = pinnedOwners.lastOrNull()?.let { pinnedTops[it] } ?: bottomBarTop
-
-    /** Neue Seite: Leiste da bzw. eingeklappt ([startCollapsed], Muster-Editor), noch keine Wahl von Hand. */
-    fun enter(startCollapsed: Boolean) {
-        collapsed = startCollapsed
-        byHand = false
-        travelled = 0f
-    }
-
-    /** Knopf angetippt: Leiste auf bzw. zu; Scrollen klappt sie auf dieser Seite nicht mehr ein. */
-    fun toggle() {
-        collapsed = !collapsed
-        byHand = true
-    }
-
-    /** Eine Startleiste ([owner]) mit ihrer Oberkante [top] (px im Fenster) an- bzw. nachmelden. */
-    fun anchorPinnedBar(owner: Any, top: Float) {
-        if (owner !in pinnedOwners) pinnedOwners += owner
-        pinnedTops[owner] = top
-    }
-
-    /** Startleiste [owner] verschwindet mit ihrer Seite. */
-    fun releasePinnedBar(owner: Any) {
-        pinnedOwners -= owner
-        pinnedTops -= owner
-    }
-
-    /** Zählt nur, was der Inhalt wirklich nach unten gescrollt hat (negatives `consumed.y`). */
-    val connection = object : NestedScrollConnection {
-        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-            if (!byHand && !collapsed && consumed.y < 0f) {
-                travelled -= consumed.y
-                if (travelled > threshold) collapsed = true
-            }
-            return Offset.Zero
-        }
-    }
-}
-
-/** Der [TabBarState] der App für Seiten in der Tiefe; null auf den Tabs, in Vorschauen und Tests. */
-val LocalTabBarState = staticCompositionLocalOf<TabBarState?> { null }
 
 /**
  * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt

@@ -74,39 +74,42 @@ import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.SessionStatus
-import app.atemkraft.ui.AboutRoute
-import app.atemkraft.ui.AtemlehreRoute
-import app.atemkraft.ui.AtmenRoute
-import app.atemkraft.ui.DetailRoute
-import app.atemkraft.ui.EigeneRoute
-import app.atemkraft.ui.GlossaryRoute
-import app.atemkraft.ui.LernenRoute
-import app.atemkraft.ui.LogbookRoute
-import app.atemkraft.ui.MeditationRoute
-import app.atemkraft.ui.PatternEditorRoute
-import app.atemkraft.ui.PranayamaRoute
-import app.atemkraft.ui.SettingsRoute
-import app.atemkraft.ui.SituationenRoute
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
-import app.atemkraft.ui.components.AppNavItem
-import app.atemkraft.ui.components.AppNavigationBar
-import app.atemkraft.ui.components.HideableTabBar
-import app.atemkraft.ui.components.LocalTabBarState
-import app.atemkraft.ui.components.TabBarState
-import app.atemkraft.ui.components.TabBarToggle
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.rememberDetailExercise
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
-import app.atemkraft.ui.isTabRoot
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MiniMeditationBar
+import app.atemkraft.ui.navigation.AboutRoute
+import app.atemkraft.ui.navigation.AppTabBar
+import app.atemkraft.ui.navigation.AtemlehreRoute
+import app.atemkraft.ui.navigation.AtmenRoute
+import app.atemkraft.ui.navigation.DetailRoute
+import app.atemkraft.ui.navigation.EigeneRoute
+import app.atemkraft.ui.navigation.GlossaryRoute
+import app.atemkraft.ui.navigation.HideableTabBar
+import app.atemkraft.ui.navigation.LernenRoute
+import app.atemkraft.ui.navigation.LocalTabBarState
+import app.atemkraft.ui.navigation.LogbookRoute
+import app.atemkraft.ui.navigation.MeditationRoute
+import app.atemkraft.ui.navigation.PatternEditorRoute
+import app.atemkraft.ui.navigation.PranayamaRoute
+import app.atemkraft.ui.navigation.SettingsRoute
+import app.atemkraft.ui.navigation.SituationenRoute
+import app.atemkraft.ui.navigation.TabBarState
+import app.atemkraft.ui.navigation.TabBarToggle
+import app.atemkraft.ui.navigation.TopTab
+import app.atemkraft.ui.navigation.isTabRoot
+import app.atemkraft.ui.navigation.startsWithTabBarCollapsed
+import app.atemkraft.ui.navigation.tabOnStack
+import app.atemkraft.ui.navigation.tapTab
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorDestination
 import app.atemkraft.ui.session.MiniSessionBar
@@ -115,9 +118,6 @@ import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
-import app.atemkraft.ui.startsWithTabBarCollapsed
-import app.atemkraft.ui.tabOnStack
-import app.atemkraft.ui.tapTab
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
@@ -224,15 +224,7 @@ private fun AtemkraftApp(
     // Markiert ist der Tab, zu dessen Stapel die Seite gehört – auch auf Push-Seiten und nach
     // einem wiederhergestellten Stapel (Eigene › Editor, dann Meditation und zurück); ein erneuter
     // Tipp darauf führt zu seiner Startseite zurück (tapTab).
-    val selectedTab = remember(navBackStackEntry) {
-        when (navController.tabOnStack()) {
-            SituationenRoute -> TopTab.SITUATIONEN
-            EigeneRoute -> TopTab.EIGENE
-            MeditationRoute -> TopTab.MEDITATION
-            LernenRoute -> TopTab.LERNEN
-            else -> TopTab.ATMEN
-        }
-    }
+    val selectedTab = remember(navBackStackEntry) { navController.tabOnStack() }
 
     // Liegt ein Overlay über allem, ist die App darunter für TalkBack und Tastatur nicht da
     // (A11Y-07, MUSTER-07): Sonst führte Wischen hinter „Beenden“ auf unsichtbare Karten und Tabs.
@@ -258,35 +250,7 @@ private fun AtemkraftApp(
                     }
                     // Auf den fünf Tabs immer; in der Tiefe, bis gescrollt oder per Knopf zugeklappt wird.
                     HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed) {
-                        AppNavigationBar(
-                            listOf(
-                                AppNavItem(
-                                    label = stringResource(R.string.tab_breathe),
-                                    selected = selectedTab == TopTab.ATMEN,
-                                    onClick = { navController.tapTab(AtmenRoute, selected = selectedTab == TopTab.ATMEN) },
-                                ) { Icon(Icons.Filled.Home, contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                                AppNavItem(
-                                    label = stringResource(R.string.tab_situations),
-                                    selected = selectedTab == TopTab.SITUATIONEN,
-                                    onClick = { navController.tapTab(SituationenRoute, selected = selectedTab == TopTab.SITUATIONEN) },
-                                ) { Icon(Icons.Filled.Search, contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                                AppNavItem(
-                                    label = stringResource(R.string.tab_own),
-                                    selected = selectedTab == TopTab.EIGENE,
-                                    onClick = { navController.tapTab(EigeneRoute, selected = selectedTab == TopTab.EIGENE) },
-                                ) { Icon(painterResource(R.drawable.ic_bookmark_filled), contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                                AppNavItem(
-                                    label = stringResource(R.string.tab_meditation),
-                                    selected = selectedTab == TopTab.MEDITATION,
-                                    onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
-                                ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                                AppNavItem(
-                                    label = stringResource(R.string.tab_learn),
-                                    selected = selectedTab == TopTab.LERNEN,
-                                    onClick = { navController.tapTab(LernenRoute, selected = selectedTab == TopTab.LERNEN) },
-                                ) { Icon(painterResource(R.drawable.ic_learn), contentDescription = null) }, // dekorativ: das Label benennt den Tab
-                            ),
-                        )
+                        AppTabBar(selected = selectedTab, onTap = { tab -> navController.tapTab(tab.route, selected = tab == selectedTab) })
                     }
                 }
             },
@@ -296,7 +260,7 @@ private fun AtemkraftApp(
                 // Tab-Wechsel blenden nur dezent – kein Ghosting mehr.
                 NavHost(
                     navController = navController,
-                    startDestination = AtmenRoute,
+                    startDestination = TopTab.START.route,
                     // Tablets/Foldables: Inhalte auf lesbare Breite begrenzen und mittig setzen;
                     // die Seitenränder zeigen den (identischen) Fensterhintergrund.
                     modifier = Modifier
@@ -667,9 +631,6 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
         content = content,
     )
 }
-
-/** Die vier Top-Level-Tabs in Leisten-Reihenfolge (für die Markierung, auch auf Push-Zielen). */
-private enum class TopTab { ATMEN, SITUATIONEN, EIGENE, MEDITATION, LERNEN }
 
 /**
  * Fragt ab Android 13 einmalig nach der Benachrichtigungs-Erlaubnis – im Moment, in dem sie Sinn

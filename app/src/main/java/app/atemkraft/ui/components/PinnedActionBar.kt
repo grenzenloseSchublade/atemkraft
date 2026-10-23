@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import app.atemkraft.ui.navigation.LocalTabBarState
+import app.atemkraft.ui.navigation.TabBarState
 import app.atemkraft.ui.theme.Dimens
 
 /**

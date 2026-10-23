@@ -1,10 +1,11 @@
-package app.atemkraft.ui
+package app.atemkraft.ui.navigation
 
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import kotlin.reflect.KClass
 
 /**
  * Tipp auf einen Tab der Leiste. Ist er schon markiert ([selected]), geht es zurück zu seiner
@@ -36,27 +37,28 @@ internal fun NavController.switchTab(route: Any) {
 }
 
 /**
- * Ob dieses Ziel einer der vier Tabs ist: Dort steht die Tab-Leiste immer. In der Tiefe (Detailseite,
- * Muster-Editor, Einstellungen, Glossar, Atemlehre, Logbuch, Über) klappt sie beim Runterscrollen
- * ein und kommt über die Lasche zurück ([app.atemkraft.ui.components.TabBarState], Nutzer
- * 2026-10-23). Vor dem ersten Ziel (null) gilt der Start-Tab.
+ * Ob dieses Ziel einer der fünf Tabs ist ([TopTab]): Dort steht die Tab-Leiste immer. In der Tiefe
+ * (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Pranayama, Logbuch, Über) klappt
+ * sie beim Runterscrollen ein und kommt über die Lasche zurück ([TabBarState], Nutzer 2026-10-23).
+ * Vor dem ersten Ziel (null) gilt der Start-Tab.
  */
 internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.any { destination ->
     TAB_ROOTS.any { destination.hasRoute(it) }
 }
 
-private val TAB_ROOTS = listOf(AtmenRoute::class, SituationenRoute::class, EigeneRoute::class, MeditationRoute::class, LernenRoute::class)
+/** Die Startseiten der Tabs als Routen-Klassen, aus [TopTab]. */
+internal val TAB_ROOTS: List<KClass<out Any>> = TopTab.entries.map { it.route::class }
 
 /**
  * Der Tab, zu dessen Stapel die aktuelle Seite gehört – auch auf Push-Seiten und nach einem
  * wiederhergestellten Stapel (`switchTab`, `restoreState`: Eigene › Editor liegt dann sofort oben,
- * ohne dass „Eigene“ selbst je aktuell war). Atmen ist Startziel und liegt immer unten; die
+ * ohne dass „Eigene“ selbst je aktuell war). Der Start-Tab ([TopTab.START]) liegt immer unten; die
  * anderen Tabs stehen nur in ihrem eigenen Stapel. Für die Markierung der Tab-Leiste.
  */
-internal fun NavController.tabOnStack(): Any = listOf(SituationenRoute, EigeneRoute, MeditationRoute, LernenRoute)
+internal fun NavController.tabOnStack(): TopTab = TopTab.entries.filter { it != TopTab.START }
     // getBackStackEntry wirft, wenn das Ziel nicht im Stapel liegt; die öffentliche API kennt
     // keine Abfrage ohne Ausnahme (currentBackStack ist bibliotheksintern).
-    .firstOrNull { route -> runCatching { getBackStackEntry(route) }.isSuccess } ?: AtmenRoute
+    .firstOrNull { tab -> runCatching { getBackStackEntry(tab.route) }.isSuccess } ?: TopTab.START
 
 /**
  * Seiten, die mit eingeklappter Tab-Leiste starten: der Muster-Editor, dessen Kurve jede Höhe

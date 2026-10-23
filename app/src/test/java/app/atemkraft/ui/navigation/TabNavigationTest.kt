@@ -1,4 +1,4 @@
-package app.atemkraft.ui
+package app.atemkraft.ui.navigation
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.navigation.NavGraph
@@ -7,12 +7,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Navigations-Grundregel (MUSTER-08) über die Routen der App und [tapTab] wie in MainActivity. */
+/**
+ * Navigations-Grundregel (MUSTER-08) über alle Tabs aus [TopTab] und [tapTab] wie in der App. Der
+ * NavHost trägt die Tab-Startseiten aus derselben Liste wie der Graph der App (`appGraph`) und zwei
+ * Push-Seiten; die Seiten selbst bleiben leer.
+ */
 @RunWith(RobolectricTestRunner::class)
 class TabNavigationTest {
 
@@ -23,27 +29,37 @@ class TabNavigationTest {
 
     /**
      * Erneuter Tipp auf den markierten Tab lässt die Startseite unverändert und führt aus jeder
-     * darüber geöffneten Seite zurück zur Startseite – auch aus tiefem Stapel.
+     * darüber geöffneten Seite zurück zur Startseite – auch aus tiefem Stapel. Markiert bleibt dabei
+     * der Tab, zu dessen Stapel die Seite gehört ([tabOnStack]); die Leiste steht fest nur auf den
+     * Startseiten ([isTabRoot]).
      */
     @Test
     fun `Re-Tap auf den markierten Tab fuehrt zur Startseite`() {
         rule.setContent {
             nav = rememberNavController()
-            NavHost(nav, startDestination = AtmenRoute) {
-                composable<AtmenRoute> {}
-                composable<SituationenRoute> {}
-                composable<EigeneRoute> {}
-                composable<MeditationRoute> {}
+            NavHost(nav, startDestination = TopTab.START.route) {
+                TopTab.entries.forEach { tab -> composable(tab.route::class) {} }
                 composable<SettingsRoute> {}
                 composable<GlossaryRoute> {}
             }
         }
-        listOf(AtmenRoute, SituationenRoute, EigeneRoute, MeditationRoute).forEach { tab ->
-            val start = step { nav.tapTab(tab, selected = false) }
-            assertEquals(start, step { nav.tapTab(tab, selected = true) })
+        assertEquals(5, TopTab.entries.size)
+        TopTab.entries.forEach { tab ->
+            val start = step { nav.tapTab(tab.route, selected = false) }
+            assertTab(tab, root = true)
+            assertEquals(start, step { nav.tapTab(tab.route, selected = true) })
             step { nav.navigate(SettingsRoute()) }
             step { nav.navigate(GlossaryRoute) }
-            assertEquals(start, step { nav.tapTab(tab, selected = true) })
+            assertTab(tab, root = false)
+            assertEquals(start, step { nav.tapTab(tab.route, selected = true) })
+            assertTab(tab, root = true)
+        }
+    }
+
+    private fun assertTab(tab: TopTab, root: Boolean) {
+        rule.runOnIdle {
+            assertEquals(tab, nav.tabOnStack())
+            if (root) assertTrue(nav.currentDestination.isTabRoot()) else assertFalse(nav.currentDestination.isTabRoot())
         }
     }
 

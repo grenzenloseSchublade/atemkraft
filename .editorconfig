@@ -18,7 +18,7 @@ ktlint_standard_no-wildcard-imports = enabled
 # Composables heißen groß (Compose-Konvention).
 ktlint_function_naming_ignore_when_annotated_with = Composable
 # Einziger eigener CompositionLocal: Der App-Rahmen reicht den Zustand der Tab-Leiste an die
-# Startleisten der Seiten durch, damit der Knopf auf ihrer Oberkante sitzt (AppNavigationBar.kt).
+# Startleisten der Seiten durch, damit der Knopf auf ihrer Oberkante sitzt (ui/navigation/TabBarState.kt).
 compose_allowed_composition_locals = LocalTabBarState
 
 # Screens sind Wurzeln, kein wiederverwendbares Layout-Element: kein modifier-Parameter nötig.
