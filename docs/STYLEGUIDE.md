@@ -1,7 +1,7 @@
 # Atemkraft – Styleguide
 
 Normativer Design-, Text- und Code-Leitfaden für Maintainer und Claude. Er dient als Leitplanke und als Grundlage der automatischen Vereinheitlichung: Jede Regel nennt ihre Prüfung.
-Stand: v2.3.0 und `main`, 2026-10-23. Sicherheit, Datenschutz, Build und Release regelt [SECURITY.md](SECURITY.md).
+Stand: v2.4.0 und `main`, 2026-10-23. Sicherheit, Datenschutz, Build und Release regelt [SECURITY.md](SECURITY.md).
 
 **Inhalt:** [0 Geltung](#geltung) · [1 Prinzipien](#prinzipien) · [2 Farbe](#farbe) · [3 Typografie](#typografie) · [4 Layout](#layout) · [5 Komponenten](#komponenten) · [6 Muster](#muster) · [7 Icons](#icons) · [8 Bewegung](#bewegung) · [9 Audio und Haptik](#audio) · [10 Barrierefreiheit](#a11y) · [11 Text und Ton](#text) · [12 Code](#code) · [13 Automatische Prüfung](#automatische-pruefung) · [14 Backlog](#backlog) · [Quellen](#quellen)
 
