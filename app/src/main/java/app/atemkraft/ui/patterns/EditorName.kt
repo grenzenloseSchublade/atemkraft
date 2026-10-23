@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +32,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -49,6 +53,7 @@ import app.atemkraft.ui.components.NoPersonalizedLearning
 import app.atemkraft.ui.components.rememberArmedConfirm
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Lesezeichen im Kopf (MUSTER-02): leer → gefüllt in `secondary`, Zustand per `stateDescription`
@@ -103,8 +108,10 @@ internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> U
  * Seitentitel (Nachtrag 7): der Name des Musters groß (`headlineSmall`), darunter klein „Eigenes
  * Muster“ als Einordnung, bei intensiven Mustern rechts „intensiv“ (`CharacterChip`, nur dann). Der
  * Name steht in einer Zeile und läuft als Laufschrift, wenn er nicht passt – nie umbrochen: Der Kopf
- * behält seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Antippen benennt um
- * ([onRename]); TalkBack: „Name: …, umbenennen“ als Überschrift.
+ * behält seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Ein kleiner Stift direkt
+ * hinter dem Namen zeigt, dass er änderbar ist (Nutzer 2026-10-23); er bleibt stehen, der Name
+ * bekommt die Restbreite. Antippen des ganzen Titels benennt um ([onRename]); TalkBack: „Name: …,
+ * umbenennen“ als Überschrift, der Stift ist dekorativ.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -127,8 +134,7 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
         // Für TalkBack unsichtbar (der Titel sagt „Name: …, umbenennen“); nicht clearAndSetSemantics,
         // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
         Column(Modifier.weight(1f).semantics { invisibleToUser() }) {
-            // Ein langer Name läuft als Laufschrift wie jeder Seitentitel, statt umzubrechen.
-            MarqueeText(text = name, style = MaterialTheme.typography.headlineSmall, color = colors.onBackground)
+            NameWithPencil(name)
             Text(
                 text = stringResource(R.string.pattern_editor_title),
                 style = MaterialTheme.typography.labelMedium,
@@ -138,6 +144,38 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
         // Nur wenn das Muster intensiv ist: Ohne ihn gehört die Breite dem Namen. Der Name ist
         // einzeilig, die Zeile springt also nicht in der Höhe.
         if (state.pattern.isIntense) CharacterChip(intense = true, activating = false)
+    }
+}
+
+/**
+ * Der Name als Laufschrift ([MarqueeText], `headlineSmall`) mit dem Stift direkt dahinter: Der
+ * Stift steht immer, der Name bekommt höchstens die Restbreite (kein `weight(fill = false)`,
+ * LAYOUT-03). Senkrecht mittig auf der Namenszeile.
+ */
+@Composable
+private fun NameWithPencil(name: String) {
+    val colors = MaterialTheme.colorScheme
+    Layout(
+        content = {
+            // Ein langer Name läuft als Laufschrift wie jeder Seitentitel, statt umzubrechen.
+            MarqueeText(text = name, style = MaterialTheme.typography.headlineSmall, color = colors.onBackground)
+            Icon(
+                Icons.Filled.Edit,
+                contentDescription = null, // dekorativ: Der ganze Titel ist die Tippfläche („Name: …, umbenennen“).
+                tint = colors.onBackground.copy(alpha = SECONDARY),
+                modifier = Modifier.size(Sizes.IconSmall),
+            )
+        },
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val pencil = measurables[1].measure(loose)
+        val gap = Dimens.GapTiny.roundToPx()
+        val text = measurables[0].measure(loose.copy(maxWidth = (constraints.maxWidth - pencil.width - gap).coerceAtLeast(0)))
+        val height = maxOf(text.height, pencil.height)
+        layout(constraints.maxWidth, height) {
+            text.placeRelative(0, (height - text.height) / 2)
+            pencil.placeRelative(text.width + gap, (height - pencil.height) / 2)
+        }
     }
 }
 
