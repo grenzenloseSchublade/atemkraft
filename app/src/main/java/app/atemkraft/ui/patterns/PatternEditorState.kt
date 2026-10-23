@@ -103,7 +103,7 @@ class PatternEditorState internal constructor(
     var nameEdited: Boolean by mutableStateOf(nameEdited)
         private set
 
-    /** Id des gespeicherten Eintrags in „Meine Muster“; null = noch nicht gespeichert. */
+    /** Id des gespeicherten Eintrags in „Eigene Kreationen“; null = noch nicht gespeichert. */
     var savedId: Long? by mutableStateOf(savedId)
         private set
 
@@ -239,7 +239,7 @@ class PatternEditorState internal constructor(
     }
 
     /**
-     * Der Eintrag wurde aus „Meine Muster“ entfernt. Der Entwurf bleibt sichtbar; ein erneutes
+     * Der Eintrag wurde aus „Eigene Kreationen“ entfernt. Der Entwurf bleibt sichtbar; ein erneutes
      * Speichern legt einen neuen Eintrag an, den ein weiterer Tipp sofort wieder herausnimmt.
      */
     fun markRemoved() {

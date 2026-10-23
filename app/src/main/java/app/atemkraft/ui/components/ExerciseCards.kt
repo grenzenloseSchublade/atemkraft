@@ -71,7 +71,7 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit, modifier: Modifier = M
 }
 
 /**
- * Karte eines generierten Musters – Muster des Tages und „Meine Muster“ sehen gleich aus: Name
+ * Karte eines generierten Musters – Muster des Tages und „Eigene Kreationen“ sehen gleich aus: Name
  * mit Charakter-Chip, darunter die kurze Musterzeile mit Dauer, Rand in Cyan (eigene Muster).
  * [action] ist die eine weitere Aktion (KOMP-02) und liegt als Overlay in der Kartenecke statt
  * in der Titelzeile: Die volle 48-dp-Tippfläche liegt über dem Karten-Padding, die Karte wird

@@ -25,7 +25,7 @@ package app.atemkraft.domain
  *   yogischen Ursprungs und bei generierten Mustern.
  * @param guided true = getakteter Atemkreis-Ablauf; false = Programm/Gewohnheit
  *   ohne festen Takt (nur Infoseite, kein Start).
- * @param generated true = generiertes Muster (Muster des Tages, „Meine Muster“): keine
+ * @param generated true = generiertes Muster (Muster des Tages, „Eigene Kreationen“): keine
  *   eingebaute Übung, die Familie ist nur Einordnung für die Farbe, nicht für den Namen.
  * @param activating Charakter eines generierten Musters: „sanft aktivierend“ statt „ruhig“
  *   (aus `PatternSpec.activating`; eingebaute Übungen zeigen „intensiv“ über [caution]).

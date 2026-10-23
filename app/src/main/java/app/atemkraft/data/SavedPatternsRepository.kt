@@ -89,7 +89,7 @@ class SavedPatternsRepository(
     private val pendingWrites = mutableMapOf<Long, SavedPatternEntity>()
     private val pendingDeletes = mutableSetOf<Long>()
 
-    /** Aktuelle Liste, neueste zuerst (für die Liste „Meine Muster“). */
+    /** Aktuelle Liste, neueste zuerst (für die Liste „Eigene Kreationen“). */
     val patterns: Flow<List<SavedPattern>> = dao.all().map { list -> list.map { it.toSaved() } }
 
     init {
