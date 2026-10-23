@@ -127,7 +127,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
         // Feste Werte statt „heute“, damit die Bilder reproduzierbar sind.
         internal val DAY = LocalDate.of(2026, 10, 3)
-        internal val daily = RandomPatternGenerator.forDate(DAY)
+        internal val daily = RandomPatternGenerator.forEpochDay(DAY.toEpochDay())
         internal val saved = listOf(11L, 42L, 7L).map(RandomPatternGenerator::forSeed)
             .mapIndexed { i, p -> SavedPattern(id = i + 1L, exercise = p.exercise, spec = p.spec) } +
             customPattern(id = 4L)

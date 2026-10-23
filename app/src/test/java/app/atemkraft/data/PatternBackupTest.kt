@@ -25,7 +25,7 @@ class PatternBackupTest {
         // Rundlauf: Tagesmuster mit Anpassung und eigene freie Folge.
         val source = FakeSavedPatternDao()
         val sourceRepo = SavedPatternsRepository(source)
-        sourceRepo.save(RandomPatternGenerator.forDate(LocalDate.of(2026, 10, 5)))
+        sourceRepo.save(RandomPatternGenerator.forEpochDay(LocalDate.of(2026, 10, 5).toEpochDay()))
         sourceRepo.saveCustom(viloma, minutes = 7, name = "Stufen")
         val overrides = mapOf("muster-1" to IntervalOverrides(duration = 7, inhale = 5))
         val decoded = PatternBackup.decode(PatternBackup.encode(sourceRepo.exportFile(nowEpochMs = 3_000) { overrides[it] }))!!

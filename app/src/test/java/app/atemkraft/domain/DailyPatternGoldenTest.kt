@@ -41,7 +41,7 @@ class DailyPatternGoldenTest {
         /** Alle 365 Tage 2026: Spec, Name und repeat. */
         fun yearHash(): String = sha256(
             (0L until 365L).joinToString("\n") { offset ->
-                val daily = RandomPatternGenerator.forDate(LocalDate.of(2026, 1, 1).plusDays(offset))
+                val daily = RandomPatternGenerator.forEpochDay(LocalDate.of(2026, 1, 1).plusDays(offset).toEpochDay())
                 "${canonical(daily.spec)}|${daily.exercise.name}|${daily.exercise.segments.single().repeat}"
             },
         )

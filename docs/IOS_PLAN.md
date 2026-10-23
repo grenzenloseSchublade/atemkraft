@@ -63,10 +63,10 @@ Android-Testbuilds gibt es bereits (GitHub-Releases, signiertes APK); Play-Store
 
 | Block | geteilt (grob) | Nötig / iOS-eigen |
 |---|---|---|
-| domain (Logik, Generator, Suche) | ~95 % | `java.time` → kotlinx-datetime; `java.text.Normalizer` → doistx-normalize |
+| domain (Logik, Generator, Suche) | ~95 % | seit 2026-10-24 frei von `java.time`, `Locale`, `String.format` und `Math` (Check `domain-platform`); offen als expect/actual-Kandidaten: `java.text.Normalizer` der Suche (`SituationSearch.normalize`, → doistx-normalize) und der Fehlername über `javaClass` (`AppScopes`) |
 | data + Inhaltskatalog | ~90 % | DataStore KMP; Zeitfunktionen ersetzen |
 | Datenbank (Room) | ~80 % | Room 2.8 oder Room 3.0 (KMP); **vorher** Schema-Export und Migrationstests |
-| Theme + Komponenten | ~95 % | `LocalConfiguration` ersetzen (u. a. `WholeWordText`, Regel „nie Wortumbruch“); eigene Icon-Vektoren |
+| Theme + Komponenten | ~95 % | `LocalConfiguration` ist ersetzt (`LocalDensity.fontScale`, `LocalWindowInfo`); `breaksInsideWord` nutzt noch `Character.getType`; eigene Icon-Vektoren |
 | Screens | ~85–90 % | `R.string` → Compose Resources (182 Strings, 11 Plurals); Zurück-Gesten; iPhone braucht sichtbare Schließen-Knöpfe |
 | Session/Meditation-Logik | ~80 % | Monotone Uhr plattformneutral; Verhalten im Gerätesleep am iPhone prüfen [unsicher] |
 | Ton-Synthese (Mathematik) | ~100 % | reines Kotlin |

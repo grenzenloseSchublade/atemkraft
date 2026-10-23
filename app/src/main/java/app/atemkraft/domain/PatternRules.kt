@@ -1,5 +1,6 @@
 package app.atemkraft.domain
 
+import kotlin.math.round
 import kotlin.math.roundToInt
 
 /** Die vier Phasen eines Musters des Tages ([PatternSpec]). */
@@ -52,7 +53,7 @@ fun PatternSpec.secondsOf(field: PatternField): Int = when (field) {
  */
 fun PatternSpec.withinCreationRules(): Boolean {
     val phases = listOfNotNull(inhale, holdFull, exhale, holdEmpty)
-    if (phases.any { !it.isFinite() || it < 0.0 || it != Math.rint(it) }) return false
+    if (phases.any { !it.isFinite() || it < 0.0 || it != round(it) }) return false
     if (holdFull != null && holdFull < 1.0) return false
     if (holdEmpty != null && holdEmpty < 1.0) return false
     if (inhale < PatternRules.INHALE_MIN || exhale < PatternRules.EXHALE_MIN || exhale > PatternRules.EXHALE_MAX) {

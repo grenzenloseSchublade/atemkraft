@@ -1,0 +1,6 @@
+import java.time.LocalDate
+val n = error.javaClass.name
+val s = "%d".format(x)
+val l = s.lowercase(Locale.ROOT)
+val r = Math.rint(x)
+val t = System.currentTimeMillis()

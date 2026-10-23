@@ -42,7 +42,7 @@ fun String.asDotSuffix(): String = "· $this"
  */
 fun formatClock(ms: Long): String {
     val (minutes, seconds) = minutesSecondsOf(ms)
-    return "%d:%02d".format(minutes, seconds)
+    return "$minutes:${seconds.toString().padStart(2, '0')}"
 }
 
 /**

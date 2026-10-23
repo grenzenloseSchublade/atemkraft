@@ -1,7 +1,5 @@
 package app.atemkraft.domain
 
-import java.util.Locale
-
 /** Art einer Phase in einem frei gestalteten Muster: Einatmen, Halten oder Ausatmen. */
 enum class FreePhaseType { IN, HOLD, OUT }
 
@@ -372,7 +370,7 @@ data class FreePattern(val phases: List<FreePhase>) {
         private fun parsePhase(part: String): FreePhase? {
             val pieces = part.split(':')
             if (pieces.size != 2) return null
-            val type = when (pieces[0].trim().lowercase(Locale.ROOT)) {
+            val type = when (pieces[0].trim().lowercase()) {
                 "in" -> FreePhaseType.IN
                 "hold" -> FreePhaseType.HOLD
                 "out" -> FreePhaseType.OUT

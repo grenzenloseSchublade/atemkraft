@@ -1,6 +1,6 @@
 package app.atemkraft.domain
 
-import java.time.LocalDate
+import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -27,7 +27,7 @@ data class PatternSpec(
  */
 fun PatternSpec.withinGuardrails(): Boolean {
     val phases = listOfNotNull(inhale, holdFull, exhale, holdEmpty)
-    if (phases.any { !it.isFinite() || it < 0.0 || it * 2 != Math.rint(it * 2) }) return false
+    if (phases.any { !it.isFinite() || it < 0.0 || it * 2 != round(it * 2) }) return false
     if (inhale < 2.0 || exhale < 2.0 || exhale > 8.0) return false
     val cycle = phases.sum()
     return if (activating) {
@@ -66,7 +66,12 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
  */
 object RandomPatternGenerator {
 
-    fun forDate(date: LocalDate): DailyPattern = forSeed(date.toEpochDay())
+    /**
+     * Das Muster eines Tages, gegeben als Epochentag (Tage seit 1970-01-01, `LocalDate.toEpochDay()`
+     * bzw. `toEpochDays()` in kotlinx-datetime): dieselbe Zahl ist der Seed. Das Datum selbst
+     * bleibt draußen, damit `domain/` ohne `java.time` auskommt.
+     */
+    fun forEpochDay(epochDay: Long): DailyPattern = forSeed(epochDay)
 
     /** Muster aus beliebigem Seed – für „Neu generieren". */
     fun forSeed(seed: Long): DailyPattern {

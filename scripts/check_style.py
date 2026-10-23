@@ -536,6 +536,10 @@ CHECKS: list[Check] = [
     Check("typo-chars-content", "TEXT-10", [SRC + "data/*.kt", SRC + "domain/*.kt"],
           [r"—", r'^(?:[^"\n]*"[^"\n]*")*[^"\n]*"[^"\n]*~']),
     Check("layer-import-domain", "CODE-01", [SRC + "domain/*.kt"], [r"^import app\.atemkraft\.(?!domain\b)"]),
+    # domain/ soll als KMP-commonMain übersetzbar bleiben (docs/IOS_PLAN.md §4): keine JVM-APIs; der
+    # einzige offene Fall (Normalizer der Suche) ist als expect/actual-Kandidat dokumentiert.
+    Check("domain-platform", "CODE-01", [SRC + "domain/*.kt"],
+          [r"^import java\.(?!text\.Normalizer$)", r"\bjavaClass\b", r"\.format\(", r"\bLocale\b", r"\b(Math|System|Character)\."]),
     Check("layer-import-data", "CODE-01", [SRC + "data/*.kt"], [r"^import app\.atemkraft\.(ui|cue|playback)\b"]),
     Check("layer-import-cue", "CODE-01", [SRC + "cue/*.kt"], [r"^import app\.atemkraft\.(?!(cue|domain)\b|(BuildConfig|R)$)"]),
     Check("layer-import-components", "CODE-01", [SRC + "ui/components/*.kt"], [r"^import app\.atemkraft\.ui\.(?!theme\b|components\b|navigation\.(LocalTabBarState|TabBarState)\b)"]),

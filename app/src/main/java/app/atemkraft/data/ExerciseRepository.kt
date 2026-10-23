@@ -23,7 +23,7 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
     init {
         val today = LocalDate.now()
         dailyDay = today.toEpochDay()
-        dailyState = MutableStateFlow(RandomPatternGenerator.forDate(today))
+        dailyState = MutableStateFlow(RandomPatternGenerator.forEpochDay(dailyDay))
     }
 
     /**
@@ -39,7 +39,7 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
         val today = LocalDate.now()
         if (today.toEpochDay() != dailyDay) {
             dailyDay = today.toEpochDay()
-            dailyState.value = RandomPatternGenerator.forDate(today)
+            dailyState.value = RandomPatternGenerator.forEpochDay(dailyDay)
         }
         return dailyState.value
     }

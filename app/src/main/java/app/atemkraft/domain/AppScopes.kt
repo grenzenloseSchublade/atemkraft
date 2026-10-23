@@ -24,7 +24,8 @@ object UncaughtErrors {
     val last: StateFlow<String?> = _last.asStateFlow()
 
     val handler = CoroutineExceptionHandler { _, error ->
-        _last.value = error.javaClass.simpleName.ifEmpty { error.javaClass.name }
+        // Anonyme Klassen haben keinen einfachen Namen; dann der volle.
+        _last.value = error.javaClass.simpleName.ifEmpty { error.javaClass.name } // Abweichung CODE-01: expect/actual-Kandidat (IOS_PLAN §4)
     }
 }
 
