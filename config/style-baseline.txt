@@ -1,6 +1,6 @@
 # Eingefrorene Altlasten der Stil-Checks (docs/STYLEGUIDE.md §13.2).
 # check<TAB>datei<TAB>anzahl – darf nur sinken. Erzeugt mit scripts/check-style.sh --update-baseline.
-color-source	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	5
+color-source	app/src/main/java/app/atemkraft/ui/components/AppNavigationBar.kt	4
 color-source	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1
 alpha-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
 alpha-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1

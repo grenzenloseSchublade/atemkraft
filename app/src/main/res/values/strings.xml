@@ -55,7 +55,7 @@
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
-    <string name="tab_situations">Anlässe</string>
+    <string name="tab_situations">Anlass</string>
     <string name="tab_own">Eigene</string>
     <string name="tab_learn">Lernen</string>
 
@@ -95,6 +95,7 @@
     <!-- Persönliche Markierung (Atemkreis): eigene Einschätzung, keine Studienlage. Karte zeigt
          sie nur, wenn gesetzt; gesetzt wird sie auf der Detailseite. -->
     <string name="cd_personal_mark">Tut mir gut</string>
+    <string name="own_favorites">Tut mir gut</string>
     <string name="state_marked">Markiert</string>
     <string name="state_not_marked">Nicht markiert</string>
     <string name="state_expanded">Ausgeklappt</string>

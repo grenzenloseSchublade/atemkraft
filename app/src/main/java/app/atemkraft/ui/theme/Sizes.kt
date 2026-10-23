@@ -1,5 +1,6 @@
 package app.atemkraft.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
 /**
@@ -24,9 +25,10 @@ object Sizes {
     /** Sichtbarer Kreis von `AppIconButton` und Stepper-Knöpfen (M3 40); Tippfläche bleibt 48. */
     val IconButtonSize = 40.dp
 
-    /** Pille des Knopfs, der in der Tiefe die Tab-Leiste auf- und zuklappt (`TabBarToggle`): Breite 40 (= [IconButtonSize]) und Höhe 24 (= [IconDefault]). */
-    val TabBarHandleWidth = IconButtonSize
-    val TabBarHandleHeight = 24.dp
+    /** Reiter des Knopfs, der in der Tiefe die Tab-Leiste auf- und zuklappt (`TabBarToggle`, „Lasche“): Breite 56, Höhe 18; oben um die Höhe gerundet. */
+    val TabBarHandleWidth = 56.dp
+    val TabBarHandleHeight = 18.dp
+    val TabBarHandleShape = RoundedCornerShape(topStart = TabBarHandleHeight, topEnd = TabBarHandleHeight)
 
     /** Standard-Icon: Icon-Buttons, Zurück, Zahnrad, Expander-Caret, Mini-Leiste (M3 24). */
     val IconDefault = 24.dp

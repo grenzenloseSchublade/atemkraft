@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
@@ -56,13 +58,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
-import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonMagenta
 import app.atemkraft.ui.theme.OnNeon
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.TabBarContainer
 import kotlin.math.roundToInt
 
 /** Ein Tab der unteren Navigationsleiste. */
@@ -91,7 +93,7 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
     val config = LocalConfiguration.current
     val windowWidth = LocalWindowInfo.current.containerSize.width
     var labelScale by remember(items.map { it.label }, config.fontScale, windowWidth) { mutableFloatStateOf(1f) }
-    NavigationBar(modifier = modifier, containerColor = DarkSurface) {
+    NavigationBar(modifier = modifier, containerColor = TabBarContainer) {
         items.forEach { item ->
             NavigationBarItem(
                 selected = item.selected,
@@ -148,6 +150,10 @@ class TabBarState(private val threshold: Float) {
     // zuletzt angemeldete.
     private val pinnedOwners = mutableStateListOf<Any>()
     private val pinnedTops = mutableStateMapOf<Any, Float>()
+
+    /** Ob der Knopf auf einer Startleiste sitzt (sonst auf den unteren Leisten). */
+    val anchoredToPinnedBar: Boolean
+        get() = pinnedOwners.lastOrNull()?.let { it in pinnedTops } == true
 
     /** Oberkante, auf der der Knopf sitzt: die jüngste Startleiste, sonst die unteren Leisten. */
     val anchorTop: Float
@@ -219,13 +225,15 @@ fun HideableTabBar(
 }
 
 /**
- * Knopf, der die Tab-Leiste in der Tiefe auf- und zuklappt (Nutzer 2026-10-23): eine kleine tonale
- * Pille ([Sizes.TabBarHandleWidth] × [Sizes.TabBarHandleHeight]) mit Pfeil, mittig auf der Oberkante
- * der untersten Leiste ([TabBarState.anchorTop]) – ohne eigene Zeile, eingeklappt gewinnt der Inhalt
- * die ganze Leiste. Pfeil nach oben, solange sie zu ist („Tab-Leiste zeigen“), nach unten, solange
- * sie offen ist („Tab-Leiste ausblenden“). Die Tippfläche ([Dimens.MinTouchTarget] im Quadrat, A11Y-05)
- * liegt halb über dem Inhalt, halb über der Leiste; sie darf in den großen Start-Button ragen
- * (Nutzer 2026-10-23). Ein dünner Rand hebt die Pille vom Inhalt ab.
+ * Knopf, der die Tab-Leiste in der Tiefe auf- und zuklappt (Nutzer 2026-10-23, Variante B „Lasche“):
+ * ein kleiner Reiter ([Sizes.TabBarHandleWidth] × [Sizes.TabBarHandleHeight], oben abgerundet), der
+ * aus der Oberkante der untersten Leiste wächst – in deren Farbe, damit er sichtbar zu ihr gehört:
+ * die Startleiste ([TabBarState.anchoredToPinnedBar], `surface` mit ihrer tonalen Erhöhung), sonst
+ * die Tab-Leiste (`DarkSurface`, auch eingeklappt: der Reiter der verborgenen Leiste). Ohne eigene
+ * Zeile, eingeklappt gewinnt der Inhalt die ganze Leiste. Pfeil nach oben, solange sie zu ist
+ * („Tab-Leiste zeigen“), nach unten, solange sie offen ist („Tab-Leiste ausblenden“). Die
+ * Tippfläche ([Dimens.MinTouchTarget] im Quadrat, A11Y-05) liegt halb über dem Inhalt, halb über der
+ * Leiste; sie darf in den großen Start-Button ragen (Nutzer 2026-10-23).
  */
 @Composable
 fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
@@ -233,26 +241,31 @@ fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
     if (top.isNaN()) return
     val turn by animateFloatAsState(if (state.collapsed) 0f else HALF_TURN, label = "tabBarToggle")
     val touch = with(LocalDensity.current) { Dimens.MinTouchTarget.toPx() }
+    val fill = if (state.anchoredToPinnedBar) {
+        MaterialTheme.colorScheme.surfaceColorAtElevation(Dimens.PinnedBarElevation)
+    } else {
+        TabBarContainer
+    }
     Box(
         modifier = modifier
             .offset { IntOffset(0, (top - touch / 2f).roundToInt()) }
             .size(Dimens.MinTouchTarget)
             .clickable(role = Role.Button, onClick = state::toggle),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.TopCenter,
     ) {
+        // Der Reiter endet genau auf der Oberkante der Leiste (Mitte der Tippfläche).
         Box(
             modifier = Modifier
+                .padding(top = Dimens.MinTouchTarget / 2 - Sizes.TabBarHandleHeight)
                 .size(width = Sizes.TabBarHandleWidth, height = Sizes.TabBarHandleHeight)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .border(Dimens.BorderThin, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                .background(fill, Sizes.TabBarHandleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Filled.KeyboardArrowUp,
                 contentDescription = stringResource(if (state.collapsed) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                modifier = Modifier.rotate(turn),
+                modifier = Modifier.size(Sizes.IconSmall).rotate(turn),
             )
         }
     }

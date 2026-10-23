@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
+import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.ConfirmIconButton
@@ -33,13 +34,16 @@ import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Tab „Eigene“: oben „Neues Muster“ (öffnet den Muster-Editor), darunter „Meine Muster“ –
+ * Tab „Eigene“: oben „Neues Muster“ (öffnet den Muster-Editor), dann „Tut mir gut“ – die Übungen
+ * mit der persönlichen Markierung ([favorites], Nutzer 2026-10-23; ohne Markierung entfällt der
+ * Abschnitt) –, darunter „Meine Muster“ –
  * gespeicherte Tagesmuster und selbst zusammengestellte Muster, neueste zuerst wie aus der
  * Datenbank. Die Liste steht immer offen: Hier ist sie der Inhalt des Tabs, nicht ein Abschnitt
  * neben den Situationen. Ohne Muster steht ein kurzer Satz da, darunter derselbe Knopf.
@@ -54,6 +58,7 @@ fun OwnPatternsScreen(
     onSelect: (String) -> Unit,
     onDeletePattern: (Long) -> Unit,
     onOpenSettings: () -> Unit,
+    favorites: List<Exercise> = emptyList(),
 ) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     val listState = rememberLazyListState()
@@ -94,9 +99,24 @@ fun OwnPatternsScreen(
                             NewPatternButton(onClick = onNewPattern)
                         }
                     }
-                    // Der einzige Abschnittskopf des Tabs, also der erste im Ring (FARBE-07).
+                }
+
+                // Köpfe reihum nach ihrer Lage (FARBE-07): „Tut mir gut“ zuerst, wenn es Markierungen gibt.
+                if (favorites.isNotEmpty()) {
+                    item(key = "favorites") {
+                        SectionHeader(title = stringResource(R.string.own_favorites), color = headingColor(0))
+                    }
+                    items(favorites, key = { "favorite-${it.id}" }) { exercise ->
+                        ExerciseCard(exercise = exercise, marked = true, onClick = { onSelect(exercise.id) })
+                    }
+                }
+
+                if (savedPatterns.isNotEmpty()) {
                     item(key = "my-patterns") {
-                        SectionHeader(title = stringResource(R.string.situations_my_patterns), color = headingColor(0))
+                        SectionHeader(
+                            title = stringResource(R.string.situations_my_patterns),
+                            color = headingColor(if (favorites.isEmpty()) 0 else 1),
+                        )
                     }
                     items(savedPatterns, key = { "pattern-${it.id}" }) { pattern ->
                         SavedPatternCard(

@@ -17,7 +17,7 @@ Beschrieben ist der Stand von `main`; die neueste APK unter Releases kann Einzel
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
 - **Eigene Muster:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“.
-- **Anlässe:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“, mit Suche nach deinem Befinden.
+- **Anlass:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“, mit Suche nach deinem Befinden.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
 - **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, und Begriffe erklärt.
 - **Logbuch und Export:** abgeschlossene Sitzungen, gespeicherte Muster als Datei sichern.

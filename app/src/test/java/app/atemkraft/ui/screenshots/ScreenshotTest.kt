@@ -138,7 +138,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
         }) { SituationsContent() }
         snap("13_eigene", tab = Tab.EIGENE) {
-            OwnPatternsScreen(savedPatterns = saved, onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {})
+            // „Tut mir gut“ mit den zwei längsten Übungsnamen.
+            val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
+            OwnPatternsScreen(savedPatterns = saved, onNewPattern = {}, favorites = favorites, onSelect = {}, onDeletePattern = {}, onOpenSettings = {})
         }
         snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, prepare = {
             // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.

@@ -389,6 +389,8 @@ private fun AtemkraftApp(
                         OwnPatternsScreen(
                             savedPatterns = savedPatterns,
                             onNewPattern = { navController.navigate(PatternEditorRoute()) },
+                            // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge.
+                            favorites = container.exerciseRepository.all().filter { it.id in markedExercises },
                             onSelect = { id -> navController.navigate(DetailRoute(id)) },
                             onDeletePattern = { id ->
                                 scope.launch { container.savedPatternsRepository.delete(id) }
