@@ -67,6 +67,7 @@ import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.rememberTapFlash
+import app.atemkraft.ui.components.rememberWidestTextWidth
 import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -374,7 +375,7 @@ private fun SessionTitle(state: SessionUiState) {
         return
     }
     val widest = stringResource(R.string.session_round, state.roundCount, state.roundCount)
-    val widestWidth = with(LocalDensity.current) { rememberTextMeasurer().measure(widest, titleStyle).size.width.toDp() }
+    val widestWidth = rememberWidestTextWidth(listOf(widest), titleStyle)
     val round = stringResource(R.string.session_round, state.roundIndex + 1, state.roundCount)
     DotSeparatedFlow(
         parts = listOf(

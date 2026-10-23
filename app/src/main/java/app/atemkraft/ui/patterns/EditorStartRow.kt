@@ -43,10 +43,12 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.CompactStepper
+import app.atemkraft.ui.components.InlineOrBelow
 import app.atemkraft.ui.components.StartPlayButton
 import app.atemkraft.ui.components.TonalPillButton
 import app.atemkraft.ui.components.flushEnd
-import app.atemkraft.ui.components.inertWhen
+import app.atemkraft.ui.components.rememberWidestTextWidth
+import app.atemkraft.ui.components.widestOf
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -101,22 +103,20 @@ internal fun StartRow(
     // Alles, was die Pille zeigen kann: jede Vorlage und „angepasst“.
     val labels = FreePatternTemplates.all.map { it.label } + stringResource(R.string.adjust_modified)
 
-    // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
-    val unseen = Modifier.inertWhen(true)
+    val statusReserve = rememberWidestTextWidth(reserve, statusStyle)
     // Eng unter dem Kopf und ohne Abstand zur Kurve (die hat über „voll“ eigenen Rand): So passen
     // Kurve und Werkzeugleiste auch auf 360 × 640 bei Schrift 1,3 samt Lasche der Tab-Leiste.
     SubcomposeLayout(Modifier.fillMaxWidth().padding(top = Dimens.GapTiny)) { constraints ->
         val width = constraints.maxWidth
         val gap = Dimens.GapSmall.roundToPx()
         val loose = Constraints(maxWidth = width)
-        fun reserve(slot: RowSlot, content: @Composable () -> Unit) = subcompose(slot) { Box(unseen) { content() } }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
         // Ohne System-Animationen fehlen die Vorschau-Knöpfe ganz (MOTION-02).
         val end = subcompose(RowSlot.CONTROLS) { Box(Modifier.flushEnd()) { controls() } }.map { it.measure(loose) }.filter { it.width > 0 }
         val endWidth = end.maxOfOrNull { it.width }?.plus(gap) ?: 0
-        val statusWidth = reserve(RowSlot.STATUS_RESERVE) { Box { reserve.forEach { Text(it, style = statusStyle) } } }
-        val withLabel = reserve(RowSlot.PILL_LABEL_RESERVE) { Box { labels.forEach { TonalPillButton(onClick = {}, icon = grid, label = it, description = "") } } }
+        val statusWidth = statusReserve.roundToPx()
+        val withLabel = widestOf(RowSlot.PILL_LABEL_RESERVE) { Box { labels.forEach { TonalPillButton(onClick = {}, icon = grid, label = it, description = "") } } }
         val showLabel = withLabel + gap + statusWidth + endWidth <= width
-        val pillWidth = if (showLabel) withLabel else reserve(RowSlot.PILL_ICON_RESERVE) { TonalPillButton(onClick = {}, icon = grid, label = null, description = "") }
+        val pillWidth = if (showLabel) withLabel else widestOf(RowSlot.PILL_ICON_RESERVE) { TonalPillButton(onClick = {}, icon = grid, label = null, description = "") }
         val pill = subcompose(RowSlot.PILL) {
             TonalPillButton(
                 onClick = onPickStart,
@@ -147,7 +147,7 @@ internal fun StartRow(
 }
 
 /** Slots der [StartRow]. */
-private enum class RowSlot { PILL, STATUS, CONTROLS, PILL_LABEL_RESERVE, PILL_ICON_RESERVE, STATUS_RESERVE }
+private enum class RowSlot { PILL, STATUS, CONTROLS, PILL_LABEL_RESERVE, PILL_ICON_RESERVE }
 
 /**
  * Breitester ruhender Status „· 88 s · 88,8/min“ für den Platz am Kopf „Atemzug“: Die Ziffern der
@@ -155,57 +155,6 @@ private enum class RowSlot { PILL, STATUS, CONTROLS, PILL_LABEL_RESERVE, PILL_IC
  */
 private const val WIDEST_CYCLE_SECONDS = 88
 private const val WIDEST_RATE = "88,8"
-
-/**
- * Zwei Teile einer Zeile: [leading] links, [end] rechtsbündig. Passen beide in ihrer natürlichen
- * Breite nebeneinander (mit `GapTiny`, sichtbar `GapSmall` bis zum Kreis des Steppers), stehen
- * sie in einer Zeile, mittig zueinander, und [leading] bekommt den Rest der Breite; sonst steht [end] rechtsbündig unter [leading] – nichts
- * wird gekürzt oder zusammengedrückt (LAYOUT-03).
- *
- * [leadingReserve] und [endReserve] zeigen, was dort sonst noch stehen kann (andere Namen, längere
- * Werte), jeweils als Geschwister: Sie werden nur gemessen, nie gezeigt oder vorgelesen. Die
- * Entscheidung ein- oder zweizeilig gilt für die breitesten davon, damit die Zeile nicht
- * umspringt, wenn sich der Inhalt ändert, und was darunter steht, nicht mitrückt.
- */
-@Composable
-internal fun LeadingAndEnd(
-    leading: @Composable () -> Unit,
-    end: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    leadingReserve: @Composable () -> Unit = {},
-    endReserve: @Composable () -> Unit = {},
-) {
-    // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
-    val unseen = Modifier.inertWhen(true)
-    Layout(
-        contents = listOf(leading, end, { Box(unseen) { leadingReserve() } }, { Box(unseen) { endReserve() } }),
-        modifier = modifier.fillMaxWidth(),
-    ) { (leadingMeasurables, endMeasurables, leadingReserves, endReserves), constraints ->
-        val width = constraints.maxWidth
-        // [end] beginnt mit einem Stepper-Knopf, dessen Tippfläche 4 dp über den sichtbaren Kreis
-        // hinausreicht: GapTiny sieht so aus wie GapSmall.
-        val gap = Dimens.GapTiny.roundToPx()
-        val first = leadingMeasurables.single()
-        val second = endMeasurables.single()
-        fun widest(measurable: Measurable, reserves: List<Measurable>) = (reserves + measurable).maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
-        val oneLine = widest(first, leadingReserves) + gap + widest(second, endReserves) <= width
-        val endPlaceable = second.measure(Constraints(maxWidth = width))
-        if (oneLine) {
-            val leadingPlaceable = first.measure(Constraints(maxWidth = width - gap - endPlaceable.width))
-            val height = maxOf(leadingPlaceable.height, endPlaceable.height)
-            layout(width, height) {
-                leadingPlaceable.placeRelative(0, (height - leadingPlaceable.height) / 2)
-                endPlaceable.placeRelative(width - endPlaceable.width, (height - endPlaceable.height) / 2)
-            }
-        } else {
-            val leadingPlaceable = first.measure(Constraints(maxWidth = width))
-            layout(width, leadingPlaceable.height + endPlaceable.height) {
-                leadingPlaceable.placeRelative(0, 0)
-                endPlaceable.placeRelative(width - endPlaceable.width, leadingPlaceable.height)
-            }
-        }
-    }
-}
 
 /**
  * Fokus und Ansage der Leiste (A11Y-04, A11Y-07): [start] (Startpunkt-Pille) und [play] sind
@@ -241,7 +190,7 @@ internal class StartFocus {
  * Play ([StartPlayButton], hervorgehoben nur durch die Füllung in `primary`): startet die Übung
  * ([onStart], gesprochen „Übung starten, ca. 5 Minuten“). Eine Zeile, solange beides nebeneinander
  * passt (gemessen mit „30 min“ und mit Zurücksetzen, damit nichts springt), sonst Play rechts
- * darunter ([LeadingAndEnd]).
+ * darunter ([InlineOrBelow]).
  *
  * Fokus (A11Y-07): Löst man Zurücksetzen per Tastatur aus, verschwindet der Knopf, der Fokus geht
  * auf Play; [StartFocus.pending] fokussiert auch die Startpunkt-Pille nach der Wahl einer Vorlage.
@@ -261,7 +210,7 @@ internal fun ActionBar(
     }
     var resetFocused by remember { mutableStateOf(false) }
     val playDescription = stringResource(R.string.cd_pattern_editor_play, pluralStringResource(R.plurals.cd_duration_minutes, approxMinutes, approxMinutes))
-    LeadingAndEnd(
+    InlineOrBelow(
         leading = { DurationStepper(state.minutes) { state.minutes = it } },
         end = {
             Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.domain.asDotSuffix
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
 
@@ -75,7 +76,7 @@ fun SessionAdjustCard(
                     // Das Caret-Glyph (knapp ein Drittel Innenrand im Icon) steht so etwa an
                     // der Stepper-Label-Kante (CardPadding).
                     modifier = Modifier.padding(start = Dimens.GapSmall),
-                    note = if (!intervalsExpanded && intervalsModified) "· " + stringResource(R.string.adjust_modified) else null,
+                    note = if (!intervalsExpanded && intervalsModified) stringResource(R.string.adjust_modified).asDotSuffix() else null,
                 )
                 if (intervalsExpanded) {
                     inhale?.let {

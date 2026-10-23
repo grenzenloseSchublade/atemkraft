@@ -10,6 +10,30 @@ package app.atemkraft.domain
 const val DOT_SEPARATOR = " · "
 
 /**
+ * Ein Trennpunkt „·“ mit (auch geschützten) Leerzeichen drumherum: die Stelle, an der eine Zeile
+ * aus Teilen ([DOT_SEPARATOR]) umbrechen darf. Regel „keine Zeile beginnt oder endet mit ·“
+ * (LAYOUT-03, TEXT-10): Bricht eine solche Zeile um, dann an einem Trennpunkt, und der Punkt
+ * entfällt dort. Als Layout `DotSeparatedFlow` (Teile gierig je Zeile), für fertige Texte
+ * [splitAtDots] (Teile je eine Zeile: Status unter dem Titel, „Starten · ca. 5 min“).
+ */
+val DOT_SPLIT = Regex("[\\s ]*·[\\s ]*")
+
+/** Die Teile zwischen den Trennpunkten ([DOT_SPLIT]), ohne Punkt und ohne leere Teile. */
+fun String.splitAtDots(): List<String> = split(DOT_SPLIT).filter { it.isNotEmpty() }
+
+/**
+ * Ohne führenden Trennpunkt: Ein Zustands-Suffix wie „· angepasst“ ([asDotSuffix]) verliert ihn,
+ * wenn er in eine eigene Zeile rutscht – keine Zeile beginnt mit „·“.
+ */
+fun String.withoutLeadingDot(): String = trimStart().removePrefix("·").trimStart()
+
+/**
+ * Zustands-Suffix hinter einem Titel oder Knopftext: „· angepasst“ (wie in `strings.xml` der
+ * Status „· 3 von 12 Phasen“). Steht er in einer eigenen Zeile, gilt [withoutLeadingDot].
+ */
+fun String.asDotSuffix(): String = "· $this"
+
+/**
  * Uhrzeit-Form m:ss einer Dauer („0:05“, „12:30“, „60:00“), abgerundet auf volle Sekunden;
  * negative Werte gelten als 0:00. Geteilt von Meditations-Overlay, Mini-Leiste und Benachrichtigung.
  */

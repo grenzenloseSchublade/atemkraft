@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.Pranayama
+import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.PranayamaTechnique
 import app.atemkraft.domain.PranayamaTopic
 import app.atemkraft.ui.components.BodyText
@@ -120,7 +121,7 @@ private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                     val spoken = technique.pronunciation?.let { stringResource(R.string.pranayama_pronunciation, it) }
-                    HintText(listOfNotNull(technique.sanskrit, spoken).joinToString(PRONUNCIATION_SEPARATOR))
+                    HintText(listOfNotNull(technique.sanskrit, spoken).joinToString(DOT_SEPARATOR))
                     Pranayama.evidenceOf(technique)?.let { EvidenceChip(it) }
                     Labeled(stringResource(R.string.pranayama_label_tradition)) {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
@@ -166,6 +167,3 @@ private fun SourcesSection(accent: Color, initiallyExpanded: Boolean) {
         }
     }
 }
-
-/** Zwischen Sanskrit und Aussprache: „*ujjāyī* · gesprochen …“. */
-private const val PRONUNCIATION_SEPARATOR = " · "

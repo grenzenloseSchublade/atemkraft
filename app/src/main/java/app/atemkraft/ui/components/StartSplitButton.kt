@@ -31,10 +31,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
+import app.atemkraft.domain.splitAtDots
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
@@ -109,17 +109,13 @@ fun StartSplitButton(
  */
 @Composable
 private fun StartLabel(label: String) {
-    val style = LocalTextStyle.current
-    val measurer = rememberTextMeasurer()
+    val labelWidth = rememberWidestTextWidth(listOf(label), LocalTextStyle.current)
     BoxWithConstraints(contentAlignment = Alignment.Center) {
-        val fits = measurer.measure(label, style, softWrap = false, maxLines = 1).size.width <= constraints.maxWidth
-        val shown = if (fits) label else label.split(LABEL_SEPARATOR).joinToString("\n")
+        val fits = labelWidth <= maxWidth
+        val shown = if (fits) label else label.splitAtDots().joinToString("\n")
         Text(shown, textAlign = TextAlign.Center)
     }
 }
-
-/** Trennpunkt zwischen Start und Dauer, mit (auch geschützten) Leerzeichen drumherum. */
-private val LABEL_SEPARATOR = Regex("[\\s\u00A0]*·[\\s\u00A0]*")
 
 @Preview
 @Composable

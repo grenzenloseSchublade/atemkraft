@@ -21,12 +21,12 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.flushEnd
+import app.atemkraft.ui.components.rememberWidestTextWidth
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 
@@ -44,22 +44,20 @@ internal class TrailingColumns(val labelWidth: Dp)
  */
 @Composable
 internal fun rememberTrailingColumns(): TrailingColumns {
-    val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val direction = LocalLayoutDirection.current
-    val button = MaterialTheme.typography.labelLarge
-    val status = MaterialTheme.typography.labelMedium
-    val labels = listOf(
-        stringResource(R.string.settings_voice_download) to button,
-        stringResource(R.string.settings_voice_choose) to button,
-        stringResource(R.string.settings_voice_active) to status,
+    val text = maxOf(
+        rememberWidestTextWidth(
+            listOf(stringResource(R.string.settings_voice_download), stringResource(R.string.settings_voice_choose)),
+            MaterialTheme.typography.labelLarge,
+        ),
+        rememberWidestTextWidth(listOf(stringResource(R.string.settings_voice_active)), MaterialTheme.typography.labelMedium),
     )
-    return remember(measurer, density, direction, labels) {
+    return remember(text, density, direction) {
         val padding = ButtonDefaults.TextButtonContentPadding
         with(density) {
-            val text = labels.maxOf { (label, style) -> measurer.measure(label, style, maxLines = 1).size.width }
             // Polster wie im Button pro Seite gerundet; dazu eine Haarlinie Luft gegen Rundung.
-            val px = text + padding.calculateStartPadding(direction).roundToPx() + padding.calculateEndPadding(direction).roundToPx() +
+            val px = text.roundToPx() + padding.calculateStartPadding(direction).roundToPx() + padding.calculateEndPadding(direction).roundToPx() +
                 Dimens.GapHairline.roundToPx()
             TrailingColumns(labelWidth = px.toDp())
         }

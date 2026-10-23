@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
@@ -44,9 +45,10 @@ import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.CompactStepper
+import app.atemkraft.ui.components.InlineOrBelow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.flushEnd
-import app.atemkraft.ui.components.inertWhen
+import app.atemkraft.ui.components.rememberWidestTextWidth
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
@@ -107,7 +109,7 @@ private fun SelectedPhase(state: PatternEditorState, focus: ToolbarFocus) {
     // andere Phase, eine Vorlage oder zieht man an der Kurve, wechselt er still – auch wenn man
     // danach zu dieser Phase zurückkehrt (ein Wechsel der Auswahl vergisst den Tipp).
     var tapped by remember(index) { mutableStateOf<FreePattern?>(null) }
-    LeadingAndEnd(
+    InlineOrBelow(
         leading = {
             PhaseTitle(
                 index = index,
@@ -251,77 +253,43 @@ private fun AddRow(state: PatternEditorState, focus: ToolbarFocus) {
         focus.notice(state.pattern, at, added + intensity(before, state.pattern))
         if (buttonFocused && !state.canAdd) focus.pending = focus.trash
     }
+    val labelStyle = MaterialTheme.typography.labelMedium
+    // Platz für „Neu nach 12:“: Mit zweistelliger Nummer rutschte die Beschriftung sonst über die
+    // Knöpfe, und die Werkzeugleiste würde beim Wechsel der Auswahl höher.
+    val labelWidth = rememberWidestTextWidth(listOf(where, widest), labelStyle)
     val label: @Composable () -> Unit = {
-        // Platz für „Neu nach 12:“: Mit zweistelliger Nummer rutschte die Beschriftung sonst
-        // über die Knöpfe, und die Werkzeugleiste würde beim Wechsel der Auswahl höher.
-        Box {
-            WholeWordText(
-                text = widest,
-                modifier = Modifier.alpha(0f).inertWhen(true),
-                style = MaterialTheme.typography.labelMedium,
-            )
-            WholeWordText(
-                text = where,
-                modifier = Modifier.semantics { contentDescription = spokenWhere },
-                style = MaterialTheme.typography.labelMedium,
-                color = WarnAmber,
-            )
-        }
+        WholeWordText(
+            text = where,
+            modifier = Modifier
+                .widthIn(min = labelWidth)
+                .semantics { contentDescription = spokenWhere },
+            style = labelStyle,
+            color = WarnAmber,
+        )
     }
-    val buttons: @Composable (Boolean) -> Unit = { live ->
-        AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled, onClick = { add(FreePhaseType.IN) }, modifier = if (live) Modifier.focusRequester(focus.addIn) else Modifier)
+    // Abstand über der Zeile; bis zu den Knöpfen hält die Reihe GapSmall (spacing).
+    val above = Modifier.fillMaxWidth().padding(top = Dimens.GapTiny)
+    AdaptiveButtonRow(
+        spacing = Dimens.GapSmall,
+        // Die drei Knöpfe sind gleichrangig: keiner steht allein in voller Breite über den anderen.
+        primaryFirst = false,
+        modifier = Modifier.fillMaxWidth().onFocusChanged { buttonFocused = it.hasFocus },
+        leading = label,
+        // Zu eng für eine Zeile: „Neu nach 2:“ steht in der gestrichelten Linie, statt eine eigene
+        // Zeile über den Knöpfen zu belegen.
+        leadingStacked = {
+            Row(above, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+                label()
+                DashedMark(Modifier.weight(1f))
+            }
+        },
+        aboveInline = { DashedMark(above) },
+    ) {
+        AddButton(R.string.pattern_editor_add_in, R.string.cd_pattern_add_in, colors.secondary, enabled, onClick = { add(FreePhaseType.IN) }, modifier = Modifier.focusRequester(focus.addIn))
         AddButton(R.string.pattern_editor_add_hold, R.string.cd_pattern_add_hold, colors.onSurfaceVariant, enabled, onClick = { add(FreePhaseType.HOLD) }, dashed = true)
         AddButton(R.string.pattern_editor_add_out, R.string.cd_pattern_add_out, BreathExhale, enabled, onClick = { add(FreePhaseType.OUT) })
     }
-    val separator = Modifier.fillMaxWidth().padding(top = Dimens.GapTiny, bottom = Dimens.GapSmall)
-    SubcomposeLayout(Modifier.fillMaxWidth()) { constraints ->
-        val width = constraints.maxWidth
-        val gap = Dimens.GapSmall.roundToPx()
-        // Passt „Neu nach 12:“ mit den drei Knöpfen in ihrer natürlichen Breite in eine Zeile?
-        // (Dieselbe Regel wie AdaptiveButtonRow; gemessen, nie gezeigt oder vorgelesen.)
-        val probeLabel = subcompose(AddSlot.PROBE_LABEL) {
-            Box(Modifier.inertWhen(true)) { WholeWordText(text = widest, style = MaterialTheme.typography.labelMedium) }
-        }.single().maxIntrinsicWidth(Constraints.Infinity)
-        val probeButtons = subcompose(AddSlot.PROBE_BUTTONS) { Box(Modifier.inertWhen(true)) { Row { buttons(false) } } }
-            .single().maxIntrinsicWidth(Constraints.Infinity)
-        // Abstand nach der Beschriftung und zwischen den Knöpfen: ADD_BUTTONS Lücken.
-        val inline = probeLabel + probeButtons + gap * ADD_BUTTONS <= width
-        val content = subcompose(if (inline) AddSlot.INLINE else AddSlot.WRAPPED) {
-            Column(Modifier.fillMaxWidth()) {
-                if (inline) {
-                    DashedMark(separator)
-                } else {
-                    // Zu eng für eine Zeile: „Neu nach 2:“ steht in der gestrichelten Linie, statt
-                    // eine eigene Zeile über den Knöpfen zu belegen.
-                    Row(separator, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                        label()
-                        DashedMark(Modifier.weight(1f))
-                    }
-                }
-                AdaptiveButtonRow(
-                    spacing = Dimens.GapSmall,
-                    // Die drei Knöpfe sind gleichrangig: keiner steht allein in voller Breite über den anderen.
-                    primaryFirst = false,
-                    modifier = Modifier.fillMaxWidth().onFocusChanged { buttonFocused = it.hasFocus },
-                    leading = if (inline) label else null,
-                ) { buttons(true) }
-            }
-        }.map { it.measure(Constraints(maxWidth = width)) }
-        layout(width, content.sumOf { it.height }) {
-            var y = 0
-            content.forEach {
-                it.placeRelative(0, y)
-                y += it.height
-            }
-        }
-    }
 }
-
-/** Teile von [AddRow]: Messproben und die beiden Anordnungen. */
-private enum class AddSlot { PROBE_LABEL, PROBE_BUTTONS, INLINE, WRAPPED }
-
-/** Knöpfe + Ein, + Halten, + Aus. */
-private const val ADD_BUTTONS = 3
 
 /** Ein Knopf „+ Ein“ usw.: sichtbar kurz, gesprochen „Einatmen hinzufügen“. */
 @Composable

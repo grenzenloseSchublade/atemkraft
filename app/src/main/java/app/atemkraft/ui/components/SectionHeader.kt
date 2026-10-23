@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -44,6 +43,8 @@ import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import app.atemkraft.R
+import app.atemkraft.domain.splitAtDots
+import app.atemkraft.domain.withoutLeadingDot
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.HeadingRing
@@ -259,8 +260,8 @@ fun CollapsibleSection(
  * hinter den einzeiligen Titel, steht er dort auf dessen Grundlinie; sonst steht er unter dem
  * Titel und verliert seinen führenden Punkt („· angepasst“ → „angepasst“), damit keine Zeile mit
  * einem Satzzeichen beginnt (LAYOUT-03); passt er auch dort nicht in eine Zeile, steht jeder Teil
- * zwischen den Punkten in einer eigenen Zeile, ohne Punkt. Gemessen wird vorab mit dem
- * [rememberTextMeasurer], so entsteht nur die gezeigte Variante (ein Knoten für TalkBack).
+ * zwischen den Punkten in einer eigenen Zeile, ohne Punkt ([splitAtDots]). Gemessen wird vorab
+ * ([rememberWidestTextWidth]), so entsteht nur die gezeigte Variante (ein Knoten für TalkBack).
  * [statusReserve]: Die Variante gilt nur, wenn sie auch für jeden dieser Texte passt, und unter
  * dem Titel ist der Status so hoch wie der höchste von ihnen – ein Wechsel des Texts ändert die
  * Höhe nicht.
@@ -288,16 +289,18 @@ private fun TitleWithStatus(
         if (statusDescription != null) contentDescription = statusDescription
         if (statusLiveRegion) liveRegion = LiveRegionMode.Polite
     }
-    val measurer = rememberTextMeasurer()
+    // Einzeilige Breiten vorab (rememberWidestTextWidth), so entsteht nur die gezeigte Variante.
+    val texts = listOf(status) + statusReserve
+    val titleWidth = rememberWidestAnnotatedWidth(listOf(sanskritText(title)), titleStyle)
+    val statusWidth = rememberWidestTextWidth(texts, statusStyle)
+    val belowWidth = rememberWidestTextWidth(texts.map { it.withoutLeadingDot() }, statusStyle)
     SubcomposeLayout(modifier) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val titlePlaceable = subcompose(StatusSlot.TITLE) {
             WholeWordText(text = title, style = titleStyle, color = color, modifier = heading)
         }.first().measure(loose)
         val gap = Dimens.GapTiny.roundToPx()
-        val titleWidth = measurer.measure(sanskritText(title), titleStyle, softWrap = false, maxLines = 1).size.width
-        fun lineWidth(text: String) = measurer.measure(text, statusStyle, softWrap = false, maxLines = 1).size.width
-        val inline = (listOf(status) + statusReserve).all { titleWidth + gap + lineWidth(it) <= constraints.maxWidth }
+        val inline = titleWidth.roundToPx() + gap + statusWidth.roundToPx() <= constraints.maxWidth
         if (inline) {
             val statusPlaceable = subcompose(StatusSlot.INLINE) {
                 Text(text = status, style = statusStyle, color = shownStatusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
@@ -312,18 +315,20 @@ private fun TitleWithStatus(
                 statusPlaceable.place(titlePlaceable.width + gap, statusTop)
             }
         } else {
-            // Passt auch darunter nicht alles in eine Zeile, steht jeder Teil („24 s“, „2,5
+            // Passt auch darunter nicht jeder Text in eine Zeile, steht jeder Teil („24 s“, „2,5
             // Atemzüge/min“) in einer eigenen Zeile – sonst endete eine Zeile auf „·“.
-            fun below(text: String): String {
-                val single = text.trimStart().removePrefix("·").trimStart()
-                return if (lineWidth(single) <= constraints.maxWidth) single else single.split(STATUS_SEPARATOR).joinToString("\n")
-            }
+            val split = belowWidth.roundToPx() > constraints.maxWidth
+            fun below(text: String): String = text.withoutLeadingDot().let { if (split) it.splitAtDots().joinToString("\n") else it }
             val statusPlaceable = subcompose(StatusSlot.BELOW) {
                 WholeWordText(text = below(status), style = statusStyle, color = shownStatusColor, modifier = statusSemantics)
             }.first().measure(loose)
-            val reserved = statusReserve.maxOfOrNull { text ->
-                measurer.measure(below(text), statusStyle, constraints = Constraints(maxWidth = constraints.maxWidth)).size.height
-            } ?: 0
+            val reserved = if (statusReserve.isEmpty()) {
+                0
+            } else {
+                subcompose(StatusSlot.RESERVE) {
+                    MeasureOnly { Box { statusReserve.forEach { Text(below(it), style = statusStyle) } } }
+                }.first().measure(loose).height
+            }
             val statusHeight = maxOf(statusPlaceable.height, reserved)
             // Breite in den Grenzen melden: Unter der Mindestbreite (weight) zentrierte das Layout
             // den Block sonst, und Titel und Status rückten vom Balken ab.
@@ -335,11 +340,8 @@ private fun TitleWithStatus(
     }
 }
 
-/** Trennpunkt zwischen Teilen eines Status, mit (auch geschützten) Leerzeichen drumherum. */
-private val STATUS_SEPARATOR = Regex("[\\s\u00A0]*·[\\s\u00A0]*")
-
 /** Slots von [TitleWithStatus]: nur die gezeigte Status-Variante wird komponiert. */
-private enum class StatusSlot { TITLE, INLINE, BELOW }
+private enum class StatusSlot { TITLE, INLINE, BELOW, RESERVE }
 
 @Preview
 @Composable
