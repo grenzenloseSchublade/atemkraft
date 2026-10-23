@@ -93,9 +93,9 @@ internal fun StartRow(
     val labels = FreePatternTemplates.all.map { it.label } + stringResource(R.string.adjust_modified)
 
     val statusReserve = rememberWidestTextWidth(reserve, statusStyle)
-    // Eng unter dem Kopf und ohne Abstand zur Kurve (die hat über „voll“ eigenen Rand): So passen
-    // Kurve und Werkzeugleiste auch auf 360 × 640 bei Schrift 1,3 samt Lasche der Tab-Leiste.
-    SubcomposeLayout(Modifier.fillMaxWidth().padding(top = Dimens.GapTiny)) { constraints ->
+    // Oben wie jede Unterseite SectionGap, zur Kurve HeaderGap wie Kopf → Inhalt; Kurve und
+    // Werkzeugleiste passen so weiter auf 360 × 640 bei Schrift 1,3 (`DeviceFitTest`).
+    SubcomposeLayout(Modifier.fillMaxWidth().padding(top = Dimens.SectionGap, bottom = Dimens.HeaderGap)) { constraints ->
         val width = constraints.maxWidth
         val gap = Dimens.GapSmall.roundToPx()
         val loose = Constraints(maxWidth = width)
