@@ -32,18 +32,21 @@ data class VoiceSpec(
     val sha256: String,
     /**
      * Lizenz in Kurzform fürs UI, belegt durch die Modellkarte. „Daten …“ heißt: Die Karte nennt
-     * nur die Lizenz der Trainingsdaten, keine eigene des Modells.
+     * nur die Lizenz der Trainingsdaten, keine eigene des Modells. Nach „;“ folgt, was für das
+     * Basismodell gilt, aus dem die Stimme feinjustiert ist („Basismodell: Daten …“ = Lizenz von
+     * dessen Trainingsdaten); ob sie auf die Stimme durchschlägt, ist offen (THIRD_PARTY_LICENSES.md).
      */
     val license: String,
     /** Rechteinhaber bzw. Quelle laut Modellkarte (Namensnennung). */
     val rightsHolder: String,
 ) {
     /**
-     * Lizenz erlaubt nur nicht kommerzielle Nutzung (Creative Commons „NC“). Stimmenauswahl und
-     * Lizenzliste zeigen dann ausdrücklich „nur nicht kommerziell“ (SEC-LEGAL-03, deklarierte
-     * Ausnahme); so folgt die Kennzeichnung allein aus [license].
+     * Die Lizenz der Stimme selbst erlaubt nur nicht kommerzielle Nutzung (Creative Commons „NC“).
+     * Stimmenauswahl und Lizenzliste zeigen dann ausdrücklich „nur nicht kommerziell“ (SEC-LEGAL-03,
+     * deklarierte Ausnahme); so folgt die Kennzeichnung allein aus [license], und zwar aus dem Teil
+     * vor „;“ – die Angabe zum Basismodell steht offen im Text, ohne die Stimme selbst einzuschränken.
      */
-    val nonCommercialOnly: Boolean get() = Regex("""\bNC\b""").containsMatchIn(license)
+    val nonCommercialOnly: Boolean get() = Regex("""\bNC\b""").containsMatchIn(license.substringBefore(';'))
 
     /** Download-Größe in MiB, abgerundet (für den UI-Hinweis). */
     val approxMb: Int get() = (sizeBytes / (1024L * 1024L)).toInt()
@@ -71,7 +74,8 @@ object VoiceCatalog {
             "voice_samples/thorsten.mp3",
             sizeBytes = 115_591_546L,
             sha256 = "dd4ed1b0d42c30a1a4862fc2b243e8044d52b8889c9ff3d1e99e92028888bc4a",
-            license = "Daten CC0",
+            // Feinjustiert aus „lessac“ (Blizzard-2013-Daten unter einer Forschungslizenz).
+            license = "Daten CC0; Basismodell: Daten mit Forschungslizenz",
             rightsHolder = "Thorsten Müller (Thorsten-Voice)",
         ),
         VoiceSpec(
@@ -109,7 +113,8 @@ object VoiceCatalog {
             "voice_samples/kerstin.mp3",
             sizeBytes = 67_107_768L,
             sha256 = "4bfe121d5f690a3b87acecd7ae1e70b48f4589ce6ae9f45a1809e6eb19fad97b",
-            license = "Daten CC0",
+            // Feinjustiert aus „ryan“ (Trainingsdaten CC BY-NC-SA 4.0).
+            license = "Daten CC0; Basismodell: Daten CC BY-NC-SA",
             rightsHolder = "rhasspy (dataset-voice-kerstin)",
         ),
         VoiceSpec(

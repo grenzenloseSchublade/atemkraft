@@ -521,6 +521,8 @@
     <string name="about_privacy_link">Datenschutzerklärung</string>
     <string name="about_privacy_hint">Was die App speichert und was nicht</string>
     <string name="about_open_link">im Browser öffnen</string>
+    <!-- Kein Browser installiert: steht unter dem angetippten Link (MUSTER-04). -->
+    <string name="about_no_browser">Kein Browser gefunden, der den Link öffnen kann.</string>
     <string name="about_licenses_title">Lizenzen</string>
     <string name="about_licenses_teaser">Atemkraft steht unter MIT-Lizenz und nutzt freie Bausteine; Stimmen haben eigene Lizenzen.</string>
     <string name="about_licenses_app">In der App</string>

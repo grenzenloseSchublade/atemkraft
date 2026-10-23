@@ -25,7 +25,9 @@ import app.atemkraft.domain.formatClock
 import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -59,15 +61,30 @@ class PlaybackService : Service() {
      */
     private var wakeLock: PowerManager.WakeLock? = null
 
+    /** Verlängert den Wakelock einer langen Sitzung (∞-Meditation), siehe [WAKELOCK_RENEW_MS]. */
+    private var wakeLockRenewal: Job? = null
+
     private fun updateWakeLock(shouldHold: Boolean) {
         val held = wakeLock?.isHeld == true
         if (shouldHold && !held) {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "atemkraft:session").apply {
+            val lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "atemkraft:session").apply {
                 setReferenceCounted(false)
                 acquire(WAKELOCK_TIMEOUT_MS)
             }
+            wakeLock = lock
+            // Erneutes acquire(timeout) setzt beim nicht gezählten Wakelock nur die Frist neu.
+            // Schluss nach WAKELOCK_MAX_MS: Hinge eine Sitzung fest, liefe er nicht ewig.
+            wakeLockRenewal?.cancel()
+            wakeLockRenewal = scope.launch {
+                repeat(((WAKELOCK_MAX_MS - WAKELOCK_TIMEOUT_MS) / WAKELOCK_RENEW_MS).toInt()) {
+                    delay(WAKELOCK_RENEW_MS)
+                    if (lock.isHeld) lock.acquire(WAKELOCK_TIMEOUT_MS)
+                }
+            }
         } else if (!shouldHold && held) {
+            wakeLockRenewal?.cancel()
+            wakeLockRenewal = null
             wakeLock?.release()
             wakeLock = null
         }
@@ -129,6 +146,7 @@ class PlaybackService : Service() {
         // löschen – sonst bleibt sie (v. a. auf Samsung) als Waise hängen.
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         notificationManager().cancel(NOTIF_ID)
+        wakeLockRenewal?.cancel()
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
         scope.cancel()
@@ -237,12 +255,14 @@ class PlaybackService : Service() {
 
         /**
          * Sicherheits-Timeout des Wakelocks: Der Timer läuft höchstens 60 min
-         * (MEDITATION_MAX_MINUTES), dazu reichlich Reserve. Die offene Sitzung (∞) hat kein Ende;
-         * für sie ist das eine Obergrenze – nach 3 h läuft der Wakelock still aus, Intervall-Gongs
-         * können im Doze dann verspätet kommen. Ob er dort vor Ablauf erneuert wird, ist offen
-         * (Verhaltensänderung, nur mit Gerätetest).
+         * (MEDITATION_MAX_MINUTES), dazu reichlich Reserve. Läuft die Sitzung noch (die offene
+         * Sitzung ∞ hat kein Ende), verlängert der Service ihn alle [WAKELOCK_RENEW_MS] um eine
+         * neue Frist, insgesamt bis [WAKELOCK_MAX_MS]; danach läuft er still aus, und
+         * Intervall-Gongs können im Doze verspätet kommen.
          */
         private const val WAKELOCK_TIMEOUT_MS = 3 * 60 * 60 * 1000L
+        private const val WAKELOCK_RENEW_MS = 60 * 60 * 1000L
+        private const val WAKELOCK_MAX_MS = 12 * 60 * 60 * 1000L
 
         /**
          * Läuft der Service gerade (zwischen onCreate und onDestroy)? Die Halter in

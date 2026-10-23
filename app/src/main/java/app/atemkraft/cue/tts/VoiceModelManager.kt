@@ -84,10 +84,23 @@ class VoiceModelManager(context: Context) {
     /** Zustand je Stimmen-Id. */
     val states: StateFlow<Map<String, VoiceDownloadState>> = _states.asStateFlow()
 
-    init {
-        // Modelle von Stimmen, die nicht mehr im Katalog stehen (GLaDOS bis 1.5.1, ca. 110 MB),
-        // kann niemand mehr wählen oder löschen: Speicher beim Start freigeben.
-        scope.launch { deleteOrphanVoiceDirs(baseDir, VoiceCatalog.all) }
+    /**
+     * Teil-Downloads liegen in [baseDir]/.download statt im Cache: Android darf `cacheDir` bei
+     * Speichermangel mitten im Download leeren. Was ein beendeter Prozess dort liegen ließ, räumt
+     * [startupCleanup] weg, bevor ein neuer Download beginnt.
+     */
+    private val downloadDir = File(baseDir, ".download")
+
+    /**
+     * Aufräumen beim Start: Modelle von Stimmen, die nicht mehr im Katalog stehen (GLaDOS bis
+     * 1.5.1, ca. 110 MB), kann niemand mehr wählen oder löschen; dazu Reste abgebrochener
+     * Downloads. Jeder Download wartet darauf ([download]).
+     */
+    private val startupCleanup: Job = scope.launch {
+        deleteOrphanVoiceDirs(baseDir, VoiceCatalog.all)
+        downloadDir.deleteRecursively()
+        // Bis 2.5.0 lagen Teil-Downloads im Cache.
+        appContext.cacheDir.listFiles { f -> f.name.contains("-download.tar.bz2") }?.forEach { it.delete() }
     }
 
     private fun dirOf(spec: VoiceSpec) = File(baseDir, spec.dirName)
@@ -127,6 +140,7 @@ class VoiceModelManager(context: Context) {
         synchronized(jobs) {
             val previous = jobs[voiceId]
             jobs[voiceId] = scope.launch {
+                startupCleanup.join()
                 previous?.cancelAndJoin()
                 runDownload(spec)
             }
@@ -153,8 +167,8 @@ class VoiceModelManager(context: Context) {
     }
 
     private suspend fun runDownload(spec: VoiceSpec) {
-        val part = File(appContext.cacheDir, "${spec.id}-download.tar.bz2.part")
-        val archive = File(appContext.cacheDir, "${spec.id}-download.tar.bz2")
+        val part = File(downloadDir, "${spec.id}.tar.bz2.part")
+        val archive = File(downloadDir, "${spec.id}.tar.bz2")
         val staging = stagingOf(spec)
         val dir = dirOf(spec)
         fun cleanup() {
@@ -165,7 +179,7 @@ class VoiceModelManager(context: Context) {
         }
         try {
             setState(spec.id, VoiceDownloadState.Downloading(0f))
-            baseDir.mkdirs()
+            downloadDir.mkdirs()
             cleanup() // sauberer Neuversuch
 
             downloadVerified(spec, part) { frac ->
@@ -248,7 +262,7 @@ class VoiceModelManager(context: Context) {
 
     private suspend fun extractTarBz2(archive: File, targetDir: File) = withContext(Dispatchers.IO) {
         val ctx = coroutineContext
-        extractTarBz2Safely(archive, targetDir) { ctx.ensureActive() }
+        extractTarBz2Safely(archive, targetDir, checkActive = { ctx.ensureActive() })
     }
 }
 
@@ -290,18 +304,41 @@ internal fun copyVerified(
 }
 
 /**
- * Entpackt ein `.tar.bz2` nach [targetDir]. Schutz: kein Pfad außerhalb von [targetDir]
- * (Zip-Slip) und keine Symlinks, Hardlinks oder Gerätedateien – solche Archive werden abgelehnt.
+ * Obergrenzen beim Entpacken (SEC-NET-04). Die Archive des Katalogs haben rund 400 Einträge
+ * (Modell, `tokens.txt`, `espeak-ng-data`) und entpackt höchstens etwa 130 MB (Thorsten); die
+ * Grenzen lassen reichlich Luft und stoppen trotzdem eine Archiv-Bombe, falls der Hash-Pin je
+ * versagte.
  */
-internal fun extractTarBz2Safely(archive: File, targetDir: File, checkActive: () -> Unit = {}) {
+internal const val MAX_ARCHIVE_ENTRIES = 1_000
+internal const val MAX_ARCHIVE_BYTES = 300L * 1024 * 1024
+
+/**
+ * Entpackt ein `.tar.bz2` nach [targetDir]. Schutz: kein Pfad außerhalb von [targetDir]
+ * (Zip-Slip), keine Symlinks, Hardlinks oder Gerätedateien, höchstens [maxEntries] Einträge und
+ * [maxBytes] entpackte Bytes (gezählt wird, was wirklich geschrieben wird, nicht die Angabe im
+ * Tar-Kopf) – sonst wird das Archiv abgelehnt; das Aufräumen macht der Aufrufer.
+ */
+internal fun extractTarBz2Safely(
+    archive: File,
+    targetDir: File,
+    checkActive: () -> Unit = {},
+    maxEntries: Int = MAX_ARCHIVE_ENTRIES,
+    maxBytes: Long = MAX_ARCHIVE_BYTES,
+) {
     targetDir.mkdirs()
     val canonicalTarget = targetDir.canonicalFile
+    var entries = 0
+    var written = 0L
+    val buf = ByteArray(64 * 1024)
     TarArchiveInputStream(
         BZip2CompressorInputStream(BufferedInputStream(archive.inputStream())),
     ).use { tar ->
         var entry = tar.nextEntry
         while (entry != null) {
             checkActive()
+            if (++entries > maxEntries) {
+                throw VoiceIntegrityException("Archiv hat mehr als $maxEntries Einträge")
+            }
             if (entry.isSymbolicLink || entry.isLink || entry.isCharacterDevice ||
                 entry.isBlockDevice || entry.isFIFO
             ) {
@@ -315,7 +352,17 @@ internal fun extractTarBz2Safely(archive: File, targetDir: File, checkActive: ()
                 outFile.mkdirs()
             } else {
                 outFile.parentFile?.mkdirs()
-                outFile.outputStream().use { out -> tar.copyTo(out, 64 * 1024) }
+                outFile.outputStream().use { out ->
+                    while (true) {
+                        val n = tar.read(buf)
+                        if (n < 0) break
+                        written += n
+                        if (written > maxBytes) {
+                            throw VoiceIntegrityException("Archiv entpackt größer als ${maxBytes / (1024 * 1024)} MB")
+                        }
+                        out.write(buf, 0, n)
+                    }
+                }
             }
             entry = tar.nextEntry
         }

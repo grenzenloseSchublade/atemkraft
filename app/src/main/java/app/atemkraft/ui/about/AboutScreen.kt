@@ -20,11 +20,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -90,6 +95,13 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false, lastError
             BodyText(stringResource(R.string.about_disclaimer), modifier = Modifier.padding(Dimens.CardPadding))
         }
 
+        // Ohne Browser wirft openUri; dann meldet das angetippte Element es selbst (MUSTER-04).
+        var failedUrl by rememberSaveable { mutableStateOf<String?>(null) }
+        val noBrowser = stringResource(R.string.about_no_browser)
+        fun hintFor(url: String, hint: String) = if (failedUrl == url) "$hint\n$noBrowser" else hint
+        val uriHandler = LocalUriHandler.current
+        val open: (String) -> Unit = { url -> failedUrl = if (uriHandler.opens(url)) null else url }
+
         Spacer(Modifier.height(Dimens.ListGap))
         ExpanderSection(
             title = stringResource(R.string.about_licenses_title),
@@ -97,32 +109,40 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false, lastError
             // Einziger Abschnittskopf der Seite: erste Farbe des Rings (FARBE-07).
             accent = headingColor(0),
             initiallyExpanded = licensesExpanded,
-        ) { LicenseList() }
+        ) { LicenseList(linkLabel = hintFor(LICENSES_URL, stringResource(R.string.about_licenses_link)), onOpen = open) }
 
         Spacer(Modifier.height(Dimens.SectionGap))
         // Quellcode und Datenschutz als Verweis-Karten wie die Kapitel im Tab „Lernen“: Titel,
         // Untertitel, Symbol „öffnet im Browser“ an der Kante; die ganze Karte öffnet den Browser.
-        val uriHandler = LocalUriHandler.current
         NavCard(
             title = stringResource(R.string.about_source_title),
             // Die Adresse darf nur nach „/“ umbrechen; sie ist ein einziges langes Wort (LAYOUT-03).
-            hint = breakAfterSlashes(REPO_URL.removePrefix(HTTPS)),
-            onClick = { uriHandler.openUri(REPO_URL) },
+            hint = hintFor(REPO_URL, breakAfterSlashes(REPO_URL.removePrefix(HTTPS))),
+            onClick = { open(REPO_URL) },
             external = true,
         )
         Spacer(Modifier.height(Dimens.ListGap))
         NavCard(
             title = stringResource(R.string.about_privacy_link),
-            hint = stringResource(R.string.about_privacy_hint),
-            onClick = { uriHandler.openUri(PRIVACY_URL) },
+            hint = hintFor(PRIVACY_URL, stringResource(R.string.about_privacy_hint)),
+            onClick = { open(PRIVACY_URL) },
             external = true,
         )
     }
 }
 
-/** Inhalt des Abschnitts „Lizenzen“: Bausteine in der App, Stimmen, Link auf die volle Liste. */
+/**
+ * Öffnet [url] im Browser; false, wenn das nicht geht. Ohne Browser wirft Compose eine Ausnahme;
+ * die fängt die Seite hier ab, statt abzustürzen.
+ */
+private fun UriHandler.opens(url: String): Boolean = runCatching { openUri(url) }.isSuccess
+
+/**
+ * Inhalt des Abschnitts „Lizenzen“: Bausteine in der App, Stimmen, Link auf die volle Liste
+ * ([linkLabel], [onOpen] öffnet ihn).
+ */
 @Composable
-private fun LicenseList() {
+private fun LicenseList(linkLabel: String, onOpen: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
         SubLabel(stringResource(R.string.about_licenses_app), color = MaterialTheme.colorScheme.onBackground)
         ThirdParty.components.forEach { LicenseEntry(it.name, it.license, it.holder) }
@@ -137,7 +157,7 @@ private fun LicenseList() {
         }
         HintText(stringResource(R.string.about_licenses_voices_note))
 
-        LinkRow(label = stringResource(R.string.about_licenses_link), url = LICENSES_URL)
+        LinkRow(label = linkLabel, onClick = { onOpen(LICENSES_URL) })
     }
 }
 
@@ -157,17 +177,16 @@ private fun LicenseEntry(name: String, license: String, holder: String) {
 /**
  * Externer Link als eigene Zeile: Die ganze Zeile ist die Tippfläche, mindestens 48 dp hoch
  * (A11Y-05). Das Ziel steht in `secondary` wie jeder Verweis im Inhalt (FARBE-04), dahinter das
- * Symbol „öffnet im Browser“ – ohne Unterstreichung, wie die übrigen Verweise der App. Öffnet
- * [url] im Browser.
+ * Symbol „öffnet im Browser“ – ohne Unterstreichung, wie die übrigen Verweise der App. [onClick]
+ * öffnet den Link im Browser.
  */
 @Composable
-private fun LinkRow(label: String, url: String) {
-    val uriHandler = LocalUriHandler.current
+private fun LinkRow(label: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link)) { uriHandler.openUri(url) },
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link), onClick = onClick),
         contentAlignment = Alignment.CenterStart,
     ) {
         LinkText(label, MaterialTheme.colorScheme.secondary)

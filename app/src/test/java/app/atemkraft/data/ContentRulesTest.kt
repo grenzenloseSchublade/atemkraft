@@ -446,6 +446,25 @@ class ContentRulesTest {
         assertNone("health-claims", strict("health-claims", healthClaimFindings(allTexts + publicTexts)) + missingDisclaimer)
     }
 
+    /**
+     * Längengrenzen der Store-Texte (Google Play, F-Droid) in jeder Sprache unter
+     * fastlane/metadata/android: Titel 30, Kurzbeschreibung 80, Beschreibung 4000, Changelog 500
+     * Zeichen. Gezählt werden Unicode-Zeichen ohne Leerraum am Ende; Play lehnt längere ab.
+     */
+    @Test
+    fun `store-lengths`() {
+        val limits = mapOf("title.txt" to 30, "short_description.txt" to 80, "full_description.txt" to 4000)
+        val metadata = repoFile("fastlane/metadata/android")
+        val texts = metadata.walkTopDown().filter { it.isFile && it.extension == "txt" }.toList()
+        val tooLong = texts.mapNotNull { f ->
+            val limit = if (f.parentFile.name == "changelogs") 500 else limits[f.name] ?: return@mapNotNull null
+            val text = f.readText().trimEnd()
+            val length = text.codePointCount(0, text.length)
+            if (length > limit) "${f.relativeTo(metadata).path}: $length von höchstens $limit Zeichen" else null
+        }
+        assertNone("store-lengths", (if (texts.isEmpty()) listOf("keine Store-Texte gefunden") else emptyList()) + tooLong)
+    }
+
     // ---- TEXT-10: Zeichen ---------------------------------------------------------------
 
     /** Kennungen, in denen ein Punkt zwischen Ziffern richtig ist (DOI, Versionen, URLs, Lizenzen wie „Apache-2.0“). */

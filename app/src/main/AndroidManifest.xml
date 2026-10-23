@@ -24,9 +24,13 @@
         </intent>
     </queries>
 
+    <!-- hasFragileUserData (ab Android 10): Beim Deinstallieren bietet Android an, Logbuch und
+         Muster zu behalten; bei einer Neuinstallation mit derselben Signatur sind sie wieder da.
+         Bleibt auf dem Gerät, ohne Cloud (docs/PRIVACY.md, „Deinstallieren“). -->
     <application
         android:name=".AtemkraftApplication"
         android:allowBackup="false"
+        android:hasFragileUserData="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:networkSecurityConfig="@xml/network_security_config"
