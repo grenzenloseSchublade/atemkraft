@@ -1,0 +1,3 @@
+- Knopf der Tab-Leiste als kleiner Reiter
+- Tab „Anlass“
+- Markierte Übungen („Tut mir gut“) im Tab „Eigene“
