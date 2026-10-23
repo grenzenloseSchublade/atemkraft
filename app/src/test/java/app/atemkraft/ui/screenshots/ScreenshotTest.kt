@@ -12,11 +12,14 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
@@ -110,7 +113,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
 
     /**
      * Die vier Tabs: Atmen; Situationen mit der größten aufgeklappt und mit Suchtreffern; „Eigene“
-     * mit vier Mustern (eines mit langem Namen); Meditation mit offener Feinwahl auf 12 min (scrollt
+     * mit allen drei Abschnitten aufgeklappt („Tut mir gut“, vier Muster – eines mit langem Namen –,
+     * Logbuch mit Beispieleinträgen); Meditation mit offener Feinwahl auf 12 min (scrollt
      * bis 1,3 nicht, LAYOUT-08) und ∞ mit aufgeklapptem Klang (akzeptierte Scroll-Ausnahme S-40).
      */
     @Test
@@ -137,10 +141,25 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             compose.onNodeWithContentDescription(app.getString(R.string.cd_search_open)).performClick()
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
         }) { SituationsContent() }
-        snap("13_eigene", tab = Tab.EIGENE) {
+        // Alle drei Abschnitte, aufgeklappt (das Logbuch per Tipp, es startet zu; dafür kurz hin und zurück scrollen).
+        snap("13_eigene", tab = Tab.EIGENE, prepare = {
+            val list = compose.onNode(hasScrollToKeyAction())
+            list.performScrollToKey("logbook")
+            compose.onNodeWithText(app.getString(R.string.settings_log_title)).performClick()
+            list.performScrollToIndex(0)
+        }) {
             // „Tut mir gut“ mit den zwei längsten Übungsnamen.
             val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
-            OwnPatternsScreen(savedPatterns = saved, onNewPattern = {}, favorites = favorites, onSelect = {}, onDeletePattern = {}, onOpenSettings = {})
+            OwnPatternsScreen(
+                savedPatterns = saved,
+                onNewPattern = {},
+                favorites = favorites,
+                onSelect = {},
+                onDeletePattern = {},
+                onOpenSettings = {},
+                logEntries = logEntries(),
+                today = DAY,
+            )
         }
         snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, prepare = {
             // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.
@@ -198,13 +217,20 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         }
     }
 
-    /** Relativ zum festen DAY, damit jede Gruppe vorkommt (Heute, Gestern, Diese Woche, zwei Monate). */
     @Composable
     private fun Logbook() {
+        LogbookScreen(entries = logEntries(), onBack = {}, today = DAY)
+    }
+
+    /**
+     * Beispieleinträge für Logbuch und „Eigene“: relativ zum festen DAY, damit jede Gruppe vorkommt
+     * (Heute, Gestern, Diese Woche, zwei Monate).
+     */
+    private fun logEntries(): List<SessionLogEntry> {
         fun at(daysAgo: Long, hour: Int, minute: Int): Long = DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val daysAgo = listOf(0L, 1L, 3L, 5L, 12L, 40L)
         // Runden und Dauer wie vom BreathSessionController geloggt.
-        val entries = BuiltInExercises.all.take(6).mapIndexed { i, e ->
+        return BuiltInExercises.all.take(6).mapIndexed { i, e ->
             SessionLogEntry(
                 id = i + 1L,
                 exerciseId = e.id,
@@ -224,7 +250,6 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             roundsCompleted = 0,
             kind = SessionKind.MEDITATION,
         )
-        LogbookScreen(entries = entries, onBack = {}, today = DAY)
     }
 
     @Composable

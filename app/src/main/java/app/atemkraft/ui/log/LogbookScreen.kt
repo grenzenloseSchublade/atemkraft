@@ -79,9 +79,9 @@ private val FAMILY_DOT = 10.dp
 private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.")
 
 /**
- * Logbuch als Push-Seite (aus Einstellungen › Daten): Statistik mit 7-Tage-Übersicht, darunter
- * der Verlauf nach Tagen gruppiert (Heute / Gestern / Diese Woche / je Monat), je Gruppe eine
- * Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
+ * Logbuch als Push-Seite (aus dem Abschnitt „Logbuch“ im Tab „Eigene“ und vom Ende einer
+ * Übung): Statistik mit 7-Tage-Übersicht, darunter der Verlauf nach Tagen gruppiert (Heute /
+ * Gestern / Diese Woche / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
  * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik. [today] nur
  * für reproduzierbare Screenshots.
  */
@@ -92,12 +92,6 @@ fun LogbookScreen(
     today: LocalDate = LocalDate.now(),
 ) {
     val zone = ZoneId.systemDefault()
-    val activeDays = remember(entries) { entries.map { it.startedAtEpochMs.toEpochDay() }.toSet() }
-    val minutesPerDay = remember(entries) {
-        entries.groupBy { it.startedAtEpochMs.toEpochDay() }
-            .mapValues { (_, list) -> list.sumOf { it.durationMs } / 60_000L }
-    }
-    val streak = remember(activeDays, today) { currentStreak(activeDays, today) }
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
 
     // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild. Oben SectionGap wie auf jeder
@@ -106,7 +100,7 @@ fun LogbookScreen(
         header = { scrolled -> PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = scrolled) },
         top = Dimens.SectionGap,
     ) {
-        item(key = "stats") { StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, today = today) }
+        item(key = "stats") { LogStatsCard(entries = entries, today = today) }
         // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
         itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group -> LogGroupSection(index, group, zone) }
     }
@@ -115,15 +109,16 @@ fun LogbookScreen(
 /**
  * Titel „7 Sitzungen · 65 min gesamt“, die Serie als eigene Zeile erst ab zwei Tagen in Folge
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
- * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung.
+ * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung. Auf der Logbuch-Seite und im
+ * Abschnitt „Logbuch“ des Tabs „Eigene“.
  */
 @Composable
-private fun StatsCard(
-    entries: List<SessionLogEntry>,
-    streak: Int,
-    minutesPerDay: Map<Long, Long>,
-    today: LocalDate,
-) {
+internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()) {
+    val streak = rememberLogStreak(entries, today)
+    val minutesPerDay = remember(entries) {
+        entries.groupBy { it.startedAtEpochMs.toEpochDay() }
+            .mapValues { (_, list) -> list.sumOf { it.durationMs } / 60_000L }
+    }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             val totalMinutes = entries.sumOf { it.durationMs } / 60_000L
@@ -265,6 +260,56 @@ private fun LogGroupSection(index: Int, group: LogGroup, zone: ZoneId) {
             }
         }
     }
+}
+
+/**
+ * Die letzten [limit] Sitzungen in einer Karte, neueste zuerst, Zeilen wie im Verlauf
+ * ([LogEntryRow]); statt der Gruppenköpfe trägt jede Zeile ihren Tag vor der Uhrzeit („Heute ·
+ * 08:30“, „Mi 15.10. · 07:45“). Für den Abschnitt „Logbuch“ im Tab „Eigene“.
+ */
+@Composable
+internal fun RecentLogCard(entries: List<SessionLogEntry>, limit: Int, today: LocalDate = LocalDate.now()) {
+    val zone = ZoneId.systemDefault()
+    val weekdays = stringArrayResource(R.array.log_weekday_short)
+    val todayLabel = stringResource(R.string.log_group_today)
+    val yesterdayLabel = stringResource(R.string.log_group_yesterday)
+    val recent = remember(entries, limit) { entries.sortedByDescending { it.startedAtEpochMs }.take(limit) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding)) {
+            recent.forEachIndexed { index, entry ->
+                if (index > 0) HorizontalDivider(color = DividerSubtle)
+                val at = Instant.ofEpochMilli(entry.startedAtEpochMs).atZone(zone)
+                val date = at.toLocalDate()
+                val day = when {
+                    !date.isBefore(today) -> todayLabel
+                    date == today.minusDays(1) -> yesterdayLabel
+                    else -> stringResource(R.string.log_day_label, weekdays[(date.dayOfWeek.value - 1).coerceIn(0, 6)], date.format(DAY_MONTH_FORMAT))
+                }
+                LogEntryRow(entry = entry, time = day + DOT_SEPARATOR + at.format(TIME_FORMAT))
+            }
+        }
+    }
+}
+
+/**
+ * Kurze Bilanz für den Kopf des Abschnitts „Logbuch“: ab zwei Tagen in Folge die Serie („3 Tage in
+ * Folge“, wie in [LogStatsCard]), sonst die Zahl der Sitzungen („12 Sitzungen“).
+ */
+@Composable
+internal fun logSummary(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()): String {
+    val streak = rememberLogStreak(entries, today)
+    return if (streak >= 2) {
+        pluralStringResource(R.plurals.log_streak, streak, streak)
+    } else {
+        pluralStringResource(R.plurals.log_sessions, entries.size, entries.size)
+    }
+}
+
+/** Tage in Folge bis heute bzw. gestern ([currentStreak]). */
+@Composable
+private fun rememberLogStreak(entries: List<SessionLogEntry>, today: LocalDate): Int {
+    val activeDays = remember(entries) { entries.map { it.startedAtEpochMs.toEpochDay() }.toSet() }
+    return remember(activeDays, today) { currentStreak(activeDays, today) }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

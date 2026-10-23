@@ -197,8 +197,8 @@ private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () ->
  * Zeile „Logbuch“: links Titel und Zahl der Sitzungen, rechts in derselben Icon-Spalte wie bei
  * den Stimmen der Papierkorb. Leeren zweistufig im selben Element (MUSTER-05,
  * [ConfirmIconButton]: „Logbuch wirklich leeren?“). Ohne Einträge gibt es nichts zu leeren – dann
- * fehlt der Papierkorb, die Zeile behält ihre Höhe. Geöffnet wird das Logbuch über den Kalender
- * im Kopf des Atmen-Tabs und am Ende einer Übung (Nutzer 2026-10-22), nicht hier.
+ * fehlt der Papierkorb, die Zeile behält ihre Höhe. Geöffnet wird das Logbuch im Tab „Eigene“
+ * (Abschnitt „Logbuch“, Nutzer 2026-10-23) und am Ende einer Übung, nicht hier.
  */
 @Composable
 private fun LogRow(count: Int, onClear: () -> Unit) {

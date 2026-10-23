@@ -154,6 +154,8 @@ internal fun NavGraphBuilder.appGraph(
             onSelect = openDetail,
             onDeletePattern = { id -> scope.launch { savedPatterns.delete(id) } },
             onOpenSettings = { navController.navigate(SettingsRoute()) },
+            logEntries = state.logEntries,
+            onOpenLogbook = openLogbook,
         )
     }
     composable<MeditationRoute> {
