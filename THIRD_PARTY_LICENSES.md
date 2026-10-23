@@ -2,8 +2,8 @@
 
 Was in der App steckt, was sie auf Wunsch lädt und unter welchen Bedingungen. Gegenstück in der App: *Einstellungen → Über Atemkraft → Lizenzen*.
 
-- **Stand:** 2026-10-07, gilt für App-Version 1.5.1 (`versionCode` 17) und 1.6.0 (`versionCode` 18). Die Laufzeit-Abhängigkeiten und `app/libs/` sind zwischen beiden gleich; seit 1.5.1 kamen nur Test- und Prüfwerkzeuge hinzu, die nicht in die APK gehen.
-- **Belege:** Lizenzangaben aus Maven-POMs, `LICENSE`/`COPYING`-Dateien der Upstream-Repos am genannten Tag oder Commit und den Modellkarten der Stimmen. Der Inhalt der APK ist mit `unzip -l` an der Release-APK v1.5.1 und an einem Build des Stands 1.6.0 geprüft, die gebündelten Bibliotheken über die Build-Skripte von sherpa-onnx v1.13.6 (samt der von dort geladenen Bibliotheken) und Zeichenketten in `libsherpa-onnx-jni.so` und `libsherpa-onnx-c-api.so`.
+- **Stand:** 2026-10-23, gilt für App-Version 2.0.2 (`versionCode` 31). Seit 1.6.0 sind die Laufzeit-Abhängigkeiten aktualisiert (§ 1); `app/libs/` mit dem sherpa-onnx-AAR ist unverändert.
+- **Belege:** Lizenzangaben aus Maven-POMs, `LICENSE`/`COPYING`-Dateien der Upstream-Repos am genannten Tag oder Commit und den Modellkarten der Stimmen. Die Laufzeit-Abhängigkeiten sind am 2026-10-23 mit `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` am Stand 2.0.2 neu erhoben, ihre Lizenzen aus den POMs und die NOTICE-Texte aus den JARs bzw. den Upstream-Repos am Tag der jeweiligen Version übernommen. Der Inhalt der APK ist mit `unzip -l` an einem Release-Build von 2.0.2 geprüft, die gebündelten Bibliotheken über die Build-Skripte von sherpa-onnx v1.13.6 (samt der von dort geladenen Bibliotheken) und Zeichenketten in `libsherpa-onnx-jni.so` und `libsherpa-onnx-c-api.so`.
 - **Keine Rechtsberatung.** Die Einordnungen unten geben Lizenztexte und veröffentlichte Auffassungen wieder.
 
 ## Kurzfassung
@@ -27,14 +27,15 @@ Ermittelt mit `./gradlew :app:dependencies --configuration releaseRuntimeClasspa
 
 | Komponente | Version | Lizenz | Rechteinhaber / Quelle | Hinweis |
 |---|---|---|---|---|
-| AndroidX Core, Activity, Lifecycle, Navigation, Room, SQLite, DataStore, SavedState, Startup, Emoji2, Profile Installer, Tracing, Collection, Annotation, Arch Core, Concurrent Futures, Graphics Path u. a. | Core 1.15.0, Activity 1.9.3, Lifecycle 2.8.7, Navigation 2.8.5, Room 2.6.1, SQLite 2.4.0, DataStore 1.1.1 | Apache-2.0 | The Android Open Source Project ([androidx/androidx](https://github.com/androidx/androidx)) | bringt die Native-Bibliotheken `libandroidx.graphics.path.so` (Graphics Path) und `libdatastore_shared_counter.so` (DataStore) mit |
-| Jetpack Compose (UI, Foundation, Animation, Runtime, Material 3, Material Icons Core, Ripple) | BOM 2025.01.00: UI 1.7.6, Material 3 1.3.1 | Apache-2.0 | The Android Open Source Project | – |
-| Kotlin Standardbibliothek | 2.1.0 (jdk7/jdk8-Teile 1.8.22, Parcelize- und Android-Extensions-Runtime 1.9.22) | Apache-2.0 | JetBrains s.r.o. ([JetBrains/kotlin](https://github.com/JetBrains/kotlin)) | NOTICE |
-| kotlinx.coroutines | 1.7.3 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
-| kotlinx.serialization | 1.7.3 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
+| AndroidX Core, Activity, Lifecycle, Navigation, NavigationEvent, Room, SQLite, DataStore, SavedState, Window, Startup, Emoji2, Autofill, Profile Installer, Tracing, Collection, Annotation, Arch Core, Concurrent Futures, Graphics Path u. a. | Core 1.19.1, Activity 1.13.0, Lifecycle 2.11.0, Navigation 2.10.2, NavigationEvent 1.1.2, Room 2.8.5, SQLite 2.6.2, DataStore 1.1.1, SavedState 1.5.0, Window 1.5.0 | Apache-2.0 | The Android Open Source Project ([androidx/androidx](https://github.com/androidx/androidx)) | bringt die Native-Bibliotheken `libandroidx.graphics.path.so` (Graphics Path) und `libdatastore_shared_counter.so` (DataStore) mit |
+| Jetpack Compose (UI, Foundation, Animation, Runtime, Material 3, Material Icons Core, Ripple) | BOM 2026.09.00: UI 1.12.1, Material 3 1.4.0, Material Icons Core 1.7.8 | Apache-2.0 | The Android Open Source Project | – |
+| Kotlin Standardbibliothek | 2.4.21 (jdk7/jdk8-Teile 1.8.0, Parcelize- und Android-Extensions-Runtime 1.9.22) | Apache-2.0 | JetBrains s.r.o. ([JetBrains/kotlin](https://github.com/JetBrains/kotlin)) | NOTICE |
+| kotlinx.coroutines | 1.9.0 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
+| kotlinx.serialization | 1.11.0 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
 | JetBrains Annotations | 23.0.0 | Apache-2.0 | JetBrains s.r.o. | nur Annotationen |
-| Apache Commons Compress | 1.27.1 | Apache-2.0 | The Apache Software Foundation | entpackt die Stimm-Archive; NOTICE |
-| Apache Commons IO, Lang, Codec | 2.16.1, 3.16.0, 1.17.1 | Apache-2.0 | The Apache Software Foundation | Abhängigkeiten von Commons Compress; NOTICE |
+| JSpecify | 1.0.0 | Apache-2.0 (POM) | The JSpecify Authors ([jspecify/jspecify](https://github.com/jspecify/jspecify)) | nur Annotationen; Abhängigkeit von AndroidX |
+| Apache Commons Compress | 1.28.0 | Apache-2.0 | The Apache Software Foundation | entpackt die Stimm-Archive; NOTICE |
+| Apache Commons IO, Lang, Codec | 2.20.0, 3.18.0, 1.19.0 | Apache-2.0 | The Apache Software Foundation | Abhängigkeiten von Commons Compress; NOTICE |
 | Okio | 3.4.0 | Apache-2.0 | Square, Inc. | Abhängigkeit von DataStore |
 | Guava ListenableFuture | 1.0 | Apache-2.0 | Google | Abhängigkeit von AndroidX |
 
@@ -73,9 +74,9 @@ Der vollständige Quellstand des AAR ist der Tag [`v1.13.6` von k2-fsa/sherpa-on
 | Teil | Herkunft | Lizenz |
 |---|---|---|
 | Symbole `Icons.*` | Material Icons aus `material-icons-core` (Google) | Apache-2.0 |
-| `ic_bookmark`, `ic_bookmark_filled`, `ic_delete_forever` (Material „Delete Forever“), `ic_open_in_new` (Material „Open In New“), `ic_remove`, `ic_reset`, `ic_meditation` (Material „Timer“), `ic_sound_on`/`ic_sound_off` (Material „Volume Up/Off“) | Pfade aus den Material Icons/Symbols von Google | Apache-2.0 |
-| App-Symbol (`ic_launcher_foreground`) | eigene Gestaltung (konzentrische Atemringe) | MIT wie die App |
-| Töne und Gong | zur Laufzeit im Code synthetisiert (`ToneCuePlayer`, `ContinuousTonePlayer`); keine Audiodateien | MIT wie die App |
+| `ic_bookmark`, `ic_bookmark_filled`, `ic_delete_forever` (Material „Delete Forever“), `ic_open_in_new` (Material „Open In New“), `ic_remove`, `ic_reset`, `ic_meditation` (Material „Timer“), `ic_sound_on`/`ic_sound_off` (Material „Volume Up/Off“), `ic_pause`, `ic_stop`, `ic_calendar` (Material „Calendar Month“), `ic_grid_view` (Material „Grid View“), `ic_learn` (Material „Menu Book“) | Pfade aus den Material Icons/Symbols von Google | Apache-2.0 |
+| App-Symbol (`ic_launcher_foreground`), `ic_breath_mark`/`ic_breath_mark_filled` (Markierung „Tut mir gut“) | eigene Gestaltung (konzentrische Atemringe bzw. Ring des Atemkreises) | MIT wie die App |
+| Töne und Gong | zur Laufzeit im Code synthetisiert (`ToneCuePlayer`, `ContinuousTonePlayer`, in der Vorschau des Muster-Editors über `PreviewCuePlayer`); keine Audiodateien | MIT wie die App |
 | Schriften | keine gebündelt; die App nutzt die Systemschrift | – |
 | Hörproben `assets/voice_samples/*.mp3` (6 Dateien, je 2–4 s) | mit der jeweiligen Stimme erzeugt (Abtastrate passt zum Modell: 16 kHz bei „low“/„x_low“, 22,05 kHz bei „high“) | siehe [Stimmen](#stimmen). Ob eine Modelllizenz auch für damit erzeugtes Audio gilt, ist rechtlich nicht eindeutig; die Proben sind deshalb vorsorglich mit der Lizenz und Namensnennung ihrer Stimme aufgeführt. |
 | Texte, Übungen, Quellenangaben | eigene Inhalte; Studien sind zitiert (`data/Refs.kt`), nicht übernommen | MIT wie die App |
@@ -120,4 +121,4 @@ Lizenztexte der Stimmen: [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/
 
 ## 6 Pflege
 
-Bei jeder neuen Abhängigkeit, neuem AAR oder neuer Stimme im selben Commit: Tabelle hier, Liste in `data/ThirdParty.kt` bzw. `license`/`rightsHolder` in `VoiceCatalog.kt` und, falls nötig, ein Lizenztext unter `assets/licenses/` (SEC-LEGAL-03). `LicenseInventoryTest` prüft, dass App-Liste, Stimmen-Katalog und Lizenztexte hier genannt sind.
+Bei jeder neuen Abhängigkeit, neuem AAR oder neuer Stimme im selben Commit: Tabelle hier, Liste in `data/ThirdParty.kt` bzw. `license`/`rightsHolder` in `VoiceCatalog.kt` und, falls nötig, ein Lizenztext unter `assets/licenses/` (SEC-LEGAL-03). Der Abgleich zwischen App-Liste, Stimmen-Katalog, Lizenztexten und dieser Datei ist manuell; der frühere `LicenseInventoryTest` ist mit dem Kürzen der Tests entfallen. Bei jeder Versionsänderung einer Bibliothek mit NOTICE (Apache Commons, Kotlin, kotlinx) auch `NOTICE.txt` gegen die neue Version abgleichen.
