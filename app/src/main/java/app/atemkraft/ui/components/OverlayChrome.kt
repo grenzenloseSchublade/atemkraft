@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -31,12 +32,15 @@ import app.atemkraft.ui.theme.Dimens
  * Geteilter Rahmen der Vollbild-Overlays (Atem-Session + Meditation): Hintergrund-Surface mit
  * sicherem Rand (safeDrawing plus Systemleisten, auch wenn die Ruhe-Ansicht sie ausblendet –
  * sonst rückte der Inhalt nach oben, [HideSystemBars]), oben Minimieren-Chevron (˅) links und
- * In-Session-Stummschalter rechts, darunter der eigentliche Inhalt. [chromeVisible] = false blendet die Kopfleiste sanft aus
+ * In-Session-Stummschalter rechts, links daneben bei der Atem-Session „Danach in die Stille“
+ * ([silenceAfter], null = nicht da: Meditation, Atmen im Gehen, Ende-Screen), darunter der
+ * eigentliche Inhalt. [chromeVisible] = false blendet die Kopfleiste sanft aus
  * (Ruhe-Ansicht der Atem-Session, [HideableSlot]); ihr Platz bleibt, der Inhalt springt nicht.
  *
  * Für TalkBack ist das Overlay ein eigener Bereich mit [title] als `paneTitle` (Übungsname bzw.
  * „Meditation“, A11Y-07); den Rest der App blendet MainActivity derweil aus ([inertWhen]).
- * Der Ton ist ein Schalter: fester Name „Ton“, Rolle Switch, Zustand „An“/„Aus“ (A11Y-01).
+ * Ton und Stille sind Schalter: fester Name („Ton“, „Danach in die Stille“), Rolle Switch, Zustand
+ * „An“/„Aus“ (A11Y-01), beide im selben Größentoken (`OverlayIconButton`).
  */
 @Composable
 fun OverlayChrome(
@@ -46,6 +50,8 @@ fun OverlayChrome(
     onToggleMute: () -> Unit,
     modifier: Modifier = Modifier,
     chromeVisible: Boolean = true,
+    silenceAfter: Boolean? = null,
+    onToggleSilenceAfter: () -> Unit = {},
     content: @Composable BoxScope.() -> Unit,
 ) {
     Surface(
@@ -65,14 +71,27 @@ fun OverlayChrome(
                             tint = MaterialTheme.colorScheme.onBackground,
                         )
                     }
-                    // Schneller Ton-Schalter für die laufende Sitzung (die Einstellung bleibt
-                    // unberührt); Kreis wie der M3-IconButton daneben, fest wie die Kopfleiste.
-                    SoundSwitch(
-                        on = !muted,
-                        onToggle = { onToggleMute() },
-                        name = stringResource(R.string.action_sound),
-                        size = Dimens.OverlayIconButton,
-                    )
+                    Row {
+                        // „Danach in die Stille“ nur für diese Übung (Startwert ist die Einstellung,
+                        // Nutzer 2026-10-23): schnell umschaltbar, ohne in die Einstellungen zu gehen.
+                        if (silenceAfter != null) {
+                            IconSwitch(
+                                on = silenceAfter,
+                                onToggle = { onToggleSilenceAfter() },
+                                name = stringResource(R.string.settings_silence_after),
+                                icon = painterResource(R.drawable.ic_meditation),
+                                size = Dimens.OverlayIconButton,
+                            )
+                        }
+                        // Schneller Ton-Schalter für die laufende Sitzung (die Einstellung bleibt
+                        // unberührt); Kreis wie der M3-IconButton daneben, fest wie die Kopfleiste.
+                        SoundSwitch(
+                            on = !muted,
+                            onToggle = { onToggleMute() },
+                            name = stringResource(R.string.action_sound),
+                            size = Dimens.OverlayIconButton,
+                        )
+                    }
                 }
             }
             Box(modifier = Modifier.weight(1f), content = content)

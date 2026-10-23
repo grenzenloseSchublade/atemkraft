@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -27,18 +28,45 @@ import app.atemkraft.ui.theme.TERTIARY
 
 /**
  * Icon-only-Lautsprecher-Schalter: Ton an ([R.drawable.ic_sound_on] in [tint]) oder aus
- * ([R.drawable.ic_sound_off], [tint] mit [TERTIARY]). Kreis [size] (Standard wie `AppIconButton`,
- * Overlays `Dimens.OverlayIconButton`), Icon 24 dp, Tippfläche 48 dp. `toggleable` mit
- * `Role.Switch` und `stateDescription` „An“/„Aus“: TalkBack liest „[name], Schalter, An“. Ohne
- * Live-Region – der fokussierte Schalter sagt seinen neuen Zustand selbst an (A11Y-01, A11Y-04).
- * Genutzt im Kopf der Vollbild-Overlays („Ton“, `OverlayChrome`) und in der Vorschau des
- * Muster-Editors („Ton der Vorschau“).
+ * ([R.drawable.ic_sound_off], [tint] mit [TERTIARY]), gebaut auf [IconSwitch]. Genutzt im Kopf der
+ * Vollbild-Overlays („Ton“, `OverlayChrome`) und in der Vorschau des Muster-Editors („Ton der
+ * Vorschau“).
  */
 @Composable
 fun SoundSwitch(
     on: Boolean,
     onToggle: (Boolean) -> Unit,
     name: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    tint: Color = MaterialTheme.colorScheme.onBackground,
+    size: Dp = Sizes.IconButtonSize,
+) {
+    IconSwitch(
+        on = on,
+        onToggle = onToggle,
+        name = name,
+        icon = painterResource(if (on) R.drawable.ic_sound_on else R.drawable.ic_sound_off),
+        modifier = modifier,
+        enabled = enabled,
+        tint = tint,
+        size = size,
+    )
+}
+
+/**
+ * Icon-only-Schalter: [icon] in [tint], aus bzw. abgeschaltet mit [TERTIARY]. Kreis [size]
+ * (Standard wie `AppIconButton`, Overlays `Dimens.OverlayIconButton`), Icon 24 dp, Tippfläche
+ * 48 dp. `toggleable` mit `Role.Switch` und `stateDescription` „An“/„Aus“: TalkBack liest „[name],
+ * Schalter, An“. Ohne Live-Region – der fokussierte Schalter sagt seinen neuen Zustand selbst an
+ * (A11Y-01, A11Y-04). Ton ([SoundSwitch]) und „Danach in die Stille“ im Kopf der Atem-Session.
+ */
+@Composable
+fun IconSwitch(
+    on: Boolean,
+    onToggle: (Boolean) -> Unit,
+    name: String,
+    icon: Painter,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tint: Color = MaterialTheme.colorScheme.onBackground,
@@ -62,7 +90,7 @@ fun SoundSwitch(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(if (on) R.drawable.ic_sound_on else R.drawable.ic_sound_off),
+            painter = icon,
             contentDescription = name,
             modifier = Modifier.size(Sizes.IconDefault),
             tint = tint.copy(alpha = if (on && enabled) 1f else TERTIARY),

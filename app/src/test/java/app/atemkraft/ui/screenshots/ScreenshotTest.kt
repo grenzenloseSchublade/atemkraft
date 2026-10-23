@@ -373,7 +373,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Vollbild-Session in Gerätehöhe: Vorbereitung, Einatmen, Viloma-Pause, offenes Halten (Wim Hof),
      * Pause, Ende mit Bilanz; dann die Meditation in allen Zuständen. Die Session-Zustände kommen
-     * aus den Daten der Übung ([sessionAt]), so wie der BreathSessionController sie setzt.
+     * aus den Daten der Übung ([sessionAt]), so wie der BreathSessionController sie setzt; laufend
+     * steht „Danach in die Stille“ (an) neben dem Ton in der Kopfzeile, die nie überläuft.
      */
     @Test
     fun session() {
@@ -447,6 +448,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             nextPhaseType = timeline.getOrNull(index + 1)?.type,
             patternHint = exercise.instructionHint,
             progress = SessionProgress(timeline).at(index, if (totalMs != null) elapsedMs else 0L),
+            // Kopfzeile mit „Danach in die Stille“ neben dem Ton (nicht bei Atmen im Gehen).
+            silenceAfterAllowed = exercise.silenceAfterAllowed,
+            silenceAfter = exercise.silenceAfterAllowed,
         )
     }
 

@@ -254,7 +254,7 @@
     <string name="settings_next_phase">Nächste Phase anzeigen</string>
     <string name="settings_next_phase_hint">Zeigt dezent die kommende Phase – hilfreich für den Anfang.</string>
     <string name="settings_silence_after">Danach in die Stille</string>
-    <string name="settings_silence_after_hint">Nach der Übung geht es nahtlos in die stille Meditation, mit Dauer, Gong und Stimme wie zuletzt im Tab Meditation.</string>
+    <string name="settings_silence_after_hint">Standard für neue Übungen; in der Übung oben umschaltbar. Nach der Übung geht es nahtlos in die stille Meditation, mit Dauer, Gong und Stimme wie zuletzt im Tab Meditation.</string>
     <string name="settings_auto_calm">Automatisch ausblenden</string>
     <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück. Ein Tipp neben den Kreis holt sie wieder.</string>
     <string name="settings_progress">Fortschrittsring</string>

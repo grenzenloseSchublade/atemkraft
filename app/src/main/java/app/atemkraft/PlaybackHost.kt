@@ -96,9 +96,9 @@ internal class PlaybackState(
     val haptics get() = container.hapticPlayer
     val silenceAfterBreath get() = container.silenceAfterBreath
 
-    /** Atemübung starten und ihr Overlay öffnen. */
+    /** Atemübung starten und ihr Overlay öffnen; „Danach in die Stille“ startet mit dem Standard aus den Einstellungen. */
     fun startBreath(exercise: Exercise, config: SessionConfig) {
-        breath.start(exercise, config)
+        breath.start(exercise, config, silenceAfter = sessionDisplay.silenceAfter)
         sessionExpanded = true
         askNotifications()
     }
@@ -187,6 +187,7 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
                 display = playback.sessionDisplay,
                 onMinimize = { playback.sessionExpanded = false },
                 onToggleMute = breath::toggleMute,
+                onToggleSilenceAfter = breath::toggleSilenceAfter,
                 onTogglePause = {
                     if (state.status == SessionStatus.PAUSED) {
                         breath.resume()

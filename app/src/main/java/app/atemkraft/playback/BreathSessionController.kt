@@ -84,6 +84,11 @@ data class SessionUiState(
     val summary: SessionSummary? = null,
     /** Darf nach dieser Übung die stille Meditation folgen ([Exercise.silenceAfterAllowed])? */
     val silenceAfterAllowed: Boolean = false,
+    /**
+     * „Danach in die Stille“ für diese Übung: Startwert aus der Einstellung (Standard), in der
+     * Übung umschaltbar ([BreathSessionController.toggleSilenceAfter]); nie, wenn nicht erlaubt.
+     */
+    val silenceAfter: Boolean = false,
 )
 
 /**
@@ -176,9 +181,10 @@ class BreathSessionController(
      * Detailseite – genau das Muster, das dort zu sehen war; „Von vorne“ nimmt dasselbe Objekt
      * (kein erneutes Nachschlagen per Id, das um Mitternacht ein anderes Tagesmuster liefern könnte).
      * Startet nur aus der sichtbaren App (Start-Knopf, „Nochmal“): Den Foreground-Service darf
-     * Android ab 12 nicht aus dem Hintergrund starten.
+     * Android ab 12 nicht aus dem Hintergrund starten. [silenceAfter] ist der Wunsch „Danach in die
+     * Stille“ für diese Übung, beim Start aus der Einstellung (Standard für neue Übungen).
      */
-    fun start(exercise: Exercise, config: SessionConfig = SessionConfig()) {
+    fun start(exercise: Exercise, config: SessionConfig = SessionConfig(), silenceAfter: Boolean = false) {
         val adjusted = exercise.adjusted(config)
         runnerJob?.cancel()
         releaseJob?.cancel()
@@ -198,6 +204,7 @@ class BreathSessionController(
             countdown = SessionTiming.COUNTDOWN_SECONDS,
             patternHint = adjusted.instructionHint,
             silenceAfterAllowed = adjusted.silenceAfterAllowed,
+            silenceAfter = silenceAfter && adjusted.silenceAfterAllowed,
         )
         // Foreground-Service: Dauer-Benachrichtigung, Prozess und CPU bleiben wach (idempotent).
         service.start()
@@ -211,9 +218,9 @@ class BreathSessionController(
         }
     }
 
-    /** Startet dieselbe Übung mit derselben Anpassung von vorn (inkl. Countdown). */
+    /** Startet dieselbe Übung mit derselben Anpassung von vorn (inkl. Countdown), der Wunsch „Danach in die Stille“ bleibt. */
     fun restart() {
-        baseExercise?.let { start(it, currentConfig) }
+        baseExercise?.let { start(it, currentConfig, silenceAfter = _state.value.silenceAfter) }
     }
 
     private suspend fun runCountdown() = clock.countdown { n ->
@@ -233,6 +240,11 @@ class BreathSessionController(
         if (_state.value.status != SessionStatus.PAUSED) return
         _state.update { it.copy(status = SessionStatus.RUNNING) }
         launchRunner()
+    }
+
+    /** Schaltet „Danach in die Stille“ für diese Übung um (nur, wo es erlaubt ist). */
+    fun toggleSilenceAfter() {
+        _state.update { if (it.silenceAfterAllowed) it.copy(silenceAfter = !it.silenceAfter) else it }
     }
 
     /** Beendet eine offene Phase ([PhaseDuration.OpenEnded]/[PhaseDuration.UntilUrge]). */

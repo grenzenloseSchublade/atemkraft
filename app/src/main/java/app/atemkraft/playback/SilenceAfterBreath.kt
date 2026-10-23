@@ -17,7 +17,8 @@ import kotlinx.coroutines.launch
  * startet die Meditation – auch hinter dem Sperrbildschirm sofort statt verspätet beim nächsten
  * Sichtbarwerden der App. Der Logbuch-Eintrag der Atemübung steht dann schon.
  *
- * Mit [silenceAfter] (Einstellung) automatisch am Ende; ohne sie über den Link „In der Stille
+ * Automatisch am Ende, wenn die Übung es wünscht ([SessionUiState.silenceAfter]: Startwert aus der
+ * Einstellung, in der Übung oben umschaltbar, Nutzer 2026-10-23); sonst über den Link „In der Stille
  * bleiben ›“ am Ende-Screen ([intoSilence]), beides auf demselben Weg. Nie nach Übungen mit
  * [app.atemkraft.domain.Exercise.silenceAfterAllowed] = false (Atmen im Gehen) und nie über eine
  * schon offene Meditation hinweg.
@@ -35,7 +36,6 @@ import kotlinx.coroutines.launch
 class SilenceAfterBreath(
     private val breath: BreathSessionController,
     private val meditation: MeditationController,
-    private val silenceAfter: Flow<Boolean>,
     private val meditationConfig: Flow<MeditationConfig>,
     private val canStartNow: () -> Boolean,
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
@@ -48,7 +48,7 @@ class SilenceAfterBreath(
     init {
         scope.launch {
             breath.finished.collect { exercise ->
-                if (exercise.silenceAfterAllowed && silenceAfter.first()) enter()
+                if (exercise.silenceAfterAllowed && breath.state.value.silenceAfter) enter()
             }
         }
     }

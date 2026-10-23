@@ -10,7 +10,8 @@ import app.atemkraft.ui.components.CalmHost
 import app.atemkraft.ui.components.OverlayChrome
 
 /**
- * Vollbild-Session über dem Scaffold; Rahmen (Minimieren + Mute) über das geteilte [OverlayChrome].
+ * Vollbild-Session über dem Scaffold; Rahmen (Minimieren, „Danach in die Stille“ für diese Übung,
+ * Ton) über das geteilte [OverlayChrome].
  *
  * Ruhe-Ansicht ([CalmHost]): Ein Tipp neben den Kreis blendet alle Bedienelemente aus
  * (Kopfleiste, Titel, Anleitung, Anleitungszeile, „Als Nächstes“, Knöpfe, Systemleisten), ein
@@ -38,6 +39,8 @@ fun SessionOverlay(
     onOpenLogbook: (() -> Unit)? = null,
     // „In der Stille bleiben ›“ am Ende-Screen: weiter in die stille Meditation; ohne ihn kein Link.
     onIntoSilence: (() -> Unit)? = null,
+    // „Danach in die Stille“ für diese Übung umschalten (Kopfzeile, neben dem Ton).
+    onToggleSilenceAfter: () -> Unit = {},
 ) {
     BackHandler { if (state.status == SessionStatus.FINISHED) onStop() else onMinimize() }
     CalmHost(
@@ -53,6 +56,9 @@ fun SessionOverlay(
             onMinimize = onMinimize,
             onToggleMute = onToggleMute,
             chromeVisible = controlsVisible,
+            // Nicht nach Atmen im Gehen und nicht mehr am Ende (dort: „In der Stille bleiben ›“).
+            silenceAfter = state.silenceAfter.takeIf { state.silenceAfterAllowed && state.status != SessionStatus.FINISHED },
+            onToggleSilenceAfter = onToggleSilenceAfter,
         ) {
             SessionScreen(
                 state = state,

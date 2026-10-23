@@ -94,7 +94,6 @@ class AppContainer(context: Context) {
     val silenceAfterBreath: SilenceAfterBreath = SilenceAfterBreath(
         breath = breathSessionController,
         meditation = meditationController,
-        silenceAfter = settingsRepository.sessionDisplay.map { it.silenceAfter },
         meditationConfig = settingsRepository.meditationSettings,
         canStartNow = playbackService::canStartNow,
     )
