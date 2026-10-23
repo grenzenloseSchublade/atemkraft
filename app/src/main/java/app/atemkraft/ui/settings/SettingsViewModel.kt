@@ -1,12 +1,7 @@
 package app.atemkraft.ui.settings
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import app.atemkraft.AtemkraftApplication
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceModelManager
@@ -174,22 +169,5 @@ class SettingsViewModel(
 
     private fun write(block: suspend () -> Unit) {
         viewModelScope.launch { block() }
-    }
-
-    companion object {
-        /** DI: zieht Repositories, Stimmen und Player aus dem AppContainer. */
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val container = (this[APPLICATION_KEY] as AtemkraftApplication).container
-                SettingsViewModel(
-                    settings = container.settingsRepository,
-                    voices = container.voiceModelManager,
-                    meditation = container.meditationController,
-                    logbook = container.logbookRepository,
-                    gongPreview = container.gongPreviewPlayer,
-                    voiceSamples = container.voiceSamplePlayer,
-                )
-            }
-        }
     }
 }

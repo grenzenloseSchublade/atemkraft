@@ -1,6 +1,9 @@
 package app.atemkraft
 
 import android.content.Context
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
@@ -17,6 +20,7 @@ import app.atemkraft.playback.MeditationController
 import app.atemkraft.playback.PlaybackServiceLinks
 import app.atemkraft.playback.SessionAudioCoordinator
 import app.atemkraft.playback.SilenceAfterBreath
+import app.atemkraft.ui.settings.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -97,4 +101,22 @@ class AppContainer(context: Context) {
         meditationConfig = settingsRepository.meditationSettings,
         canStartNow = playbackService::canStartNow,
     )
+
+    /**
+     * Fabrik des [SettingsViewModel], des einzigen ViewModels: zieht Repositories, Stimmen und
+     * Player aus diesem Container. Liegt hier statt im ViewModel, damit `ui/` weder die
+     * Application noch den Container kennt (A-10).
+     */
+    val settingsViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
+        initializer {
+            SettingsViewModel(
+                settings = settingsRepository,
+                voices = voiceModelManager,
+                meditation = meditationController,
+                logbook = logbookRepository,
+                gongPreview = gongPreviewPlayer,
+                voiceSamples = voiceSamplePlayer,
+            )
+        }
+    }
 }

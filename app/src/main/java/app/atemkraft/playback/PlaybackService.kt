@@ -1,5 +1,6 @@
 package app.atemkraft.playback
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -16,8 +17,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import app.atemkraft.AtemkraftApplication
-import app.atemkraft.MainActivity
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.MeditationMode
@@ -31,6 +30,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+
+/**
+ * Was der [PlaybackService] von der App braucht: die beiden Abläufe und die Activity, die ein Tipp
+ * auf die Benachrichtigung öffnet. Die Application implementiert es; so kennt `playback/` weder die
+ * Application- noch die Activity-Klasse und hängt nicht am Wurzelpaket (A-10).
+ */
+interface PlaybackDependencies {
+    val meditationController: MeditationController
+    val breathSessionController: BreathSessionController
+    val launchActivity: Class<out Activity>
+}
 
 /**
  * Foreground-Service (`mediaPlayback`), der eine laufende Meditation oder Atem-Session am Leben
@@ -49,9 +59,9 @@ class PlaybackService : Service() {
 
     private val scope = supervisedScope(Dispatchers.Main.immediate)
 
-    private val container get() = (application as AtemkraftApplication).container
-    private val meditation get() = container.meditationController
-    private val breath get() = container.breathSessionController
+    private val dependencies get() = application as PlaybackDependencies
+    private val meditation get() = dependencies.meditationController
+    private val breath get() = dependencies.breathSessionController
 
     /**
      * Partial-Wakelock: hält NUR die CPU wach (Bildschirm darf aus), solange eine Sitzung aktiv
@@ -205,7 +215,7 @@ class PlaybackService : Service() {
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, MainActivity::class.java)
+            Intent(this, dependencies.launchActivity)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE,
         )

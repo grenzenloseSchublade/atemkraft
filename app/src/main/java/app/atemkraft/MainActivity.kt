@@ -72,9 +72,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AtemkraftApp(
     // An der Activity und ab App-Start gesammelt: Beim Öffnen springt kein Schalter (ARC-3).
-    settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
+    settingsViewModel: SettingsViewModel = viewModel(factory = appContainer().settingsViewModelFactory),
 ) {
-    val container = (LocalContext.current.applicationContext as AtemkraftApplication).container
+    val container = appContainer()
     val navController = rememberNavController()
     val playback = rememberPlaybackState(container)
     val graphState = rememberGraphState(container)
@@ -140,3 +140,7 @@ private fun AtemkraftApp(
         )
     }
 }
+
+/** Der [AppContainer] der laufenden App. */
+@Composable
+private fun appContainer(): AppContainer = (LocalContext.current.applicationContext as AtemkraftApplication).container

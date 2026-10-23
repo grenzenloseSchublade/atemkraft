@@ -501,6 +501,10 @@ CHECKS: list[Check] = [
     Check("layer-import-cue", "CODE-01", [SRC + "cue/*.kt"], [r"^import app\.atemkraft\.(?!(cue|domain)\b|(BuildConfig|R)$)"]),
     Check("layer-import-components", "CODE-01", [SRC + "ui/components/*.kt"], [r"^import app\.atemkraft\.ui\.(?!theme\b|components\b|navigation\.(LocalTabBarState|TabBarState)\b)"]),
     Check("layer-import-playback", "CODE-01", [SRC + "playback/*.kt"], [r"^import app\.atemkraft\.ui\b"]),
+    # Das Wurzelpaket (Application, Container, Activity, NavGraph) steckt alles zusammen; nur es selbst
+    # kennt seine Klassen, die Schichten darunter sehen davon nur BuildConfig und R.
+    Check("layer-import-root", "CODE-01", [SRC + "data/*.kt", SRC + "playback/*.kt", SRC + "ui/*.kt"],
+          [r"^import app\.atemkraft\.(?!(BuildConfig|R)$)[A-Z]\w*$"]),
     Check("ordinal-persist", "CODE-05", [SRC + "data/*.kt"], [r"\.ordinal\b"]),
     Check("todo-unlinked", "CODE-06", [SRC + "*.kt"], [r"//\s*TODO(?!\((S|A)-\d+\))"], skip_comments=False),
     # Sicherheit (docs/SECURITY.md, Automatische Prüfung): Null-Toleranz, ohne Baseline.
