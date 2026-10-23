@@ -14,6 +14,9 @@ interface LogbookDao {
     @Query("SELECT * FROM log_entries ORDER BY startedAtEpochMs DESC")
     fun all(): Flow<List<LogEntryEntity>>
 
+    @Query("SELECT COUNT(*) FROM log_entries")
+    fun count(): Flow<Int>
+
     @Query("DELETE FROM log_entries")
     suspend fun clear()
 }

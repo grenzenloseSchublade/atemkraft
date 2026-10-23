@@ -12,8 +12,8 @@ class LogbookRepository(private val dao: LogbookDao) {
 
     val entries: Flow<List<SessionLogEntry>> = dao.all().map { list -> list.map { it.toDomain() } }
 
-    /** Zahl der Einträge (Einstellungen, Zeile „Logbuch“), ohne sie in Domain-Objekte zu wandeln. */
-    val count: Flow<Int> = dao.all().map { it.size }
+    /** Zahl der Einträge (Einstellungen, Zeile „Logbuch“): zählt in der DB, statt alle Zeilen zu laden (A-16). */
+    val count: Flow<Int> = dao.count()
 
     suspend fun append(entry: SessionLogEntry) = dao.insert(entry.toEntity())
 

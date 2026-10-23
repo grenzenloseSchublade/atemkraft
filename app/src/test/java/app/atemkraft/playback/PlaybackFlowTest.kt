@@ -215,6 +215,8 @@ class PlaybackFlowTest {
 
         override fun all(): Flow<List<LogEntryEntity>> = MutableStateFlow(rows.toList())
 
+        override fun count(): Flow<Int> = MutableStateFlow(rows.size)
+
         override suspend fun clear() = rows.clear()
     }
 
