@@ -12,7 +12,8 @@ import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.ExerciseIds
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.ui.navigation.PatternEditorRoute
 import kotlinx.coroutines.CoroutineScope
@@ -59,16 +60,16 @@ internal fun DetailDestination(
     val lookup = rememberDetailExercise(
         id = id,
         resolve = exercises::byId,
-        live = { key -> SavedPatternsRepository.idOf(key)?.let { savedPatterns.observe(key) } },
+        live = { key -> ExerciseIds.savedIdOf(key)?.let { savedPatterns.observe(key) } },
     )
     val exercise = lookup.exercise
     if (exercise == null) {
         if (lookup.missing) LaunchedEffect(id) { missing() }
         return
     }
-    val savedPatternId = SavedPatternsRepository.idOf(id)
+    val savedPatternId = ExerciseIds.savedIdOf(id)
     val requireSafety = exercise.caution && (!safety.acknowledged || safety.showWarning)
-    val persistIntervals = id != RandomPatternGenerator.ID
+    val persistIntervals = id != ExerciseIds.DAILY
     val markable = exercise in BuiltInExercises.all
     val savedIntervals by remember(id) { settings.exerciseIntervals(id) }.collectAsStateWithLifecycle(initialValue = null)
     ExerciseDetailScreen(
@@ -100,8 +101,8 @@ internal fun DetailDestination(
         onEditPattern = when {
             // Die Zahlen genau dieses Musters mitgeben: Ein erneutes Nachschlagen im Editor wäre
             // nach Mitternacht schon das nächste.
-            id == RandomPatternGenerator.ID -> {
-                { onOpenEditor(RandomPatternGenerator.specOf(exercise)?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true)) }
+            id == ExerciseIds.DAILY -> {
+                { onOpenEditor(GeneratedExercises.specOf(exercise)?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true)) }
             }
 
             savedPatternId != null -> {

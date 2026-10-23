@@ -66,13 +66,7 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
  */
 object RandomPatternGenerator {
 
-    /** Übungs-Kennung des Musters des Tages; wie [ExerciseIds.DAILY], bleibt für bestehende Aufrufer (MainActivity). */
-    const val ID = ExerciseIds.DAILY
-
     fun forDate(date: LocalDate): DailyPattern = forSeed(date.toEpochDay())
-
-    /** Wie [GeneratedExercises.specOf]; bleibt für bestehende Aufrufer (MainActivity). */
-    fun specOf(exercise: Exercise): PatternSpec? = GeneratedExercises.specOf(exercise)
 
     /** Muster aus beliebigem Seed – für „Neu generieren". */
     fun forSeed(seed: Long): DailyPattern {

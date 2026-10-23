@@ -195,7 +195,7 @@ class SavedPatternsRepository(
      * Muster gibt es nicht (mehr).
      */
     fun observe(exerciseId: String): Flow<Exercise?> {
-        val id = idOf(exerciseId) ?: return flowOf(null)
+        val id = ExerciseIds.savedIdOf(exerciseId) ?: return flowOf(null)
         return patterns.map { list -> list.firstOrNull { it.id == id }?.exercise }.distinctUntilChanged()
     }
 
@@ -296,7 +296,7 @@ class SavedPatternsRepository(
 
     /** Synchrone Auflösung für den Session-Start ([ExerciseRepository.byId]). */
     fun byExerciseId(exerciseId: String): Exercise? {
-        val id = idOf(exerciseId) ?: return null
+        val id = ExerciseIds.savedIdOf(exerciseId) ?: return null
         return cached.firstOrNull { it.id == id }?.exercise
     }
 
@@ -376,9 +376,6 @@ class SavedPatternsRepository(
     companion object {
         /** Vorschlagsname einer freien Folge, z. B. „Eigenes Muster 3·1·6“ ([FreePattern.numbers]). */
         fun suggestedName(pattern: FreePattern): String = "Eigenes Muster ${pattern.numbers()}"
-
-        /** DB-Id aus einer Übungs-Id („muster-7“ → 7); null für andere Übungen ([ExerciseIds.savedIdOf]). */
-        fun idOf(exerciseId: String): Long? = ExerciseIds.savedIdOf(exerciseId)
 
         private fun entityOf(spec: PatternSpec, name: String, origin: String, minutes: Int?) = SavedPatternEntity(
             name = name,
