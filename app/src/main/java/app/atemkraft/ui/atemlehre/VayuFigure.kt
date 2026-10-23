@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +51,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -94,8 +97,9 @@ import app.atemkraft.ui.theme.VayuWholeAlpha
 /**
  * Inhalt des Abschnitts „Die fünf *vāyus*“ der Atemlehre (Design Vayus.dc.html, Nutzer
  * 2026-10-22): kurze Einleitung, das Bild ([VayuFigure]), ein Hinweis und die Liste der fünf als
- * Schalter ([VayuRow]), darunter die Quelle. Tippen hebt eine Strömung im Bild hervor, ein
- * zweiter Tipp oder ein anderer Eintrag löst sie wieder. Die Wahl überlebt den Weg in eine Übung.
+ * Schalter ([VayuRow]), darunter die Quelle. Tippen auf einen Eintrag oder auf die Stelle am Körper
+ * (Nutzer 2026-10-23) hebt eine Strömung im Bild und in der Liste hervor, ein zweiter Tipp oder ein
+ * anderer vāyu löst sie wieder. Die Wahl überlebt den Weg in eine Übung.
  */
 @Composable
 internal fun VayusContent() {
@@ -112,7 +116,7 @@ internal fun VayusContent() {
                 .padding(vertical = Dimens.GapSmall),
             contentAlignment = Alignment.Center,
         ) {
-            VayuFigure(selected = selected)
+            VayuFigure(selected = selected, onSelect = { vayu -> selected = if (selected == vayu) null else vayu })
         }
         HintText(stringResource(R.string.atemlehre_vayus_hint))
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
@@ -190,10 +194,16 @@ private fun VayuRow(vayu: LoreVayu, selected: Boolean, onToggle: () -> Unit) {
  *
  * Geometrie in den Einheiten der Vorlage (viewBox 352 × 450), skaliert auf die Breite; die
  * Beschriftungen folgen der Systemschrift (`labelMedium`, kursiv) und bleiben im Bild.
- * Für TalkBack ein Knoten mit Beschreibung; die Liste darunter trägt dieselbe Information.
+ * Für TalkBack ein Knoten mit Beschreibung; die Liste darunter trägt dieselbe Information und ist
+ * der zugängliche Weg zur Wahl.
+ *
+ * Antippen wählt den vāyu an dieser Stelle ([onSelect], Nutzer 2026-10-23): seine Beschriftung,
+ * sein Farbfeld (das kleinere zuerst, samāna vor apāna), sonst im Bereich von Figur, Aura und
+ * Strömungslinien vyāna; daneben nichts. Das Bild ist ein Fünftel schmaler als die Spalte
+ * ([FIGURE_WIDTH], Nutzer 2026-10-23).
  */
 @Composable
-internal fun VayuFigure(selected: Vayu?, modifier: Modifier = Modifier) {
+internal fun VayuFigure(selected: Vayu?, onSelect: (Vayu) -> Unit, modifier: Modifier = Modifier) {
     val animate = remember { ValueAnimator.areAnimatorsEnabled() }
     val flow: State<Float>
     val flowFast: State<Float>
@@ -218,15 +228,24 @@ internal fun VayuFigure(selected: Vayu?, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelMedium.copy(fontStyle = FontStyle.Italic)
     val geometry = remember { VayuGeometry() }
+    // Lage der Beschriftungen in px, beim Zeichnen gemessen; nur das Antippen liest sie (kein State).
+    val labelRects = remember { mutableMapOf<Vayu, Rect>() }
+    val select by rememberUpdatedState(onSelect)
 
     Canvas(
         modifier = modifier
             .widthIn(max = Sizes.VayuFigureMaxWidth)
-            .fillMaxWidth()
+            .fillMaxWidth(FIGURE_WIDTH)
             .aspectRatio(VIEW_W / VIEW_H)
             .semantics {
                 contentDescription = description
                 role = Role.Image
+            }
+            .pointerInput(Unit) {
+                detectTapGestures { position ->
+                    val scale = size.width / VIEW_W
+                    vayuAt(position, scale, labelRects)?.let(select)
+                }
             },
     ) {
         val scale = size.width / VIEW_W
@@ -275,8 +294,26 @@ internal fun VayuFigure(selected: Vayu?, modifier: Modifier = Modifier) {
             val left = (if (label.endAnchored) anchor - width else anchor).coerceIn(0f, (size.width - width).coerceAtLeast(0f))
             val top = (label.baseline * scale - layout.firstBaseline).coerceIn(0f, (size.height - layout.size.height).coerceAtLeast(0f))
             drawText(layout, color = label.vayu.color(), topLeft = Offset(left, top), alpha = alphaOf(label.vayu, VayuLabelAlpha))
+            labelRects[label.vayu] = Rect(Offset(left, top), Size(width, layout.size.height.toFloat()))
         }
     }
+}
+
+/**
+ * Der vāyu an [position] (px; [scale] px je Einheit der Vorlage): Beschriftung ([labels], mit
+ * [LABEL_SLACK] Rand), dann die Farbfelder vom kleinsten an, dann vyāna im Bereich von Figur,
+ * Aura und Strömungslinien ([VYANA_AREA]); sonst null.
+ */
+private fun vayuAt(position: Offset, scale: Float, labels: Map<Vayu, Rect>): Vayu? {
+    labels.entries.firstOrNull { it.value.inflate(LABEL_SLACK * scale).contains(position) }?.let { return it.key }
+    val x = position.x / scale
+    val y = position.y / scale
+    FIELDS.sortedBy { it.rx * it.ry }.firstOrNull { field ->
+        val dx = (x - field.cx) / field.rx
+        val dy = (y - field.cy) / field.ry
+        dx * dx + dy * dy <= 1f
+    }?.let { return it.vayu }
+    return if (VYANA_AREA.contains(Offset(x, y))) Vayu.VYANA else null
 }
 
 /** vyāna als weiche Aura: der Umriss mehrfach, breit und leise übereinander – ein Weichzeichner ohne Blur-Filter. */
@@ -395,6 +432,15 @@ private class VayuGeometry {
 
 private const val VIEW_W = 352f
 private const val VIEW_H = 450f
+
+/** Breite des Bilds als Anteil der Spalte: ein Fünftel kleiner (Nutzer 2026-10-23). */
+private const val FIGURE_WIDTH = 0.8f
+
+/** Rand um die Beschriftungen, in dem ein Tipp sie noch trifft. */
+private const val LABEL_SLACK = 8f
+
+/** Figur samt Aura und Strömungslinien: Ein Tipp hier, aber in keinem Farbfeld, wählt vyāna. */
+private val VYANA_AREA = Rect(76f, 0f, 276f, 444f)
 private const val OUTLINE_WIDTH = 2.5f
 private const val FLOW_WIDTH = 2f
 private const val FLOW_WIDTH_SELECTED = 3f

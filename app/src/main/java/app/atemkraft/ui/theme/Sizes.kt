@@ -101,6 +101,6 @@ object Sizes {
     val MiniCurveWidth = 64.dp
     val MiniCurveHeight = IconDefault
 
-    /** Höchstbreite des vāyu-Bilds der Atemlehre (352, Breite der Vorlage); schmaler skaliert es mit. */
-    val VayuFigureMaxWidth = 352.dp
+    /** Höchstbreite des vāyu-Bilds der Atemlehre (280, ein Fünftel unter der Breite der Vorlage); schmaler skaliert es mit. */
+    val VayuFigureMaxWidth = 280.dp
 }

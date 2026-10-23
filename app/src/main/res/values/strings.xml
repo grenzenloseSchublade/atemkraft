@@ -202,7 +202,7 @@
     <string name="atemlehre_phases">Die vier Phasen</string>
     <!-- Sanskrit zwischen Sternchen wird kursiv gesetzt (TEXT-14, sanskritText). -->
     <string name="atemlehre_vayus">Die fünf *vāyus*</string>
-    <string name="atemlehre_vayus_hint">Tippe eine Strömung an, um sie im Bild hervorzuheben.</string>
+    <string name="atemlehre_vayus_hint">Tippe eine Strömung am Körper oder in der Liste an, um sie hervorzuheben.</string>
     <string name="cd_vayu_figure">Piktogramm-Figur mit den fünf Vayus: prana im Brustraum nach innen, apana im Becken nach unten, samana in der Nabelmitte zur Mitte hin, udana in Hals und Kopf nach oben, vyana im ganzen Körper nach außen.</string>
     <string name="atemlehre_rules">Die Grundregeln</string>
     <string name="atemlehre_patterns">Die Muster</string>
