@@ -53,15 +53,14 @@ import app.atemkraft.ui.theme.Sizes
  * Farbe des Kopfes an Stelle [index] eines Screens (FARBE-07): reihum durch [HeadingRing], der
  * oberste Kopf ist 0. Der Index ist die Lage des Kopfes, ausdrücklich gesetzt, kein Zähler der
  * Komposition – ein zugeklappter Abschnitt behält seine Farbe. Die Farbe trägt keine Bedeutung.
- * Im Atmen-Tab nur für die Anlässe: Die übrigen Köpfe dort tragen die Familienfarben.
+ * Nicht im Atmen-Tab: Dort tragen die Köpfe die Familienfarben.
  */
 fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
 
 /**
- * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen samt
- * Anlässen, Eigene, Meditation, Lernen, Atemlehre, Pranayama, Glossar, Logbuch), damit
- * Sektionsüberschriften überall identisch lesen. [color] kommt aus [headingColor] (FARBE-07),
- * im Atmen-Tab außer bei den Anlässen aus der Familie.
+ * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen, Eigene,
+ * Meditation, Atemlehre, Pranayama, Glossar, Logbuch), damit Sektionsüberschriften überall
+ * identisch lesen. [color] kommt aus [headingColor] (FARBE-07), im Atmen-Tab aus der Familie.
  *
  * Abstände: Über einem festen Kopf steht [top] (Standard `SectionHeaderTop`; kleiner nur, wo ein
  * Bildschirm ohne Scrollen auskommen muss). **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
@@ -69,9 +68,12 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * [CollapsibleSection]. So steht der erste Inhalt unter jedem Kopf gleich weit.
  *
  * [trailingAction] ist eine optionale Aktion für den ganzen Abschnitt (z. B. „Muster neu
- * generieren“), rechts als `AppIconButton`, ihr Glyph bündig an der Inhaltskante ([flushEnd]).
- * Sie steht mittig auf der ersten Titelzeile; ihre 48-dp-Tippfläche ragt dabei in den Abstand
- * darunter, ohne den Kopf höher zu machen – der Abschnitt rückt nicht nach unten.
+ * generieren“, „Neues Muster“), rechts als `AppIconButton`, ihr Glyph bündig an der Inhaltskante
+ * ([flushEnd]). Sie steht mittig auf der ersten Titelzeile; ihre 48-dp-Tippfläche ragt dabei in den
+ * Abstand darunter, ohne den Kopf höher zu machen – der Abschnitt rückt nicht nach unten. Mit
+ * [expanded] stehen Caret und Aktion zusammen: Der Caret bleibt am Titel, die Aktion rechts davon
+ * an der Inhaltskante; die Tippfläche des Auf- und Zuklappens endet vor der Aktion, beide sind
+ * eigene Bedienelemente („Eigene Kreationen“ im Tab „Eigene“).
  *
  * [teaser] steht als ganzer Satz unter dem Titel (nie gekürzt, LAYOUT-03). Mit [expanded]
  * wird der Kopf zur aufklappbaren Zeile (MUSTER-03): Caret am Titel, die ganze Zeile samt
@@ -80,7 +82,7 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt:
  * nicht aufklappbar.
  *
- * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Meine Muster · 5“):
+ * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Eigene Kreationen · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
  * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Ablauf ·
  * 4 von 12 Phasen“, MUSTER-02). Passt er nicht mehr hinter den Titel, steht er darunter, ohne den
@@ -125,10 +127,12 @@ fun SectionHeader(
         Modifier.padding(vertical = Dimens.GapSmall)
     }
     Row(
-        modifier = modifier.fillMaxWidth().then(toggle),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,
     ) {
-        Column(modifier = Modifier.weight(1f).then(inner)) {
+        // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
+        // So steckt eine Kopf-Aktion daneben nicht in einem zweiten Button.
+        Column(modifier = Modifier.weight(1f).then(toggle).then(inner)) {
             // Balken und Caret stehen mittig neben der ersten Titelzeile, nicht mittig am ganzen
             // Block: Rutscht der Status darunter (bis zu drei Zeilen), bliebe der Balken sonst
             // neben dem Status stehen.
@@ -202,7 +206,8 @@ private fun Modifier.centeredOverflow(center: Dp): Modifier = layout { measurabl
  * vom Abschnitt darüber wie ein fester Kopf. [headerTop] ist der Abstand über einem festen Kopf
  * (0 für den ersten Kopf einer Push-Seite, der schon `SectionGap` unter dem Seitenkopf steht).
  * [headerModifier] gilt für die Kopfzeile selbst (Tippfläche), z. B. ein `FocusRequester`, wenn
- * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07).
+ * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07). [trailingAction] reicht an den Kopf
+ * durch (Aktion neben dem Caret, z. B. „+“ bei „Eigene Kreationen“).
  *
  * Nicht im Meditations-Tab: Dort kostete jede Höhenänderung den Zeitring Platz (LAYOUT-08).
  */
@@ -221,6 +226,7 @@ fun CollapsibleSection(
     spacingAbove: Dp = 0.dp,
     headerTop: Dp = Dimens.SectionHeaderTop,
     contentSpacing: Dp = Dimens.ListGap,
+    trailingAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val topFill = if (expanded == null) 0.dp else (Dimens.SectionHeaderTop - Dimens.GapSmall * 2 - spacingAbove).coerceAtLeast(0.dp)
@@ -237,6 +243,7 @@ fun CollapsibleSection(
             statusDescription = statusDescription,
             smallStatus = smallStatus,
             top = headerTop,
+            trailingAction = trailingAction,
         )
         if (expanded != false) {
             Column(
@@ -335,7 +342,7 @@ private fun SectionHeaderPreview() {
 private fun SectionHeaderExpandablePreview() {
     AtemkraftTheme {
         SectionHeader(
-            title = stringResource(R.string.situations_my_patterns),
+            title = stringResource(R.string.own_creations),
             color = headingColor(0),
             teaser = stringResource(R.string.home_subtitle),
             expanded = false,

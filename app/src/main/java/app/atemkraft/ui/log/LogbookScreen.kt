@@ -8,18 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -29,20 +25,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CollapsibleSection
+import app.atemkraft.ui.components.DotSeparatedFlow
+import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SecondaryText
@@ -79,7 +79,7 @@ private val FAMILY_DOT = 10.dp
 private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.")
 
 /**
- * Logbuch als Push-Seite (aus dem Abschnitt „Logbuch“ im Tab „Eigene“ und vom Ende einer
+ * Logbuch als Push-Seite (aus der Karte „Verlauf“ im Tab „Eigene“ und vom Ende einer
  * Übung): Statistik mit 7-Tage-Übersicht, darunter der Verlauf nach Tagen gruppiert (Heute /
  * Gestern / Diese Woche / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
  * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik. [today] nur
@@ -109,16 +109,13 @@ fun LogbookScreen(
 /**
  * Titel „7 Sitzungen · 65 min gesamt“, die Serie als eigene Zeile erst ab zwei Tagen in Folge
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
- * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung. Auf der Logbuch-Seite und im
- * Abschnitt „Logbuch“ des Tabs „Eigene“.
+ * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung. Auf der Logbuch-Seite; im Tab
+ * „Eigene“ führt [LogHistoryCard] hierher.
  */
 @Composable
 internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()) {
     val streak = rememberLogStreak(entries, today)
-    val minutesPerDay = remember(entries) {
-        entries.groupBy { it.startedAtEpochMs.toEpochDay() }
-            .mapValues { (_, list) -> list.sumOf { it.durationMs } / 60_000L }
-    }
+    val minutesPerDay = rememberMinutesPerDay(entries)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             val totalMinutes = entries.sumOf { it.durationMs } / 60_000L
@@ -152,16 +149,62 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
 }
 
 /**
+ * Einstieg ins Logbuch oben im Tab „Eigene“ (Nutzer 2026-10-23): Titel „Verlauf“ mit Chevron, die
+ * Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min diese Woche“
+ * (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten Tage; fehlt beides,
+ * die Zahl der Sitzungen). Die ganze Karte ist der Button zur Logbuch-Seite ([onClick]). Ohne
+ * Sitzungen steht statt Punkten und Zeile ein Satz; die Karte bleibt (MUSTER-04).
+ *
+ * TalkBack hört „Verlauf“ und die Zeile; die Punkte je Tag stehen auf der Logbuch-Seite.
+ */
+@Composable
+internal fun LogHistoryCard(entries: List<SessionLogEntry>, onClick: () -> Unit, today: LocalDate = LocalDate.now()) {
+    val streak = rememberLogStreak(entries, today)
+    val minutesPerDay = rememberMinutesPerDay(entries)
+    val weekMinutes = (0L..6L).sumOf { minutesPerDay[today.minusDays(it).toEpochDay()] ?: 0L }
+    // Card(onClick): Ripple in Kartenform, Tippfläche ≥ 48 dp aus der M3-Surface (KOMP-02).
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+                CardTitle(stringResource(R.string.own_history), modifier = Modifier.weight(1f))
+                ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
+            }
+            if (entries.isEmpty()) {
+                Spacer(Modifier.height(Dimens.GapTiny))
+                HintText(stringResource(R.string.own_history_empty))
+            } else {
+                Spacer(Modifier.height(Dimens.ListGap))
+                WeekRow(minutesPerDay = minutesPerDay, today = today, spoken = false)
+                Spacer(Modifier.height(Dimens.ListGap))
+                val parts = buildList {
+                    if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
+                    if (weekMinutes > 0) add(stringResource(R.string.log_minutes_week, weekMinutes))
+                    if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
+                }
+                // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
+                DotSeparatedFlow(
+                    parts = parts.map { part -> { SecondaryText(part) } },
+                    separator = { SecondaryText(DOT_SEPARATOR) },
+                )
+            }
+        }
+    }
+}
+
+/**
  * Ruhige 7-Tage-Übersicht: pro Tag ein Punkt, dessen Intensität mit den geübten Minuten
  * wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine Wertung). Bewusst ohne Zahlen und
  * ohne Druck; heute bekommt nur einen sanften Ring. Beschriftung zweibuchstabig („Mo“ … „So“),
- * weil einzelne Buchstaben doppeldeutig sind (M/D/S). Details stehen für TalkBack bereit.
+ * weil einzelne Buchstaben doppeldeutig sind (M/D/S). Details stehen für TalkBack bereit, außer
+ * mit `spoken = false` ([LogHistoryCard]).
  */
 @Composable
-private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate) {
+@OptIn(ExperimentalComposeUiApi::class)
+private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Boolean = true) {
     val labels = stringArrayResource(R.array.log_weekday_short)
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        // spoken = false: Die Zeile ist Teil eines Buttons, der sie in Worten zusammenfasst.
+        modifier = Modifier.fillMaxWidth().then(if (spoken) Modifier else Modifier.semantics { invisibleToUser() }),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         for (offset in 6 downTo 0) {
@@ -262,47 +305,11 @@ private fun LogGroupSection(index: Int, group: LogGroup, zone: ZoneId) {
     }
 }
 
-/**
- * Die letzten [limit] Sitzungen in einer Karte, neueste zuerst, Zeilen wie im Verlauf
- * ([LogEntryRow]); statt der Gruppenköpfe trägt jede Zeile ihren Tag vor der Uhrzeit („Heute ·
- * 08:30“, „Mi 15.10. · 07:45“). Für den Abschnitt „Logbuch“ im Tab „Eigene“.
- */
+/** Geübte Minuten je Tag (Epochentag → Minuten). */
 @Composable
-internal fun RecentLogCard(entries: List<SessionLogEntry>, limit: Int, today: LocalDate = LocalDate.now()) {
-    val zone = ZoneId.systemDefault()
-    val weekdays = stringArrayResource(R.array.log_weekday_short)
-    val todayLabel = stringResource(R.string.log_group_today)
-    val yesterdayLabel = stringResource(R.string.log_group_yesterday)
-    val recent = remember(entries, limit) { entries.sortedByDescending { it.startedAtEpochMs }.take(limit) }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding)) {
-            recent.forEachIndexed { index, entry ->
-                if (index > 0) HorizontalDivider(color = DividerSubtle)
-                val at = Instant.ofEpochMilli(entry.startedAtEpochMs).atZone(zone)
-                val date = at.toLocalDate()
-                val day = when {
-                    !date.isBefore(today) -> todayLabel
-                    date == today.minusDays(1) -> yesterdayLabel
-                    else -> stringResource(R.string.log_day_label, weekdays[(date.dayOfWeek.value - 1).coerceIn(0, 6)], date.format(DAY_MONTH_FORMAT))
-                }
-                LogEntryRow(entry = entry, time = day + DOT_SEPARATOR + at.format(TIME_FORMAT))
-            }
-        }
-    }
-}
-
-/**
- * Kurze Bilanz für den Kopf des Abschnitts „Logbuch“: ab zwei Tagen in Folge die Serie („3 Tage in
- * Folge“, wie in [LogStatsCard]), sonst die Zahl der Sitzungen („12 Sitzungen“).
- */
-@Composable
-internal fun logSummary(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()): String {
-    val streak = rememberLogStreak(entries, today)
-    return if (streak >= 2) {
-        pluralStringResource(R.plurals.log_streak, streak, streak)
-    } else {
-        pluralStringResource(R.plurals.log_sessions, entries.size, entries.size)
-    }
+private fun rememberMinutesPerDay(entries: List<SessionLogEntry>): Map<Long, Long> = remember(entries) {
+    entries.groupBy { it.startedAtEpochMs.toEpochDay() }
+        .mapValues { (_, list) -> list.sumOf { it.durationMs } / 60_000L }
 }
 
 /** Tage in Folge bis heute bzw. gestern ([currentStreak]). */

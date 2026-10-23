@@ -18,7 +18,7 @@
     <string name="family_upregulate">B\u00A0· Hochregeln</string>
     <string name="family_balance">C\u00A0· Balancieren</string>
     <string name="family_functional">D\u00A0· Funktionell</string>
-    <!-- Statt der Familie auf der Detailseite generierter Muster (Tagesmuster, Meine Muster) -->
+    <!-- Statt der Familie auf der Detailseite generierter Muster (Tagesmuster, Eigene Kreationen) -->
     <string name="family_pattern">Muster</string>
 
     <!-- Tags: Studienlage (EvidenceLevel, TEXT-07), Vorsicht, Programm -->
@@ -95,20 +95,22 @@
     <string name="state_not_marked">Nicht markiert</string>
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
-    <string name="situations_my_patterns">Meine Muster</string>
+    <!-- Gespeicherte Tagesmuster und selbst zusammengestellte Muster im Tab „Eigene“ (Nutzer 2026-10-23). -->
+    <string name="own_creations">Eigene Kreationen</string>
     <!-- Anzahl als Status-Suffix an einem Kopf (Abschnitte im Tab „Eigene“, Vorschau des SectionHeader). -->
     <string name="situations_my_patterns_count">· %1$d</string>
     <string name="cd_pattern_delete">Muster %1$s löschen</string>
     <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
 
-    <!-- Tab „Eigene“: Kopf wie die anderen Tabs, darunter „Neues Muster“ und die Abschnitte „Tut mir
-         gut“, „Meine Muster“ (gespeicherte Tagesmuster und selbst zusammengestellte) und „Logbuch“. -->
+    <!-- Tab „Eigene“: Kopf wie die anderen Tabs, darunter die Karte „Verlauf“ (Einstieg ins Logbuch)
+         und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
     <string name="own_title">Eigene</string>
     <string name="own_subtitle">Gespeichert und selbst zusammengestellt</string>
+    <!-- „Neues Muster“: Name des „+“ im Kopf von „Eigene Kreationen“ und, ohne eigene Kreationen, des Knopfs. -->
     <string name="own_new_pattern">Neues Muster</string>
     <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung; der Knopf „Neues Muster“ steht darunter. -->
-    <string name="own_empty">Noch keine Muster. Stell dir eines zusammen oder speichere im Tab „Atmen“ das Muster des Tages.</string>
+    <string name="own_empty">Noch keine eigenen Kreationen. Stell dir ein Muster zusammen oder speichere im Tab „Atmen“ das Muster des Tages.</string>
     <!-- Abschnitte des Tabs einklappbar (MUSTER-03): Anzahl als Status hinter dem Titel, für TalkBack in Worten. -->
     <plurals name="cd_own_favorites_count">
         <item quantity="one">%d Übung</item>
@@ -118,10 +120,9 @@
         <item quantity="one">%d Muster</item>
         <item quantity="other">%d Muster</item>
     </plurals>
-    <!-- Abschnitt „Logbuch“: kurze Bilanz als Status („· 3 Tage in Folge“), darunter Wochenübersicht,
-         die letzten Sitzungen und der Weg zur ganzen Logbuch-Seite. -->
-    <string name="own_log_status">· %1$s</string>
-    <string name="own_log_all">Alle Sitzungen</string>
+    <!-- Karte „Verlauf“: Einstieg ins Logbuch mit Wochenpunkten und Bilanz; ohne Sitzungen der Satz. -->
+    <string name="own_history">Verlauf</string>
+    <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 
     <!-- Einstiege in den Muster-Editor: Link unter dem Muster des Tages, Stift auf der Detailseite. -->
     <string name="home_own_pattern_link">Eigenes Muster zusammenstellen</string>
@@ -334,6 +335,8 @@
         <item quantity="other">%d Sitzungen</item>
     </plurals>
     <string name="log_minutes_total">%1$d\u00A0min gesamt</string>
+    <!-- Minuten der sieben Tage der Wochenpunkte (Karte „Verlauf“ im Tab „Eigene“). -->
+    <string name="log_minutes_week">%1$d\u00A0min diese Woche</string>
     <plurals name="log_rounds">
         <item quantity="one">%d Runde</item>
         <item quantity="other">%d Runden</item>

@@ -146,6 +146,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 today = DAY,
             )
         }
+        // Leer: Verlauf mit dem Satz statt der Punkte, ohne Kopf „Eigene Kreationen“, voller Knopf.
+        snap("13_eigene_leer", tab = Tab.EIGENE) {
+            OwnPatternsScreen(savedPatterns = emptyList(), onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}, today = DAY)
+        }
         snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, prepare = {
             // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.
             val closed = app.getString(R.string.meditation_dial_fine_off)

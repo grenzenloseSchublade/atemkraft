@@ -1,23 +1,15 @@
 package app.atemkraft.ui.own
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,45 +27,41 @@ import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppOutlinedButton
-import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ExerciseCard
-import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
-import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.log.LogStatsCard
-import app.atemkraft.ui.log.RecentLogCard
-import app.atemkraft.ui.log.logSummary
+import app.atemkraft.ui.log.LogHistoryCard
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 import java.time.LocalDate
 
 /**
- * Tab „Eigene“, der persönliche Bereich: oben fest „Neues Muster“ (öffnet den Muster-Editor), dann
- * bis zu drei Abschnitte – „Tut mir gut“ (die Übungen mit der persönlichen Markierung,
- * [favorites], Nutzer 2026-10-23), „Meine Muster“ (gespeicherte Tagesmuster und selbst
- * zusammengestellte Muster, neueste zuerst wie aus der Datenbank) und „Logbuch“ ([logEntries]:
- * Kennzahlen mit Wochenübersicht, die letzten [RECENT_LOG_ENTRIES] Sitzungen und „Alle Sitzungen ›“
- * zur Logbuch-Seite, [onOpenLogbook]). Leere Abschnitte erscheinen nicht; ohne Muster steht über
- * dem Knopf ein kurzer Satz.
+ * Tab „Eigene“, der persönliche Bereich (Nutzer 2026-10-23): oben die Karte „Verlauf“ als
+ * Einstieg ins Logbuch ([LogHistoryCard]: Wochenpunkte und Bilanz, die ganze Karte führt zur
+ * Logbuch-Seite, [onOpenLogbook]; ohne Sitzungen ein Satz, die Karte bleibt), darunter bis zu zwei
+ * Abschnitte – „Tut mir gut“ (die Übungen mit der persönlichen Markierung, [favorites]) und „Eigene
+ * Kreationen“ (gespeicherte Tagesmuster und selbst zusammengestellte Muster, neueste zuerst wie aus
+ * der Datenbank). „Neues Muster“ (öffnet den Muster-Editor) ist das „+“ im Kopf von „Eigene
+ * Kreationen“; ohne eigene Kreationen gibt es den Kopf nicht, dann steht ein kurzer Satz mit dem
+ * vollen Knopf „+ Neues Muster“ da.
  *
- * Einklappbar (MUSTER-03, Nutzer 2026-10-23) erst ab zwei sichtbaren Abschnitten, mit Caret und
- * der Anzahl bzw. kurzen Bilanz im Kopf („Tut mir gut · 4“, „Logbuch · 3 Tage in Folge“). Muster und
- * Markierungen stehen zu Beginn offen, das Logbuch zu; die Wahl gilt für die Sitzung
- * (`rememberSaveable`), nicht dauerhaft. Ein einzelner Abschnitt steht offen ohne Caret.
+ * Einklappbar (MUSTER-03) erst, wenn beide Abschnitte da sind, mit Caret und der Anzahl im Kopf
+ * („Tut mir gut · 4“); beide stehen zu Beginn offen, die Wahl gilt für die Sitzung
+ * (`rememberSaveable`), nicht dauerhaft. Ein einzelner Abschnitt steht offen ohne Caret. Köpfe
+ * reihum nach ihrer Lage (FARBE-07); der Titel der Karte „Verlauf“ steht neutral wie jeder
+ * Kartentitel.
  *
  * Löschen bleibt zweistufig in der Kartenecke (MUSTER-05). Der Kopf gleicht den anderen Tabs:
- * Titel, Untertitel, Zahnrad zu den Einstellungen; einen Kalender braucht er nicht, der Abschnitt
- * „Logbuch“ führt zum Logbuch. [today] nur für reproduzierbare Screenshots.
+ * Titel, Untertitel, Zahnrad zu den Einstellungen. [today] nur für reproduzierbare Screenshots.
  */
 @Composable
 fun OwnPatternsScreen(
@@ -89,14 +77,11 @@ fun OwnPatternsScreen(
 ) {
     var favoritesExpanded by rememberSaveable { mutableStateOf(true) }
     var patternsExpanded by rememberSaveable { mutableStateOf(true) }
-    var logExpanded by rememberSaveable { mutableStateOf(false) }
-    val collapsible = listOf(favorites.isNotEmpty(), savedPatterns.isNotEmpty(), logEntries.isNotEmpty()).count { it } >= 2
+    val collapsible = favorites.isNotEmpty() && savedPatterns.isNotEmpty()
     val favoritesStatus = stringResource(R.string.situations_my_patterns_count, favorites.size)
     val favoritesDescription = pluralStringResource(R.plurals.cd_own_favorites_count, favorites.size, favorites.size)
     val patternsStatus = stringResource(R.string.situations_my_patterns_count, savedPatterns.size)
     val patternsDescription = pluralStringResource(R.plurals.cd_own_patterns_count, savedPatterns.size, savedPatterns.size)
-    val logSummary = logSummary(logEntries, today)
-    val logStatus = stringResource(R.string.own_log_status, logSummary)
 
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
@@ -109,15 +94,8 @@ fun OwnPatternsScreen(
         },
         subtitle = stringResource(R.string.own_subtitle),
     ) {
-        item(key = "new-pattern") {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                if (savedPatterns.isEmpty()) {
-                    HintText(stringResource(R.string.own_empty))
-                    Spacer(Modifier.height(Dimens.GapSmall))
-                }
-                NewPatternButton(onClick = onNewPattern)
-            }
+        item(key = "history") {
+            LogHistoryCard(entries = logEntries, onClick = onOpenLogbook, today = today)
         }
 
         // Köpfe reihum nach ihrer Lage (FARBE-07): Es zählen nur die sichtbaren Abschnitte.
@@ -141,15 +119,22 @@ fun OwnPatternsScreen(
         }
 
         if (savedPatterns.isNotEmpty()) {
-            val color = headingColor(head++)
+            val color = headingColor(head)
             item(key = "my-patterns") {
                 OwnSection(
-                    title = stringResource(R.string.situations_my_patterns),
+                    title = stringResource(R.string.own_creations),
                     color = color,
                     expanded = patternsExpanded.takeIf { collapsible },
                     onExpandedChange = { patternsExpanded = it },
                     status = patternsStatus.takeIf { collapsible },
                     statusDescription = patternsDescription,
+                    // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf, so groß wie „Neu
+                    // generieren“ beim Muster des Tages (AppIconButton), in der Farbe des Kopfs.
+                    trailingAction = {
+                        AppIconButton(onClick = onNewPattern) {
+                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = color)
+                        }
+                    },
                 ) {
                     savedPatterns.forEach { pattern ->
                         // Je Muster ein eigener Zustand des zweistufigen Löschens, auch wenn die Liste sich ändert.
@@ -163,33 +148,19 @@ fun OwnPatternsScreen(
                     }
                 }
             }
-        }
-
-        if (logEntries.isNotEmpty()) {
-            val color = headingColor(head)
-            item(key = "logbook") {
-                OwnSection(
-                    title = stringResource(R.string.settings_log_title),
-                    color = color,
-                    expanded = logExpanded.takeIf { collapsible },
-                    onExpandedChange = { logExpanded = it },
-                    status = logStatus.takeIf { collapsible },
-                    statusDescription = logSummary,
-                ) {
-                    LogStatsCard(entries = logEntries, today = today)
-                    RecentLogCard(entries = logEntries, limit = RECENT_LOG_ENTRIES, today = today)
-                    // Bündig: Das Polster des Text-Buttons ragt in den Rand.
-                    AppTextButton(onClick = onOpenLogbook, modifier = Modifier.flushStart()) {
-                        ForwardLinkText(text = stringResource(R.string.own_log_all), color = MaterialTheme.colorScheme.secondary)
-                    }
+        } else {
+            // Ohne eigene Kreationen kein leerer Kopf: Satz und voller Knopf als Einstieg.
+            item(key = "new-pattern") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.height(Dimens.SectionGap))
+                    HintText(stringResource(R.string.own_empty))
+                    Spacer(Modifier.height(Dimens.GapSmall))
+                    NewPatternButton(onClick = onNewPattern)
                 }
             }
         }
     }
 }
-
-/** Wie viele Sitzungen der Abschnitt „Logbuch“ zeigt; alle stehen auf der Logbuch-Seite. */
-private const val RECENT_LOG_ENTRIES = 3
 
 /**
  * Ein Abschnitt des Tabs als ein Listeneintrag ([CollapsibleSection]); `expanded = null` heißt fest
@@ -203,6 +174,7 @@ private fun OwnSection(
     onExpandedChange: (Boolean) -> Unit,
     status: String?,
     statusDescription: String,
+    trailingAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     CollapsibleSection(
@@ -213,11 +185,12 @@ private fun OwnSection(
         status = status,
         statusDescription = statusDescription.takeIf { status != null },
         spacingAbove = Dimens.ListGap,
+        trailingAction = trailingAction,
         content = content,
     )
 }
 
-/** „+ Neues Muster“ über die volle Breite: die Hauptaktion des Tabs, umrandet wie die Daten-Knöpfe. */
+/** „+ Neues Muster“ über die volle Breite: Einstieg, solange es keine eigenen Kreationen gibt; umrandet wie die Daten-Knöpfe. */
 @Composable
 private fun NewPatternButton(onClick: () -> Unit) {
     AppOutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
