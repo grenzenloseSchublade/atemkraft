@@ -5,7 +5,7 @@ import kotlin.math.roundToInt
 /**
  * Eine bereits aufgelöste Phase im Ablauf einer konkreten Session: alle Runden
  * und Wiederholungen sind ausmultipliziert, [perRound] ist angewandt. Der
- * SessionViewModel arbeitet nur noch auf dieser flachen Liste.
+ * BreathSessionController arbeitet nur noch auf dieser flachen Liste.
  */
 data class RuntimePhase(
     val type: PhaseType,

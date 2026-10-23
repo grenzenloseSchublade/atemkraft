@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -19,8 +20,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Bindet Ton, Haptik und Audio-Fokus an den Session-Zustand – im Scope des ViewModels,
- * bewusst NICHT an den UI-Lifecycle. Hinter dem Sperrbildschirm ist die Composition
+ * Bindet Ton, Haptik und Audio-Fokus an den Session-Zustand – im Scope des
+ * [BreathSessionController] (App-weit, eine Instanz im AppContainer), bewusst NICHT an den
+ * UI-Lifecycle. Hinter dem Sperrbildschirm ist die Composition
  * eingefroren (collectAsStateWithLifecycle pausiert unterhalb von STARTED); dort
  * platzierte Effekte verpassen das Session-Ende, und der durchgehende Ton liefe endlos
  * weiter, bis die Abschluss-Abfrage bestätigt wird. Diese Collector laufen dagegen
@@ -31,12 +33,15 @@ class SessionAudioCoordinator(
     private val settings: Flow<CueSettings>,
     /** Die eine Instanz aus dem AppContainer (AUDIO-04); Phasen-Haptik nutzt deren Drossel nicht. */
     private val hapticPlayer: HapticPlayer,
-) {
+) : BreathAudio {
     private val tonePlayer = ToneCuePlayer()
     private val continuousPlayer = ContinuousTonePlayer()
     private val audioFocus = AudioFocusController(context)
 
-    fun bind(
+    /** Die zuletzt gelesenen Ton-Einstellungen (nach [bind]); für [finishTailMs]. */
+    private var current: StateFlow<CueSettings>? = null
+
+    override fun bind(
         scope: CoroutineScope,
         status: Flow<SessionStatus>,
         cues: Flow<CueEvent>,
@@ -44,6 +49,7 @@ class SessionAudioCoordinator(
         muted: Flow<Boolean>,
     ) {
         val current = settings.stateIn(scope, SharingStarted.Eagerly, CueSettings())
+        this.current = current
         // In-Session-Stummschalter: übersteuert transient den Ton (nicht die Einstellung).
         val mutedState = muted.stateIn(scope, SharingStarted.Eagerly, false)
         scope.launch {
@@ -125,11 +131,14 @@ class SessionAudioCoordinator(
         }
     }
 
-    /** Beim Wegräumen des ViewModels aufrufen: gibt Threads und Audio-Fokus frei. */
-    fun release() {
-        continuousPlayer.stop()
-        tonePlayer.release()
-        audioFocus.abandon()
+    /**
+     * Ausklang des Abschluss-Gongs: so lange hält der Controller den Foreground-Service nach dem
+     * Ende noch, damit der Gong hinter dem Sperrbildschirm nicht abgeschnitten wird. Ohne Ton oder
+     * stummgeschaltet kommt kein Gong (dann 0).
+     */
+    override fun finishTailMs(muted: Boolean): Long {
+        val cfg = current?.value ?: return 0L
+        return if (cfg.soundMode == SoundMode.OFF || muted) 0L else tonePlayer.gongTotalMs().toLong() + FINISH_MARGIN_MS
     }
 
     private companion object {

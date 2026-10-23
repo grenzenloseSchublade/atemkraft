@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -56,9 +55,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -115,7 +111,6 @@ import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorDestination
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionOverlay
-import app.atemkraft.ui.session.SessionViewModel
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
@@ -148,7 +143,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AtemkraftApp(
-    sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory),
     // An der Activity und ab App-Start gesammelt: Beim Öffnen springt kein Schalter (ARC-3).
     settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
@@ -157,10 +151,12 @@ private fun AtemkraftApp(
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
+    // Atem-Session app-weit wie die Meditation (Controller im AppContainer, Foreground-Service).
+    val breathController = container.breathSessionController
     // In der Wurzel nur der Status: Der volle Zustand tickt während einer Sitzung alle 33 ms und
     // wird erst in [SessionHost] gelesen (Mini-Leiste, Overlay) – sonst setzte die ganze App
     // rund 30-mal pro Sekunde neu an (ARC-3).
-    val sessionStatus by sessionViewModel.status.collectAsStateWithLifecycle()
+    val sessionStatus by breathController.status.collectAsStateWithLifecycle()
     val cueSettings by container.settingsRepository.cueSettings
         .collectAsStateWithLifecycle(initialValue = CueSettings())
     val safetySettings by container.settingsRepository.safetySettings
@@ -190,20 +186,18 @@ private fun AtemkraftApp(
     val meditationActive = meditationStatus != MeditationStatus.IDLE
     var meditationExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // Danach in die Stille (Nutzer 2026-10-23): Nach einer Atemübung nahtlos in die stille
-    // Meditation, eingestellt wie zuletzt im Tab Meditation. Nicht nach „Atmen im Gehen“ – wer geht,
-    // setzt sich nicht eben hin. Der Eintrag der Atemübung steht da schon im Logbuch.
-    val silenceAllowed = { sessionViewModel.currentExerciseId != WALKING_EXERCISE_ID }
-    val intoSilence = {
-        val expanded = sessionExpanded
-        sessionViewModel.stop()
-        sessionExpanded = false
-        meditationController.start(meditationConfig)
-        meditationExpanded = expanded
+    // Danach in die Stille: Den Übergang macht der Ablauf selbst ([SilenceAfterBreath], auch hinter
+    // dem Sperrbildschirm). Die Oberfläche übernimmt nur, ob das Session-Overlay offen war – auch
+    // erst beim nächsten Sichtbarwerden, wenn der Übergang im Hintergrund kam.
+    val silenceAfterBreath = container.silenceAfterBreath
+    LaunchedEffect(meditationActive) {
+        if (meditationActive && silenceAfterBreath.consumeHandover()) {
+            meditationExpanded = sessionExpanded
+            sessionExpanded = false
+        }
     }
-    LaunchedEffect(sessionStatus) {
-        if (sessionStatus == SessionStatus.FINISHED && sessionDisplay.silenceAfter && silenceAllowed()) intoSilence()
-    }
+    // Erlaubnis für die Benachrichtigung beim ersten Start einer Sitzung, gleich welcher Art (ARC-6).
+    val askNotifications = rememberNotificationAsk(container.settingsRepository)
 
     KeepScreenOn(
         enabled = sessionStatus == SessionStatus.RUNNING ||
@@ -227,15 +221,6 @@ private fun AtemkraftApp(
     val tabBar = remember(density) { TabBarState(threshold = with(density) { Dimens.SectionGap.toPx() }) }
     LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(startCollapsed = currentDestination.startsWithTabBarCollapsed()) }
 
-    // Aktueller Top-Level-Tab (null auf Push-Zielen wie Detail/Settings).
-    val currentTopTab = when {
-        currentDestination.isOn(AtmenRoute) -> TopTab.ATMEN
-        currentDestination.isOn(SituationenRoute) -> TopTab.SITUATIONEN
-        currentDestination.isOn(EigeneRoute) -> TopTab.EIGENE
-        currentDestination.isOn(MeditationRoute) -> TopTab.MEDITATION
-        currentDestination.isOn(LernenRoute) -> TopTab.LERNEN
-        else -> null
-    }
     // Markiert ist der Tab, zu dessen Stapel die Seite gehört – auch auf Push-Seiten und nach
     // einem wiederhergestellten Stapel (Eigene › Editor, dann Meditation und zurück); ein erneuter
     // Tipp darauf führt zu seiner Startseite zurück (tapTab).
@@ -247,20 +232,6 @@ private fun AtemkraftApp(
             LernenRoute -> TopTab.LERNEN
             else -> TopTab.ATMEN
         }
-    }
-
-    // System-Zurück auf einem Top-Level-Tab bei minimierter Session/Meditation: App nur in den
-    // Hintergrund schieben statt die Activity zu beenden – sonst stirbt die Atem-Session (ihr
-    // ViewModel hängt an der Activity), obwohl die Mini-Leiste „läuft weiter" signalisiert. Nach
-    // dem Ende (FINISHED) gibt es nichts mehr zu retten: Zurück beendet die App wie gewohnt.
-    // Auf Push-Seiten (currentTopTab == null) und in Overlays greifen deren eigene Back-Handler.
-    val sessionRunning = sessionActive && sessionStatus != SessionStatus.FINISHED
-    val meditationRunning = meditationActive && meditationStatus != MeditationStatus.FINISHED
-    BackHandler(
-        enabled = (sessionRunning || meditationRunning) && currentTopTab != null &&
-            !sessionExpanded && !meditationExpanded,
-    ) {
-        (context as? Activity)?.moveTaskToBack(false)
     }
 
     // Liegt ein Overlay über allem, ist die App darunter für TalkBack und Tastatur nicht da
@@ -276,7 +247,7 @@ private fun AtemkraftApp(
                 // Ihre Oberkante trägt den Knopf der Tab-Leiste, solange die Seite keine Startleiste hat.
                 Column(Modifier.onGloballyPositioned { tabBar.bottomBarTop = it.positionInRoot().y }) {
                     if (sessionActive && !sessionExpanded) {
-                        SessionHost(sessionViewModel.state) { state ->
+                        SessionHost(breathController.state) { state ->
                             MiniSessionBar(state = state, onClick = { sessionExpanded = true })
                         }
                     }
@@ -401,7 +372,6 @@ private fun AtemkraftApp(
                     composable<MeditationRoute> {
                         // TTS-Engine erst hier vorbereiten (nicht beim App-Start), idempotent.
                         LaunchedEffect(Unit) { meditationController.prepareSpeech() }
-                        val askNotifications = rememberNotificationAsk(container.settingsRepository)
                         MeditationScreen(
                             initialConfig = meditationConfig,
                             speechAvailable = meditationSpeechAvailable,
@@ -481,9 +451,10 @@ private fun AtemkraftApp(
                                 scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
                             },
                             onStart = { config ->
-                                sessionViewModel.start(exercise, config)
+                                breathController.start(exercise, config)
                                 sessionExpanded = true
                                 navController.popBackStack()
+                                askNotifications()
                             },
                             onBack = { navController.popBackStack() },
                             onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
@@ -524,8 +495,9 @@ private fun AtemkraftApp(
                             // Ausprobieren ohne Speichern: Der Editor bleibt unter der Session offen –
                             // probieren, nachstellen, noch einmal probieren.
                             onStart = { exercise, config ->
-                                sessionViewModel.start(exercise, config)
+                                breathController.start(exercise, config)
                                 sessionExpanded = true
+                                askNotifications()
                             },
                             onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
                             onBack = { navController.popBackStack() },
@@ -593,31 +565,32 @@ private fun AtemkraftApp(
         // Vollbild-Session über allem; System-Zurück regelt das Overlay selbst (minimieren, am
         // Ende-Screen wie „Ende“).
         if (sessionActive && sessionExpanded) {
-            SessionHost(sessionViewModel.state) { state ->
+            SessionHost(breathController.state) { state ->
                 SessionOverlay(
                     state = state,
                     display = sessionDisplay,
                     onMinimize = { sessionExpanded = false },
-                    onToggleMute = sessionViewModel::toggleMute,
+                    onToggleMute = breathController::toggleMute,
                     onTogglePause = {
                         if (state.status == SessionStatus.PAUSED) {
-                            sessionViewModel.resume()
+                            breathController.resume()
                         } else {
-                            sessionViewModel.pause()
+                            breathController.pause()
                         }
                     },
                     // Tipp-Tick nur bei eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
                     onTapHaptic = { container.hapticPlayer.tick(enabled = cueSettings.haptics) },
-                    onContinue = sessionViewModel::continueFromUserPaced,
-                    onRestart = sessionViewModel::restart,
+                    onContinue = breathController::continueFromUserPaced,
+                    onRestart = breathController::restart,
                     onStop = {
-                        sessionViewModel.stop()
+                        breathController.stop()
                         sessionExpanded = false
                     },
-                    onIntoSilence = if (silenceAllowed()) intoSilence else null,
+                    // Derselbe Weg wie „Danach in die Stille“; nicht nach Atmen im Gehen.
+                    onIntoSilence = if (state.silenceAfterAllowed) silenceAfterBreath::intoSilence else null,
                     // „Im Logbuch ansehen ›“ am Ende: beendet wie „Ende“ und öffnet das Logbuch.
                     onOpenLogbook = {
-                        sessionViewModel.stop()
+                        breathController.stop()
                         sessionExpanded = false
                         navController.navigate(LogbookRoute) { launchSingleTop = true }
                     },
@@ -698,17 +671,12 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
 /** Die vier Top-Level-Tabs in Leisten-Reihenfolge (für die Markierung, auch auf Push-Zielen). */
 private enum class TopTab { ATMEN, SITUATIONEN, EIGENE, MEDITATION, LERNEN }
 
-/** „Atmen im Gehen“: danach geht es nicht in die stille Meditation. */
-private const val WALKING_EXERCISE_ID = "walking-breath"
-
-/** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
-private fun NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true
-
 /**
  * Fragt ab Android 13 einmalig nach der Benachrichtigungs-Erlaubnis – im Moment, in dem sie Sinn
- * ergibt: beim ersten Meditationsstart, nicht beim App-Start (ARC-6). Gebraucht wird sie nur für
- * die Meditations-Benachrichtigung; bei Ablehnung läuft der Timer trotzdem. Danach fragt die App
- * nie wieder. Bis der gespeicherte Stand geladen ist, gilt „schon gefragt“ – lieber einmal nicht
+ * ergibt: beim ersten Start einer Sitzung (Meditation oder Atemübung), nicht beim App-Start
+ * (ARC-6). Gebraucht wird sie nur für die Benachrichtigung der laufenden Sitzung; bei Ablehnung
+ * läuft die Sitzung trotzdem. Weil auch die Atemübung fragt, ist sie vor „Danach in die Stille“
+ * geklärt – den Übergang startet der Ablauf ohne Oberfläche. Danach fragt die App nie wieder. Bis der gespeicherte Stand geladen ist, gilt „schon gefragt“ – lieber einmal nicht
  * fragen als doppelt.
  */
 @Composable

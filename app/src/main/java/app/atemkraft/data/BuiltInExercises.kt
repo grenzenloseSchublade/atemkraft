@@ -783,6 +783,8 @@ object BuiltInExercises {
             "Kein Ersatz für eine Behandlung bei Panikstörung.",
         ),
         references = listOf(Refs.zaccaro2018),
+        // Wer geht, setzt sich danach nicht eben hin: keine stille Meditation im Anschluss.
+        silenceAfterAllowed = false,
         rounds = 1,
         segments = listOf(
             Segment(

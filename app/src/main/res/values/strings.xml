@@ -518,7 +518,10 @@
     <string name="cd_meditation_dial_more">Eine Minute mehr</string>
     <string name="meditation_done_title">Sitzung beendet</string>
     <string name="cd_meditation_ring">Meditations-Ring</string>
-    <string name="meditation_notification_channel">Meditation</string>
+    <!-- Ein Kanal für beide Sitzungsarten (Meditation und Atemübung, PlaybackService). -->
+    <string name="session_notification_channel">Laufende Sitzung</string>
+    <!-- Ohne Namen der Übung: Die Benachrichtigung steht auch auf dem Sperrbildschirm. -->
+    <string name="session_notification_title">Atemübung läuft</string>
     <string name="meditation_notification_title">Meditation läuft</string>
     <string name="meditation_notification_remaining">%1$s verbleibend</string>
 </resources>

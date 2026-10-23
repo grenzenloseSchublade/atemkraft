@@ -50,7 +50,7 @@ data class MeditationUiState(
 
 /**
  * App-weiter Ablauf einer Meditation. Bewusst **nicht** an ein ViewModel/den UI-Lifecycle
- * gebunden, sondern an einen eigenen [scope] – zusammen mit dem [MeditationService]
+ * gebunden, sondern an einen eigenen [scope] – zusammen mit dem [PlaybackService]
  * (Foreground) läuft der Timer damit zuverlässig weiter, auch wenn der Bildschirm aus ist
  * oder die Activity im Hintergrund pausiert. An die Monotonuhr verankert (kein Drift).
  * Gongs/Sprache laufen über [MeditationAudio] (in der App der [MeditationAudioCoordinator]), der
@@ -149,7 +149,14 @@ class MeditationController(
     private fun producesAudio(): Boolean = currentConfig.startEndGong || currentConfig.gongEveryMin != null ||
         (currentConfig.speech && speechAvailable.value)
 
+    /**
+     * Startet eine Meditation – die eine Funktion für den Start im Tab und für den Übergang nach
+     * einer Atemübung ([SilenceAfterBreath]): Stimme vorbereiten (idempotent; die gewählte Stimme
+     * setzt der Collector in init), dann starten. Die Sprache beginnt frühestens nach dem Countdown,
+     * bis dahin ist die Engine bereit.
+     */
     fun start(config: MeditationConfig) {
+        audio.prepareSpeech()
         runnerJob?.cancel()
         finishing = false
         audio.setMuted(false) // neue Sitzung startet unstumm
@@ -431,7 +438,7 @@ interface MeditationAudio {
     fun stopSpeech()
 }
 
-/** Start und Ende des Foreground-Service einer Meditation; in der App [MeditationServiceLink]. */
+/** Start und Ende des Foreground-Service eines Ablaufs; in der App ein Halter aus [PlaybackServiceLinks]. */
 interface ForegroundLink {
     fun start()
     fun stop()

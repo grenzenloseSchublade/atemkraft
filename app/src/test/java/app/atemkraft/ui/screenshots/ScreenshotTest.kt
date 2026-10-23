@@ -51,6 +51,7 @@ import app.atemkraft.domain.withoutMarks
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
+import app.atemkraft.playback.SessionUiState
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.about.AboutScreen
@@ -67,7 +68,6 @@ import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorState
 import app.atemkraft.ui.session.SessionOverlay
-import app.atemkraft.ui.session.SessionUiState
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
 import app.atemkraft.ui.settings.SettingsScreen
@@ -203,7 +203,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     private fun Logbook() {
         fun at(daysAgo: Long, hour: Int, minute: Int): Long = DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val daysAgo = listOf(0L, 1L, 3L, 5L, 12L, 40L)
-        // Runden und Dauer wie vom SessionViewModel geloggt.
+        // Runden und Dauer wie vom BreathSessionController geloggt.
         val entries = BuiltInExercises.all.take(6).mapIndexed { i, e ->
             SessionLogEntry(
                 id = i + 1L,
@@ -348,7 +348,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Vollbild-Session in Gerätehöhe: Vorbereitung, Einatmen, Viloma-Pause, offenes Halten (Wim Hof),
      * Pause, Ende mit Bilanz; dann die Meditation in allen Zuständen. Die Session-Zustände kommen
-     * aus den Daten der Übung ([sessionAt]), so wie das SessionViewModel sie setzt.
+     * aus den Daten der Übung ([sessionAt]), so wie der BreathSessionController sie setzt.
      */
     @Test
     fun session() {
@@ -398,7 +398,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     }
 
     /**
-     * Zustand der laufenden Session wie im SessionViewModel (runFixedPhase/runUserPacedPhase): die
+     * Zustand der laufenden Session wie im BreathSessionController (runFixedPhase/runUserPacedPhase): die
      * erste Phase des Ablaufs von [exercise], auf die [phase] zutrifft, davon [elapsedMs] verstrichen
      * (bei offenen Phasen hochgezählt).
      */

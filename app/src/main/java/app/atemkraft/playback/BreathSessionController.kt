@@ -1,13 +1,6 @@
-package app.atemkraft.ui.session
+package app.atemkraft.playback
 
 import android.os.SystemClock
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import app.atemkraft.AtemkraftApplication
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.toCueEvent
 import app.atemkraft.data.LogbookRepository
@@ -25,14 +18,16 @@ import app.atemkraft.domain.SessionTiming
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.buildTimeline
 import app.atemkraft.domain.sessionSummary
-import app.atemkraft.playback.PhaseAudio
-import app.atemkraft.playback.SessionAudioCoordinator
-import app.atemkraft.playback.SessionStatus
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -46,6 +41,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.min
+
+/** Ablauf-Zustand einer Atem-Session; der [SessionAudioCoordinator] und die UI folgen ihm. */
+enum class SessionStatus { IDLE, PREPARING, RUNNING, PAUSED, WAITING_FOR_USER, FINISHED }
+
+/** Audio-Info zum Phasenbeginn für den durchgehenden Ton (Typ + Dauer; open = ohne feste Dauer). */
+data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean, val level: BreathLevel? = null)
 
 /**
  * Sichtbarer Zustand der laufenden Session. Die UI ist eine reine Funktion davon –
@@ -81,19 +82,31 @@ data class SessionUiState(
     val progress: Float = 0f,
     /** Bilanz für den Ende-Bildschirm; nur bei [SessionStatus.FINISHED] gesetzt. */
     val summary: SessionSummary? = null,
+    /** Darf nach dieser Übung die stille Meditation folgen ([Exercise.silenceAfterAllowed])? */
+    val silenceAfterAllowed: Boolean = false,
 )
 
 /**
- * Steuert den zeitlichen Ablauf einer Atemübung. Der Timer läuft im
- * [viewModelScope] und übersteht damit Rotation/Recomposition. Phasen mit fester
- * Dauer sind an die Monotonuhr [now] verankert (in der App [SystemClock.elapsedRealtime],
- * im Test die virtuelle Zeit), sodass sich kein Drift aufsummiert.
+ * App-weiter Ablauf einer Atemübung, gebaut wie der [MeditationController]: Er hängt an einem
+ * eigenen [scope] im AppContainer statt an einem ViewModel der Activity. Damit übersteht die Session
+ * Rotation, das Beenden der Activity (Zurück auf einem Tab) und das Wegwischen der App; zusammen mit
+ * dem [PlaybackService] (Foreground, `mediaPlayback`) laufen Takt und Töne bei ausgeschaltetem
+ * Bildschirm und nach der Home-Taste weiter. Phasen mit fester Dauer sind an die Monotonuhr [now]
+ * verankert (in der App [SystemClock.elapsedRealtime], im Test die virtuelle Zeit), sodass sich kein
+ * Drift aufsummiert; Uhr und Dispatcher sind für Tests injizierbar.
+ *
+ * Am natürlichen Ende schreibt er den Logbuch-Eintrag selbst und meldet die Übung über [finished] –
+ * daran hängt „Danach in die Stille“ ([SilenceAfterBreath]), unabhängig davon, ob die Oberfläche
+ * gerade sichtbar ist.
  */
-class SessionViewModel(
-    private val audio: SessionAudioCoordinator? = null,
-    private val logbook: LogbookRepository? = null,
+class BreathSessionController(
+    private val audio: BreathAudio,
+    private val logbook: LogbookRepository?,
+    private val service: ForegroundLink,
     now: () -> Long = SystemClock::elapsedRealtime,
-) : ViewModel() {
+    dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+) {
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     /** Countdown und aktive Atemzeit, geteilt mit der Meditation ([SessionClock]). */
     private val clock = SessionClock(now)
@@ -103,41 +116,46 @@ class SessionViewModel(
 
     /** Nur der Status, ohne die Frame-Ticks des vollen Zustands – für die App-Wurzel (ARC-3). */
     val status: StateFlow<SessionStatus> = _state.map { it.status }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, SessionStatus.IDLE)
+        .stateIn(scope, SharingStarted.Eagerly, SessionStatus.IDLE)
 
-    private val _cues = MutableSharedFlow<CueEvent>(
+    private val cueEvents = MutableSharedFlow<CueEvent>(
         extraBufferCapacity = 8,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val cues: SharedFlow<CueEvent> = _cues.asSharedFlow()
 
     /** Phasenbeginn-Events für den durchgehenden Ton. */
-    private val _phaseAudio = MutableSharedFlow<PhaseAudio>(
+    private val phaseEvents = MutableSharedFlow<PhaseAudio>(
         extraBufferCapacity = 8,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val phaseAudio: SharedFlow<PhaseAudio> = _phaseAudio.asSharedFlow()
+
+    private val _finished = MutableSharedFlow<Exercise>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    /** Meldet die (angepasste) Übung, sobald sie von selbst zu Ende gelaufen ist – nicht bei [stop]. */
+    val finished: SharedFlow<Exercise> = _finished.asSharedFlow()
 
     init {
-        // Audio folgt dem Session-Zustand im viewModelScope statt der UI – läuft damit
-        // auch hinter dem Sperrbildschirm weiter und räumt am Session-Ende zuverlässig auf.
-        audio?.bind(
-            scope = viewModelScope,
-            status = _state.map { it.status },
-            cues = cues,
-            phaseAudio = phaseAudio,
+        // Audio folgt dem Session-Zustand in diesem Scope statt der UI – läuft damit auch hinter
+        // dem Sperrbildschirm weiter und räumt am Session-Ende zuverlässig auf.
+        audio.bind(
+            scope = scope,
+            status = status,
+            cues = cueEvents.asSharedFlow(),
+            phaseAudio = phaseEvents.asSharedFlow(),
             muted = _state.map { it.muted },
         )
-    }
-
-    override fun onCleared() {
-        audio?.release()
     }
 
     private var timeline: List<RuntimePhase> = emptyList()
     private var progressTracker = SessionProgress(emptyList())
     private var index = 0
     private var runnerJob: Job? = null
+
+    /** Gibt den Foreground-Service nach dem Ausklingen des Abschluss-Gongs frei. */
+    private var releaseJob: Job? = null
 
     /** Beim Fortsetzen aus der Pause: Restzeit der aktuellen Phase (sonst null). */
     private var resumeRemainingMs: Long? = null
@@ -151,19 +169,19 @@ class SessionViewModel(
 
     // Logbuch-Metadaten der laufenden Session.
     private var currentExercise: Exercise? = null
-
-    /** Kennung der laufenden bzw. eben beendeten Übung; null nach [stop]. */
-    val currentExerciseId: String? get() = currentExercise?.id
     private var startedAtEpochMs = 0L
 
     /**
      * Startet [exercise] mit der Anpassung [config]. Die Übung kommt als aufgelöstes Objekt von der
      * Detailseite – genau das Muster, das dort zu sehen war; „Von vorne“ nimmt dasselbe Objekt
      * (kein erneutes Nachschlagen per Id, das um Mitternacht ein anderes Tagesmuster liefern könnte).
+     * Startet nur aus der sichtbaren App (Start-Knopf, „Nochmal“): Den Foreground-Service darf
+     * Android ab 12 nicht aus dem Hintergrund starten.
      */
     fun start(exercise: Exercise, config: SessionConfig = SessionConfig()) {
         val adjusted = exercise.adjusted(config)
         runnerJob?.cancel()
+        releaseJob?.cancel()
         baseExercise = exercise
         currentConfig = config
         timeline = adjusted.buildTimeline()
@@ -179,12 +197,15 @@ class SessionViewModel(
             roundCount = adjusted.rounds,
             countdown = SessionTiming.COUNTDOWN_SECONDS,
             patternHint = adjusted.instructionHint,
+            silenceAfterAllowed = adjusted.silenceAfterAllowed,
         )
+        // Foreground-Service: Dauer-Benachrichtigung, Prozess und CPU bleiben wach (idempotent).
+        service.start()
         if (timeline.isEmpty()) {
             finish()
             return
         }
-        runnerJob = viewModelScope.launch {
+        runnerJob = scope.launch {
             runCountdown()
             runPhaseLoop()
         }
@@ -224,19 +245,24 @@ class SessionViewModel(
         _state.update { it.copy(muted = !it.muted) }
     }
 
+    /** Beendet bzw. verwirft die Session (auch den Ende-Screen) und gibt den Service frei. */
     fun stop() {
         runnerJob?.cancel()
+        releaseJob?.cancel()
         continueSignal?.cancel()
         continueSignal = null
         index = 0
         resumeRemainingMs = null
         currentExercise = null
+        // Zuerst IDLE, dann den Service lösen: Sein Benachrichtigungs-Collector überspringt IDLE und
+        // postet nach dem Wegräumen nichts mehr nach (wie beim MeditationController).
         _state.update { SessionUiState() }
+        service.stop()
     }
 
     private fun launchRunner() {
         runnerJob?.cancel()
-        runnerJob = viewModelScope.launch { runPhaseLoop() }
+        runnerJob = scope.launch { runPhaseLoop() }
     }
 
     private suspend fun runPhaseLoop() {
@@ -249,21 +275,17 @@ class SessionViewModel(
             val phase = timeline[index]
             // Durchgehender Ton: Phasenbeginn (auch beim Fortsetzen, damit der Ton wieder anläuft).
             val fixedMs = (phase.duration as? PhaseDuration.Fixed)?.let { resumeRemainingMs ?: it.millis } ?: 0L
-            _phaseAudio.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed, phase.level))
+            phaseEvents.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed, phase.level))
             // Cue nur zum echten Phasenbeginn, nicht beim Fortsetzen mitten in der Phase.
             if (resumeRemainingMs == null) {
-                _cues.tryEmit(phase.type.toCueEvent())
+                cueEvents.tryEmit(phase.type.toCueEvent())
             }
             when (val duration = phase.duration) {
                 is PhaseDuration.Fixed -> {
-                    val deadline = if (resumeRemainingMs != null) {
-                        clock.now() + resumeRemainingMs!!
-                    } else {
+                    val deadline = resumeRemainingMs?.let { clock.now() + it }
                         // Kleiner Catch-up-Deckel: Nach einer längeren Stall-Phase (Prozess
                         // eingefroren) nicht alle verpassten Phasen im Zeitraffer nachholen.
-                        maxOf(nextAnchorMs, clock.now() - CATCHUP_SLACK_MS) +
-                            duration.millis
-                    }
+                        ?: (maxOf(nextAnchorMs, clock.now() - CATCHUP_SLACK_MS) + duration.millis)
                     runFixedPhase(phase, deadline, duration.millis)
                     nextAnchorMs = deadline
                 }
@@ -332,7 +354,7 @@ class SessionViewModel(
             while (isActive) {
                 clock.accrue()
                 _state.update { it.copy(elapsedMs = clock.now() - start) }
-                delay(100L)
+                delay(USER_PACED_TICK_MS)
             }
         }
         try {
@@ -345,10 +367,11 @@ class SessionViewModel(
 
     private fun finish() {
         clock.accrue()
-        _cues.tryEmit(CueEvent.FINISH)
-        // Logbuch direkt im viewModelScope schreiben (kein UI-Collector nötig) – der
-        // Eintrag geht damit auch bei gesperrtem Bildschirm oder Recreation nicht verloren.
-        currentExercise?.let { exercise ->
+        cueEvents.tryEmit(CueEvent.FINISH)
+        // Logbuch direkt in diesem Scope schreiben (kein UI-Collector nötig) – der Eintrag geht
+        // damit auch bei gesperrtem Bildschirm oder ohne Activity nicht verloren.
+        val exercise = currentExercise
+        if (exercise != null && logbook != null) {
             val entry = SessionLogEntry(
                 exerciseId = exercise.id,
                 exerciseName = exercise.name,
@@ -357,7 +380,7 @@ class SessionViewModel(
                 durationMs = clock.activeMs,
                 roundsCompleted = exercise.rounds,
             )
-            logbook?.let { viewModelScope.launch { it.append(entry) } }
+            scope.launch { logbook.append(entry) }
         }
         _state.update {
             it.copy(
@@ -369,25 +392,37 @@ class SessionViewModel(
                 summary = sessionSummary(timeline, clock.activeMs),
             )
         }
-    }
-
-    companion object {
-        /** DI: zieht Logbuch und Audio-Koordinator aus dem AppContainer/der Application. */
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val app = this[APPLICATION_KEY] as AtemkraftApplication
-                SessionViewModel(
-                    audio = SessionAudioCoordinator(
-                        context = app,
-                        settings = app.container.settingsRepository.cueSettings,
-                        hapticPlayer = app.container.hapticPlayer,
-                    ),
-                    logbook = app.container.logbookRepository,
-                )
-            }
+        // Foreground-Service erst nach dem Ausklingen des Abschluss-Gongs lösen, damit er hinter dem
+        // Sperrbildschirm nicht abgeschnitten wird. Übernimmt die Meditation („Danach in die
+        // Stille“), hält sie den Service schon, bevor [stop] diesen Halter löst.
+        val tailMs = audio.finishTailMs(muted = _state.value.muted)
+        releaseJob = scope.launch {
+            delay(tailMs)
+            service.stop()
         }
-
-        /** Max. Aufhol-Spielraum des Phasen-Ankers nach einem Stall (kein Zeitraffer-Nachholen). */
-        private const val CATCHUP_SLACK_MS = 250L
+        exercise?.let { _finished.tryEmit(it) }
     }
+
+    private companion object {
+        /** Max. Aufhol-Spielraum des Phasen-Ankers nach einem Stall (kein Zeitraffer-Nachholen). */
+        const val CATCHUP_SLACK_MS = 250L
+
+        /** Takt der hochzählenden Zeit in offenen Phasen (Zehntelsekunde genügt für die Anzeige). */
+        const val USER_PACED_TICK_MS = 100L
+    }
+}
+
+/** Die Audio-Bausteine, die der [BreathSessionController] braucht; in der App der [SessionAudioCoordinator]. */
+interface BreathAudio {
+    /** Ton, Haptik und Audio-Fokus an den Ablauf binden – einmal, im Scope des Controllers. */
+    fun bind(
+        scope: CoroutineScope,
+        status: Flow<SessionStatus>,
+        cues: Flow<CueEvent>,
+        phaseAudio: Flow<PhaseAudio>,
+        muted: Flow<Boolean>,
+    )
+
+    /** Wie lange der Abschluss-Gong noch klingt (ms, mit Reserve); 0 ohne hörbaren Gong. */
+    fun finishTailMs(muted: Boolean): Long
 }

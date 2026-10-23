@@ -49,7 +49,7 @@ Hast du keine Stimme geladen oder gewählt, kann die gesprochene Meditationsanle
 
 ## Benachrichtigung
 
-Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läuft“ mit der verbleibenden bzw. vergangenen Zeit, auch auf dem Sperrbildschirm. Sie nennt keine Übungen und keine Logbuchdaten.
+Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läuft“ mit der verbleibenden bzw. vergangenen Zeit, während einer Atemübung „Atemübung läuft“ mit der Runde (z. B. „Runde 2 von 4“), beides auch auf dem Sperrbildschirm. Sie nennt keine Übungen und keine Logbuchdaten. **Bis einschließlich Version 2.0.2** gibt es die Benachrichtigung nur zur Meditation.
 
 ## Export und Import
 
@@ -71,9 +71,9 @@ Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die dire
 |---|---|
 | Internet (`INTERNET`) | nur der Stimm-Download |
 | Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“. Die Rasten des Zeitrings in der Meditation (ab Version 1.6.5) sind Berührungs-Feedback und folgen der Android-Einstellung dafür, nicht dem Schalter. **Bis einschließlich Version 1.5.1** vibriert der Tick auch bei ausgeschaltetem Schalter |
-| Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation wach, damit Gongs pünktlich kommen |
-| Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation läuft bei ausgeschaltetem Bildschirm weiter |
-| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Meditation. Lehnst du ab, läuft der Timer trotzdem |
+| Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation oder Atemübung wach, damit Gongs und Phasen-Töne pünktlich kommen (bis einschließlich Version 2.0.2 nur bei der Meditation) |
+| Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation und Atemübung laufen bei ausgeschaltetem Bildschirm und im Hintergrund weiter (bis einschließlich Version 2.0.2 nur die Meditation) |
+| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation oder Atemübung mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Sitzung (bis einschließlich Version 2.0.2: einer Meditation). Lehnst du ab, läuft die Sitzung trotzdem |
 | Sichtbarkeit der Sprachausgabe (`<queries>` für `TTS_SERVICE`) | die Sprachausgabe des Geräts finden |
 
 Hinzu kommt `app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, die Android-Bibliothek AndroidX automatisch einträgt; sie gilt nur innerhalb der App. Die App fragt weder Standort, Kontakte, Kamera, Mikrofon noch Speicher ab.
