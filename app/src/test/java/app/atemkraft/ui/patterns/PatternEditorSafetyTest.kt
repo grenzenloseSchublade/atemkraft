@@ -43,12 +43,14 @@ class PatternEditorSafetyTest {
             AtemkraftTheme {
                 PatternEditorScreen(
                     state = state,
-                    onSavedChange = {},
-                    onStart = { exercise, _ -> started += exercise },
-                    onOpenLore = {},
-                    onBack = {},
+                    actions = PatternEditorActions(
+                        onSavedChange = {},
+                        onStart = { exercise, _ -> started += exercise },
+                        onOpenLore = {},
+                        onBack = {},
+                        onConfirmedSafety = { id -> safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(id)) },
+                    ),
                     safety = safety,
-                    onConfirmedSafety = { id -> safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(id)) },
                     soundOutput = { SilentPreviewSound },
                 )
             }

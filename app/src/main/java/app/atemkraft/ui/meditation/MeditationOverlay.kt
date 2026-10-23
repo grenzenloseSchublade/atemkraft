@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -63,6 +64,19 @@ import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 
 /**
+ * Was die laufende Meditation auslöst (CODE-02). [onOpenLogbook]: „Im Logbuch ansehen ›“ am
+ * Ende-Screen; ohne ihn kein Link.
+ */
+@Immutable
+data class MeditationActions(
+    val onTogglePause: () -> Unit,
+    val onTapHaptic: () -> Unit,
+    val onRestart: () -> Unit,
+    val onEnd: () -> Unit,
+    val onOpenLogbook: (() -> Unit)? = null,
+)
+
+/**
  * Vollbild-Overlay der laufenden/abgeschlossenen Meditation – identischer Rahmen wie die
  * Atem-Session ([app.atemkraft.ui.session.SessionOverlay]) über das geteilte [OverlayChrome].
  * Am Ende dieselbe Frage samt Bilanz wie dort; System-Zurück minimiert, am Ende-Screen wirkt es
@@ -74,16 +88,11 @@ import app.atemkraft.ui.theme.Dimens
 fun MeditationOverlay(
     state: MeditationUiState,
     display: MeditationDisplay,
+    actions: MeditationActions,
     onMinimize: () -> Unit,
     onToggleMute: () -> Unit,
-    onTogglePause: () -> Unit,
-    onTapHaptic: () -> Unit,
-    onRestart: () -> Unit,
-    onEnd: () -> Unit,
-    // „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
-    onOpenLogbook: (() -> Unit)? = null,
 ) {
-    BackHandler { if (state.status == MeditationStatus.FINISHED) onEnd() else onMinimize() }
+    BackHandler { if (state.status == MeditationStatus.FINISHED) actions.onEnd() else onMinimize() }
     CalmHost(
         canHide = state.status == MeditationStatus.PREPARING || state.status == MeditationStatus.RUNNING,
         autoCalm = display.autoCalm && state.status == MeditationStatus.RUNNING,
@@ -97,7 +106,7 @@ fun MeditationOverlay(
             onToggleMute = onToggleMute,
             chromeVisible = controlsVisible,
         ) {
-            MeditationContent(state, display, controlsVisible, onTogglePause, onTapHaptic, onRestart, onEnd, onOpenLogbook)
+            MeditationContent(state, display, controlsVisible, actions)
         }
     }
 }
@@ -107,18 +116,14 @@ private fun MeditationContent(
     state: MeditationUiState,
     display: MeditationDisplay,
     controlsVisible: Boolean,
-    onTogglePause: () -> Unit,
-    onTapHaptic: () -> Unit,
-    onRestart: () -> Unit,
-    onEnd: () -> Unit,
-    onOpenLogbook: (() -> Unit)?,
+    actions: MeditationActions,
 ) {
     if (state.status == MeditationStatus.FINISHED) {
         FinishedPanel(
             title = stringResource(R.string.session_done_prompt),
-            onAgain = onRestart,
-            onExit = onEnd,
-            onOpenLogbook = onOpenLogbook,
+            onAgain = actions.onRestart,
+            onExit = actions.onEnd,
+            onOpenLogbook = actions.onOpenLogbook,
             // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
             // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
             summary = sessionSummaryParts(durationMs = state.elapsedMs),
@@ -128,10 +133,10 @@ private fun MeditationContent(
             state = state,
             display = display,
             controlsVisible = controlsVisible,
-            onTogglePause = onTogglePause,
-            onTapHaptic = onTapHaptic,
-            onRestart = onRestart,
-            onEnd = onEnd,
+            onTogglePause = actions.onTogglePause,
+            onTapHaptic = actions.onTapHaptic,
+            onRestart = actions.onRestart,
+            onEnd = actions.onEnd,
         )
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -79,6 +80,26 @@ import app.atemkraft.ui.theme.TERTIARY
 import kotlin.math.roundToInt
 
 /**
+ * Was die Detailseite auslöst (CODE-02). [onIntervalsChange]/[onIntervalsReset] merken bzw. löschen
+ * die Anpassung, [onConfirmedSafety] die Bestätigung des Sicherheitsdialogs.
+ * - [onOpenLore]: Sprung zur Muster-Karte der Atemlehre aus „Aus der Yoga-Lehre“; ohne ihn kein Verweis.
+ * - [onMarkedChange]: persönliche Markierung „tut mir gut“; ohne ihn (Muster) kein Schalter.
+ * - [onEditPattern]: Stift im Kopf generierter Muster, öffnet den Muster-Editor (Phasen ändert man
+ *   nur dort); ohne ihn kein Stift.
+ */
+@Immutable
+data class DetailActions(
+    val onIntervalsChange: (duration: Int, inhale: Int?, hold: Int?, exhale: Int?) -> Unit,
+    val onIntervalsReset: () -> Unit,
+    val onConfirmedSafety: () -> Unit,
+    val onStart: (SessionConfig) -> Unit,
+    val onBack: () -> Unit,
+    val onOpenLore: ((patternId: String) -> Unit)? = null,
+    val onMarkedChange: ((Boolean) -> Unit)? = null,
+    val onEditPattern: (() -> Unit)? = null,
+)
+
+/**
  * Detail-/Infoseite einer Übung. Progressive Disclosure: oben das Wesentliche (Name fest im Kopf,
  * Familie mit Chips, 1-Zeiler, Meta, ggf. Sicherheits-Appetizer), darunter aus-/einklappbare
  * Abschnitte; der Starten-Button ist unten **gepinnt** und ohne Scrollen erreichbar.
@@ -89,20 +110,10 @@ fun ExerciseDetailScreen(
     exercise: Exercise,
     requireSafetyConfirm: Boolean,
     savedIntervals: IntervalOverrides?,
-    onIntervalsChange: (duration: Int, inhale: Int?, hold: Int?, exhale: Int?) -> Unit,
-    onIntervalsReset: () -> Unit,
-    onConfirmedSafety: () -> Unit,
-    onStart: (SessionConfig) -> Unit,
-    onBack: () -> Unit,
-    // Sprung zur Muster-Karte der Atemlehre aus „Aus der Yoga-Lehre“; ohne ihn kein Verweis.
-    onOpenLore: ((patternId: String) -> Unit)? = null,
-    // Persönliche Markierung „tut mir gut“; ohne [onMarkedChange] (Muster) kein Schalter.
+    actions: DetailActions,
     marked: Boolean = false,
-    onMarkedChange: ((Boolean) -> Unit)? = null,
-    // Stift im Kopf generierter Muster: öffnet den Muster-Editor (Phasen ändert man nur dort).
-    // [editDescription] = Wortlaut für TalkBack; null = nach Herkunft („Als eigenes Muster
-    // anpassen“ beim Muster des Tages, sonst „Muster bearbeiten“).
-    onEditPattern: (() -> Unit)? = null,
+    // Wortlaut des Stifts für TalkBack; null = nach Herkunft („Als eigenes Muster anpassen“ beim
+    // Muster des Tages, sonst „Muster bearbeiten“).
     editDescription: String? = null,
 ) {
     val accent = exercise.family.color()
@@ -126,9 +137,9 @@ fun ExerciseDetailScreen(
     fun persistAdjustments() {
         val overrides = adjust.overrides
         if (overrides != null) {
-            onIntervalsChange(overrides.duration ?: defaults.duration, overrides.inhale, overrides.hold, overrides.exhale)
+            actions.onIntervalsChange(overrides.duration ?: defaults.duration, overrides.inhale, overrides.hold, overrides.exhale)
         } else {
-            onIntervalsReset()
+            actions.onIntervalsReset()
         }
     }
 
@@ -156,8 +167,8 @@ fun ExerciseDetailScreen(
     val launch = rememberSafetyGate(
         require = requireSafetyConfirm,
         cautions = exercise.cautions,
-        onConfirm = onConfirmedSafety,
-        proceed = { onStart(adjust.config()) },
+        onConfirm = actions.onConfirmedSafety,
+        proceed = { actions.onStart(adjust.config()) },
     )
 
     val scrollState = rememberScrollState()
@@ -169,15 +180,15 @@ fun ExerciseDetailScreen(
         if (exercise.id == ExerciseIds.DAILY) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
     )
     PushScaffold(
-        onBack = onBack,
+        onBack = actions.onBack,
         title = exercise.name,
         action = when {
-            onMarkedChange != null -> {
-                { PersonalMarkToggle(marked = marked, onMarkedChange = onMarkedChange) }
+            actions.onMarkedChange != null -> {
+                { PersonalMarkToggle(marked = marked, onMarkedChange = actions.onMarkedChange) }
             }
 
-            onEditPattern != null && exercise.generated -> {
-                { EditPatternButton(description = editLabel, onClick = onEditPattern) }
+            actions.onEditPattern != null && exercise.generated -> {
+                { EditPatternButton(description = editLabel, onClick = actions.onEditPattern) }
             }
 
             else -> null
@@ -185,7 +196,7 @@ fun ExerciseDetailScreen(
         scrollState = scrollState,
         // Gepinnter Start (immer sichtbar) – nur bei getakteten Übungen.
         bottomBar = if (exercise.guided) {
-            { StartBar(exercise, adjust, estimatedSeconds, onStart = { launch() }, onIntervalsReset = onIntervalsReset) }
+            { StartBar(exercise, adjust, estimatedSeconds, onStart = { launch() }, onIntervalsReset = actions.onIntervalsReset) }
         } else {
             null
         },
@@ -262,11 +273,11 @@ fun ExerciseDetailScreen(
                     BodyText(lore.detail)
                     // Lehrquelle wie in Atemlehre und Pranayama.
                     lore.source?.let { HintText(it) }
-                    if (onOpenLore != null) {
+                    if (actions.onOpenLore != null) {
                         patterns.forEach { pattern ->
                             // Der Chevron zeigt „führt weiter“ (ICON-01). Nicht bündig (flushStart): Die
                             // Höhenanimation des Expanders schneidet alles außerhalb ab.
-                            AppTextButton(onClick = { onOpenLore(pattern.id) }) {
+                            AppTextButton(onClick = { actions.onOpenLore(pattern.id) }) {
                                 ForwardLinkText(
                                     text = stringResource(R.string.detail_lore_link, pattern.linkName),
                                     // Verweise im Inhalt einheitlich in secondary (FARBE-04).

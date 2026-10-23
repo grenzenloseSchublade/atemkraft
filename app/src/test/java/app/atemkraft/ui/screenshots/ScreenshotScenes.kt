@@ -16,8 +16,12 @@ import app.atemkraft.domain.buildTimeline
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
 import app.atemkraft.playback.SessionUiState
+import app.atemkraft.ui.home.HomeActions
+import app.atemkraft.ui.home.HomeCatalog
 import app.atemkraft.ui.home.HomeScreen
+import app.atemkraft.ui.meditation.MeditationActions
 import app.atemkraft.ui.meditation.MeditationOverlay
+import app.atemkraft.ui.session.SessionActions
 import app.atemkraft.ui.session.SessionOverlay
 
 /*
@@ -32,19 +36,18 @@ import app.atemkraft.ui.session.SessionOverlay
 @Composable
 internal fun BreatheTab(welcome: Boolean = false) {
     HomeScreen(
-        exercisesByFamily = BreathingFamily.entries
-            .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
-            .filter { (_, list) -> list.isNotEmpty() },
-        situations = Situations.all,
-        areas = Areas.all,
-        resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
-        yogaExerciseIds = Pranayama.exerciseIds,
+        catalog = HomeCatalog(
+            exercisesByFamily = BreathingFamily.entries
+                .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
+                .filter { (_, list) -> list.isNotEmpty() },
+            situations = Situations.all,
+            areas = Areas.all,
+            yogaExerciseIds = Pranayama.exerciseIds,
+            resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
+        ),
         daily = ScreenshotHarness.daily,
         dailySaved = false,
-        onRegenerateDaily = {},
-        onDailySavedChange = {},
-        onSelect = {},
-        onOpenSettings = {},
+        actions = HomeActions(onRegenerateDaily = {}, onDailySavedChange = {}, onSelect = {}, onOpenSettings = {}),
         welcome = if (welcome) BuiltInExercises.all.first { it.id == "resonanz" } else null,
     )
 }
@@ -85,14 +88,9 @@ internal fun sessionAt(exercise: Exercise, elapsedMs: Long, phase: (RuntimePhase
 internal fun SessionShot(state: SessionUiState) = SessionOverlay(
     state = state,
     display = SessionDisplay(autoCalm = false),
+    actions = SessionActions(onTogglePause = {}, onTapHaptic = {}, onContinue = {}, onRestart = {}, onStop = {}, onOpenLogbook = {}),
     onMinimize = {},
     onToggleMute = {},
-    onTogglePause = {},
-    onTapHaptic = {},
-    onContinue = {},
-    onRestart = {},
-    onStop = {},
-    onOpenLogbook = {},
 )
 
 /** Vollbild-Meditation ohne automatische Ruhe. */
@@ -100,11 +98,7 @@ internal fun SessionShot(state: SessionUiState) = SessionOverlay(
 internal fun MeditationShot(state: MeditationUiState) = MeditationOverlay(
     state = state,
     display = MeditationDisplay(autoCalm = false),
+    actions = MeditationActions(onTogglePause = {}, onTapHaptic = {}, onRestart = {}, onEnd = {}, onOpenLogbook = {}),
     onMinimize = {},
     onToggleMute = {},
-    onTogglePause = {},
-    onTapHaptic = {},
-    onRestart = {},
-    onEnd = {},
-    onOpenLogbook = {},
 )

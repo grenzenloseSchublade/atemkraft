@@ -73,16 +73,18 @@ internal fun PatternEditorDestination(
     val editor: @Composable (PatternEditorState) -> Unit = { state ->
         PatternEditorScreen(
             state = state,
-            onSavedChange = { save ->
-                scope.launch { writes.withLock { write(state, save, repository, missing) } }
-            },
-            onStart = onStart,
-            onOpenLore = onOpenLore,
-            onBack = onBack,
+            actions = PatternEditorActions(
+                onSavedChange = { save ->
+                    scope.launch { writes.withLock { write(state, save, repository, missing) } }
+                },
+                onStart = onStart,
+                onOpenLore = onOpenLore,
+                onBack = onBack,
+                onConfirmedSafety = onConfirmedSafety,
+            ),
             cueSettings = cueSettings,
             otherAudioActive = otherAudioActive,
             safety = safety,
-            onConfirmedSafety = onConfirmedSafety,
         )
     }
 

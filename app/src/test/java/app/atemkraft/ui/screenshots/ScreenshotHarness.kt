@@ -56,6 +56,7 @@ import app.atemkraft.ui.navigation.HideableTabBar
 import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.patterns.PATTERN_INFO_TAG
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
+import app.atemkraft.ui.patterns.PatternEditorActions
 import app.atemkraft.ui.patterns.PatternEditorScreen
 import app.atemkraft.ui.patterns.PatternEditorState
 import app.atemkraft.ui.patterns.curve.CurveAxisSeconds
@@ -447,10 +448,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     protected fun Editor(create: (namePrefix: String) -> PatternEditorState) {
         PatternEditorScreen(
             state = rememberPatternEditorState(create = create),
-            onSavedChange = {},
-            onStart = { _, _ -> },
-            onOpenLore = {},
-            onBack = {},
+            actions = PatternEditorActions(onSavedChange = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {}),
             // Ohne echten Ton: Die Vorschau-Aufnahme spielt sonst Töne über Robolectric.
             soundOutput = { SilentPreviewSound },
         )

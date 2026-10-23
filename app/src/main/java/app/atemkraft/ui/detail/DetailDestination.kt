@@ -76,40 +76,42 @@ internal fun DetailDestination(
         exercise = exercise,
         requireSafetyConfirm = requireSafety,
         savedIntervals = if (persistIntervals) savedIntervals else null,
-        onIntervalsChange = { duration, inhale, hold, exhale ->
-            if (persistIntervals) {
-                scope.launch { settings.setExerciseIntervals(id, duration, inhale, hold, exhale) }
-            }
-        },
-        onIntervalsReset = {
-            if (persistIntervals) {
-                scope.launch { settings.clearExerciseIntervals(id) }
-            }
-        },
-        onConfirmedSafety = {
-            scope.launch { settings.acknowledgeSafety(exercise.id) }
-        },
-        onStart = { config -> onStart(exercise, config) },
-        onBack = onBack,
-        onOpenLore = onOpenLore,
+        actions = DetailActions(
+            onIntervalsChange = { duration, inhale, hold, exhale ->
+                if (persistIntervals) {
+                    scope.launch { settings.setExerciseIntervals(id, duration, inhale, hold, exhale) }
+                }
+            },
+            onIntervalsReset = {
+                if (persistIntervals) {
+                    scope.launch { settings.clearExerciseIntervals(id) }
+                }
+            },
+            onConfirmedSafety = {
+                scope.launch { settings.acknowledgeSafety(exercise.id) }
+            },
+            onStart = { config -> onStart(exercise, config) },
+            onBack = onBack,
+            onOpenLore = onOpenLore,
+            onMarkedChange = if (markable) {
+                { marked -> scope.launch { settings.setExerciseMarked(id, marked) } }
+            } else {
+                null
+            },
+            onEditPattern = when {
+                // Die Zahlen genau dieses Musters mitgeben: Ein erneutes Nachschlagen im Editor wäre
+                // nach Mitternacht schon das nächste.
+                id == ExerciseIds.DAILY -> {
+                    { onOpenEditor(GeneratedExercises.specOf(exercise)?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true)) }
+                }
+
+                savedPatternId != null -> {
+                    { onOpenEditor(PatternEditorRoute(patternId = savedPatternId)) }
+                }
+
+                else -> null
+            },
+        ),
         marked = id in markedIds,
-        onMarkedChange = if (markable) {
-            { marked -> scope.launch { settings.setExerciseMarked(id, marked) } }
-        } else {
-            null
-        },
-        onEditPattern = when {
-            // Die Zahlen genau dieses Musters mitgeben: Ein erneutes Nachschlagen im Editor wäre
-            // nach Mitternacht schon das nächste.
-            id == ExerciseIds.DAILY -> {
-                { onOpenEditor(GeneratedExercises.specOf(exercise)?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true)) }
-            }
-
-            savedPatternId != null -> {
-                { onOpenEditor(PatternEditorRoute(patternId = savedPatternId)) }
-            }
-
-            else -> null
-        },
     )
 }

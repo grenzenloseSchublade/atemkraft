@@ -27,22 +27,14 @@ import app.atemkraft.ui.components.OverlayChrome
 fun SessionOverlay(
     state: SessionUiState,
     display: SessionDisplay,
+    actions: SessionActions,
     onMinimize: () -> Unit,
     onToggleMute: () -> Unit,
-    onTogglePause: () -> Unit,
-    onTapHaptic: () -> Unit,
-    onContinue: () -> Unit,
-    onRestart: () -> Unit,
-    onStop: () -> Unit,
     modifier: Modifier = Modifier,
-    // „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
-    onOpenLogbook: (() -> Unit)? = null,
-    // „In die Stille ›“ am Ende-Screen: weiter in die stille Meditation; ohne ihn kein Link.
-    onIntoSilence: (() -> Unit)? = null,
     // „Danach in die Stille“ für diese Übung umschalten (Kopfzeile, neben dem Ton).
     onToggleSilenceAfter: () -> Unit = {},
 ) {
-    BackHandler { if (state.status == SessionStatus.FINISHED) onStop() else onMinimize() }
+    BackHandler { if (state.status == SessionStatus.FINISHED) actions.onStop() else onMinimize() }
     CalmHost(
         canHide = state.status in HIDEABLE,
         autoCalm = display.autoCalm && state.status != SessionStatus.PREPARING,
@@ -63,14 +55,8 @@ fun SessionOverlay(
             SessionScreen(
                 state = state,
                 display = display,
+                actions = actions,
                 controlsVisible = controlsVisible,
-                onTogglePause = onTogglePause,
-                onTapHaptic = onTapHaptic,
-                onContinue = onContinue,
-                onRestart = onRestart,
-                onStop = onStop,
-                onOpenLogbook = onOpenLogbook,
-                onIntoSilence = onIntoSilence,
             )
         }
     }

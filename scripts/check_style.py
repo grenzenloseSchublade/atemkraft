@@ -209,6 +209,45 @@ def ui_literal_hits(lines: list[str]) -> list[int]:
     return hits
 
 
+SCREEN_PARAMS_MAX = 8
+SCREEN_FUN = re.compile(r"^(?:internal\s+|public\s+)?fun\s+(\w+(?:Screen|Overlay))\s*\(", re.MULTILINE)
+
+
+def top_level_params(text: str, start: int) -> list[str]:
+    """Parameter (ohne Kommentare) einer Funktion, deren Liste bei [start] (nach „(“) beginnt."""
+    depth, cur, params, i = 1, "", [], start
+    while i < len(text) and depth:
+        c = text[i]
+        if text.startswith("//", i):
+            i = text.index("\n", i)
+            continue
+        if c in "([{<":
+            depth += 1
+        elif c in ")]}>" and not text.startswith("->", i - 1):
+            depth -= 1
+        if depth == 1 and c == ",":
+            params.append(cur.strip())
+            cur = ""
+        elif depth:
+            cur += c
+        i += 1
+    if cur.strip():
+        params.append(cur.strip())
+    return params
+
+
+def screen_params(check: Check) -> dict[str, list[int]]:
+    """CODE-02: nicht private `…Screen`/`…Overlay`-Composables mit mehr als 8 Parametern (ohne `modifier`)."""
+    hits: dict[str, list[int]] = {}
+    for f in files_for(check.include, check.exclude):
+        text = (ROOT / f).read_text(encoding="utf-8")
+        for m in SCREEN_FUN.finditer(text):
+            params = [p for p in top_level_params(text, m.end()) if not p.startswith("modifier:")]
+            if len(params) > SCREEN_PARAMS_MAX:
+                hits.setdefault(f, []).append(text.count("\n", 0, m.start()) + 1)
+    return hits
+
+
 def ui_literal(check: Check) -> dict[str, list[int]]:
     hits: dict[str, list[int]] = {}
     for f in files_for(check.include, check.exclude):
@@ -511,6 +550,7 @@ CHECKS: list[Check] = [
           [r"^import app\.atemkraft\.data\.\w*Repository$", r"^import app\.atemkraft\.playback\.\w*Controller$",
            r"^import kotlinx\.coroutines\.CoroutineScope$"],
           exclude=[SRC + "ui/*Destination.kt", SRC + "ui/*ViewModel.kt", SRC + "ui/settings/PatternTransfer.kt"]),
+    Check("screen-params", "CODE-02", [SRC + "ui/*.kt"], custom=screen_params),
     Check("ordinal-persist", "CODE-05", [SRC + "data/*.kt"], [r"\.ordinal\b"]),
     Check("todo-unlinked", "CODE-06", [SRC + "*.kt"], [r"//\s*TODO(?!\((S|A)-\d+\))"], skip_comments=False),
     # Sicherheit (docs/SECURITY.md, Automatische Prüfung): Null-Toleranz, ohne Baseline.

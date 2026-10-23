@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,30 @@ import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.SECONDARY
+
+/**
+ * Was der Atmen-Tab zeigt und gleich bleibt, solange die App läuft: die angeleiteten Übungen nach
+ * Familie, Anlässe, Bereiche, die Übungen der Seite „Pranayama“ (Filter „Aus dem Yoga“) und das
+ * Nachschlagen einer Übung per Id ([resolve]).
+ */
+@Immutable
+class HomeCatalog(
+    val exercisesByFamily: List<Pair<BreathingFamily, List<Exercise>>>,
+    val situations: List<SituationRecommendation>,
+    val areas: List<BreathingArea>,
+    val yogaExerciseIds: Set<String>,
+    val resolve: (String) -> Exercise?,
+)
+
+/** Was der Atmen-Tab auslöst (CODE-02). */
+@Immutable
+data class HomeActions(
+    val onRegenerateDaily: () -> Unit,
+    val onDailySavedChange: (Boolean) -> Unit,
+    val onSelect: (String) -> Unit,
+    val onOpenSettings: () -> Unit,
+    val onDismissWelcome: () -> Unit = {},
+)
 
 /**
  * Atmen-Tab: alles, was man starten kann. Von oben: beim ersten Start die Willkommenskarte
@@ -83,28 +108,19 @@ import app.atemkraft.ui.theme.SECONDARY
  */
 @Composable
 fun HomeScreen(
-    exercisesByFamily: List<Pair<BreathingFamily, List<Exercise>>>,
-    situations: List<SituationRecommendation>,
-    areas: List<BreathingArea>,
-    resolve: (String) -> Exercise?,
-    // Übungen der Seite „Pranayama“ für den Filter „Aus dem Yoga“.
-    yogaExerciseIds: Set<String>,
+    catalog: HomeCatalog,
     daily: DailyPattern,
     dailySaved: Boolean,
-    onRegenerateDaily: () -> Unit,
-    onDailySavedChange: (Boolean) -> Unit,
-    onSelect: (String) -> Unit,
-    onOpenSettings: () -> Unit,
+    actions: HomeActions,
     markedIds: Set<String> = emptySet(),
     welcome: Exercise? = null,
-    onDismissWelcome: () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     // Höchstens eins von beiden ist gesetzt, und nur bei leerer Eingabe (siehe KDoc).
     var chosen by rememberSaveable { mutableStateOf<Situation?>(null) }
     var chosenArea by rememberSaveable { mutableStateOf<BreathingFamily?>(null) }
     var filters by rememberSaveable { mutableStateOf(emptySet<ExerciseFilter>()) }
-    val results = remember(query, situations, areas) { SituationSearch.search(query, situations, areas) }
+    val results = remember(query, catalog.situations, catalog.areas) { SituationSearch.search(query, catalog.situations, catalog.areas) }
     val focusManager = LocalFocusManager.current
     val showAll = {
         query = ""
@@ -116,25 +132,25 @@ fun HomeScreen(
     // Was unter dem Block steht: der gewählte Anlass, der gewählte Bereich, die Suchtreffer oder
     // nichts (dann die Familien).
     val shownSituations: List<SituationRecommendation> = when {
-        chosen != null -> situations.filter { it.situation == chosen }
+        chosen != null -> catalog.situations.filter { it.situation == chosen }
         chosenArea != null -> emptyList()
         else -> results?.situations.orEmpty()
     }
     val shownAreas: List<BreathingArea> = when {
-        chosenArea != null -> areas.filter { it.family == chosenArea }
+        chosenArea != null -> catalog.areas.filter { it.family == chosenArea }
         chosen != null -> emptyList()
         else -> results?.areas.orEmpty()
     }
     val filtering = chosen != null || chosenArea != null || results != null
     val highlighted = shownSituations.map { it.situation }.toSet()
-    val familyExercises = exercisesByFamily.toMap()
-    val filtered = remember(exercisesByFamily, filters, yogaExerciseIds) { ExerciseFilters.apply(exercisesByFamily, filters, yogaExerciseIds) }
+    val familyExercises = catalog.exercisesByFamily.toMap()
+    val filtered = remember(catalog.exercisesByFamily, filters, catalog.yogaExerciseIds) { ExerciseFilters.apply(catalog.exercisesByFamily, filters, catalog.yogaExerciseIds) }
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.tab_breathe),
-                action = { SettingsAction(onClick = onOpenSettings) },
+                action = { SettingsAction(onClick = actions.onOpenSettings) },
                 scrolled = scrolled,
             )
         },
@@ -143,11 +159,11 @@ fun HomeScreen(
         // Erster Start: eine ruhige, abweisbare Karte statt eines Onboardings (Nutzer 2026-10-24).
         if (welcome != null) {
             item(key = "welcome") {
-                WelcomeCard(exercise = welcome, onOpen = { onSelect(welcome.id) }, onDismiss = onDismissWelcome)
+                WelcomeCard(exercise = welcome, onOpen = { actions.onSelect(welcome.id) }, onDismiss = actions.onDismissWelcome)
             }
         }
         // Einstieg „nach Befinden“ ohne eigene Überschrift: Feld und Anlässe in einer Fläche.
-        if (situations.isNotEmpty()) {
+        if (catalog.situations.isNotEmpty()) {
             item(key = "feeling") {
                 FeelingBlock(
                     query = query,
@@ -158,7 +174,7 @@ fun HomeScreen(
                             chosenArea = null
                         }
                     },
-                    situations = situations,
+                    situations = catalog.situations,
                     highlighted = highlighted,
                     onChipClick = { situation ->
                         // Zweiter Tipp auf denselben Chip zeigt wieder alles; ein Chip leert die Eingabe.
@@ -180,11 +196,11 @@ fun HomeScreen(
             val directAreas = shownAreas.map { it.family }.toSet()
             shownSituations.forEach { rec ->
                 item(key = "rec-${rec.situation.name}") { RecommendationIntro(rec, withTitle) }
-                items(rec.exerciseIds.mapNotNull(resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
-                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                items(rec.exerciseIds.mapNotNull(catalog.resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
+                    ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
                 // Steht der Bereich ohnehin als Treffer darunter, braucht es keinen Verweis darauf.
-                val area = rec.area(resolve)
+                val area = rec.area(catalog.resolve)
                 if (area != null && area !in directAreas) {
                     item(key = "rec-${rec.situation.name}-area") {
                         AreaLink(family = area) {
@@ -201,7 +217,7 @@ fun HomeScreen(
                     AreaHeader(area = area, onClose = if (chosenArea != null) showAll else null)
                 }
                 items(familyExercises[area.family].orEmpty(), key = { "area-${area.family.name}-${it.id}" }) { exercise ->
-                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                    ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
             }
         } else {
@@ -212,7 +228,7 @@ fun HomeScreen(
                     title = stringResource(R.string.home_daily_pattern),
                     color = MaterialTheme.colorScheme.secondary,
                 ) {
-                    AppIconButton(onClick = onRegenerateDaily) {
+                    AppIconButton(onClick = actions.onRegenerateDaily) {
                         Icon(
                             Icons.Filled.Refresh,
                             contentDescription = stringResource(R.string.cd_pattern_regenerate),
@@ -225,8 +241,8 @@ fun HomeScreen(
                 DailyPatternCard(
                     daily = daily,
                     saved = dailySaved,
-                    onClick = { onSelect(daily.exercise.id) },
-                    onSavedChange = onDailySavedChange,
+                    onClick = { actions.onSelect(daily.exercise.id) },
+                    onSavedChange = actions.onDailySavedChange,
                 )
             }
             item(key = "all-header") {
@@ -246,7 +262,7 @@ fun HomeScreen(
                     SectionHeader(title = family.title(), color = family.color())
                 }
                 items(exercises, key = { it.id }) { exercise ->
-                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                    ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
             }
         }

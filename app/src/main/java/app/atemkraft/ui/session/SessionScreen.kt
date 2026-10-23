@@ -27,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,27 +79,38 @@ import app.atemkraft.ui.theme.TERTIARY
 import kotlin.math.ceil
 
 /**
+ * Was die laufende Atem-Session auslöst (CODE-02). [onTapHaptic] spielt den Tipp-Tick beim
+ * Antippen des Kreises; ob er vibriert, entscheidet der Aufrufer anhand des App-Schalters
+ * „Vibration“.
+ * - [onOpenLogbook]: „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
+ * - [onIntoSilence]: „In die Stille ›“ am Ende-Screen, weiter in die stille Meditation; ohne ihn
+ *   kein Link.
+ */
+@Immutable
+data class SessionActions(
+    val onTogglePause: () -> Unit,
+    val onTapHaptic: () -> Unit,
+    val onContinue: () -> Unit,
+    val onRestart: () -> Unit,
+    val onStop: () -> Unit,
+    val onOpenLogbook: (() -> Unit)? = null,
+    val onIntoSilence: (() -> Unit)? = null,
+)
+
+/**
  * Zeigt die laufende Session: Start-Countdown, Atemkreis mit Fortschrittsbogen, im Kreis nur
  * Phasenwort und Sekunden, darunter fest die Anleitungszeile, Steuerung und – optional, dezent –
  * die kommende Phase. Bogen, Sekunden und kommende Phase schaltet [display] ab (der Countdown
  * vor dem Start zählt immer). Am Ende „✓ Geschafft“, die offene Frage und eine kurze Bilanz.
  * [controlsVisible] = false ist die Ruhe-Ansicht ([SessionOverlay]): alles außer Kreis, Wort,
  * Sekunden und Bogen blendet aus, ohne dass der Kreis springt.
- * [onTapHaptic] spielt den Tipp-Tick beim Antippen des Kreises; ob er vibriert, entscheidet
- * der Aufrufer anhand des App-Schalters „Vibration“.
  */
 @Composable
 fun SessionScreen(
     state: SessionUiState,
     display: SessionDisplay,
-    onTogglePause: () -> Unit,
-    onTapHaptic: () -> Unit,
-    onContinue: () -> Unit,
-    onRestart: () -> Unit,
-    onStop: () -> Unit,
+    actions: SessionActions,
     controlsVisible: Boolean = true,
-    onOpenLogbook: (() -> Unit)? = null,
-    onIntoSilence: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -107,10 +119,10 @@ fun SessionScreen(
         if (state.status == SessionStatus.FINISHED) {
             FinishedPanel(
                 title = stringResource(R.string.session_done_prompt),
-                onAgain = onRestart,
-                onExit = onStop,
-                onOpenLogbook = onOpenLogbook,
-                onIntoSilence = onIntoSilence,
+                onAgain = actions.onRestart,
+                onExit = actions.onStop,
+                onOpenLogbook = actions.onOpenLogbook,
+                onIntoSilence = actions.onIntoSilence,
                 summary = state.summary?.let { sessionSummaryParts(it.durationMs, rounds = it.rounds, breaths = it.breaths) }.orEmpty(),
             )
         } else {
@@ -118,11 +130,11 @@ fun SessionScreen(
                 state = state,
                 display = display,
                 controlsVisible = controlsVisible,
-                onTogglePause = onTogglePause,
-                onTapHaptic = onTapHaptic,
-                onContinue = onContinue,
-                onRestart = onRestart,
-                onStop = onStop,
+                onTogglePause = actions.onTogglePause,
+                onTapHaptic = actions.onTapHaptic,
+                onContinue = actions.onContinue,
+                onRestart = actions.onRestart,
+                onStop = actions.onStop,
             )
         }
     }

@@ -32,6 +32,8 @@ import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.detail.DetailDestination
 import app.atemkraft.ui.glossary.GlossaryScreen
+import app.atemkraft.ui.home.HomeActions
+import app.atemkraft.ui.home.HomeCatalog
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
@@ -51,6 +53,7 @@ import app.atemkraft.ui.navigation.PatternEditorRoute
 import app.atemkraft.ui.navigation.PranayamaRoute
 import app.atemkraft.ui.navigation.ProgramsRoute
 import app.atemkraft.ui.navigation.SettingsRoute
+import app.atemkraft.ui.own.OwnActions
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorDestination
 import app.atemkraft.ui.settings.SettingsScreen
@@ -128,41 +131,50 @@ internal fun NavGraphBuilder.appGraph(
         // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
         // ein eigenes Muster mit gleichen Zahlen zählt nicht (Herkunft).
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
+        val catalog = remember {
+            HomeCatalog(
+                exercisesByFamily = exercises.guidedByFamily,
+                situations = Situations.all,
+                areas = Areas.all,
+                yogaExerciseIds = Pranayama.exerciseIds,
+                resolve = { id -> exercises.byId(id) },
+            )
+        }
         HomeScreen(
+            catalog = catalog,
             daily = dailyPattern,
             dailySaved = savedPatterns.isDailySaved(dailyPattern, patterns),
-            onRegenerateDaily = exercises::regenerateDaily,
-            onDailySavedChange = { save ->
-                val pattern = dailyPattern
-                scope.launch {
-                    if (save) savedPatterns.save(pattern) else savedPatterns.unsave(pattern)
-                }
-            },
-            exercisesByFamily = exercises.guidedByFamily,
-            situations = Situations.all,
-            areas = Areas.all,
-            resolve = { id -> exercises.byId(id) },
-            yogaExerciseIds = Pranayama.exerciseIds,
-            onSelect = openDetail,
-            onOpenSettings = { navController.navigate(SettingsRoute()) },
+            actions = HomeActions(
+                onRegenerateDaily = exercises::regenerateDaily,
+                onDailySavedChange = { save ->
+                    val pattern = dailyPattern
+                    scope.launch {
+                        if (save) savedPatterns.save(pattern) else savedPatterns.unsave(pattern)
+                    }
+                },
+                onSelect = openDetail,
+                onOpenSettings = { navController.navigate(SettingsRoute()) },
+                onDismissWelcome = { scope.launch { settings.dismissWelcome() } },
+            ),
             markedIds = state.markedExercises,
             // Erster Start: ruhiger Einstieg mit Gesundheitshinweis, bis der Nutzer ihn wegklickt.
             welcome = if (state.welcomeDismissed) null else exercises.byId(WELCOME_EXERCISE_ID),
-            onDismissWelcome = { scope.launch { settings.dismissWelcome() } },
         )
     }
     composable<EigeneRoute> {
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
         OwnPatternsScreen(
             savedPatterns = patterns,
-            onNewPattern = { navController.navigate(PatternEditorRoute()) },
+            actions = OwnActions(
+                onNewPattern = { navController.navigate(PatternEditorRoute()) },
+                onSelect = openDetail,
+                onDeletePattern = { id -> scope.launch { savedPatterns.delete(id) } },
+                onOpenSettings = { navController.navigate(SettingsRoute()) },
+                onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
+            ),
             // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge.
             favorites = exercises.all().filter { it.id in state.markedExercises },
-            onSelect = openDetail,
-            onDeletePattern = { id -> scope.launch { savedPatterns.delete(id) } },
-            onOpenSettings = { navController.navigate(SettingsRoute()) },
             logEntries = state.logEntries,
-            onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
         )
     }
     composable<MeditationRoute> {

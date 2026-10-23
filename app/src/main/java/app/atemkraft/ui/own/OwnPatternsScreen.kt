@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,16 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 import java.time.LocalDate
 
+/** Was der Tab „Eigene“ auslöst (CODE-02): neues Muster, Übung öffnen, Muster löschen, Einstellungen, Logbuch. */
+@Immutable
+data class OwnActions(
+    val onNewPattern: () -> Unit,
+    val onSelect: (String) -> Unit,
+    val onDeletePattern: (Long) -> Unit,
+    val onOpenSettings: () -> Unit,
+    val onOpenLogbook: () -> Unit = {},
+)
+
 /**
  * Tab „Eigene“, der persönliche Bereich (Nutzer 2026-10-23): oben die Karte „Verlauf“ als
  * Einstieg ins Logbuch ([LogHistoryCard]: Wochenpunkte und Bilanz, die ganze Karte führt zur
@@ -66,13 +77,9 @@ import java.time.LocalDate
 @Composable
 fun OwnPatternsScreen(
     savedPatterns: List<SavedPattern>,
-    onNewPattern: () -> Unit,
-    onSelect: (String) -> Unit,
-    onDeletePattern: (Long) -> Unit,
-    onOpenSettings: () -> Unit,
+    actions: OwnActions,
     favorites: List<Exercise> = emptyList(),
     logEntries: List<SessionLogEntry> = emptyList(),
-    onOpenLogbook: () -> Unit = {},
     today: LocalDate = LocalDate.now(),
 ) {
     var favoritesExpanded by rememberSaveable { mutableStateOf(true) }
@@ -88,14 +95,14 @@ fun OwnPatternsScreen(
         header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.own_title),
-                action = { SettingsAction(onClick = onOpenSettings) },
+                action = { SettingsAction(onClick = actions.onOpenSettings) },
                 scrolled = scrolled,
             )
         },
         subtitle = stringResource(R.string.own_subtitle),
     ) {
         item(key = "history") {
-            LogHistoryCard(entries = logEntries, onClick = onOpenLogbook, today = today)
+            LogHistoryCard(entries = logEntries, onClick = actions.onOpenLogbook, today = today)
         }
 
         // Köpfe reihum nach ihrer Lage (FARBE-07): Es zählen nur die sichtbaren Abschnitte.
@@ -112,7 +119,7 @@ fun OwnPatternsScreen(
                     statusDescription = favoritesDescription,
                 ) {
                     favorites.forEach { exercise ->
-                        ExerciseCard(exercise = exercise, marked = true, onClick = { onSelect(exercise.id) })
+                        ExerciseCard(exercise = exercise, marked = true, onClick = { actions.onSelect(exercise.id) })
                     }
                 }
             }
@@ -131,7 +138,7 @@ fun OwnPatternsScreen(
                     // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf, so groß wie „Neu
                     // generieren“ beim Muster des Tages (AppIconButton), in der Farbe des Kopfs.
                     trailingAction = {
-                        AppIconButton(onClick = onNewPattern) {
+                        AppIconButton(onClick = actions.onNewPattern) {
                             Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = color)
                         }
                     },
@@ -141,8 +148,8 @@ fun OwnPatternsScreen(
                         key(pattern.id) {
                             SavedPatternCard(
                                 pattern = pattern,
-                                onClick = { onSelect(pattern.exercise.id) },
-                                onDelete = { onDeletePattern(pattern.id) },
+                                onClick = { actions.onSelect(pattern.exercise.id) },
+                                onDelete = { actions.onDeletePattern(pattern.id) },
                             )
                         }
                     }
@@ -155,7 +162,7 @@ fun OwnPatternsScreen(
                     Spacer(Modifier.height(Dimens.SectionGap))
                     HintText(stringResource(R.string.own_empty))
                     Spacer(Modifier.height(Dimens.GapSmall))
-                    NewPatternButton(onClick = onNewPattern)
+                    NewPatternButton(onClick = actions.onNewPattern)
                 }
             }
         }
@@ -227,7 +234,7 @@ private fun OwnPatternsScreenPreview() {
         RandomPatternGenerator.forSeed(seed).let { SavedPattern(id = i + 1L, exercise = it.exercise, spec = it.spec) }
     }
     AtemkraftTheme {
-        OwnPatternsScreen(savedPatterns = patterns, onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {})
+        OwnPatternsScreen(savedPatterns = patterns, actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}))
     }
 }
 
@@ -235,6 +242,6 @@ private fun OwnPatternsScreenPreview() {
 @Composable
 private fun OwnPatternsScreenEmptyPreview() {
     AtemkraftTheme {
-        OwnPatternsScreen(savedPatterns = emptyList(), onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {})
+        OwnPatternsScreen(savedPatterns = emptyList(), actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}))
     }
 }

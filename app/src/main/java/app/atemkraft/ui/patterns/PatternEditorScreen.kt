@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,16 @@ import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.WarnAmber
 
+/** Was der Muster-Editor auslöst (CODE-02); Bedeutung siehe [PatternEditorScreen]. */
+@Immutable
+data class PatternEditorActions(
+    val onSavedChange: (Boolean) -> Unit,
+    val onStart: (Exercise, SessionConfig) -> Unit,
+    val onOpenLore: (patternId: String) -> Unit,
+    val onBack: () -> Unit,
+    val onConfirmedSafety: (exerciseId: String) -> Unit = {},
+)
+
 /**
  * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“, 5 „Kompakt“, 6 „Leiste unten“),
  * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, rechts Startpunkt ([StartButton],
@@ -72,16 +83,18 @@ import app.atemkraft.ui.theme.WarnAmber
  * ([ActionBar], Nachtrag 6): Dauer, Zurücksetzen und der große Play-Knopf.
  *
  * Die Seite liest und ändert nur [state] (ARC-7). Was gespeichert wird, entscheidet der Aufrufer:
- * [onSavedChange] (true = speichern bzw. denselben Eintrag aktualisieren, false = aus „Meine
- * Muster“ entfernen) schreibt ins Repository und meldet das Ergebnis mit
+ * [PatternEditorActions.onSavedChange] (true = speichern bzw. denselben Eintrag aktualisieren,
+ * false = aus „Meine Muster“ entfernen) schreibt ins Repository und meldet das Ergebnis mit
  * [PatternEditorState.markSaved] bzw. [PatternEditorState.markRemoved] zurück. Ein Muster, das es
  * schon vor dem Öffnen gab, entfernt das Lesezeichen nur zweistufig (MUSTER-05); ein in dieser
  * Sitzung angelegtes nimmt ein erneuter Tipp sofort wieder heraus (KOMP-02).
  *
- * [onStart] probiert den Entwurf ohne Speichern aus (Übung und Dauer als [SessionConfig]); die
- * Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem Sicherheitsdialog, wenn
- * [safety] es verlangt ([SafetySettings.requiresConfirm], dieselbe Regel wie auf der Detailseite;
- * [rememberSafetyGate]); die Bestätigung meldet [onConfirmedSafety]. [onOpenLore] öffnet eine Karte der Atemlehre.
+ * [PatternEditorActions.onStart] probiert den Entwurf ohne Speichern aus (Übung und Dauer als
+ * [SessionConfig]); die Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem
+ * Sicherheitsdialog, wenn [safety] es verlangt ([SafetySettings.requiresConfirm], dieselbe Regel
+ * wie auf der Detailseite; [rememberSafetyGate]); die Bestätigung meldet
+ * [PatternEditorActions.onConfirmedSafety]. [PatternEditorActions.onOpenLore] öffnet eine Karte
+ * der Atemlehre.
  *
  * Ton der Vorschau ([rememberPreviewSound]): Klang-Einstellungen der App [cueSettings]; still,
  * solange eine Übung oder Meditation läuft ([otherAudioActive]). [soundOutput] tauschen nur Tests.
@@ -89,14 +102,10 @@ import app.atemkraft.ui.theme.WarnAmber
 @Composable
 fun PatternEditorScreen(
     state: PatternEditorState,
-    onSavedChange: (Boolean) -> Unit,
-    onStart: (Exercise, SessionConfig) -> Unit,
-    onOpenLore: (patternId: String) -> Unit,
-    onBack: () -> Unit,
+    actions: PatternEditorActions,
     cueSettings: CueSettings = CueSettings(),
     otherAudioActive: Boolean = false,
     safety: SafetySettings = SafetySettings(),
-    onConfirmedSafety: (exerciseId: String) -> Unit = {},
     soundOutput: (Context) -> PreviewSoundOutput = ::AppPreviewSoundOutput,
 ) {
     val exercise = state.exercise()
@@ -125,17 +134,17 @@ fun PatternEditorScreen(
         require = safety.requiresConfirm(exercise),
         cautions = exercise.cautions,
         // Bestätigt gilt für dieses Muster, nicht für alle intensiven Übungen (MUSTER-06).
-        onConfirm = { onConfirmedSafety(exercise.id) },
+        onConfirm = { actions.onConfirmedSafety(exercise.id) },
     ) {
         preview.pause()
-        onStart(exercise, config)
+        actions.onStart(exercise, config)
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             val scrollState = rememberScrollState()
             PushHeader(
-                onBack = onBack,
+                onBack = actions.onBack,
                 titleContent = { NameTitle(state, onRename = { showRename = true }) },
                 // Fester Bereichsname statt des Musternamens: Umbenennen soll keine neue Seite ansagen.
                 paneTitle = stringResource(R.string.pattern_editor_title),
@@ -146,7 +155,7 @@ fun PatternEditorScreen(
                             preview.pause()
                             showTemplates = true
                         }
-                        SaveToggle(state, onSavedChange)
+                        SaveToggle(state, actions.onSavedChange)
                     }
                 },
                 scrolled = scrollState.canScrollBackward,
@@ -178,7 +187,7 @@ fun PatternEditorScreen(
                     )
                     pattern.intensityNote()?.let { IntenseNote(it) }
                     Sequence(state)
-                    Lore(exercise, onOpenLore)
+                    Lore(exercise, actions.onOpenLore)
                     Spacer(Modifier.height(Dimens.ScreenBottom))
                 }
             }
@@ -303,6 +312,6 @@ internal const val PATTERN_TOOLBAR_TAG = "pattern_editor_toolbar"
 private fun PatternEditorScreenPreview() {
     AtemkraftTheme {
         val state = rememberPatternEditorState { PatternEditorState.new(it, FreePatternTemplates.all[2].pattern) }
-        PatternEditorScreen(state = state, onSavedChange = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {})
+        PatternEditorScreen(state = state, actions = PatternEditorActions(onSavedChange = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {}))
     }
 }

@@ -31,9 +31,11 @@ import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.SessionStatus
+import app.atemkraft.ui.meditation.MeditationActions
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MiniMeditationBar
 import app.atemkraft.ui.session.MiniSessionBar
+import app.atemkraft.ui.session.SessionActions
 import app.atemkraft.ui.session.SessionOverlay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -205,32 +207,34 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
             SessionOverlay(
                 state = state,
                 display = playback.sessionDisplay,
+                actions = SessionActions(
+                    onTogglePause = {
+                        if (state.status == SessionStatus.PAUSED) {
+                            breath.resume()
+                        } else {
+                            breath.pause()
+                        }
+                    },
+                    // Tipp-Tick nur bei eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
+                    onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
+                    onContinue = breath::continueFromUserPaced,
+                    onRestart = breath::restart,
+                    onStop = {
+                        breath.stop()
+                        playback.sessionExpanded = false
+                    },
+                    // „Im Logbuch ansehen ›“ am Ende: beendet wie „Ende“ und öffnet das Logbuch.
+                    onOpenLogbook = {
+                        breath.stop()
+                        playback.sessionExpanded = false
+                        onOpenLogbook()
+                    },
+                    // Derselbe Weg wie „Danach in die Stille“; nicht nach Atmen im Gehen.
+                    onIntoSilence = if (state.silenceAfterAllowed) playback.silenceAfterBreath::intoSilence else null,
+                ),
                 onMinimize = { playback.sessionExpanded = false },
                 onToggleMute = breath::toggleMute,
                 onToggleSilenceAfter = breath::toggleSilenceAfter,
-                onTogglePause = {
-                    if (state.status == SessionStatus.PAUSED) {
-                        breath.resume()
-                    } else {
-                        breath.pause()
-                    }
-                },
-                // Tipp-Tick nur bei eingeschaltetem App-Schalter „Vibration“ (AUDIO-05).
-                onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
-                onContinue = breath::continueFromUserPaced,
-                onRestart = breath::restart,
-                onStop = {
-                    breath.stop()
-                    playback.sessionExpanded = false
-                },
-                // Derselbe Weg wie „Danach in die Stille“; nicht nach Atmen im Gehen.
-                onIntoSilence = if (state.silenceAfterAllowed) playback.silenceAfterBreath::intoSilence else null,
-                // „Im Logbuch ansehen ›“ am Ende: beendet wie „Ende“ und öffnet das Logbuch.
-                onOpenLogbook = {
-                    breath.stop()
-                    playback.sessionExpanded = false
-                    onOpenLogbook()
-                },
             )
         }
     }
@@ -241,28 +245,30 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
             MeditationOverlay(
                 state = state,
                 display = playback.meditationDisplay,
+                actions = MeditationActions(
+                    onTogglePause = {
+                        if (state.status == MeditationStatus.PAUSED) {
+                            meditation.resume()
+                        } else {
+                            meditation.pause()
+                        }
+                    },
+                    onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
+                    onRestart = meditation::restart,
+                    // Ab einer Minute schließt „Beenden“ regulär ab: Das Overlay bleibt für den Ende-Screen
+                    // offen. Sonst (kurz, Countdown, „Ende“ am Ende-Screen) ist die Sitzung weg.
+                    onEnd = {
+                        meditation.end()
+                        if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
+                    },
+                    onOpenLogbook = {
+                        meditation.end()
+                        playback.meditationExpanded = false
+                        onOpenLogbook()
+                    },
+                ),
                 onMinimize = { playback.meditationExpanded = false },
                 onToggleMute = meditation::toggleMute,
-                onTogglePause = {
-                    if (state.status == MeditationStatus.PAUSED) {
-                        meditation.resume()
-                    } else {
-                        meditation.pause()
-                    }
-                },
-                onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
-                onRestart = meditation::restart,
-                // Ab einer Minute schließt „Beenden“ regulär ab: Das Overlay bleibt für den Ende-Screen
-                // offen. Sonst (kurz, Countdown, „Ende“ am Ende-Screen) ist die Sitzung weg.
-                onEnd = {
-                    meditation.end()
-                    if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
-                },
-                onOpenLogbook = {
-                    meditation.end()
-                    playback.meditationExpanded = false
-                    onOpenLogbook()
-                },
             )
         }
     }

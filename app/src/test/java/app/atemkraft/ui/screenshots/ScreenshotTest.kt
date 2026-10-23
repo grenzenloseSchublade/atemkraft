@@ -58,12 +58,14 @@ import app.atemkraft.ui.components.CHOICE_CHIPS_TAG
 import app.atemkraft.ui.components.FILTER_CHIPS_TAG
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
+import app.atemkraft.ui.detail.DetailActions
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.own.OwnActions
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorState
 import app.atemkraft.ui.settings.NoOpSettingsActions
@@ -156,18 +158,15 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
             OwnPatternsScreen(
                 savedPatterns = saved,
-                onNewPattern = {},
+                actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
                 favorites = favorites,
-                onSelect = {},
-                onDeletePattern = {},
-                onOpenSettings = {},
                 logEntries = logEntries(),
                 today = DAY,
             )
         }
         // Leer: Verlauf mit dem Satz statt der Punkte, ohne Kopf „Eigene Kreationen“, voller Knopf.
         snap("13_eigene_leer", tab = Tab.EIGENE) {
-            OwnPatternsScreen(savedPatterns = emptyList(), onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}, today = DAY)
+            OwnPatternsScreen(savedPatterns = emptyList(), actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}), today = DAY)
         }
         snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, measure = { meditationRing("03_meditation_fein") }, prepare = {
             // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.
@@ -411,14 +410,16 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                     exercise = exercise,
                     requireSafetyConfirm = false,
                     savedIntervals = if (adjusted) IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9) else null,
-                    onIntervalsChange = { _, _, _, _ -> },
-                    onIntervalsReset = {},
-                    onConfirmedSafety = {},
-                    onStart = {},
-                    onBack = {},
-                    onOpenLore = {},
-                    onMarkedChange = if (builtIn) ({ _: Boolean -> }) else null,
-                    onEditPattern = if (builtIn) null else ({}),
+                    actions = DetailActions(
+                        onIntervalsChange = { _, _, _, _ -> },
+                        onIntervalsReset = {},
+                        onConfirmedSafety = {},
+                        onStart = {},
+                        onBack = {},
+                        onOpenLore = {},
+                        onMarkedChange = if (builtIn) ({ _: Boolean -> }) else null,
+                        onEditPattern = if (builtIn) null else ({}),
+                    ),
                 )
             }
         }
