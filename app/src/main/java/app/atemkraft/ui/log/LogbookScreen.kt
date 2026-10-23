@@ -52,6 +52,7 @@ import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.durationClockText
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
@@ -272,7 +273,7 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
     // Der Punkt gehört zum Namen: oben ausgerichtet und mittig zur ersten Namenszeile, nicht zur
     // Höhe des ganzen Eintrags – sonst schwebt er bei umgebrochener Dauer zwischen den Zeilen.
     val nameStyle = MaterialTheme.typography.titleSmall
-    val dotTop = with(LocalDensity.current) { (nameStyle.lineHeight.toDp() - FAMILY_DOT) / 2 }
+    val dotTop = (rememberFirstLineHeight(nameStyle) - FAMILY_DOT) / 2
     // Ein Eintrag ist ein Fokus-Stopp (A11Y-06): Name, Uhrzeit, Dauer und Runden in einer Ansage.
     Row(
         modifier = Modifier

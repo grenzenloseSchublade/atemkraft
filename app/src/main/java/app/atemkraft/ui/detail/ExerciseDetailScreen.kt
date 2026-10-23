@@ -47,6 +47,7 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
+import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
@@ -395,7 +396,7 @@ private fun StartBar(
             else -> stringResource(
                 R.string.action_start_duration,
                 start,
-                stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
+                stringResource(R.string.duration_approx, minutesRounded(estimatedSeconds)),
             )
         }
         StartSplitButton(

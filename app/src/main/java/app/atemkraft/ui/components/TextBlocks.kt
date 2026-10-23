@@ -6,15 +6,19 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -123,12 +127,10 @@ private val DecorativeGlyph = Modifier.semantics { invisibleToUser() }
  * ist dann höher als ihr `lineHeight` in dp.
  */
 @Composable
-fun rememberFirstLineHeight(style: TextStyle): androidx.compose.ui.unit.Dp {
-    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    return androidx.compose.runtime.remember(measurer, density, style) {
-        with(density) { measurer.measure(ONE_LINE, style, maxLines = 1).size.height.toDp() }
-    }
+fun rememberFirstLineHeight(style: TextStyle): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(measurer, density, style) { with(density) { measurer.measure(ONE_LINE, style, maxLines = 1).size.height.toDp() } }
 }
 
 /** Ein Zeichen für die Messung einer Zeile ([rememberFirstLineHeight]). */

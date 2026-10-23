@@ -33,8 +33,8 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
+import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HoldDash
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.selectedRow
@@ -65,15 +65,16 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
                 .verticalScroll(rememberScrollState())
                 .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
         ) {
-            SectionHeader(title = stringResource(R.string.pattern_editor_start), color = headingColor(0), top = 0.dp)
-            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline)) {
-                FreePatternTemplates.all.forEach { template ->
-                    TemplateRow(template, selected = template == state.template) {
-                        state.applyTemplate(template)
-                        scope.launch { sheetState.hide() }.invokeOnCompletion {
-                            onDismiss()
-                            // Erst nach dem Schließen: Der Fokus geht zurück auf das Startpunkt-Pille.
-                            onPick()
+            CollapsibleSection(title = stringResource(R.string.pattern_editor_start), color = headingColor(0), headerTop = 0.dp) {
+                Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline)) {
+                    FreePatternTemplates.all.forEach { template ->
+                        TemplateRow(template, selected = template == state.template) {
+                            state.applyTemplate(template)
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                onDismiss()
+                                // Erst nach dem Schließen: Der Fokus geht zurück auf das Startpunkt-Pille.
+                                onPick()
+                            }
                         }
                     }
                 }
