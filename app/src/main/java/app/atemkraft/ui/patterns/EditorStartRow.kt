@@ -47,6 +47,7 @@ import app.atemkraft.ui.components.StartPlayButton
 import app.atemkraft.ui.components.TonalPillButton
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.inertWhen
+import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 

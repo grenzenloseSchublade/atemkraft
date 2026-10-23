@@ -40,6 +40,7 @@ import app.atemkraft.domain.FreeTemplate
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes

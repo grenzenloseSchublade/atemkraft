@@ -70,17 +70,16 @@ fun SavedPatternEntity.freePattern(): FreePattern? = if (patternOrigin() == Patt
 /**
  * Zusammenfassung einer freien Folge in den vier festen Feldern (Spalten bzw. Backup-Felder):
  * Ein und Aus als Summen, Halten ab halb voller Lunge als „Halten voll“, darunter als „Halten
- * leer“ (dieselbe Grenze wie [FreePattern.intensityReasons]), jeweils summiert, 0 s wird `null`.
+ * leer“ (dieselbe Grenze wie [FreePattern.intensityReasons], [FreePattern.isUpperSide]), jeweils summiert, 0 s wird `null`.
  * [PatternSpec.activating] folgt der Einordnung: mehr Ein als Aus. Nur Ersatz – die Folge selbst
  * lässt sich daraus nicht zurückgewinnen.
  */
 fun FreePattern.columnSpec(): PatternSpec {
-    val levels = levels()
     var holdFull = 0
     var holdEmpty = 0
     phases.forEachIndexed { i, phase ->
         if (phase.type == FreePhaseType.HOLD) {
-            if (levels[i].from >= HALF_FULL) holdFull += phase.seconds else holdEmpty += phase.seconds
+            if (isUpperSide(i)) holdFull += phase.seconds else holdEmpty += phase.seconds
         }
     }
     return PatternSpec(
@@ -91,8 +90,6 @@ fun FreePattern.columnSpec(): PatternSpec {
         activating = inhaleSeconds > exhaleSeconds,
     )
 }
-
-private const val HALF_FULL = 0.5f
 
 fun SavedPatternEntity.patternOrigin(): PatternOrigin = SavedPatternEntity.originOf(origin)
 

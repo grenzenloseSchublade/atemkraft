@@ -43,7 +43,7 @@ import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.theme.BreathExhale
+import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SegmentSelected
@@ -142,13 +142,6 @@ internal fun PhaseNumber(index: Int, background: Color) {
     }
 }
 
-/** Farbe der Phase [index] wie in der Kurve: Ein [inhale], Aus [BreathExhale], Halten nach seiner Höhe. */
-internal fun phaseColor(pattern: FreePattern, index: Int, inhale: Color): Color = when (pattern.phases[index].type) {
-    FreePhaseType.IN -> inhale
-    FreePhaseType.OUT -> BreathExhale
-    FreePhaseType.HOLD -> if (pattern.levels()[index].from >= HALF) inhale else BreathExhale
-}
-
 /** Strich in Phasenfarbe: Ein und Aus gefüllt, Halten als gestrichelter Umriss (FARBE-04, wie die Atemlehre). */
 @Composable
 private fun PhaseMark(color: Color, dashed: Boolean) {
@@ -192,6 +185,3 @@ internal fun DashedMark(modifier: Modifier = Modifier) {
             },
     )
 }
-
-/** Ab halb voll gehört ein Halten zur Einatmen-Seite (wie die Kurve). */
-private const val HALF = 0.5f

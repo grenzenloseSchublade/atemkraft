@@ -122,6 +122,18 @@ data class FreePattern(val phases: List<FreePhase>) {
         return count
     }
 
+    /**
+     * Gehört Phase [index] zur oberen Seite (Einatem-Seite)? Einatmen immer, Ausatmen nie, ein
+     * Halten ab halb voller Lunge. Die eine Regel für Phasenfarbe (Kurve, Ablauf, Mini-Kurve,
+     * Status: oben `secondary`, unten `BreathExhale`), Lage der Beschriftung in der Kurve, die
+     * Schwelle für „intensiv“ ([intensityReasons]) und die Spalten „Halten voll/leer“.
+     */
+    fun isUpperSide(index: Int): Boolean = when (phases[index].type) {
+        FreePhaseType.IN -> true
+        FreePhaseType.OUT -> false
+        FreePhaseType.HOLD -> isUpperLevel(levels()[index].from)
+    }
+
     /** Wo das Halten an [index] steht; `null`, wenn dort kein Halten ist. */
     fun holdPositionAt(index: Int): HoldPosition? = holdPositions()[index]
 
@@ -201,7 +213,8 @@ data class FreePattern(val phases: List<FreePhase>) {
      * Warum das Muster als intensiv gilt, in fester Reihenfolge; leer heißt nicht intensiv.
      * Gezählt wird, wie lange man am Stück nicht atmet: Halten direkt hintereinander – auch über
      * das Ende der Folge zum Anfang ([cycleOrder]) – zählen zusammen. Wie im Design gehört ein
-     * Halten zur oberen Schwelle, wenn die Lunge mindestens halb voll ist, sonst zur unteren.
+     * Halten zur oberen Schwelle, wenn die Lunge mindestens halb voll ist, sonst zur unteren
+     * ([isUpperSide]).
      * Intensiv ist Halten voll über 10 s, Halten leer über 8 s oder mehr als 20 Atemzüge pro
      * Minute (ganzzahlig verglichen, ohne Rundung).
      */
@@ -217,7 +230,7 @@ data class FreePattern(val phases: List<FreePhase>) {
         }
         cycleOrder().forEach { i ->
             if (phases[i].type == FreePhaseType.HOLD) {
-                if (block == 0) blockFull = levels[i].from >= HALF
+                if (block == 0) blockFull = isUpperLevel(levels[i].from)
                 block += phases[i].seconds
             } else if (block > 0) {
                 endBlock()
@@ -335,6 +348,9 @@ data class FreePattern(val phases: List<FreePhase>) {
         private const val AXIS_ROOM_SECONDS = 6
         private const val LEVEL_EPSILON = 1e-4f
         private const val HALF = 0.5f
+
+        /** Ab halb voll gehört ein Füllstand zur oberen Seite ([isUpperSide]). */
+        private fun isUpperLevel(level: Float): Boolean = level >= HALF
 
         /** Längster Text, den [parse] annimmt: 12 × „hold:30“ und Kommas, großzügig gerundet. */
         private const val MAX_COMPACT_LENGTH = 200

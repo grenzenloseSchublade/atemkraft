@@ -156,7 +156,7 @@ fun BreathCurveEditor(
     val currentOnChange by rememberUpdatedState(onChangeSeconds)
     val haptic = LocalHapticFeedback.current
     val colors = MaterialTheme.colorScheme
-    val palette = CurvePalette(inhale = colors.secondary, exhale = BreathExhale)
+    val inhale = colors.secondary
     val metrics = rememberCurveMetrics()
     val textColor = colors.onSurface.copy(alpha = TERTIARY)
 
@@ -272,14 +272,14 @@ fun BreathCurveEditor(
             val layout = metrics.layout(size.width, axis, axisTarget, size.height)
             // Das Band liegt auf der Zeitleiste; Zahlen unter seiner Beschriftung fallen solange weg.
             val band = drag?.let { bandGeometry(pattern, it, layout, bandLabel.orEmpty(), size.width) }
-            drawCurve(pattern, selected, layout, palette, colors.outlineVariant, textColor, hideNumbersIn = band?.labelRect)
+            drawCurve(pattern, selected, layout, inhale, colors.outlineVariant, textColor, hideNumbersIn = band?.labelRect)
             band?.let { drawBand(it, layout) }
             if (preview.playing) {
                 drawCircle(colors.onSurface, radius = Sizes.CurveDot.toPx() / 2f, center = pattern.pointAt(preview.time, layout))
             }
             // Der gewählte Griff zuletzt, damit er über Nachbarn liegt.
             curveHandles(pattern, layout).sortedBy { it.index == selected }.forEach { handle ->
-                drawHandle(handle, selected = handle.index == selected, color = palette.colorOf(pattern, handle.index), fill = colors.background)
+                drawHandle(handle, selected = handle.index == selected, color = phaseColor(pattern, handle.index, inhale), fill = colors.background)
             }
         }
     }
@@ -288,18 +288,18 @@ fun BreathCurveEditor(
 /** Ein laufender Zug: Phase [index], und die Achse [axis] in Sekunden, die bis zum Loslassen gilt. */
 private data class CurveDrag(val index: Int, val axis: Int)
 
-/** Die beiden Phasenfarben der Kurve. */
-@Immutable
-private class CurvePalette(val inhale: Color, val exhale: Color) {
-    /** Farbe der Phase [index]: Ein Cyan, Aus Koralle, Halten nach seiner Höhe (ab halb voll Cyan). */
-    fun colorOf(pattern: FreePattern, index: Int): Color = if (pattern.isInhaleSide(index)) inhale else exhale
-}
+/**
+ * Farbe der Phase [index] von [pattern] – die eine Stelle für Kurve, Ablauf-Zeilen, Mini-Kurve der
+ * Vorlagen, Werkzeugleiste und Status der Startzeile: obere Seite ([FreePattern.isUpperSide]:
+ * Einatmen, Halten ab halb voll) [inhale] (`secondary`), untere [BreathExhale] (FARBE-04).
+ */
+internal fun phaseColor(pattern: FreePattern, index: Int, inhale: Color): Color = if (pattern.isUpperSide(index)) inhale else BreathExhale
 
 private fun DrawScope.drawCurve(
     pattern: FreePattern,
     selected: Int?,
     layout: CurveLayout,
-    palette: CurvePalette,
+    inhale: Color,
     lineColor: Color,
     textColor: Color,
     hideNumbersIn: Rect? = null,
@@ -324,7 +324,7 @@ private fun DrawScope.drawCurve(
         lineTo(layout.xAt(t.toFloat()), layout.yEmpty)
         close()
     }
-    drawPath(fill, palette.inhale.copy(alpha = ALPHA_CURVE_FILL))
+    drawPath(fill, inhale.copy(alpha = ALPHA_CURVE_FILL))
 
     // Linien „voll“ und „leer“ (dekorativ) mit ihrer Beschriftung links.
     listOf(layout.yFull, layout.yEmpty).forEach { y ->
@@ -341,7 +341,7 @@ private fun DrawScope.drawCurve(
         val from = Offset(layout.xAt(t.toFloat()), layout.yAt(levels[i].from))
         t += phase.seconds
         val to = Offset(layout.xAt(t.toFloat()), layout.yAt(levels[i].to))
-        val color = palette.colorOf(pattern, i)
+        val color = phaseColor(pattern, i, inhale)
         val hold = phase.type == FreePhaseType.HOLD
         val width = when {
             i == selected -> selectedStroke
@@ -354,7 +354,7 @@ private fun DrawScope.drawCurve(
     val texts = pattern.phases.map { layout.measurer.measure("${it.seconds}${layout.secondsSuffix}", layout.phaseStyle) }
     val spots = curveLabelSpots(pattern, selected, layout, size.width, texts.map { Size(it.size.width.toFloat(), it.size.height.toFloat()) })
     spots.forEachIndexed { i, spot ->
-        if (spot != null) drawText(texts[i], palette.colorOf(pattern, i), spot.topLeft)
+        if (spot != null) drawText(texts[i], phaseColor(pattern, i, inhale), spot.topLeft)
     }
 
     // Zeitleiste: feine Striche, längere an den Zahlen; „s“ nur an der letzten Zahl.

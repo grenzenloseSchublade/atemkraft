@@ -27,9 +27,6 @@ import kotlin.math.roundToInt
  */
 internal val CURVE_LABEL_STEPS = listOf(1, 2, 5, 10, 15, 30, 60)
 
-/** Ab halb voll gehört ein Halten zur Einatmen-Seite (Cyan, Beschriftung über der Linie). */
-private const val HALF = 0.5f
-
 /** Feine Striche zwischen den Zahlen ab Schritt 10 s: ein Fünftel des Schritts. */
 private const val MINOR_DIVISOR = 5
 
@@ -222,13 +219,6 @@ internal fun rememberCurveMetrics(): CurveMetrics {
 /** Zahlen, Phasen-Beschriftungen und Band einer Kurve mit 12 Phasen passen in den Cache. */
 private const val MEASURE_CACHE = 48
 
-/** Cyan-Seite: Einatmen, oder ein Halten ab halb voll. */
-internal fun FreePattern.isInhaleSide(index: Int): Boolean = when (phases[index].type) {
-    FreePhaseType.IN -> true
-    FreePhaseType.OUT -> false
-    FreePhaseType.HOLD -> levels()[index].from >= HALF
-}
-
 /** Beginn der Phase [index] in Sekunden ab Beginn des Durchlaufs. */
 internal fun FreePattern.startOf(index: Int): Int = phases.take(index.coerceIn(0, phases.size)).sumOf { it.seconds }
 
@@ -375,7 +365,8 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
             )
 
             FreePhaseType.HOLD -> {
-                val upper = levels[i].from >= HALF
+                // Obere Seite ([FreePattern.isUpperSide]): Beschriftung über der Linie.
+                val upper = pattern.isUpperSide(i)
                 // Dicht an der Linie, zwischen den Griffen an den Enden; unter „leer“ ist nur dafür
                 // Platz, über „voll“ bei knapper Höhe ebenso.
                 val close = if (upper) from.y - lineBand - h else from.y + lineBand
