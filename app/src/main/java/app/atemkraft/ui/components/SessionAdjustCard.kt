@@ -28,6 +28,8 @@ data class PhaseAdjust(
  * Eingeklappt markiert „· angepasst" abweichende Intervalle; der Hinweis verschwindet von
  * selbst, sobald die Werte – auch manuell zurückgesteppt – wieder den Defaults entsprechen.
  * Das Zurücksetzen selbst sitzt beim Start-Button (Split-Button im Detail-Screen).
+ * Fehlen alle drei Phasen (Stufen-Übungen, Phasen unter 1 s, `AdjustDefaults.of`), bleibt nur
+ * der Dauer- bzw. Runden-Stepper, ohne „Phasen anpassen“.
  * [durationSpokenLabel]/[durationUnit]: Wortlaut für TalkBack wie beim [Stepper]
  * („Dauer: 10 Minuten“).
  */

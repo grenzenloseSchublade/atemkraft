@@ -11,46 +11,10 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.domain.AdjustDefaults
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.PhaseDuration
-import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
-import app.atemkraft.domain.defaultMinutes
-import app.atemkraft.domain.isRoundBased
-import kotlin.math.roundToInt
-
-/**
- * Vorgaben einer Übung für die Anpassung auf der Detailseite: Runden bzw. Minuten und die
- * Sekunden der festen Phasen. null = die Übung hat diese Phase nicht mit fester Dauer, dann gibt
- * es dafür keinen Stepper.
- */
-data class AdjustDefaults(
-    val roundBased: Boolean,
-    val duration: Int,
-    val inhale: Int?,
-    val hold: Int?,
-    val exhale: Int?,
-) {
-    /** Grenzen des Dauer-Steppers: Runden oder Minuten. */
-    val durationRange: IntRange get() = if (roundBased) AdjustLimits.ROUNDS else AdjustLimits.MINUTES
-
-    companion object {
-        fun of(exercise: Exercise): AdjustDefaults {
-            val phases = exercise.segments.flatMap { it.phases }
-            fun seconds(type: PhaseType): Int? = phases.firstNotNullOfOrNull { phase ->
-                (phase.duration as? PhaseDuration.Fixed)?.takeIf { phase.type == type }
-            }?.let { (it.millis / 1000.0).roundToInt() }
-            return AdjustDefaults(
-                roundBased = exercise.isRoundBased,
-                duration = if (exercise.isRoundBased) exercise.rounds else exercise.defaultMinutes(),
-                inhale = seconds(PhaseType.INHALE),
-                hold = seconds(PhaseType.HOLD_FULL) ?: seconds(PhaseType.HOLD_EMPTY),
-                exhale = seconds(PhaseType.EXHALE),
-            )
-        }
-    }
-}
 
 /**
  * Anpassung einer Übung auf der Detailseite (Dauer und Phasenlängen), getrennt von der

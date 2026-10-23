@@ -94,14 +94,70 @@ fun Exercise.defaultMinutes(): Int {
 }
 
 /**
+ * Vorgaben einer Übung für die Anpassung auf der Detailseite: Runden bzw. Minuten und die
+ * Sekunden der festen Phasen. null = für diese Phase gibt es keinen Stepper – die Übung hat sie
+ * nicht mit fester Dauer, oder ihre Phasen sind nicht einzeln anpassbar ([phasesAdjustable]).
+ * Liegt neben [adjusted], damit Anzeige und Anwendung dieselben Sekunden je Typ sehen
+ * ([fixedMillisOf]).
+ */
+data class AdjustDefaults(
+    val roundBased: Boolean,
+    val duration: Int,
+    val inhale: Int?,
+    val hold: Int?,
+    val exhale: Int?,
+) {
+    /** Grenzen des Dauer-Steppers: Runden oder Minuten. */
+    val durationRange: IntRange get() = if (roundBased) AdjustLimits.ROUNDS else AdjustLimits.MINUTES
+
+    companion object {
+        fun of(exercise: Exercise): AdjustDefaults {
+            fun seconds(type: PhaseType): Int? = exercise.fixedMillisOf(type)
+                ?.takeIf { exercise.phasesAdjustable }
+                ?.let { (it / 1000.0).roundToInt() }
+            return AdjustDefaults(
+                roundBased = exercise.isRoundBased,
+                duration = if (exercise.isRoundBased) exercise.rounds else exercise.defaultMinutes(),
+                inhale = seconds(PhaseType.INHALE),
+                hold = seconds(PhaseType.HOLD_FULL) ?: seconds(PhaseType.HOLD_EMPTY),
+                exhale = seconds(PhaseType.EXHALE),
+            )
+        }
+    }
+}
+
+/**
+ * Lassen sich die Phasenlängen einzeln anpassen (Stepper „Einatmen“, „Halten“, „Ausatmen“)? Nein
+ * bei Atmen in Stufen ([Phase.level], Dirgha, Viloma: mehrere kurze Einatem- und Pausen-Phasen),
+ * bei Phasen unter 1 s (Feueratmung: 0,5 s würde zum kleinsten Stepper-Schritt 1 s) und wenn
+ * Phasen eines Typs verschieden lang sind. Ein Stepper zeigte dort nur die erste Phase eines Typs,
+ * [adjusted] überschriebe aber alle – „Einatmen 2 s“ plus ein Schritt verlängerte das Einatmen um
+ * 3 s, Pausen erschienen als „Halten voll“. Dann bleibt nur die Dauer bzw. die Rundenzahl.
+ */
+val Exercise.phasesAdjustable: Boolean
+    get() {
+        val phases = segments.flatMap { it.phases }
+        if (phases.any { it.level != null }) return false
+        if (phases.any { (it.duration as? PhaseDuration.Fixed)?.millis?.let { ms -> ms < 1000L } == true }) return false
+        return ADJUSTABLE_TYPES.all { type ->
+            phases.filter { it.type == type }.mapNotNull { (it.duration as? PhaseDuration.Fixed)?.millis }.distinct().size <= 1
+        }
+    }
+
+/** Phasentypen mit eigenem Stepper (Halten leer folgt dem Halten-Stepper, siehe [adjusted]). */
+private val ADJUSTABLE_TYPES = listOf(PhaseType.INHALE, PhaseType.HOLD_FULL, PhaseType.HOLD_EMPTY, PhaseType.EXHALE)
+
+/**
  * Wendet die [SessionConfig] an: rundenbasiert → Rundenzahl überschreiben;
- * kontinuierlich → Segment-Wiederholung aus den gewünschten Minuten berechnen.
+ * kontinuierlich → Segment-Wiederholung aus den gewünschten Minuten berechnen. Phasenlängen nur bei
+ * [phasesAdjustable] – eine alte gespeicherte Anpassung einer Stufen-Übung bleibt so wirkungslos.
+ * Runden und Minuten bleiben in den Grenzen der Stepper ([AdjustLimits]).
  */
 fun Exercise.adjusted(config: SessionConfig): Exercise {
     // 1) Optionale Phasenlängen überschreiben (nur feste Dauern).
     val hasOverrides = config.inhaleSeconds != null ||
         config.exhaleSeconds != null || config.holdSeconds != null
-    val base = if (!hasOverrides) {
+    val base = if (!hasOverrides || !phasesAdjustable) {
         this
     } else {
         // Halten leer folgt dem Halten-Stepper nur, wenn es so lang ist wie Halten voll (Box) oder
@@ -135,14 +191,20 @@ fun Exercise.adjusted(config: SessionConfig): Exercise {
 
     // 2) Runden (rundenbasiert) bzw. Minuten → Wiederholungen aus dem neuen Zyklus.
     if (base.isRoundBased) {
-        val chosen = (config.rounds ?: base.rounds).coerceIn(1, 20)
+        val chosen = (config.rounds ?: base.rounds).coerceIn(AdjustLimits.ROUNDS)
         return base.copy(rounds = chosen)
     }
     val segment = base.segments.firstOrNull() ?: return base
-    val minutes = (config.minutes ?: base.defaultMinutes()).coerceIn(1, 30)
+    val minutes = (config.minutes ?: base.defaultMinutes()).coerceIn(AdjustLimits.MINUTES)
     val repeat = (minutes * 60_000.0 / base.cycleMillis()).roundToInt().coerceAtLeast(1)
     return base.copy(segments = listOf(segment.copy(repeat = repeat)))
 }
 
-/** Feste Dauer der ersten Phase vom Typ [type] im ersten Segment, sonst null. */
-private fun Exercise.fixedMillisOf(type: PhaseType): Long? = (segments.firstOrNull()?.phases?.firstOrNull { it.type == type }?.duration as? PhaseDuration.Fixed)?.millis
+/**
+ * Feste Dauer der Phasen vom Typ [type] über alle Segmente – die eine Quelle für die Sekunden je
+ * Typ in [AdjustDefaults] und [adjusted]. null, wenn die Übung den Typ nicht mit fester Dauer hat;
+ * sind die Phasen verschieden lang, gilt die erste (dann ist [phasesAdjustable] ohnehin false).
+ */
+private fun Exercise.fixedMillisOf(type: PhaseType): Long? = segments.asSequence()
+    .flatMap { it.phases }
+    .firstNotNullOfOrNull { phase -> (phase.duration as? PhaseDuration.Fixed)?.takeIf { phase.type == type }?.millis }
