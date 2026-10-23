@@ -2,11 +2,17 @@ package app.atemkraft.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
@@ -27,13 +33,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import app.atemkraft.R
 import app.atemkraft.ui.theme.DarkSurface
@@ -41,6 +55,7 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonMagenta
 import app.atemkraft.ui.theme.OnNeon
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
 
 /** Ein Tab der unteren Navigationsleiste. */
@@ -98,16 +113,57 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
 /**
- * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), nur auf den vier Tabs
- * ([visible], `isTabRoot`). In der Tiefe bleibt nur der Platz der Systemnavigation [systemInsets];
- * die Höhe gleitet dabei (Default-Spring, MOTION-04), sodass eine Startleiste darüber sanft
- * hinab- bzw. hinaufrutscht, statt um die ganze Leiste zu springen.
+ * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Jede neue Seite startet mit
+ * der Leiste ([enter]); scrollt der Inhalt mehr als [threshold] px nach unten, klappt sie ein
+ * ([collapsed]). Zurück kommt sie nicht von selbst beim Hochscrollen, sondern über die Lasche
+ * ([TabBarHandle], [expand]) – danach entscheidet der Nutzer, Scrollen klappt auf dieser Seite nicht
+ * mehr ein. Die Scroll-Wege aller Seiten misst [connection] zentral im Rahmen der App; auf den vier
+ * Tabs selbst bleibt die Leiste immer stehen (das entscheidet der Aufrufer).
+ */
+@Stable
+class TabBarState(private val threshold: Float) {
+    var collapsed by mutableStateOf(false)
+        private set
+    private var byHand = false
+    private var travelled = 0f
+
+    /** Neue Seite: Leiste da bzw. eingeklappt ([startCollapsed], Muster-Editor), noch keine Wahl von Hand. */
+    fun enter(startCollapsed: Boolean) {
+        collapsed = startCollapsed
+        byHand = false
+        travelled = 0f
+    }
+
+    /** Lasche angetippt: Leiste zurück, Scrollen klappt sie auf dieser Seite nicht mehr ein. */
+    fun expand() {
+        collapsed = false
+        byHand = true
+    }
+
+    /** Zählt nur, was der Inhalt wirklich nach unten gescrollt hat (negatives `consumed.y`). */
+    val connection = object : NestedScrollConnection {
+        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+            if (!byHand && !collapsed && consumed.y < 0f) {
+                travelled -= consumed.y
+                if (travelled > threshold) collapsed = true
+            }
+            return Offset.Zero
+        }
+    }
+}
+
+/**
+ * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]. Sonst steht an
+ * ihrer Stelle [handle] (die Lasche, [TabBarHandle]) über dem Platz der Systemnavigation
+ * [systemInsets]. Die Höhe gleitet dabei (Default-Spring, MOTION-04), sodass eine Startleiste
+ * darüber sanft hinab- bzw. hinaufrutscht, statt um die ganze Leiste zu springen.
  */
 @Composable
 fun HideableTabBar(
     visible: Boolean,
     modifier: Modifier = Modifier,
     systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
+    handle: @Composable () -> Unit = {},
     bar: @Composable () -> Unit,
 ) {
     Box(modifier.animateContentSize()) {
@@ -117,7 +173,41 @@ fun HideableTabBar(
                 bar()
             }
         } else {
-            Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
+            Column {
+                handle()
+                Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
+            }
+        }
+    }
+}
+
+/**
+ * Lasche an der Stelle der eingeklappten Tab-Leiste: ein kleiner Pfeil nach oben in einer tonalen
+ * Pille ([Sizes.TabBarHandleWidth] × [Sizes.TabBarHandleHeight]), die ganze Breite eine Tippfläche
+ * von [Dimens.MinTouchTarget] Höhe (A11Y-05); antippen holt die Leiste zurück ([onExpand],
+ * „Tab-Leiste zeigen“). Auf jeder Seite der Tiefe an derselben Stelle, mit oder ohne Startleiste.
+ */
+@Composable
+fun TabBarHandle(onExpand: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(Dimens.MinTouchTarget)
+            .clickable(role = Role.Button, onClick = onExpand),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = Sizes.TabBarHandleWidth, height = Sizes.TabBarHandleHeight)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.KeyboardArrowUp,
+                contentDescription = stringResource(R.string.cd_tab_bar_show),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+            )
         }
     }
 }

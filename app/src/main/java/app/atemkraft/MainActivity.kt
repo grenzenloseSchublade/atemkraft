@@ -42,7 +42,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,6 +91,8 @@ import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.HideableTabBar
+import app.atemkraft.ui.components.TabBarHandle
+import app.atemkraft.ui.components.TabBarState
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.rememberDetailExercise
@@ -108,9 +112,11 @@ import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.situations.SituationsScreen
+import app.atemkraft.ui.startsWithTabBarCollapsed
 import app.atemkraft.ui.tabOnStack
 import app.atemkraft.ui.tapTab
 import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -192,6 +198,11 @@ private fun AtemkraftApp(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    // Tab-Leiste in der Tiefe: klappt beim Runterscrollen ein, Lasche holt sie zurück; jede neue
+    // Seite startet frisch (Muster-Editor eingeklappt).
+    val density = LocalDensity.current
+    val tabBar = remember(density) { TabBarState(threshold = with(density) { Dimens.SectionGap.toPx() }) }
+    LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(startCollapsed = currentDestination.startsWithTabBarCollapsed()) }
 
     // Aktueller Top-Level-Tab (null auf Push-Zielen wie Detail/Settings).
     val currentTopTab = when {
@@ -248,8 +259,11 @@ private fun AtemkraftApp(
                             MiniMeditationBar(state = state, onClick = { meditationExpanded = true })
                         }
                     }
-                    // Nur auf den vier Tabs; in der Tiefe weicht sie dem Inhalt (Nutzer 2026-10-23).
-                    HideableTabBar(visible = currentDestination.isTabRoot()) {
+                    // Auf den vier Tabs immer; in der Tiefe, bis gescrollt wird (Nutzer 2026-10-23).
+                    HideableTabBar(
+                        visible = currentDestination.isTabRoot() || !tabBar.collapsed,
+                        handle = { TabBarHandle(onExpand = tabBar::expand) },
+                    ) {
                         AppNavigationBar(
                             listOf(
                                 AppNavItem(
@@ -287,6 +301,8 @@ private fun AtemkraftApp(
                 // die Seitenränder zeigen den (identischen) Fensterhintergrund.
                 modifier = Modifier
                     .padding(innerPadding)
+                    // Misst das Scrollen jeder Seite für die Tab-Leiste, ohne etwas zu verbrauchen.
+                    .nestedScroll(tabBar.connection)
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .widthIn(max = 600.dp),

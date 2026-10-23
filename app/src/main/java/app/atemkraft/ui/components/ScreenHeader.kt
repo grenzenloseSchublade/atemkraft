@@ -27,8 +27,8 @@ import app.atemkraft.ui.theme.SECONDARY
  * immer an derselben Stelle: außen höchstens eine Aktion ([action], ein `AppIconButton`) – das
  * Zahnrad ([SettingsAction]) bzw. die Lupe im Situationen-Tab –, links daneben der Kalender zum
  * Logbuch ([onOpenLogbook], [LogbookAction], nur im Atmen-Tab links neben dem Zahnrad, Nutzer
- * 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bricht nie
- * im Wort ([WholeWordText]); neben zwei Icons wird er bei großer Schrift notfalls kleiner.
+ * 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bleibt eine
+ * Zeile und läuft notfalls als Laufschrift ([HeaderTitle]).
  *
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
  * scrollt“), damit Zahnrad, Kalender und Lupe immer erreichbar sind. Der Untertitel gehört zum

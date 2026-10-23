@@ -59,6 +59,7 @@ import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.CurveAxisSeconds
 import app.atemkraft.ui.components.CurveHeightRange
 import app.atemkraft.ui.components.HideableTabBar
+import app.atemkraft.ui.components.TabBarHandle
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
@@ -258,8 +259,8 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
     /**
      * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
-     * Trennlinie und [AppNavigationBar] mit [selected] markiert – nur auf den vier Tabs ([tabBar];
-     * [HideableTabBar] wie in MainActivity, in der Tiefe ohne Leiste) –, darunter die
+     * Trennlinie und [AppNavigationBar] mit [selected] markiert – ohne [tabBar] eingeklappt mit der
+     * Lasche wie eine Seite der Tiefe ([HideableTabBar], [TabBarHandle]) –, darunter die
      * Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
      */
     @Composable
@@ -268,7 +269,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             Spacer(Modifier.height(STATUS_BAR_DP.dp))
             Box(Modifier.weight(1f).fillMaxWidth()) { content() }
             // Wie MainActivity (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
-            HideableTabBar(visible = tabBar, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
+            HideableTabBar(visible = tabBar, systemInsets = WindowInsets(0), handle = { TabBarHandle(onExpand = {}) }) { TabNavigation(selected) }
             Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
         }
     }

@@ -24,6 +24,10 @@ object Sizes {
     /** Sichtbarer Kreis von `AppIconButton` und Stepper-Knöpfen (M3 40); Tippfläche bleibt 48. */
     val IconButtonSize = 40.dp
 
+    /** Pille der Lasche an der Stelle der eingeklappten Tab-Leiste (`TabBarHandle`): Breite 40 (= [IconButtonSize]) und Höhe 24 (= [IconDefault]). */
+    val TabBarHandleWidth = IconButtonSize
+    val TabBarHandleHeight = 24.dp
+
     /** Standard-Icon: Icon-Buttons, Zurück, Zahnrad, Expander-Caret, Mini-Leiste (M3 24). */
     val IconDefault = 24.dp
 

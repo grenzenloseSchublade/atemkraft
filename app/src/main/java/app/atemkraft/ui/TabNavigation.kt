@@ -36,10 +36,10 @@ internal fun NavController.switchTab(route: Any) {
 }
 
 /**
- * Ob dieses Ziel einer der vier Tabs ist: Nur dort steht die Tab-Leiste. Sobald man in die Tiefe
- * geht (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Logbuch, Über), weicht sie
- * und gibt ihren Platz dem Inhalt; zurück geht es über den Pfeil im Kopf (Nutzer 2026-10-23).
- * Vor dem ersten Ziel (null) gilt der Start-Tab.
+ * Ob dieses Ziel einer der vier Tabs ist: Dort steht die Tab-Leiste immer. In der Tiefe (Detailseite,
+ * Muster-Editor, Einstellungen, Glossar, Atemlehre, Logbuch, Über) klappt sie beim Runterscrollen
+ * ein und kommt über die Lasche zurück ([app.atemkraft.ui.components.TabBarState], Nutzer
+ * 2026-10-23). Vor dem ersten Ziel (null) gilt der Start-Tab.
  */
 internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.any { destination ->
     TAB_ROOTS.any { destination.hasRoute(it) }
@@ -57,3 +57,9 @@ internal fun NavController.tabOnStack(): Any = listOf(SituationenRoute, EigeneRo
     // getBackStackEntry wirft, wenn das Ziel nicht im Stapel liegt; die öffentliche API kennt
     // keine Abfrage ohne Ausnahme (currentBackStack ist bibliotheksintern).
     .firstOrNull { route -> runCatching { getBackStackEntry(route) }.isSuccess } ?: AtmenRoute
+
+/**
+ * Seiten, die mit eingeklappter Tab-Leiste starten: der Muster-Editor, dessen Kurve jede Höhe
+ * braucht und der selten scrollt.
+ */
+internal fun NavDestination?.startsWithTabBarCollapsed(): Boolean = this?.hierarchy?.any { it.hasRoute(PatternEditorRoute::class) } == true

@@ -136,6 +136,7 @@ import app.atemkraft.ui.components.CurvePreviewControls
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.MarqueeText
 import app.atemkraft.ui.components.NoPersonalizedLearning
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
@@ -667,7 +668,9 @@ private fun StartRow(
 
     // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
     val unseen = Modifier.inertWhen(true)
-    SubcomposeLayout(Modifier.fillMaxWidth().padding(vertical = Dimens.GapSmall)) { constraints ->
+    // Eng unter dem Kopf und ohne Abstand zur Kurve (die hat über „voll“ eigenen Rand): So passen
+    // Kurve und Werkzeugleiste auch auf 360 × 640 bei Schrift 1,3 samt Lasche der Tab-Leiste.
+    SubcomposeLayout(Modifier.fillMaxWidth().padding(top = Dimens.GapTiny)) { constraints ->
         val width = constraints.maxWidth
         val gap = Dimens.GapSmall.roundToPx()
         val loose = Constraints(maxWidth = width)
@@ -1239,18 +1242,8 @@ private fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
         // Für TalkBack unsichtbar (der Titel sagt „Name: …, umbenennen“); nicht clearAndSetSemantics,
         // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
         Column(Modifier.weight(1f).semantics { invisibleToUser() }) {
-            // Ein langer Name läuft als Laufschrift, statt umzubrechen – zwei Zeilen machten den Kopf
-            // zu hoch (Nutzer 2026-10-23). Dreimal, dann steht er wieder am Anfang (ruhig wie die
-            // App); ohne System-Animationen endet er mit „…“ (MOTION-02).
-            val marquee = remember { ValueAnimator.areAnimatorsEnabled() }
-            Text(
-                text = name,
-                style = MaterialTheme.typography.headlineSmall,
-                color = colors.onBackground,
-                maxLines = 1,
-                overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis,
-                modifier = if (marquee) Modifier.basicMarquee() else Modifier,
-            )
+            // Ein langer Name läuft als Laufschrift wie jeder Seitentitel, statt umzubrechen.
+            MarqueeText(text = name, style = MaterialTheme.typography.headlineSmall, color = colors.onBackground)
             Text(
                 text = stringResource(R.string.pattern_editor_title),
                 style = MaterialTheme.typography.labelMedium,

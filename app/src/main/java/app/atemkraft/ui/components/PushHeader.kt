@@ -35,8 +35,8 @@ import app.atemkraft.ui.theme.Dimens
  * blendet eine Haarlinie an seiner Unterkante ein.
  * Ohne [title] steht nur der Pfeil fest – für Seiten, deren Kopf zum Inhalt gehört (Markenkopf
  * auf „Über“).
- * Der Titel bricht nie im Wort um ([WholeWordText]); wird er zweizeilig (lange Übungsnamen auf
- * der Detailseite), wächst die Zeile mit. [action] steht rechts außen, ihr Icon bündig zur
+ * Der Titel steht in einer Zeile; passt er nicht (lange Übungsnamen auf der Detailseite), läuft er
+ * als Laufschrift ([HeaderTitle]). [action] steht rechts außen, ihr Icon bündig zur
  * Inhaltskante wie der Pfeil links; der Titel nimmt nur die Breite dazwischen (`weight`).
  * [titleContent] ersetzt [title] durch einen eigenen Titelbereich in derselben Breite (Muster-Editor:
  * Name des Musters, zum Umbenennen antippbar, Nachtrag 7). Der Titel – Seitentitel oder Name,
@@ -85,15 +85,18 @@ internal fun HeaderBar(modifier: Modifier = Modifier, content: @Composable RowSc
     )
 }
 
-/** Titel der Kopfzeile, auf Tabs und Push-Seiten gleich groß (`headlineSmall`). */
+/**
+ * Titel der Kopfzeile, auf Tabs und Push-Seiten gleich groß (`headlineSmall`): eine Zeile, die als
+ * Laufschrift läuft, wenn sie nicht passt ([MarqueeText], Nutzer 2026-10-23) – nie umbrochen, nie
+ * verkleinert, also überall gleich hoch.
+ */
 @Composable
 internal fun HeaderTitle(text: String, modifier: Modifier = Modifier) {
-    WholeWordText(
+    MarqueeText(
         text = text,
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onBackground,
         modifier = modifier.semantics { heading() },
-        marks = false,
     )
 }
 
