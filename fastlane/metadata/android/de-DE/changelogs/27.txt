@@ -1,0 +1,6 @@
+- Eigenes Muster: Atemzug frei gestalten, mit Kurve, Vorlagen und Vorschau
+- Neuer Tab „Eigene“ für gespeicherte Muster
+- Logbuch über den Kalender im Atmen-Tab
+- Atemlehre: die fünf vāyus, am Körper antippbar
+- Fester Seitentitel, Tab-Leiste nur auf den Tabs
+- Meditation: ruhige Ansicht, Ring und Zeit abschaltbar

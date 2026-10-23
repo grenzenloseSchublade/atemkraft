@@ -44,8 +44,8 @@ android {
         applicationId = "app.atemkraft"
         minSdk = 26
         targetSdk = 36
-        versionCode = 26
-        versionName = "1.6.8"
+        versionCode = 27
+        versionName = "1.7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Nur echte Geräte-ABIs mitliefern (sherpa-onnx-AAR enthält auch x86/x86_64 für Emulatoren).
