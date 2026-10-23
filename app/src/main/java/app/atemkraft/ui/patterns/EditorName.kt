@@ -47,7 +47,6 @@ import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.MarqueeText
 import app.atemkraft.ui.components.NoPersonalizedLearning
 import app.atemkraft.ui.components.rememberArmedConfirm
@@ -106,7 +105,8 @@ internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> U
 
 /**
  * Seitentitel (Nachtrag 7): der Name des Musters groß (`headlineSmall`), darunter klein „Eigenes
- * Muster“ als Einordnung, bei intensiven Mustern rechts „intensiv“ (`CharacterChip`, nur dann). Der
+ * Muster“ als Einordnung; „intensiv“ steht seit 2026-10-23 rechts in der Zeile der Werte über der
+ * Kurve ([InfoLine]), der Titel bekommt die ganze Breite vor Startpunkt und Lesezeichen. Der
  * Name steht in einer Zeile und läuft als Laufschrift, wenn er nicht passt – nie umbrochen: Der Kopf
  * behält seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Ein kleiner Stift direkt
  * hinter dem Namen zeigt, dass er änderbar ist (Nutzer 2026-10-23); er bleibt stehen, der Name
@@ -129,7 +129,6 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
             }
             .clickable(role = Role.Button, onClick = onRename),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
     ) {
         // Für TalkBack unsichtbar (der Titel sagt „Name: …, umbenennen“); nicht clearAndSetSemantics,
         // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
@@ -141,9 +140,6 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
                 color = colors.onBackground.copy(alpha = SECONDARY),
             )
         }
-        // Nur wenn das Muster intensiv ist: Ohne ihn gehört die Breite dem Namen. Der Name ist
-        // einzeilig, die Zeile springt also nicht in der Höhe.
-        if (state.pattern.isIntense) CharacterChip(intense = true, activating = false)
     }
 }
 

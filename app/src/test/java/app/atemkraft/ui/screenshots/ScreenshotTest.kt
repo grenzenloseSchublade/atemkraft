@@ -335,7 +335,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Muster-Editor in Listenhöhe: Vorlage „Viloma I“ (sieben Phasen), zweite Phase gewählt,
      * „Ablauf“ und „Aus der Yoga-Lehre“ aufgeklappt; dann laufende Vorschau (Uhr fest, Punkt in
-     * „Halten voll“) mit dem Phasennamen in der Startzeile.
+     * „Halten voll“) mit Phase und Restsekunden in den Werten über der Kurve.
      */
     @Test
     fun patternEditor() {

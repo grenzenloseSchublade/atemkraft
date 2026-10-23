@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,7 +50,6 @@ import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberSafetyGate
 import app.atemkraft.ui.patterns.curve.BreathCurveEditor
-import app.atemkraft.ui.patterns.curve.CurvePreviewControls
 import app.atemkraft.ui.patterns.curve.rememberBreathCurveHeights
 import app.atemkraft.ui.patterns.curve.rememberCurvePreviewState
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -57,10 +58,11 @@ import app.atemkraft.ui.theme.WarnAmber
 
 /**
  * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“, 5 „Kompakt“, 6 „Leiste unten“),
- * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, ggf. „intensiv“, und Lesezeichen ·
- * Startzeile ([StartRow]: Startpunkt-Pille für die Vorlagen, kurzer Status bzw. die Phase der
- * laufenden Vorschau, rechts Play/Pause und Ton-Schalter) · die Atemkurve (keine eigene
- * Vorschau-Zeile) · direkt darunter die Werkzeugleiste (gewählte Phase mit Sekunden-Stepper und
+ * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, rechts Startpunkt ([StartButton],
+ * öffnet die Vorlagen) und Lesezeichen · Werte ohne Tippfläche ([InfoLine]: „Box · 16 s je
+ * Atemzug · 3,8/min“, ggf. „intensiv“; während der Vorschau die Phase) · die Atemkurve · darunter
+ * rechtsbündig die Vorschau ([PreviewRow]: Play/Pause und Ton-Schalter; Nutzer 2026-10-23: über
+ * der Kurve keine Knöpfe) · die Werkzeugleiste (gewählte Phase mit Sekunden-Stepper und
  * Papierkorb, gelb gestrichelt getrennt „Neu nach 2:“ mit + Ein / + Halten / + Aus). Ziel: Kurve
  * und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle Höhe, wo Platz ist,
  * sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe ([FirstScreen]; die
@@ -133,7 +135,16 @@ fun PatternEditorScreen(
             PushHeader(
                 onBack = onBack,
                 titleContent = { NameTitle(state, onRename = { showRename = true }) },
-                action = { SaveToggle(state, onSavedChange) },
+                action = {
+                    // Startpunkt links neben dem Lesezeichen (Nutzer 2026-10-23): Über der Kurve stehen nur Werte.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        StartButton(state, startFocus) {
+                            preview.pause()
+                            showTemplates = true
+                        }
+                        SaveToggle(state, onSavedChange)
+                    }
+                },
                 scrolled = scrollState.canScrollBackward,
             )
             // Sichtbare Höhe der Scroll-Fläche: Danach richtet sich die Höhe der Kurve ([FirstScreen]).
@@ -147,19 +158,7 @@ fun PatternEditorScreen(
                 ) {
                     FirstScreen(
                         viewport = viewport,
-                        header = {
-                            StartRow(
-                                state = state,
-                                phase = phaseIndex.takeIf { preview.playing },
-                                focus = startFocus,
-                                onPickStart = {
-                                    preview.pause()
-                                    showTemplates = true
-                                },
-                            ) {
-                                CurvePreviewControls(preview) { PreviewSoundSwitch(sound) }
-                            }
-                        },
+                        header = { InfoLine(state, preview) },
                         curve = {
                             BreathCurveEditor(
                                 pattern = pattern,
@@ -170,6 +169,7 @@ fun PatternEditorScreen(
                                 preview = preview,
                             )
                         },
+                        belowCurve = { PreviewRow(preview, sound) },
                         toolbar = { Toolbar(state, toolbarFocus) },
                     )
                     pattern.intensityNote()?.let { IntenseNote(it) }
@@ -208,21 +208,23 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
 }
 
 /**
- * Der erste Bildschirm des Editors (Nachtrag 5 und 6): Startzeile [header], Atemkurve [curve]
- * und Werkzeugleiste [toolbar] untereinander. Die Kurve bekommt die Höhe, mit der alles zusammen in
- * die sichtbare Höhe [viewport] (px) der Scroll-Fläche passt – bevorzugt ihre volle, auf kleinen
- * Bildschirmen weniger, nie unter ihre Mindesthöhe ([BreathCurveHeights.fit]); reicht auch die
- * nicht, scrollt die Seite. Die Tab-Leiste ist in der Tiefe eingeklappt (Nutzer 2026-10-23), ihre
- * Höhe gehört der Kurve; klappt der Nutzer sie auf, wird die Kurve flacher.
+ * Der erste Bildschirm des Editors (Nachtrag 5 und 6): Werte [header], Atemkurve [curve], darunter
+ * die Vorschau [belowCurve] (Nutzer 2026-10-23) und die Werkzeugleiste [toolbar]. Die Kurve bekommt
+ * die Höhe, mit der alles zusammen in die sichtbare Höhe [viewport] (px) der Scroll-Fläche passt –
+ * bevorzugt ihre volle, auf kleinen Bildschirmen weniger, nie unter ihre Mindesthöhe
+ * ([BreathCurveHeights.fit]; Vorschau und Werkzeugleiste zählen beide mit); reicht auch die nicht,
+ * scrollt die Seite. Die Tab-Leiste ist in der Tiefe eingeklappt (Nutzer 2026-10-23), ihre Höhe
+ * gehört der Kurve; klappt der Nutzer sie auf, wird die Kurve flacher.
  *
- * Kopf und Werkzeugleiste behalten beim Bearbeiten ihre Höhe (Platz für die längsten Texte
- * reserviert), also auch die Kurve – nichts springt beim Auswählen, Hinzufügen oder Entfernen.
+ * Werte, Vorschau und Werkzeugleiste behalten beim Bearbeiten ihre Höhe (Platz für die längsten
+ * Texte reserviert), also auch die Kurve – nichts springt beim Auswählen, Hinzufügen oder Entfernen.
  */
 @Composable
 private fun FirstScreen(
     viewport: Int,
     header: @Composable () -> Unit,
     curve: @Composable () -> Unit,
+    belowCurve: @Composable () -> Unit,
     toolbar: @Composable () -> Unit,
 ) {
     val heights = rememberBreathCurveHeights()
@@ -231,7 +233,11 @@ private fun FirstScreen(
         centerHeight = { free -> if (free == Constraints.Infinity) heights.preferred.roundToPx() else heights.fit(free.toDp()).roundToPx() },
         top = header,
         center = curve,
-        bottom = toolbar,
+        // Zwei Teile unten: FillViewportColumn stapelt sie und zieht beide vom Platz der Kurve ab.
+        bottom = {
+            belowCurve()
+            toolbar()
+        },
     )
 }
 

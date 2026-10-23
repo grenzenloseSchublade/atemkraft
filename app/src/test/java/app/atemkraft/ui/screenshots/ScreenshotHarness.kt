@@ -25,7 +25,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -45,7 +44,6 @@ import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.SilentPreviewSound
-import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
@@ -54,6 +52,7 @@ import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AppTabBar
 import app.atemkraft.ui.navigation.HideableTabBar
 import app.atemkraft.ui.navigation.TopTab
+import app.atemkraft.ui.patterns.PATTERN_INFO_TAG
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
 import app.atemkraft.ui.patterns.PatternEditorScreen
 import app.atemkraft.ui.patterns.PatternEditorState
@@ -273,7 +272,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     private val compactProblems = mutableListOf<String>()
 
     /**
-     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, Startzeile, Kurve und Werkzeugleiste
+     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, Werte, Kurve, Vorschau und Werkzeugleiste
      * (gewählte Phase mit Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne Scrollen ganz im
      * Bild – auf jedem Gerät der Matrix bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE] hart geprüft,
      * ohne Tab-Leiste (Tiefe, Nutzer 2026-10-23); bei 2,0 nur gemessen. Überall ein Fehler: Die
@@ -293,9 +292,8 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
      * Befund `KOMPAKT` (passt), `KOMPAKT_FEHLT` als Fehler ([compactProblems]) oder
      * `KOMPAKT_SCROLLT` (nur gemessen). Fehler, wo [hard]: Es passt nicht, oder die Kurve ist nicht
      * so hoch wie der freie Platz erlaubt (geklemmt auf ihre Spanne). Ohne [hard] ist es immer noch
-     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Auf dem
-     * A54 bis Schrift 1,1 ist es auch ein Fehler, wenn der Status unter statt neben der
-     * Startpunkt-Pille steht.
+     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Die Zeile
+     * nennt die gezeigte Fassung der Werte über der Kurve (MUSTER-10: kürzer statt umbrochen).
      * Alle Werte ab Oberkante der Scroll-Fläche, in dp.
      */
     protected fun editorFit(
@@ -314,15 +312,9 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val play = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).fetchSemanticsNode().unclipped()
         val durationPlus = compose.onNodeWithContentDescription("${app.getString(R.string.cd_adjust_duration)}, ${app.getString(R.string.adjust_increase)}").fetchSemanticsNode().unclipped()
         val barOneLine = abs(play.center.y - durationPlus.center.y) <= 1f
-        // Status „11 s · 5,5/min“ in der Zeile der Startpunkt-Pille (Startzeile, 2026-10-23)?
-        val pill = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "").substringBefore(","), substring = true)
-            .fetchSemanticsNode().unclipped()
-        // Der gezeigte Status trägt die Beschreibung in Worten; die nur gemessenen Reserven nicht.
-        val status = compose.onNode(
-            hasText("\u00A0s\u00A0·", substring = true) and SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription),
-            useUnmergedTree = true,
-        ).fetchSemanticsNode().unclipped()
-        val statusInline = status.center.y in pill.top..pill.bottom
+        // Gezeigte Fassung der Werte über der Kurve.
+        val info = compose.onNodeWithTag(PATTERN_INFO_TAG, useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsProperties.Text].joinToString { it.text.replace('\u00A0', ' ').replace("\u2060", "") }
         val density = compose.density.density
         fun dp(px: Float) = (px / density).roundToInt()
         // Platz für die Kurve: sichtbare Höhe minus alles darüber und Werkzeugleiste darunter.
@@ -332,7 +324,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom + 0.5f
         val minWouldFit = free >= range.start - 0.5f
         val kind = when {
-            device == TestMatrix.A54 && fontScale <= TestMatrix.A54_FONT_SCALE && !statusInline -> "KOMPAKT_FEHLT"
             hard && !barOneLine -> "KOMPAKT_FEHLT"
             fits && heightRight -> "KOMPAKT"
             (minWouldFit && !fits) || !heightRight -> "KOMPAKT_FEHLT"
@@ -342,7 +333,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
             "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
             "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp), " +
-            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Status ${if (statusInline) "neben der Startpunkt-Pille" else "darunter"}"
+            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Werte „$info“"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)
     }

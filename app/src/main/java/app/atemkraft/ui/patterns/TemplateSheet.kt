@@ -81,7 +81,7 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
                             state.applyTemplate(template)
                             scope.launch { sheetState.hide() }.invokeOnCompletion {
                                 onDismiss()
-                                // Erst nach dem Schließen: Der Fokus geht zurück auf das Startpunkt-Pille.
+                                // Erst nach dem Schließen: Der Fokus geht zurück auf den Startpunkt im Kopf.
                                 onPick()
                             }
                         }

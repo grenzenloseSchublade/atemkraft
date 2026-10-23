@@ -30,7 +30,7 @@ internal fun MeasureOnly(content: @Composable () -> Unit) {
  * Einzeilige Breite (`maxIntrinsicWidth`) des Breitesten in [content], komponiert in [slot] als
  * [MeasureOnly]: Alles, was [content] nebeneinander oder übereinander zeigt (z. B. jede mögliche
  * Beschriftung in einer `Box`), zählt mit. Für `SubcomposeLayout`s, deren Anordnung von Reserven
- * abhängt (Startzeile des Muster-Editors).
+ * abhängt.
  */
 fun SubcomposeMeasureScope.widestOf(slot: Any, content: @Composable () -> Unit): Int = subcompose(slot) { MeasureOnly(content) }.maxOfOrNull { it.maxIntrinsicWidth(Constraints.Infinity) } ?: 0
 

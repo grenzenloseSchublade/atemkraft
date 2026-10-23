@@ -27,9 +27,9 @@ class DeviceFitTest(device: Device, fontScale: Float) : ScreenshotHarness(device
     }
 
     /**
-     * Ungünstigster Fall: intensives Muster (4-7-8 mit Halten voll 12 s, Chip „intensiv“ neben dem
-     * Namen, Hinweiskarte), Startpunkt „angepasst“, längster Phasenname „Halten voll“ in der
-     * Werkzeugleiste.
+     * Ungünstigster Fall: intensives Muster (4-7-8 mit Halten voll 12 s, Chip „intensiv“ in der
+     * Zeile der Werte, Hinweiskarte), Startpunkt „angepasst“, längster Phasenname „Halten voll“ in
+     * der Werkzeugleiste.
      */
     @Test
     fun patternEditor() = snap("14_muster_editor_kompakt", tab = Tab.EIGENE, tabBar = false, measure = { editorFit("14_muster_editor_kompakt") }) {

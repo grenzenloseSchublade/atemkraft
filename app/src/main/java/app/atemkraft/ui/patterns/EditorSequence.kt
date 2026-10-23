@@ -60,7 +60,7 @@ internal fun Sequence(state: PatternEditorState) {
     val count = state.pattern.phases.size
     CollapsibleSection(
         title = stringResource(R.string.pattern_editor_sequence),
-        // Erster Abschnittskopf der Seite (FARBE-07), seit die Startzeile „Atemzug“ ersetzt.
+        // Erster Abschnittskopf der Seite (FARBE-07), seit über der Kurve nur die Werte stehen statt des Kopfs „Atemzug“.
         color = headingColor(0),
         expanded = open,
         onExpandedChange = { open = it },

@@ -138,25 +138,30 @@
 
     <!-- Muster-Editor „Eigenes Muster“: frei gestaltete Phasenfolge (MUSTER-10, Nachtrag 4). -->
     <string name="pattern_editor_title">Eigenes Muster</string>
-    <!-- Feste Leiste unten (Nachtrag 6): Startpunkt-Symbol (öffnet die Vorlagen als Bottom Sheet,
-         gesprochen „Startpunkt wählen, aktuell: Box“ bzw. „… angepasst“), Dauer „− 5 min +“
-         (geschütztes Leerzeichen: Zahl und Einheit bleiben beisammen) und der große Play-Knopf
-         „Übung starten, ca. 5 Minuten“ (%1$s = cd_duration_minutes). -->
+    <!-- Startpunkt: Raster-Symbol im Kopf (öffnet die Vorlagen als Bottom Sheet, gesprochen
+         „Startpunkt wählen, derzeit Box“ bzw. „… angepasst“); feste Leiste unten (Nachtrag 6):
+         Dauer „− 5 min +“ (geschütztes Leerzeichen: Zahl und Einheit bleiben beisammen) und der
+         große Play-Knopf „Übung starten, ca. 5 Minuten“ (%1$s = cd_duration_minutes). -->
     <string name="pattern_editor_start">Startpunkt</string>
-    <string name="cd_pattern_editor_start">Startpunkt wählen, aktuell: %1$s</string>
+    <string name="cd_pattern_editor_start">Startpunkt wählen, derzeit %1$s</string>
     <string name="pattern_editor_minutes">%1$d\u00A0min</string>
     <string name="cd_pattern_editor_play">Übung starten, ca. %1$s</string>
-    <!-- Abschnitt mit der Atemkurve; kurzer Status hinter dem Titel: „Atemzug · 10 s · 6/min“,
-         TalkBack liest die Plural-Form. %2$s = die Rate (pattern_editor_rate_short, für TalkBack
-         cd_pattern_editor_rate bzw. _one): Atemzüge pro Minute mit deutschem Komma, gesprochen
-         genau „1“ in der Einzahl; „6/min“ bricht nicht am Schrägstrich (Wortverbinder U+2060). -->
-    <string name="pattern_editor_cycle" tools:ignore="PluralsCandidate">%1$d\u00A0s\u00A0· %2$s</string>
+    <!-- Werte über der Kurve (InfoLine, keine Tippfläche): „Box · 16 s je Atemzug · 3,8/min“, bei
+         Platzmangel „Box · 16 s · 3,8/min“, dann „16 s · 3,8/min“; während der Vorschau die Phase
+         und „noch 3 s“. Die Rate (pattern_editor_rate_short, für TalkBack cd_pattern_editor_rate
+         bzw. _one): Atemzüge pro Minute mit deutschem Komma, gesprochen genau „1“ in der Einzahl;
+         „6/min“ bricht nicht am Schrägstrich (Wortverbinder U+2060). TalkBack: cd_pattern_editor_info
+         mit %1$s = Startpunkt, %2$s = die Plural-Form cd_pattern_editor_cycle. -->
+    <string name="pattern_editor_info_breath" tools:ignore="PluralsCandidate">%1$d\u00A0s je\u00A0Atemzug</string>
+    <string name="pattern_editor_info_seconds">%1$d\u00A0s</string>
+    <string name="pattern_editor_info_remaining" tools:ignore="PluralsCandidate">noch %1$d\u00A0s</string>
     <string name="pattern_editor_rate_short">%1$s\u2060/\u2060min</string>
+    <string name="cd_pattern_editor_info">%1$s, %2$s</string>
     <string name="cd_pattern_editor_rate" tools:ignore="PluralsCandidate">%1$s Atemzüge pro Minute</string>
     <string name="cd_pattern_editor_rate_one">1 Atemzug pro Minute</string>
     <plurals name="cd_pattern_editor_cycle">
-        <item quantity="one">%1$d Sekunde je Durchlauf, %2$s</item>
-        <item quantity="other">%1$d Sekunden je Durchlauf, %2$s</item>
+        <item quantity="one">%1$d Sekunde je Atemzug, %2$s</item>
+        <item quantity="other">%1$d Sekunden je Atemzug, %2$s</item>
     </plurals>
     <!-- Beschriftung in der Kurve: Linien „voll“/„leer“, je Phase „4 s“ in Phasenfarbe. -->
     <string name="pattern_editor_curve_full">voll</string>
@@ -169,6 +174,8 @@
     <!-- TalkBack: die Kurve ist ein Knoten. %1$s = die Folge in Worten (FreePattern.spokenDescription):
          „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“. -->
     <string name="cd_breath_curve">Atemkurve: %1$s</string>
+    <!-- Zeile unter der Kurve: kleine Beschriftung links von Play/Pause und Ton-Schalter. -->
+    <string name="pattern_editor_preview">Vorschau</string>
     <string name="cd_preview_play">Vorschau abspielen</string>
     <string name="cd_preview_pause">Vorschau anhalten</string>
     <!-- Lautsprecher-Schalter der Editor-Vorschau (Role.Switch, Zustand „An“/„Aus“). -->

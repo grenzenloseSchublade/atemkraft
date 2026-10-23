@@ -90,7 +90,7 @@ fun Stepper(
 
 /**
  * Stepper ohne sichtbares Label („−  5 min  +“) für knappe Zeilen, in denen der Zusammenhang das
- * Label trägt (Muster-Editor: Dauer neben dem Startpunkt, Sekunden der gewählten Phase in der
+ * Label trägt (Muster-Editor: Dauer in der Leiste unten, Sekunden der gewählten Phase in der
  * Werkzeugleiste). [valueText] ist der sichtbare Wert samt Einheit („5 min“, „4 s“, `titleSmall`); TalkBack
  * hört wie beim [Stepper] [spokenLabel] mit dem Wert in Worten ([valueUnit]) und optional
  * [spokenSuffix]. Knöpfe und Tippflächen wie beim [Stepper], kein eigenes Polster. [flushEnd]:

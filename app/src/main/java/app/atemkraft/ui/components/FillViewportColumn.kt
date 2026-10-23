@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.Density
  * nie etwas abgeschnitten.
  *
  * Tab Meditation: der Zeitring füllt den Platz, mindestens seine Mindestgröße. Muster-Editor:
- * Startzeile, Kurve, Werkzeugleiste – die Kurve so hoch, dass alles passt, zwischen ihrer Mindest-
- * und Wunschhöhe.
+ * Werte, Kurve, Vorschau und Werkzeugleiste – die Kurve so hoch, dass alles passt, zwischen ihrer
+ * Mindest- und Wunschhöhe.
  */
 @Composable
 fun FillViewportColumn(

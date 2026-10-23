@@ -128,11 +128,9 @@ fun rememberBreathCurveHeights(): BreathCurveHeights {
  * gelbes Band auf der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
  *
  * Vorschau ([preview]): Läuft sie, wandert ein Punkt in Echtzeit über die Kurve. Die Knöpfe
- * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: rechts in die
- * Startzeile über der Kurve), ebenso den Phasennamen und den Ton (`PreviewSoundEffect` mit
- * [CurvePreviewState]).
- * Eine eigene Zeile unter der Kurve gibt es nicht – die Werkzeugleiste des Editors rückt direkt
- * darunter.
+ * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: rechtsbündig in
+ * eine Zeile darunter, Nutzer 2026-10-23), ebenso den Phasennamen (Muster-Editor: in den Werten
+ * über der Kurve) und den Ton (`PreviewSoundEffect` mit [CurvePreviewState]).
  *
  * Höhe: bevorzugt [BreathCurveHeights.preferred]; gibt der Aufrufer per [modifier] weniger
  * (`Modifier.height`, siehe [rememberBreathCurveHeights]), weicht zuerst der Platz für Beschriftungen
@@ -291,7 +289,7 @@ private data class CurveDrag(val index: Int, val axis: Int)
 
 /**
  * Farbe der Phase [index] von [pattern] – die eine Stelle für Kurve, Ablauf-Zeilen, Mini-Kurve der
- * Vorlagen, Werkzeugleiste und Status der Startzeile: obere Seite ([FreePattern.isUpperSide]:
+ * Vorlagen, Werkzeugleiste und Phase in den Werten über der Kurve: obere Seite ([FreePattern.isUpperSide]:
  * Einatmen, Halten ab halb voll) [inhale] (`secondary`), untere [BreathExhale] (FARBE-04).
  */
 internal fun phaseColor(pattern: FreePattern, index: Int, inhale: Color): Color = if (pattern.isUpperSide(index)) inhale else BreathExhale
