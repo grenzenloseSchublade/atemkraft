@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
@@ -25,6 +26,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -200,6 +202,8 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
      * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt.
      * [screen] nimmt den ganzen Bildschirm samt eigener Fenster auf (Dialoge); das Fenster muss
      * dafür Gerätegröße haben ([deviceWindow]).
+     * [export] bekommt das Bild des Testknotens unabhängig vom Roborazzi-Modus (Store-Bilder,
+     * [StoreScreenshotTest]).
      */
     @OptIn(ExperimentalRoborazziApi::class)
     protected fun snap(
@@ -213,6 +217,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         screen: Boolean = false,
         prepare: () -> Unit = {},
         measure: () -> List<String> = { emptyList() },
+        export: ((ImageBitmap) -> Unit)? = null,
         content: @Composable () -> Unit,
     ) {
         currentWidthDp = widthDp
@@ -227,6 +232,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         } else {
             compose.onNodeWithTag(SHOT).captureRoboImage("$dir/$name.png")
         }
+        export?.invoke(compose.onNodeWithTag(SHOT).captureToImage())
         // Befunde neben dem Bild ablegen (überschreibt den letzten Lauf); Übersicht per
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)

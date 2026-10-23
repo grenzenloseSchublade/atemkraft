@@ -25,15 +25,9 @@ import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
-import app.atemkraft.data.Areas
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
-import app.atemkraft.data.MeditationDisplay
-import app.atemkraft.data.Pranayama
-import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.Situations
-import app.atemkraft.domain.BreathingFamily
-import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseFilters
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
@@ -43,10 +37,8 @@ import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RuntimePhase
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
-import app.atemkraft.domain.SessionProgress
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -68,15 +60,12 @@ import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
-import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
-import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorState
-import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
 import app.atemkraft.ui.settings.SettingsScreen
@@ -228,26 +217,6 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         val scroller = generateSequence(row.parent) { it.parent }.first { SemanticsProperties.HorizontalScrollAxisRange in it.config }
         val scroll = (scroller.config[SemanticsProperties.HorizontalScrollAxisRange].maxValue() / compose.density.density).roundToInt()
         return listOf("${device.name}\tfs${(fontScale * 100).toInt()}\tFILTER\t1 Zeile, Scroll-Weg $scroll dp")
-    }
-
-    @Composable
-    private fun BreatheTab() {
-        HomeScreen(
-            exercisesByFamily = BreathingFamily.entries
-                .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
-                .filter { (_, list) -> list.isNotEmpty() },
-            situations = Situations.all,
-            areas = Areas.all,
-            resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
-            yogaExerciseIds = Pranayama.exerciseIds,
-            daily = daily,
-            dailySaved = false,
-            onRegenerateDaily = {},
-            onDailySavedChange = {},
-            onSelect = {},
-            onOpenSettings = {},
-            onOpenPatternEditor = {},
-        )
     }
 
     /**
@@ -517,63 +486,4 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             MeditationShot(MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L))
         }
     }
-
-    /**
-     * Zustand der laufenden Session wie im BreathSessionController (runFixedPhase/runUserPacedPhase): die
-     * erste Phase des Ablaufs von [exercise], auf die [phase] zutrifft, davon [elapsedMs] verstrichen
-     * (bei offenen Phasen hochgezählt).
-     */
-    private fun sessionAt(exercise: Exercise, elapsedMs: Long, phase: (RuntimePhase) -> Boolean): SessionUiState {
-        val timeline = exercise.buildTimeline()
-        val index = timeline.indexOfFirst(phase)
-        val current = timeline[index]
-        val totalMs = (current.duration as? PhaseDuration.Fixed)?.millis
-        return SessionUiState(
-            exerciseName = exercise.name,
-            status = if (totalMs != null) SessionStatus.RUNNING else SessionStatus.WAITING_FOR_USER,
-            phaseType = current.type,
-            phaseLevel = current.level,
-            phaseLabel = current.label,
-            phaseNote = current.note,
-            remainingMs = totalMs?.let { it - elapsedMs } ?: 0L,
-            phaseTotalMs = totalMs ?: 0L,
-            elapsedMs = if (totalMs != null) 0L else elapsedMs,
-            roundIndex = current.roundIndex,
-            roundCount = current.roundCount,
-            nextPhaseType = timeline.getOrNull(index + 1)?.type,
-            patternHint = exercise.instructionHint,
-            progress = SessionProgress(timeline).at(index, if (totalMs != null) elapsedMs else 0L),
-            // Kopfzeile mit „Danach in die Stille“ neben dem Ton (nicht bei Atmen im Gehen).
-            silenceAfterAllowed = exercise.silenceAfterAllowed,
-            silenceAfter = exercise.silenceAfterAllowed,
-        )
-    }
-
-    /** Ohne automatische Ruhe, damit nichts von selbst ausblendet. */
-    @Composable
-    private fun SessionShot(state: SessionUiState) = SessionOverlay(
-        state = state,
-        display = SessionDisplay(autoCalm = false),
-        onMinimize = {},
-        onToggleMute = {},
-        onTogglePause = {},
-        onTapHaptic = {},
-        onContinue = {},
-        onRestart = {},
-        onStop = {},
-        onOpenLogbook = {},
-    )
-
-    @Composable
-    private fun MeditationShot(state: MeditationUiState) = MeditationOverlay(
-        state = state,
-        display = MeditationDisplay(autoCalm = false),
-        onMinimize = {},
-        onToggleMute = {},
-        onTogglePause = {},
-        onTapHaptic = {},
-        onRestart = {},
-        onEnd = {},
-        onOpenLogbook = {},
-    )
 }

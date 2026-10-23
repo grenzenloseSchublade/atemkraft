@@ -181,6 +181,21 @@ tasks.withType<Test>().configureEach {
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+// Store-Bilder (fastlane/metadata/android/*/images, docs/STORE.md) nur auf Wunsch:
+//   scripts/build.sh testDebugUnitTest --tests '*StoreScreenshotTest' -PstoreScreenshots
+// Ohne den Schalter schließt jeder Testlauf (auch scripts/check.sh) die Klasse aus und schreibt
+// keine Bilder; mit ihm läuft der Test immer neu, weil seine Ausgabe außerhalb von build/ liegt.
+val storeScreenshots = providers.gradleProperty("storeScreenshots").isPresent
+val storeMetadataDir = rootProject.file("fastlane/metadata/android").absolutePath
+tasks.withType<Test>().configureEach {
+    if (storeScreenshots) {
+        systemProperty("atemkraft.storeOut", storeMetadataDir)
+        outputs.upToDateWhen { false }
+    } else {
+        filter.excludeTestsMatching("*.StoreScreenshotTest")
+    }
+}
+
 // Deutliche Warnung beim Paketieren statt beim Konfigurieren: So erscheint sie nur bei
 // Release-Builds (nicht bei jedem assembleDebug) und auch bei Configuration-Cache-Treffern.
 if (keystoreProps == null || unsignedRelease) {
