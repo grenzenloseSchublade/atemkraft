@@ -138,6 +138,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("01_atmen_suche_treffer", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
         }, measure = sameChips) { BreatheTab() }
+        // Ohne Treffer: „Nichts gefunden“, „Alle zeigen“ und der Satz, was die Suche kennt.
+        snap("01_atmen_suche_leer", prepare = {
+            compose.onNode(hasSetTextAction()).performTextInput("Kopfschmerzen")
+        }, measure = sameChips) { BreatheTab() }
         // Bereich über „Mehr: … ›“ unter dem Anlass gewählt: Familienkopf mit ✕, kein Chip markiert.
         snap("01_atmen_bereich", prepare = {
             compose.onNodeWithText(widest.shortLabel).performClick()

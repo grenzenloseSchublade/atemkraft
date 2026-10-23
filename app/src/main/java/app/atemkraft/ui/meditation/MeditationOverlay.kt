@@ -115,7 +115,7 @@ private fun MeditationContent(
 ) {
     if (state.status == MeditationStatus.FINISHED) {
         FinishedPanel(
-            title = stringResource(R.string.session_done_question),
+            title = stringResource(R.string.session_done_prompt),
             onAgain = onRestart,
             onExit = onEnd,
             onOpenLogbook = onOpenLogbook,

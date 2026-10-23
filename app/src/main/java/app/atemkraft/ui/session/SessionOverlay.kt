@@ -37,7 +37,7 @@ fun SessionOverlay(
     modifier: Modifier = Modifier,
     // „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
     onOpenLogbook: (() -> Unit)? = null,
-    // „In der Stille bleiben ›“ am Ende-Screen: weiter in die stille Meditation; ohne ihn kein Link.
+    // „In die Stille ›“ am Ende-Screen: weiter in die stille Meditation; ohne ihn kein Link.
     onIntoSilence: (() -> Unit)? = null,
     // „Danach in die Stille“ für diese Übung umschalten (Kopfzeile, neben dem Ton).
     onToggleSilenceAfter: () -> Unit = {},
@@ -56,7 +56,7 @@ fun SessionOverlay(
             onMinimize = onMinimize,
             onToggleMute = onToggleMute,
             chromeVisible = controlsVisible,
-            // Nicht nach Atmen im Gehen und nicht mehr am Ende (dort: „In der Stille bleiben ›“).
+            // Nicht nach Atmen im Gehen und nicht mehr am Ende (dort: „In die Stille ›“).
             silenceAfter = state.silenceAfter.takeIf { state.silenceAfterAllowed && state.status != SessionStatus.FINISHED },
             onToggleSilenceAfter = onToggleSilenceAfter,
         ) {

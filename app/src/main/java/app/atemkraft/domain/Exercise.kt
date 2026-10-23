@@ -30,7 +30,7 @@ package app.atemkraft.domain
  * @param activating Charakter eines generierten Musters: „sanft aktivierend“ statt „ruhig“
  *   (aus `PatternSpec.activating`; eingebaute Übungen zeigen „intensiv“ über [caution]).
  * @param silenceAfterAllowed Darf nach der Übung die stille Meditation folgen („Danach in die
- *   Stille“, „In der Stille bleiben ›“)? false bei Übungen, nach denen sich niemand eben hinsetzt
+ *   Stille“, „In die Stille ›“)? false bei Übungen, nach denen sich niemand eben hinsetzt
  *   (Atmen im Gehen); eine Eigenschaft der Übung statt einer festen Id in der Oberfläche.
  * @param perRound Hook, um Phasen pro Runde anzupassen (z. B. Wim-Hof-Retention).
  */

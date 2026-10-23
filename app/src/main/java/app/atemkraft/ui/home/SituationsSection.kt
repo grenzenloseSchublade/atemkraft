@@ -186,7 +186,9 @@ internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?) {
 /**
  * Trefferstatus unter dem Block, als Live-Region angesagt (A11Y-04): „2 Anlässe“, „1 Anlass,
  * 1 Bereich“, „1 Bereich“ – kurz genug, dass er nie umbricht. Ohne Treffer „Nichts gefunden“ mit
- * „Alle zeigen“ (MUSTER-04) – keine geratene Empfehlung.
+ * „Alle zeigen“ (MUSTER-04) – keine geratene Empfehlung – und darunter, was die Suche kennt:
+ * Alltagswörter, keine Beschwerden (Nutzer 2026-10-24). Sonst schlösse man aus einem Nicht-Treffer
+ * wie „Kopfschmerzen“, die Suche funktioniere nicht.
  *
  * Entprellt: Die Zahlen folgen der Eingabe erst, wenn sie [Motion.SearchStatusSettle] stehen. Die
  * Treffer werden je Buchstabe neu berechnet; ohne Pause sprach die Live-Region bei „Erschöpft“ bis
@@ -211,15 +213,18 @@ private fun SettledSearchStatus(situations: Int, areas: Int, onShowAll: () -> Un
         if (situations > 0) pluralStringResource(R.plurals.situations_search_situations, situations, situations) else null,
         if (areas > 0) pluralStringResource(R.plurals.situations_search_areas, areas, areas) else null,
     )
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-        SecondaryText(
-            text = if (none) stringResource(R.string.situations_search_none) else parts.joinToString(", "),
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .semantics { liveRegion = LiveRegionMode.Polite },
-        )
-        if (none) {
-            AppTextButton(onClick = onShowAll) { Text(stringResource(R.string.action_show_all)) }
+    Column {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+            SecondaryText(
+                text = if (none) stringResource(R.string.situations_search_none) else parts.joinToString(", "),
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            if (none) {
+                AppTextButton(onClick = onShowAll) { Text(stringResource(R.string.action_show_all)) }
+            }
         }
+        if (none) SecondaryText(stringResource(R.string.situations_search_none_hint))
     }
 }

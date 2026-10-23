@@ -106,7 +106,7 @@ fun SessionScreen(
     ) {
         if (state.status == SessionStatus.FINISHED) {
             FinishedPanel(
-                title = stringResource(R.string.session_done_question),
+                title = stringResource(R.string.session_done_prompt),
                 onAgain = onRestart,
                 onExit = onStop,
                 onOpenLogbook = onOpenLogbook,
