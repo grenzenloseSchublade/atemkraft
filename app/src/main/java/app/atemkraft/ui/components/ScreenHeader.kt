@@ -1,6 +1,7 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -33,12 +34,11 @@ import app.atemkraft.ui.theme.SECONDARY
  * Fester Kopf der Top-Level-Tabs: dieselbe Zeile wie der Kopf der Push-Seiten ([HeaderBar],
  * Titel `headlineSmall`), nur ohne Pfeil – beim Wechsel springt nichts. Rechts die Icon-Aktionen,
  * immer an derselben Stelle: außen höchstens eine Aktion ([action], ein `AppIconButton`, etwa das
- * Zahnrad [SettingsAction]), links daneben optional der Kalender zum Logbuch ([onOpenLogbook],
- * [LogbookAction]). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bleibt eine
+ * Zahnrad [SettingsAction]), Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bleibt eine
  * Zeile und läuft notfalls als Laufschrift ([HeaderTitle]).
  *
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
- * scrollt“), damit Zahnrad und Kalender immer erreichbar sind. Der Untertitel gehört zum Inhalt
+ * scrollt“), damit das Zahnrad immer erreichbar ist. Der Untertitel gehört zum Inhalt
  * ([ScreenSubtitle], erster Eintrag der Liste). [scrolled] (Inhalt liegt unter dem Kopf) blendet
  * die Haarlinie an der Unterkante ein.
  */
@@ -47,7 +47,6 @@ fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
-    onOpenLogbook: (() -> Unit)? = null,
     scrolled: Boolean = false,
 ) {
     Column(modifier.fillMaxWidth().scrolledHairline(scrolled)) {
@@ -55,12 +54,7 @@ fun ScreenHeader(
             HeaderTitle(title, Modifier.weight(1f))
             // Glyph an der Inhaltskante wie der Caret der Abschnittsköpfe darunter; die Tippfläche
             // ragt in den Screen-Rand (LAYOUT-07).
-            if (action != null || onOpenLogbook != null) {
-                Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically) {
-                    if (onOpenLogbook != null) LogbookAction(onClick = onOpenLogbook)
-                    if (action != null) action()
-                }
-            }
+            if (action != null) Box(Modifier.flushEnd()) { action() }
         }
     }
 }
@@ -123,21 +117,6 @@ fun ScreenSubtitle(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/**
- * Kalender für [ScreenHeader]: öffnet das Logbuch (cd „Logbuch“), nur im Atmen-Tab links neben dem
- * Zahnrad (Nutzer 2026-10-22).
- */
-@Composable
-fun LogbookAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    AppIconButton(onClick = onClick, modifier = modifier) {
-        Icon(
-            painter = painterResource(R.drawable.ic_calendar),
-            contentDescription = stringResource(R.string.settings_log_title),
-            tint = MaterialTheme.colorScheme.onBackground,
-        )
-    }
-}
-
 /** Zahnrad für [ScreenHeader]`.action`: öffnet die Einstellungen (cd `settings_title`). */
 @Composable
 fun SettingsAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -157,7 +136,6 @@ private fun ScreenHeaderPreview() {
         ScreenHeader(
             title = stringResource(R.string.tab_breathe),
             action = { SettingsAction(onClick = {}) },
-            onOpenLogbook = {},
         )
     }
 }
