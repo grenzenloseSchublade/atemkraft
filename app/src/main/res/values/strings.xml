@@ -209,8 +209,9 @@
     <string name="learn_atemlehre_hint">Phasen, vāyus, Regeln und Muster</string>
     <string name="learn_pranayama_hint">Grundlagen und Techniken, mit Übungen zum Ausprobieren</string>
     <string name="learn_glossary_hint">Studien, HRV und Yoga-Begriffe</string>
-    <!-- Infoseiten ohne Startknopf (SKY, Buteyko, Nasenatmung): gelesen statt geübt. -->
+    <!-- Infoseiten ohne Startknopf (SKY, Buteyko, Nasenatmung): gelesen statt geübt; Kapitel und eigene Seite. -->
     <string name="learn_programs">Programme &amp; Gewohnheiten</string>
+    <string name="learn_programs_hint">SKY, Buteyko, Nasenatmung</string>
     <string name="pranayama_title">Pranayama</string>
     <string name="pranayama_basics">Grundlagen</string>
     <string name="pranayama_techniques">Techniken</string>

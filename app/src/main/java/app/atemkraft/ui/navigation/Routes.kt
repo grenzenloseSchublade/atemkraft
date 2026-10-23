@@ -6,19 +6,19 @@ import kotlinx.serialization.Serializable
 /**
  * Type-safe Navigation-Routen. Tabs: Atmen (mit Anlässen und Suche), Eigene, Meditation, Lernen.
  * Push-Seiten mit festem Kopf: Detail, Muster-Editor („Eigenes Muster“), Einstellungen, Logbuch,
- * Glossar, Über, Atemlehre, Pranayama.
+ * Glossar, Über, Atemlehre, Pranayama, Programme.
  */
 @Serializable
 object AtmenRoute
 
-/** Tab „Eigene“: „Neues Muster“ und die Liste „Meine Muster“. */
+/** Tab „Eigene“: Karte „Verlauf“, „Tut mir gut“ und „Eigene Kreationen“ mit „Neues Muster“. */
 @Serializable
 object EigeneRoute
 
 @Serializable
 object MeditationRoute
 
-/** Tab „Lernen“: Kapitel Atemlehre, Pranayama und Begriffe (Nutzer 2026-10-23). */
+/** Tab „Lernen“: Kapitel Atemlehre, Pranayama, Programme & Gewohnheiten und Begriffe (Nutzer 2026-10-23). */
 @Serializable
 object LernenRoute
 
@@ -26,11 +26,15 @@ object LernenRoute
 @Serializable
 object PranayamaRoute
 
+/** Seite „Programme & Gewohnheiten“ im Tab „Lernen“: Infoseiten ohne Start (SKY, Buteyko, Nasenatmung). */
+@Serializable
+object ProgramsRoute
+
 /** [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte. */
 @Serializable
 data class SettingsRoute(val focusMeditation: Boolean = false)
 
-/** Logbuch als Push-Seite, erreichbar aus Einstellungen › Daten. */
+/** Logbuch als Push-Seite, erreichbar über die Karte „Verlauf“ im Tab „Eigene“. */
 @Serializable
 object LogbookRoute
 

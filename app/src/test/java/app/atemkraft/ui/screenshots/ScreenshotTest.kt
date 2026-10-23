@@ -64,6 +64,7 @@ import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
+import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.own.OwnPatternsScreen
@@ -204,7 +205,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * (Hinweis nach zurückgesetzten Einstellungen, „Keine Stimme gewählt“, Stimmen-Katalog offen
      * samt Quelle, „Beim Handywechsel?“ offen, längste Daten-Rückmeldungen, leeres Logbuch);
      * Glossar; Über mit Lizenzen; Atemlehre mit aufgeklappten Köpfen (samt den fünf vāyus) und der Karte „Feuer“;
-     * Tab „Lernen“ in Gerätehöhe samt Programmen und Pranayama mit allen Karten aufgeklappt;
+     * Tab „Lernen“ mit vier Kapiteln, die Programme als eigene Seite und Pranayama mit allen Karten
+     * aufgeklappt;
      * Mini-Leiste mit längstem Namen und längstem Phasenwort.
      */
     @Test
@@ -222,7 +224,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             }
         }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer") }
         snap("15_lernen", tab = Tab.LERNEN) {
-            LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenGlossary = {}, programs = BuiltInExercises.all.filter { !it.guided })
+            LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
+        }
+        snap("17_programme") {
+            ProgramsScreen(programs = BuiltInExercises.all.filter { !it.guided }, onBack = {}, onOpenExercise = {}, markedIds = setOf("buteyko"))
         }
         snap("16_pranayama_offen") { PranayamaScreen(onBack = {}, onOpenExercise = {}, expanded = true) }
         snap("11_mini_leiste", heightDp = 160) {
