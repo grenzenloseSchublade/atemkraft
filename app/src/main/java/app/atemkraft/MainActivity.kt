@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -93,8 +96,9 @@ import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.HideableTabBar
-import app.atemkraft.ui.components.TabBarHandle
+import app.atemkraft.ui.components.LocalTabBarState
 import app.atemkraft.ui.components.TabBarState
+import app.atemkraft.ui.components.TabBarToggle
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.rememberDetailExercise
@@ -269,7 +273,8 @@ private fun AtemkraftApp(
         Scaffold(
             modifier = Modifier.inertWhen(overlayOpen),
             bottomBar = {
-                Column {
+                // Ihre Oberkante trägt den Knopf der Tab-Leiste, solange die Seite keine Startleiste hat.
+                Column(Modifier.onGloballyPositioned { tabBar.bottomBarTop = it.positionInRoot().y }) {
                     if (sessionActive && !sessionExpanded) {
                         SessionHost(sessionViewModel.state) { state ->
                             MiniSessionBar(state = state, onClick = { sessionExpanded = true })
@@ -280,11 +285,8 @@ private fun AtemkraftApp(
                             MiniMeditationBar(state = state, onClick = { meditationExpanded = true })
                         }
                     }
-                    // Auf den vier Tabs immer; in der Tiefe, bis gescrollt wird (Nutzer 2026-10-23).
-                    HideableTabBar(
-                        visible = currentDestination.isTabRoot() || !tabBar.collapsed,
-                        handle = { TabBarHandle(onExpand = tabBar::expand) },
-                    ) {
+                    // Auf den fünf Tabs immer; in der Tiefe, bis gescrollt oder per Knopf zugeklappt wird.
+                    HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed) {
                         AppNavigationBar(
                             listOf(
                                 AppNavItem(
@@ -318,267 +320,273 @@ private fun AtemkraftApp(
                 }
             },
         ) { innerPadding ->
-            // Push-Ziele (Detail/Settings/…) gleiten hierarchisch herein/heraus ([pushComposable]);
-            // Tab-Wechsel blenden nur dezent – kein Ghosting mehr.
-            NavHost(
-                navController = navController,
-                startDestination = AtmenRoute,
-                // Tablets/Foldables: Inhalte auf lesbare Breite begrenzen und mittig setzen;
-                // die Seitenränder zeigen den (identischen) Fensterhintergrund.
-                modifier = Modifier
-                    .padding(innerPadding)
-                    // Misst das Scrollen jeder Seite für die Tab-Leiste, ohne etwas zu verbrauchen.
-                    .nestedScroll(tabBar.connection)
-                    .fillMaxWidth()
-                    .wrapContentWidth(Alignment.CenterHorizontally)
-                    .widthIn(max = 600.dp),
-                enterTransition = { fadeIn(tween(Motion.NavTab)) },
-                exitTransition = { fadeOut(tween(Motion.NavTab)) },
-                popEnterTransition = { fadeIn(tween(Motion.NavTab)) },
-                popExitTransition = { fadeOut(tween(Motion.NavTab)) },
-            ) {
-                composable<AtmenRoute> {
-                    var dailyPattern by remember {
-                        mutableStateOf(container.exerciseRepository.daily())
-                    }
-                    // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
-                    // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
-                    // ein eigenes Muster mit gleichen Zahlen zählt nicht (Herkunft).
-                    val savedPatterns by container.savedPatternsRepository.patterns
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
-                    val dailySaved = container.savedPatternsRepository.isDailySaved(dailyPattern, savedPatterns)
-                    HomeScreen(
-                        daily = dailyPattern,
-                        dailySaved = dailySaved,
-                        onRegenerateDaily = {
-                            dailyPattern = container.exerciseRepository.regenerateDaily()
-                        },
-                        onDailySavedChange = { save ->
-                            val pattern = dailyPattern
-                            scope.launch {
-                                if (save) {
-                                    container.savedPatternsRepository.save(pattern)
-                                } else {
-                                    container.savedPatternsRepository.unsave(pattern)
-                                }
-                            }
-                        },
-                        exercisesByFamily = guidedByFamily,
-                        programs = programs,
-                        onSelect = { id -> navController.navigate(DetailRoute(id)) },
-                        onOpenSettings = { navController.navigate(SettingsRoute()) },
-                        markedIds = markedExercises,
-                        onOpenPatternEditor = { navController.navigate(PatternEditorRoute()) },
-                        onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
-                    )
-                }
-                composable<SituationenRoute> {
-                    SituationsScreen(
-                        recommendations = Situations.all,
-                        resolve = { id -> container.exerciseRepository.byId(id) },
-                        onSelect = { id -> navController.navigate(DetailRoute(id)) },
-                        markedIds = markedExercises,
-                    )
-                }
-                composable<EigeneRoute> {
-                    val savedPatterns by container.savedPatternsRepository.patterns
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
-                    OwnPatternsScreen(
-                        savedPatterns = savedPatterns,
-                        onNewPattern = { navController.navigate(PatternEditorRoute()) },
-                        onSelect = { id -> navController.navigate(DetailRoute(id)) },
-                        onDeletePattern = { id ->
-                            scope.launch { container.savedPatternsRepository.delete(id) }
-                        },
-                        onOpenSettings = { navController.navigate(SettingsRoute()) },
-                    )
-                }
-                composable<MeditationRoute> {
-                    // TTS-Engine erst hier vorbereiten (nicht beim App-Start), idempotent.
-                    LaunchedEffect(Unit) { meditationController.prepareSpeech() }
-                    val askNotifications = rememberNotificationAsk(container.settingsRepository)
-                    MeditationScreen(
-                        initialConfig = meditationConfig,
-                        speechAvailable = meditationSpeechAvailable,
-                        gongIntervalMin = gongIntervalMin,
-                        onOpenSettings = { navController.navigate(SettingsRoute(focusMeditation = true)) },
-                        // Raste des Zeitrings: leicht je Minute, deutlicher je 5. Bedien-Rückmeldung,
-                        // kein Session-Cue: unabhängig vom App-Schalter, Android regelt sie (AUDIO-05).
-                        onDurationTick = { major -> container.hapticPlayer.dialTick(strong = major) },
-                        onStart = { config ->
-                            scope.launch { container.settingsRepository.setMeditationConfig(config) }
-                            meditationController.start(config)
-                            meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
-                            askNotifications()
-                        },
-                    )
-                }
-                composable<LernenRoute> {
-                    LearnScreen(
-                        onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
-                        onOpenPranayama = { navController.navigate(PranayamaRoute) },
-                        onOpenGlossary = { navController.navigate(GlossaryRoute) },
-                    )
-                }
-                pushComposable<DetailRoute> { entry ->
-                    val id = entry.toRoute<DetailRoute>().exerciseId
-                    // Eingebaute Übungen und das Tagesmuster einmal auflösen (ARC-5); gespeicherte
-                    // Muster folgen der DB und zeigen nach dem Bearbeiten im Editor die neuen Werte.
-                    val lookup = rememberDetailExercise(
-                        id = id,
-                        resolve = container.exerciseRepository::byId,
-                        live = { exerciseId ->
-                            SavedPatternsRepository.idOf(exerciseId)?.let { container.savedPatternsRepository.observe(exerciseId) }
-                        },
-                    )
-                    val exercise = lookup.exercise
-                    if (exercise == null) {
-                        // Unauflösbare Route (z. B. gelöschtes Muster): zurück statt leerer Screen
-                        // (CODE-05) – nur, solange dieses Ziel oben liegt. Lädt das Muster noch, bleibt
-                        // die Seite kurz leer.
-                        if (lookup.missing) {
-                            LaunchedEffect(entry.id) {
-                                if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
-                            }
+            CompositionLocalProvider(LocalTabBarState provides tabBar) {
+                // Push-Ziele (Detail/Settings/…) gleiten hierarchisch herein/heraus ([pushComposable]);
+                // Tab-Wechsel blenden nur dezent – kein Ghosting mehr.
+                NavHost(
+                    navController = navController,
+                    startDestination = AtmenRoute,
+                    // Tablets/Foldables: Inhalte auf lesbare Breite begrenzen und mittig setzen;
+                    // die Seitenränder zeigen den (identischen) Fensterhintergrund.
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        // Misst das Scrollen jeder Seite für die Tab-Leiste, ohne etwas zu verbrauchen.
+                        .nestedScroll(tabBar.connection)
+                        .fillMaxWidth()
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+                        .widthIn(max = 600.dp),
+                    enterTransition = { fadeIn(tween(Motion.NavTab)) },
+                    exitTransition = { fadeOut(tween(Motion.NavTab)) },
+                    popEnterTransition = { fadeIn(tween(Motion.NavTab)) },
+                    popExitTransition = { fadeOut(tween(Motion.NavTab)) },
+                ) {
+                    composable<AtmenRoute> {
+                        var dailyPattern by remember {
+                            mutableStateOf(container.exerciseRepository.daily())
                         }
-                        return@pushComposable
-                    }
-                    val savedPatternId = SavedPatternsRepository.idOf(id)
-                    val requireSafety = exercise.caution &&
-                        (!safetySettings.acknowledged || safetySettings.showWarning)
-                    // Intervall-Anpassungen pro Übung merken – außer beim Muster des Tages: dessen
-                    // Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten
-                    // sonst morgen für ein anderes Muster.
-                    val persistIntervals = id != RandomPatternGenerator.ID
-                    // Markieren nur eingebaute Übungen: Ihre Id ist stabil und ihre Karten stehen
-                    // in den Listen; Muster wechseln oder lassen sich löschen.
-                    val markable = exercise in BuiltInExercises.all
-                    val savedIntervals by remember(id) {
-                        container.settingsRepository.exerciseIntervals(id)
-                    }.collectAsStateWithLifecycle(initialValue = null)
-                    ExerciseDetailScreen(
-                        exercise = exercise,
-                        requireSafetyConfirm = requireSafety,
-                        savedIntervals = if (persistIntervals) savedIntervals else null,
-                        onIntervalsChange = { duration, inhale, hold, exhale ->
-                            if (persistIntervals) {
+                        // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
+                        // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
+                        // ein eigenes Muster mit gleichen Zahlen zählt nicht (Herkunft).
+                        val savedPatterns by container.savedPatternsRepository.patterns
+                            .collectAsStateWithLifecycle(initialValue = emptyList())
+                        val dailySaved = container.savedPatternsRepository.isDailySaved(dailyPattern, savedPatterns)
+                        HomeScreen(
+                            daily = dailyPattern,
+                            dailySaved = dailySaved,
+                            onRegenerateDaily = {
+                                dailyPattern = container.exerciseRepository.regenerateDaily()
+                            },
+                            onDailySavedChange = { save ->
+                                val pattern = dailyPattern
                                 scope.launch {
-                                    container.settingsRepository.setExerciseIntervals(id, duration, inhale, hold, exhale)
+                                    if (save) {
+                                        container.savedPatternsRepository.save(pattern)
+                                    } else {
+                                        container.savedPatternsRepository.unsave(pattern)
+                                    }
+                                }
+                            },
+                            exercisesByFamily = guidedByFamily,
+                            programs = programs,
+                            onSelect = { id -> navController.navigate(DetailRoute(id)) },
+                            onOpenSettings = { navController.navigate(SettingsRoute()) },
+                            markedIds = markedExercises,
+                            onOpenPatternEditor = { navController.navigate(PatternEditorRoute()) },
+                            onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
+                        )
+                    }
+                    composable<SituationenRoute> {
+                        SituationsScreen(
+                            recommendations = Situations.all,
+                            resolve = { id -> container.exerciseRepository.byId(id) },
+                            onSelect = { id -> navController.navigate(DetailRoute(id)) },
+                            markedIds = markedExercises,
+                        )
+                    }
+                    composable<EigeneRoute> {
+                        val savedPatterns by container.savedPatternsRepository.patterns
+                            .collectAsStateWithLifecycle(initialValue = emptyList())
+                        OwnPatternsScreen(
+                            savedPatterns = savedPatterns,
+                            onNewPattern = { navController.navigate(PatternEditorRoute()) },
+                            onSelect = { id -> navController.navigate(DetailRoute(id)) },
+                            onDeletePattern = { id ->
+                                scope.launch { container.savedPatternsRepository.delete(id) }
+                            },
+                            onOpenSettings = { navController.navigate(SettingsRoute()) },
+                        )
+                    }
+                    composable<MeditationRoute> {
+                        // TTS-Engine erst hier vorbereiten (nicht beim App-Start), idempotent.
+                        LaunchedEffect(Unit) { meditationController.prepareSpeech() }
+                        val askNotifications = rememberNotificationAsk(container.settingsRepository)
+                        MeditationScreen(
+                            initialConfig = meditationConfig,
+                            speechAvailable = meditationSpeechAvailable,
+                            gongIntervalMin = gongIntervalMin,
+                            onOpenSettings = { navController.navigate(SettingsRoute(focusMeditation = true)) },
+                            // Raste des Zeitrings: leicht je Minute, deutlicher je 5. Bedien-Rückmeldung,
+                            // kein Session-Cue: unabhängig vom App-Schalter, Android regelt sie (AUDIO-05).
+                            onDurationTick = { major -> container.hapticPlayer.dialTick(strong = major) },
+                            onStart = { config ->
+                                scope.launch { container.settingsRepository.setMeditationConfig(config) }
+                                meditationController.start(config)
+                                meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
+                                askNotifications()
+                            },
+                        )
+                    }
+                    composable<LernenRoute> {
+                        LearnScreen(
+                            onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
+                            onOpenPranayama = { navController.navigate(PranayamaRoute) },
+                            onOpenGlossary = { navController.navigate(GlossaryRoute) },
+                        )
+                    }
+                    pushComposable<DetailRoute> { entry ->
+                        val id = entry.toRoute<DetailRoute>().exerciseId
+                        // Eingebaute Übungen und das Tagesmuster einmal auflösen (ARC-5); gespeicherte
+                        // Muster folgen der DB und zeigen nach dem Bearbeiten im Editor die neuen Werte.
+                        val lookup = rememberDetailExercise(
+                            id = id,
+                            resolve = container.exerciseRepository::byId,
+                            live = { exerciseId ->
+                                SavedPatternsRepository.idOf(exerciseId)?.let { container.savedPatternsRepository.observe(exerciseId) }
+                            },
+                        )
+                        val exercise = lookup.exercise
+                        if (exercise == null) {
+                            // Unauflösbare Route (z. B. gelöschtes Muster): zurück statt leerer Screen
+                            // (CODE-05) – nur, solange dieses Ziel oben liegt. Lädt das Muster noch, bleibt
+                            // die Seite kurz leer.
+                            if (lookup.missing) {
+                                LaunchedEffect(entry.id) {
+                                    if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
                                 }
                             }
-                        },
-                        onIntervalsReset = {
-                            if (persistIntervals) {
-                                scope.launch { container.settingsRepository.clearExerciseIntervals(id) }
-                            }
-                        },
-                        onConfirmedSafety = {
-                            scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
-                        },
-                        onStart = { config ->
-                            sessionViewModel.start(exercise, config)
-                            sessionExpanded = true
-                            navController.popBackStack()
-                        },
-                        onBack = { navController.popBackStack() },
-                        onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
-                        marked = id in markedExercises,
-                        onMarkedChange = if (markable) {
-                            { marked -> scope.launch { container.settingsRepository.setExerciseMarked(id, marked) } }
-                        } else {
-                            null
-                        },
-                        // Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen,
-                        // ein gespeichertes bearbeiten.
-                        onEditPattern = when {
-                            // Die Zahlen genau dieses Musters mitgeben: Ein erneutes daily() im
-                            // Editor wäre nach Mitternacht schon das nächste.
-                            id == RandomPatternGenerator.ID -> {
-                                {
-                                    val shown = RandomPatternGenerator.specOf(exercise)
-                                    navController.navigate(shown?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true))
+                            return@pushComposable
+                        }
+                        val savedPatternId = SavedPatternsRepository.idOf(id)
+                        val requireSafety = exercise.caution &&
+                            (!safetySettings.acknowledged || safetySettings.showWarning)
+                        // Intervall-Anpassungen pro Übung merken – außer beim Muster des Tages: dessen
+                        // Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten
+                        // sonst morgen für ein anderes Muster.
+                        val persistIntervals = id != RandomPatternGenerator.ID
+                        // Markieren nur eingebaute Übungen: Ihre Id ist stabil und ihre Karten stehen
+                        // in den Listen; Muster wechseln oder lassen sich löschen.
+                        val markable = exercise in BuiltInExercises.all
+                        val savedIntervals by remember(id) {
+                            container.settingsRepository.exerciseIntervals(id)
+                        }.collectAsStateWithLifecycle(initialValue = null)
+                        ExerciseDetailScreen(
+                            exercise = exercise,
+                            requireSafetyConfirm = requireSafety,
+                            savedIntervals = if (persistIntervals) savedIntervals else null,
+                            onIntervalsChange = { duration, inhale, hold, exhale ->
+                                if (persistIntervals) {
+                                    scope.launch {
+                                        container.settingsRepository.setExerciseIntervals(id, duration, inhale, hold, exhale)
+                                    }
                                 }
-                            }
+                            },
+                            onIntervalsReset = {
+                                if (persistIntervals) {
+                                    scope.launch { container.settingsRepository.clearExerciseIntervals(id) }
+                                }
+                            },
+                            onConfirmedSafety = {
+                                scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
+                            },
+                            onStart = { config ->
+                                sessionViewModel.start(exercise, config)
+                                sessionExpanded = true
+                                navController.popBackStack()
+                            },
+                            onBack = { navController.popBackStack() },
+                            onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
+                            marked = id in markedExercises,
+                            onMarkedChange = if (markable) {
+                                { marked -> scope.launch { container.settingsRepository.setExerciseMarked(id, marked) } }
+                            } else {
+                                null
+                            },
+                            // Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen,
+                            // ein gespeichertes bearbeiten.
+                            onEditPattern = when {
+                                // Die Zahlen genau dieses Musters mitgeben: Ein erneutes daily() im
+                                // Editor wäre nach Mitternacht schon das nächste.
+                                id == RandomPatternGenerator.ID -> {
+                                    {
+                                        val shown = RandomPatternGenerator.specOf(exercise)
+                                        navController.navigate(shown?.let(PatternEditorRoute::of) ?: PatternEditorRoute(fromDaily = true))
+                                    }
+                                }
 
-                            savedPatternId != null -> {
-                                { navController.navigate(PatternEditorRoute(patternId = savedPatternId)) }
-                            }
+                                savedPatternId != null -> {
+                                    { navController.navigate(PatternEditorRoute(patternId = savedPatternId)) }
+                                }
 
-                            else -> null
-                        },
-                    )
-                }
-                pushComposable<PatternEditorRoute> { entry ->
-                    val route = entry.toRoute<PatternEditorRoute>()
-                    PatternEditorDestination(
-                        patternId = route.patternId,
-                        fromDaily = route.fromDaily,
-                        repository = container.savedPatternsRepository,
-                        dailySpec = { route.dailySpec() ?: container.exerciseRepository.daily().spec },
-                        scope = scope,
-                        // Ausprobieren ohne Speichern: Der Editor bleibt unter der Session offen –
-                        // probieren, nachstellen, noch einmal probieren.
-                        onStart = { exercise, config ->
-                            sessionViewModel.start(exercise, config)
-                            sessionExpanded = true
-                        },
-                        onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
-                        onBack = { navController.popBackStack() },
-                        // Muster gelöscht: zurück, nur solange der Editor oben liegt (CODE-05).
-                        onMissing = {
-                            if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
-                        },
-                        // Vorschau-Ton mit den Klängen der App, still neben einer laufenden Übung.
-                        cueSettings = cueSettings,
-                        otherAudioActive = sessionActive || meditationActive,
-                        // Intensive eigene Muster: derselbe Sicherheitsdialog wie auf der Detailseite.
-                        requireSafetyConfirm = !safetySettings.acknowledged || safetySettings.showWarning,
-                        onConfirmedSafety = {
-                            scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
-                        },
-                    )
-                }
-                pushComposable<SettingsRoute> { entry ->
-                    // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
-                    LaunchedEffect(Unit) { meditationController.prepareSpeech() }
-                    val patternTransfer = rememberPatternTransfer(
-                        container.savedPatternsRepository,
-                        container.settingsRepository,
-                    )
-                    val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
-                    SettingsScreen(
-                        state = settingsState,
-                        actions = settingsViewModel.actions,
-                        onOpenAbout = { navController.navigate(AboutRoute) },
-                        onBack = { navController.popBackStack() },
-                        transfer = patternTransfer,
-                        focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
-                    )
-                }
-                pushComposable<LogbookRoute> {
-                    LogbookScreen(entries = logEntries, onBack = { navController.popBackStack() })
-                }
-                pushComposable<GlossaryRoute> {
-                    GlossaryScreen(onBack = { navController.popBackStack() })
-                }
-                pushComposable<AtemlehreRoute> { entry ->
-                    AtemlehreScreen(
-                        onBack = { navController.popBackStack() },
-                        onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
-                        focus = entry.toRoute<AtemlehreRoute>().focus,
-                    )
-                }
-                pushComposable<PranayamaRoute> {
-                    PranayamaScreen(
-                        onBack = { navController.popBackStack() },
-                        onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
-                    )
-                }
-                pushComposable<AboutRoute> {
-                    AboutScreen(onBack = { navController.popBackStack() })
+                                else -> null
+                            },
+                        )
+                    }
+                    pushComposable<PatternEditorRoute> { entry ->
+                        val route = entry.toRoute<PatternEditorRoute>()
+                        PatternEditorDestination(
+                            patternId = route.patternId,
+                            fromDaily = route.fromDaily,
+                            repository = container.savedPatternsRepository,
+                            dailySpec = { route.dailySpec() ?: container.exerciseRepository.daily().spec },
+                            scope = scope,
+                            // Ausprobieren ohne Speichern: Der Editor bleibt unter der Session offen –
+                            // probieren, nachstellen, noch einmal probieren.
+                            onStart = { exercise, config ->
+                                sessionViewModel.start(exercise, config)
+                                sessionExpanded = true
+                            },
+                            onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
+                            onBack = { navController.popBackStack() },
+                            // Muster gelöscht: zurück, nur solange der Editor oben liegt (CODE-05).
+                            onMissing = {
+                                if (navController.currentBackStackEntry?.id == entry.id) navController.popBackStack()
+                            },
+                            // Vorschau-Ton mit den Klängen der App, still neben einer laufenden Übung.
+                            cueSettings = cueSettings,
+                            otherAudioActive = sessionActive || meditationActive,
+                            // Intensive eigene Muster: derselbe Sicherheitsdialog wie auf der Detailseite.
+                            requireSafetyConfirm = !safetySettings.acknowledged || safetySettings.showWarning,
+                            onConfirmedSafety = {
+                                scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
+                            },
+                        )
+                    }
+                    pushComposable<SettingsRoute> { entry ->
+                        // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
+                        LaunchedEffect(Unit) { meditationController.prepareSpeech() }
+                        val patternTransfer = rememberPatternTransfer(
+                            container.savedPatternsRepository,
+                            container.settingsRepository,
+                        )
+                        val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
+                        SettingsScreen(
+                            state = settingsState,
+                            actions = settingsViewModel.actions,
+                            onOpenAbout = { navController.navigate(AboutRoute) },
+                            onBack = { navController.popBackStack() },
+                            transfer = patternTransfer,
+                            focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
+                        )
+                    }
+                    pushComposable<LogbookRoute> {
+                        LogbookScreen(entries = logEntries, onBack = { navController.popBackStack() })
+                    }
+                    pushComposable<GlossaryRoute> {
+                        GlossaryScreen(onBack = { navController.popBackStack() })
+                    }
+                    pushComposable<AtemlehreRoute> { entry ->
+                        AtemlehreScreen(
+                            onBack = { navController.popBackStack() },
+                            onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
+                            focus = entry.toRoute<AtemlehreRoute>().focus,
+                        )
+                    }
+                    pushComposable<PranayamaRoute> {
+                        PranayamaScreen(
+                            onBack = { navController.popBackStack() },
+                            onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
+                        )
+                    }
+                    pushComposable<AboutRoute> {
+                        AboutScreen(onBack = { navController.popBackStack() })
+                    }
                 }
             }
         }
+
+        // Knopf der Tab-Leiste in der Tiefe: auf der Oberkante der Startleiste bzw. der unteren Leisten,
+        // über dem Inhalt; Overlays darüber verdecken ihn.
+        if (!currentDestination.isTabRoot()) TabBarToggle(tabBar, Modifier.align(Alignment.TopCenter))
 
         // Vollbild-Session über allem; System-Zurück regelt das Overlay selbst (minimieren, am
         // Ende-Screen wie „Ende“).

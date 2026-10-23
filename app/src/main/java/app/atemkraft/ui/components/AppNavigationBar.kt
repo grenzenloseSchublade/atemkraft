@@ -3,6 +3,7 @@ package app.atemkraft.ui.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -29,10 +31,13 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +54,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
 import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.Dimens
@@ -57,6 +63,7 @@ import app.atemkraft.ui.theme.OnNeon
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
+import kotlin.math.roundToInt
 
 /** Ein Tab der unteren Navigationsleiste. */
 class AppNavItem(
@@ -118,10 +125,14 @@ private const val NAV_LABEL_MIN_SCALE = 0.4f
 /**
  * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Jede neue Seite startet mit
  * der Leiste ([enter]); scrollt der Inhalt mehr als [threshold] px nach unten, klappt sie ein
- * ([collapsed]). Zurück kommt sie nicht von selbst beim Hochscrollen, sondern über die Lasche
- * ([TabBarHandle], [expand]) – danach entscheidet der Nutzer, Scrollen klappt auf dieser Seite nicht
+ * ([collapsed]). Der Knopf auf der Oberkante der untersten Leiste ([TabBarToggle]) klappt sie auf
+ * und wieder zu ([toggle]) – danach entscheidet der Nutzer, Scrollen klappt auf dieser Seite nicht
  * mehr ein. Die Scroll-Wege aller Seiten misst [connection] zentral im Rahmen der App; auf den fünf
  * Tabs selbst bleibt die Leiste immer stehen (das entscheidet der Aufrufer).
+ *
+ * Wo der Knopf sitzt: auf der Oberkante einer Startleiste, wenn die Seite eine hat
+ * ([PinnedActionBar] meldet sich mit [anchorPinnedBar] an), sonst auf der Oberkante der unteren
+ * Leisten ([bottomBarTop]). Beides in px im Fenster.
  */
 @Stable
 class TabBarState(private val threshold: Float) {
@@ -130,6 +141,18 @@ class TabBarState(private val threshold: Float) {
     private var byHand = false
     private var travelled = 0f
 
+    /** Oberkante der unteren Leisten (Mini-Leiste, Tab-Leiste bzw. Systemnavigation), px im Fenster. */
+    var bottomBarTop by mutableFloatStateOf(Float.NaN)
+
+    // Startleisten der gerade gezeigten Seiten: Beim Seitenwechsel stehen kurz zwei da, es gilt die
+    // zuletzt angemeldete.
+    private val pinnedOwners = mutableStateListOf<Any>()
+    private val pinnedTops = mutableStateMapOf<Any, Float>()
+
+    /** Oberkante, auf der der Knopf sitzt: die jüngste Startleiste, sonst die unteren Leisten. */
+    val anchorTop: Float
+        get() = pinnedOwners.lastOrNull()?.let { pinnedTops[it] } ?: bottomBarTop
+
     /** Neue Seite: Leiste da bzw. eingeklappt ([startCollapsed], Muster-Editor), noch keine Wahl von Hand. */
     fun enter(startCollapsed: Boolean) {
         collapsed = startCollapsed
@@ -137,10 +160,22 @@ class TabBarState(private val threshold: Float) {
         travelled = 0f
     }
 
-    /** Lasche angetippt: Leiste zurück, Scrollen klappt sie auf dieser Seite nicht mehr ein. */
-    fun expand() {
-        collapsed = false
+    /** Knopf angetippt: Leiste auf bzw. zu; Scrollen klappt sie auf dieser Seite nicht mehr ein. */
+    fun toggle() {
+        collapsed = !collapsed
         byHand = true
+    }
+
+    /** Eine Startleiste ([owner]) mit ihrer Oberkante [top] (px im Fenster) an- bzw. nachmelden. */
+    fun anchorPinnedBar(owner: Any, top: Float) {
+        if (owner !in pinnedOwners) pinnedOwners += owner
+        pinnedTops[owner] = top
+    }
+
+    /** Startleiste [owner] verschwindet mit ihrer Seite. */
+    fun releasePinnedBar(owner: Any) {
+        pinnedOwners -= owner
+        pinnedTops -= owner
     }
 
     /** Zählt nur, was der Inhalt wirklich nach unten gescrollt hat (negatives `consumed.y`). */
@@ -155,18 +190,20 @@ class TabBarState(private val threshold: Float) {
     }
 }
 
+/** Der [TabBarState] der App für Seiten in der Tiefe; null auf den Tabs, in Vorschauen und Tests. */
+val LocalTabBarState = staticCompositionLocalOf<TabBarState?> { null }
+
 /**
- * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]. Sonst steht an
- * ihrer Stelle [handle] (die Lasche, [TabBarHandle]) über dem Platz der Systemnavigation
- * [systemInsets]. Die Höhe gleitet dabei (Default-Spring, MOTION-04), sodass eine Startleiste
- * darüber sanft hinab- bzw. hinaufrutscht, statt um die ganze Leiste zu springen.
+ * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt
+ * nur der Platz der Systemnavigation [systemInsets]. Die Höhe gleitet dabei (Default-Spring,
+ * MOTION-04), sodass eine Startleiste darüber sanft hinab- bzw. hinaufrutscht, statt um die ganze
+ * Leiste zu springen.
  */
 @Composable
 fun HideableTabBar(
     visible: Boolean,
     modifier: Modifier = Modifier,
     systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
-    handle: @Composable () -> Unit = {},
     bar: @Composable () -> Unit,
 ) {
     Box(modifier.animateContentSize()) {
@@ -176,41 +213,50 @@ fun HideableTabBar(
                 bar()
             }
         } else {
-            Column {
-                handle()
-                Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
-            }
+            Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
         }
     }
 }
 
 /**
- * Lasche an der Stelle der eingeklappten Tab-Leiste: ein kleiner Pfeil nach oben in einer tonalen
- * Pille ([Sizes.TabBarHandleWidth] × [Sizes.TabBarHandleHeight]), die ganze Breite eine Tippfläche
- * von [Dimens.MinTouchTarget] Höhe (A11Y-05); antippen holt die Leiste zurück ([onExpand],
- * „Tab-Leiste zeigen“). Auf jeder Seite der Tiefe an derselben Stelle, mit oder ohne Startleiste.
+ * Knopf, der die Tab-Leiste in der Tiefe auf- und zuklappt (Nutzer 2026-10-23): eine kleine tonale
+ * Pille ([Sizes.TabBarHandleWidth] × [Sizes.TabBarHandleHeight]) mit Pfeil, mittig auf der Oberkante
+ * der untersten Leiste ([TabBarState.anchorTop]) – ohne eigene Zeile, eingeklappt gewinnt der Inhalt
+ * die ganze Leiste. Pfeil nach oben, solange sie zu ist („Tab-Leiste zeigen“), nach unten, solange
+ * sie offen ist („Tab-Leiste ausblenden“). Die Tippfläche ([Dimens.MinTouchTarget] im Quadrat, A11Y-05)
+ * liegt halb über dem Inhalt, halb über der Leiste; sie darf in den großen Start-Button ragen
+ * (Nutzer 2026-10-23). Ein dünner Rand hebt die Pille vom Inhalt ab.
  */
 @Composable
-fun TabBarHandle(onExpand: () -> Unit, modifier: Modifier = Modifier) {
+fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
+    val top = state.anchorTop
+    if (top.isNaN()) return
+    val turn by animateFloatAsState(if (state.collapsed) 0f else HALF_TURN, label = "tabBarToggle")
+    val touch = with(LocalDensity.current) { Dimens.MinTouchTarget.toPx() }
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(Dimens.MinTouchTarget)
-            .clickable(role = Role.Button, onClick = onExpand),
+            .offset { IntOffset(0, (top - touch / 2f).roundToInt()) }
+            .size(Dimens.MinTouchTarget)
+            .clickable(role = Role.Button, onClick = state::toggle),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .size(width = Sizes.TabBarHandleWidth, height = Sizes.TabBarHandleHeight)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .border(Dimens.BorderThin, MaterialTheme.colorScheme.outlineVariant, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Filled.KeyboardArrowUp,
-                contentDescription = stringResource(R.string.cd_tab_bar_show),
+                contentDescription = stringResource(if (state.collapsed) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                modifier = Modifier.rotate(turn),
             )
         }
     }
 }
+
+/** Pfeil des [TabBarToggle] nach unten gedreht (Grad). */
+private const val HALF_TURN = 180f
