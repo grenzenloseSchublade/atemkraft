@@ -1,0 +1,6 @@
+- Vier Tabs: Anlässe und Suche jetzt im Tab Atmen
+- Eigene mit „Tut mir gut“, Mustern und Logbuch, einklappbar
+- Programme in Lernen
+- Tab-Leiste auf Unterseiten eingeklappt
+- „Danach in die Stille“ in der Übung umschaltbar
+- Muster-Editor luftiger, Stift am Namen
