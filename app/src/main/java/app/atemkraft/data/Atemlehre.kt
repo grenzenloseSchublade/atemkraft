@@ -23,11 +23,21 @@ import app.atemkraft.domain.Vayu
  * die UI setzt sie kursiv. Namen von Übungen und Atemtechniken (Nadi Shodhana, Bhramari, Sitali,
  * Ujjayi, Bhastrika, Kapalabhati, Viloma), Personen und Texttitel bleiben aufrecht in ihrer
  * gängigen Schreibweise: Sie sind Eigennamen wie „Box-Atmung“ und stehen so als Titel in der App.
+ * Geht es um die Wortbedeutung („*viloma* heißt „gegen den Strich““), ist es ein Wort: klein,
+ * kursiv, in IAST.
  */
 object Atemlehre {
 
     val intro = "So deutet die Yoga-Tradition Einatmen, Ausatmen und Halten. Das ist Lehre, " +
         "keine Studienlage; was Studien sagen, steht jeweils unter „Studien“."
+
+    /**
+     * Herkunft des Maßes 1 : 4 : 2, gleich auf der Karte „klassisch“ und auf der Seite „Pranayama“:
+     * Gheranda Samhita, Kap. 5, Reinigung der Kanäle mit Keimsilben (16 : 64 : 32; Vers je nach
+     * Ausgabe etwa 5,36–5,45, geprüft 2026-10-23). Ob es dort zuerst steht, ist nicht geklärt.
+     */
+    const val CLASSIC_RATIO_ORIGIN = "In der Gheranda Samhita steht das Maß als 16\u00A0:\u00A064\u00A0:\u00A032 " +
+        "bei der Reinigung der Kanäle (Kap.\u00A05); ob es dort zuerst vorkommt, ist offen."
 
     val phases = listOf(
         LorePhase(PhaseType.INHALE, "Einatmen", "*pūraka*", "Aufnehmen. In der Lehre *prāṇa*: Kraft kommt herein."),
@@ -88,10 +98,10 @@ object Atemlehre {
                 "doppelt so lang ist wie das Einatmen.",
             typical = "Abends, vor dem Schlafen, bei Unruhe, Hitze oder Ärger.",
             studies = "Beim Ausatmen schlägt das Herz langsamer, die Richtung passt. Ob ein langes " +
-                "Ausatmen mehr bringt als gleich langes, langsames Atmen, ist offen: Eine Studie " +
-                "fand mehr Herzratenvariabilität (Bae 2021), andere keinen Unterschied " +
-                "(Meehan & Shaffer 2024, Birdee 2023).",
-            exerciseIds = listOf("resonanz", "bhramari", "cyclic-sighing", "zwerchfell", "sitali", "lippenbremse", RandomPatternGenerator.ID),
+                "Ausatmen mehr bringt als gleich langes, langsames Atmen, ist offen: Zwei Studien " +
+                "fanden mehr Herzratenvariabilität, eine davon auch mehr Entspannung (Van Diest 2014, " +
+                "Bae 2021), andere keinen Unterschied (Meehan & Shaffer 2024, Birdee 2023).",
+            exerciseIds = listOf("resonanz", "bhramari", "cyclic-sighing", "zwerchfell", "sitali", "ujjayi", "lippenbremse", RandomPatternGenerator.ID),
         ),
         LorePattern(
             id = "brmhana",
@@ -123,12 +133,12 @@ object Atemlehre {
                 "2,50). Gilt als Grundlage, bevor man Verhältnisse verschiebt, und als Vorbereitung " +
                 "auf Meditation.",
             typical = "Zum Ankommen, vor der Meditation, wenn man die Mitte sucht.",
-            studies = "Der am besten untersuchte Teil: Langsames Atmen um 6 Atemzüge pro Minute erhöht " +
+            studies = "Hierzu gibt es die meisten Studien: Langsames Atmen um 6 Atemzüge pro Minute erhöht " +
                 "die Herzratenvariabilität, das zeigt eine Auswertung von 223 Studien (Laborde " +
                 "2022). Das Tempo zählt dabei mehr als das Verhältnis. Über viele Atemformen hinweg " +
                 "berichteten Übende in 12 Studien etwas weniger Stress als ohne Atemübung, ein " +
                 "kleiner bis mittlerer Effekt (Fincham 2023).",
-            exerciseIds = listOf("nadi-shodhana"),
+            exerciseIds = listOf("nadi-shodhana", "dirgha"),
         ),
         LorePattern(
             id = "feuer",
@@ -156,7 +166,7 @@ object Atemlehre {
             rhythm = List(8) { listOf(exhale(1.0), inhale(1.0, passive = true)) }.flatten(),
             counts = "Stoß aus, Einatmen von selbst",
             teaser = "Kurze, aktive Ausatemstöße gelten in der Yoga-Lehre als wärmend und klärend.",
-            teaching = "Kapalabhati heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika (2,35) " +
+            teaching = "*kapālabhāti* heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika (2,35) " +
                 "zählt es zu den sechs Reinigungen (*ṣaṭkarma*) und vergleicht es mit dem Blasebalg " +
                 "eines Schmieds: Ein- und Ausatmen sehr schnell. Heute wird meist nur das Ausatmen " +
                 "aktiv geübt, das Einatmen geschieht von selbst.",
@@ -195,8 +205,9 @@ object Atemlehre {
             teaching = "*bāhya kumbhaka* gilt als feiner und anspruchsvoller als das Halten mit " +
                 "voller Lunge. Patanjali nennt Ausatmen und Anhalten als Weg zu einem klaren Geist " +
                 "(Yoga-Sutra 1,34). Desikachar beschreibt die Pause nach dem Ausatmen als Zeit, in " +
-                "der das innere Feuer Verbrauchtes verbrennt. Traditionell mit eingezogenem Bauch " +
-                "(*uḍḍīyāna bandha*).",
+                "der das innere Feuer Verbrauchtes verbrennt. In der Viniyoga-Lehre kommt dazu der eingezogene " +
+                "Bauch (*uḍḍīyāna bandha*); die Hatha Yoga Pradipika setzt ihn dagegen ans Halten und an den " +
+                "Beginn des Ausatmens (2,45).",
             typical = "Für Geübte, in ruhiger Verfassung.",
             studies = "Kaum Daten. Mit leerer Lunge ist der Sauerstoffvorrat klein, Atemnot kommt früher.",
             exerciseIds = listOf("box-4-4-4-4", RandomPatternGenerator.ID),
@@ -231,11 +242,11 @@ object Atemlehre {
                 "nennt 1 : 4 : 2 das „meistbevorzugte“ Maß und rät Anfängern zu 1 : 2 : 2. Geübt " +
                 "wird es meist in der Wechselatmung. Die Hatha Yoga Pradipika beschreibt Stufen " +
                 "der Übung: Anfangs schwitzt der Übende, später zittert er (2,12).",
-            typical = "Lange Praxis, am besten mit Lehrer.",
+            typical = "Lange Praxis, mit Begleitung durch einen Lehrer.",
             studies = "Als Verhältnis nicht untersucht. Lange Pausen sind nichts für den Einstieg.",
             exerciseIds = listOf("nadi-shodhana"),
             appNote = "In der App ohne Halten.",
-            origin = "Wo das Maß zuerst steht, ist unklar; genannt wird die Śāṇḍilya-Upaniṣad, nicht geprüft.",
+            origin = CLASSIC_RATIO_ORIGIN,
         ),
         // Viloma I und II je als eigene Karte wie die beiden Halten-Karten: gegensätzliche
         // Richtung, eigener Rhythmus (Nutzer 2026-10-21). Werte wie die Übungen in der App.
@@ -246,7 +257,7 @@ object Atemlehre {
             rhythm = listOf(inhale(2.0), holdFull(2.0), inhale(2.0), holdFull(2.0), inhale(2.0), exhale(8.0)),
             counts = "z. B. Ein in drei Stufen\u00A0· Aus 8",
             teaser = "Einatmen in Stufen gilt als sanftes *bṛṃhaṇa*: aufbauen, ohne zu drängen.",
-            teaching = "Viloma heißt „gegen den Strich“: Das Einatmen wird in kleine Abschnitte mit " +
+            teaching = "*viloma* heißt „gegen den Strich“: Das Einatmen wird in kleine Abschnitte mit " +
                 "kurzen Pausen geteilt, danach fließt das Ausatmen in einem Zug. Stufen beim " +
                 "Einatmen gelten als aufbauend (*bṛṃhaṇa*). Iyengar teilt in Abschnitte von 2–3 s " +
                 "mit ebenso langen Pausen, bis die Lunge voll ist. Die Pausen sind kurzes Halten, " +
@@ -260,7 +271,10 @@ object Atemlehre {
             id = "viloma-aus",
             title = "Ausatmen in Stufen (Viloma II)",
             linkName = "Viloma II",
-            rhythm = listOf(inhale(6.0), exhale(2.0), holdEmpty(2.0), exhale(2.0), holdEmpty(2.0), exhale(2.0)),
+            // Die Pausen liegen mitten im Ausatmen, die Lunge ist noch zu zwei bzw. einem Drittel
+            // gefüllt: kein Halten leer (*bāhya kumbhaka*). Wie in der Übung und bei Viloma I ein
+            // Halten mit Füllstand, in der App als HOLD_FULL modelliert (RandomPatternGenerator).
+            rhythm = listOf(inhale(6.0), exhale(2.0), holdFull(2.0), exhale(2.0), holdFull(2.0), exhale(2.0)),
             counts = "z. B. Ein 6\u00A0· Aus in drei Stufen",
             teaser = "Ausatmen in Stufen gilt als sanftes *laṅghana*: loslassen, leicht werden.",
             teaching = "Umgekehrt zu Viloma I: Das Einatmen fließt in einem Zug, das Ausatmen wird in " +
@@ -285,8 +299,9 @@ object Atemlehre {
             "Atemweg",
             "Rechtes Nasenloch: Sonne (*piṅgalā*), gilt als wärmend. Linkes Nasenloch: Mond (*iḍā*), " +
                 "gilt als kühlend. Über die gerollte Zunge (Sitali): kühlend. Mit leicht verengter " +
-                "Kehle (Ujjayi): wärmend und sammelnd. Summend (Bhramari): lenkt nach innen.",
-            listOf("sitali", "bhramari", "nadi-shodhana"),
+                "Kehle (Ujjayi): Das Rauschen gilt als wärmend und sammelnd, das längere Ausatmen als " +
+                "*laṅghana*. Summend (Bhramari): lenkt nach innen.",
+            listOf("sitali", "ujjayi", "bhramari", "nadi-shodhana"),
         ),
         LoreInfluence("Tageszeit", "Morgens eher *bṛṃhaṇa*, abends eher *laṅghana*."),
         LoreInfluence(
@@ -305,7 +320,8 @@ object Atemlehre {
     /** Klassische Texte und Lehrbücher, Verse deutsch zitiert. */
     val textSources = listOf(
         "Patanjali: Yoga-Sutra 1,34; 2,49–2,53",
-        "Svatmarama: Hatha Yoga Pradipika 2,2; 2,7–2,10; 2,12; 2,15; 2,35; 2,44; 2,51–2,68",
+        "Svatmarama: Hatha Yoga Pradipika 2,2; 2,7–2,10; 2,12; 2,15; 2,35; 2,44–2,45; 2,51–2,68",
+        "Gheranda Samhita, Kap. 5",
         "T. K. V. Desikachar: The Heart of Yoga (1995)",
         "B. K. S. Iyengar: Light on Pranayama (1981)",
         "Swami Kuvalayananda: Pranayama (1966)",
@@ -315,6 +331,7 @@ object Atemlehre {
     val studyRefs: List<Reference> = listOf(
         Refs.laborde2022,
         Refs.fincham2023,
+        Refs.vanDiest2014,
         Refs.bae2021,
         Refs.meehan2024,
         Refs.birdee2023,

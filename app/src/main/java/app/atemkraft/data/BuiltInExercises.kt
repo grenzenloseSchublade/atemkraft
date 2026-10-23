@@ -183,7 +183,7 @@ object BuiltInExercises {
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
             teaser = "Langes, summendes Ausatmen gilt in der Yoga-Lehre als beruhigend und nach innen lenkend.",
-            detail = "Bhramari heißt „Biene“. Die Hatha Yoga Pradipika beschreibt das Einatmen mit dem Brummen der " +
+            detail = "*bhrāmarī* heißt „Biene“. Die Hatha Yoga Pradipika beschreibt das Einatmen mit dem Brummen der " +
                 "männlichen und das langsame Ausatmen mit dem Summen der weiblichen Biene; die Übung soll den " +
                 "Geist nach innen führen. Nach der Atemlehre ist das Muster *laṅghana*: Das Ausatmen ist doppelt " +
                 "so lang wie das Einatmen.",
@@ -200,8 +200,8 @@ object BuiltInExercises {
             "15-Fache (Weitzberg 2002). Dieser NO-Effekt ist allerdings lokal in den " +
             "Nasennebenhöhlen; ein systemischer oder gar krankheitsheilender Nutzen ist nicht " +
             "belegt. Die klinischen Studien sind klein und unverblindet, zeigen aber meist direkt " +
-            "danach einen niedrigeren Blutdruck; der Puls sank nur leicht. Am besten mit lockerem " +
-            "Kiefer und geschlossenem Mund.",
+            "danach einen niedrigeren Blutdruck; der Puls sank nur leicht. Dabei bleibt der Kiefer " +
+            "locker und der Mund geschlossen.",
         instructionHint = "Durch die Nase einatmen → mit geschlossenem Mund lang summend " +
             "durch die Nase ausatmen\u00A0· 5–10 Runden, Mund geschlossen, Kiefer locker.",
         references = listOf(Refs.pramanik2010, Refs.weitzberg2002),
@@ -272,8 +272,8 @@ object BuiltInExercises {
             "langsamen, ausatem-betonten Atmen, das die Balance Richtung Parasympathikus " +
             "verschiebt; der kühle Luftstrom über die feuchte Zunge ist ein angenehmer " +
             "Sinnesreiz, der beim Dranbleiben hilft. Die Evidenz speziell zu Sitali ist dünn: " +
-            "Eine kleine, unverblindete Studie fand eine Blutdrucksenkung (Shetty), das Ergebnis " +
-            "unterscheidet sich aber kaum von einfachem langsamem Atmen. Der Name verspricht „Kühlung“, doch eine Messung " +
+            "Eine kleine, unverblindete Studie fand eine Blutdrucksenkung (Shetty 2017), verglichen " +
+            "allerdings mit einer Warteliste, nicht mit einfachem langsamem Atmen. Der Name verspricht „Kühlung“, doch eine Messung " +
             "(Telles 2020) fand die Körpertemperatur sogar leicht erhöht – es ist ein gefühlt " +
             "kühler Atem, keine echte Abkühlung des Körpers.",
         instructionHint = "Zunge zu einem Röhrchen rollen, ca. 4 s kühl darüber einatmen → Mund zu, " +
@@ -283,7 +283,7 @@ object BuiltInExercises {
             "Zungenrollen ist nicht jedem möglich – dann die Sitkari-Variante (durch die Zähne).",
             "Eher nicht bei Kälte, Atemwegsinfekt, Asthma oder niedrigem Blutdruck.",
         ),
-        references = listOf(Refs.shetty2019, Refs.telles2020),
+        references = listOf(Refs.shetty2017, Refs.telles2020),
         rounds = 1,
         segments = listOf(
             Segment(
@@ -303,12 +303,13 @@ object BuiltInExercises {
         family = BreathingFamily.DOWNREGULATE,
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
-            teaser = "Ujjayi gilt in der Yoga-Lehre als wärmend und sammelnd: Atem mit leisem Rauschen.",
+            teaser = "Das leise Rauschen der Kehle gilt in der Yoga-Lehre als wärmend und sammelnd.",
             detail = "*ujjāyī* heißt „die Siegreiche“. Die Hatha Yoga Pradipika beschreibt, wie der Atem mit " +
                 "geschlossenem Mund langsam eingezogen wird, hörbar von der Kehle bis zum Herzen; danach folgen " +
-                "Halten und Ausatmen durch das linke Nasenloch. In der App ohne Halten und durch beide " +
-                "Nasenlöcher. Bei Krishnamacharya, Desikachar und Iyengar ist Ujjayi die Grundtechnik, auf der " +
-                "viele andere aufbauen. Nach der Atemlehre ist das Muster *laṅghana*: Das Ausatmen ist länger.",
+                "Halten und Ausatmen durch das linke Nasenloch, und die Übung fache das Körperfeuer an. In der " +
+                "App ohne Halten und durch beide Nasenlöcher. Bei Krishnamacharya, Desikachar und Iyengar ist " +
+                "Ujjayi die Grundtechnik, auf der viele andere aufbauen. Nach der Atemlehre gilt das Rauschen " +
+                "der Kehle als wärmend und sammelnd, das längere Ausatmen als *laṅghana*.",
             patternId = "langhana",
             source = "Hatha Yoga Pradipika 2,51–2,53",
         ),
@@ -413,7 +414,7 @@ object BuiltInExercises {
         caution = true,
         lore = YogaLore(
             teaser = "In der Hatha-Lehre zählt Kapalabhati zu den Reinigungen; es gilt als wärmend und klärend.",
-            detail = "Kapalabhati heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika zählt es zu den sechs " +
+            detail = "*kapālabhāti* heißt „leuchtender Schädel“. Die Hatha Yoga Pradipika zählt es zu den sechs " +
                 "Reinigungen und vergleicht es mit dem Blasebalg eines Schmieds. Nach der Atemlehre ist " +
                 "schnelles Atmen Feuer: Es soll *agni* anfachen, das innere Feuer am Nabel, und gilt als stark " +
                 "belebend (*bṛṃhaṇa*).",
@@ -423,12 +424,12 @@ object BuiltInExercises {
         shortDescription = "Schnelle, kräftige Ausatemstöße aus dem Bauch, der Einatem geschieht " +
             "passiv (yogischer „Blasebalg“). Energetisierend – für Wachheit am Morgen, nicht zur " +
             "Beruhigung.",
-        effect = "Macht wach: Die schnellen Ausatemstöße aktivieren den Sympathikus.",
-        effectDetail = "Der Wachheits-Schub entsteht, weil die schnellen, aktiven Ausatemstöße " +
-            "bei passivem Einatem die Ventilation weit über den Bedarf treiben – das senkt kurz " +
-            "das CO₂ und aktiviert den Sympathikus (höherer Puls, gesteigerte Aufmerksamkeit). " +
-            "Studien dazu sind klein, " +
-            "oft unkontrolliert und kurzfristig; traditionelle „Reinigungs-/Detox“-Aussagen sind " +
+        effect = "Die schnellen Ausatemstöße sollen wach machen; das ist plausibel, aber kaum untersucht.",
+        effectDetail = "Die Idee hinter dem Wachheits-Schub: Die schnellen, aktiven Ausatemstöße " +
+            "bei passivem Einatem treiben die Ventilation weit über den Bedarf – das senkt kurz " +
+            "das CO₂ und soll den Sympathikus aktivieren (höherer Puls, mehr Aufmerksamkeit). " +
+            "Studien dazu sind klein, oft unkontrolliert und kurzfristig und weichen in Tempo und " +
+            "Ausführung häufig vom Text ab (Chetry 2022); traditionelle „Reinigungs-/Detox“-Aussagen sind " +
             "nicht belegt. Verwandt mit der Wim-Hof-Atmung, aber ohne deren lange Atempausen. Bei " +
             "kräftiger, langer Ausführung ist sehr selten ein Pneumothorax beschrieben " +
             "(Fallbericht Johnson 2004) – auf leeren Magen, im Sitzen und nicht übertreiben.",
@@ -440,7 +441,7 @@ object BuiltInExercises {
                 "Epilepsie, Glaukom oder Hernie.",
             "Bei Schwindel sofort aufhören (selten: Pneumothorax bei kräftiger, langer Ausführung).",
         ),
-        references = listOf(Refs.zaccaro2018, Refs.kapalabhatiCase2004),
+        references = listOf(Refs.chetry2022, Refs.kapalabhatiCase2004),
         rounds = 3,
         segments = listOf(
             Segment(
@@ -486,7 +487,7 @@ object BuiltInExercises {
         evidence = EvidenceLevel.LITTLE_STUDIED,
         lore = YogaLore(
             teaser = "In Stufen einatmen gilt in der Atemlehre als sanftes *bṛṃhaṇa*: aufbauend, ohne zu drängen.",
-            detail = "Viloma heißt „gegen den Strich“: Der Atem fließt nicht in einem Zug, sondern mit Pausen. " +
+            detail = "*viloma* heißt „gegen den Strich“: Der Atem fließt nicht in einem Zug, sondern mit Pausen. " +
                 "Iyengar beschreibt als erste Stufe das Einatmen in Abschnitten von 2–3 s mit ebenso langen " +
                 "Pausen, danach langsam und tief aus; für Anfänger und im Liegen. Nach der Atemlehre betont " +
                 "das schrittweise Einatmen das Aufnehmende (*bṛṃhaṇa*). Die Hatha Yoga Pradipika kennt Viloma nicht.",
@@ -648,7 +649,7 @@ object BuiltInExercises {
         evidence = EvidenceLevel.STUDIED,
         lore = YogaLore(
             teaser = "Die Yoga-Lehre sieht in der Wechselatmung den Ausgleich von Sonne (rechts) und Mond (links).",
-            detail = "Nadi Shodhana heißt „Reinigung der Kanäle“. Nach der Lehre fließt *prāṇa* durch zwei " +
+            detail = "*nāḍī śodhana* heißt „Reinigung der Kanäle“. Nach der Lehre fließt *prāṇa* durch zwei " +
                 "Hauptkanäle: *iḍā* links, Mond, kühlend; *piṅgalā* rechts, Sonne, wärmend. Der Wechsel soll " +
                 "beide ausgleichen. Die Hatha Yoga Pradipika übt ihn mit langem Halten, spätere Lehrer oft " +
                 "im Maß 1 : 4 : 2; in der App ohne Halten.",

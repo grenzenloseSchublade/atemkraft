@@ -70,9 +70,11 @@ object Refs {
             "(6 RCTs, n=525). SBP −7,16 / DBP −5,16 mmHg, aber hohe Heterogenität, kaum Blindung.",
         "doi:10.1159/000539707\u00A0· PMID 39008954",
     )
-    val shetty2019 = Reference(
-        "Shetty P. et al.: Sheetali/Sheetkari pranayama bei Hypertonie – RCT (60 Pat., " +
-            "10 min/Tag). Senkung von SBP und Herzfrequenz; kleine, unverblindete Studie.",
+    val shetty2017 = Reference(
+        "Shetty P. et al. (2017): Effects of Sheetali and Sheetkari Pranayamas on Blood Pressure and " +
+            "Autonomic Function in Hypertensive Patients. Integr Med (Encinitas) 16(5):32–37. RCT mit 60 " +
+            "Personen mit Bluthochdruck, 10 min/Tag, Kontrolle Warteliste: systolischer Blutdruck und " +
+            "Herzfrequenz niedriger; kleine, unverblindete Studie.",
         "PMID 30936803",
     )
     val telles2020 = Reference(

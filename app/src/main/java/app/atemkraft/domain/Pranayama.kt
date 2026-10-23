@@ -20,7 +20,10 @@ data class PranayamaTopic(
  * [teaser] ein geschlossener Satz (≤ ~95 Zeichen). Aufgeklappt: [tradition] (Herkunft, zuschreibend
  * formuliert), [howTo] (Anleitung), [studies] (ehrliche Einordnung mit Autor und Jahr), [safety].
  * [exerciseId] verweist auf eine Übung der App („Üben ›“); ohne sie ist die Technik nur erklärt
- * (z. B. Bandhas). [evidence] wie auf der Detailseite, null = nicht eingestuft.
+ * (z. B. Bandhas). [moreExerciseIds] sind weitere Übungen derselben Technik (Viloma II neben
+ * Viloma I), je ein eigener Verweis. Die Studienlage kommt bei einer Technik mit Übung aus der
+ * Übung (`Pranayama.evidenceOf`), damit Seite und Detailseite nie auseinanderlaufen; [evidence]
+ * gilt nur für Techniken ohne Übung, null = nicht eingestuft.
  */
 data class PranayamaTechnique(
     val id: String,
@@ -34,5 +37,6 @@ data class PranayamaTechnique(
     val pronunciation: String? = null,
     val source: String? = null,
     val exerciseId: String? = null,
+    val moreExerciseIds: List<String> = emptyList(),
     val evidence: EvidenceLevel? = null,
 )

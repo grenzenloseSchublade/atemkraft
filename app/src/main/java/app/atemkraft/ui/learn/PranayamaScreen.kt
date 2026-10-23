@@ -103,8 +103,8 @@ private fun TopicCard(topic: PranayamaTopic, expanded: Boolean) {
 
 /**
  * Eine Technik als Karte: Titel und Teaser; aufgeklappt Sanskrit und Aussprache, das Etikett der
- * Studienlage, dann Tradition, „So geht’s“, Studien, Sicherheit und – wo es eine Übung gibt –
- * „Üben“ mit dem Verweis-Chip zur Detailseite.
+ * Studienlage (aus der Übung, wo es eine gibt), dann Tradition, „So geht’s“, Studien, Sicherheit
+ * und – wo es Übungen gibt – „Üben“ mit je einem Verweis-Chip zur Detailseite.
  */
 @Composable
 private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String) -> Unit, expanded: Boolean) {
@@ -120,7 +120,7 @@ private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                     val spoken = technique.pronunciation?.let { stringResource(R.string.pranayama_pronunciation, it) }
                     HintText(listOfNotNull(technique.sanskrit, spoken).joinToString(PRONUNCIATION_SEPARATOR))
-                    technique.evidence?.let { EvidenceChip(it) }
+                    Pranayama.evidenceOf(technique)?.let { EvidenceChip(it) }
                     Labeled(stringResource(R.string.pranayama_label_tradition)) {
                         Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                             BodyText(technique.tradition)
@@ -131,7 +131,9 @@ private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String
                     Labeled(stringResource(R.string.atemlehre_label_studies)) { BodyText(technique.studies) }
                     Labeled(stringResource(R.string.pranayama_label_safety)) { BodyText(technique.safety) }
                     technique.exerciseId?.let { id ->
-                        Labeled(stringResource(R.string.pranayama_label_practice)) { ExerciseChips(listOf(id), onOpenExercise) }
+                        Labeled(stringResource(R.string.pranayama_label_practice)) {
+                            ExerciseChips(listOf(id) + technique.moreExerciseIds, onOpenExercise)
+                        }
                     }
                 }
             }

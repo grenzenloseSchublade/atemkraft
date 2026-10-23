@@ -16,7 +16,7 @@ import app.atemkraft.domain.Reference
  * die Seite „Atemlehre“ ([Atemlehre.phases]); hier steht nur der Verweis.
  *
  * Sanskrit klein in IAST zwischen Sternchen (TEXT-14), Namen von Techniken, Personen und
- * Texttitel aufrecht.
+ * Texttitel aufrecht; die Wortbedeutung („*viloma* heißt …“) gilt dem Wort, also kursiv.
  */
 object Pranayama {
 
@@ -84,15 +84,14 @@ object Pranayama {
                     "vṛtti*, dem Atem in ungleichen Verhältnissen. Das eine gilt als ordnend, das andere " +
                     "verschiebt den Schwerpunkt auf Aufnehmen oder Loslassen.",
                 "Das bekannteste ungleiche Maß ist 1\u00A0:\u00A04\u00A0:\u00A02: einatmen, viermal so lange halten, doppelt " +
-                    "so lange ausatmen. Genannt wird es in späteren Hatha-Texten, etwa der Gheranda Samhita; " +
-                    "wo es zuerst steht, ist unklar. Es ist ein Fernziel nach langer Übung, kein Startwert.",
+                    "so lange ausatmen. " + Atemlehre.CLASSIC_RATIO_ORIGIN + " Es ist ein Fernziel nach langer Übung, kein Startwert.",
                 "Ob das Verhältnis zählt, ist in Studien uneinheitlich. Längeres Ausatmen fühlte sich in " +
                     "einer Studie entspannender an und hob die Herzratenvariabilität (Van Diest 2014, " +
                     "n\u00A0=\u00A030; ähnlich Bae 2021). Andere fanden bei langsamem Atmen keinen Unterschied " +
                     "zwischen gleich langen und ungleichen Phasen (Birdee 2023, Meehan & Shaffer 2024). " +
                     "Klarer ist: Das langsame Tempo zählt mehr.",
             ),
-            source = "B. K. S. Iyengar: Light on Pranayama; Gheranda Samhita (Versangaben je nach Ausgabe)",
+            source = "B. K. S. Iyengar: Light on Pranayama; Gheranda Samhita, Kap. 5 (Versangaben je nach Ausgabe)",
         ),
         PranayamaTopic(
             id = "tempo",
@@ -157,21 +156,22 @@ object Pranayama {
             name = "Ujjayi (Siegesatem)",
             sanskrit = "*ujjāyī*",
             pronunciation = "udsch-dschá-jii",
-            teaser = "Ujjayi gilt in der Yoga-Lehre als wärmend und sammelnd: langsamer Atem mit leisem Rauschen.",
+            teaser = "Bei Ujjayi gilt das leise Rauschen der Kehle in der Yoga-Lehre als wärmend und sammelnd.",
             tradition = "*ujjāyī* heißt „die Siegreiche“, von *ud*, hinauf, und *ji*, siegen. Die Hatha Yoga " +
                 "Pradipika beschreibt, wie der Atem mit geschlossenem Mund langsam eingezogen wird, hörbar " +
-                "von der Kehle bis zum Herzen; dann folgen Halten und Ausatmen durch das linke Nasenloch " +
-                "(2,51–2,52). Üben lasse es sich auch im Gehen und Stehen (2,53). Bei Krishnamacharya und " +
-                "seinem Sohn Desikachar ist Ujjayi die Grundtechnik fast jeder Atemübung, auch während der " +
-                "Haltungen. Auch Iyengar baut seine Atemlehre darauf auf.",
+                "von der Kehle bis zum Herzen; dann folgen Halten und Ausatmen durch das linke Nasenloch, und " +
+                "die Übung fache das Körperfeuer an (2,51–2,52). Üben lasse es sich auch im Gehen und Stehen " +
+                "(2,53). Bei Krishnamacharya und seinem Sohn Desikachar ist Ujjayi die Grundtechnik fast jeder " +
+                "Atemübung, auch während der Haltungen. Auch Iyengar baut seine Atemlehre darauf auf. Nach der " +
+                "Atemlehre gilt das Rauschen der Kehle als wärmend und sammelnd, das längere Ausatmen als *laṅghana*.",
             howTo = "Schließe den Mund und atme durch die Nase. Verenge die Kehle ein wenig, wie wenn du " +
                 "ein „haaa“ flüsterst oder einen Spiegel anhauchst, nur mit geschlossenem Mund. So entsteht " +
                 "beim Ein- und Ausatmen ein leises, gleichmäßiges Rauschen, das nur du hörst. Gesicht und " +
                 "Kiefer bleiben weich. Atme langsam, etwa 4\u00A0s ein und 6\u00A0s aus. Ujjayi lässt sich mit jedem " +
                 "langsamen Muster der App verbinden. Fällt es schwer, übe das Rauschen zuerst nur beim Ausatmen.",
             studies = "Zu Ujjayi gibt es wenige, kleine Studien. Bei 17 Yoga-Anfängern hob langsames Atmen " +
-                "die Empfindlichkeit des Baroreflexes, eines Regelkreises des Blutdrucks; mit Ujjayi stieg sie etwas " +
-                "weniger, mit Rauschen beim Ein- und Ausatmen nicht deutlich (Mason 2013). Bei 12 Menschen " +
+                "die Empfindlichkeit des Baroreflexes, eines Regelkreises des Blutdrucks; mit Rauschen nur beim Ausatmen " +
+                "stieg sie etwas weniger, mit Rauschen beim Ein- und Ausatmen nicht deutlich (Mason 2013). Bei 12 Menschen " +
                 "mit Querschnittlähmung hob Ujjayi die Sauerstoffsättigung leicht (Mazur 2024, explorativ). " +
                 "Den Nutzen trägt vermutlich vor allem das langsame Tempo; das Rauschen hilft, den Atem " +
                 "gleichmäßig zu halten.",
@@ -179,7 +179,6 @@ object Pranayama {
                 "fließt immer. Bei Schwindel, Druck im Kopf oder Atemnot aufhören und normal weiteratmen.",
             source = "Hatha Yoga Pradipika 2,51–2,53",
             exerciseId = "ujjayi",
-            evidence = EvidenceLevel.STUDIED,
         ),
         PranayamaTechnique(
             id = "dirgha",
@@ -203,7 +202,6 @@ object Pranayama {
                 "Lunge sanft dosieren.",
             source = "Moderne Lehre: Sivananda-Schule, Integral Yoga",
             exerciseId = "dirgha",
-            evidence = EvidenceLevel.LITTLE_STUDIED,
         ),
         PranayamaTechnique(
             id = "nadi-shodhana",
@@ -225,7 +223,6 @@ object Pranayama {
             safety = "Bei verstopfter Nase auslassen. Nicht pressen und nichts erzwingen.",
             source = "Hatha Yoga Pradipika 2,7–2,10",
             exerciseId = "nadi-shodhana",
-            evidence = EvidenceLevel.STUDIED,
         ),
         PranayamaTechnique(
             id = "viloma",
@@ -248,7 +245,7 @@ object Pranayama {
                 "Lungenerkrankung und in der Schwangerschaft vorher ärztlich abklären.",
             source = "B. K. S. Iyengar: Light on Pranayama, Kap. 20",
             exerciseId = "viloma-ein",
-            evidence = EvidenceLevel.LITTLE_STUDIED,
+            moreExerciseIds = listOf("viloma-aus"),
         ),
         PranayamaTechnique(
             id = "bhramari",
@@ -270,7 +267,6 @@ object Pranayama {
             safety = "Leise summen, nicht pressen. Bei Schwindel aufhören und normal weiteratmen.",
             source = "Hatha Yoga Pradipika 2,68",
             exerciseId = "bhramari",
-            evidence = EvidenceLevel.STUDIED,
         ),
         PranayamaTechnique(
             id = "sitali",
@@ -279,25 +275,24 @@ object Pranayama {
             pronunciation = "schíi-ta-lii, ssiit-káa-rii",
             teaser = "Sitali und Sitkari gelten in der Yoga-Lehre als kühlend: Die Luft strömt über Zunge oder Zähne.",
             tradition = "*śītalī* heißt „die Kühlende“. Die Hatha Yoga Pradipika beschreibt, wie der Atem " +
-                "über die gerollte Zunge eingesogen, angehalten und durch die Nase ausgeatmet wird " +
-                "(2,57–2,58). Bei Sitkari zieht man die Luft zischend durch den Mund ein (2,54–2,56). " +
+                "über die Zunge eingesogen, angehalten und durch die Nase ausgeatmet wird (2,57–2,58); " +
+                "die Zunge zu rollen ist heute die übliche Ausführung. Bei Sitkari zieht man die Luft zischend durch den Mund ein (2,54–2,56). " +
                 "Ayurveda rät zu beiden bei Hitze und Reizbarkeit (*pitta*).",
             howTo = "Sitali: Die Zunge zu einem Röhrchen rollen, langsam darüber einatmen, den Mund " +
                 "schließen und durch die Nase ausatmen. Sitkari, wenn sich die Zunge nicht rollen lässt: " +
                 "durch die locker aufeinanderliegenden Zähne einatmen, die Lippen leicht geöffnet. In der " +
                 "App 4\u00A0s ein und 6\u00A0s aus, ohne Halten.",
-            studies = "Eine kleine, unverblindete Studie fand bei Bluthochdruck niedrigere Werte (Shetty), " +
-                "kaum anders als bei einfachem langsamem Atmen. Wörtlich kühlt die Übung nicht: " +
+            studies = "Eine kleine, unverblindete Studie fand bei Bluthochdruck niedrigere Werte (Shetty 2017); " +
+                "verglichen wurde mit einer Warteliste, nicht mit einfachem langsamem Atmen. Wörtlich kühlt die Übung nicht: " +
                 "Körpertemperatur und Energieumsatz stiegen in einer Messung sogar leicht (Telles 2020). " +
                 "Kühl fühlt sich vor allem die einströmende Luft an.",
             safety = "Eher nicht bei Kälte, Atemwegsinfekt, Asthma oder niedrigem Blutdruck.",
             source = "Hatha Yoga Pradipika 2,54–2,58",
             exerciseId = "sitali",
-            evidence = EvidenceLevel.STUDIED,
         ),
         PranayamaTechnique(
             id = "kapalabhati",
-            name = "Kapalabhati (Feueratmung)",
+            name = "Feueratmung (Kapalabhati)",
             sanskrit = "*kapālabhāti*",
             pronunciation = "ka-paa-la-bháa-ti",
             teaser = "Kapalabhati gilt in der Hatha-Lehre als Reinigung; als schnelle Technik braucht es Vorsicht.",
@@ -317,7 +312,6 @@ object Pranayama {
                 "Pneumothorax beschrieben (Johnson 2004).",
             source = "Hatha Yoga Pradipika 2,35",
             exerciseId = "feueratmung",
-            evidence = EvidenceLevel.LITTLE_STUDIED,
         ),
         PranayamaTechnique(
             id = "surya-chandra",
@@ -326,8 +320,9 @@ object Pranayama {
             pronunciation = "súur-ja bhée-da-na, tschán-dra bhée-da-na",
             teaser = "Einatmen rechts gilt als Sonne, links als Mond; Studien finden keinen Unterschied.",
             tradition = "*sūrya bhedana* heißt „Durchstoßen der Sonne“: rechts einatmen, halten, links " +
-                "ausatmen. Die Hatha Yoga Pradipika zählt es zu ihren acht *kumbhakas* und sieht es als " +
-                "wärmend (2,48–2,50). Das Gegenstück *candra bhedana*, links ein und rechts aus, stammt aus " +
+                "ausatmen. Die Hatha Yoga Pradipika zählt es zu ihren acht *kumbhakas*: Es reinige den Schädel " +
+                "und vertreibe *vāta*-Störungen und Parasiten (2,48–2,50). Als wärmend gilt es erst in späterer " +
+                "Lehre. Das Gegenstück *candra bhedana*, links ein und rechts aus, stammt ebenfalls aus " +
                 "späterer Lehre, etwa bei Iyengar; es gilt als kühlend und beruhigend.",
             howTo = "Mit der Hand wie bei der Wechselatmung: Für Surya Bhedana immer rechts ein und links " +
                 "aus, für Chandra Bhedana umgekehrt. Langsam und anfangs ohne Halten. In der App gibt es " +
@@ -380,6 +375,14 @@ object Pranayama {
         ),
     )
 
+    /**
+     * Studienlage einer Technik: bei einer Technik mit Übung die Stufe der Übung (eine Quelle für
+     * Seite und Detailseite, TEXT-07), sonst [PranayamaTechnique.evidence].
+     */
+    fun evidenceOf(technique: PranayamaTechnique): EvidenceLevel? = technique.exerciseId
+        ?.let { id -> BuiltInExercises.all.firstOrNull { it.id == id }?.evidence }
+        ?: technique.evidence
+
     // ---- Quellen ----
 
     val sourcesTeaser = "Klassische Texte für die Lehre, Studien für die Einordnung."
@@ -412,7 +415,7 @@ object Pranayama {
         Refs.pramanik2010,
         Refs.weitzberg2002,
         Refs.chetry2026,
-        Refs.shetty2019,
+        Refs.shetty2017,
         Refs.telles2020,
         Refs.chetry2022,
         Refs.kapalabhatiCase2004,
