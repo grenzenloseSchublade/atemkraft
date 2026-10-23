@@ -11,18 +11,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 
 /**
- * Liefert die verfügbaren Übungen. Aktuell aus [BuiltInExercises] (im Code);
- * später kann hier transparent eine JSON-/DataStore-Quelle dazukommen. Zusätzlich das
- * generierte „Muster des Tages" ([RandomPatternGenerator]) als beobachtbarer Zustand [daily].
+ * Liefert die verfügbaren Übungen: eingebaute aus [BuiltInExercises] (im Code), gespeicherte über
+ * [SavedPatternsRepository]. Zusätzlich das generierte „Muster des Tages"
+ * ([RandomPatternGenerator]) als beobachtbarer Zustand [daily]; [today] liefert das Datum, gegen
+ * das der Tageswechsel geprüft wird (Tests setzen eine feste Uhr, A-24).
  */
-class ExerciseRepository(private val saved: SavedPatternsRepository) {
+class ExerciseRepository(
+    private val saved: SavedPatternsRepository,
+    private val today: () -> LocalDate = LocalDate::now,
+) {
 
     private var dailyDay: Long
     private val dailyState: MutableStateFlow<DailyPattern>
 
     init {
-        val today = LocalDate.now()
-        dailyDay = today.toEpochDay()
+        dailyDay = today().toEpochDay()
         dailyState = MutableStateFlow(RandomPatternGenerator.forEpochDay(dailyDay))
     }
 
@@ -36,9 +39,9 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
     /** Das aktuelle Muster des Tages; nach einem Tageswechsel zuerst das des neuen Tages in [daily]. */
     @Synchronized
     fun currentDaily(): DailyPattern {
-        val today = LocalDate.now()
-        if (today.toEpochDay() != dailyDay) {
-            dailyDay = today.toEpochDay()
+        val day = today().toEpochDay()
+        if (day != dailyDay) {
+            dailyDay = day
             dailyState.value = RandomPatternGenerator.forEpochDay(dailyDay)
         }
         return dailyState.value
@@ -50,7 +53,7 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
      */
     @Synchronized
     fun regenerateDaily() {
-        dailyDay = LocalDate.now().toEpochDay()
+        dailyDay = today().toEpochDay()
         dailyState.value = RandomPatternGenerator.forSeed(System.nanoTime())
     }
 
@@ -63,7 +66,7 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
     }
 
     /** Übungen nach Familie gruppiert, in fester Reihenfolge A → D. */
-    fun byFamily(): List<Pair<BreathingFamily, List<Exercise>>> = BreathingFamily.entries.map { family ->
+    private fun byFamily(): List<Pair<BreathingFamily, List<Exercise>>> = BreathingFamily.entries.map { family ->
         family to BuiltInExercises.all.filter { it.family == family }
     }.filter { (_, list) -> list.isNotEmpty() }
 

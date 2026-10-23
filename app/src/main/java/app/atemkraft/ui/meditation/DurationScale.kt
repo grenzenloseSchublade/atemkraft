@@ -148,8 +148,9 @@ fun crossesMajor(previous: Int, next: Int): Boolean {
  * eine Minute weiter; nach der 60 folgt als letzter Strich ∞ (offene Sitzung).
  *
  * Vorrat, Stand v1.6.5: Variante F ist als Reserve zum Zeitring vorbereitet, aber nicht
- * ausgeliefert – nur `DurationScaleTest` nutzt dieses Objekt. Kein toter Code; entfernen nur nach
- * Entscheidung gegen Variante F.
+ * ausgeliefert und derzeit von nichts genutzt (der frühere `DurationScaleTest` ist mit dem
+ * Ausdünnen der Tests entfallen). Bewusst behalten; entfernen erst nach Entscheidung gegen
+ * Variante F.
  */
 object RulerScale {
 

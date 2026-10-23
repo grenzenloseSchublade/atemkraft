@@ -57,5 +57,6 @@ internal val TAB_ROOTS: List<KClass<out Any>> = TopTab.entries.map { it.route::c
  */
 internal fun NavController.tabOnStack(): TopTab = TopTab.entries.filter { it != TopTab.START }
     // getBackStackEntry wirft, wenn das Ziel nicht im Stapel liegt; die öffentliche API kennt
-    // keine Abfrage ohne Ausnahme (currentBackStack ist bibliotheksintern).
+    // keine Abfrage ohne Ausnahme: currentBackStack ist @RestrictTo(LIBRARY_GROUP) – Lint lässt es
+    // im App-Code nicht zu, nur der TabNavigationTest liest es. Höchstens drei Abfragen je Navigation.
     .firstOrNull { tab -> runCatching { getBackStackEntry(tab.route) }.isSuccess } ?: TopTab.START
