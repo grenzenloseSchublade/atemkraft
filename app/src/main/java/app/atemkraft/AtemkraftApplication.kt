@@ -1,7 +1,6 @@
 package app.atemkraft
 
 import android.app.Application
-import app.atemkraft.data.AppContainer
 
 class AtemkraftApplication : Application() {
 

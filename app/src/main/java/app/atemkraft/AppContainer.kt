@@ -1,10 +1,14 @@
-package app.atemkraft.data
+package app.atemkraft
 
 import android.content.Context
 import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
+import app.atemkraft.data.ExerciseRepository
+import app.atemkraft.data.LogbookRepository
+import app.atemkraft.data.SavedPatternsRepository
+import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.local.AtemkraftDatabase
 import app.atemkraft.playback.BreathSessionController
 import app.atemkraft.playback.MeditationAudioCoordinator
@@ -12,15 +16,26 @@ import app.atemkraft.playback.MeditationController
 import app.atemkraft.playback.PlaybackServiceLinks
 import app.atemkraft.playback.SessionAudioCoordinator
 import app.atemkraft.playback.SilenceAfterBreath
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
- * Manuelles DI: hält die Repositories einmalig (keine Instanziierung in Composables).
- * Wird von [app.atemkraft.AtemkraftApplication] erzeugt und an ViewModels/Composables
- * weitergereicht.
+ * Manuelles DI: hält Repositories, Player und die app-weiten Abläufe einmalig (keine
+ * Instanziierung in Composables). Wird von [AtemkraftApplication] erzeugt und an
+ * ViewModels/Composables weitergereicht. Liegt im Wurzelpaket, weil es data, cue und playback
+ * zusammensteckt.
  */
 class AppContainer(context: Context) {
+
+    /**
+     * App-weiter Scope für Schreibvorgänge, die die Oberfläche anstößt und nicht abwartet
+     * (Lesezeichen, Markierung, Anpassungen, Bestätigungen): Er lebt so lange wie der Prozess und
+     * übersteht Drehen und Verlassen der Seite, anders als `rememberCoroutineScope()`.
+     */
+    val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val database = AtemkraftDatabase.build(context)
 

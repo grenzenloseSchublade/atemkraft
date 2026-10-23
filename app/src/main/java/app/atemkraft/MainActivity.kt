@@ -37,7 +37,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -121,6 +120,7 @@ import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -148,7 +148,8 @@ private fun AtemkraftApp(
 ) {
     val context = LocalContext.current
     val container = (context.applicationContext as AtemkraftApplication).container
-    val scope = rememberCoroutineScope()
+    // Schreibvorgänge laufen im App-weiten Scope: Sie überstehen Drehen und Verlassen der Seite.
+    val scope = container.appScope
     val navController = rememberNavController()
 
     // Atem-Session app-weit wie die Meditation (Controller im AppContainer, Foreground-Service).
@@ -197,7 +198,7 @@ private fun AtemkraftApp(
         }
     }
     // Erlaubnis für die Benachrichtigung beim ersten Start einer Sitzung, gleich welcher Art (ARC-6).
-    val askNotifications = rememberNotificationAsk(container.settingsRepository)
+    val askNotifications = rememberNotificationAsk(container.settingsRepository, scope)
 
     KeepScreenOn(
         enabled = sessionStatus == SessionStatus.RUNNING ||
@@ -641,9 +642,8 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
  * fragen als doppelt.
  */
 @Composable
-private fun rememberNotificationAsk(settings: SettingsRepository): () -> Unit {
+private fun rememberNotificationAsk(settings: SettingsRepository, scope: CoroutineScope): () -> Unit {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val asked by settings.notificationAsked.collectAsStateWithLifecycle(initialValue = true)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     return {
