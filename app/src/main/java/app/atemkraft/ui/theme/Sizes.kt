@@ -73,9 +73,6 @@ object Sizes {
     /** Sichtbarer Griff an einem Phasenende (18); die Tippfläche ist [Dimens.MinTouchTarget]. */
     val CurveHandle = 18.dp
 
-    /** Halten-Griffe sitzen so weit über (voll) bzw. unter (leer) ihrer Linie (16). */
-    val CurveHoldHandleOffset = 16.dp
-
     /** Griff der gewählten Phase, etwas größer als [CurveHandle] (22). */
     val CurveHandleSelected = 22.dp
 

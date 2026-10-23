@@ -87,7 +87,7 @@ internal val CURVE_LABEL_STEPS = listOf(1, 2, 5, 10, 15, 30, 60)
 /** Lücke der gestrichelten Halten-Phasen im Verhältnis zur Strichlänge (Vorlage 6/5). */
 private const val DASH_GAP_RATIO = 5f / 6f
 
-/** Ab halb voll gehört ein Halten zur Einatmen-Seite (Cyan, Griff über der Linie). */
+/** Ab halb voll gehört ein Halten zur Einatmen-Seite (Cyan, Beschriftung über der Linie). */
 private const val HALF = 0.5f
 
 /** Feine Striche zwischen den Zahlen ab Schritt 10 s: ein Fünftel des Schritts. */
@@ -203,7 +203,7 @@ fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewStat
  * springt nichts. Zahlen im Schritt aus [CURVE_LABEL_STEPS], feine Striche je Sekunde, solange sie
  * mindestens [Sizes.CurveTickMinSpacing] auseinander liegen, „s“ nur an der letzten Zahl.
  *
- * Griff am Ende jeder Phase (Ein-/Aus-Ende auf der Kurve, Halten über bzw. unter seiner Linie,
+ * Griff am Ende jeder Phase, immer auf der Kurve (auch beim Halten: am Ende seiner Linie;
  * Tippfläche ≥ 48 dp, bei Überlappung gewinnt der nächste). Antippen eines Griffs oder einer Linie
  * (bis eine halbe Tippfläche daneben, [nearestSegment]) wählt die Phase ([onSelect]),
  * horizontales Ziehen an einem Griff ändert ihre Dauer – erst nach der waagrechten Touch-Slop, ein senkrechtes
@@ -220,7 +220,7 @@ fun rememberCurvePreviewState(): CurvePreviewState = remember { CurvePreviewStat
  *
  * Höhe: bevorzugt [BreathCurveHeights.preferred]; gibt der Aufrufer per [modifier] weniger
  * (`Modifier.height`, siehe [rememberBreathCurveHeights]), weicht zuerst der Platz für Beschriftungen
- * über dem Halten-voll-Griff (sie rücken neben den Griff), dann der Abstand „voll“–„leer“, bis
+ * über „voll“ (Beschriftungen eines Haltens rücken dann dicht an die Linie), dann der Abstand „voll“–„leer“, bis
  * hinab zu [Sizes.CurveSpanMin].
  *
  * TalkBack: Die Kurve ist ein Knoten mit `contentDescription` („Atemkurve: Einatmen 4 Sekunden,
@@ -450,8 +450,8 @@ internal fun curveMinorStep(labelStep: Int, pxPerSecond: Float, fineMin: Float):
 
 /**
  * Maße der Kurve, die nur von Dichte und Schrift abhängen (in px). [layout] ergänzt Breite, Höhe
- * und Achse. Von oben: Beschriftung über dem Halten-voll-Griff (nur bei voller Höhe), Griff, Linie
- * „voll“, Kurve, Linie „leer“, darunter nur so viel wie der Halten-leer-Griff bzw. das Wort „leer“
+ * und Achse. Von oben: Beschriftung über einem Halten auf „voll“ (nur bei voller Höhe), Linie
+ * „voll“, Kurve, Linie „leer“, darunter nur so viel wie der gewählte Griff auf „leer“ bzw. das Wort „leer“
  * braucht, dann die Zeitleiste mit Zahlen; das gelbe Band liegt beim Ziehen auf der Zeitleiste.
  */
 @Immutable
@@ -472,7 +472,6 @@ internal class CurveMetrics(
     private val inset: Float,
     private val span: Float,
     private val spanMin: Float,
-    private val holdOffset: Float,
     private val handle: Float,
     private val handleSelected: Float,
     private val touch: Float,
@@ -480,19 +479,22 @@ internal class CurveMetrics(
     private val tickSpacing: Float,
 ) {
     /**
-     * Platz unter „leer“ (und knapp über „voll“): der gewählte Halten-Griff samt Abstand zur Linie
-     * bzw. das Wort an der Linie, dazu `GapTiny`. Die Tippfläche des Griffs darf in die Zeitleiste
-     * reichen, der sichtbare Griff nicht.
+     * Platz unter „leer“ (und knapp über „voll“): die obere bzw. untere Hälfte des gewählten Griffs
+     * auf der Linie bzw. das Wort an der Linie, dazu `GapTiny`. Die Tippfläche des Griffs darf in die
+     * Zeitleiste reichen, der sichtbare Griff nicht.
      */
-    private val zone = maxOf(holdOffset + handleSelected / 2f, hairline + smallHeight) + gapTiny
+    private val zone = maxOf(handleSelected / 2f, hairline + smallHeight) + gapTiny
 
-    /** Über „voll“ bei voller Höhe: zusätzlich die Beschriftung über dem Halten-voll-Griff. */
-    private val topRoomy = maxOf(gapTiny + labelHeight + hairline + holdOffset + handle / 2f, zone)
+    /**
+     * Über „voll“ bei voller Höhe: zusätzlich die Beschriftung eines Haltens auf „voll“, über den
+     * Griffen an seinen Enden (so steht sie auch bei kurzem Halten frei).
+     */
+    private val topRoomy = maxOf(gapTiny + labelHeight + hairline * 2 + handleSelected / 2f, zone)
 
     /** Unter der Linie „leer“: [zone], Striche und Zahlen der Zeitleiste. */
     private val bottom = zone + gapSmall + hairline + smallHeight + gapTiny
 
-    /** Volle Höhe: Abstand „voll“–„leer“ [Sizes.CurveSpan], Platz für Beschriftungen über dem Halten-voll-Griff. */
+    /** Volle Höhe: Abstand „voll“–„leer“ [Sizes.CurveSpan], Platz für Beschriftungen über einem Halten auf „voll“. */
     val preferredHeight: Float = topRoomy + span + bottom
 
     /** Kleinste Höhe: Abstand „voll“–„leer“ [Sizes.CurveSpanMin], über „voll“ nur [zone]. */
@@ -501,7 +503,7 @@ internal class CurveMetrics(
     /**
      * Lagen für die Breite [width], die Höhe [height] und die (ggf. gerade animierte) Achse
      * [axis]; [axisTarget] bestimmt den rechten Rand. Fehlt Höhe, weicht zuerst der Platz über dem
-     * Halten-voll-Griff, dann der Abstand „voll“–„leer“ (nie unter [Sizes.CurveSpanMin]).
+     * Halten auf „voll“, dann der Abstand „voll“–„leer“ (nie unter [Sizes.CurveSpanMin]).
      */
     fun layout(width: Float, axis: Float, axisTarget: Int = axis.roundToInt(), height: Float = preferredHeight): CurveLayout {
         val curveSpan = (height - zone - bottom).coerceIn(spanMin, span)
@@ -528,7 +530,6 @@ internal class CurveMetrics(
             minorStep = curveMinorStep(step, pxPerSecond, tickSpacing),
             yFull = yFull,
             yEmpty = yEmpty,
-            holdOffset = holdOffset,
             handle = handle,
             handleSelected = handleSelected,
             touchRadius = touch / 2f,
@@ -562,7 +563,6 @@ internal class CurveLayout(
     val minorStep: Int,
     val yFull: Float,
     val yEmpty: Float,
-    val holdOffset: Float,
     val handle: Float,
     /** Durchmesser des gewählten Griffs. */
     val handleSelected: Float,
@@ -619,7 +619,6 @@ internal fun rememberCurveMetrics(): CurveMetrics {
                 inset = Dimens.CardPadding.toPx(),
                 span = Sizes.CurveSpan.toPx(),
                 spanMin = Sizes.CurveSpanMin.toPx(),
-                holdOffset = Sizes.CurveHoldHandleOffset.toPx(),
                 handle = Sizes.CurveHandle.toPx(),
                 handleSelected = Sizes.CurveHandleSelected.toPx(),
                 touch = Dimens.MinTouchTarget.toPx(),
@@ -637,21 +636,16 @@ private const val MEASURE_CACHE = 48
 internal data class CurveHandle(val index: Int, val center: Offset)
 
 /**
- * Griffe der Kurve, einer am Ende jeder Phase: Ein- und Aus-Ende auf der Kurve, ein Halten ab
- * halb voll über seiner Linie, darunter unter ihr.
+ * Griffe der Kurve, einer am Ende jeder Phase, alle auf der Kurve – auch ein Halten (Nutzer
+ * 2026-10-23: ein frei schwebender Halten-Griff las sich als verrutscht). Bei sehr kurzem Halten
+ * berühren sich sein Griff und der davor; die Tippfläche entscheidet dann der nähere.
  */
 internal fun curveHandles(pattern: FreePattern, layout: CurveLayout): List<CurveHandle> {
     val levels = pattern.levels()
     var end = 0
     return pattern.phases.mapIndexed { i, phase ->
         end += phase.seconds
-        val y = layout.yAt(levels[i].to)
-        val shift = when {
-            phase.type != FreePhaseType.HOLD -> 0f
-            levels[i].to >= HALF -> -layout.holdOffset
-            else -> layout.holdOffset
-        }
-        CurveHandle(i, Offset(layout.xAt(end.toFloat()), y + shift))
+        CurveHandle(i, Offset(layout.xAt(end.toFloat()), layout.yAt(levels[i].to)))
     }
 }
 
@@ -771,10 +765,10 @@ private fun DrawScope.drawCurve(
 /**
  * Wo die Beschriftung „4 s“ jeder Phase steht ([sizes] je Phase in px), `null` = weggelassen.
  * Ein/Aus stehen bevorzugt außen neben der Schräge (Ein links oben, Aus rechts oben), sonst innen
- * auf der anderen Seite, notfalls über bzw. unter dem Griff am Ende oder rechts neben ihm; ein Halten über (obere
- * Hälfte) bzw. unter seinem Griff, sonst auf Höhe des Griffs zwischen ihm und der Linie (unter
- * „leer“ ist nur dafür Platz, über „voll“ bei knapper Höhe ebenso), sonst auf der anderen Seite
- * seiner Linie, notfalls seitlich versetzt. Eine Beschriftung darf keinen Griff, keine andere Beschriftung, nicht die Wörter
+ * auf der anderen Seite, notfalls über bzw. unter dem Griff am Ende oder rechts neben ihm; ein Halten mittig
+ * dicht über (obere Hälfte) bzw. unter seiner Linie, wenn es zwischen die Griffe an seinen Enden
+ * passt, sonst mit Abstand über bzw. unter den Griffen, sonst auf der anderen Seite seiner Linie,
+ * notfalls links neben dem Griff am Ende. Eine Beschriftung darf keinen Griff, keine andere Beschriftung, nicht die Wörter
  * „voll“/„leer“ und nicht deren Linien berühren (alles mit Rand), nicht die Zeitleiste darunter und
  * nicht über den Innenrand ([CurveLayout.gapSmall]) hinaus ragen – passt keine Stelle (viele sehr
  * kurze Phasen), entfällt sie, statt zu überlappen.
@@ -802,7 +796,6 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
     val area = Rect(layout.gapSmall, 0f, width - layout.gapSmall, layout.bandTop)
     val spots = arrayOfNulls<Rect>(pattern.phases.size)
     val order = pattern.phases.indices.sortedBy { it != selected }
-    val reach = layout.holdOffset + layout.handle / 2f + layout.hairline
     val gap = layout.gapSmall
     val clear = layout.handleSelected / 2f + margin
     for (i in order) {
@@ -832,25 +825,19 @@ internal fun curveLabelSpots(pattern: FreePattern, selected: Int?, layout: Curve
 
             FreePhaseType.HOLD -> {
                 val upper = levels[i].from >= HALF
-                val above = from.y - reach - h
-                val below = from.y + reach
+                // Dicht an der Linie, zwischen den Griffen an den Enden; unter „leer“ ist nur dafür
+                // Platz, über „voll“ bei knapper Höhe ebenso.
+                val close = if (upper) from.y - lineBand - h else from.y + lineBand
+                // Mit Abstand über bzw. unter den Griffen: frei auch bei kurzem Halten.
+                val outer = if (upper) from.y - clear - h else from.y + clear
                 val inner = if (upper) from.y + gap else from.y - gap - h
-                val outer = if (upper) above else below
-                // Auf Höhe des Griffs (zwischen Linie und Griff-Mitte), aber nicht auf der Linie:
-                // Unter „leer“ ist nur so viel Platz wie der Griff braucht, über „voll“ bei
-                // knapper Höhe ebenso.
-                val level = if (upper) {
-                    minOf(from.y - layout.holdOffset - h / 2f, from.y - lineBand - h)
-                } else {
-                    maxOf(from.y + layout.holdOffset - h / 2f, from.y + lineBand)
-                }
                 // Seitlich: links neben dem Griff am Ende.
                 val beside = to.x - layout.handle / 2f - margin - gap - w
                 listOf(
+                    Offset(midX - w / 2f, close),
                     Offset(midX - w / 2f, outer),
-                    Offset(midX - w / 2f, level),
                     Offset(midX - w / 2f, inner),
-                    Offset(beside, level),
+                    Offset(beside, close),
                     Offset(beside, outer),
                     Offset(beside, inner),
                 )
