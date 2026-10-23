@@ -13,7 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -35,9 +35,9 @@ import app.atemkraft.ui.theme.Sizes
  */
 @Composable
 fun LinkChip(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val config = LocalConfiguration.current
+    val fontScale = LocalDensity.current.fontScale
     val windowWidth = LocalWindowInfo.current.containerSize.width
-    var wrap by remember(label, config.fontScale, windowWidth) { mutableStateOf(false) }
+    var wrap by remember(label, fontScale, windowWidth) { mutableStateOf(false) }
     SuggestionChip(
         onClick = onClick,
         label = {

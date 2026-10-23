@@ -47,7 +47,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
@@ -97,9 +96,9 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
     )
     // Eine Größe für alle Beschriftungen, damit die Leiste ruhig wirkt; neu gemessen, wenn sich
     // Namen, Schrift oder Fensterbreite ändern.
-    val config = LocalConfiguration.current
+    val fontScale = LocalDensity.current.fontScale
     val windowWidth = LocalWindowInfo.current.containerSize.width
-    val keys = arrayOf(items.map { it.label }, config.fontScale, windowWidth)
+    val keys = arrayOf(items.map { it.label }, fontScale, windowWidth)
     var labelScale by remember(*keys) { mutableFloatStateOf(1f) }
     var iconOnly by remember(*keys) { mutableStateOf(false) }
     NavigationBar(modifier = modifier, containerColor = TabBarContainer) {
