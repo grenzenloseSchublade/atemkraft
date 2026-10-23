@@ -1,13 +1,13 @@
 # Datenschutzerklärung Atemkraft
 
-Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
+Für die Android-App Atemkraft (`app.atemkraft`), gleich über welche Bezugsquelle du sie installierst: GitHub-Releases dieses Repos, Google Play oder F-Droid (siehe [Bezugsquellen](#bezugsquellen)).
 
-- **Stand:** 2026-10-23, geprüft gegen Version 2.5.0 und den Quellcode auf `main` an diesem Tag. Wo sich Versionen bis einschließlich 1.5.1 davon unterscheiden, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
+- **Stand:** 2026-10-24. Gilt ab Version 2.5.0, geprüft gegen diese Version und den Quellcode auf `main` an diesem Tag. Punkte, die erst in der Version nach 2.5.0 dazukommen, sind als solche markiert. Wie sich frühere Versionen unterscheiden, steht im [Anhang](#fruehere-versionen).
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung
 
-Atemkraft erhebt keine Daten über dich. Es gibt kein Konto, keinen Server des Anbieters, keine Analyse, keine Werbung, keine Absturzberichte und kein Tracking; die App enthält keine solchen Bibliotheken und keine Google Play Services. Was du in der App tust, bleibt auf deinem Gerät, solange du es nicht selbst exportierst oder beim Handywechsel überträgst (bis einschließlich Version 1.5.1 kommt das Android-Backup hinzu, siehe [unten](#wechsel)). Die einzige Netzverbindung der App ist der Download einer Stimme, und den löst nur ein Tippen von dir aus.
+Atemkraft erhebt keine Daten über dich. Es gibt kein Konto, keinen Server des Anbieters, keine Analyse, keine Werbung, keine Absturzberichte und kein Tracking; die App enthält keine solchen Bibliotheken und keine Google Play Services. Was du in der App tust, bleibt auf deinem Gerät, solange du es nicht selbst exportierst oder beim Handywechsel überträgst. Die einzige Netzverbindung der App ist der Download einer Stimme, und den löst nur ein Tippen von dir aus. Was die Stores beim Installieren selbst verarbeiten, steht unter [Bezugsquellen](#bezugsquellen).
 
 ## Was auf deinem Gerät gespeichert wird
 
@@ -18,12 +18,15 @@ Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. D
 | Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | *Einstellungen → Daten → „Logbuch leeren“* (ein zweiter Tipp bestätigt); App-Speicher löschen |
 | Eigene Kreationen (Datenbank) | Name (bei selbst zusammengestellten Mustern frei wählbar, höchstens 80 Zeichen), Phasenlängen (bei selbst zusammengestellten Mustern die ganze Folge aus Ein, Halten und Aus), Art (aktivierend oder nicht), Herkunft (Muster des Tages oder selbst zusammengestellt) und Dauer gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen im Tab „Eigene“ unter „Eigene Kreationen“ (ein zweiter Tipp bestätigt) oder mit dem Lesezeichen im Muster-Editor |
 | Einstellungen | Klang (Lautstärke, Gong-Nachhall), Atemübung (Ton, Vibration, „Danach in die Stille“ als Startwert jeder Atemübung, „Sicherheitshinweis immer zeigen“ und ob du den Sicherheitshinweis schon einmal bestätigt hast), Anzeige der Atemübung (automatisch ausblenden, Fortschrittsring, Sekunden im Kreis, nächste Phase), Meditation (zuletzt gewählte Dauer, Gongs und Anleitung, Gong-Abstand sowie die Anzeige: automatisch ausblenden, Fortschrittsring, Zeit im Kreis), gewählte Stimme, Anpassungen pro Übung, Übungen, die du mit „Tut mir gut“ markiert hast, ob die App schon nach der Benachrichtigung gefragt hat und, falls die Einstellungsdatei einmal beschädigt war, wann die App sie zurückgesetzt hat und ob du den Hinweis dazu gesehen hast | Anpassungen pro Übung zurücksetzen; Markierung durch erneutes Antippen aufheben; App-Speicher löschen |
-| Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen. Die bis Version 1.5.1 angebotene Stimme GLaDOS löscht die App ab Version 1.6.0 beim Start selbst |
-| Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Versuch. Den Download-Cache leert Android auch bei Speichermangel |
+| Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen |
+| Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Start. In Version 2.5.0 liegt der Download im Cache, den Android auch bei Speichermangel leert; ab der Version danach im Speicher der Stimmen |
 
-Die Befindens-Suche „Wie fühlst du dich?“ im Tab „Atmen“ (ab Version 1.6.0; bis Version 2.1.0 im eigenen Tab „Anlass“, vorher „Situationen“ bzw. „Anlässe“ genannt) wird nicht gespeichert: Der Suchtext bleibt nur erhalten, solange er im Feld steht (auch beim Drehen oder wenn Android die App im Hintergrund beendet und du zurückkehrst), und ist weg, sobald du ihn löschst oder mit Zurück die Suche verlässt. Die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
+Die Befindens-Suche „Wie fühlst du dich?“ im Tab „Atmen“ wird nicht gespeichert: Der Suchtext bleibt nur erhalten, solange er im Feld steht (auch beim Drehen oder wenn Android die App im Hintergrund beendet und du zurückkehrst), und ist weg, sobald du ihn löschst oder mit Zurück die Suche verlässt. Die App bittet die Tastatur, deine Eingaben nicht zu lernen. Ob eine Tastatur-App dieser Bitte folgt, liegt bei ihr.
 
-Das Logbuch kann Rückschlüsse auf dein Befinden zulassen, weil manche Übungen zu bestimmten Anlässen passen. Es steht deshalb nicht in der Export-Datei und ab Version 1.6.0 nicht im Cloud-Backup; mitgenommen wird es nur bei einer Übertragung beim Handywechsel, die du selbst startest (siehe [Handywechsel](#wechsel)). Beim Deinstallieren löscht Android alle Daten der App.
+Das Logbuch kann Rückschlüsse auf dein Befinden zulassen, weil manche Übungen zu bestimmten Anlässen passen. Es steht deshalb nicht in der Export-Datei und nicht im Cloud-Backup; mitgenommen wird es nur bei einer Übertragung beim Handywechsel, die du selbst startest (siehe [Handywechsel](#wechsel)).
+
+<a id="deinstallieren"></a>
+**Beim Deinstallieren** löscht Android alle Daten der App. Ab der Version nach 2.5.0 bietet Android ab Android 10 dabei an, die Daten zu behalten (Kästchen „App-Daten behalten“ o. Ä., je nach Hersteller und Weg des Deinstallierens). Wählst du das, bleiben Logbuch, Muster, Einstellungen und Stimmen im Speicher deines Geräts, nicht in einer Cloud; installierst du Atemkraft mit derselben Signatur neu, sind sie wieder da. Entfernen kannst du sie dann, indem du die App wieder installierst und den App-Speicher löschst.
 
 <a id="netz"></a>
 ## Stimm-Download – die einzige Netzverbindung
@@ -35,7 +38,7 @@ Wenn du in den Einstellungen bei einer Stimme auf „Laden“ tippst, lädt die 
 | Adresse | `https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/<stimme>.tar.bz2`, von dort weitergeleitet zu `release-assets.githubusercontent.com` |
 | Auslöser | nur dein Tippen auf „Laden“; nie automatisch oder im Hintergrund |
 | Was GitHub dabei sieht | deine IP-Adresse, Zeitpunkt, die angefragte Datei und den User-Agent der App |
-| User-Agent | ab Version 1.6.0 nur `Atemkraft/<Version>`. **Bis einschließlich Version 1.5.1** sendet die App den Standard von Android, der Android-Version und Gerätemodell enthält (z. B. `Dalvik/2.1.0 (Linux; U; Android 14; <Modell> Build/…)`). |
+| User-Agent | nur `Atemkraft/<Version>`, ohne Gerätemodell oder Android-Version |
 | Was nicht übertragen wird | keine Kennung, kein Konto, keine Daten aus der App |
 | Empfänger | GitHub, Inc. (ein Unternehmen von Microsoft, USA). Für die Verarbeitung dort gilt das [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Der Anbieter von Atemkraft hat keinen Zugriff auf diese Daten. |
 
@@ -45,15 +48,15 @@ Links im Über-Screen (Quellcode, diese Erklärung, Lizenzen) öffnen deinen Bro
 
 ## Sprachausgabe des Systems
 
-Hast du keine Stimme geladen oder gewählt, kann die gesprochene Meditationsanleitung die Sprachausgabe deines Geräts nutzen. Das gilt auch, wenn du bis Version 1.5.1 GLaDOS gewählt hattest; ab Version 1.6.0 vergisst die App diese Wahl. Sie erhält nur die festen Ansagetexte der App, nie Daten aus Logbuch oder Einstellungen. Die App wählt dabei eine deutsche Stimme, die kein Netz braucht, sofern eine installiert ist. Ob die Sprachausgabe selbst eine Netzverbindung nutzt, hängt von der installierten Sprach-App ab, nicht von Atemkraft.
+Hast du keine Stimme geladen oder gewählt, kann die gesprochene Meditationsanleitung die Sprachausgabe deines Geräts nutzen. Sie erhält nur die festen Ansagetexte der App, nie Daten aus Logbuch oder Einstellungen. Die App wählt dabei eine deutsche Stimme, die kein Netz braucht, sofern eine installiert ist. Ob die Sprachausgabe selbst eine Netzverbindung nutzt, hängt von der installierten Sprach-App ab, nicht von Atemkraft.
 
 ## Benachrichtigung
 
-Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läuft“ mit der verbleibenden bzw. vergangenen Zeit, während einer Atemübung „Atemübung läuft“ mit der Runde (z. B. „Runde 2 von 4“), beides auch auf dem Sperrbildschirm. Sie nennt keine Übungen und keine Logbuchdaten. **Bis einschließlich Version 2.0.2** gibt es die Benachrichtigung nur zur Meditation.
+Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läuft“ mit der verbleibenden bzw. vergangenen Zeit, während einer Atemübung „Atemübung läuft“ mit der Runde (z. B. „Runde 2 von 4“), beides auch auf dem Sperrbildschirm. Sie nennt keine Übungen und keine Logbuchdaten.
 
 ## Export und Import
 
-Ab Version 1.6.0 kannst du unter *Einstellungen → Daten* mit „Exportieren“ deine eigenen Kreationen (gespeicherte Muster) als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen (bei eigenen Mustern die ganze Phasenfolge), Art, Herkunft (Muster des Tages oder eigenes Muster), Dauer, Zeitpunkt des Speicherns und die Anpassungen dieser Muster sowie den Zeitpunkt des Exports, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
+Unter *Einstellungen → Daten* kannst du mit „Exportieren“ deine eigenen Kreationen (gespeicherte Muster) als Datei sichern (`atemkraft-muster-<datum>.json`). Sie enthält Name, Phasenlängen (bei eigenen Mustern die ganze Phasenfolge), Art, Herkunft (Muster des Tages oder eigenes Muster), Dauer, Zeitpunkt des Speicherns und die Anpassungen dieser Muster sowie den Zeitpunkt des Exports, kein Logbuch und keine Suchtexte. Den Speicherort wählst du selbst über die Dateiauswahl von Android; die App behält danach keinen Zugriff. Wohin die Datei weitergeht (z. B. in einen Cloud-Ordner), entscheidest du.
 
 Mit „Importieren“ liest die App eine Datei, die du in der Dateiauswahl wählst, einmal ein und übernimmt daraus nur gültige Muster und deren Anpassungen. Auch hier behält sie keinen Zugriff auf die Datei.
 
@@ -62,25 +65,36 @@ Mit „Importieren“ liest die App eine Datei, die du in der Dateiauswahl wähl
 
 Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die direkte Übertragung beim Handywechsel (Kabel oder WLAN-Direkt, z. B. Smart Switch) Logbuch, Muster und Einstellungen von Gerät zu Gerät mitnehmen, ohne Umweg über eine Cloud; ob sie das tut, hängt laut Android-Dokumentation vom Gerätehersteller ab. Stimmen lädst du danach neu. Bis Android 11 ist auch diese Übertragung abgeschaltet.
 
-**Bis einschließlich Version 1.5.1** ist das Android-Backup noch erlaubt: Ist auf deinem Gerät die Sicherung eingeschaltet (meist in dein Google-Konto), kann Android Logbuch, Muster und Einstellungen dorthin sichern, Stimmen nicht. Auch die Übertragung beim Handywechsel funktioniert dort unter Android 11 und älter. Der Anbieter von Atemkraft hat auf diese Sicherung keinen Zugriff. Abschalten lässt sie sich in der Regel nur für das ganze Gerät, in den Sicherungs-Einstellungen von Android (Bezeichnung je nach Hersteller). Ob das Update auf Version 1.6.0 eine schon angelegte Sicherung entfernt, dokumentiert Android nicht; ansehen und löschen kannst du Sicherungen in deinem Google-Konto.
-
 <a id="berechtigungen"></a>
 ## Berechtigungen
 
 | Berechtigung | Wofür |
 |---|---|
 | Internet (`INTERNET`) | nur der Stimm-Download |
-| Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“. Die Rasten des Zeitrings in der Meditation (ab Version 1.6.5) sind Berührungs-Feedback und folgen der Android-Einstellung dafür, nicht dem Schalter. **Bis einschließlich Version 1.5.1** vibriert der Tick auch bei ausgeschaltetem Schalter |
-| Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation oder Atemübung wach, damit Gongs und Phasen-Töne pünktlich kommen (bis einschließlich Version 2.0.2 nur bei der Meditation) |
-| Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation und Atemübung laufen bei ausgeschaltetem Bildschirm und im Hintergrund weiter (bis einschließlich Version 2.0.2 nur die Meditation) |
-| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation oder Atemübung mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Sitzung (bis einschließlich Version 2.0.2: einer Meditation). Lehnst du ab, läuft die Sitzung trotzdem |
+| Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“. Die Rasten des Zeitrings in der Meditation sind Berührungs-Feedback und folgen der Android-Einstellung dafür, nicht dem Schalter |
+| Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation oder Atemübung wach, damit Gongs und Phasen-Töne pünktlich kommen |
+| Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation und Atemübung laufen bei ausgeschaltetem Bildschirm und im Hintergrund weiter |
+| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation oder Atemübung mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Sitzung. Lehnst du ab, läuft die Sitzung trotzdem |
 | Sichtbarkeit der Sprachausgabe (`<queries>` für `TTS_SERVICE`) | die Sprachausgabe des Geräts finden |
 
 Hinzu kommt `app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, die Android-Bibliothek AndroidX automatisch einträgt; sie gilt nur innerhalb der App. Die App fragt weder Standort, Kontakte, Kamera, Mikrofon noch Speicher ab.
 
+<a id="bezugsquellen"></a>
+## Bezugsquellen und Store-Betreiber
+
+Die App ist auf allen Wegen dieselbe, mit derselben Signatur. Wer dir die App liefert, verarbeitet dabei eigene Daten nach seinen eigenen Regeln; darauf hat der Anbieter keinen Einfluss.
+
+| Bezugsquelle | Wer was verarbeitet | Was der Anbieter davon erhält |
+|---|---|---|
+| GitHub-Releases (auch über Apps wie Obtainium) | GitHub sieht beim Herunterladen IP-Adresse, Zeitpunkt und User-Agent ([GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)) | nur die Zahl der Downloads je Datei |
+| Google Play (geplant) | Google verarbeitet als Store-Betreiber dein Google-Konto, Installationen, Updates und Bewertungen ([Datenschutzerklärung von Google](https://policies.google.com/privacy)) | zusammengefasste Zahlen in der Play Console (z. B. Installationen nach Land und Gerät) und öffentliche Bewertungen; hast du in Android erlaubt, Nutzungs- und Diagnosedaten mit Google zu teilen, auch anonymisierte Absturzberichte (Android vitals), ohne Angaben zu deiner Person |
+| F-Droid (geplant) | der F-Droid-Client und die Server des F-Droid-Repos, ohne Konto ([Über F-Droid](https://f-droid.org/en/about/)) | nichts |
+
+Die App selbst sendet auf keinem dieser Wege etwas an den Anbieter oder an den Store.
+
 ## Deine Rechte
 
-Über die App verarbeitet der Anbieter keine Daten über dich; es gibt bei ihm also nichts, worüber er Auskunft geben, was er berichtigen oder löschen könnte. Schreibst du ihm über GitHub (siehe [Kontakt](#kontakt)), sieht er deinen GitHub-Namen und was du dort schreibst; ein Issue ist öffentlich. Deine Daten in der App verwaltest und löschst du selbst (siehe oben). Für Daten bei GitHub wende dich an GitHub. Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO).
+Über die App verarbeitet der Anbieter keine Daten über dich; es gibt bei ihm also nichts, worüber er Auskunft geben, was er berichtigen oder löschen könnte. Schreibst du ihm über GitHub (siehe [Kontakt](#kontakt)), sieht er deinen GitHub-Namen und was du dort schreibst; ein Issue ist öffentlich. Deine Daten in der App verwaltest und löschst du selbst (siehe oben). Für Daten bei GitHub, Google oder F-Droid wende dich an diese. Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO).
 
 <a id="kontakt"></a>
 ## Kontakt
@@ -90,3 +104,19 @@ Fragen zum Datenschutz: [Issue im Repo](https://github.com/grenzenloseSchublade/
 ## Änderungen
 
 Ändert sich etwas am Umgang mit Daten, steht das in dieser Datei mit neuem Stand-Datum; frühere Fassungen zeigt die Versionsgeschichte im Repo.
+
+<a id="fruehere-versionen"></a>
+## Anhang: frühere Versionen
+
+Wer eine ältere Version nutzt: Diese Punkte weichen von der Beschreibung oben ab.
+
+| Thema | Abweichung |
+|---|---|
+| Cloud-Backup | **Bis einschließlich Version 1.5.1** ist das Android-Backup erlaubt: Ist auf deinem Gerät die Sicherung eingeschaltet (meist in dein Google-Konto), kann Android Logbuch, Muster und Einstellungen dorthin sichern, Stimmen nicht. Auch die Übertragung beim Handywechsel funktioniert dort unter Android 11 und älter. Der Anbieter hat auf diese Sicherung keinen Zugriff. Abschalten lässt sie sich in der Regel nur für das ganze Gerät, in den Sicherungs-Einstellungen von Android (Bezeichnung je nach Hersteller). Ob das Update auf Version 1.6.0 eine schon angelegte Sicherung entfernt, dokumentiert Android nicht; ansehen und löschen kannst du Sicherungen in deinem Google-Konto. |
+| User-Agent beim Stimm-Download | **Bis einschließlich Version 1.5.1** sendet die App den Standard von Android, der Android-Version und Gerätemodell enthält (z. B. `Dalvik/2.1.0 (Linux; U; Android 14; <Modell> Build/…)`). |
+| Stimme GLaDOS | **Bis einschließlich Version 1.5.1** gibt es die Stimme GLaDOS. Ab Version 1.6.0 löscht die App ein geladenes Modell beim Start selbst und vergisst die Wahl; die Meditationsanleitung nutzt dann die Sprachausgabe des Systems. |
+| Befindens-Suche, Export und Import | erst ab Version 1.6.0. Die Suche lag bis Version 2.1.0 im eigenen Tab „Anlass“ (vorher „Situationen“ bzw. „Anlässe“ genannt). |
+| Vibration | **Bis einschließlich Version 1.5.1** vibriert der Tick beim Antippen des Kreises auch bei ausgeschaltetem Schalter. Die Rasten des Zeitrings gibt es ab Version 1.6.5. |
+| Benachrichtigung, Vordergrunddienst, Aktiv halten | **Bis einschließlich Version 2.0.2** nur bei der Meditation, nicht bei der Atemübung; die Frage nach der Benachrichtigung kommt dort beim ersten Start einer Meditation. |
+| Teil-Downloads | **Bis einschließlich Version 2.5.0** im Cache der App (siehe Zwischenspeicher oben). |
+| Deinstallieren | **Bis einschließlich Version 2.5.0** bietet Android nicht an, die Daten zu behalten. |

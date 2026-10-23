@@ -1,6 +1,6 @@
 # Veröffentlichung in Google Play und F-Droid
 
-Stand: 2026-10-23, App-Version 2.5.0. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
+Stand: 2026-10-24, App-Version 2.5.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
 
 Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Links im Text, abgerufen am 2026-10-23). Store-Regeln ändern sich; vor jedem Schritt die verlinkte Seite noch einmal lesen. Keine Rechtsberatung.
 
@@ -10,8 +10,8 @@ Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Li
 |---|---|---|---|---|
 | GitHub-Releases | aktiv bis v1.6.8, seitdem pausiert | wir | sofort | Push, Tag, Release |
 | Google Play | geplant | wir (AAB), Google verteilt | etwa 4–6 Wochen | Konto, 14 Tage geschlossener Test mit 12 Testern, Formulare, Grafiken |
-| F-Droid (Hauptrepo) | geplant | F-Droid baut aus dem Tag nach, veröffentlicht unsere signierte APK | Wochen bis Monate | Bibliothek von JitPack statt `app/libs`, reproduzierbarer Build, Rezept in fdroiddata |
-| IzzyOnDroid | **zurückgestellt** | wir (GitHub-APK) | Tage | Ausschlussregel für KI-generierten Code, APK über 30 MB |
+| F-Droid (Hauptrepo) | geplant | F-Droid baut aus dem Tag nach, veröffentlicht unsere signierte APK | Wochen bis Monate | Rezept in fdroiddata; Repo vorbereitet (JitPack statt `app/libs`, Tag-Nachbau im CI) |
+| IzzyOnDroid | **zurückgestellt** | wir (GitHub-APK) | Tage | Ausschlussregel für KI-generierten Code; Größe: nur die arm64-APK liegt knapp unter 30 MB (29 MB), die Universal-APK darüber (47 MB) |
 
 **Strategie:** ein Signaturschlüssel und eine `applicationId` (`app.atemkraft`) für alle Kanäle. Nutzer können so zwischen GitHub, Play und F-Droid wechseln, ohne zu deinstallieren. Das ist wichtig, weil es bewusst kein Cloud-Backup gibt: Eine Deinstallation löscht Logbuch und Muster (außer sie wurden exportiert). Außerdem muss bei der Android-Entwicklerverifizierung nur ein Fingerprint registriert werden.
 
@@ -21,9 +21,9 @@ Vor dem Start muss der Nutzer entscheiden:
 
 1. **Release-Politik wieder öffnen.** Seit 2026-10-19 wird nur lokal versioniert; v1.7.0 bis v2.5.0 sind weder gepusht noch getaggt. F-Droid baut ausschließlich aus öffentlichen Tags, Play braucht das zwar nicht, aber Quelltext und Store-Version sollen übereinstimmen (GPL-Bestandteile, siehe unten). Ohne Push und Tag geht nur Play.
 2. **IzzyOnDroid.** Die Aufnahmeregeln lehnen Apps ab, deren Code ganz oder teilweise mit generativer KI entstanden ist („Vibe-coded apps will be rejected“, [Inclusion Policy, Abschnitt AI](https://izzyondroid.org/docs/general/AppInclusionPolicy/)). Atemkraft wird offen mit Claude entwickelt (Co-Authored-By in den Commits). Verschweigen widerspräche deren Regeln. Empfehlung: IzzyOnDroid nicht einreichen; wer die GitHub-APKs automatisch aktualisieren will, nutzt [Obtainium](https://obtainium.imranr.dev/).
-3. **Lizenzangabe.** Der Quelltext steht unter MIT. Die APK enthält über sherpa-onnx statisch gelinktes eSpeak NG (GPL-3.0-or-later) und ist als Ganzes GPL-3.0. Das steht so in [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md) und muss in Store-Text und F-Droid-Rezept genauso ehrlich stehen. GPL-3-Apps in Play sind verbreitet (Signal, Termux), juristisch aber nicht unumstritten; das ist eine bewusste Entscheidung, die in SEC-LEGAL-03 festgehalten wird.
-4. **Nicht-freie Stimmen.** Miro und Dii stehen unter CC BY-NC-ND 4.0, ihre Hörproben liegen in der APK. In F-Droid führt das zum Warnhinweis *NonFreeAssets*. Alternativ beide Stimmen samt Hörproben entfernen. Kerstin beruht auf einem Basismodell mit CC-BY-NC-SA-Trainingsdaten, Thorsten auf einem mit Forschungslizenz; die Kennzeichnung in der App ist dafür zu ergänzen.
-5. **Öffentliche Kontaktdaten.** Ein privates Play-Konto zeigt **gesetzlichen Namen, Land und Entwickler-E-Mail** öffentlich an ([Hilfe 13628312](https://support.google.com/googleplay/android-developer/answer/13628312)). Für Store und Datenschutzerklärung eine eigene E-Mail-Adresse oder einen Alias nur für die App anlegen, nicht die Uni- oder Privatadresse.
+3. **Lizenzangabe – entschieden 2026-10-24.** Quelltext MIT, APK als Ganzes GPL-3.0-or-later, weil sie über sherpa-onnx statisch gelinktes eSpeak NG enthält ([THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md#gpl), SEC-LEGAL-03). So steht es in Store-Angaben und F-Droid-Rezept. GPL-3-Apps in Play sind verbreitet (Signal, Termux), juristisch aber nicht unumstritten; das ist bewusst in Kauf genommen.
+4. **Nicht-freie Stimmen – entschieden.** Miro und Dii (CC BY-NC-ND 4.0) bleiben samt Hörproben in der APK (Nutzerentscheidung 2026-10-08, bestätigt 2026-10-24); in F-Droid führt das zum Warnhinweis *NonFreeAssets*. Kerstin beruht auf einem Basismodell mit CC-BY-NC-SA-Trainingsdaten, Thorsten auf einem mit Forschungslizenz; App und Lizenzliste nennen das seit 2026-10-24 in der Kurzlizenz. Offen bleibt, ob man die beiden vorsorglich als „nur nicht kommerziell“ kennzeichnet.
+5. **Öffentliche Kontaktdaten.** Ein privates Play-Konto zeigt **gesetzlichen Namen, Land und Entwickler-E-Mail** öffentlich an ([Hilfe 13628312](https://support.google.com/googleplay/android-developer/answer/13628312)). Für Store und Datenschutzerklärung eine eigene E-Mail-Adresse oder einen Alias nur für die App anlegen, nicht die Uni- oder Privatadresse. Die Datenschutzerklärung nennt bisher nur GitHub als Kontaktweg; die Adresse kommt dort dazu, sobald es sie gibt.
 
 ## Im Repo vorbereiten
 
@@ -57,16 +57,16 @@ Ohne `-PstoreScreenshots` schließt Gradle den Test aus; `scripts/check.sh` schr
 
 ### Build
 
-- **sherpa-onnx von JitPack statt aus `app/libs/`.** Der F-Droid-Scanner lehnt `.aar`-Dateien im Quellbaum ab. JitPack liefert dieselbe Datei byte-identisch (SHA-256 am 2026-10-23 verglichen) und steht auf der Positivliste des Scanners; die TTS-App SherpaTTS ist so in F-Droid. Einbinden als AAR-Koordinate (`com.github.k2-fsa.sherpa-onnx:sherpa-onnx:v1.13.6@aar`), JitPack in `settings.gradle.kts` per `content {}` auf `com.github.k2-fsa` beschränken, Prüfsumme per Gradle Dependency Verification (`gradle/verification-metadata.xml`) statt `.sha256`-Datei pinnen. SEC-SUP-02 und `config/security/binaries.allow` anpassen.
-- **Reproduzierbarer Build** (SEC-BUILD-06). F-Droid baut den Tag nach und veröffentlicht unsere APK nur, wenn sie bis auf die Signatur gleich ist. Bekannte Stolpersteine: Baseline-Profile (`assets/dexopt/baseline.prof`) können je CPU-Kernzahl abweichen; R8 und Ressourcen-Shrinking mehrfach bauen und vergleichen; immer JDK 17 (`scripts/build.sh` soll bei anderem JDK abbrechen, nicht nur warnen). Werkzeuge: `apksigcopier compare`, `diffoscope`. Der CI-Job `rebuild-compare` sollte vor der Einreichung grün sein.
-- **App Bundle für Play:** `scripts/build.sh bundleRelease`. Play erzeugt daraus pro Gerät passende APKs; die 56-MB-APK fällt dort nicht ins Gewicht.
-- **ABI-Splits für GitHub** (optional): eine APK je Architektur plus Universal-APK; versionCode-Schema dann in SEC-BUILD-05 festlegen.
+- **sherpa-onnx von JitPack statt aus `app/libs/` – erledigt 2026-10-24.** Der F-Droid-Scanner lehnt `.aar`-Dateien im Quellbaum ab. JitPack liefert dieselbe Datei byte-identisch (SHA-256 am 2026-10-23 und 2026-10-24 verglichen) und steht auf der Positivliste des Scanners; die TTS-App SherpaTTS ist so in F-Droid. Eingebunden als AAR-Koordinate `com.github.k2-fsa.sherpa-onnx:sherpa-onnx:v1.13.6`, JitPack in `settings.gradle.kts` per `exclusiveContent` allein für diese Gruppe, Prüfsumme per Gradle Dependency Verification (`gradle/verification-metadata.xml`, SEC-SUP-01/-02).
+- **Reproduzierbarer Build** (SEC-BUILD-06). F-Droid baut den Tag nach und veröffentlicht unsere APK nur, wenn sie bis auf die Signatur gleich ist. Stand 2026-10-24: `scripts/build.sh` bricht Release-Aufgaben mit anderem JDK als 17 ab; Native Libs kommen ohne NDK-Strippen unverändert aus dem AAR; zwei saubere Builds mit unterschiedlich vielen Gradle-Workern waren bitgleich, auch `assets/dexopt/baseline.prof` (das Baseline-Profil bleibt deshalb an). Der Workflow `release-verify` baut jeden Tag im CI nach und vergleicht mit den Release-Assets (`apksigcopier compare`); er sollte vor der Einreichung grün sein. Offen bleibt der Nachbau auf dem F-Droid-Buildserver selbst (anderer Pfad, andere Kernzahl): erst `fdroid build` zeigt, ob er übereinstimmt.
+- **App Bundle für Play:** `scripts/build.sh bundleRelease` in einem eigenen Aufruf (dabei ohne ABI-Splits, sonst bricht AGP ab). Play erzeugt daraus pro Gerät passende APKs (Bundle 24 MB).
+- **ABI-Splits für GitHub – erledigt 2026-10-24:** je Release `atemkraft-vX.Y.Z.apk` (Universal, 47 MB), `atemkraft-vX.Y.Z-arm64-v8a.apk` (29 MB) und `atemkraft-vX.Y.Z-armeabi-v7a.apk` (21 MB), alle mit demselben versionCode (SEC-BUILD-05). F-Droid vergleicht gegen die Universal-APK; das Rezept braucht deshalb `output:` (siehe unten). Vorher war die einzige APK 56 MB groß; 8 MB davon waren die ungenutzte C- und C++-API von sherpa-onnx.
 
 ### Dokumente
 
-- **Datenschutzerklärung** (`docs/PRIVACY.md`): Play verlangt eine öffentliche, nicht geofence-geschützte URL (kein PDF), die auch in der App verlinkt ist. Die GitHub-Ansicht genügt; besser ein stabiler Link (GitHub Pages oder Tag statt `main`). Ergänzen: Verteilung über Play und F-Droid, Hinweis, dass Google bzw. F-Droid als Store-Betreiber eigene Daten verarbeiten, Kontakt-E-Mail, Anbietername wie im Store. Historische Hinweise auf Versionen bis 1.5.1 in einen Anhang.
+- **Datenschutzerklärung** (`docs/PRIVACY.md`): Play verlangt eine öffentliche, nicht geofence-geschützte URL (kein PDF), die auch in der App verlinkt ist. Die GitHub-Ansicht genügt; besser ein stabiler Link (GitHub Pages oder Tag statt `main`). Seit 2026-10-24 erledigt: gilt ab 2.5.0, Altversionen im Anhang, Bezugsquellen GitHub, Play und F-Droid mit Hinweis auf die eigene Verarbeitung der Store-Betreiber. Offen: Kontakt-E-Mail (siehe Entscheidung 5), Anbietername wie im Store.
 - **README**, Abschnitt *Installieren*: Bezugsquellen (Play und F-Droid „folgen“, GitHub-Releases, Obtainium) und Hinweis auf dieselbe Signatur stehen; die Store-Links nachtragen, sobald die App dort erscheint.
-- **SECURITY.md**: SEC-DIST-01 präzisieren (F-Droid braucht einen Build aus Quellen, `Binaries:` allein reicht nicht); fehlende Prüfskripte (`verify-apk.sh`, Allowlists) anlegen oder die Verweise streichen.
+- **SECURITY.md** – erledigt 2026-10-24: SEC-DIST-01 präzisiert (F-Droid baut selbst, `Binaries:` allein reicht nicht); `scripts/verify-apk.sh` und die Allowlists unter `config/security/` gibt es, `check.sh` und der Tag-Nachbau rufen sie auf.
 
 ## Google Play
 
@@ -153,7 +153,7 @@ Changelog: https://github.com/grenzenloseSchublade/atemkraft/releases
 
 AntiFeatures:
   NonFreeAssets:
-    de: Zwei Stimmen (Miro, Dii) und ihre Hörproben stehen unter CC BY-NC-ND 4.0.
+    de: Die Hörproben zweier Stimmen (Miro, Dii) in der App stehen unter CC BY-NC-ND 4.0; beide Stimmen sind nur nicht kommerziell nutzbar.
   NonFreeNet:
     de: Lädt auf Wunsch Stimmen von GitHub herunter.
 
@@ -168,6 +168,8 @@ Builds:
     subdir: app
     gradle:
       - yes
+    # ABI-Splits: die Universal-APK vergleichen (wie atemkraft-v%v.apk); Pfad relativ zu subdir
+    output: build/outputs/apk/release/app-universal-release-unsigned.apk
 
 AllowedAPKSigningKeys: 75022defe65aa24e223f3e79880f09f423456757002ff0b33ba2ae29b9f41890
 
