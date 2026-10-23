@@ -8,15 +8,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
@@ -117,8 +120,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * auf seinen Bereich), mit diesem Bereich gewählt, mit Suchtreffern und mit einem reinen
      * Bereichstreffer – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht; „Eigene“ mit
      * Verlauf (Beispieleinträge), „Tut mir gut“ und vier Mustern (eines mit langem Namen) und leer;
-     * Meditation mit offener Feinwahl auf 12 min (scrollt bis 1,3 nicht, LAYOUT-08) und ∞ mit
-     * aufgeklapptem Klang (akzeptierte Scroll-Ausnahme S-40).
+     * Meditation mit offener Feinwahl auf 12 min (scrollt bis 1,3 nicht, LAYOUT-08; „Klang & Stimme“
+     * mit offenem Blatt: [meditationSoundSheet]).
      */
     @Test
     fun tabs() {
@@ -162,7 +165,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("13_eigene_leer", tab = Tab.EIGENE) {
             OwnPatternsScreen(savedPatterns = emptyList(), onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}, today = DAY)
         }
-        snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, prepare = {
+        snap("03_meditation_fein", tab = Tab.MEDITATION, noScroll = true, measure = { meditationRing("03_meditation_fein") }, prepare = {
             // Die Mitte ist klickbar und meldet ihren Zustand als „Feinwahl aus“.
             val closed = app.getString(R.string.meditation_dial_fine_off)
             compose.onNode(
@@ -172,9 +175,6 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 },
             ).performClick()
         }) { MeditationTab(MeditationConfig(minutes = 12)) }
-        snap("03_meditation_frei", tab = Tab.MEDITATION, acceptedScroll = true, prepare = {
-            compose.onNodeWithText(app.getString(R.string.meditation_sound_voice_label)).performClick()
-        }) { MeditationTab(MeditationConfig(mode = MeditationMode.FREE, gongEveryMin = 15), gongIntervalMin = 15) }
     }
 
     /**
@@ -336,6 +336,30 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         }) {
             Editor { PatternEditorState.new(it, FreePattern(listOf(FreePhase(FreePhaseType.IN, 4), FreePhase(FreePhaseType.HOLD, 1), FreePhase(FreePhaseType.OUT, 6)))) }
         }
+    }
+
+    /**
+     * „Klang & Stimme“ als offenes Blatt über dem Tab (MUSTER-11): ∞ mit Gong alle 15 min, die
+     * längste Wahl. Eigenes Fenster wie das Startpunkt-Sheet, also Aufnahme des ganzen Bildschirms.
+     */
+    @Test
+    fun meditationSoundSheet() {
+        snap("03_meditation_klang_offen", tab = Tab.MEDITATION, screen = true, prepare = {
+            // TalkBack liest die Zeile als eine Schaltfläche: Titel, Wahl, Stimme – Kommas statt Punkt.
+            val spoken = listOf(
+                app.getString(R.string.meditation_sound_voice_label),
+                "Gong " + app.getString(R.string.meditation_interval_minutes, 15),
+                app.getString(R.string.meditation_voice_off),
+            ).joinToString(", ")
+            compose.onNodeWithContentDescription(spoken)
+                .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+                // Bei Schrift 2,0 scrollt die Seite (Notlösung), die Zeile liegt dann darunter.
+                .performScrollTo()
+                .performClick()
+            compose.waitForIdle()
+            // Das Blatt ist offen: Sprachanleitung steht darin.
+            compose.onNodeWithText(app.getString(R.string.meditation_speech_label)).assertExists()
+        }) { MeditationTab(MeditationConfig(mode = MeditationMode.FREE, gongEveryMin = 15), gongIntervalMin = 15) }
     }
 
     /** Startpunkt-Sheet offen: eigenes Fenster, also Fenster in Gerätegröße ([setUp]) und Aufnahme des ganzen Bildschirms. */

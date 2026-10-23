@@ -1,5 +1,6 @@
 package app.atemkraft.ui.screenshots
 
+import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.patterns.PatternEditorState
@@ -10,8 +11,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Muster-Editor in Gerätehöhe ([TestMatrix.DEVICE_CONFIGS]): Kurve und Werkzeugleiste stehen bis
- * Schrift 1,3 ohne Scrollen da; die Tab-Leiste steht in der Tiefe nie (MUSTER-10, [editorFit]).
+ * Muster-Editor und Meditations-Tab in Gerätehöhe ([TestMatrix.DEVICE_CONFIGS]): Kurve und
+ * Werkzeugleiste stehen bis Schrift 1,3 ohne Scrollen da, die Tab-Leiste steht in der Tiefe nie
+ * (MUSTER-10, [editorFit]); der Meditations-Tab scrollt bis 1,3 nicht (LAYOUT-08).
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -37,5 +39,14 @@ class DeviceFitTest(device: Device, fontScale: Float) : ScreenshotHarness(device
                 select(1)
             }
         }
+    }
+
+    /**
+     * Meditations-Tab in Gerätehöhe mit Tab-Leiste: scrollt bis Schrift 1,3 nicht (LAYOUT-08), der
+     * Zeitring bekommt den ganzen Platz; seine Kante steht als `RING` in der `.tsv`.
+     */
+    @Test
+    fun meditation() = snap("03_meditation", tab = Tab.MEDITATION, noScroll = true, measure = { meditationRing("03_meditation") }) {
+        MeditationTab(MeditationConfig(minutes = 12))
     }
 }

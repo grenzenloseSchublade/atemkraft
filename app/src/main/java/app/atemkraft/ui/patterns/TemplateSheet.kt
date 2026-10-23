@@ -27,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
@@ -45,7 +48,8 @@ import app.atemkraft.ui.theme.Sizes
 import kotlinx.coroutines.launch
 
 /**
- * Vorlagen als Bottom Sheet (Nachtrag 6): „Startpunkt“ und je Vorlage eine Zeile mit Name und
+ * Vorlagen als Bottom Sheet (Nachtrag 6; wann ein Bottom Sheet passt: MUSTER-11, wie „Klang &
+ * Stimme“ in der Meditation, `SoundSheet`): „Startpunkt“ und je Vorlage eine Zeile mit Name und
  * Mini-Kurve ([MiniCurve]), die passende markiert (`selectable`, Rolle RadioButton, Fläche
  * `secondaryContainer`, Rand `SegmentSelected` wie in der Ablauf-Liste). Eine Wahl setzt die Folge
  * (letzte Phase gewählt) und schließt das Sheet; danach meldet es [onPick].
@@ -62,6 +66,11 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                // Vor dem Griff gelesen: TalkBack beginnt beim Titel (MUSTER-11).
+                .semantics {
+                    isTraversalGroup = true
+                    traversalIndex = -1f
+                }
                 .verticalScroll(rememberScrollState())
                 .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
         ) {

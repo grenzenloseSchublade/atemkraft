@@ -82,6 +82,11 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt:
  * nicht aufklappbar.
  *
+ * Mit [onClick] öffnet der Kopf etwas (Bottom Sheet, MUSTER-11: „Klang & Stimme“ im
+ * Meditations-Tab): dieselbe Zeile wie aufklappbar, aber mit [ForwardChevron] statt Caret, ohne
+ * Zustand. TalkBack liest sie als eine Schaltfläche aus Titel und Teaser, die Trennpunkte als
+ * Kommas („Klang & Stimme, Gong Start & Ende, ohne Stimme, Schaltfläche“).
+ *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Eigene Kreationen · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
  * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Ablauf ·
@@ -100,13 +105,24 @@ fun SectionHeader(
     statusDescription: String? = null,
     smallStatus: Boolean = false,
     top: Dp = Dimens.SectionHeaderTop,
+    onClick: (() -> Unit)? = null,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
     val density = LocalDensity.current
     // Gemessen statt aus lineHeight: ab Android 14 wächst die Schrift nichtlinear (rememberFirstLineHeight).
     val titleLine = rememberFirstLineHeight(titleStyle)
-    val toggle = if (expanded == null) {
+    // Zeile wie aufklappbar: Tippfläche ohne den Leerraum darüber, innen oben und unten GapSmall.
+    val tappable = expanded != null || onClick != null
+    val toggle = if (onClick != null) {
+        val spoken = listOfNotNull(title, teaser?.splitAtDots()?.joinToString(", ")).joinToString(", ")
+        Modifier
+            .padding(top = Dimens.GapSmall)
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clickable(role = Role.Button, onClick = onClick)
+            // Die Beschreibung geht dem sichtbaren Text vor; der Titel ist hier keine Überschrift.
+            .semantics { contentDescription = spoken }
+    } else if (expanded == null) {
         Modifier
     } else {
         val state = expandedStateText(expanded)
@@ -121,7 +137,7 @@ fun SectionHeader(
                 stateDescription = state
             }
     }
-    val inner = if (expanded == null) {
+    val inner = if (!tappable) {
         Modifier.padding(top = top)
     } else {
         Modifier.padding(vertical = Dimens.GapSmall)
@@ -159,8 +175,13 @@ fun SectionHeader(
                     statusDescription = statusDescription,
                     statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
+                    isHeading = onClick == null,
                 )
-                if (expanded != null) {
+                if (onClick != null) {
+                    Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
+                        ForwardChevron(tint = color)
+                    }
+                } else if (expanded != null) {
                     Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
                         ExpandCaret(expanded = expanded, tint = color)
                     }
@@ -173,7 +194,7 @@ fun SectionHeader(
         // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).
         if (trailingAction != null) {
             // Mitte der Tippfläche auf der Mitte der ersten Titelzeile (wie Balken und Caret).
-            val above = if (expanded == null) top else Dimens.GapSmall * 2
+            val above = if (!tappable) top else Dimens.GapSmall * 2
             Box(Modifier.centeredOverflow(above + titleLine / 2).flushEnd()) { trailingAction() }
         }
     }
@@ -262,7 +283,8 @@ fun CollapsibleSection(
  * damit keine Zeile mit einem Satzzeichen beginnt (LAYOUT-03); passt er auch dort nicht in eine
  * Zeile, steht jeder Teil zwischen den Punkten in einer eigenen Zeile, ohne Punkt
  * ([splitAtDots]). Gemessen wird vorab ([rememberWidestTextWidth]), so entsteht nur die gezeigte
- * Variante (ein Knoten für TalkBack).
+ * Variante (ein Knoten für TalkBack). Ohne [isHeading] ist der Titel keine Überschrift (Kopf als
+ * Schaltfläche, `onClick`).
  */
 @Composable
 private fun TitleWithStatus(
@@ -272,9 +294,10 @@ private fun TitleWithStatus(
     statusDescription: String?,
     statusStyle: TextStyle,
     modifier: Modifier = Modifier,
+    isHeading: Boolean = true,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
-    val heading = Modifier.semantics { heading() }
+    val heading = if (isHeading) Modifier.semantics { heading() } else Modifier
     if (status == null) {
         WholeWordText(text = title, style = titleStyle, color = color, modifier = modifier.then(heading))
         return

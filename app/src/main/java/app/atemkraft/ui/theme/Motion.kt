@@ -32,9 +32,6 @@ object Motion {
     /** Knöpfe der Session-Steuerung erscheinen nach der Vorbereitung (`SessionControlBar`). */
     val ControlFade = 300
 
-    /** Auf- und Zuklappen eines Abschnitts, dessen Nachbarn mitwachsen (Meditation „Klang & Stimme“). */
-    val Expand = 250
-
     /** Tap-Flash: Halt in voller Deckkraft, bevor das Symbol ausblendet. */
     val TapFlashHold = 220L
 

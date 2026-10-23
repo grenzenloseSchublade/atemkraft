@@ -93,8 +93,8 @@ internal typealias Tab = TopTab
  * Leisten der App mit ([TabFrame]): Statusleiste, Tab-Leiste und Systemnavigation – sonst
  * überschätzt das Bild den Platz um rund 150 dp.
  *
- * Der Meditations-Tab scrollt bis fontScale 1,3 nicht (LAYOUT-08, `SCROLLT`); aufgeklappter Klang
- * ist eine akzeptierte Ausnahme (S-40), die nur gemessen wird (`SCROLLT_AUSNAHME`).
+ * Der Meditations-Tab scrollt bis fontScale 1,3 nicht (LAYOUT-08, `SCROLLT`); „Klang & Stimme“
+ * liegt im Bottom Sheet und ändert die Seite nicht.
  *
  * Endlos-Animationen stehen still (FrozenInfiniteAnimations).
  *
@@ -117,14 +117,11 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         /** Bis zu dieser Schriftgröße prüft der Muster-Editor hart, dass Kurve und Werkzeugleiste ohne Scrollen dastehen. */
         private const val COMPACT_EDITOR_MAX_FONT_SCALE = 1.3f
 
-        /** Bottom Sheet der Vorlagen: eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
-        private const val SHEET_TEST = "patternEditorTemplates"
+        /** Bottom Sheets (Vorlagen, Klang & Stimme): eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
+        private val SHEET_TESTS = listOf("patternEditorTemplates", "meditationSoundSheet")
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
-
-        /** Befund für eine akzeptierte Scroll-Ausnahme (S-40): gemessen, nicht als Fehler gewertet. */
-        private const val ACCEPTED_SCROLL = "SCROLLT_AUSNAHME"
 
         // Feste Werte statt „heute“, damit die Bilder reproduzierbar sind.
         internal val DAY = LocalDate.of(2026, 10, 3)
@@ -178,7 +175,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     fun setUp() {
         // Dialoge messen sich am Fenster, nicht am Testknoten: Für sie Gerätegröße statt des
         // hohen Testfensters. Vor setContent, weil der Wechsel die Activity neu erzeugt.
-        if (testName.methodName.startsWith("safetyDialog") || testName.methodName.startsWith(SHEET_TEST)) {
+        if (testName.methodName.startsWith("safetyDialog") || SHEET_TESTS.any(testName.methodName::startsWith)) {
             RuntimeEnvironment.setQualifiers("w${windowDp.first}dp-h${windowDp.second}dp-xhdpi")
         }
         // Schriftgröße wie in den Android-Einstellungen, über die echte Konfiguration: Ab
@@ -201,9 +198,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
      * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
      * Mit [tab] liegt der Inhalt wie in der App über Tab-Leiste und Systemleisten ([TabFrame],
      * dann in Gerätehöhe bzw. [frameHeightDp]); [noScroll] prüft, dass die Seite bis
-     * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt. [acceptedScroll] misst denselben Weg für eine
-     * akzeptierte Ausnahme (S-40): Befund `SCROLLT_AUSNAHME` in der `.tsv`, der Test schlägt
-     * nicht fehl – so bleibt sichtbar, wie weit die Seite dort scrollt.
+     * [NO_SCROLL_MAX_FONT_SCALE] nicht scrollt.
      * [screen] nimmt den ganzen Bildschirm samt eigener Fenster auf (Dialoge); das Fenster muss
      * dafür Gerätegröße haben ([deviceWindow]).
      */
@@ -216,7 +211,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         tabBar: Boolean = true,
         frameHeightDp: Int = device.heightDp,
         noScroll: Boolean = false,
-        acceptedScroll: Boolean = false,
         screen: Boolean = false,
         prepare: () -> Unit = {},
         measure: () -> List<String> = { emptyList() },
@@ -240,11 +234,10 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val controls = controlFindings(name)
         val checked = fontScale <= NO_SCROLL_MAX_FONT_SCALE
         val scrolls = if (noScroll && checked) scrollFindings(name) else emptyList()
-        val acceptedScrolls = if (acceptedScroll && checked) scrollFindings(name, ACCEPTED_SCROLL) else emptyList()
         val measured = measure()
         // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
         File(dir).mkdirs()
-        File("$dir/$name.tsv").writeText((findings + controls + scrolls + acceptedScrolls + measured).joinToString("") { "$it\n" })
+        File("$dir/$name.tsv").writeText((findings + controls + scrolls + measured).joinToString("") { "$it\n" })
         wordBreaks += findings
         controlProblems += controls
         scrollProblems += scrolls
@@ -354,6 +347,16 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         return listOf(line)
     }
 
+    /**
+     * Kantenlänge des Zeitrings (der Regler mit `SetProgress`) in dp, als Befund `RING` – zum
+     * Vergleich der Ringgröße über Geräte und Schriftgrößen.
+     */
+    protected fun meditationRing(screen: String): List<String> {
+        val ring = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress)).fetchSemanticsNode()
+        val side = (ring.size.width / compose.density.density).roundToInt()
+        return listOf("${device.name}\tfs${(fontScale * 100).toInt()}\tRING\t$screen\t$side dp")
+    }
+
     /** LAYOUT-08: Der Meditations-Tab scrollt bis fontScale 1,3 nicht. */
     @After
     fun noScroll() {
@@ -362,13 +365,13 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         }
     }
 
-    /** Jede senkrechte Scroll-Fläche im Bild mit Scroll-Weg > 0 ([kind], Weg in dp). */
-    private fun scrollFindings(screen: String, kind: String = "SCROLLT"): List<String> {
+    /** Jede senkrechte Scroll-Fläche im Bild mit Scroll-Weg > 0 (Befund `SCROLLT`, Weg in dp). */
+    private fun scrollFindings(screen: String): List<String> {
         val nodes = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
             .fetchSemanticsNodes()
         return nodes.mapNotNull { node ->
             val max = node.config[SemanticsProperties.VerticalScrollAxisRange].maxValue()
-            if (max <= 0f) null else "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\t${(max / compose.density.density).toInt()} dp"
+            if (max <= 0f) null else "${device.name}\tfs${(fontScale * 100).toInt()}\tSCROLLT\t$screen\t${(max / compose.density.density).toInt()} dp"
         }
     }
 

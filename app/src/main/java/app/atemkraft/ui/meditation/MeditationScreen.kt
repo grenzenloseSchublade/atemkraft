@@ -1,11 +1,5 @@
 package app.atemkraft.ui.meditation
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -35,27 +29,23 @@ import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.StartSplitButton
-import app.atemkraft.ui.components.SubLabel
-import app.atemkraft.ui.components.ToggleRow
-import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.Motion
 
 /** Gong-Wahl im Tab; die Intervall-Länge steht in den Einstellungen. */
-private enum class GongChoice {
+internal enum class GongChoice {
     OFF,
     START_END,
     INTERVAL,
 }
 
 /**
- * Meditations-Tab: Auswahl (Zeitring für die Dauer samt offener Sitzung „∞“, eingeklappt Gong und
- * Sprachanleitung) und laufende Sitzung als Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf
- * liegt im [app.atemkraft.playback.MeditationController].
+ * Meditations-Tab: Auswahl (Zeitring für die Dauer samt offener Sitzung „∞“, darunter die Zeile
+ * „Klang & Stimme“, die Gong und Sprachanleitung im Bottom Sheet öffnet) und laufende Sitzung als
+ * Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf liegt im
+ * [app.atemkraft.playback.MeditationController].
  */
 @Composable
 fun MeditationScreen(
@@ -92,9 +82,15 @@ private fun SelectionContent(
     var startEndGong by rememberSaveable(key) { mutableStateOf(initialConfig.startEndGong) }
     var intervalOn by rememberSaveable(key) { mutableStateOf(initialConfig.gongEveryMin != null) }
     var speech by rememberSaveable(key) { mutableStateOf(initialConfig.speech) }
-    // Standardmäßig zu: Aufgeklappt darf die Seite auf 360 dp scrollen (LAYOUT-08, Ausnahme S-40).
-    var soundExpanded by rememberSaveable { mutableStateOf(false) }
+    // Offen überlebt das Blatt Drehen; die Seite darunter bleibt unverändert (MUSTER-11).
+    var soundSheetOpen by rememberSaveable { mutableStateOf(false) }
     val mode = if (duration.free) MeditationMode.FREE else MeditationMode.TIMED
+    // Der Zustand bleibt startEndGong/intervalOn; Zeile und Blatt bilden ihn nur auf eine Wahl ab.
+    val gong = when {
+        intervalOn -> GongChoice.INTERVAL
+        startEndGong -> GongChoice.START_END
+        else -> GongChoice.OFF
+    }
 
     // Scrollt nur als Notlösung (LAYOUT-08); dann zeigt der feste Kopf seine Haarlinie.
     val scrollState = rememberScrollState()
@@ -105,10 +101,10 @@ private fun SelectionContent(
             action = { SettingsAction(onClick = onOpenSettings) },
             scrolled = scrollState.canScrollBackward,
         )
-        // Die Seite scrollt nicht: Der Regler bekommt den Platz zwischen Kopf und „Klang & Stimme“
-        // und wird bei großer Schrift oder aufgeklapptem Klang kleiner. Er hängt oben unter dem Kopf,
-        // damit er beim Aufklappen nur schrumpft und nicht wandert. Erst wenn selbst seine
-        // Mindestgröße nicht passt, scrollt die Seite als Notlösung – abgeschnitten wird nie.
+        // Die Seite scrollt nicht: Der Regler bekommt den ganzen Platz zwischen Kopf und „Klang &
+        // Stimme“ und wird nur bei großer Schrift kleiner; Gong und Stimme liegen im Bottom Sheet und
+        // nehmen ihm nichts weg. Erst wenn selbst seine Mindestgröße nicht passt (Schrift 2,0),
+        // scrollt die Seite als Notlösung – abgeschnitten wird nie.
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
             val minCenter = durationPickerMinSide() + Dimens.GapSmall * 2
             // Kopf oben, der Regler im restlichen Platz, mindestens in seiner Mindestgröße.
@@ -133,21 +129,27 @@ private fun SelectionContent(
                     }
                 },
                 bottom = {
-                    SoundSection(
-                        startEndGong = startEndGong,
-                        intervalOn = intervalOn,
+                    SoundRow(
+                        gong = gong,
                         gongIntervalMin = gongIntervalMin,
-                        speech = speech,
-                        speechAvailable = speechAvailable,
-                        expanded = soundExpanded,
-                        onExpandedChange = { soundExpanded = it },
-                        onGong = { choice ->
-                            startEndGong = choice != GongChoice.OFF
-                            intervalOn = choice == GongChoice.INTERVAL
-                        },
-                        onSpeech = { speech = it },
+                        speech = speech && speechAvailable,
+                        onClick = { soundSheetOpen = true },
                     )
                 },
+            )
+        }
+        if (soundSheetOpen) {
+            SoundSheet(
+                gong = gong,
+                gongIntervalMin = gongIntervalMin,
+                speech = speech,
+                speechAvailable = speechAvailable,
+                onGong = { choice ->
+                    startEndGong = choice != GongChoice.OFF
+                    intervalOn = choice == GongChoice.INTERVAL
+                },
+                onSpeech = { speech = it },
+                onDismiss = { soundSheetOpen = false },
             )
         }
 
@@ -203,27 +205,12 @@ private fun DurationPicker(state: DurationPickerState, onTick: (major: Boolean) 
 private fun durationPickerMinSide(): Dp = timeDialMinSide(Dimens.DurationPickerMin)
 
 /**
- * „Klang & Stimme“: zugeklappt nur eine Zeile mit der aktuellen Wahl (MUSTER-03) – eine schlichte
- * Sitzung braucht nur die Dauer. Aufgeklappt Gong und Sprachanleitung. Der Zustand bleibt
- * startEndGong/intervalOn, die Reihe bildet ihn nur auf eine Wahl ab.
+ * „Klang & Stimme“: eine Zeile mit der aktuellen Wahl darunter und Chevron (Abschnittskopf mit
+ * `onClick`); die ganze Zeile öffnet das [SoundSheet] (MUSTER-11). Eine schlichte Sitzung braucht
+ * nur die Dauer, der Zeitring darüber behält so immer seine volle Größe (LAYOUT-08).
  */
 @Composable
-private fun SoundSection(
-    startEndGong: Boolean,
-    intervalOn: Boolean,
-    gongIntervalMin: Int,
-    speech: Boolean,
-    speechAvailable: Boolean,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    onGong: (GongChoice) -> Unit,
-    onSpeech: (Boolean) -> Unit,
-) {
-    val gong = when {
-        intervalOn -> GongChoice.INTERVAL
-        startEndGong -> GongChoice.START_END
-        else -> GongChoice.OFF
-    }
+private fun SoundRow(gong: GongChoice, gongIntervalMin: Int, speech: Boolean, onClick: () -> Unit) {
     Column {
         SectionHeader(
             title = stringResource(R.string.meditation_sound_voice_label),
@@ -236,70 +223,11 @@ private fun SoundSection(
                     GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
                     GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
                 },
-                stringResource(
-                    if (speech && speechAvailable) R.string.meditation_voice_on else R.string.meditation_voice_off,
-                ),
+                stringResource(if (speech) R.string.meditation_voice_on else R.string.meditation_voice_off),
             ),
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
+            onClick = onClick,
         )
-        // Zügig auf- und zuklappen: Der Ring darüber folgt der Höhe Bild für Bild und schrumpft
-        // stetig statt zu springen. Bei Animator-Skala 0 springt beides ohne Übergang (MOTION-02).
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(tween(Motion.Expand)) + fadeIn(tween(Motion.Expand)),
-            exit = shrinkVertically(tween(Motion.Expand)) + fadeOut(tween(Motion.Expand)),
-        ) {
-            SoundOptions(
-                gong = gong,
-                gongIntervalMin = gongIntervalMin,
-                speech = speech,
-                speechAvailable = speechAvailable,
-                onGong = onGong,
-                onSpeech = onSpeech,
-            )
-        }
         // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.
         Spacer(Modifier.height(Dimens.GapSmall))
-    }
-}
-
-/** Aufgeklappter Inhalt von „Klang & Stimme“: Gong-Wahl und Sprachanleitung. */
-@Composable
-private fun SoundOptions(
-    gong: GongChoice,
-    gongIntervalMin: Int,
-    speech: Boolean,
-    speechAvailable: Boolean,
-    onGong: (GongChoice) -> Unit,
-    onSpeech: (Boolean) -> Unit,
-) {
-    Column {
-        // Kopf → Inhalt wie überall HeaderGap; GapSmall davon polstert schon der aufklappbare Kopf.
-        Spacer(Modifier.height(Dimens.HeaderGap - Dimens.GapSmall))
-        SubLabel(stringResource(R.string.meditation_gong_label), Modifier.choiceGroupHeading(), color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(Dimens.GapSmall))
-        // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
-        SegmentedChoiceRow(GongChoice.entries, gong, onGong, groupLabel = stringResource(R.string.meditation_gong_label)) { choice ->
-            when (choice) {
-                GongChoice.OFF -> stringResource(R.string.meditation_off)
-                GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
-                GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
-            }
-        }
-        // Abstand wie nach dem Dauer-Raster; der Touch-Rand der Segmente allein wirkte zu eng.
-        Spacer(Modifier.height(Dimens.GapSmall))
-        // Schalter in der Zeile seines Namens, Hinweis darunter; die ganze Zeile schaltet.
-        ToggleRow(
-            label = stringResource(R.string.meditation_speech_label),
-            checked = speech && speechAvailable,
-            onCheckedChange = onSpeech,
-            hint = if (speechAvailable) {
-                stringResource(R.string.meditation_speech_hint)
-            } else {
-                stringResource(R.string.meditation_speech_unavailable)
-            },
-            enabled = speechAvailable,
-        )
     }
 }
