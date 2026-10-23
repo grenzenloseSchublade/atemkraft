@@ -101,6 +101,7 @@
     <string name="state_switch_off">Aus</string>
     <string name="mini_open">Öffnen</string>
     <string name="session_paused">Pausiert</string>
+    <string name="meditation_running">Läuft</string>
 
     <!-- Startscreen -->
     <string name="home_daily_pattern">Muster des Tages</string>
@@ -313,6 +314,8 @@
     <string name="adjust_exhale">Ausatmen (s)</string>
     <!-- TalkBack-Wert des Steppers: „Einatmen: 4 Sekunden“ – das sichtbare Label behält „(s)“. -->
     <string name="cd_stepper_value">%1$s: %2$s</string>
+    <string name="cd_stepper_value_suffix">%1$s, %2$s</string>
+    <string name="cd_stepper_button">%1$s, %2$s</string>
     <string name="cd_adjust_duration">Dauer</string>
     <string name="adjust_reset">Zurücksetzen</string>
     <string name="adjust_modified">angepasst</string>
@@ -397,6 +400,7 @@
         <item quantity="other">%1$s: %2$d Minuten geübt</item>
     </plurals>
     <string name="cd_log_day_none">%1$s: keine Übung</string>
+    <string name="cd_log_day_today">Heute, %1$s</string>
 
     <!-- Steuerung -->
     <string name="action_start">Starten</string>
@@ -504,6 +508,7 @@
     <string name="voice_size_mb">ca.\u00A0%1$d\u00A0MB</string>
     <string name="voice_loading">lädt …</string>
     <string name="voice_non_commercial">nur nicht kommerziell</string>
+    <string name="voice_state_downloaded">geladen</string>
     <string name="voice_failed_short">fehlgeschlagen – erneut laden</string>
     <!-- Qualität einer Katalog-Stimme (VoiceQuality), klein wie der übrige Untertitel. -->
     <string name="voice_quality_studio_clear">Studio, sehr klar</string>

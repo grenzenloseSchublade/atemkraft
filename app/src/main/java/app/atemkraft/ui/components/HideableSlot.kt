@@ -1,13 +1,11 @@
 package app.atemkraft.ui.components
 
-import android.view.accessibility.AccessibilityManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +21,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import app.atemkraft.ui.theme.Motion
@@ -101,21 +98,4 @@ private class ReleaseFocusNode(private var hidden: Boolean) :
         }
         this.hidden = hidden
     }
-}
-
-/**
- * Ob TalkBack (o. Ä.) per Touch-Erkundung bedient wird; folgt Änderungen live. Dann darf nichts
- * per Tipp ausgeblendet werden, sonst wären die Bedienelemente unerreichbar (A11Y).
- */
-@Composable
-fun rememberTouchExplorationEnabled(): Boolean {
-    val context = LocalContext.current
-    val manager = remember(context) { context.getSystemService(AccessibilityManager::class.java) }
-    var enabled by remember(manager) { mutableStateOf(manager?.isTouchExplorationEnabled == true) }
-    DisposableEffect(manager) {
-        val listener = AccessibilityManager.TouchExplorationStateChangeListener { enabled = it }
-        manager?.addTouchExplorationStateChangeListener(listener)
-        onDispose { manager?.removeTouchExplorationStateChangeListener(listener) }
-    }
-    return enabled
 }

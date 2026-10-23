@@ -47,6 +47,12 @@ object Motion {
      */
     val TapFlashStatic = 500L
 
+    /**
+     * Trefferstatus der Befindens-Suche (`SearchStatus`): so lange muss die Zahl stehen, bevor sie
+     * erscheint und angesagt wird – beim Tippen spräche die Live-Region sonst je Buchstabe (A11Y-04).
+     */
+    val SearchStatusSettle = 600L
+
     /** vāyu-Bild: Strömungslinien rücken in dieser Zeit um zwei Strich-Abstände weiter (ruhig). */
     val VayuFlow = 2400
 

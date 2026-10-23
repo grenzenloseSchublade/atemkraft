@@ -5,3 +5,10 @@ Modifier.clickable(
     indication = null,
     role = Role.Button,
 ) { open() }
+Surface(color = c, modifier = modifier.fillMaxWidth()) { Text(t) }
+Surface(
+    onClick = open,
+    modifier = modifier
+        .fillMaxWidth()
+        .semantics { role = Role.Button },
+) { Text(t) }

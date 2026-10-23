@@ -163,6 +163,17 @@ def section_header_heading(_: Check) -> dict[str, list[int]]:
     return hits
 
 
+def pane_title(_: Check) -> dict[str, list[int]]:
+    """A11Y-07: Kopfzeile aller Seiten (HeaderBar in PushHeader.kt, auch für ScreenHeader) und
+    Session-Overlay sind Bereiche mit paneTitle; TalkBack sagt sonst keinen Seitenwechsel an."""
+    hits = {}
+    for name in ("PushHeader", "ScreenHeader", "OverlayChrome"):
+        path = SRC + f"ui/components/{name}.kt"
+        if "paneTitle" not in (ROOT / path).read_text(encoding="utf-8"):
+            hits[path] = [0]
+    return hits
+
+
 UI_LITERAL_LINE = re.compile(r"Text\(|contentDescription\s*=|stateDescription\s*=|onClickLabel\s*=|listOf\(")
 STRING_LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
 
@@ -416,7 +427,7 @@ CHECKS: list[Check] = [
     Check("theme-tokens", "FARBE-06", [], custom=theme_tokens),
     Check("type-literal", "TYPO-01", [SRC + "*.kt"], [r"\b\d+(\.\d+)?f?\.sp\b|FontWeight\.|(fontSize|letterSpacing|lineHeight)\s*="],
           exclude=[SRC + "ui/theme/*"], skip_imports=True),
-    Check("layout-literal", "LAYOUT-01", [SRC + "*.kt"], [r"\b([1-9]\d*|\d*\.\d+)f?\.dp\b", r"(RoundedCorner|CutCorner)Shape\("],
+    Check("layout-literal", "LAYOUT-01", [SRC + "*.kt"], [r"\b([1-9]\d*|\d*\.\d+)f?\.dp\b", r"(RoundedCorner|CutCorner)Shape\(", r"\bDp\.Hairline\b"],
           exclude=[SRC + "ui/theme/*"]),
     Check("weight-nofill", "LAYOUT-03", [SRC + "ui/*.kt"], [r"weight\([^)]*fill\s*=\s*false"]),
     Check("m3-size-const", "LAYOUT-04", [SRC + "*.kt"],
@@ -457,9 +468,13 @@ CHECKS: list[Check] = [
     Check("player-in-composable", "AUDIO-04", [SRC + "ui/*.kt"], [r"remember\s*\{\s*(Haptic|ToneCue|Continuous)\w*Player\("]),
     # Über die ganze Datei mit Klammerausgleich: role darf in einer Folgezeile stehen, auch nach
     # Argumenten mit eigenen Klammern wie remember { MutableInteractionSource() }.
+    # Ebenso M3 Surface(onClick): Es setzt keine Rolle; sie kommt per semantics { role = … } dazu.
     Check("semantics-required", "A11Y-01", [SRC + "ui/*.kt"],
-          [r"\.clickable\s*(?:\((?!(?:[^()]|\([^()]*\))*?\brole\s*=)|\{)"], multiline=True),
+          [r"\.clickable\s*(?:\((?!(?:[^()]|\([^()]*\))*?\brole\s*=)|\{)",
+           r"(?<![\w.])Surface\((?=(?:[^()]|\([^()]*\))*?\bonClick\s*=)(?!(?:[^()]|\([^()]*\))*?\brole\s*=)"],
+          multiline=True),
     Check("semantics-heading", "A11Y-01", [], custom=section_header_heading),
+    Check("pane-title", "A11Y-07", [], custom=pane_title),
     Check("a11y-ratchet", "A11Y-02", [SRC + "ui/*.kt"], [r"clearAndSetSemantics", r"indication\s*=\s*null"], skip_imports=True),
     Check("switch-unlabeled", "A11Y-03", [SRC + "ui/*.kt"],
           [r"\bSwitch\((?:[^()]|\([^()]*\))*?onCheckedChange\s*=(?!\s*null)"], multiline=True),

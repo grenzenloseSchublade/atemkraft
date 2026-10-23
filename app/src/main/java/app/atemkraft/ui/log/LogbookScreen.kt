@@ -54,6 +54,7 @@ import app.atemkraft.ui.components.durationClockText
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
+import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
 import app.atemkraft.ui.theme.ALPHA_HEAT_NONE
@@ -219,11 +220,13 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
             }
             val isToday = offset == 0
             val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.GERMAN)
-            val dayDescription = if (minutes > 0) {
+            val dayText = if (minutes > 0) {
                 pluralStringResource(R.plurals.cd_log_day_minutes, minutes.toInt(), dayName, minutes.toInt())
             } else {
                 stringResource(R.string.cd_log_day_none, dayName)
             }
+            // „Heute“ trägt sonst nur der dünne Ring (FARBE-05): auch in Worten.
+            val dayDescription = if (isToday) stringResource(R.string.cd_log_day_today, dayText) else dayText
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.semantics { contentDescription = dayDescription },
@@ -335,13 +338,17 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {
+        // Die Familie trägt der Punkt nur in Farbe; im zusammengeführten Eintrag nennt ihn seine
+        // Beschreibung (FARBE-05: „A · Herunterregeln, Resonanz-Atmung, …“).
+        val familyName = entry.family?.title()
         Box(
             modifier = Modifier
                 .padding(top = dotTop.coerceAtLeast(0.dp))
                 .size(FAMILY_DOT)
                 .clip(CircleShape)
                 // Meditation hat keine Familie – eigener, ruhiger Cyan-Ton.
-                .background(entry.family?.color() ?: NeonCyan),
+                .background(entry.family?.color() ?: NeonCyan)
+                .then(if (familyName != null) Modifier.semantics { contentDescription = familyName } else Modifier),
         )
         // FlowRow: Passt die Dauer nicht mehr neben den Namen (große Schrift), rutscht sie
         // darunter – der Name behält die volle Breite und bricht nicht im Wort (LAYOUT-03).

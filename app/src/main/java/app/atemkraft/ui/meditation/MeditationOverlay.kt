@@ -151,11 +151,12 @@ private fun RunningContent(
     val ringDescription = stringResource(R.string.cd_meditation_ring)
     val ringAction = stringResource(if (paused) R.string.circle_action_resume else R.string.circle_action_pause)
     // TalkBack-Ansage der Zustandswechsel (wie die Atem-Session ihren Phasennamen ansagt): als
-    // Zustand am Titel („Meditation, Pausiert“), der sichtbare Name bleibt der gesprochene.
+    // Zustand am Titel („Meditation, Pausiert“), der sichtbare Name bleibt der gesprochene. Auch
+    // „Läuft“ ist ein Zustand: Ohne ihn verschwand die Ansage beim Fortsetzen still (A11Y-04).
     val stateAnnounce = when {
         preparing -> stringResource(R.string.session_get_ready)
         paused -> stringResource(R.string.session_paused)
-        else -> null
+        else -> stringResource(R.string.meditation_running)
     }
 
     // Ruhiger, VOLL gefüllter Kreis (kein Wachstum); der Fortschritt steht in der Zahl.
@@ -185,7 +186,7 @@ private fun RunningContent(
                 modifier = Modifier
                     .semantics {
                         liveRegion = LiveRegionMode.Polite
-                        stateAnnounce?.let { stateDescription = it }
+                        stateDescription = stateAnnounce
                     },
             )
         },

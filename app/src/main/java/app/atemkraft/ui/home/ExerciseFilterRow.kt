@@ -39,7 +39,6 @@ internal fun ExerciseFilterRow(active: Set<ExerciseFilter>, onToggle: (ExerciseF
             label = filter.label(),
             selected = filter in active,
             onClick = { onToggle(filter) },
-            multiSelect = true,
         )
     }
 }

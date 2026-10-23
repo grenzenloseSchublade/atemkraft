@@ -1,6 +1,5 @@
 package app.atemkraft.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -43,16 +45,28 @@ fun NavCard(
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     external: Boolean = false,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    val open = onClick
+    val linkLabel = if (external) stringResource(R.string.about_open_link) else null
+    // Card(onClick) wie die übrigen Karten (KOMP-02): Ripple in der Kartenform. M3 setzt dabei keine
+    // Rolle, sie kommt hier dazu – samt „Link öffnen“ für Ziele im Browser.
+    Card(
+        onClick = open,
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                role = Role.Button
+                if (linkLabel != null) {
+                    onClick(label = linkLabel) {
+                        open()
+                        true
+                    }
+                }
+            },
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = Dimens.MinTouchTarget)
-                .clickable(
-                    role = Role.Button,
-                    onClickLabel = if (external) stringResource(R.string.about_open_link) else null,
-                    onClick = onClick,
-                )
                 .padding(Dimens.CardPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),

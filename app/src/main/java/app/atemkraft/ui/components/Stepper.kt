@@ -83,7 +83,7 @@ fun Stepper(
         // statt „+“ aus der Zeile zu drücken.
         StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
         val spokenValue = if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
-        val valueDescription = stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue).let { if (spokenSuffix != null) "$it, $spokenSuffix" else it }
+        val valueDescription = stepperValueDescription(spokenLabel, spokenValue, spokenSuffix)
         StepButtons(spokenLabel, valueDescription, value, range, onChange, announce)
     }
 }
@@ -110,9 +110,19 @@ fun CompactStepper(
     flushEnd: Boolean = false,
 ) {
     val spokenValue = if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
-    val valueDescription = stringResource(R.string.cd_stepper_value, spokenLabel, spokenValue).let { if (spokenSuffix != null) "$it, $spokenSuffix" else it }
+    val valueDescription = stepperValueDescription(spokenLabel, spokenValue, spokenSuffix)
     val edge = if (flushEnd) Modifier.flushEnd(Sizes.CircleOverhang) else Modifier
     StepButtons(spokenLabel, valueDescription, value, range, onChange, announce, modifier.then(edge), valueText, MaterialTheme.typography.titleSmall)
+}
+
+/**
+ * TalkBack-Text des Werts („Einatmen: 4 Sekunden“, mit [suffix] „…, höher als empfohlen“). Satzbau
+ * und Trennzeichen aus `strings.xml` (TEXT-01), damit eine Übersetzung die Reihenfolge ändern kann.
+ */
+@Composable
+private fun stepperValueDescription(label: String, value: String, suffix: String?): String {
+    val base = stringResource(R.string.cd_stepper_value, label, value)
+    return if (suffix != null) stringResource(R.string.cd_stepper_value_suffix, base, suffix) else base
 }
 
 @Composable
@@ -159,7 +169,7 @@ private fun StepButtons(
             enabled = value > range.first,
             colors = IconButtonDefaults.filledTonalIconButtonColors(),
         ) {
-            Icon(painterResource(R.drawable.ic_remove), contentDescription = "$label, $decreaseLabel")
+            Icon(painterResource(R.drawable.ic_remove), contentDescription = stringResource(R.string.cd_stepper_button, label, decreaseLabel))
         }
         Text(
             text = valueText,
@@ -185,7 +195,7 @@ private fun StepButtons(
             enabled = value < range.last,
             colors = IconButtonDefaults.filledTonalIconButtonColors(),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "$label, $increaseLabel")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.cd_stepper_button, label, increaseLabel))
         }
     }
 }

@@ -4,3 +4,8 @@ Modifier.clickable(
     interactionSource = remember { MutableInteractionSource() },
     onClick = open,
 )
+Surface(onClick = open, color = c) { Text(t) }
+Surface(
+    onClick = open,
+    modifier = modifier.fillMaxWidth().heightIn(min = h),
+) { Text(t) }

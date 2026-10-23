@@ -39,6 +39,19 @@ val SecondaryContainer = Color(0xFF3A2C60)
 val SegmentSelected = Color(0xFF715AAF)
 val OutlineVariantIndigo = Color(0xFF453763)
 
+/**
+ * Rand von Chips, Umriss-Buttons, Segmenten, Switch und Namensfeld (M3 `outline`): gedämpftes
+ * Lavendel aus dem Indigo statt M3-Grau #938F99, 6,18:1 auf dem Grund, 4,87:1 auf der Karte.
+ */
+val OutlineIndigo = Color(0xFF9A8FBF)
+
+/**
+ * M3 `primaryContainer` / `onPrimaryContainer`: von M3 nur implizit gelesen (FARBE-06). Tiefes,
+ * indigo-getöntes Magenta statt des Baseline-Lila #4F378B; der helle Text hält darauf 9,94:1.
+ */
+val PrimaryContainer = Color(0xFF4E2560)
+val OnPrimaryContainer = DarkOnBackground
+
 /** Gedämpfter Sekundärtext (M3 onSurfaceVariant) – Lavendel statt Voll-Weiß. */
 val DarkOnSurfaceVariant = Color(0xFFC3B8DD)
 

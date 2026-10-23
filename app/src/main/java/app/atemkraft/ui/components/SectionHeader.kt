@@ -202,16 +202,24 @@ fun SectionHeader(
 }
 
 /**
- * Stellt den Inhalt mit seiner Mitte auf die Höhe [center] unter der Oberkante, meldet aber keine
- * Höhe: Die 48-dp-Tippfläche einer Kopf-Aktion ragt so in den Abstand unter dem Kopf, statt ihn
- * höher zu machen. Kein `offset` – die Breite zählt für die Nachbarn wie gewohnt.
+ * Stellt den Inhalt mit seiner Mitte auf die Höhe [center] unter der Oberkante und meldet nur so
+ * viel Höhe, dass er höchstens [MAX_OVERHANG] unter den Kopf ragt: Die 48-dp-Tippfläche einer
+ * Kopf-Aktion liegt so im Abstand `HeaderGap` unter dem Kopf, statt ihn höher zu machen – aber
+ * nie bis an den ersten Inhalt (A11Y-05). Bei kleiner Schrift (0,85) endete sie sonst genau an der
+ * Oberkante der ersten Karte; dann wird der Kopf um die fehlenden 2 dp höher. Kein `offset` – die
+ * Breite zählt für die Nachbarn wie gewohnt.
  */
 private fun Modifier.centeredOverflow(center: Dp): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints.copy(minHeight = 0))
-    layout(placeable.width, 0) {
-        placeable.placeRelative(0, (center.roundToPx() - placeable.height / 2).coerceAtLeast(0))
+    val y = (center.roundToPx() - placeable.height / 2).coerceAtLeast(0)
+    val height = (y + placeable.height - MAX_OVERHANG.roundToPx()).coerceAtLeast(0)
+    layout(placeable.width, height) {
+        placeable.placeRelative(0, y)
     }
 }
+
+/** Größter Überstand einer Kopf-Aktion unter den Kopf: der Abstand zum Inhalt bis auf eine Haarlinie. */
+private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
 
 /**
  * Abschnitt mit Kopf und Inhalt (MUSTER-03): [SectionHeader] und darunter [content], in einer

@@ -200,7 +200,7 @@ internal fun DurationReadout(
             Text(
                 text = if (free) texts.freeSymbol else minutes.toString(),
                 style = numberStyle,
-                color = if (free) colors.primary else colors.onSurface,
+                color = if (free) colors.secondary else colors.onSurface,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 softWrap = false,

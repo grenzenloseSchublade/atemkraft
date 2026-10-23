@@ -34,7 +34,11 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -96,8 +100,10 @@ fun AppIconButton(
 /**
  * Icon-only-Umschalter mit Zustand (z. B. Muster speichern): Optik und Tippfläche wie
  * [AppIconButton], aber `toggleable` mit `Role.Checkbox` und [stateDescription], damit TalkBack
- * Name, Rolle und Zustand liest (A11Y-01). Die Live-Region sagt den Wechsel an, ohne dass der
- * Fokus springt (A11Y-04, MUSTER-02) – statt eines ausgegrauten „✓ Gespeichert“. Den Zustand
+ * Name, Rolle und Zustand liest (A11Y-01). Die Live-Region sagt einen Wechsel von außen an, ohne
+ * dass der Fokus springt (A11Y-04, MUSTER-02) – statt eines ausgegrauten „✓ Gespeichert“. Beim
+ * eigenen Tipp schweigt sie: Den neuen Zustand sagt der fokussierte Knopf dann selbst an, mit
+ * Live-Region käme er doppelt (wie [IconSwitch], genau eine Ansage je Wechsel). Den Zustand
  * zeigt der Aufrufer im Icon (gefüllt/leer); das Icon trägt die `contentDescription` (ICON-02).
  * [announce] = false nimmt die Live-Region weg, etwa solange ein anderer Knopf den Zustand als
  * Nebenwirkung ändert und schon selbst eine Ansage auslöst (eine Ansage je Tipp, A11Y-04).
@@ -111,6 +117,10 @@ fun AppIconToggle(
     announce: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    // Zustand, den der eigene Tipp verlangt hat; solange er gilt, keine Live-Region. Ein Wechsel von
+    // außen weicht davon ab, wird angesagt und löscht die Marke.
+    var tapped by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(checked) { if (checked != tapped) tapped = null }
     Box(
         modifier = modifier
             .minimumInteractiveComponentSize()
@@ -121,11 +131,14 @@ fun AppIconToggle(
                 interactionSource = null,
                 indication = ripple(),
                 role = Role.Checkbox,
-                onValueChange = onCheckedChange,
+                onValueChange = {
+                    tapped = it
+                    onCheckedChange(it)
+                },
             )
             .semantics {
                 this.stateDescription = stateDescription
-                if (announce) liveRegion = LiveRegionMode.Polite
+                if (announce && checked != tapped) liveRegion = LiveRegionMode.Polite
             },
         contentAlignment = Alignment.Center,
     ) {

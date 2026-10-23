@@ -40,7 +40,8 @@ import app.atemkraft.ui.theme.SECONDARY
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
  * scrollt“), damit das Zahnrad immer erreichbar ist. Der Untertitel gehört zum Inhalt
  * ([ScreenSubtitle], erster Eintrag der Liste). [scrolled] (Inhalt liegt unter dem Kopf) blendet
- * die Haarlinie an der Unterkante ein.
+ * die Haarlinie an der Unterkante ein. Der Titel ist zugleich `paneTitle` des Tabs ([HeaderBar],
+ * A11Y-07): TalkBack sagt ihn beim Tab-Wechsel an.
  */
 @Composable
 fun ScreenHeader(
@@ -50,7 +51,7 @@ fun ScreenHeader(
     scrolled: Boolean = false,
 ) {
     Column(modifier.fillMaxWidth().scrolledHairline(scrolled)) {
-        HeaderBar {
+        HeaderBar(paneTitle = title) {
             HeaderTitle(title, Modifier.weight(1f))
             // Glyph an der Inhaltskante wie der Caret der Abschnittsköpfe darunter; die Tippfläche
             // ragt in den Screen-Rand (LAYOUT-07).

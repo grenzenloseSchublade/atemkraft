@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
@@ -56,7 +57,9 @@ internal fun SoundSheet(
     // Unten hält das Blatt schon die Systemleisten frei (contentWindowInsets), ScreenBottom kommt dazu.
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, dragHandle = null) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            BottomSheetDefaults.DragHandle()
+            // Stumm für TalkBack: Ohne den M3-Slot trägt er keine Aktion, wäre nur ein leerer Stopp
+            // (A11Y-06). Geschlossen wird über den Hintergrund („Blatt schließen“) oder Zurück.
+            BottomSheetDefaults.DragHandle(Modifier.semantics { invisibleToUser() })
         }
         Column(
             modifier = Modifier

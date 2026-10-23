@@ -20,7 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -96,7 +97,7 @@ import app.atemkraft.ui.theme.rememberAnimationsEnabled
 /**
  * Inhalt des Abschnitts „Die fünf *vāyus*“ der Atemlehre (Design Vayus.dc.html, Nutzer
  * 2026-10-22): kurze Einleitung, das Bild ([VayuFigure]), ein Hinweis und die Liste der fünf als
- * Schalter ([VayuRow]), darunter die Quelle. Tippen auf einen Eintrag oder auf die Stelle am Körper
+ * Einzelwahl ([VayuRow]), darunter die Quelle. Tippen auf einen Eintrag oder auf die Stelle am Körper
  * (Nutzer 2026-10-23) hebt eine Strömung im Bild und in der Liste hervor, ein zweiter Tipp oder ein
  * anderer vāyu löst sie wieder. Die Wahl überlebt den Weg in eine Übung.
  */
@@ -118,7 +119,8 @@ internal fun VayusContent() {
             VayuFigure(selected = selected, onSelect = { vayu -> selected = if (selected == vayu) null else vayu })
         }
         HintText(stringResource(R.string.atemlehre_vayus_hint))
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+        // Einzelwahl (A11Y-03): höchstens ein vāyu ist gewählt, also Optionsfelder in einer Gruppe.
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
             Atemlehre.vayus.forEach { vayu ->
                 VayuRow(
                     vayu = vayu,
@@ -141,8 +143,9 @@ internal fun Vayu.color(): Color = when (this) {
 }
 
 /**
- * Ein Eintrag der Liste als Schalter (Rolle Switch, Zustand an/aus; die ganze Zeile ist die
- * Tippfläche): Farbpunkt, Name kursiv in der Farbe des vāyu · Ort, darunter der Satz der Lehre.
+ * Ein Eintrag der Liste als Optionsfeld (Rolle RadioButton, „ausgewählt“; die ganze Zeile ist die
+ * Tippfläche – vorher ein Schalter, fünf „Aus“ für eine Wahl, von der nur eine „An“ sein kann). Ein
+ * zweiter Tipp löst die Wahl wieder: Farbpunkt, Name kursiv in der Farbe des vāyu · Ort, darunter der Satz der Lehre.
  * Gewählt mit Kartenfläche und Rand in der vāyu-Farbe – Fläche und Rand tragen die Auswahl, nicht
  * die Farbe allein (FARBE-05).
  */
@@ -165,7 +168,7 @@ private fun VayuRow(vayu: LoreVayu, selected: Boolean, onToggle: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .selectedRow(selected, shape, borderColor = color, fill = MaterialTheme.colorScheme.surfaceVariant)
-            .toggleable(value = selected, role = Role.Switch, onValueChange = { onToggle() })
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onToggle)
             .padding(horizontal = Dimens.ListGap, vertical = Dimens.GapSmall),
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {

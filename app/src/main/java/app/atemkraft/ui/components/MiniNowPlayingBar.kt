@@ -16,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -40,7 +43,10 @@ fun MiniNowPlayingBar(title: String, statusText: String, onClick: () -> Unit, mo
             .fillMaxWidth()
             // Zwei Textzeilen plus Polster ergeben schon ≈ 50 dp; die Mindesthöhe sichert nur
             // das Touch-Ziel (früher 60 dp mit sichtbarem Leerraum).
-            .heightIn(min = Dimens.MinTouchTarget),
+            .heightIn(min = Dimens.MinTouchTarget)
+            // M3 Surface(onClick) setzt keine Rolle: ohne sie sagt TalkBack nicht „Schaltfläche“, und
+            // Voice Access findet den einzigen Weg zurück in die Sitzung nicht (A11Y-01).
+            .semantics { role = Role.Button },
     ) {
         Row(
             modifier = Modifier

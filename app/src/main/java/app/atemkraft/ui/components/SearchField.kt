@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -90,13 +91,18 @@ fun SearchField(
                         verticalArrangement = Arrangement.Center,
                     ) {
                         Box {
-                            if (query.isEmpty()) {
-                                Text(
-                                    text = placeholder,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                                )
-                            }
+                            // Immer im Baum, sichtbar nur bei leerem Feld: Der Platzhalter wird mit dem
+                            // Feld zusammengeführt und bleibt so sein Name wie das Label eines
+                            // M3-Textfelds – auch wenn Text drinsteht (TalkBack „Erschö, Wie fühlst du
+                            // dich?“, Voice Access „Tippe auf …“; A11Y-01). Nur nicht gezeichnet, nicht
+                            // per Alpha: Durchsichtige Knoten blendet die Bedienungshilfe aus.
+                            val empty = query.isEmpty()
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                                modifier = Modifier.drawWithContent { if (empty) drawContent() },
+                            )
                             inner()
                         }
                         HorizontalDivider(modifier = Modifier.padding(top = Dimens.GapTiny)) // Abweichung KOMP-03: Grundlinie des Suchfelds

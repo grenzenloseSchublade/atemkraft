@@ -133,7 +133,10 @@ private fun Expander(
                         Modifier
                     },
                 )
-                .semantics {
+                // Ohne Inhalt fehlt das clickable und mit ihm das Zusammenführen: Die Überschrift
+                // läge an einer Zeile ohne eigenen Text, „nächste Überschrift“ fände sie nicht
+                // (A11Y-01). Dann führt die Zeile Titel und Teaser selbst zu einem Stopp zusammen.
+                .semantics(mergeDescendants = !expandable) {
                     heading()
                     if (expandable) stateDescription = state
                 }

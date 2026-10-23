@@ -24,12 +24,14 @@ import androidx.compose.ui.unit.isSpecified
  * Text, dessen Wörter nie umbrechen (LAYOUT-03). Ist ein einzelnes Wort breiter als die Zeile
  * (lange Komposita bei großer Systemschrift auf schmalen Geräten), wird die Schrift in kleinen
  * Schritten verkleinert, bis jedes Wort ganz in eine Zeile passt – höchstens bis [minScale]
- * (Standard 0,7; nur sehr schmale Plätze wie Tab-Beschriftungen gehen tiefer).
- * Bis dahin wird nicht gezeichnet, es flackert also nichts. Gleichrangige Texte (z. B.
+ * (Standard 0,7). Bis dahin wird nicht gezeichnet, es flackert also nichts. Gleichrangige Texte (z. B.
  * Tab-Beschriftungen) teilen sich eine Größe: Der Aufrufer reicht [sharedScale] herein und
  * übernimmt per [onSharedScaleTooBig] den kleineren Wert – die kleinste nötige gilt für alle.
  * [singleLine]: Der Text muss zusätzlich in eine Zeile passen (Chip-Beschriftungen, LAYOUT-03);
  * auch dafür wird höchstens bis [minScale] verkleinert.
+ * [onDoesNotFit]: Passt der Text selbst bei [minScale] nicht, meldet er das, statt sich zu zeigen –
+ * der Aufrufer wechselt dann das Layout (Tab-Leiste nur mit Icons, Verweis-Chip zweizeilig), statt
+ * die große Systemschrift weiter zurückzunehmen (LAYOUT-03 Mittel 1 vor 2, WCAG 1.4.4).
  *
  * Für Titel, Namen und Beschriftungen; Fließtext wird stattdessen so formuliert, dass kein
  * Wort die Zeile sprengt. Sanskrit-Auszeichnung („*vāyus*“) wird kursiv ([sanskritText]); mit
@@ -48,6 +50,7 @@ fun WholeWordText(
     sharedScale: Float? = null,
     onSharedScaleTooBig: (Float) -> Unit = {},
     marks: Boolean = true,
+    onDoesNotFit: (() -> Unit)? = null,
 ) {
     // Neu messen, wenn sich Text, Stil, Schriftgröße oder Bildschirmbreite ändern.
     val config = LocalConfiguration.current
@@ -75,6 +78,8 @@ fun WholeWordText(
             if (tooBig && scale > minScale) {
                 val smaller = (scale - STEP).coerceAtLeast(minScale)
                 if (sharedScale != null) onSharedScaleTooBig(smaller) else ownScale = smaller
+            } else if (tooBig && onDoesNotFit != null) {
+                onDoesNotFit()
             } else {
                 ready = true
             }

@@ -15,7 +15,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.ui.theme.CHIP_FILL
@@ -99,7 +98,9 @@ fun Chip(
     Box(
         modifier = modifier
             .clip(shape)
-            .then(if (outlined) Modifier.border(Dp.Hairline, color, shape) else Modifier.background(color.copy(alpha = CHIP_FILL)))
+            // Umrandet in BorderThin wie AppOutlinedButton: Vorher ein Haarstrich von einem Pixel (≈ 0,36 dp am A54),
+            // noch dünner als der 1-dp-Rand, der um enge Rundungen schon ausgefranst wirkte.
+            .then(if (outlined) Modifier.border(Dimens.BorderThin, color, shape) else Modifier.background(color.copy(alpha = CHIP_FILL)))
             .padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
     ) {
         Text(

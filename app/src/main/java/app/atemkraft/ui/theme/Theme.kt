@@ -35,7 +35,10 @@ private val AtemkraftColors = darkColorScheme(
     surfaceContainerHighest = DarkSurfaceVariant,
     secondaryContainer = SecondaryContainer,
     onSecondaryContainer = DarkOnBackground,
+    outline = OutlineIndigo,
     outlineVariant = OutlineVariantIndigo,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
     // Zerstörende Aktionen und Fehler (MUSTER-05): sonst das blasse M3-Baseline-Rosa.
     error = EvidenceCaution,
     onError = OnNeon,

@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
@@ -55,13 +54,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.NeonMagenta
-import app.atemkraft.ui.theme.OnNeon
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
@@ -77,41 +73,55 @@ class AppNavItem(
 )
 
 /**
- * Untere Navigationsleiste der Haupt-Tabs. Beschriftungen brechen nie im Wort (LAYOUT-03):
- * Reicht die Tab-Breite bei großer Schrift nicht, wird die Beschriftung verkleinert
- * ([WholeWordText], bis 50 %, damit vier Tabs bei Schrift 2,0 passen).
+ * Untere Navigationsleiste der Haupt-Tabs. Beschriftungen brechen nie im Wort (LAYOUT-03) und
+ * teilen sich eine Größe. Reicht die Tab-Breite bei großer Schrift nicht, wird die Beschriftung
+ * höchstens bis [NAV_LABEL_MIN_SCALE] verkleinert; passt sie auch dann nicht, zeigt die Leiste nur
+ * die Icons und trägt den Namen als `contentDescription` des Tabs (Nutzer: lieber Icon-only als
+ * geschrumpfte Schrift) – wer die Systemschrift vergrößert, bekommt nie Text in Normalgröße
+ * (WCAG 1.4.4).
+ *
+ * Auswahl: tonale Pille (`secondaryContainer`) mit Icon und Beschriftung in `primary` – keine
+ * gefüllte Neon-Fläche, die gehört dem Start-Button (PRIN-02). Das Gewicht bleibt bei Auswahl gleich
+ * (TYPO-01): Ein breiteres SemiBold verlangte im Moment des Wechsels eine kleinere gemeinsame
+ * Größe, alle vier Beschriftungen sprangen.
  */
 @Composable
 fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
     val colors = NavigationBarItemDefaults.colors(
-        selectedIconColor = OnNeon,
-        selectedTextColor = NeonMagenta,
-        indicatorColor = NeonMagenta,
-        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
-        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
+        selectedIconColor = scheme.primary,
+        selectedTextColor = scheme.primary,
+        indicatorColor = scheme.secondaryContainer,
+        unselectedIconColor = scheme.onSurface.copy(alpha = TERTIARY),
+        unselectedTextColor = scheme.onSurface.copy(alpha = TERTIARY),
     )
-    // Eine Größe für alle Beschriftungen, damit die Leiste ruhig wirkt.
+    // Eine Größe für alle Beschriftungen, damit die Leiste ruhig wirkt; neu gemessen, wenn sich
+    // Namen, Schrift oder Fensterbreite ändern.
     val config = LocalConfiguration.current
     val windowWidth = LocalWindowInfo.current.containerSize.width
-    var labelScale by remember(items.map { it.label }, config.fontScale, windowWidth) { mutableFloatStateOf(1f) }
+    val keys = arrayOf(items.map { it.label }, config.fontScale, windowWidth)
+    var labelScale by remember(*keys) { mutableFloatStateOf(1f) }
+    var iconOnly by remember(*keys) { mutableStateOf(false) }
     NavigationBar(modifier = modifier, containerColor = TabBarContainer) {
         items.forEach { item ->
             NavigationBarItem(
                 selected = item.selected,
                 onClick = item.onClick,
                 icon = item.icon,
-                label = {
-                    WholeWordText(
-                        text = item.label,
-                        style = LocalTextStyle.current.copy(
-                            fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Normal,
-                        ),
-                        // Ein Fünftel der Breite ist bei fontScale 2,0 sehr knapp: „Meditation“
-                        // braucht dann gut 40 % (360 dp). Das Icon bleibt groß und trägt die Erkennung.
-                        minScale = NAV_LABEL_MIN_SCALE,
-                        sharedScale = labelScale,
-                        onSharedScaleTooBig = { labelScale = minOf(labelScale, it) },
-                    )
+                // Ohne Beschriftung benennt die Beschreibung den Tab (das Icon ist dekorativ).
+                modifier = if (iconOnly) Modifier.semantics { contentDescription = item.label } else Modifier,
+                label = if (iconOnly) {
+                    null
+                } else {
+                    {
+                        WholeWordText(
+                            text = item.label,
+                            minScale = NAV_LABEL_MIN_SCALE,
+                            sharedScale = labelScale,
+                            onSharedScaleTooBig = { labelScale = minOf(labelScale, it) },
+                            onDoesNotFit = { iconOnly = true },
+                        )
+                    }
                 },
                 colors = colors,
             )
@@ -122,8 +132,11 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 /** Deckkraft der Trennlinie über der Tab-Leiste. */
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
-/** Kleinste Beschriftung der Tabs (Anteil der Rolle), damit vier Namen bei Schrift 2,0 ganz bleiben. */
-private const val NAV_LABEL_MIN_SCALE = 0.5f
+/**
+ * Kleinste Beschriftung der Tabs (Anteil der Rolle). Darunter Icon-only statt kleinerer Schrift
+ * (LAYOUT-03): Mit 0,5 standen die Namen bei Schrift 2,0 wieder in Normalgröße.
+ */
+private const val NAV_LABEL_MIN_SCALE = 0.85f
 
 /**
  * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt
@@ -141,7 +154,7 @@ fun HideableTabBar(
     Box(modifier.animateContentSize()) {
         if (visible) {
             Column {
-                HorizontalDivider(thickness = Dimens.BorderThin, color = NeonMagenta.copy(alpha = TAB_DIVIDER_ALPHA))
+                HorizontalDivider(thickness = Dimens.BorderThin, color = MaterialTheme.colorScheme.primary.copy(alpha = TAB_DIVIDER_ALPHA))
                 bar()
             }
         } else {
@@ -158,15 +171,19 @@ fun HideableTabBar(
  * die Tab-Leiste (`DarkSurface`, auch eingeklappt: der Reiter der verborgenen Leiste). Ohne eigene
  * Zeile, eingeklappt gewinnt der Inhalt die ganze Leiste. Pfeil nach oben, solange sie zu ist
  * („Tab-Leiste zeigen“), nach unten, solange sie offen ist („Tab-Leiste ausblenden“). Die
- * Tippfläche ([Dimens.MinTouchTarget] im Quadrat, A11Y-05) liegt halb über dem Inhalt, halb über der
- * Leiste; sie darf in den großen Start-Button ragen (Nutzer 2026-10-23).
+ * Tippfläche ist so breit wie der Reiter und [Dimens.MinTouchTarget] hoch (A11Y-05). Sie liegt zu drei
+ * Vierteln über der Kante und ragt nur [TOUCH_BELOW_EDGE] in die Leiste darunter – das ist das
+ * Polster der Startleiste, der Start-Button selbst bleibt frei (vorher die halbe Tippfläche, sie
+ * deckte dessen obere 12 dp ab).
  */
 @Composable
 fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
     val top = state.anchorTop
     if (top.isNaN()) return
     val turn by animateFloatAsState(if (state.collapsed) 0f else HALF_TURN, label = "tabBarToggle")
-    val touch = with(LocalDensity.current) { Dimens.MinTouchTarget.toPx() }
+    // Abstand von der Oberkante der Tippfläche bis zur Kante der Leiste.
+    val above = Dimens.MinTouchTarget - TOUCH_BELOW_EDGE
+    val abovePx = with(LocalDensity.current) { above.toPx() }
     val fill = if (state.anchoredToPinnedBar) {
         MaterialTheme.colorScheme.surfaceColorAtElevation(Dimens.PinnedBarElevation)
     } else {
@@ -174,15 +191,15 @@ fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
     }
     Box(
         modifier = modifier
-            .offset { IntOffset(0, (top - touch / 2f).roundToInt()) }
-            .size(Dimens.MinTouchTarget)
+            .offset { IntOffset(0, (top - abovePx).roundToInt()) }
+            .size(width = Sizes.TabBarHandleWidth, height = Dimens.MinTouchTarget)
             .clickable(role = Role.Button, onClick = state::toggle),
         contentAlignment = Alignment.TopCenter,
     ) {
-        // Der Reiter endet genau auf der Oberkante der Leiste (Mitte der Tippfläche).
+        // Der Reiter endet genau auf der Oberkante der Leiste.
         Box(
             modifier = Modifier
-                .padding(top = Dimens.MinTouchTarget / 2 - Sizes.TabBarHandleHeight)
+                .padding(top = above - Sizes.TabBarHandleHeight)
                 .size(width = Sizes.TabBarHandleWidth, height = Sizes.TabBarHandleHeight)
                 .background(fill, Sizes.TabBarHandleShape),
             contentAlignment = Alignment.Center,
@@ -196,6 +213,12 @@ fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/**
+ * Teil der Tippfläche des [TabBarToggle] unter der Kante: so viel, wie die Startleiste über ihrem
+ * Button polstert (`PinnedActionBar`, `ListGap`), ein Viertel der Tippfläche.
+ */
+private val TOUCH_BELOW_EDGE = Dimens.ListGap
 
 /** Pfeil des [TabBarToggle] nach unten gedreht (Grad). */
 private const val HALF_TURN = 180f

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
@@ -76,9 +75,10 @@ const val FILTER_CHIPS_TAG = "filter-chips"
  * Kein Warnton: Alle Chips sehen gleich aus (Nutzer 2026-10-23); die Warnung einer intensiven
  * Wahl steht erst als ⚠-Zeile in der Empfehlung darunter ([WarnText]).
  *
- * TalkBack: Rolle Optionsfeld, „ausgewählt“/„nicht ausgewählt“; die Reihe ist eine
- * [ChoiceChipRow] (`selectableGroup`). Mit [multiSelect] (Filter, [FilterChipRow]) ist der Chip
- * ein Kontrollkästchen (`toggleable`, „aktiviert“/„nicht aktiviert“), sonst gleich.
+ * TalkBack: Kontrollkästchen (`toggleable`, „aktiviert“/„nicht aktiviert“), Anlässe wie Filter
+ * ([FilterChipRow]). Ein Optionsfeld passte bei den Anlässen nicht: In der Suche sind mehrere
+ * zugleich markiert, und ein zweiter Tipp hebt die Wahl auf – beides widerspricht der Rolle
+ * „Optionsfeld“ (eine Wahl, keine Abwahl). Die Reihe ist eine [ChoiceChipRow] mit Gruppennamen.
  */
 @Composable
 fun ChoiceChip(
@@ -86,7 +86,6 @@ fun ChoiceChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    multiSelect: Boolean = false,
 ) {
     val shape = MaterialTheme.shapes.small
     val fill by animateColorAsState(if (selected) SegmentSelected else Color.Transparent, label = "chipFill")
@@ -99,13 +98,7 @@ fun ChoiceChip(
             .clip(shape)
             .background(fill)
             .border(Dimens.BorderChip, border, shape)
-            .then(
-                if (multiSelect) {
-                    Modifier.toggleable(value = selected, role = Role.Checkbox, interactionSource = null, indication = ripple()) { onClick() }
-                } else {
-                    Modifier.selectable(selected = selected, role = Role.RadioButton, interactionSource = null, indication = ripple(), onClick = onClick)
-                },
-            )
+            .toggleable(value = selected, role = Role.Checkbox, interactionSource = null, indication = ripple()) { onClick() }
             // Fest, damit die Rundung keine Glyphen anschneidet (LAYOUT-03); schmaler als ein
             // M3-Chip (16), damit die sechs Anlässe auf 360 dp in zwei Zeilen passen.
             .padding(horizontal = Dimens.ChipPadding),
@@ -225,7 +218,7 @@ private fun flowLines(widths: List<Int>, limit: Int, gap: Int): List<List<Int>> 
 }
 
 /**
- * Einzeilige Reihe aus [ChoiceChip]s mit `multiSelect` (Filterreihe über der
+ * Einzeilige Reihe aus [ChoiceChip]s (Filterreihe über der
  * Übungsliste, MUSTER-12, Nutzer 2026-10-23): dieselben Chips wie die Anlässe, nebeneinander
  * `GapSmall`, aber **immer eine Zeile**. Passt sie nicht, scrollt sie seitlich wie die
  * [ChoiceChipRow] (gemeinsam: [bleed], [edgeFade]); die Fläche reicht dabei um [sideBleed] auf

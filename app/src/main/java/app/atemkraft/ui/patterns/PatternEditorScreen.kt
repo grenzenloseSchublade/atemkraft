@@ -46,6 +46,7 @@ import app.atemkraft.ui.components.FillViewportColumn
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberSafetyGate
@@ -135,6 +136,8 @@ fun PatternEditorScreen(
             PushHeader(
                 onBack = onBack,
                 titleContent = { NameTitle(state, onRename = { showRename = true }) },
+                // Fester Bereichsname statt des Musternamens: Umbenennen soll keine neue Seite ansagen.
+                paneTitle = stringResource(R.string.pattern_editor_title),
                 action = {
                     // Startpunkt links neben dem Lesezeichen (Nutzer 2026-10-23): Über der Kurve stehen nur Werte.
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -243,8 +246,9 @@ private fun FirstScreen(
 
 /**
  * Hinweiskarte bei intensiven Mustern: Gründe und Sicherheitssatz ([FreePattern.intensityNote]) –
- * eine Karte wie jede andere (KOMP-03: Fläche, `shapes.medium`, `CardPadding`, Text `bodySmall`),
- * Rand `accentBorder(WarnAmber)`.
+ * eine Karte wie jede andere (KOMP-03: Fläche, `shapes.medium`, `CardPadding`), Rand
+ * `accentBorder(WarnAmber)`, der Text als ⚠-Zeile in `WarnAmber` wie auf der Detailseite ([WarnText],
+ * FARBE-04).
  */
 @Composable
 private fun IntenseNote(text: String) {
@@ -254,7 +258,7 @@ private fun IntenseNote(text: String) {
             .padding(top = Dimens.ListGap),
         border = accentBorder(WarnAmber),
     ) {
-        BodyText("⚠ $text", modifier = Modifier.padding(Dimens.CardPadding))
+        WarnText(text, modifier = Modifier.padding(Dimens.CardPadding))
     }
 }
 

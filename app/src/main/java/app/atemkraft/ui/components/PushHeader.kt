@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
@@ -49,6 +50,8 @@ import app.atemkraft.ui.theme.Dimens
  * [titleContent] ersetzt [title] durch einen eigenen Titelbereich in derselben Breite (Muster-Editor:
  * Name des Musters, zum Umbenennen antippbar, Nachtrag 7). Der Titel – Seitentitel oder Name,
  * auch eines eigenen Musters – steht wörtlich, ohne Sanskrit-Auszeichnung (TEXT-14).
+ * [paneTitle] (Standard: [title]) macht die Seite für TalkBack zu einem eigenen Bereich, der beim
+ * Öffnen angesagt wird (A11Y-07); Seiten mit [titleContent] geben ihn ausdrücklich an.
  */
 @Composable
 fun PushHeader(
@@ -58,8 +61,9 @@ fun PushHeader(
     titleContent: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
     scrolled: Boolean = false,
+    paneTitle: String? = title,
 ) {
-    HeaderBar(modifier = modifier.scrolledHairline(scrolled)) {
+    HeaderBar(modifier = modifier.scrolledHairline(scrolled), paneTitle = paneTitle) {
         // Die Tippfläche des Pfeils ragt links in den Rand ([flushStart]); so steht der Pfeil an
         // der Inhaltskante, und der Titel folgt ihm im Abstand des Überstands statt doppelt so
         // weit („weit versetzt“). Die Tippfläche selbst bleibt 48 dp (A11Y-05).
@@ -126,11 +130,17 @@ fun PushScaffold(
 /**
  * Die eine Kopfzeile aller Seiten (Tabs und Push): Rand `ScreenPadding`, Abstand oben
  * `ScreenTopSub`, mindestens eine Tippfläche hoch – fest über dem scrollenden Inhalt.
+ *
+ * [paneTitle] trägt die Kopfzeile als `paneTitle` (A11Y-07): Compose Navigation meldet beim
+ * Seiten- oder Tab-Wechsel kein neues Fenster; erst der neue Bereich lässt TalkBack ansagen, wo
+ * man ist, statt still auf dem Zurück-Pfeil zu stehen. Jede Seite hat genau eine Kopfzeile, also
+ * genau einen Bereich.
  */
 @Composable
-internal fun HeaderBar(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+internal fun HeaderBar(modifier: Modifier = Modifier, paneTitle: String? = null, content: @Composable RowScope.() -> Unit) {
     Row(
         modifier = modifier
+            .then(if (paneTitle != null) Modifier.semantics { this.paneTitle = paneTitle } else Modifier)
             .fillMaxWidth()
             .padding(start = Dimens.ScreenPadding, top = Dimens.ScreenTopSub, end = Dimens.ScreenPadding)
             .heightIn(min = Dimens.MinTouchTarget),

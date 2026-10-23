@@ -27,7 +27,9 @@ import kotlinx.coroutines.delay
  * sind. Ausgeblendet verschwinden auch Status- und Navigationsleiste ([HideSystemBars]). Der Tipp
  * auf den Kreis bleibt Pause/Weiter: Der Kreis verbraucht ihn selbst, hier kommen nur Tipps auf
  * freie Fläche an. Ein Tastendruck (Hardware-Tastatur, D-Pad) blendet wieder ein, statt unsichtbar
- * etwas auszulösen. Mit TalkBack (Touch-Erkundung) wird nie ausgeblendet.
+ * etwas auszulösen. Mit aktiver Bedienungshilfe wird nie ausgeblendet – nicht nur mit TalkBack
+ * (Touch-Erkundung): Switch Access scannt ohne Touch-Erkundung und ohne Tasten-Ereignisse an die
+ * App, ausgeblendete Knöpfe holte er nie zurück (wie beim zweistufigen Löschen, `ConfirmAction`).
  *
  * @param canHide der Zustand erlaubt Ruhe; in Pause und am Ende ist alles sichtbar (sonst käme
  *   man nicht an „Beenden“), danach gilt wieder die gewählte Ansicht.
@@ -44,7 +46,7 @@ fun CalmHost(
     content: @Composable (controlsVisible: Boolean) -> Unit,
 ) {
     var calm by rememberSaveable { mutableStateOf(false) }
-    val hideable = canHide && !rememberTouchExplorationEnabled()
+    val hideable = canHide && !rememberAccessibilityActive()
     val controlsVisible = !(calm && hideable)
     val currentHideable by rememberUpdatedState(hideable)
     LaunchedEffect(reset) { if (reset) calm = false }

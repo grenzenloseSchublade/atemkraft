@@ -82,9 +82,9 @@ fun rememberArmedConfirm(): ArmedConfirm {
 
 /**
  * Ob irgendein Bedienungshilfe-Dienst läuft (TalkBack, Switch Access, Voice Access …); folgt
- * Änderungen live. Bewusst breiter als [rememberTouchExplorationEnabled]: Switch Access schaltet
- * keine Touch-Erkundung ein. Dass auch andere Dienste (z. B. ein Passwortmanager) zählen, kostet
- * nur den Rückfall nach 4 s – die sichere Richtung.
+ * Änderungen live. Bewusst breiter als Touch-Erkundung: Switch Access schaltet sie nicht ein. Dass
+ * auch andere Dienste (z. B. ein Passwortmanager) zählen, kostet nur den Rückfall nach 4 s bzw. die
+ * Ruhe-Ansicht der Sitzung ([CalmHost]) – die sichere Richtung.
  */
 @Composable
 fun rememberAccessibilityActive(): Boolean {

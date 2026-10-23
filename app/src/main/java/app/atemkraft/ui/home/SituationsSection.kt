@@ -16,6 +16,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -43,6 +48,8 @@ import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
+import kotlinx.coroutines.delay
 
 /**
  * Block „Wie fühlst du dich?“ im Atmen-Tab (MUSTER-09): eine leicht abgesetzte Fläche ohne eigene
@@ -180,10 +187,25 @@ internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?) {
  * Trefferstatus unter dem Block, als Live-Region angesagt (A11Y-04): „2 Anlässe“, „1 Anlass,
  * 1 Bereich“, „1 Bereich“ – kurz genug, dass er nie umbricht. Ohne Treffer „Nichts gefunden“ mit
  * „Alle zeigen“ (MUSTER-04) – keine geratene Empfehlung.
+ *
+ * Entprellt: Die Zahlen folgen der Eingabe erst, wenn sie [Motion.SearchStatusSettle] stehen. Die
+ * Treffer werden je Buchstabe neu berechnet; ohne Pause sprach die Live-Region bei „Erschöpft“ bis
+ * zu neun Mal zusätzlich zum Tasten-Echo, und „Nichts gefunden“ blitzte mitten im Wort auf.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SearchStatus(situations: Int, areas: Int, onShowAll: () -> Unit) {
+    var settled by remember { mutableStateOf(situations to areas) }
+    LaunchedEffect(situations, areas) {
+        delay(Motion.SearchStatusSettle)
+        settled = situations to areas
+    }
+    SettledSearchStatus(settled.first, settled.second, onShowAll)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SettledSearchStatus(situations: Int, areas: Int, onShowAll: () -> Unit) {
     val none = situations == 0 && areas == 0
     val parts = listOfNotNull(
         if (situations > 0) pluralStringResource(R.plurals.situations_search_situations, situations, situations) else null,

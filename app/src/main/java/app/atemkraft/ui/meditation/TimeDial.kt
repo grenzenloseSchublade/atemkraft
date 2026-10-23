@@ -52,7 +52,7 @@ import kotlin.math.sin
  * Zeitring (Variante E der Dauerwahl): ein 60-Minuten-Zifferblatt wie ein Küchenwecker, 12 Uhr
  * oben, im Uhrzeigersinn. Ziehen am Ringband oder Tippen auf Band und Zahlen setzt die Dauer
  * (am Knopf gegriffen ohne Sprung), die ∞-Marke oben – ein kleiner umrandeter Knopf – die offene
- * Sitzung (Knopf und Bogen voll Pink). Ein Tipp irgendwo in die innere Scheibe öffnet die Feinwahl
+ * Sitzung (Knopf und Ring voll Cyan). Ein Tipp irgendwo in die innere Scheibe öffnet die Feinwahl
  * (− / + je Minute), ein zweiter schließt sie.
  *
  * Reine Darstellung: Wert und Regeln (Raste, ∞, Feinwahl) liegen in [DurationPickerState] und
@@ -163,10 +163,11 @@ fun TimeDial(
                         cap = StrokeCap.Round,
                     )
                 }
-                // Bogen: Cyan von 12 Uhr bis zum Wert, bei ∞ voll in Pink. Die runde Kappe am
-                // Anfang beginnt genau am 12-Uhr-Strich, statt in die 55 zu ragen.
+                // Bogen: Cyan von 12 Uhr bis zum Wert, bei ∞ voller Ring im selben Cyan – Pink gehört
+                // auf diesem Tab allein dem Start (PRIN-02). Die runde Kappe am Anfang beginnt genau
+                // am 12-Uhr-Strich, statt in die 55 zu ragen.
                 if (free) {
-                    drawCircle(colors.primary, radius = geo.trackRadius, center = c, style = Stroke(geo.trackWidth))
+                    drawCircle(colors.secondary, radius = geo.trackRadius, center = c, style = Stroke(geo.trackWidth))
                 } else {
                     drawArc(
                         color = colors.secondary,
@@ -184,14 +185,14 @@ fun TimeDial(
                     val accent = !free && n == minutes
                     drawCentered(layout, c + direction(DialScale.angleOf(n)) * geo.numeralRadius, if (accent) colors.secondary else colors.onSurfaceVariant)
                 }
-                // ∞-Marke oben als kleiner Knopf: dünn umrandet, gewählt Pink gefüllt.
+                // ∞-Marke oben als kleiner Knopf: dünn umrandet, gewählt in der Farbe des Rings gefüllt.
                 val markAt = c + direction(0f) * geo.numeralRadius
                 if (free) {
-                    drawCircle(colors.primary, radius = geo.markRadius, center = markAt)
+                    drawCircle(colors.secondary, radius = geo.markRadius, center = markAt)
                 } else {
                     drawCircle(colors.outline, radius = geo.markRadius, center = markAt, style = Stroke(Dimens.BorderThin.toPx()))
                 }
-                drawCentered(mark, markAt, if (free) colors.onPrimary else colors.onSurfaceVariant)
+                drawCentered(mark, markAt, if (free) colors.onSecondary else colors.onSurfaceVariant)
                 if (!free) {
                     val dir = direction(DialScale.angleOf(minutes))
                     val knob = c + dir * geo.trackRadius

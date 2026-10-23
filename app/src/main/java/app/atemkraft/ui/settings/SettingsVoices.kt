@@ -12,6 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceGender
@@ -79,7 +83,18 @@ internal fun VoiceRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            HintText(voiceSubtitle(spec, state, active, engineReady))
+            // Ende oder Fehler des Downloads sagt der Untertitel an (A11Y-04): Live-Region, sobald
+            // kein Prozentwert mehr läuft – „lädt … 40 %“ spräche sonst bei jedem Schritt –, und
+            // fertig geladen mit dem Zustand „geladen“, weil der Text dann nur Merkmale nennt.
+            val live = state !is VoiceDownloadState.Downloading || state.extracting || state.indeterminate
+            val downloaded = stringResource(R.string.voice_state_downloaded)
+            HintText(
+                voiceSubtitle(spec, state, active, engineReady),
+                modifier = Modifier.semantics {
+                    if (live) liveRegion = LiveRegionMode.Polite
+                    if (state is VoiceDownloadState.Downloaded) stateDescription = downloaded
+                },
+            )
             if (spec.nonCommercialOnly) {
                 // Eigene Zeile in Warnfarbe statt im grauen Untertitel: Die Einschränkung soll vor
                 // dem Laden auffallen (SEC-LEGAL-03), ohne die Zeile breiter zu machen (LAYOUT-03).
