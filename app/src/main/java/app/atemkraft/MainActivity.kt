@@ -100,7 +100,7 @@ private fun AtemkraftApp(
                 // Ihre Oberkante trägt den Knopf der Tab-Leiste, solange die Seite keine Startleiste hat.
                 Column(Modifier.onGloballyPositioned { tabBar.bottomBarTop = it.positionInRoot().y }) {
                     PlaybackMiniBars(playback)
-                    // Auf den fünf Tabs immer; in der Tiefe nur, wenn per Knopf aufgeklappt.
+                    // Auf den vier Tabs immer; in der Tiefe nur, wenn per Knopf aufgeklappt.
                     HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed) {
                         AppTabBar(selected = selectedTab, onTap = { tab -> navController.tapTab(tab.route, selected = tab == selectedTab) })
                     }

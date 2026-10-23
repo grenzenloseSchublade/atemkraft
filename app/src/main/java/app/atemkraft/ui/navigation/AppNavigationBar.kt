@@ -79,7 +79,7 @@ class AppNavItem(
 /**
  * Untere Navigationsleiste der Haupt-Tabs. Beschriftungen brechen nie im Wort (LAYOUT-03):
  * Reicht die Tab-Breite bei großer Schrift nicht, wird die Beschriftung verkleinert
- * ([WholeWordText], bis 40 %, damit fünf Tabs bei Schrift 2,0 passen).
+ * ([WholeWordText], bis 50 %, damit vier Tabs bei Schrift 2,0 passen).
  */
 @Composable
 fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
@@ -122,8 +122,8 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 /** Deckkraft der Trennlinie über der Tab-Leiste. */
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
-/** Kleinste Beschriftung der Tabs (Anteil der Rolle), damit fünf Namen bei Schrift 2,0 ganz bleiben. */
-private const val NAV_LABEL_MIN_SCALE = 0.4f
+/** Kleinste Beschriftung der Tabs (Anteil der Rolle), damit vier Namen bei Schrift 2,0 ganz bleiben. */
+private const val NAV_LABEL_MIN_SCALE = 0.5f
 
 /**
  * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt

@@ -3,7 +3,7 @@ package app.atemkraft.domain
 import java.text.Normalizer
 
 /**
- * Befindens-Suche im Tab „Anlass“: findet zu einer freien Eingabe („kann nicht schlafen“,
+ * Befindens-Suche im Tab „Atmen“: findet zu einer freien Eingabe („kann nicht schlafen“,
  * „müde“) die passenden [SituationRecommendation]s – deterministisch, offline, ohne Modell.
  *
  * Regeln (bewusst eng, damit jede Zuordnung nachvollziehbar und prüfbar bleibt):

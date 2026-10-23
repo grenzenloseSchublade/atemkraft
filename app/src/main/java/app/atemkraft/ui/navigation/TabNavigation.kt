@@ -37,9 +37,9 @@ internal fun NavController.switchTab(route: Any) {
 }
 
 /**
- * Ob dieses Ziel einer der fünf Tabs ist ([TopTab]): Dort steht die Tab-Leiste immer. In der Tiefe
- * (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Pranayama, Logbuch, Über) klappt
- * sie beim Runterscrollen ein und kommt über die Lasche zurück ([TabBarState], Nutzer 2026-10-23).
+ * Ob dieses Ziel einer der vier Tabs ist ([TopTab]): Dort steht die Tab-Leiste immer. In der Tiefe
+ * (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Pranayama, Logbuch, Über) ist
+ * sie eingeklappt und kommt über die Lasche zurück ([TabBarState], Nutzer 2026-10-23).
  * Vor dem ersten Ziel (null) gilt der Start-Tab.
  */
 internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.any { destination ->
@@ -59,9 +59,3 @@ internal fun NavController.tabOnStack(): TopTab = TopTab.entries.filter { it != 
     // getBackStackEntry wirft, wenn das Ziel nicht im Stapel liegt; die öffentliche API kennt
     // keine Abfrage ohne Ausnahme (currentBackStack ist bibliotheksintern).
     .firstOrNull { tab -> runCatching { getBackStackEntry(tab.route) }.isSuccess } ?: TopTab.START
-
-/**
- * Seiten, die mit eingeklappter Tab-Leiste starten: der Muster-Editor, dessen Kurve jede Höhe
- * braucht und der selten scrollt.
- */
-internal fun NavDestination?.startsWithTabBarCollapsed(): Boolean = this?.hierarchy?.any { it.hasRoute(PatternEditorRoute::class) } == true

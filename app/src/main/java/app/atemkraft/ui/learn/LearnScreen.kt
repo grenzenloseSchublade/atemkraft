@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -19,9 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
+import app.atemkraft.domain.Exercise
+import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.ScreenHeader
+import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
@@ -35,11 +39,22 @@ import app.atemkraft.ui.theme.SECONDARY
  * deutet), Pranayama (Grundlagen und Techniken, mit „Üben ›“ zur Übung) und Begriffe. Vorher
  * standen Atemlehre und Begriffe oben in den Einstellungen.
  *
- * Die Kapiteltitel sind die eine Kopf-Ebene des Screens und gehen reihum durch den Kopf-Ring
- * (FARBE-07): Atemlehre 0, Pranayama 1, Begriffe 2.
+ * Darunter der Abschnitt „Programme & Gewohnheiten“: Infoseiten ohne Startknopf (SKY, Buteyko,
+ * Nasenatmung) als [ExerciseCard], sie öffnen die Detailseite ([onOpenExercise]). Seit sie hier
+ * stehen, gilt: Atmen = alles, was man starten kann; Lernen = alles, was man liest.
+ *
+ * Kapiteltitel und Abschnittskopf sind die eine Kopf-Ebene des Screens und gehen reihum durch den
+ * Kopf-Ring (FARBE-07): Atemlehre 0, Pranayama 1, Begriffe 2, Programme 3.
  */
 @Composable
-fun LearnScreen(onOpenAtemlehre: () -> Unit, onOpenPranayama: () -> Unit, onOpenGlossary: () -> Unit) {
+fun LearnScreen(
+    onOpenAtemlehre: () -> Unit,
+    onOpenPranayama: () -> Unit,
+    onOpenGlossary: () -> Unit,
+    programs: List<Exercise> = emptyList(),
+    onOpenExercise: (String) -> Unit = {},
+    markedIds: Set<String> = emptySet(),
+) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled -> ScreenHeader(title = stringResource(R.string.tab_learn), scrolled = scrolled) },
@@ -69,8 +84,19 @@ fun LearnScreen(onOpenAtemlehre: () -> Unit, onOpenPranayama: () -> Unit, onOpen
                 onClick = onOpenGlossary,
             )
         }
+        if (programs.isNotEmpty()) {
+            item(key = "programs-header") {
+                SectionHeader(title = stringResource(R.string.learn_programs), color = headingColor(PROGRAMS_HEADING))
+            }
+            items(programs, key = { it.id }) { program ->
+                ExerciseCard(exercise = program, onClick = { onOpenExercise(program.id) }, marked = program.id in markedIds)
+            }
+        }
     }
 }
+
+/** Lage des Programm-Kopfs im Kopf-Ring: nach den drei Kapitelkarten (FARBE-07). */
+private const val PROGRAMS_HEADING = 3
 
 /**
  * Ein Kapitel als [NavCard]: Titel in der Farbe seiner Lage ([heading], FARBE-07), darunter ein

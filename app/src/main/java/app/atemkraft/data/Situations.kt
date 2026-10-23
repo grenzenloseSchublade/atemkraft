@@ -7,7 +7,7 @@ import app.atemkraft.domain.SituationRecommendation
  * Situations-Empfehlungen aus der F3-Matrix. IDs verweisen auf [BuiltInExercises].
  *
  * `keywords` sind die kuratierten Befindens-Begriffe der Suche (SituationSearch): Alltagswörter
- * und Anlässe in Laiensprache, je Begriff genau eine Situation, rund 30 je Situation. Kein
+ * und Anlässe in Laiensprache, je Begriff genau eine Situation, rund 35 je Situation. Kein
  * Begriff fängt einen Begriff einer anderen Situation an (Ausnahmen „nachts“/„Nachtschicht“ und
  * „Ruhe“/„ruhelos“, gelöst über „genauester Begriff gewinnt“); Wörter mit Doppelsinn stehen nur
  * als Wendung da („erstes Date“ statt „Date“, das sonst „Daten“ träfe; „im Stau“ statt „Stau“
@@ -32,6 +32,7 @@ object Situations {
                 "Wut", "genervt", "gereizt", "ausrasten", "aufgewühlt", "Schreck", "erschrocken",
                 "schlechte Nachricht", "Chef", "Zahnarzt", "Arzttermin", "Blutabnahme", "Spritze",
                 "Flug", "Fliegen", "Flugangst", "Aufzug", "Menschenmenge", "im Stau", "Berufsverkehr", "Lärm",
+                "Frust", "Zoff", "ungeduldig", "Verspätung", "Wartezimmer", "Behörde",
             ),
         ),
         SituationRecommendation(
@@ -45,6 +46,7 @@ object Situations {
                 "Unruhe", "ruhelos", "rastlos", "getrieben", "zappelig", "hibbelig", "Lampenfieber", "Auftritt", "Bühne", "Rede",
                 "erstes Date", "Hochzeit", "Vorfreude", "außer Atem", "aus der Puste", "schnaufen", "Treppe",
                 "Treppensteigen", "bergauf", "Spaziergang", "spazieren", "Fahrrad", "Joggen", "Jogging", "Laufen", "Training", "Sport",
+                "aufgedreht", "kribbelig", "Vorspielen", "Wandern", "Schwimmen", "Radfahren",
             ),
         ),
         SituationRecommendation(
@@ -58,6 +60,7 @@ object Situations {
                 "Schlafenszeit", "Bett", "hinlegen", "Gedanken", "Gedankenkarussell", "Gedanken kreisen",
                 "grübeln", "grüble", "Grübelei", "Sorgen", "Kopf voll", "abschalten", "runterkommen", "herunterfahren",
                 "runterfahren", "loslassen", "Ruhe", "zur Ruhe kommen", "entspannen", "Entspannung",
+                "Kopfkino", "Nickerchen", "Mittagsschlaf", "Albtraum", "Schäfchen zählen",
             ),
         ),
         SituationRecommendation(
@@ -71,6 +74,7 @@ object Situations {
                 "Büro", "Homeoffice", "Schreibtisch", "Meeting", "Besprechung", "Gespräch", "Bewerbung",
                 "Vorstellungsgespräch", "Interview", "Vortrag", "Präsentation", "Wettkampf", "Turnier",
                 "abgelenkt", "zerstreut", "unkonzentriert", "konzentrieren", "fokussieren", "klar denken",
+                "Referat", "Projekt", "Abschlussarbeit", "Steuererklärung", "Videocall",
             ),
         ),
         SituationRecommendation(
@@ -94,7 +98,8 @@ object Situations {
                 "erschlagen", "ausgepowert", "groggy", "kraftlos", "energielos", "Mittagstief",
                 "Nachmittagstief", "Feierabend", "nach der Arbeit", "langer Tag", "schlecht geschlafen",
                 "Nachtschicht", "Schichtdienst", "Schichtarbeit", "Jetlag", "Pause", "Auszeit", "erholen", "Erholung",
-                "auftanken", "Kraft tanken", "durchatmen",
+                "auftanken", "Kraft tanken", "durchatmen", "geschafft", "Akku leer", "Durchhänger", "neben der Spur",
+                "Überstunden",
             ),
         ),
     )

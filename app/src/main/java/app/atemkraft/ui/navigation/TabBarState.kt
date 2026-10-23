@@ -15,7 +15,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Wer von einem Tab in die
  * Tiefe geht, sieht sie eingeklappt ([collapsed]). Der Knopf auf der Oberkante der untersten Leiste
  * ([TabBarToggle]) klappt sie auf und wieder zu ([toggle]); diese Wahl gilt auf allen weiteren Seiten
- * der Tiefe, vor und zurück, bis der Nutzer wieder auf einem Tab steht ([enter]). Auf den fünf Tabs
+ * der Tiefe, vor und zurück, bis der Nutzer wieder auf einem Tab steht ([enter]). Auf den vier Tabs
  * selbst steht die Leiste immer (das entscheidet der Aufrufer).
  *
  * Wo der Knopf sitzt: auf der Oberkante einer Startleiste, wenn die Seite eine hat

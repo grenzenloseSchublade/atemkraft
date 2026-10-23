@@ -3,7 +3,7 @@
     <string name="app_name">Atemkraft</string>
 
     <!-- Startbildschirm -->
-    <string name="home_subtitle">Wähle eine Atemübung</string>
+    <string name="home_subtitle">Wähle eine Übung oder sag, wie es dir geht</string>
 
     <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen) -->
     <string name="phase_inhale">Einatmen</string>
@@ -55,19 +55,16 @@
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
-    <string name="tab_situations">Anlass</string>
     <string name="tab_own">Eigene</string>
     <string name="tab_learn">Lernen</string>
 
-    <!-- Situationen -->
-    <string name="situations_subtitle">Welche Atmung passt gerade?</string>
+    <!-- Anlässe im Atmen-Tab: Kopf über Suchfeld und den sechs Anlässen -->
+    <string name="home_situations">Anlass</string>
     <!-- Befindens-Suche: Platzhalter muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
     <string name="situations_search_placeholder">Wie fühlst du dich?</string>
-    <string name="cd_search_open">Anlässe durchsuchen</string>
     <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
     <string name="cd_tab_bar_hide">Tab-Leiste ausblenden</string>
     <string name="cd_search_clear">Eingabe löschen</string>
-    <string name="cd_search_close">Suche schließen</string>
     <plurals name="situations_search_count">
         <item quantity="one">%1$d Anlass passt</item>
         <item quantity="other">%1$d Anlässe passen</item>
@@ -85,7 +82,6 @@
     <string name="session_paused">Pausiert</string>
 
     <!-- Startscreen -->
-    <string name="home_programs">Programme &amp; Wissen</string>
     <string name="home_daily_pattern">Muster des Tages</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="cd_pattern_regenerate">Muster neu generieren</string>
@@ -213,6 +209,8 @@
     <string name="learn_atemlehre_hint">Phasen, vāyus, Regeln und Muster</string>
     <string name="learn_pranayama_hint">Grundlagen und Techniken, mit Übungen zum Ausprobieren</string>
     <string name="learn_glossary_hint">Studien, HRV und Yoga-Begriffe</string>
+    <!-- Infoseiten ohne Startknopf (SKY, Buteyko, Nasenatmung): gelesen statt geübt. -->
+    <string name="learn_programs">Programme &amp; Gewohnheiten</string>
     <string name="pranayama_title">Pranayama</string>
     <string name="pranayama_basics">Grundlagen</string>
     <string name="pranayama_techniques">Techniken</string>

@@ -43,13 +43,11 @@ import app.atemkraft.ui.navigation.MeditationRoute
 import app.atemkraft.ui.navigation.PatternEditorRoute
 import app.atemkraft.ui.navigation.PranayamaRoute
 import app.atemkraft.ui.navigation.SettingsRoute
-import app.atemkraft.ui.navigation.SituationenRoute
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorDestination
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
-import app.atemkraft.ui.situations.SituationsScreen
 import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.launch
 
@@ -89,7 +87,7 @@ internal fun rememberGraphState(container: AppContainer): GraphState {
 }
 
 /**
- * Die Ziele der App je Feature: die fünf Tabs ([app.atemkraft.ui.navigation.TopTab]) und die
+ * Die Ziele der App je Feature: die vier Tabs ([app.atemkraft.ui.navigation.TopTab]) und die
  * Push-Seiten ([pushComposable]). Schreibvorgänge laufen im App-weiten Scope
  * ([AppContainer.appScope]); Sitzungen starten über [playback].
  */
@@ -107,7 +105,6 @@ internal fun NavGraphBuilder.appGraph(
     val back: () -> Unit = { navController.popBackStack() }
     val openDetail: (String) -> Unit = { id -> navController.navigate(DetailRoute(id)) }
     val openLore: (String) -> Unit = { patternId -> navController.navigate(AtemlehreRoute(patternId)) }
-    val openLogbook: () -> Unit = { navController.navigate(LogbookRoute) { launchSingleTop = true } }
 
     composable<AtmenRoute> {
         // Beim Betreten den Tageswechsel prüfen; danach folgt die Karte dem Repository.
@@ -128,20 +125,12 @@ internal fun NavGraphBuilder.appGraph(
                 }
             },
             exercisesByFamily = exercises.guidedByFamily,
-            programs = exercises.programs,
+            situations = Situations.all,
+            resolve = { id -> exercises.byId(id) },
             onSelect = openDetail,
             onOpenSettings = { navController.navigate(SettingsRoute()) },
             markedIds = state.markedExercises,
             onOpenPatternEditor = { navController.navigate(PatternEditorRoute()) },
-            onOpenLogbook = openLogbook,
-        )
-    }
-    composable<SituationenRoute> {
-        SituationsScreen(
-            recommendations = Situations.all,
-            resolve = { id -> exercises.byId(id) },
-            onSelect = openDetail,
-            markedIds = state.markedExercises,
         )
     }
     composable<EigeneRoute> {
@@ -155,7 +144,7 @@ internal fun NavGraphBuilder.appGraph(
             onDeletePattern = { id -> scope.launch { savedPatterns.delete(id) } },
             onOpenSettings = { navController.navigate(SettingsRoute()) },
             logEntries = state.logEntries,
-            onOpenLogbook = openLogbook,
+            onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
         )
     }
     composable<MeditationRoute> {
@@ -180,6 +169,10 @@ internal fun NavGraphBuilder.appGraph(
             onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
             onOpenPranayama = { navController.navigate(PranayamaRoute) },
             onOpenGlossary = { navController.navigate(GlossaryRoute) },
+            // Programme: Infoseiten ohne Start, gelesen statt geübt (Nutzer 2026-10-23).
+            programs = exercises.programs,
+            onOpenExercise = openDetail,
+            markedIds = state.markedExercises,
         )
     }
     pushComposable<DetailRoute> { entry ->
