@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), wie sie über dieses Repo und seine GitHub-Releases verteilt wird.
 
-- **Stand:** 2026-10-23, geprüft gegen Version 1.7.0 und den Quellcode auf `main` an diesem Tag. Wo sich Versionen bis einschließlich 1.5.1 davon unterscheiden, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
+- **Stand:** 2026-10-23, geprüft gegen Version 1.7.1 und den Quellcode auf `main` an diesem Tag. Wo sich Versionen bis einschließlich 1.5.1 davon unterscheiden, steht es dabei ([Stimm-Download](#netz), [Cloud-Backup](#wechsel), [Berechtigungen](#berechtigungen)); Befindens-Suche sowie Export und Import der Muster gibt es erst ab Version 1.6.0.
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung

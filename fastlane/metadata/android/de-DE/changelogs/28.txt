@@ -1,0 +1,3 @@
+- Tab-Leiste klappt auf Unterseiten beim Scrollen ein, Lasche holt sie zurück
+- Lange Titel laufen als Laufschrift statt umzubrechen
+- Muster-Editor: Kurve und Werkzeugleiste passen auch auf kleine Handys
