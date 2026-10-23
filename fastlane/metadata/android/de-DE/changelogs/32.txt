@@ -1,0 +1,5 @@
+- Atemübung läuft im Hintergrund weiter, auch bei gesperrtem Bildschirm
+- Übergang in die Stille auch bei gesperrtem Bildschirm
+- Stufen-Übungen: nur Dauer bzw. Runden anpassbar
+- Einheitliche Abstände, Verweise in Cyan, eigenes Symbol für „Anlass“
+- Inhalte an Verse und Studien angeglichen
