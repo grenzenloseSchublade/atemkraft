@@ -35,7 +35,7 @@ Alles, was beide Stores aus dem Repo lesen, liegt unter `fastlane/metadata/andro
 |---|---|---|
 | `de-DE/title.txt` | 30 Zeichen (Play) | „Atemkraft – Atemübungen“ (23) |
 | `de-DE/short_description.txt` | 80 Zeichen | Nutzen statt Funktionsliste (75) |
-| `de-DE/full_description.txt` | 4000 Zeichen | Nutzen, „Was Atemkraft anders macht“, „Was drin ist“, Datenschutz, Lizenzen (3228); enthält den Disclaimer aus SEC-LEGAL-02 wörtlich. Zahlen wie in den Daten: 17 angeleitete Übungen in vier Bereichen, drei Programme, sechs Anlässe |
+| `de-DE/full_description.txt` | 4000 Zeichen | Nutzen, „Was Atemkraft anders macht“, „Was drin ist“, Datenschutz, Lizenzen (3224); enthält den Disclaimer aus SEC-LEGAL-02 wörtlich. Zahlen wie in den Daten: 17 angeleitete Übungen in vier Bereichen, drei Programme, sechs Anlässe |
 | `de-DE/changelogs/<versionCode>.txt` | 500 Zeichen | je Release |
 | `en-US/title.txt`, `short_description.txt`, `full_description.txt` | wie oben | kurz, erster Satz: App nur auf Deutsch. F-Droid fällt für alle anderen Sprachen auf en-US zurück |
 

@@ -2,7 +2,7 @@ Note: Atemkraft is available in German only. All texts, guidance and voices in t
 
 Atemkraft guides you through breathing exercises and silent meditation. A circle breathes with you: it grows as you inhale and shrinks as you exhale, with optional tones and vibration.
 
-- 17 guided breathing exercises in four areas, such as resonance breathing, 4-7-8 and box breathing. Each one comes with instructions, safety notes and an honest summary of the research, with references (usually DOI or PMID).
+- 17 guided breathing exercises in four areas (calming, activating, balancing, breath training), such as resonance breathing, 4-7-8 and box breathing. Each one comes with instructions, safety notes and an honest summary of the research, with references (usually DOI or PMID).
 - Pick a situation such as falling asleep or focus, or search for how you feel.
 - A new breathing pattern every day, and an editor to build your own.
 - Meditation timer with gong and optional spoken guidance; keeps running with the screen off.

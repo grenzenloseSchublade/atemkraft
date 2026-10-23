@@ -8,7 +8,7 @@ Was Atemkraft anders macht
 
 Was drin ist
 
-- Atmen: 17 angeleitete Atemübungen in vier Bereichen (Herunterregeln, Hochregeln, Balancieren, Funktionell), etwa Resonanz-Atmung, 4-7-8, Box-Atmung und Lippenbremse. Ein-, Aus- und Halte-Zeiten lassen sich pro Übung anpassen. Vor intensiven Übungen wie Wim Hof oder Feueratmung zeigt die App einen Sicherheitshinweis.
+- Atmen: 17 angeleitete Atemübungen in vier Bereichen (Beruhigen, Aktivieren, Ausgleichen, Atem schulen), etwa Resonanz-Atmung, 4-7-8, Box-Atmung und Lippenbremse. Ein-, Aus- und Halte-Zeiten lassen sich pro Übung anpassen. Vor intensiven Übungen wie Wim Hof oder Feueratmung zeigt die App einen Sicherheitshinweis.
 - Wie fühlst du dich?: sechs Anlässe wie „Einschlafen“, „Fokus“ oder „Stress“ zum Antippen und eine Suche nach deinem Befinden. Sie läuft ohne Netz und wird nicht gespeichert.
 - Sitzung: Kreis, Fortschrittsbogen und eine Ruhe-Ansicht ohne Bedienelemente. Am Ende fragt die App, wie du dich fühlst, und zeigt eine kurze Bilanz.
 - Muster des Tages: jeden Tag ein neues Atemmuster in festen Grenzen, als Abwechslung ohne Wirkversprechen. Neu würfeln oder speichern.

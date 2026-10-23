@@ -13,7 +13,7 @@ Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf das optionale Laden ein
 
 Beschrieben ist der Stand von `main`; die veröffentlichte Version kann Einzelnes davon noch nicht haben.
 
-- **Atmen:** 17 Übungen in vier Bereichen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ zum Antippen und eine Suche nach deinem Befinden.
+- **Atmen:** 17 Übungen in vier Bereichen (Beruhigen, Aktivieren, Ausgleichen, Atem schulen), je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ zum Antippen und eine Suche nach deinem Befinden.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
 - **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Startpunkten und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen.
