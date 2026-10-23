@@ -111,7 +111,8 @@ fun ExerciseDetailScreen(
     // Abschnittsköpfe reihum nach ihrer Lage, ohne Bedeutung (FARBE-07): Index = Zahl der gezeigten
     // Köpfe darüber; fehlt ein Abschnitt (Anleitung, Lehre, Hinweise, Quellen), rückt der nächste
     // nach. Auch „Hinweise & Sicherheit“ geht reihum – die Warnung tragen ⚠-Zeile und Chip. Die
-    // Familienfarbe bleibt beim Inhalt (Familie, Dauer-Chip, Lehre-Verweis).
+    // Familienfarbe bleibt beim Inhalt (Familie, Dauer-Chip); der Lehre-Verweis steht wie jeder
+    // Verweis in secondary (FARBE-04).
     val effectHead = if (exercise.instructionHint != null) 1 else 0
     val loreHead = effectHead + 1
     val cautionsHead = loreHead + (if (exercise.lore != null) 1 else 0)
@@ -260,13 +261,8 @@ fun ExerciseDetailScreen(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                     BodyText(lore.detail)
-                    lore.source?.let { source ->
-                        Text(
-                            text = source,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
-                        )
-                    }
+                    // Lehrquelle wie in Atemlehre und Pranayama.
+                    lore.source?.let { HintText(it) }
                     if (onOpenLore != null) {
                         patterns.forEach { pattern ->
                             // Der Chevron zeigt „führt weiter“ (ICON-01). Nicht bündig (flushStart): Die
@@ -274,7 +270,8 @@ fun ExerciseDetailScreen(
                             AppTextButton(onClick = { onOpenLore(pattern.id) }) {
                                 ForwardLinkText(
                                     text = stringResource(R.string.detail_lore_link, pattern.linkName),
-                                    color = accent,
+                                    // Verweise im Inhalt einheitlich in secondary (FARBE-04).
+                                    color = MaterialTheme.colorScheme.secondary,
                                 )
                             }
                         }

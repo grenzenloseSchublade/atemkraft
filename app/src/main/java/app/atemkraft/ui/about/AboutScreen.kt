@@ -153,8 +153,9 @@ private fun LicenseEntry(name: String, license: String, holder: String) {
 
 /**
  * Externer Link als eigene Zeile: Die ganze Zeile ist die Tippfläche, mindestens 48 dp hoch
- * (A11Y-05). Das Ziel steht in `primary`, dahinter das Symbol „öffnet im Browser“ – ohne
- * Unterstreichung, wie die übrigen Verweise der App. Öffnet [url] im Browser.
+ * (A11Y-05). Das Ziel steht in `secondary` wie jeder Verweis im Inhalt (FARBE-04), dahinter das
+ * Symbol „öffnet im Browser“ – ohne Unterstreichung, wie die übrigen Verweise der App. Öffnet
+ * [url] im Browser.
  */
 @Composable
 private fun LinkRow(label: String, url: String) {
@@ -166,7 +167,7 @@ private fun LinkRow(label: String, url: String) {
             .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link)) { uriHandler.openUri(url) },
         contentAlignment = Alignment.CenterStart,
     ) {
-        LinkText(label, MaterialTheme.colorScheme.primary)
+        LinkText(label, MaterialTheme.colorScheme.secondary)
     }
 }
 
