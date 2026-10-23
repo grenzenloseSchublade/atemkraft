@@ -66,12 +66,12 @@ class SilenceAfterBreath(
     fun consumeHandover(): Boolean = handedOver.also { handedOver = false }
 
     private suspend fun enter() {
-        if (meditation.status.value != MeditationStatus.IDLE) return
+        if (meditation.state.value.status != MeditationStatus.IDLE) return
         val config = meditationConfig.first()
         // Nach dem Lesen erneut prüfen: Inzwischen kann die Atem-Session verworfen oder neu
         // gestartet worden sein; dann gibt es nichts mehr zu übergeben.
-        if (breath.status.value != SessionStatus.FINISHED) return
-        if (meditation.status.value != MeditationStatus.IDLE || !canStartNow()) return
+        if (breath.state.value.status != SessionStatus.FINISHED) return
+        if (meditation.state.value.status != MeditationStatus.IDLE || !canStartNow()) return
         // Erst die Meditation (übernimmt den laufenden Foreground-Service), dann die Atem-Session
         // verwerfen (gibt ihren Halter frei) – in dieser Reihenfolge endet der Service nie dazwischen.
         meditation.start(config)

@@ -393,11 +393,12 @@ class BreathSessionController(
             )
         }
         // Foreground-Service erst nach dem Ausklingen des Abschluss-Gongs lösen, damit er hinter dem
-        // Sperrbildschirm nicht abgeschnitten wird. Übernimmt die Meditation („Danach in die
-        // Stille“), hält sie den Service schon, bevor [stop] diesen Halter löst.
-        val tailMs = audio.finishTailMs(muted = _state.value.muted)
+        // Sperrbildschirm nicht abgeschnitten wird – und nie vor [HANDOFF_HOLD_MS]: So lange darf
+        // „Danach in die Stille“ ihn übernehmen (die Meditation hält ihn dann schon, bevor [stop]
+        // diesen Halter löst), auch ohne Ton, wenn kein Gong nachklingt.
+        val holdMs = maxOf(audio.finishTailMs(muted = _state.value.muted), HANDOFF_HOLD_MS)
         releaseJob = scope.launch {
-            delay(tailMs)
+            delay(holdMs)
             service.stop()
         }
         exercise?.let { _finished.tryEmit(it) }
@@ -409,6 +410,9 @@ class BreathSessionController(
 
         /** Takt der hochzählenden Zeit in offenen Phasen (Zehntelsekunde genügt für die Anzeige). */
         const val USER_PACED_TICK_MS = 100L
+
+        /** Mindestzeit, die der Service nach dem Ende gehalten wird (Übergang in die Stille, s. finish). */
+        const val HANDOFF_HOLD_MS = 2_000L
     }
 }
 
