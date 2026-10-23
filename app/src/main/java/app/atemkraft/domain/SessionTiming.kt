@@ -12,6 +12,16 @@ object SessionTiming {
 
     /** Ein Schritt des Start-Countdowns. */
     const val COUNTDOWN_STEP_MS = 1000L
+
+    /**
+     * Logbuch-Regel für beide Sitzungsarten (Nutzer-Review 2026-10-24): Eine Sitzung, die von selbst
+     * zu Ende läuft, kommt immer ins Logbuch. Eine früher beendete („Beenden“, „Stopp“ in der
+     * Benachrichtigung, ersetzt durch einen neuen Start) kommt hinein, sobald sie mindestens so viel
+     * aktive Zeit hat – mit der echten Dauer, ohne Wertung „abgebrochen“. Darunter gilt sie als
+     * Fehlstart und hinterlässt nichts. Die Meditation zeigt ab dieser Zeit auch beim Beenden den
+     * Ende-Screen mit End-Gong (offene Sitzung wie Timer), darunter kehrt sie in die Auswahl zurück.
+     */
+    const val MIN_LOG_MS = 60_000L
 }
 
 /**

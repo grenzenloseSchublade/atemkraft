@@ -18,12 +18,12 @@ import app.atemkraft.domain.SessionTiming
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.buildTimeline
 import app.atemkraft.domain.sessionSummary
+import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -100,9 +100,11 @@ data class SessionUiState(
  * verankert (in der App [SystemClock.elapsedRealtime], im Test die virtuelle Zeit), sodass sich kein
  * Drift aufsummiert; Uhr und Dispatcher sind für Tests injizierbar.
  *
- * Am natürlichen Ende schreibt er den Logbuch-Eintrag selbst und meldet die Übung über [finished] –
- * daran hängt „Danach in die Stille“ ([SilenceAfterBreath]), unabhängig davon, ob die Oberfläche
- * gerade sichtbar ist.
+ * Den Logbuch-Eintrag schreibt er selbst, nach der Regel in [SessionTiming.MIN_LOG_MS]: am
+ * natürlichen Ende immer, beim früheren Beenden ([stop], ersetzt durch [start]) ab einer Minute aktiver
+ * Zeit mit den bis dahin vollständigen Runden. Das natürliche Ende meldet er über [finished] – daran
+ * hängt „Danach in die Stille“ ([SilenceAfterBreath]), unabhängig davon, ob die Oberfläche gerade
+ * sichtbar ist.
  */
 class BreathSessionController(
     private val audio: BreathAudio,
@@ -111,7 +113,7 @@ class BreathSessionController(
     now: () -> Long = SystemClock::elapsedRealtime,
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val scope = supervisedScope(dispatcher)
 
     /** Countdown und aktive Atemzeit, geteilt mit der Meditation ([SessionClock]). */
     private val clock = SessionClock(now)
@@ -186,6 +188,7 @@ class BreathSessionController(
      */
     fun start(exercise: Exercise, config: SessionConfig = SessionConfig(), silenceAfter: Boolean = false) {
         val adjusted = exercise.adjusted(config)
+        logEndedEarly() // eine laufende Übung wird ersetzt, nicht spurlos verworfen
         runnerJob?.cancel()
         releaseJob?.cancel()
         baseExercise = exercise
@@ -232,6 +235,7 @@ class BreathSessionController(
     fun pause() {
         if (_state.value.status != SessionStatus.RUNNING) return
         runnerJob?.cancel()
+        clock.accrue() // aktive Zeit bis zum Pausenzeitpunkt banken, bevor die Uhr steht
         resumeRemainingMs = _state.value.remainingMs
         _state.update { it.copy(status = SessionStatus.PAUSED) }
     }
@@ -257,8 +261,12 @@ class BreathSessionController(
         _state.update { it.copy(muted = !it.muted) }
     }
 
-    /** Beendet bzw. verwirft die Session (auch den Ende-Screen) und gibt den Service frei. */
+    /**
+     * Beendet bzw. verwirft die Session (auch den Ende-Screen) und gibt den Service frei. Eine noch
+     * laufende Übung kommt ab einer Minute aktiver Zeit ins Logbuch ([SessionTiming.MIN_LOG_MS]).
+     */
     fun stop() {
+        logEndedEarly()
         runnerJob?.cancel()
         releaseJob?.cancel()
         continueSignal?.cancel()
@@ -383,17 +391,7 @@ class BreathSessionController(
         // Logbuch direkt in diesem Scope schreiben (kein UI-Collector nötig) – der Eintrag geht
         // damit auch bei gesperrtem Bildschirm oder ohne Activity nicht verloren.
         val exercise = currentExercise
-        if (exercise != null && logbook != null) {
-            val entry = SessionLogEntry(
-                exerciseId = exercise.id,
-                exerciseName = exercise.name,
-                family = exercise.family,
-                startedAtEpochMs = startedAtEpochMs,
-                durationMs = clock.activeMs,
-                roundsCompleted = exercise.rounds,
-            )
-            scope.launch { logbook.append(entry) }
-        }
+        exercise?.let { appendLog(roundsCompleted = it.rounds) }
         _state.update {
             it.copy(
                 status = SessionStatus.FINISHED,
@@ -414,6 +412,34 @@ class BreathSessionController(
             service.stop()
         }
         exercise?.let { _finished.tryEmit(it) }
+    }
+
+    /**
+     * Früh beendete Übung ins Logbuch, sobald sie [SessionTiming.MIN_LOG_MS] aktive Zeit hat; nur aus
+     * dem Lauf (nicht im Countdown, nicht vom Ende-Screen, dort steht der Eintrag schon).
+     */
+    private fun logEndedEarly() {
+        val status = _state.value.status
+        if (status != SessionStatus.RUNNING && status != SessionStatus.PAUSED && status != SessionStatus.WAITING_FOR_USER) return
+        if (status != SessionStatus.PAUSED) clock.accrue() // in der Pause ist bis zum Pausenzeitpunkt gebucht
+        if (clock.activeMs < SessionTiming.MIN_LOG_MS) return
+        // Vollständig sind die Runden vor der laufenden Phase.
+        appendLog(roundsCompleted = timeline.getOrNull(index)?.roundIndex ?: 0)
+    }
+
+    /** Schreibt den Eintrag der laufenden Übung direkt in diesem Scope (auch ohne sichtbare Oberfläche). */
+    private fun appendLog(roundsCompleted: Int) {
+        val exercise = currentExercise ?: return
+        val logbook = logbook ?: return
+        val entry = SessionLogEntry(
+            exerciseId = exercise.id,
+            exerciseName = exercise.name,
+            family = exercise.family,
+            startedAtEpochMs = startedAtEpochMs,
+            durationMs = clock.activeMs,
+            roundsCompleted = roundsCompleted,
+        )
+        scope.launch { logbook.append(entry) }
     }
 
     private companion object {

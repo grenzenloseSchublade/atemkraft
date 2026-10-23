@@ -7,13 +7,13 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceModelManager
+import app.atemkraft.domain.supervisedScope
 import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +38,7 @@ class PiperSpeechGuide(
         appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     private val executor = Executors.newSingleThreadExecutor()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = supervisedScope(Dispatchers.Main.immediate)
 
     private val _available = MutableStateFlow(false)
 

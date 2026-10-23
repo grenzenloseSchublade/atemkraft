@@ -1,11 +1,14 @@
 package app.atemkraft.playback
 
 import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -21,7 +24,8 @@ import kotlinx.coroutines.launch
  * Einstellung, in der Übung oben umschaltbar, Nutzer 2026-10-23); sonst über den Link „In der Stille
  * bleiben ›“ am Ende-Screen ([intoSilence]), beides auf demselben Weg. Nie nach Übungen mit
  * [app.atemkraft.domain.Exercise.silenceAfterAllowed] = false (Atmen im Gehen) und nie über eine
- * schon offene Meditation hinweg.
+ * laufende Meditation hinweg; eine schon beendete, die noch am Ende-Screen steht (auch minimiert),
+ * räumt der Übergang weg, statt stumm nichts zu tun.
  *
  * **Hintergrund:** Den Foreground-Service darf Android ab 12 nicht aus dem Hintergrund starten. Die
  * Atem-Session läuft selbst mit dem [PlaybackService]; die Meditation übernimmt ihn, bevor die
@@ -40,10 +44,16 @@ class SilenceAfterBreath(
     private val canStartNow: () -> Boolean,
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val scope = supervisedScope(dispatcher)
 
-    /** Gesetzt nach einem Übergang, bis die Oberfläche ihn mit [consumeHandover] abholt. */
-    private var handedOver = false
+    private val _handedOver = MutableStateFlow(false)
+
+    /**
+     * Gesetzt nach einem Übergang, bis die Oberfläche ihn mit [consumeHandover] abholt. Beobachtbar,
+     * weil der Status der Meditation beim Übergang von einem beendeten Ende-Screen aus „aktiv“ bleibt
+     * und die Oberfläche an ihm allein den Übergang nicht sähe.
+     */
+    val handedOver: StateFlow<Boolean> = _handedOver.asStateFlow()
 
     init {
         scope.launch {
@@ -63,19 +73,24 @@ class SilenceAfterBreath(
      * Gab es seit dem letzten Aufruf einen Übergang? Die Oberfläche übernimmt dann den Zustand des
      * Session-Overlays (offen oder minimiert) für die Meditation – einmal je Übergang.
      */
-    fun consumeHandover(): Boolean = handedOver.also { handedOver = false }
+    fun consumeHandover(): Boolean = _handedOver.value.also { _handedOver.value = false }
+
+    /** Frei für die Stille: keine Meditation oder nur eine schon beendete (Ende-Screen). */
+    private fun meditationFree(): Boolean = meditation.state.value.status.let { it == MeditationStatus.IDLE || it == MeditationStatus.FINISHED }
 
     private suspend fun enter() {
-        if (meditation.state.value.status != MeditationStatus.IDLE) return
+        if (!meditationFree()) return
         val config = meditationConfig.first()
         // Nach dem Lesen erneut prüfen: Inzwischen kann die Atem-Session verworfen oder neu
         // gestartet worden sein; dann gibt es nichts mehr zu übergeben.
         if (breath.state.value.status != SessionStatus.FINISHED) return
-        if (meditation.state.value.status != MeditationStatus.IDLE || !canStartNow()) return
+        if (!meditationFree() || !canStartNow()) return
+        // Ein stehender Ende-Screen der Meditation weicht (ihr Eintrag steht schon im Logbuch).
+        if (meditation.state.value.status == MeditationStatus.FINISHED) meditation.end()
         // Erst die Meditation (übernimmt den laufenden Foreground-Service), dann die Atem-Session
         // verwerfen (gibt ihren Halter frei) – in dieser Reihenfolge endet der Service nie dazwischen.
         meditation.start(config)
-        handedOver = true
+        _handedOver.value = true
         breath.stop()
     }
 }

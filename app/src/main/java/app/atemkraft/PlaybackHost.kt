@@ -43,7 +43,9 @@ import kotlinx.coroutines.launch
  * Was der App-Rahmen von den beiden app-weiten Abläufen (Atemübung, Meditation) weiß: ihr Status,
  * ob ihr Overlay offen ist ([sessionExpanded], [meditationExpanded], überstehen das Drehen) und die
  * Anzeige-Einstellungen der Overlays. Gestartet wird über [startBreath] bzw. [startMeditation]:
- * Overlay öffnen und beim ersten Start nach der Benachrichtigung fragen (ARC-6).
+ * beim ersten Start erst nach der Benachrichtigung fragen (ARC-6), dann starten und das Overlay
+ * öffnen. Es läuft immer höchstens ein Ablauf: Ein neuer Start ersetzt den laufenden, der dabei nach
+ * der Logbuch-Regel endet ([app.atemkraft.domain.SessionTiming.MIN_LOG_MS]) statt spurlos.
  *
  * Nur der Status liegt hier: Der volle Zustand tickt während einer Sitzung alle 33 ms und wird erst
  * in Mini-Leiste bzw. Overlay gelesen ([PlaybackMiniBars], [PlaybackOverlays]) – sonst setzte die
@@ -59,7 +61,7 @@ internal class PlaybackState(
     cueSettings: State<CueSettings>,
     sessionDisplay: State<SessionDisplay>,
     meditationDisplay: State<MeditationDisplay>,
-    private val askNotifications: () -> Unit,
+    private val askNotifications: (then: () -> Unit) -> Unit,
 ) {
     val sessionStatus by sessionStatus
     val meditationStatus by meditationStatus
@@ -96,18 +98,34 @@ internal class PlaybackState(
     val haptics get() = container.hapticPlayer
     val silenceAfterBreath get() = container.silenceAfterBreath
 
-    /** Atemübung starten und ihr Overlay öffnen; „Danach in die Stille“ startet mit dem Standard aus den Einstellungen. */
-    fun startBreath(exercise: Exercise, config: SessionConfig) {
-        breath.start(exercise, config, silenceAfter = sessionDisplay.silenceAfter)
-        sessionExpanded = true
-        askNotifications()
+    /**
+     * Atemübung starten und ihr Overlay öffnen; „Danach in die Stille“ startet mit dem Standard aus den
+     * Einstellungen. Eine laufende Übung ersetzt [BreathSessionController.start] selbst; eine Meditation
+     * endet still, erst nach dem Start (der Service bleibt so durchgehend gehalten). [onStarted] läuft,
+     * sobald die Übung wirklich läuft – beim ersten Mal erst nach der Antwort auf die Erlaubnis.
+     */
+    fun startBreath(exercise: Exercise, config: SessionConfig, onStarted: () -> Unit = {}) {
+        askNotifications {
+            breath.start(exercise, config, silenceAfter = sessionDisplay.silenceAfter)
+            sessionExpanded = true
+            if (meditationActive) {
+                meditation.discard()
+                meditationExpanded = false
+            }
+            onStarted()
+        }
     }
 
-    /** Meditation starten und ihr Overlay öffnen (wie beim Start einer Atemübung). */
+    /** Meditation starten und ihr Overlay öffnen (wie beim Start einer Atemübung, eine laufende Übung endet). */
     fun startMeditation(config: MeditationConfig) {
-        meditation.start(config)
-        meditationExpanded = true
-        askNotifications()
+        askNotifications {
+            meditation.start(config)
+            meditationExpanded = true
+            if (sessionActive) {
+                breath.stop()
+                sessionExpanded = false
+            }
+        }
     }
 
     /**
@@ -149,7 +167,9 @@ internal fun rememberPlaybackState(container: AppContainer): PlaybackState {
             askNotifications = askNotifications,
         )
     }
-    LaunchedEffect(playback.meditationActive) { playback.takeOverSilence() }
+    // Übergang in die Stille, auch erst beim nächsten Sichtbarwerden, wenn er im Hintergrund kam.
+    val handedOver by container.silenceAfterBreath.handedOver.collectAsStateWithLifecycle()
+    LaunchedEffect(handedOver, playback.meditationActive) { if (handedOver) playback.takeOverSilence() }
     return playback
 }
 
@@ -232,9 +252,11 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
                 },
                 onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
                 onRestart = meditation::restart,
+                // Ab einer Minute schließt „Beenden“ regulär ab: Das Overlay bleibt für den Ende-Screen
+                // offen. Sonst (kurz, Countdown, „Ende“ am Ende-Screen) ist die Sitzung weg.
                 onEnd = {
                     meditation.end()
-                    playback.meditationExpanded = false
+                    if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
                 },
                 onOpenLogbook = {
                     meditation.end()
@@ -259,25 +281,36 @@ private fun <T> SessionHost(state: StateFlow<T>, content: @Composable (T) -> Uni
 /**
  * Fragt ab Android 13 einmalig nach der Benachrichtigungs-Erlaubnis – im Moment, in dem sie Sinn
  * ergibt: beim ersten Start einer Sitzung (Meditation oder Atemübung), nicht beim App-Start
- * (ARC-6). Gebraucht wird sie nur für die Benachrichtigung der laufenden Sitzung; bei Ablehnung
- * läuft die Sitzung trotzdem. Weil auch die Atemübung fragt, ist sie vor „Danach in die Stille“
- * geklärt – den Übergang startet der Ablauf ohne Oberfläche. Danach fragt die App nie wieder. Bis
- * der gespeicherte Stand geladen ist, gilt „schon gefragt“ – lieber einmal nicht fragen als doppelt.
- * Gemerkt wird in [scope], dem App-weiten Scope.
+ * (ARC-6). Und zwar **vor** dem Start: Die Sitzung ([then]) beginnt erst nach der Antwort, gleich
+ * welcher – sonst liefe der Countdown unter dem Systemdialog, und die erste Phase wäre verpasst.
+ * Gebraucht wird die Erlaubnis nur für die Benachrichtigung der laufenden Sitzung (Kanal-Beschreibung
+ * in den Systemeinstellungen sagt, wofür); bei Ablehnung läuft die Sitzung trotzdem. Kein eigener
+ * Erklärdialog davor. Weil auch die Atemübung fragt, ist sie vor „Danach in die Stille“ geklärt – den
+ * Übergang startet der Ablauf ohne Oberfläche. Danach fragt die App nie wieder. Bis der gespeicherte
+ * Stand geladen ist, gilt „schon gefragt“ – lieber einmal nicht fragen als doppelt. Gemerkt wird in
+ * [scope], dem App-weiten Scope. Wird die Activity mitten im Dialog neu aufgebaut, entfällt der
+ * wartende Start; ein zweiter Tipp startet dann ohne Frage.
  */
 @Composable
-private fun rememberNotificationAsk(settings: SettingsRepository, scope: CoroutineScope): () -> Unit {
+private fun rememberNotificationAsk(settings: SettingsRepository, scope: CoroutineScope): (then: () -> Unit) -> Unit {
     val context = LocalContext.current
     val asked = settings.notificationAsked.collectAsStateWithLifecycle(initialValue = true)
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val pending = remember { mutableStateOf<(() -> Unit)?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        pending.value?.invoke()
+        pending.value = null
+    }
     return remember(context, settings, scope, asked, launcher) {
-        {
+        { then ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !asked.value &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
             ) {
                 scope.launch { settings.setNotificationAsked() }
+                pending.value = then
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                then()
             }
         }
     }

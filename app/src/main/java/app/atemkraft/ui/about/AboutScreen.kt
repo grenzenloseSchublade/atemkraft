@@ -60,10 +60,12 @@ private const val LICENSES_URL = "https://github.com/grenzenloseSchublade/atemkr
 /**
  * Über-Seite: App-Name, Version, Kurzbeschreibung, ehrlicher Haftungshinweis, Lizenzen der
  * Fremdbausteine und Stimmen sowie Links zu Quellcode und Datenschutzerklärung.
- * [licensesExpanded] öffnet die Lizenzliste von Anfang an (Screenshot-Test).
+ * [licensesExpanded] öffnet die Lizenzliste von Anfang an (Screenshot-Test). [lastError] ist die Art
+ * eines abgefangenen Hintergrundfehlers ([app.atemkraft.domain.UncaughtErrors]); dann steht unter der
+ * Version ein stiller Hinweis, damit der Fehler nicht unbemerkt bleibt.
  */
 @Composable
-fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
+fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false, lastError: String? = null) {
     // Titel fest im Kopf wie auf allen Unterseiten (Nutzer 2026-10-21). Nur „Über“: Der
     // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander.
     PushScaffold(onBack = onBack, title = stringResource(R.string.about_title)) {
@@ -78,6 +80,7 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
         )
+        lastError?.let { HintText(stringResource(R.string.about_last_error, it)) }
         Spacer(Modifier.height(Dimens.SectionGap))
         // Zahl aus dem Katalog: Eine neue Übung zählt mit, ohne dass der Text veraltet.
         val count = BuiltInExercises.all.size

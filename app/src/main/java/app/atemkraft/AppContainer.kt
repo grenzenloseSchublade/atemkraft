@@ -10,6 +10,7 @@ import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.local.AtemkraftDatabase
+import app.atemkraft.domain.supervisedScope
 import app.atemkraft.playback.BreathSessionController
 import app.atemkraft.playback.MeditationAudioCoordinator
 import app.atemkraft.playback.MeditationController
@@ -18,7 +19,6 @@ import app.atemkraft.playback.SessionAudioCoordinator
 import app.atemkraft.playback.SilenceAfterBreath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -35,7 +35,7 @@ class AppContainer(context: Context) {
      * (Lesezeichen, Markierung, Anpassungen, Bestätigungen): Er lebt so lange wie der Prozess und
      * übersteht Drehen und Verlassen der Seite, anders als `rememberCoroutineScope()`.
      */
-    val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    val appScope: CoroutineScope = supervisedScope(Dispatchers.Main.immediate)
 
     private val database = AtemkraftDatabase.build(context)
 

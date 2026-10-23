@@ -22,9 +22,9 @@ import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.formatClock
+import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -38,13 +38,14 @@ import kotlinx.coroutines.launch
  * im Vordergrund – ein zweiter Start aus dem Hintergrund wäre ab Android 12 verboten.
  *
  * Die Abläufe selbst liegen im [MeditationController] und im [BreathSessionController]; dieser
- * Service zeigt nur die ruhige Dauer-Benachrichtigung des laufenden Ablaufs (die Meditation hat
- * Vorrang, falls beide laufen) und hält die CPU wach. Wann er läuft, regeln die Halter über
+ * Service zeigt nur die ruhige Dauer-Benachrichtigung des laufenden Ablaufs (es läuft höchstens
+ * einer, ein neuer Start ersetzt den alten; im Moment des Übergangs hat die Meditation Vorrang) und
+ * hält die CPU wach. Wann er läuft, regeln die Halter über
  * [PlaybackServiceLinks].
  */
 class PlaybackService : Service() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = supervisedScope(Dispatchers.Main.immediate)
 
     private val container get() = (application as AtemkraftApplication).container
     private val meditation get() = container.meditationController
@@ -76,6 +77,7 @@ class PlaybackService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        running = true
         createChannel()
         // Benachrichtigung bei jeder sichtbaren Änderung aktualisieren – aber NICHT, wenn nichts
         // mehr läuft (IDLE/FINISHED), sonst würde beim Beenden noch „0:00" nachgepostet und bliebe
@@ -130,6 +132,7 @@ class PlaybackService : Service() {
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
         scope.cancel()
+        running = false
         super.onDestroy()
     }
 
@@ -213,6 +216,7 @@ class PlaybackService : Service() {
             getString(R.string.session_notification_channel),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
+            description = getString(R.string.session_notification_channel_description)
             setSound(null, null)
             enableVibration(false)
             setShowBadge(false)
@@ -240,6 +244,15 @@ class PlaybackService : Service() {
          */
         private const val WAKELOCK_TIMEOUT_MS = 3 * 60 * 60 * 1000L
 
+        /**
+         * Läuft der Service gerade (zwischen onCreate und onDestroy)? Die Halter in
+         * [PlaybackServiceLinks] allein wissen das nicht: Der Service kann sich selbst beenden
+         * („Stopp“ in der Benachrichtigung am Ende-Screen) oder vom System beendet werden.
+         */
+        @Volatile
+        internal var running = false
+            private set
+
         fun startIntent(context: Context): Intent = Intent(context, PlaybackService::class.java)
     }
 }
@@ -255,6 +268,10 @@ private fun SessionStatus.isLive() = this != SessionStatus.IDLE && this != Sessi
  * aus dem Hintergrund ab Android 12 nicht). Beim Beenden räumt er die Benachrichtigung zusätzlich
  * app-seitig weg: Der Service tut das in onDestroy zwar selbst, aber dessen Teardown-Timing ist
  * herstellerabhängig (v. a. Samsung) – so bleibt keine Waise zurück. Nur vom Main-Thread nutzen.
+ *
+ * Ob der Service wirklich läuft, sagt [PlaybackService.running], nicht die Halter-Menge: Hat er sich
+ * selbst beendet, während ein Halter eingetragen blieb, startet der nächste Start aus der sichtbaren
+ * App ihn neu, statt die Sitzung ohne Foreground-Service laufen zu lassen.
  */
 class PlaybackServiceLinks(context: Context) {
     private val appContext = context.applicationContext
@@ -263,8 +280,16 @@ class PlaybackServiceLinks(context: Context) {
     /** Halter für einen Ablauf ([owner] = stabile Kennung, z. B. „meditation“). */
     fun link(owner: String): ForegroundLink = object : ForegroundLink {
         override fun start() {
-            if (!holders.add(owner) || holders.size > 1) return // läuft schon für einen anderen Ablauf
-            ContextCompat.startForegroundService(appContext, PlaybackService.startIntent(appContext))
+            holders.add(owner)
+            // Aus der sichtbaren App immer (idempotent: der laufende Service zeigt nur neu an). Aus dem
+            // Hintergrund nur, wenn er nicht schon läuft – sonst übernimmt der Ablauf ihn einfach.
+            if (PlaybackService.running && !appVisible()) return
+            try {
+                ContextCompat.startForegroundService(appContext, PlaybackService.startIntent(appContext))
+            } catch (_: IllegalStateException) {
+                // Start aus dem Hintergrund verboten (ab Android 12): Die Sitzung läuft dann ohne
+                // Service weiter, statt die App zu beenden. Die Aufrufer prüfen vorher [canStartNow].
+            }
         }
 
         override fun stop() {
@@ -279,8 +304,9 @@ class PlaybackServiceLinks(context: Context) {
      * bleibt einfach im Vordergrund) oder die App sichtbar ist; sonst verbietet Android ab 12 den
      * Start aus dem Hintergrund.
      */
-    fun canStartNow(): Boolean {
-        if (holders.isNotEmpty()) return true
+    fun canStartNow(): Boolean = (holders.isNotEmpty() && PlaybackService.running) || appVisible()
+
+    private fun appVisible(): Boolean {
         val info = ActivityManager.RunningAppProcessInfo()
         ActivityManager.getMyMemoryState(info)
         return info.importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND

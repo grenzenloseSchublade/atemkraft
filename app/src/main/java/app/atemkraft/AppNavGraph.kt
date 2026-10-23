@@ -11,6 +11,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -24,6 +26,7 @@ import app.atemkraft.data.Situations
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.domain.UncaughtErrors
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.detail.DetailDestination
@@ -111,8 +114,9 @@ internal fun NavGraphBuilder.appGraph(
     val openLore: (String) -> Unit = { patternId -> navController.navigate(AtemlehreRoute(patternId)) }
 
     composable<AtmenRoute> {
-        // Beim Betreten den Tageswechsel prüfen; danach folgt die Karte dem Repository.
-        remember { exercises.currentDaily() }
+        // Beim Betreten und bei jeder Rückkehr in die App den Tageswechsel prüfen (die App kann
+        // über Mitternacht auf diesem Tab stehen); danach folgt die Karte dem Repository.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { exercises.currentDaily() }
         val dailyPattern by exercises.daily.collectAsStateWithLifecycle()
         // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
         // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
@@ -187,9 +191,9 @@ internal fun NavGraphBuilder.appGraph(
             scope = scope,
             safety = state.safetySettings,
             markedIds = state.markedExercises,
+            // Die Detailseite geht erst, wenn die Übung läuft (beim ersten Mal nach der Erlaubnis-Frage).
             onStart = { exercise, config ->
-                playback.startBreath(exercise, config)
-                navController.popBackStack()
+                playback.startBreath(exercise, config) { navController.popIfTop(entry) }
             },
             onOpenLore = openLore,
             onOpenEditor = { route -> navController.navigate(route) },
@@ -258,7 +262,8 @@ internal fun NavGraphBuilder.appGraph(
         ProgramsScreen(programs = exercises.programs, onBack = back, onOpenExercise = openDetail, markedIds = state.markedExercises)
     }
     pushComposable<AboutRoute> {
-        AboutScreen(onBack = back)
+        val lastError by UncaughtErrors.last.collectAsStateWithLifecycle()
+        AboutScreen(onBack = back, lastError = lastError)
     }
 }
 

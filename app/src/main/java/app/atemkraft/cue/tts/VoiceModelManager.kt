@@ -2,11 +2,11 @@ package app.atemkraft.cue.tts
 
 import android.content.Context
 import app.atemkraft.BuildConfig
+import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,9 +65,14 @@ data class VoiceModelPaths(val model: String, val tokens: String, val dataDir: S
 class VoiceModelManager(context: Context) {
 
     private val appContext = context.applicationContext
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = supervisedScope(Dispatchers.IO)
 
     private val baseDir = File(appContext.filesDir, "tts")
+
+    /**
+     * Laufende Download-/Lösch-Aufträge je Stimme. Geschrieben vom Main-Thread ([download]) und vom
+     * Engine-Thread der Sprache ([delete] nach dem Freigeben der Stimme): nur unter dieser Sperre.
+     */
     private val jobs = mutableMapOf<String, Job>()
 
     private val _states = MutableStateFlow(
@@ -119,27 +124,31 @@ class VoiceModelManager(context: Context) {
         val spec = VoiceCatalog.byId(voiceId) ?: return
         val cur = _states.value[voiceId]
         if (cur is VoiceDownloadState.Downloading || cur is VoiceDownloadState.Downloaded) return
-        val previous = jobs[voiceId]
-        jobs[voiceId] = scope.launch {
-            previous?.cancelAndJoin()
-            runDownload(spec)
+        synchronized(jobs) {
+            val previous = jobs[voiceId]
+            jobs[voiceId] = scope.launch {
+                previous?.cancelAndJoin()
+                runDownload(spec)
+            }
         }
     }
 
     /** Laufenden Download einer Stimme abbrechen. */
     fun cancel(voiceId: String) {
-        jobs[voiceId]?.cancel()
+        synchronized(jobs) { jobs[voiceId] }?.cancel()
     }
 
     /** Eine Stimme wieder entfernen (Speicher freigeben) – deterministisch, abseits des Main-Threads. */
     fun delete(voiceId: String) {
         val spec = VoiceCatalog.byId(voiceId) ?: return
-        val previous = jobs[voiceId]
-        jobs[voiceId] = scope.launch {
-            previous?.cancelAndJoin()
-            dirOf(spec).deleteRecursively()
-            stagingOf(spec).deleteRecursively()
-            setState(voiceId, VoiceDownloadState.NotDownloaded)
+        synchronized(jobs) {
+            val previous = jobs[voiceId]
+            jobs[voiceId] = scope.launch {
+                previous?.cancelAndJoin()
+                dirOf(spec).deleteRecursively()
+                stagingOf(spec).deleteRecursively()
+                setState(voiceId, VoiceDownloadState.NotDownloaded)
+            }
         }
     }
 

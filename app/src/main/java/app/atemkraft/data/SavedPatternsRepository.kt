@@ -15,10 +15,10 @@ import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PatternTexts
+import app.atemkraft.domain.supervisedScope
 import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -77,7 +77,7 @@ class SavedPatternsRepository(
     private val dao: SavedPatternDao,
     private val clearOverrides: suspend (exerciseId: String) -> Unit = {},
     private val overrideMinutes: suspend (exerciseId: String) -> Int? = { null },
-    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    scope: CoroutineScope = supervisedScope(Dispatchers.IO),
 ) {
 
     @Volatile

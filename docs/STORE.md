@@ -102,7 +102,7 @@ Der Upload-Schlüssel liegt wie der Release-Schlüssel außerhalb des Repos (SEC
 | Altersfreigabe (IARC) | Fragebogen ehrlich ausfüllen; erwartbar USK 0 / PEGI 3 |
 | Zielgruppe | 18+ (Atemanhalten und intensive Übungen sind für Kinder ungeeignet; unter 13 griffe die Families-Policy) |
 | Health-Apps-Erklärung | Pflicht für alle Apps. Kategorie *Health and fitness → Stress Management, Relaxation, Mental Acuity*; **nicht** „Medical“ oder „Medical Device“ ([14738291](https://support.google.com/googleplay/android-developer/answer/14738291)) |
-| Foreground-Service | Typ `mediaPlayback` begründen, **mit Video** ([13392821](https://support.google.com/googleplay/android-developer/answer/13392821)): 30–60 s, Session starten, Ton läuft, Bildschirm aus, Gong und Phasentöne laufen weiter, Benachrichtigung sichtbar. Als nicht gelistetes Video hochladen |
+| Foreground-Service | Typ `mediaPlayback` begründen, **mit Video** ([13392821](https://support.google.com/googleplay/android-developer/answer/13392821)): 30–60 s, Session starten, Ton läuft, Bildschirm aus, Gong und Phasentöne laufen weiter, Benachrichtigung sichtbar. Als nicht gelistetes Video hochladen. Eine stille Meditation (Gong aus, keine Stimme) spielt nichts ab, nutzt den Typ aber ebenfalls; deshalb im Formular den Zweck als „Gong, Sprachanleitung und Phasentöne bei ausgeschaltetem Bildschirm“ beschreiben und im Video eine Sitzung mit Ton zeigen |
 | Nachrichten, Behörden, Finanzen | jeweils Nein |
 
 Kategorie im Store: *Gesundheit & Fitness*.

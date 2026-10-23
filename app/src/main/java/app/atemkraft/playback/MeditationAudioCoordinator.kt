@@ -9,9 +9,9 @@ import app.atemkraft.cue.SpeechGuide
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.domain.ToneVolume
+import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,7 +33,7 @@ class MeditationAudioCoordinator(
     private val piper = PiperSpeechGuide(context, voiceModelManager)
     private val system = SpeechGuide(context)
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = supervisedScope(Dispatchers.Main.immediate)
 
     /** Ist die aktive neuronale Stimme einsatzbereit? Steuert Routing UND UI (gleiche Quelle). */
     override val piperReady: StateFlow<Boolean> = piper.available

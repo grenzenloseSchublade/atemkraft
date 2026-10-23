@@ -11,11 +11,11 @@ import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SessionTiming
 import app.atemkraft.domain.ToneVolume
+import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,7 +65,7 @@ class MeditationController(
     dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
     private val random: Random = Random,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val scope = supervisedScope(dispatcher)
 
     /** Countdown und aktive Zeit, geteilt mit der Atem-Session ([SessionClock]). */
     private val clock = SessionClock(now)
@@ -157,6 +157,7 @@ class MeditationController(
      */
     fun start(config: MeditationConfig) {
         audio.prepareSpeech()
+        logEndedEarly() // eine laufende Sitzung wird ersetzt, nicht spurlos verworfen
         runnerJob?.cancel()
         finishing = false
         audio.setMuted(false) // neue Sitzung startet unstumm
@@ -205,19 +206,25 @@ class MeditationController(
     }
 
     /**
-     * „Beenden"/Verwerfen: RUNNING/PAUSED im FREE-Modus → regulärer Abschluss (End-Gong,
-     * Logbuch); ansonsten (TIMED, Countdown, bereits beendeter/leerer Zustand) → Abbruch bzw.
-     * Rückkehr in die Auswahl. Ein bereits FINISHED-Zustand wird nur verworfen (kein
-     * erneutes finish() → keine Doppel-Einträge/-Gongs).
+     * „Beenden" (Overlay, Benachrichtigung) nach der Regel in [SessionTiming.MIN_LOG_MS], für Timer
+     * und offene Sitzung gleich: RUNNING/PAUSED ab einer Minute aktiver Zeit → regulärer Abschluss
+     * (End-Gong, Logbuch, Ende-Screen); darunter, im Countdown oder vom Ende-Screen → Abbruch bzw.
+     * Rückkehr in die Auswahl. Ein bereits FINISHED-Zustand wird nur verworfen (kein erneutes
+     * finish() → keine Doppel-Einträge/-Gongs).
      */
     fun end() {
         val status = _state.value.status
-        when {
-            status == MeditationStatus.RUNNING || status == MeditationStatus.PAUSED ->
-                if (currentConfig.mode == MeditationMode.FREE) finishNow() else abort()
+        val live = status == MeditationStatus.RUNNING || status == MeditationStatus.PAUSED
+        if (live && activeMsNow() >= SessionTiming.MIN_LOG_MS) finishNow() else abort()
+    }
 
-            else -> abort() // IDLE, PREPARING, FINISHED → nur verwerfen/zurücksetzen
-        }
+    /**
+     * Ersetzt durch eine Atemübung: still beenden, ohne End-Gong und Ende-Screen; ab einer Minute
+     * aktiver Zeit steht die Sitzung trotzdem im Logbuch ([SessionTiming.MIN_LOG_MS]).
+     */
+    fun discard() {
+        logEndedEarly()
+        abort()
     }
 
     private fun abort() {
@@ -232,6 +239,31 @@ class MeditationController(
         _state.value = MeditationUiState()
         service.stop()
     }
+
+    /** Aktive Zeit bis jetzt; im Lauf wird bis zu diesem Moment nachgebucht (die Pause hat schon gebucht). */
+    private fun activeMsNow(): Long {
+        if (_state.value.status == MeditationStatus.RUNNING) clock.accrue()
+        return clock.activeMs
+    }
+
+    /** Laufende, nicht schon abschließende Sitzung ab [SessionTiming.MIN_LOG_MS] ins Logbuch (ohne Gong). */
+    private fun logEndedEarly() {
+        val status = _state.value.status
+        if (finishing || (status != MeditationStatus.RUNNING && status != MeditationStatus.PAUSED)) return
+        if (activeMsNow() < SessionTiming.MIN_LOG_MS) return
+        val entry = logEntry()
+        scope.launch { logbook.append(entry) }
+    }
+
+    private fun logEntry() = SessionLogEntry(
+        exerciseId = MEDITATION_ID,
+        exerciseName = MEDITATION_NAME,
+        family = null,
+        startedAtEpochMs = startedAtEpochMs,
+        durationMs = clock.activeMs,
+        roundsCompleted = 0,
+        kind = SessionKind.MEDITATION,
+    )
 
     private fun finishNow() {
         if (finishing) return
@@ -367,20 +399,9 @@ class MeditationController(
         // Nur für einen tatsächlich hörbaren End-Gong den Fokus (erneut) anfordern.
         if (currentConfig.startEndGong && !_state.value.muted) audio.requestFocus()
         if (currentConfig.startEndGong) audio.gong()
-        // Nur nennenswerte Sitzungen protokollieren (verhindert Ein-Sekunden-Einträge).
-        if (clock.activeMs >= MIN_LOG_MS) {
-            logbook.append(
-                SessionLogEntry(
-                    exerciseId = MEDITATION_ID,
-                    exerciseName = MEDITATION_NAME,
-                    family = null,
-                    startedAtEpochMs = startedAtEpochMs,
-                    durationMs = clock.activeMs,
-                    roundsCompleted = 0,
-                    kind = SessionKind.MEDITATION,
-                ),
-            )
-        }
+        // Hierher kommen nur der natürlich abgelaufene Timer und ein Beenden ab einer Minute (end()):
+        // beide zählen nach der Logbuch-Regel ([SessionTiming.MIN_LOG_MS]).
+        logbook.append(logEntry())
         // Die Bilanz am Ende zeigt dieselbe aktive Zeit, die ins Logbuch geht (nicht die Sollzeit).
         _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = clock.activeMs) }
         // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
@@ -397,9 +418,6 @@ class MeditationController(
          */
         private const val MEDITATION_ID = "meditation"
         private const val MEDITATION_NAME = "Meditation"
-
-        /** Mindest-Dauer, ab der eine Sitzung ins Logbuch kommt. */
-        private const val MIN_LOG_MS = 10_000L
 
         /** Stoppuhr-Tick im FREE-Modus (5 fps genügt für Sekundenanzeige). */
         private const val TICK_MS = 200L
