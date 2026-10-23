@@ -1,0 +1,16 @@
+Note: Atemkraft is available in German only. All texts, guidance and voices in the app are German.
+
+Atemkraft guides you through breathing exercises and silent meditation. A circle breathes with you: it grows as you inhale and shrinks as you exhale, with optional tones and vibration.
+
+- 17 guided breathing exercises in four areas, such as resonance breathing, 4-7-8 and box breathing. Each one comes with instructions, safety notes and an honest summary of the research, with references (usually DOI or PMID).
+- Pick a situation such as falling asleep or focus, or search for how you feel.
+- A new breathing pattern every day, and an editor to build your own.
+- Meditation timer with gong and optional spoken guidance; keeps running with the screen off.
+- Background reading on breathing in yoga, pranayama, a glossary and three programmes (SKY, Buteyko, nasal breathing).
+- Log of completed sessions; export and import your patterns.
+
+No account, no ads, no tracking. Everything stays on your device; the app only goes online if you download a voice (from GitHub).
+
+Source code under the MIT licence; the app as a whole is GPL-3.0 because it includes eSpeak NG. Some voices are licensed for non-commercial use only and are marked as such in the app.
+
+Not a medical device; it does not diagnose, treat, cure or prevent any disease. For medical advice, talk to a healthcare professional.

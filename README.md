@@ -1,33 +1,42 @@
 # Atemkraft
 
-Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 20 Atemtechniken; zu jeder steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen.
+Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 17 Atemübungen; dazu kommen drei Programme zum Nachlesen. Zu jeder Übung steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen.
 
-Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf den optionalen Download einer Sprachstimme. Atemkraft ist eine Wellness-App und kein Medizinprodukt; sie ersetzt keinen Rat von Ärztin, Arzt oder anderem Fachpersonal.
+Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf das optionale Laden einer Sprachstimme. Atemkraft ist eine Wellness-App und kein Medizinprodukt; sie ersetzt keinen Rat von Ärztin, Arzt oder anderem Fachpersonal.
 
 <p>
-  <img src="docs/screenshot-atmen.png" width="200" alt="Tab Atmen: Muster des Tages, Suche „Wie fühlst du dich?“ mit Anlässen als Chips und Liste der Atemübungen">
+  <img src="docs/screenshot-atmen.png" width="200" alt="Tab Atmen: Muster des Tages, Suche „Wie fühlst du dich?“ mit Anlässen als Chips, Filter und Liste der Atemübungen">
   <img src="docs/screenshot-sitzung.png" width="200" alt="Laufende Sitzung: Atemkreis mit „Einatmen“, Sekunden und Fortschrittsbogen">
 </p>
 
 ## Funktionen
 
-Beschrieben ist der Stand von `main`; die neueste APK unter Releases kann Einzelnes davon noch nicht haben.
+Beschrieben ist der Stand von `main`; die veröffentlichte Version kann Einzelnes davon noch nicht haben.
 
-- **Atmen:** 17 Übungen in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ zum Antippen und eine Suche nach deinem Befinden.
+- **Atmen:** 17 Übungen in vier Bereichen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ zum Antippen und eine Suche nach deinem Befinden.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
-- **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen.
+- **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Startpunkten und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
 - **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, Begriffe erklärt und Programme wie Buteyko und Nasenatmung zum Nachlesen.
 - **Logbuch und Export:** abgeschlossene Sitzungen, gespeicherte Muster als Datei sichern.
 
 ## Installieren
 
-Atemkraft gibt es als APK auf GitHub, nicht im Play Store (Android 8.0 oder neuer).
+Atemkraft läuft ab Android 8.0. Bezugsquellen:
+
+- **Google Play** und **F-Droid:** folgen; die Links stehen hier, sobald die App dort erscheint.
+- **GitHub:** als APK unter [Releases](https://github.com/grenzenloseSchublade/atemkraft/releases/latest).
+
+Alle Wege liefern dieselbe App mit derselben Signatur. Du kannst deshalb die Quelle wechseln, ohne die App zu deinstallieren: Das Update aus der neuen Quelle installiert sich über die vorhandene App, Logbuch, Muster und Einstellungen bleiben. Das ist wichtig, weil es bewusst kein Cloud-Backup gibt; eine Deinstallation löscht diese Daten, außer du hast deine Muster vorher exportiert.
+
+Ohne Store:
 
 1. Auf dem Handy [Neueste Version](https://github.com/grenzenloseSchublade/atemkraft/releases/latest) öffnen und unter „Assets“ `atemkraft-vX.Y.Z.apk` laden.
 2. Die Datei öffnen und dem Browser einmal erlauben, Apps zu installieren.
 3. „Installieren“ tippen. Updates genauso darüber installieren; Logbuch, Muster und Einstellungen bleiben.
+
+Wer die GitHub-APKs automatisch aktuell halten will, trägt die Repo-Adresse in [Obtainium](https://obtainium.imranr.dev/) ein.
 
 Echte APKs tragen dieses Zertifikat (SHA-256), prüfbar mit [AppVerifier](https://github.com/soupslurpr/AppVerifier) oder `apksigner verify --print-certs`:
 

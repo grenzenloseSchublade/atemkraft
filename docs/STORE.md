@@ -33,21 +33,27 @@ Alles, was beide Stores aus dem Repo lesen, liegt unter `fastlane/metadata/andro
 
 | Datei | Grenze | Stand |
 |---|---|---|
-| `de-DE/title.txt` | 30 Zeichen (Play) | vorhanden |
-| `de-DE/short_description.txt` | 80 Zeichen | vorhanden (71); sollte Nutzen statt Funktionsliste sagen |
-| `de-DE/full_description.txt` | 4000 Zeichen | vorhanden (3988, fast voll); enthält den Disclaimer aus SEC-LEGAL-02 wörtlich |
+| `de-DE/title.txt` | 30 Zeichen (Play) | „Atemkraft – Atemübungen“ (23) |
+| `de-DE/short_description.txt` | 80 Zeichen | Nutzen statt Funktionsliste (75) |
+| `de-DE/full_description.txt` | 4000 Zeichen | Nutzen, „Was Atemkraft anders macht“, „Was drin ist“, Datenschutz, Lizenzen (3228); enthält den Disclaimer aus SEC-LEGAL-02 wörtlich. Zahlen wie in den Daten: 17 angeleitete Übungen in vier Bereichen, drei Programme, sechs Anlässe |
 | `de-DE/changelogs/<versionCode>.txt` | 500 Zeichen | je Release |
-| `en-US/title.txt`, `short_description.txt`, `full_description.txt` | wie oben | **fehlt**; F-Droid fällt für alle anderen Sprachen auf en-US zurück. Kurz halten und sagen, dass die App nur Deutsch spricht |
+| `en-US/title.txt`, `short_description.txt`, `full_description.txt` | wie oben | kurz, erster Satz: App nur auf Deutsch. F-Droid fällt für alle anderen Sprachen auf en-US zurück |
 
-### Grafiken (fehlen alle)
+### Grafiken
 
-| Datei | Format |
-|---|---|
-| `de-DE/images/icon.png` | 512 × 512 px, 32-Bit-PNG mit Alpha, höchstens 1 MB. Aus dem adaptiven Launcher-Icon rendern |
-| `de-DE/images/featureGraphic.png` | 1024 × 500 px, JPEG oder 24-Bit-PNG **ohne** Alpha. Play-Pflicht, F-Droid zeigt es als Kopfbild |
-| `de-DE/images/phoneScreenshots/1.png` … | Play: mindestens 2, höchstens 8; Seiten 320–3840 px, Seitenverhältnis höchstens 2:1, ohne Alpha. Für Empfehlungen in Play mindestens 4 im Hochformat ab 1080 × 1920 px |
+| Datei | Format | Stand |
+|---|---|---|
+| `de-DE/images/icon.png` | 512 × 512 px, 32-Bit-PNG mit Alpha, höchstens 1 MB | aus dem adaptiven Launcher-Icon gerendert (sichtbare 72 dp der 108-dp-Ebenen); Ecken rundet Play |
+| `de-DE/images/featureGraphic.png` | 1024 × 500 px, JPEG oder 24-Bit-PNG **ohne** Alpha. Play-Pflicht, F-Droid zeigt es als Kopfbild | Atemringe des Icons, App-Name, „Atemübungen und Meditation“ |
+| `de-DE/images/phoneScreenshots/1.png` … `6.png` | Play: mindestens 2, höchstens 8; Seiten 320–3840 px, Seitenverhältnis höchstens 2:1, ohne Alpha. Für Empfehlungen in Play mindestens 4 im Hochformat ab 1080 × 1920 px | 1080 × 1920 px (384 dp bei 450 dpi wie das A54, Höhe 9:16): Sitzung, Atmen mit Anlass „Einschlafen“, Detail Resonanz-Atmung, Meditation, Muster-Editor, Lernen |
 
-Die Roborazzi-Bilder (720 × 1560 px) sind dafür zu klein und zu schmal. Besser echte Screenshots vom Gerät oder Roborazzi in höherer Auflösung mit Seitenverhältnis 9:16 rendern. `en-US/images/` kann auf dieselben Dateien verweisen (Kopie).
+Alle Bilder erzeugt `StoreScreenshotTest` (Robolectric, dieselben Gates wie der Screenshot-Test) und schreibt sie nach `de-DE/images/` und `en-US/images/` (gleiche Dateien):
+
+```bash
+scripts/build.sh testDebugUnitTest --tests '*StoreScreenshotTest' -PstoreScreenshots
+```
+
+Ohne `-PstoreScreenshots` schließt Gradle den Test aus; `scripts/check.sh` schreibt also keine Store-Bilder. Neu erzeugen bei sichtbaren Änderungen an den gezeigten Screens, zusammen mit den README-Bildern (Release-Checkliste Schritt 2).
 
 ### Build
 
@@ -59,7 +65,7 @@ Die Roborazzi-Bilder (720 × 1560 px) sind dafür zu klein und zu schmal. Besser
 ### Dokumente
 
 - **Datenschutzerklärung** (`docs/PRIVACY.md`): Play verlangt eine öffentliche, nicht geofence-geschützte URL (kein PDF), die auch in der App verlinkt ist. Die GitHub-Ansicht genügt; besser ein stabiler Link (GitHub Pages oder Tag statt `main`). Ergänzen: Verteilung über Play und F-Droid, Hinweis, dass Google bzw. F-Droid als Store-Betreiber eigene Daten verarbeiten, Kontakt-E-Mail, Anbietername wie im Store. Historische Hinweise auf Versionen bis 1.5.1 in einen Anhang.
-- **README**, Abschnitt *Installieren*: „nicht im Play Store“ ersetzen durch die Bezugsquellen und den Hinweis, dass alle dieselbe Signatur tragen.
+- **README**, Abschnitt *Installieren*: Bezugsquellen (Play und F-Droid „folgen“, GitHub-Releases, Obtainium) und Hinweis auf dieselbe Signatur stehen; die Store-Links nachtragen, sobald die App dort erscheint.
 - **SECURITY.md**: SEC-DIST-01 präzisieren (F-Droid braucht einen Build aus Quellen, `Binaries:` allein reicht nicht); fehlende Prüfskripte (`verify-apk.sh`, Allowlists) anlegen oder die Verweise streichen.
 
 ## Google Play

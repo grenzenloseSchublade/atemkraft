@@ -1,17 +1,22 @@
-Atemkraft ist eine App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 20 Atemtechniken; zu jeder steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen. Dazu ein Meditations-Timer und ein Logbuch.
+Atemkraft begleitet dich, wenn du nach einem vollen Tag zur Ruhe kommen, vor dem Schlafen abschalten oder morgens wach werden willst. Ein Kreis atmet mit dir: Er wächst beim Einatmen und schrumpft beim Ausatmen, dazu auf Wunsch Töne und Vibration. Du kannst die Augen schließen und einfach folgen.
 
-Ohne Konto, ohne Werbung, ohne Tracking. Die App läuft offline; Netz braucht sie nur, wenn du eine Stimme lädst.
+Was Atemkraft anders macht
 
-Funktionen
+- Mit Quellen: Zu jeder Übung steht, was die Studienlage hergibt, mit Sicherheitshinweisen und Quellenangaben, in der Regel mit DOI oder PMID. Ein Etikett zeigt die Studienlage auf einen Blick: „gut belegt“, „in Studien geprüft“ oder „kaum untersucht“.
+- Privat: kein Konto, keine Werbung, kein Tracking. Alles bleibt auf deinem Gerät; Netz braucht die App nur, wenn du eine Stimme lädst.
+- Kostenlos und quelloffen.
 
-- Atmen: 17 Atemübungen in vier Gruppen (Herunterregeln, Hochregeln, Balancieren, Funktionell), z. B. Resonanz-Atmung, 4-7-8, Box-Atmung, Lippenbremse. Jede Übung hat Anleitung, Einordnung der Studienlage, Sicherheitshinweise und Quellenangaben, in der Regel mit DOI oder PMID. Ein Etikett zeigt die Studienlage auf einen Blick: „gut belegt“, „in Studien geprüft“ oder „kaum untersucht“. Bei getakteten Übungen lassen sich Ein-, Aus- und Halte-Zeiten anpassen; die Anpassung bleibt pro Übung gespeichert. Vor Wim Hof und Feueratmung erscheint ein Sicherheitshinweis, beim ersten Mal immer. Übungen, die dir guttun, markierst du mit dem Atemkreis-Symbol „Tut mir gut“. Dazu „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ oder „Fokus“ zum Antippen und eine Suche nach deinem Befinden; sie läuft ohne Netz und wird nicht gespeichert.
-- Sitzung: Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen; ein Bogen um den Kreis zeigt, wie weit die Sitzung ist. Ein Tipp neben den Kreis blendet die Bedienelemente aus (Ruhe-Ansicht), ein zweiter holt sie zurück. Am Ende fragt die App „Wie fühlst du dich?“ und zeigt eine kurze Bilanz mit Runden, Dauer und Atemzügen. Wahlweise ein kurzer Ton bei jedem Phasenwechsel oder ein Dauerton, dazu Vibration bei jedem Phasenwechsel; alles abschaltbar.
-- Muster des Tages: jeden Tag ein neues, zufällig erzeugtes Atemmuster in festen Grenzen. Gedacht als Abwechslung, ohne Wirkversprechen. Muster lassen sich neu würfeln und speichern.
-- Eigene Kreationen: einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen: Punkte der Atemkurve ziehen, Vorlage als Start, Vorschau mit Ton. Gesammelt im Tab „Eigene“.
-- Meditation: Die Dauer stellst du an einem Zeitring ein: 1–60 min in Minutenschritten oder ∞ für eine offene Sitzung mit Stoppuhr. Gong aus, zu Start und Ende oder in festen Abständen. Optional eine gesprochene Anleitung: mit der Sprachausgabe deines Geräts oder mit einer ladbaren deutschen Stimme, die du vorher anhören kannst. Läuft auch bei ausgeschaltetem Bildschirm; auf Wunsch geht eine Atemübung nahtlos in sie über.
-- Logbuch: abgeschlossene Sitzungen nach Heute, Gestern, Woche und Monat, dazu Wochenübersicht, Tage in Folge und Minuten gesamt.
-- Lernen: Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, je mit Übung zum Ausprobieren, ein Glossar und Programme wie SKY, Buteyko und Nasenatmung zum Nachlesen.
-- Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren, an einen Ort deiner Wahl.
+Was drin ist
+
+- Atmen: 17 angeleitete Atemübungen in vier Bereichen (Herunterregeln, Hochregeln, Balancieren, Funktionell), etwa Resonanz-Atmung, 4-7-8, Box-Atmung und Lippenbremse. Ein-, Aus- und Halte-Zeiten lassen sich pro Übung anpassen. Vor intensiven Übungen wie Wim Hof oder Feueratmung zeigt die App einen Sicherheitshinweis.
+- Wie fühlst du dich?: sechs Anlässe wie „Einschlafen“, „Fokus“ oder „Stress“ zum Antippen und eine Suche nach deinem Befinden. Sie läuft ohne Netz und wird nicht gespeichert.
+- Sitzung: Kreis, Fortschrittsbogen und eine Ruhe-Ansicht ohne Bedienelemente. Am Ende fragt die App, wie du dich fühlst, und zeigt eine kurze Bilanz.
+- Muster des Tages: jeden Tag ein neues Atemmuster in festen Grenzen, als Abwechslung ohne Wirkversprechen. Neu würfeln oder speichern.
+- Eigene Kreationen: einen Atemzug selbst zusammenstellen, Punkte der Atemkurve ziehen, mit Vorschau und Ton.
+- Meditation: Dauer am Zeitring einstellen (1–60 min oder offen mit Stoppuhr), Gong zu Start und Ende oder in Abständen, optional eine gesprochene Anleitung. Läuft auch bei ausgeschaltetem Bildschirm; auf Wunsch geht eine Atemübung nahtlos in die Stille über.
+- Lernen: Atemlehre, Pranayama mit Grundlagen und Techniken wie Ujjayi, Begriffe erklärt und drei Programme zum Nachlesen (SKY, Buteyko, Nasenatmung).
+- Logbuch: abgeschlossene Sitzungen, Wochenübersicht, Tage in Folge und Minuten gesamt.
+- Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren.
 
 Datenschutz
 
@@ -19,6 +24,6 @@ Atemkraft erhebt keine Daten über dich: kein Konto, kein eigener Server, keine 
 
 Lizenzen
 
-Der Quellcode steht unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later) über sherpa-onnx; Lizenztexte liegen in der App. Die Stimmen haben eigene Lizenzen; einige sind nur für nicht kommerzielle Nutzung freigegeben und in der App so gekennzeichnet. Übersicht in der App unter Über Atemkraft → Lizenzen; die vollständige Liste mit Versionen und Belegen steht im Quellcode-Repo auf GitHub (THIRD_PARTY_LICENSES.md).
+Quellcode unter der MIT-Lizenz. Die App enthält eSpeak NG (GPL-3.0-or-later), daher gilt für sie als Ganzes die GPL-3.0. Stimmen haben eigene Lizenzen, einige nur für nicht kommerzielle Nutzung; sie sind in der App gekennzeichnet. Übersicht unter Über Atemkraft → Lizenzen, die vollständige Liste in THIRD_PARTY_LICENSES.md im Quellcode-Repo auf GitHub.
 
 Kein Medizinprodukt; diagnostiziert, behandelt, heilt oder verhindert keine Erkrankung. Für medizinischen Rat wende dich an Fachpersonal.
