@@ -18,6 +18,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import app.atemkraft.data.Areas
+import app.atemkraft.data.Pranayama
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
@@ -131,6 +132,7 @@ internal fun NavGraphBuilder.appGraph(
             situations = Situations.all,
             areas = Areas.all,
             resolve = { id -> exercises.byId(id) },
+            yogaExerciseIds = Pranayama.exerciseIds,
             onSelect = openDetail,
             onOpenSettings = { navController.navigate(SettingsRoute()) },
             markedIds = state.markedExercises,

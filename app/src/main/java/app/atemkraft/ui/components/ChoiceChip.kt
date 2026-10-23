@@ -5,14 +5,17 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -52,8 +55,11 @@ import app.atemkraft.ui.theme.Sizes
 /** Test-Tag der Reihe aus [ChoiceChip]s: Der ScreenshotTest prüft, dass kein Chip beim Markieren oder Abblenden verrutscht. */
 const val CHOICE_CHIPS_TAG = "choice-chips"
 
+/** Test-Tag der einzeiligen Filterreihe ([FilterChipRow]). */
+const val FILTER_CHIPS_TAG = "filter-chips"
+
 /**
- * Auswählbarer Chip (Anlässe im Tab „Atmen“): sichtbar [Sizes.ButtonHeight] hoch wie die Segmente
+ * Auswählbarer Chip (Anlässe und Filter im Tab „Atmen“): sichtbar [Sizes.ButtonHeight] hoch wie die Segmente
  * einer `SegmentedChoiceRow` (auch eine Auswahl), Tippfläche 48 dp; Form `shapes.small`, Polster
  * waagerecht [Dimens.ChipPadding], Beschriftung `labelLarge` in einer Zeile – nie verkleinert,
  * nie umbrochen: Der Chip ist so breit wie seine Beschriftung; reicht der Platz nicht, scrollt
@@ -71,7 +77,8 @@ const val CHOICE_CHIPS_TAG = "choice-chips"
  * Wahl steht erst als ⚠-Zeile in der Empfehlung darunter ([WarnText]).
  *
  * TalkBack: Rolle Optionsfeld, „ausgewählt“/„nicht ausgewählt“; die Reihe ist eine
- * [ChoiceChipRow] (`selectableGroup`).
+ * [ChoiceChipRow] (`selectableGroup`). Mit [multiSelect] (Filter, [FilterChipRow]) ist der Chip
+ * ein Kontrollkästchen (`toggleable`, „aktiviert“/„nicht aktiviert“), sonst gleich.
  */
 @Composable
 fun ChoiceChip(
@@ -79,6 +86,7 @@ fun ChoiceChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    multiSelect: Boolean = false,
 ) {
     val shape = MaterialTheme.shapes.small
     val fill by animateColorAsState(if (selected) SegmentSelected else Color.Transparent, label = "chipFill")
@@ -91,7 +99,13 @@ fun ChoiceChip(
             .clip(shape)
             .background(fill)
             .border(Dimens.BorderChip, border, shape)
-            .selectable(selected = selected, role = Role.RadioButton, interactionSource = null, indication = ripple(), onClick = onClick)
+            .then(
+                if (multiSelect) {
+                    Modifier.toggleable(value = selected, role = Role.Checkbox, interactionSource = null, indication = ripple()) { onClick() }
+                } else {
+                    Modifier.selectable(selected = selected, role = Role.RadioButton, interactionSource = null, indication = ripple(), onClick = onClick)
+                },
+            )
             // Fest, damit die Rundung keine Glyphen anschneidet (LAYOUT-03); schmaler als ein
             // M3-Chip (16), damit die sechs Anlässe auf 360 dp in zwei Zeilen passen.
             .padding(horizontal = Dimens.ChipPadding),
@@ -139,10 +153,10 @@ fun <T> ChoiceChipRow(
     chip: @Composable (item: T, order: Modifier) -> Unit,
 ) {
     val scroll = rememberScrollState()
-    val bleed = with(LocalDensity.current) { endBleed.roundToPx() }
-    BoxWithConstraints(modifier = modifier.bleedEnd(endBleed)) {
+    val bleedPx = with(LocalDensity.current) { endBleed.roundToPx() }
+    BoxWithConstraints(modifier = modifier.bleed(end = endBleed)) {
         // Platz für die Chips ohne Scrollen: bis zur Inhaltskante, nicht in den Überstand.
-        val limit = (constraints.maxWidth - bleed).coerceAtLeast(0)
+        val limit = (constraints.maxWidth - bleedPx).coerceAtLeast(0)
         Box(
             Modifier
                 .fillMaxWidth()
@@ -170,7 +184,7 @@ fun <T> ChoiceChipRow(
                 val lineWidth = lines.maxOfOrNull { line -> line.sumOf { widths[it] } + gap * (line.size - 1).coerceAtLeast(0) } ?: 0
                 val heights = lines.map { line -> line.maxOfOrNull { chips[it].height } ?: 0 }
                 // Im Scrollfall reicht der Inhalt um den Überstand weiter: Ganz gescrollt steht der letzte Chip an der Inhaltskante.
-                val width = maxOf(if (fits) lineWidth else lineWidth + bleed, constraints.minWidth)
+                val width = maxOf(if (fits) lineWidth else lineWidth + bleedPx, constraints.minWidth)
                 val xs = IntArray(chips.size)
                 val ys = IntArray(chips.size)
                 var y = 0
@@ -211,15 +225,60 @@ private fun flowLines(widths: List<Int>, limit: Int, gap: Int): List<List<Int>> 
 }
 
 /**
- * Meldet sich um [bleed] schmaler, als es misst, und ragt damit am Ende über das Polster des
- * Behälters hinaus (wie [flushEnd], nur wächst hier der Inhalt in den Rand). Der Behälter
- * schneidet an seiner Kante ab – die Karte an ihrem Rand.
+ * Einzeilige Reihe aus [ChoiceChip]s mit `multiSelect` (Filterreihe über der
+ * Übungsliste, MUSTER-12, Nutzer 2026-10-23): dieselben Chips wie die Anlässe, nebeneinander
+ * `GapSmall`, aber **immer eine Zeile**. Passt sie nicht, scrollt sie seitlich wie die
+ * [ChoiceChipRow] (gemeinsam: [bleed], [edgeFade]); die Fläche reicht dabei um [sideBleed] auf
+ * beiden Seiten über den Rand hinaus – in einer Liste das `ScreenPadding`, also bis an den
+ * Bildschirmrand. In Ruhe steht der erste Chip an der Inhaltskante, ganz gescrollt der letzte; ein
+ * Verlauf nur an der Seite, auf der noch Chips liegen.
+ *
+ * TalkBack: eigene Traversal-Gruppe namens [groupName], die Chips als Kontrollkästchen in ihrer
+ * Reihenfolge; ein fokussierter Chip scrollt von selbst ins Bild.
  */
-private fun Modifier.bleedEnd(bleed: Dp): Modifier = layout { measurable, constraints ->
-    val px = bleed.roundToPx()
+@Composable
+fun <T> FilterChipRow(
+    groupName: String,
+    items: List<T>,
+    modifier: Modifier = Modifier,
+    sideBleed: Dp = 0.dp,
+    chip: @Composable (item: T) -> Unit,
+) {
+    val scroll = rememberScrollState()
+    Box(
+        modifier
+            .bleed(start = sideBleed, end = sideBleed)
+            .fillMaxWidth()
+            .edgeFade(scroll)
+            .horizontalScroll(scroll),
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = sideBleed)
+                .testTag(FILTER_CHIPS_TAG)
+                .semantics {
+                    contentDescription = groupName
+                    isTraversalGroup = true
+                },
+            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items.forEach { chip(it) }
+        }
+    }
+}
+
+/**
+ * Meldet sich um [start] + [end] schmaler, als es misst, und ragt damit über das Polster des
+ * Behälters hinaus (wie [flushEnd], nur wächst hier der Inhalt in den Rand; RTL gespiegelt). Der
+ * Behälter schneidet an seiner Kante ab – die Karte an ihrem Rand, die Liste am Bildschirmrand.
+ */
+private fun Modifier.bleed(start: Dp = 0.dp, end: Dp = 0.dp): Modifier = layout { measurable, constraints ->
+    val startPx = start.roundToPx()
+    val px = startPx + end.roundToPx()
     val wide = if (constraints.hasBoundedWidth) constraints.copy(maxWidth = constraints.maxWidth + px) else constraints
     val placeable = measurable.measure(wide)
-    layout((placeable.width - px).coerceAtLeast(0), placeable.height) { placeable.placeRelative(0, 0) }
+    layout((placeable.width - px).coerceAtLeast(0), placeable.height) { placeable.placeRelative(-startPx, 0) }
 }
 
 /**

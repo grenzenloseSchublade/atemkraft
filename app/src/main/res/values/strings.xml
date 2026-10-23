@@ -78,6 +78,21 @@
     <string name="situations_search_none">Nichts gefunden</string>
     <string name="action_show_all">Alle zeigen</string>
 
+    <!-- Filterreihe über der Übungsliste im Atmen-Tab (MUSTER-12): Kopf, Name der Gruppe für
+         TalkBack, die Filter (quer zu den Familien, sachlich, kein Versprechen), Trefferstatus.
+         Die Chips stehen in einer Zeile und brechen nie um. -->
+    <string name="home_all_exercises">Alle Übungen</string>
+    <string name="filter_group">Übungen filtern</string>
+    <string name="filter_short">Bis %1$d\u00A0min</string>
+    <string name="filter_no_hold">Ohne Halten</string>
+    <string name="filter_yoga">Aus dem Yoga</string>
+    <plurals name="filter_count">
+        <item quantity="one">%1$d Übung</item>
+        <item quantity="other">%1$d Übungen</item>
+    </plurals>
+    <string name="filter_none">Keine Übung passt zu allen Filtern</string>
+    <string name="action_filter_reset">Filter zurücksetzen</string>
+
     <!-- Mini-Player / Overlay -->
     <string name="action_minimize">Minimieren</string>
     <string name="action_sound">Ton</string>

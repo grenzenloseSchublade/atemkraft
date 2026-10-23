@@ -53,7 +53,8 @@ import app.atemkraft.ui.theme.Sizes
  * Farbe des Kopfes an Stelle [index] eines Screens (FARBE-07): reihum durch [HeadingRing], der
  * oberste Kopf ist 0. Der Index ist die Lage des Kopfes, ausdrücklich gesetzt, kein Zähler der
  * Komposition – ein zugeklappter Abschnitt behält seine Farbe. Die Farbe trägt keine Bedeutung.
- * Nicht im Atmen-Tab: Dort tragen die Köpfe die Familienfarben.
+ * Im Atmen-Tab tragen die Köpfe die Familienfarben; nur „Alle Übungen“ über der Filterreihe steht
+ * in `headingColor(0)`.
  */
 fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
 

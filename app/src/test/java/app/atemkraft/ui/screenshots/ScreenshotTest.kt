@@ -29,10 +29,12 @@ import app.atemkraft.data.Areas
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.MeditationDisplay
+import app.atemkraft.data.Pranayama
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseFilters
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
@@ -61,6 +63,7 @@ import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.CHOICE_CHIPS_TAG
+import app.atemkraft.ui.components.FILTER_CHIPS_TAG
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.ExerciseDetailScreen
@@ -116,8 +119,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     private val app get() = RuntimeEnvironment.getApplication()
 
     /**
-     * Die vier Tabs: Atmen als Liste, mit dem Anlass mit den meisten Übungen gewählt (samt Verweis
-     * auf seinen Bereich), mit diesem Bereich gewählt, mit Suchtreffern und mit einem reinen
+     * Die vier Tabs: Atmen als Liste, mit zwei Filtern (eine Zeile, [filterRow]), mit dem Anlass mit
+     * den meisten Übungen gewählt (samt Verweis auf seinen Bereich), mit diesem Bereich gewählt, mit Suchtreffern und mit einem reinen
      * Bereichstreffer – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht, und [chipRows],
      * dass es genau zwei Zeilen sind; „Eigene“ mit
      * Verlauf (Beispieleinträge), „Tut mir gut“ und vier Mustern (eines mit langem Namen) und leer;
@@ -134,6 +137,11 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             (now + chipRows()).map { "${device.name}\tfs${(fontScale * 100).toInt()}\tCHIP\t$it" }
         }
         snap("01_atmen", measure = sameChips) { BreatheTab() }
+        // Zwei Filter gewählt (MUSTER-12): Familien ohne Treffer fallen weg, die Reihe bleibt eine Zeile.
+        snap("01_atmen_filter", prepare = {
+            compose.onNodeWithText(app.getString(R.string.filter_short, ExerciseFilters.SHORT_MAX_MINUTES)).performClick()
+            compose.onNodeWithText(app.getString(R.string.filter_no_hold)).performClick()
+        }, measure = { sameChips() + filterRow() }) { BreatheTab() }
         val widest = Situations.all.maxBy { it.exerciseIds.size }
         snap("01_atmen_anlass_offen", prepare = { compose.onNodeWithText(widest.shortLabel).performClick() }, measure = sameChips) { BreatheTab() }
         snap("01_atmen_suche_treffer", prepare = {
@@ -212,6 +220,16 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         return "$lines Zeilen, Scroll-Weg $scroll dp"
     }
 
+    /** MUSTER-12: Die Filterreihe ([FILTER_CHIPS_TAG]) steht immer in einer Zeile. Ergebnis: Scroll-Weg in dp. */
+    private fun filterRow(): List<String> {
+        val row = compose.onNodeWithTag(FILTER_CHIPS_TAG, useUnmergedTree = true).fetchSemanticsNode()
+        val lines = row.children.map { it.positionInRoot.y.roundToInt() }.distinct().size
+        assertEquals("Filterreihe nicht in einer Zeile (MUSTER-12)", 1, lines)
+        val scroller = generateSequence(row.parent) { it.parent }.first { SemanticsProperties.HorizontalScrollAxisRange in it.config }
+        val scroll = (scroller.config[SemanticsProperties.HorizontalScrollAxisRange].maxValue() / compose.density.density).roundToInt()
+        return listOf("${device.name}\tfs${(fontScale * 100).toInt()}\tFILTER\t1 Zeile, Scroll-Weg $scroll dp")
+    }
+
     @Composable
     private fun BreatheTab() {
         HomeScreen(
@@ -221,6 +239,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             situations = Situations.all,
             areas = Areas.all,
             resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
+            yogaExerciseIds = Pranayama.exerciseIds,
             daily = daily,
             dailySaved = false,
             onRegenerateDaily = {},

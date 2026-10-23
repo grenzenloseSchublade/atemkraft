@@ -376,6 +376,15 @@ object Pranayama {
     )
 
     /**
+     * Ids der Übungen, die eine Technik dieser Seite üben ([PranayamaTechnique.exerciseId] und
+     * [PranayamaTechnique.moreExerciseIds]): Grundlage des Filters „Aus dem Yoga“ im Atmen-Tab
+     * (`ExerciseFilter.YOGA`, Nutzer 2026-10-23).
+     */
+    val exerciseIds: Set<String> by lazy {
+        techniques.flatMap { listOfNotNull(it.exerciseId) + it.moreExerciseIds }.toSet()
+    }
+
+    /**
      * Studienlage einer Technik: bei einer Technik mit Übung die Stufe der Übung (eine Quelle für
      * Seite und Detailseite, TEXT-07), sonst [PranayamaTechnique.evidence].
      */

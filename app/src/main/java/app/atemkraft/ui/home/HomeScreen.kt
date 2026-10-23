@@ -21,6 +21,8 @@ import app.atemkraft.domain.BreathingArea
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseFilter
+import app.atemkraft.domain.ExerciseFilters
 import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
@@ -38,13 +40,14 @@ import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
+import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Atmen-Tab: alles, was man starten kann. Von oben: Muster des Tages, der Block „Wie fühlst du
- * dich?“ (Suchfeld und die sechs Anlässe als Chips, [FeelingBlock]), dann die Übungen nach
- * Familien – deren Köpfe sind die einzige große Überschriften-Ebene unter dem Muster des Tages.
+ * dich?“ (Suchfeld und die sechs Anlässe als Chips, [FeelingBlock]), dann „Alle Übungen“ mit der
+ * Filterreihe und darunter die Übungen nach Familien mit ihren farbigen Köpfen.
  * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
  * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
@@ -60,6 +63,12 @@ import app.atemkraft.ui.theme.SECONDARY
  *   Treffer markiert, darunter stehen erst die Empfehlungen der Anlässe, beste zuerst, dann die
  *   direkt getroffenen Bereiche. Ein Chip leert die Eingabe, eine Eingabe hebt die Wahl auf.
  *
+ * Im Grundzustand steht über den Familien der Kopf „Alle Übungen“ mit der Filterreihe
+ * ([ExerciseFilterRow], MUSTER-12, Nutzer 2026-10-23): Filter quer zu den Familien, UND-verknüpft;
+ * die Liste bleibt nach Familien gruppiert, Familien ohne Treffer fallen samt Kopf weg. Die Wahl
+ * lebt nur in `rememberSaveable` und bleibt, während ein Anlass, eine Suche oder ein Bereich
+ * gewählt ist – die Reihe ist dann ausgeblendet.
+ *
  * Der Bereich eines Anlasses ist die häufigste Familie seiner Übungen ([area]). Das Feld bekommt
  * beim Öffnen keinen Fokus; die Eingabe lebt nur in `rememberSaveable` – nie in DataStore oder
  * Log (SEC-PRIV-03/04). System-Zurück leert zuerst Wahl und Suche und schließt die Tastatur.
@@ -70,6 +79,8 @@ fun HomeScreen(
     situations: List<SituationRecommendation>,
     areas: List<BreathingArea>,
     resolve: (String) -> Exercise?,
+    // Übungen der Seite „Pranayama“ für den Filter „Aus dem Yoga“.
+    yogaExerciseIds: Set<String>,
     daily: DailyPattern,
     dailySaved: Boolean,
     onRegenerateDaily: () -> Unit,
@@ -84,6 +95,7 @@ fun HomeScreen(
     // Höchstens eins von beiden ist gesetzt, und nur bei leerer Eingabe (siehe KDoc).
     var chosen by rememberSaveable { mutableStateOf<Situation?>(null) }
     var chosenArea by rememberSaveable { mutableStateOf<BreathingFamily?>(null) }
+    var filters by rememberSaveable { mutableStateOf(emptySet<ExerciseFilter>()) }
     val results = remember(query, situations, areas) { SituationSearch.search(query, situations, areas) }
     val focusManager = LocalFocusManager.current
     val showAll = {
@@ -108,6 +120,7 @@ fun HomeScreen(
     val filtering = chosen != null || chosenArea != null || results != null
     val highlighted = shownSituations.map { it.situation }.toSet()
     val familyExercises = exercisesByFamily.toMap()
+    val filtered = remember(exercisesByFamily, filters, yogaExerciseIds) { ExerciseFilters.apply(exercisesByFamily, filters, yogaExerciseIds) }
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled ->
@@ -213,7 +226,19 @@ fun HomeScreen(
                 }
             }
         } else {
-            exercisesByFamily.forEach { (family, exercises) ->
+            item(key = "all-header") {
+                // Kein Familienkopf: erster Ton des Kopf-Rings (FARBE-07, Ausnahme Atmen-Tab).
+                SectionHeader(title = stringResource(R.string.home_all_exercises), color = headingColor(0))
+            }
+            item(key = "filters") {
+                ExerciseFilterRow(active = filters, onToggle = { filters = if (it in filters) filters - it else filters + it })
+            }
+            if (filters.isNotEmpty()) {
+                item(key = "filter-status") {
+                    FilterStatus(count = filtered.sumOf { it.second.size }, onReset = { filters = emptySet() })
+                }
+            }
+            filtered.forEach { (family, exercises) ->
                 item(key = "header-${family.name}") {
                     SectionHeader(title = family.title(), color = family.color())
                 }
