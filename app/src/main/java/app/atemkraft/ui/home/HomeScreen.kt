@@ -2,7 +2,6 @@ package app.atemkraft.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
@@ -22,6 +21,7 @@ import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternTexts
+import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
 import app.atemkraft.ui.components.AppIconButton
@@ -37,19 +37,22 @@ import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
-import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
- * Atmen-Tab: alles, was man starten kann. Von oben: Muster des Tages, der Abschnitt „Anlass“ mit
- * der Befindens-Suche und den sechs Anlässen zum Stöbern (aufklappbar, Standard zu), dann die
- * Übungen nach Familien. Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
+ * Atmen-Tab: alles, was man starten kann. Von oben: Muster des Tages, der Block „Wie fühlst du
+ * dich?“ (Suchfeld und die sechs Anlässe als Chips, [FeelingBlock]), dann die Übungen nach
+ * Familien – deren Köpfe sind die einzige große Überschriften-Ebene unter dem Muster des Tages.
+ * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
- * Befindens-Suche (MUSTER-09): Das Feld steht immer da, ohne Fokus beim Öffnen. Sobald die
- * Eingabe ein Suchwort enthält ([SituationSearch]), stehen unter dem Feld nur die passenden
- * Anlässe, aufgeklappt und beste zuerst; die Anlässe zum Stöbern und die Familien treten solange
- * zurück. Die Eingabe lebt nur in `rememberSaveable` – nie in DataStore oder Log
- * (SEC-PRIV-03/04). System-Zurück leert zuerst die Suche und schließt die Tastatur.
+ * Ein Zustand, nicht zwei (MUSTER-09): Ein Tipp auf einen Chip wählt den Anlass – unter dem Block
+ * stehen sein Begründungssatz und seine Übungen, die Familien treten zurück; ein zweiter Tipp auf
+ * denselben Chip oder System-Zurück zeigt wieder alles. Sobald die Eingabe ein Suchwort enthält
+ * ([SituationSearch]), leuchten die Chips der Treffer, die übrigen werden blass, und darunter
+ * stehen die Empfehlungen der Treffer, beste zuerst. Ein Chip leert die Eingabe, eine Eingabe hebt
+ * die Wahl auf. Das Feld bekommt beim Öffnen keinen Fokus; die Eingabe lebt nur in
+ * `rememberSaveable` – nie in DataStore oder Log (SEC-PRIV-03/04). System-Zurück leert zuerst
+ * Wahl und Suche und schließt die Tastatur.
  */
 @Composable
 fun HomeScreen(
@@ -67,13 +70,22 @@ fun HomeScreen(
     onOpenPatternEditor: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
+    var chosen by rememberSaveable { mutableStateOf<Situation?>(null) }
     val results = remember(query, situations) { SituationSearch.search(query, situations) }
     val focusManager = LocalFocusManager.current
-    val clearSearch = {
+    val showAll = {
         query = ""
+        chosen = null
         focusManager.clearFocus()
     }
-    BackHandler(enabled = query.isNotEmpty(), onBack = clearSearch)
+    BackHandler(enabled = query.isNotEmpty() || chosen != null, onBack = showAll)
+    // Was unter dem Block steht: der gewählte Anlass, die Suchtreffer oder nichts (dann die Familien).
+    val shown: List<SituationRecommendation>? = when {
+        chosen != null -> situations.filter { it.situation == chosen }
+        else -> results
+    }
+    val highlighted = shown.orEmpty().map { it.situation }.toSet()
+    val dimmed = if (results != null) situations.map { it.situation }.toSet() - highlighted else emptySet()
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled ->
@@ -120,31 +132,41 @@ fun HomeScreen(
             }
         }
 
-        // Einstieg „nach Befinden“: Kopf, Suchfeld und Anlässe bilden einen Abschnitt. Der Kopf
-        // steht über dem Feld, damit es nicht zum Muster des Tages darüber zu gehören scheint.
+        // Einstieg „nach Befinden“ ohne eigene Überschrift: Feld und Anlässe in einer Fläche.
         if (situations.isNotEmpty()) {
-            item(key = "situations-header") {
-                SectionHeader(title = stringResource(R.string.home_situations), color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY))
-            }
-            item(key = "situations-search") {
-                SituationSearchField(query = query, onQueryChange = { query = it })
+            item(key = "feeling") {
+                FeelingBlock(
+                    query = query,
+                    onQueryChange = { text ->
+                        query = text
+                        if (text.isNotEmpty()) chosen = null
+                    },
+                    situations = situations,
+                    highlighted = highlighted,
+                    dimmed = dimmed,
+                    onChipClick = { situation ->
+                        // Zweiter Tipp auf denselben Chip zeigt wieder alles; ein Chip leert die Eingabe.
+                        chosen = if (chosen == situation) null else situation
+                        query = ""
+                        focusManager.clearFocus()
+                    },
+                )
             }
         }
         if (results != null) {
             item(key = "search-status") {
-                SearchStatus(count = results.size, onShowAll = clearSearch)
+                SearchStatus(count = results.size, onShowAll = showAll)
             }
-            // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der Übersicht zu
-            // überschreiben. Köpfe reihum nach ihrer Lage unter den Treffern (FARBE-07).
-            itemsIndexed(results, key = { _, rec -> "q-${rec.situation.name}" }) { index, rec ->
-                SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
+        }
+        if (shown != null) {
+            val withTitle = shown.size > 1
+            shown.forEach { rec ->
+                item(key = "rec-${rec.situation.name}") { RecommendationIntro(rec, withTitle) }
+                items(rec.exerciseIds.mapNotNull(resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
+                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                }
             }
         } else {
-            // Standard: alle Anlässe zu – der Tab bleibt kurz, die Familien folgen gleich.
-            itemsIndexed(situations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
-                SituationSection(rec, index, initiallyExpanded = false, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
-            }
-
             exercisesByFamily.forEach { (family, exercises) ->
                 item(key = "header-${family.name}") {
                     SectionHeader(title = family.title(), color = family.color())
@@ -169,7 +191,7 @@ private fun DailyPatternCard(
     onSavedChange: (Boolean) -> Unit,
 ) {
     PatternCard(exercise = daily.exercise, patternLine = PatternTexts.hintFor(daily.spec), onClick = onClick) {
-        // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Meine Muster“ – der
+        // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Eigene Kreationen“ – der
         // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
         // erneutes Tippen nimmt das Muster wieder heraus.
         AppIconToggle(

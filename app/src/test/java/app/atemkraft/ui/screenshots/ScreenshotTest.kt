@@ -12,14 +12,11 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToIndex
-import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
@@ -59,6 +56,7 @@ import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
+import app.atemkraft.ui.components.CHOICE_CHIPS_TAG
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.ExerciseDetailScreen
@@ -75,6 +73,7 @@ import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsUiState
+import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -83,6 +82,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.ZoneId
+import kotlin.math.roundToInt
 
 /**
  * Alle Screens durch die Gates des [ScreenshotHarness] (Wortbruch, Abschneiden, Tippflächen) auf
@@ -111,26 +111,28 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     private val app get() = RuntimeEnvironment.getApplication()
 
     /**
-     * Die vier Tabs: Atmen als Liste, mit dem größten Anlass aufgeklappt und mit Suchtreffern;
-     * „Eigene“ mit allen drei Abschnitten aufgeklappt („Tut mir gut“, vier Muster – eines mit langem
-     * Namen –, Logbuch mit Beispieleinträgen); Meditation mit offener Feinwahl auf 12 min (scrollt
-     * bis 1,3 nicht, LAYOUT-08) und ∞ mit aufgeklapptem Klang (akzeptierte Scroll-Ausnahme S-40).
+     * Die vier Tabs: Atmen als Liste, mit dem Anlass mit den meisten Übungen gewählt und mit
+     * Suchtreffern – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht; „Eigene“ mit
+     * Verlauf (Beispieleinträge), „Tut mir gut“ und vier Mustern (eines mit langem Namen) und leer;
+     * Meditation mit offener Feinwahl auf 12 min (scrollt bis 1,3 nicht, LAYOUT-08) und ∞ mit
+     * aufgeklapptem Klang (akzeptierte Scroll-Ausnahme S-40).
      */
     @Test
     fun tabs() {
-        snap("01_atmen") { BreatheTab() }
+        var chips: List<String>? = null
+        val sameChips = {
+            val now = chipLayout()
+            val first = chips ?: now.also { chips = it }
+            assertEquals("Anlass-Chips verrutscht (Größe oder Zeile geändert)", first, now)
+            now.map { "${device.name}\tfs${(fontScale * 100).toInt()}\tCHIP\t$it" }
+        }
+        snap("01_atmen", measure = sameChips) { BreatheTab() }
         val widest = Situations.all.maxBy { it.exerciseIds.size }
-        snap("01_atmen_anlass_offen", prepare = { compose.onNodeWithText(widest.title).performClick() }) { BreatheTab() }
+        snap("01_atmen_anlass_offen", prepare = { compose.onNodeWithText(widest.shortLabel).performClick() }, measure = sameChips) { BreatheTab() }
         snap("01_atmen_suche_treffer", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
-        }) { BreatheTab() }
-        // Alle drei Abschnitte, aufgeklappt (das Logbuch per Tipp, es startet zu; dafür kurz hin und zurück scrollen).
-        snap("13_eigene", tab = Tab.EIGENE, prepare = {
-            val list = compose.onNode(hasScrollToKeyAction())
-            list.performScrollToKey("logbook")
-            compose.onNodeWithText(app.getString(R.string.settings_log_title)).performClick()
-            list.performScrollToIndex(0)
-        }) {
+        }, measure = sameChips) { BreatheTab() }
+        snap("13_eigene", tab = Tab.EIGENE) {
             // „Tut mir gut“ mit den zwei längsten Übungsnamen.
             val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
             OwnPatternsScreen(
@@ -157,6 +159,22 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("03_meditation_frei", tab = Tab.MEDITATION, acceptedScroll = true, prepare = {
             compose.onNodeWithText(app.getString(R.string.meditation_sound_voice_label)).performClick()
         }) { MeditationTab(MeditationConfig(mode = MeditationMode.FREE, gongEveryMin = 15), gongIntervalMin = 15) }
+    }
+
+    /**
+     * Lage und Größe jedes Anlass-Chips relativ zu seiner Reihe ([CHOICE_CHIPS_TAG]), in dp: Sie
+     * sind in jedem Zustand gleich (markiert, blass, nichts), sonst verrutschten die Chips.
+     */
+    private fun chipLayout(): List<String> {
+        val row = compose.onNodeWithTag(CHOICE_CHIPS_TAG, useUnmergedTree = true).fetchSemanticsNode()
+        val density = compose.density.density
+        fun dp(px: Float) = (px / density).roundToInt()
+        return row.children.map { chip ->
+            val x = chip.positionInRoot.x - row.positionInRoot.x
+            val y = chip.positionInRoot.y - row.positionInRoot.y
+            val name = chip.children.firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.Text)?.joinToString() } ?: "?"
+            "$name\t${dp(x)},${dp(y)}\t${dp(chip.size.width.toFloat())} × ${dp(chip.size.height.toFloat())} dp"
+        }
     }
 
     @Composable

@@ -38,6 +38,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.BREATHLESSNESS,
             title = "Kurzatmig oder aufgeregt",
+            shortLabel = "Kurzatmig",
             rationale = "Bringt hektisches, flaches Atmen wieder in einen ruhigen, " +
                 "gleichmäßigen Rhythmus.",
             exerciseIds = listOf("lippenbremse", "walking-breath", "buteyko", "nasenatmung"),
@@ -52,6 +53,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.SLEEP,
             title = "Vor dem Einschlafen",
+            shortLabel = "Einschlafen",
             rationale = "Langer, ruhiger Ausatem zum Herunterfahren vor dem Schlafen.",
             exerciseIds = listOf("4-7-8", "resonanz", "sitali"),
             keywords = listOf(
@@ -66,6 +68,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.FOCUS,
             title = "Konzentration & Fokus",
+            shortLabel = "Fokus",
             rationale = "Ruhig und zugleich wach – ein gleichmäßiger Takt vor einer Aufgabe.",
             exerciseIds = listOf("box-4-4-4-4"),
             keywords = listOf(
@@ -80,6 +83,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.HIGH_PHASE,
             title = "Wach & energiegeladen werden",
+            shortLabel = "Wach & energiegeladen",
             rationale = "Ein kräftiger, anregender Atem-Reiz, der aktiviert und wach macht. " +
                 "Nur üben, wenn du dich gesund und ausgeruht fühlst.",
             exerciseIds = listOf("wim-hof", "feueratmung"),
@@ -90,6 +94,7 @@ object Situations {
         SituationRecommendation(
             situation = Situation.CRASH,
             title = "Erschöpft oder ausgelaugt",
+            shortLabel = "Erschöpft",
             rationale = "Nur sanfte, beruhigende Atmung – nichts Anstrengendes, das zusätzlich " +
                 "auslaugt.",
             exerciseIds = listOf("resonanz", "cyclic-sighing"),

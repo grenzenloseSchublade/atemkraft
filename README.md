@@ -13,7 +13,7 @@ Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf den optionalen Download
 
 Beschrieben ist der Stand von `main`; die neueste APK unter Releases kann Einzelnes davon noch nicht haben.
 
-- **Atmen:** 17 Übungen in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber Einstiege nach Anlass, etwa „Vor dem Einschlafen“, und eine Suche nach deinem Befinden.
+- **Atmen:** 17 Übungen in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ zum Antippen und eine Suche nach deinem Befinden.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
 - **Eigene Muster:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“ zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast.

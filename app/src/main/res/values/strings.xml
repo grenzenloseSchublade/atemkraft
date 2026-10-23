@@ -58,9 +58,8 @@
     <string name="tab_own">Eigene</string>
     <string name="tab_learn">Lernen</string>
 
-    <!-- Anlässe im Atmen-Tab: Kopf über Suchfeld und den sechs Anlässen -->
-    <string name="home_situations">Anlass</string>
-    <!-- Befindens-Suche: Platzhalter muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
+    <!-- Befindens-Suche im Atmen-Tab: Platzhalter des Felds und Name der Anlass-Chips für TalkBack;
+         muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
     <string name="situations_search_placeholder">Wie fühlst du dich?</string>
     <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
     <string name="cd_tab_bar_hide">Tab-Leiste ausblenden</string>
