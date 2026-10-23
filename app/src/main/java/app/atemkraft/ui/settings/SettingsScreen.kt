@@ -73,8 +73,13 @@ import app.atemkraft.ui.theme.SECONDARY
 import kotlinx.coroutines.flow.first
 
 /**
- * Einstellungen: Ton, Atmen, Sitzung & Sicherheit, Während der Atemübung, Meditation und Daten,
- * unten Über. Atemlehre und Begriffe stehen seit 2026-10-23 im Tab „Lernen“.
+ * Einstellungen: Klang (beide Sitzungsarten), Atemübung (Ton, Vibration, „Danach in die Stille“,
+ * Sicherheitshinweis), Anzeige der Atemübung, Meditation und Daten, unten Über. Atemlehre und
+ * Begriffe stehen seit 2026-10-23 im Tab „Lernen“.
+ *
+ * Texte nach einem Muster (STYLEGUIDE TEXT-15): Kartentitel, optional ein Satz, wofür die Karte
+ * gilt; je Einstellung der Name und darunter höchstens ein erklärender Satz, nur wenn er etwas
+ * hinzufügt; Auswahlreihen mit Unterüberschrift darüber und dem Satz darunter. Nichts doppelt.
  */
 @Composable
 fun SettingsScreen(
@@ -119,15 +124,12 @@ fun SettingsScreen(
         }
 
         // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
-        // Bedeutung (FARBE-07): Klang 0, Atmen 1, Sitzung 2, Während der Atemübung 3,
-        // Meditation 4, Daten 5.
+        // Bedeutung (FARBE-07): Klang 0, Atemübung 1, Anzeige der Atemübung 2, Meditation 3,
+        // Daten 4.
         TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
 
         Spacer(Modifier.height(Dimens.ListGap))
-        AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
-
-        Spacer(Modifier.height(Dimens.ListGap))
-        SessionCard(state.haptics, state.showSafetyWarning, actions::setHaptics, actions::setShowSafetyWarning)
+        BreathCard(state, actions)
 
         Spacer(Modifier.height(Dimens.ListGap))
         SessionDisplayCard(state.sessionDisplay, actions)
@@ -156,18 +158,18 @@ fun SettingsScreen(
 }
 
 /**
- * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
- * keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die Zahl der
- * Logbuch-Sitzungen mit Papierkorb, zweistufig (MUSTER-05).
+ * Daten: „Eigene Kreationen“ (gespeicherte Muster) als Datei sichern und wieder einlesen (Storage
+ * Access Framework, keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die
+ * Zahl der Logbuch-Sitzungen mit Papierkorb, zweistufig (MUSTER-05).
  */
 @Composable
 private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () -> Unit) {
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
-    SettingsCard(stringResource(R.string.settings_data_title), heading = 5, titleGap = Dimens.GapTiny) {
-        HintText(stringResource(R.string.settings_data_hint))
+    SettingsCard(stringResource(R.string.settings_data_title), heading = 4, intro = stringResource(R.string.settings_data_intro)) {
+        SubLabel(stringResource(R.string.settings_data_patterns))
         Spacer(Modifier.height(Dimens.GapSmall))
-        // Kurze Labels, damit beide gleich breit nebeneinander passen; dass es um Muster geht,
-        // sagt der Hinweis darüber. Passen sie nicht, stehen sie untereinander (LAYOUT-03).
+        // Kurze Labels, damit beide gleich breit nebeneinander passen; worum es geht, sagt die
+        // Unterüberschrift darüber. Passen sie nicht, stehen sie untereinander (LAYOUT-03).
         AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
             DataButton(transfer.exportLabel ?: stringResource(R.string.settings_data_export), transfer.export)
             DataButton(transfer.importLabel ?: stringResource(R.string.settings_data_import), transfer.import)
@@ -181,6 +183,8 @@ private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () ->
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
+        Spacer(Modifier.height(Dimens.GapTiny))
+        HintText(stringResource(R.string.settings_data_hint))
         // Wie „Wie funktioniert das?“ in der Atmen-Karte: Der lange Hinweis steht erst auf Wunsch da.
         DisclosureToggle(
             text = stringResource(R.string.settings_data_transfer_more),
@@ -237,7 +241,7 @@ private fun DataButton(label: String, onClick: () -> Unit) {
     }
 }
 
-/** Allgemeine Klang-Karte: gilt app-weit (Atem-Cues, Schluss-Gong der Atemübungen, Meditations-Gongs). */
+/** Klang-Karte: gilt für beide Sitzungsarten (Atem-Töne, Schluss-Gong der Atemübungen, Meditations-Gongs). */
 @Composable
 private fun TonCard(
     volume: ToneVolume,
@@ -246,7 +250,7 @@ private fun TonCard(
     onGongLong: (Boolean) -> Unit,
     onPreviewGong: () -> Unit,
 ) {
-    SettingsCard(stringResource(R.string.settings_tone_title), heading = 0) {
+    SettingsCard(stringResource(R.string.settings_tone_title), heading = 0, intro = stringResource(R.string.settings_tone_intro)) {
         SubLabel(stringResource(R.string.volume_title), Modifier.choiceGroupHeading())
         Spacer(Modifier.height(Dimens.GapSmall))
         SegmentedChoiceRow(ToneVolume.entries, volume, onVolume, groupLabel = stringResource(R.string.volume_title)) { v ->
@@ -284,19 +288,19 @@ private fun TonCard(
     }
 }
 
-/** Atem-spezifische Klang-Einstellungen (nur für Atem-Sessions). */
+/**
+ * Atemübung: wie die Übung klingt und sich anfühlt (Ton, beim Dauerton die Wechsel-Betonung,
+ * Vibration), was danach kommt („Danach in die Stille“, nur der Startwert) und ob der
+ * Sicherheitshinweis vor intensiven Übungen jedes Mal erscheint. Der Satz unter „Ton“ beschreibt
+ * die gewählte Option; „Wie funktioniert das?“ gehört zum Dauerton und steht nur bei ihm.
+ */
 @Composable
-private fun AtmenCard(
-    soundMode: SoundMode,
-    transition: TransitionEmphasis,
-    onSoundMode: (SoundMode) -> Unit,
-    onTransition: (TransitionEmphasis) -> Unit,
-) {
+private fun BreathCard(state: SettingsUiState, actions: SettingsActions) {
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     SettingsCard(stringResource(R.string.settings_breathing_title), heading = 1) {
         SubLabel(stringResource(R.string.settings_sound_title), Modifier.choiceGroupHeading())
         Spacer(Modifier.height(Dimens.GapSmall))
-        SegmentedChoiceRow(SoundMode.entries, soundMode, onSoundMode, groupLabel = stringResource(R.string.settings_sound_title)) { mode ->
+        SegmentedChoiceRow(SoundMode.entries, state.soundMode, actions::setSoundMode, groupLabel = stringResource(R.string.settings_sound_title)) { mode ->
             when (mode) {
                 SoundMode.OFF -> stringResource(R.string.sound_mode_off)
                 SoundMode.CUES -> stringResource(R.string.sound_mode_cues)
@@ -304,27 +308,40 @@ private fun AtmenCard(
             }
         }
         Spacer(Modifier.height(Dimens.GapTiny))
-        HintText(stringResource(R.string.settings_sound_appetizer))
-        DisclosureToggle(
-            text = stringResource(R.string.settings_sound_more),
-            expanded = soundInfoExpanded,
-            onToggle = { soundInfoExpanded = !soundInfoExpanded },
+        HintText(
+            stringResource(
+                when (state.soundMode) {
+                    SoundMode.OFF -> R.string.sound_mode_off_hint
+                    SoundMode.CUES -> R.string.sound_mode_cues_hint
+                    SoundMode.CONTINUOUS -> R.string.sound_mode_continuous_hint
+                },
+            ),
         )
-        if (soundInfoExpanded) {
-            // Aufgeklappt Fließtext wie im Expander; die Quellen folgen ohne Zwischenzeile –
-            // der Umschalter benennt den Inhalt schon (wie die Detailseite).
-            BodyText(stringResource(R.string.settings_sound_hint))
-            Spacer(Modifier.height(Dimens.GapSmall))
-            listOf(Refs.respeRate, Refs.shaffer2020, Refs.zaccaro2018).forEach { ref ->
-                ReferenceItem(ref)
-                Spacer(Modifier.height(Dimens.GapTiny))
+        if (state.soundMode == SoundMode.CONTINUOUS) {
+            DisclosureToggle(
+                text = stringResource(R.string.settings_sound_more),
+                expanded = soundInfoExpanded,
+                onToggle = { soundInfoExpanded = !soundInfoExpanded },
+            )
+            if (soundInfoExpanded) {
+                // Aufgeklappt Fließtext wie im Expander; die Quellen folgen ohne Zwischenzeile –
+                // der Umschalter benennt den Inhalt schon (wie die Detailseite).
+                BodyText(stringResource(R.string.settings_sound_hint))
+                Spacer(Modifier.height(Dimens.GapSmall))
+                listOf(Refs.respeRate, Refs.shaffer2020, Refs.zaccaro2018).forEach { ref ->
+                    ReferenceItem(ref)
+                    Spacer(Modifier.height(Dimens.GapTiny))
+                }
             }
-        }
-        if (soundMode == SoundMode.CONTINUOUS) {
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.emphasis_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
-            SegmentedChoiceRow(TransitionEmphasis.entries, transition, onTransition, groupLabel = stringResource(R.string.emphasis_title)) { emphasis ->
+            SegmentedChoiceRow(
+                TransitionEmphasis.entries,
+                state.transition,
+                actions::setTransition,
+                groupLabel = stringResource(R.string.emphasis_title),
+            ) { emphasis ->
                 when (emphasis) {
                     TransitionEmphasis.SOFT -> stringResource(R.string.emphasis_soft)
                     TransitionEmphasis.MEDIUM -> stringResource(R.string.emphasis_medium)
@@ -334,32 +351,38 @@ private fun AtmenCard(
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.emphasis_hint))
         }
-    }
-}
 
-@Composable
-private fun SessionCard(
-    haptics: Boolean,
-    showSafetyWarning: Boolean,
-    onToggleHaptics: (Boolean) -> Unit,
-    onToggleSafety: (Boolean) -> Unit,
-) {
-    SettingsCard(stringResource(R.string.settings_session_title), heading = 2, titleGap = Dimens.GapTiny) {
-        ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
+        ToggleRow(
+            label = stringResource(R.string.settings_haptics),
+            checked = state.haptics,
+            onCheckedChange = actions::setHaptics,
+            hint = stringResource(R.string.settings_haptics_hint),
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+        ToggleRow(
+            label = stringResource(R.string.settings_silence_after),
+            checked = state.sessionDisplay.silenceAfter,
+            onCheckedChange = actions::setSilenceAfter,
+            hint = stringResource(R.string.settings_silence_after_hint),
+        )
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
         ToggleRow(
             label = stringResource(R.string.settings_safety),
-            checked = showSafetyWarning,
-            onCheckedChange = onToggleSafety,
+            checked = state.showSafetyWarning,
+            onCheckedChange = actions::setShowSafetyWarning,
             hint = stringResource(R.string.settings_safety_hint),
         )
     }
 }
 
-/** Was die laufende Atem-Session zeigt; alles abschaltbar für eine möglichst ruhige Ansicht. */
+/**
+ * Was die laufende Atem-Session zeigt; alles abschaltbar für eine möglichst ruhige Ansicht. Die
+ * Erklärungen stehen hier; die gleichnamigen Schalter der Meditation verweisen nur darauf.
+ */
 @Composable
 private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions) {
-    SettingsCard(stringResource(R.string.settings_display_title), heading = 3, titleGap = Dimens.GapTiny) {
+    SettingsCard(stringResource(R.string.settings_display_title), heading = 2, titleGap = Dimens.GapTiny) {
         ToggleRow(
             label = stringResource(R.string.settings_auto_calm),
             checked = display.autoCalm,
@@ -387,17 +410,14 @@ private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions
             onCheckedChange = actions::setShowNextPhase,
             hint = stringResource(R.string.settings_next_phase_hint),
         )
-        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
-        ToggleRow(
-            label = stringResource(R.string.settings_silence_after),
-            checked = display.silenceAfter,
-            onCheckedChange = actions::setSilenceAfter,
-            hint = stringResource(R.string.settings_silence_after_hint),
-        )
     }
 }
 
-/** Was die laufende Meditation zeigt; wie bei der Atemübung alles abschaltbar. */
+/**
+ * Was die laufende Meditation zeigt; wie bei der Atemübung alles abschaltbar. Ausblenden und
+ * Fortschrittsring wirken wie dort und werden nicht ein zweites Mal erklärt: Der Hinweis unter
+ * „Automatisch ausblenden“ verweist auf die Atemübung, der Ring braucht keinen.
+ */
 @Composable
 private fun MeditationDisplayRows(display: MeditationDisplay, actions: SettingsActions) {
     Column {
@@ -405,14 +425,13 @@ private fun MeditationDisplayRows(display: MeditationDisplay, actions: SettingsA
             label = stringResource(R.string.settings_auto_calm),
             checked = display.autoCalm,
             onCheckedChange = actions::setMeditationAutoCalm,
-            hint = stringResource(R.string.settings_auto_calm_hint),
+            hint = stringResource(R.string.settings_med_auto_calm_hint),
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
         ToggleRow(
             label = stringResource(R.string.settings_progress),
             checked = display.showProgress,
             onCheckedChange = actions::setMeditationShowProgress,
-            hint = stringResource(R.string.settings_med_progress_hint),
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
         ToggleRow(
@@ -438,7 +457,7 @@ private fun MeditationCard(
     columns: TrailingColumns,
     display: @Composable () -> Unit,
 ) {
-    SettingsCard(stringResource(R.string.settings_meditation_title), heading = 4) {
+    SettingsCard(stringResource(R.string.settings_meditation_title), heading = 3, intro = stringResource(R.string.settings_meditation_intro)) {
         SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())
         Spacer(Modifier.height(Dimens.GapSmall))
         // Eine Reihe à vier: ohne Häkchen passt „15 min“ in ein Viertel der Kartenbreite.
@@ -518,19 +537,23 @@ private fun MeditationCard(
 
 /**
  * Eine Karte der Einstellungen: Titel als farbiger Kopf der Seite ([heading], reihum, FARBE-07),
- * darunter nach [titleGap] der Inhalt; Polster `CardPadding`. [titleGap] ist `GapTiny`, wo der
- * Inhalt mit einer Zeile beginnt, die sich selbst polstert (Schalter, Hinweis), sonst `GapSmall`.
+ * direkt darunter optional [intro] (ein Satz, wofür die Karte gilt – nur, wo er etwas hinzufügt,
+ * wie der Hinweis einer [NavCard]), nach [titleGap] der Inhalt; Polster `CardPadding`. [titleGap]
+ * ist `GapTiny`, wo der Inhalt mit einer Zeile beginnt, die sich selbst polstert (Schalter), sonst
+ * `GapSmall`.
  */
 @Composable
 private fun SettingsCard(
     title: String,
     heading: Int,
     titleGap: Dp = Dimens.GapSmall,
+    intro: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             CardTitle(title, color = headingColor(heading))
+            if (intro != null) HintText(intro)
             Spacer(Modifier.height(titleGap))
             content()
         }

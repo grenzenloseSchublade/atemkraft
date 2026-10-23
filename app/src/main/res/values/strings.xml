@@ -199,8 +199,8 @@
     <string name="cd_pattern_name_rename">Name: %1$s, umbenennen</string>
 
     <!-- Erweiterte Einstellungen -->
-    <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
-    <string name="settings_safety_hint">Wird vor intensiven Übungen gezeigt, beim ersten Mal immer.</string>
+    <string name="settings_safety">Sicherheitshinweis immer zeigen</string>
+    <string name="settings_safety_hint">Erscheint vor jedem Start einer intensiven Übung. Aus: nur, bis du ihn einmal bestätigt hast.</string>
     <string name="settings_glossary">Begriffe erklärt</string>
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>
@@ -250,19 +250,20 @@
         <item quantity="other">%1$d Atemtechniken mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
     </plurals>
     <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe unter „Begriffe erklärt“. Bei Erkrankungen vorher ärztlich abklären.</string>
-    <string name="settings_next_phase">Nächste Phase anzeigen</string>
-    <string name="settings_next_phase_hint">Zeigt dezent die kommende Phase – hilfreich für den Anfang.</string>
+    <string name="settings_next_phase">Nächste Phase</string>
+    <string name="settings_next_phase_hint">Nennt unter dem Kreis die kommende Phase, hilfreich, solange dir ein Muster neu ist.</string>
     <string name="settings_silence_after">Danach in die Stille</string>
-    <string name="settings_silence_after_hint">Standard für neue Übungen; in der Übung oben umschaltbar. Nach der Übung geht es nahtlos in die stille Meditation, mit Dauer, Gong und Stimme wie zuletzt im Tab Meditation.</string>
+    <string name="settings_silence_after_hint">Nach dem Ende beginnt nahtlos die stille Meditation, eingestellt wie zuletzt im Tab „Meditation“. Hier wählst du nur den Startwert; in der Übung schaltest du es oben um.</string>
     <string name="settings_auto_calm">Automatisch ausblenden</string>
-    <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück. Ein Tipp neben den Kreis holt sie wieder.</string>
+    <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück; ein Tipp neben den Kreis holt sie wieder.</string>
+    <!-- Meditation: dieselbe Wirkung wie bei der Atemübung, dort erklärt (nichts doppelt). -->
+    <string name="settings_med_auto_calm_hint">Wie bei der Atemübung.</string>
     <string name="settings_progress">Fortschrittsring</string>
     <string name="settings_progress_hint">Zeigt am Rand des Kreises, wie weit die Übung ist.</string>
     <string name="settings_seconds">Sekunden im Kreis</string>
-    <string name="settings_med_progress_hint">Zeigt am Rand des Kreises, wie viel der Zeit vorbei ist.</string>
     <string name="settings_med_time">Zeit im Kreis</string>
     <string name="settings_med_time_hint">Restzeit, bei offener Meditation die verstrichene Zeit. Aus: nur der stille Kreis.</string>
-    <string name="settings_seconds_hint">Zählt jede Phase mit. Aus: nur das Phasenwort, den Takt gibt der Kreis.</string>
+    <string name="settings_seconds_hint">Zählt die Sekunden jeder Phase herunter. Aus: nur das Phasenwort, den Takt gibt der Kreis.</string>
     <string name="settings_about">Mit Quellen, aber keine ärztliche Empfehlung.</string>
 
     <!-- Sicherheits-Dialog -->
@@ -379,34 +380,41 @@
     <string name="sound_mode_off">Aus</string>
     <string name="sound_mode_cues">Töne</string>
     <string name="sound_mode_continuous">Dauerton</string>
-    <string name="settings_sound_appetizer">Töne: ein kurzer Ton bei jedem Phasenwechsel. Dauerton: ein leiser Ton führt deinen Atem – höher beim Einatmen, tiefer beim Ausatmen.</string>
+    <!-- Satz unter „Ton“ zur gewählten Option (Einstellungs-Muster, TEXT-15). -->
+    <string name="sound_mode_off_hint">Kein Ton und kein Gong am Ende; dich führen der Kreis und, wenn du magst, die Vibration.</string>
+    <string name="sound_mode_cues_hint">Ein kurzer Ton bei jedem Phasenwechsel, am Ende ein Gong.</string>
+    <string name="sound_mode_continuous_hint">Ein leiser Ton begleitet den ganzen Atemzug: Er steigt beim Einatmen und sinkt beim Ausatmen.</string>
     <string name="settings_sound_more">Wie funktioniert das?</string>
-    <string name="settings_sound_hint">Der Ton steigt beim Einatmen und fällt beim Ausatmen, mit einer kurzen Zäsur am Wechsel. Dieses Prinzip nutzen auch klinische Atemtrainer (z. B. RESPeRATE); langsames, gleichmäßiges Atmen erhöht in Studien die HRV (Zaccaro 2018). Keine esoterischen Heilfrequenzen.</string>
-    <string name="emphasis_title">Wechsel-Betonung</string>
+    <string name="settings_sound_hint">Klinische Atemtrainer wie RESPeRATE führen den Atem nach demselben Prinzip. Langsames, gleichmäßiges Atmen erhöht in Studien die HRV, die Schwankung zwischen den Herzschlägen (Zaccaro 2018). Keine esoterischen Heilfrequenzen.</string>
+    <string name="emphasis_title">Wechsel betonen</string>
     <string name="emphasis_soft">Sanft</string>
     <string name="emphasis_medium">Mittel</string>
     <string name="emphasis_strong">Stärker</string>
-    <string name="emphasis_hint">Je vertrauter du mit dem Ton bist, desto weniger Betonung brauchst du – am Anfang eher Stärker, mit Übung Sanft.</string>
+    <string name="emphasis_hint">Wie deutlich der Ton zwischen Ein- und Ausatmen kurz leiser wird. Am Anfang hilft „Stärker“, mit Übung reicht „Sanft“.</string>
     <string name="volume_title">Lautstärke</string>
     <string name="volume_quiet">Leise</string>
     <string name="volume_medium">Mittel</string>
     <string name="volume_loud">Laut</string>
-    <string name="volume_hint">Relativ zur Medien-Lautstärke deines Geräts.</string>
+    <string name="volume_hint">Wie laut Töne und Gongs im Verhältnis zur Medienlautstärke deines Geräts klingen.</string>
     <string name="settings_haptics">Vibration</string>
+    <string name="settings_haptics_hint">Vibriert bei jedem Phasenwechsel, auch wenn der Ton aus ist.</string>
 
     <!-- Einstellungen · Abschnitts-Titel -->
     <string name="settings_tone_title">Klang</string>
-    <string name="settings_breathing_title">Atmen</string>
-    <string name="settings_session_title">Sitzung &amp; Sicherheit</string>
-    <string name="settings_display_title">Während der Atemübung</string>
+    <string name="settings_tone_intro">Gilt für Atemübungen und Meditation.</string>
+    <string name="settings_breathing_title">Atemübung</string>
+    <string name="settings_display_title">Anzeige der Atemübung</string>
     <string name="settings_meditation_title">Meditation</string>
-    <string name="settings_reset_notice">Einstellungen wurden zurückgesetzt, weil ihre Datei beschädigt war. Logbuch, Muster und geladene Stimmen sind noch da; wähle hier neu, was du anders hattest.</string>
+    <string name="settings_meditation_intro">Gilt im Tab „Meditation“ und für die Stille nach einer Atemübung.</string>
+    <string name="settings_reset_notice">Einstellungen wurden zurückgesetzt, weil ihre Datei beschädigt war. Logbuch, eigene Kreationen und geladene Stimmen sind noch da; wähle hier neu, was du anders hattest.</string>
     <string name="settings_data_title">Daten</string>
-    <string name="settings_data_hint">Gespeicherte Muster als Datei sichern und wieder einlesen. Den Speicherort wählst du selbst – die App hat kein Konto und keine Cloud.</string>
+    <string name="settings_data_intro">Alles bleibt auf deinem Gerät; die App hat kein Konto und keine Cloud.</string>
+    <string name="settings_data_patterns">Eigene Kreationen</string>
+    <string name="settings_data_hint">Als Datei sichern und wieder einlesen; den Speicherort wählst du selbst.</string>
     <string name="settings_data_export">Exportieren</string>
     <string name="settings_data_import">Importieren</string>
     <string name="settings_data_transfer_more">Beim Handywechsel?</string>
-    <string name="settings_data_transfer_hint">Beim Handywechsel kann die direkte Übertragung (z. B. Smart Switch per Kabel, ab Android 12) je nach Hersteller Logbuch, Muster und Einstellungen ohne Cloud mitnehmen; Stimmen lädst du neu. Die Muster sichert „Exportieren“ in jedem Fall.</string>
+    <string name="settings_data_transfer_hint">Ab Android 12 kann die direkte Übertragung von Gerät zu Gerät (z. B. Smart Switch per Kabel) Logbuch, eigene Kreationen und Einstellungen ohne Cloud mitnehmen, je nach Hersteller. Stimmen lädst du neu. Sicher mitnehmen kannst du deine Kreationen mit „Exportieren“.</string>
     <string name="settings_log_title">Logbuch</string>
     <string name="settings_log_empty">Noch keine Sitzung</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
@@ -416,7 +424,7 @@
         <item quantity="one">✓ %1$d exportiert</item>
         <item quantity="other">✓ %1$d exportiert</item>
     </plurals>
-    <string name="data_export_empty">Noch keine gespeicherten Muster – speichere im Tab „Atmen“ das Muster des Tages oder stell dir im Tab „Eigene“ eines zusammen.</string>
+    <string name="data_export_empty">Noch nichts unter „Eigene Kreationen“ – speichere im Tab „Atmen“ das Muster des Tages oder stell dir im Tab „Eigene“ eines zusammen.</string>
     <plurals name="data_import_done">
         <item quantity="one">✓ %1$d neu\u00A0· %2$d vorhanden</item>
         <item quantity="other">✓ %1$d neu\u00A0· %2$d vorhanden</item>
@@ -435,13 +443,13 @@
     <string name="data_io_error">Die Datei ließ sich nicht lesen oder schreiben. Bitte einen anderen Speicherort wählen.</string>
     <string name="cd_voice_preview">Stimme %1$s anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>
-    <string name="settings_gong_interval">Gong-Intervall</string>
-    <string name="settings_gong_interval_hint">Abstand der Zwischen-Gongs, wenn in der Meditation „alle … min“ gewählt ist.</string>
-    <string name="settings_gong_length">Gong-Ausklang</string>
+    <string name="settings_gong_interval">Gong-Abstand</string>
+    <string name="settings_gong_interval_hint">Gilt, wenn im Tab „Meditation“ beim Gong „alle … min“ gewählt ist.</string>
+    <string name="settings_gong_length">Gong-Nachhall</string>
     <string name="gong_length_short">Kurz</string>
     <string name="gong_length_long">Lang</string>
-    <string name="settings_gong_length_hint">Gilt für den Schluss-Gong der Atemübungen und die Meditations-Gongs. Beide klingen natürlich bis zur Stille aus – „Lang“ hallt voller nach.</string>
-    <string name="settings_voice">Stimme</string>
+    <string name="settings_gong_length_hint">„Lang“ hallt voller und länger nach.</string>
+    <string name="settings_voice">Stimme der Sprachanleitung</string>
 
     <!-- Zustände beim Nachladen einer Katalog-Stimme: klein wie jeder Status (§11.1), geschützte
          Leerzeichen halten „lädt … 40 %“ in einer Zeile zusammen. -->
@@ -450,7 +458,7 @@
     <string name="settings_speech_pack_preparing">wird vorbereitet …</string>
 
     <!-- Stimmen-Katalog -->
-    <string name="settings_voice_catalog_hint">Erst anhören, dann laden. Mehrere Stimmen möglich; die gewählte wird in der Anleitung gesprochen. Stimmen kommen von GitHub (sherpa-onnx).</string>
+    <string name="settings_voice_catalog_hint">Erst anhören, dann laden und wählen; behalten kannst du mehrere. Ohne gewählte Stimme spricht die Sprachausgabe deines Geräts, sofern sie Deutsch kann. Die Stimmen kommen von GitHub (sherpa-onnx).</string>
     <string name="settings_voice_none_installed">Noch keine Stimme geladen</string>
     <string name="settings_voice_none_chosen">Keine Stimme gewählt</string>
     <string name="settings_voice_show">Stimmen zeigen</string>
