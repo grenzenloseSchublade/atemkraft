@@ -4,13 +4,14 @@
 # Hintergrund: `java` zeigt hier auf ein JRE ohne `javac`, deshalb scheitert
 # Gradles Toolchain-Auswahl ohne Hilfe. Dieses Skript sucht ein vollständiges
 # JDK (mit javac), setzt JAVA_HOME und reicht alle Argumente an ./gradlew durch.
-# Bevorzugt JDK 17 wie CI und Release-Builds (SEC-BUILD-06); ein anderes baut
-# mit Warnung weiter.
+# Bevorzugt JDK 17 wie CI und Release-Builds (SEC-BUILD-06). Mit einem anderen JDK
+# bricht es bei Release-Aufgaben ab (Reproduzierbarkeit), sonst baut es mit Warnung weiter.
 #
 # Beispiele:
 #   scripts/build.sh                  # = assembleDebug
 #   scripts/build.sh installDebug     # auf Gerät/Emulator installieren
 #   scripts/build.sh clean assembleRelease
+#   scripts/build.sh bundleRelease    # App Bundle für Play: eigener Aufruf (ohne ABI-Splits)
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -56,8 +57,17 @@ JDK_HOME="$(find_jdk)" || {
 }
 JDK_MAJOR="$(jdk_major "${JDK_HOME}")"
 if [[ "${JDK_MAJOR}" != "${WANT_MAJOR}" ]]; then
-  echo "WARNUNG: JDK ${JDK_MAJOR:-?} statt ${WANT_MAJOR} – CI und Release bauen mit ${WANT_MAJOR}; Screenshots und" \
-    "Release-APK können abweichen." >&2
+  # Release-Artefakte müssen bitgleich nachbaubar sein (F-Droid, CI release-verify): kein
+  # Release-Build mit fremdem JDK. Erkannt an Aufgaben wie assembleRelease, :app:bundleRelease.
+  for task in "$@"; do
+    if [[ "${task}" =~ ^(:?[A-Za-z0-9_-]+:)*[a-z][A-Za-z]*Release$ ]]; then
+      echo "FEHLER: ${task} braucht JDK ${WANT_MAJOR} (gefunden: ${JDK_MAJOR:-?} in ${JDK_HOME})." \
+        "JAVA_HOME auf ein JDK ${WANT_MAJOR} setzen (SEC-BUILD-06)." >&2
+      exit 1
+    fi
+  done
+  echo "WARNUNG: JDK ${JDK_MAJOR:-?} statt ${WANT_MAJOR} – CI und Release bauen mit ${WANT_MAJOR}; Screenshots" \
+    "können abweichen." >&2
 fi
 
 echo "JDK:            ${JDK_HOME}"

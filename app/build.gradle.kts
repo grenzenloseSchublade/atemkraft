@@ -35,6 +35,8 @@ val allowDebugSignedRelease = providers.gradleProperty("allowDebugSignedRelease"
 // Prüf-Build in scripts/check.sh: Release bauen (R8, Shrinking, lintVital), aber nie signieren –
 // auch wenn lokal ein Release-Keystore liegt. Der Key wird nur für echte Releases benutzt.
 val unsignedRelease = providers.gradleProperty("unsignedRelease").orNull == "true"
+// Wird in diesem Aufruf ein App Bundle gebaut? Dann ohne ABI-Splits (siehe splits unten).
+val buildsBundle = gradle.startParameter.taskNames.any { it.substringAfterLast(':').startsWith("bundle") }
 
 android {
     namespace = "app.atemkraft"
@@ -52,6 +54,34 @@ android {
         // Spart ~2/3 der Native-Libs-Größe; arm64 deckt fast alle modernen Geräte, arm32 die alten.
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+    }
+
+    // Für GitHub je eine APK pro Architektur plus Universal-APK (SEC-BUILD-05, Namensschema in der
+    // Release-Checkliste): Die Universal-APK wird `atemkraft-vX.Y.Z.apk`, gegen sie vergleicht
+    // F-Droid (`Binaries:`); die ABI-APKs sind nur kleinere Downloads. Alle tragen denselben
+    // versionCode – Play bekommt das App Bundle und teilt selbst, ein ABI-Versatz ist unnötig.
+    // Beim App Bundle sind Splits aus: AGP bricht sonst mit Ressourcen-Shrinking ab
+    // (issuetracker.google.com/402800800). Deshalb bundleRelease in einem eigenen Gradle-Aufruf.
+    splits {
+        abi {
+            isEnable = !buildsBundle
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = true
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // C- und C++-API von sherpa-onnx: Die Kotlin-API lädt nur libsherpa-onnx-jni.so, und
+            // die hängt allein von libonnxruntime.so ab (readelf: kein NEEDED auf die API-Libs,
+            // keine Namen davon in der JNI-Lib oder den Klassen). Spart je ABI rund 5 MB.
+            excludes += setOf("**/libsherpa-onnx-c-api.so", "**/libsherpa-onnx-cxx-api.so")
+            // Native Libs unverändert aus dem AAR übernehmen statt sie mit dem NDK erneut zu
+            // strippen: Das Ergebnis hängt sonst davon ab, ob und welches NDK installiert ist
+            // (reproduzierbarer Build, SEC-BUILD-06), und die Libs bleiben byte-gleich mit Upstream.
+            keepDebugSymbols += "**/*.so"
         }
     }
 
@@ -219,8 +249,10 @@ if (keystoreProps == null || unsignedRelease) {
 
 dependencies {
     // Neuronale Offline-TTS-Engine (Piper/VITS „Thorsten") – AAR bringt Native-Libs + Kotlin-API.
-    // Bewusst als gebündeltes AAR (offline, reproduzierbar) statt Maven/JitPack.
-    implementation(files("libs/sherpa-onnx-1.13.6.aar"))
+    // Von JitPack, byte-gleich mit dem Upstream-Release, SHA-256 in gradle/verification-metadata.xml.
+    // Die AAR-Koordinate (Gruppe …sherpa-onnx) statt des Sammel-POMs com.github.k2-fsa:sherpa-onnx,
+    // das sherpa-onnx-jvm nachzöge; nicht transitiv, damit nie etwas anderes mitkommt.
+    implementation(libs.sherpa.onnx) { isTransitive = false }
     // Zum Entpacken des heruntergeladenen Stimmmodells (.tar.bz2): reines Java, keine Native-Libs.
     implementation(libs.commons.compress)
 

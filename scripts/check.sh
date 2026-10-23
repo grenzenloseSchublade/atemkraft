@@ -2,7 +2,7 @@
 # Einziger Einstieg für alle Prüfungen, lokal und im CI (docs/STYLEGUIDE.md §13.1).
 #
 #   scripts/check.sh          # Stil-Checks, Sicherheits-Checks, ktlint, Unit-Tests, Android Lint,
-#                             # Release-Build (unsigniert)
+#                             # Release-Build (unsigniert) samt verify-apk
 #   scripts/check.sh --fast   # ohne Android Lint und Release-Build
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -26,24 +26,31 @@ scripts/check-style.sh
 TASKS=(ktlintCheck testDebugUnitTest)
 $FAST || TASKS+=(lintDebug assembleRelease -PunsignedRelease=true)
 
-# Das Paketieren räumt das Ausgabeverzeichnis des Release-Builds; eine dort liegende signierte
-# app-release.apk (scripts/build.sh assembleRelease mit Keystore) wäre danach weg. Deshalb wird
+# Das Paketieren räumt das Ausgabeverzeichnis des Release-Builds; dort liegende signierte APKs
+# (app-*-release.apk von scripts/build.sh assembleRelease mit Keystore) wären danach weg. Deshalb wird
 # das Verzeichnis vorher beiseitegelegt und am Ende – auch bei Fehlern – unverändert
-# zurückgestellt; die unsignierte Prüf-APK wird verworfen.
+# zurückgestellt; die unsignierten Prüf-APKs werden verworfen.
 RELEASE_OUT="app/build/outputs/apk/release"
 RELEASE_KEEP="app/build/check-release-keep"
 restore_release() {
   [[ -d "${RELEASE_KEEP}" ]] || return 0
   rm -rf "${RELEASE_OUT}"
   mv "${RELEASE_KEEP}" "${RELEASE_OUT}"
-  echo "check.sh: signierte Release-APK in ${RELEASE_OUT} wiederhergestellt"
+  echo "check.sh: signierte Release-APKs in ${RELEASE_OUT} wiederhergestellt"
 }
-if ! $FAST && [[ -f "${RELEASE_OUT}/app-release.apk" ]]; then
+if ! $FAST && compgen -G "${RELEASE_OUT}/*-release.apk" >/dev/null; then
   rm -rf "${RELEASE_KEEP}"
   mv "${RELEASE_OUT}" "${RELEASE_KEEP}"
   trap restore_release EXIT
 fi
 step "Gradle: ${TASKS[*]}"
 scripts/build.sh "${TASKS[@]}"
+
+# Die Prüf-APKs gegen die Allowlists (Berechtigungen, Exporte, Native Libs, 16 KB, Lizenzen);
+# nur das Zertifikat fehlt ihnen, das prüft die Release-Checkliste an der signierten APK.
+if ! $FAST; then
+  step "verify-apk (Prüf-Build)"
+  scripts/verify-apk.sh --allow-unsigned "${RELEASE_OUT}"/*-release-unsigned.apk
+fi
 
 printf '\ncheck.sh: alles grün\n'

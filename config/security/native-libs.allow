@@ -1,0 +1,13 @@
+# Native Bibliotheken in Release-APKs (docs/SECURITY.md SEC-BUILD-03), geprüft von
+# scripts/verify-apk.sh (apk-hardening): Jede lib/<abi>/<name>.so muss hier stehen. Nur echte
+# Geräte-ABIs; die C- und C++-API von sherpa-onnx sind bewusst ausgeschlossen (app/build.gradle.kts).
+# sherpa-onnx (JNI-Lib, lädt die Kotlin-API) und ONNX Runtime (einzige Abhängigkeit der JNI-Lib)
+lib/arm64-v8a/libsherpa-onnx-jni.so
+lib/arm64-v8a/libonnxruntime.so
+lib/armeabi-v7a/libsherpa-onnx-jni.so
+lib/armeabi-v7a/libonnxruntime.so
+# androidx.graphics:graphics-path (Compose) und androidx.datastore
+lib/arm64-v8a/libandroidx.graphics.path.so
+lib/arm64-v8a/libdatastore_shared_counter.so
+lib/armeabi-v7a/libandroidx.graphics.path.so
+lib/armeabi-v7a/libdatastore_shared_counter.so

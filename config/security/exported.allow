@@ -1,0 +1,7 @@
+# Exportierte Komponenten des gemergten Release-Manifests (docs/SECURITY.md SEC-PLAT-01), geprüft
+# von scripts/verify-apk.sh (apk-exported). Format: <komponente> [nötige Berechtigung]. Steht eine
+# Berechtigung dabei, muss die Komponente genau mit ihr geschützt sein.
+# Launcher-Activity; wertet keine Intent-Daten aus (SEC-PLAT-02).
+app.atemkraft.MainActivity
+# androidx.profileinstaller (Baseline-Profil); nur mit der System-Berechtigung DUMP erreichbar.
+androidx.profileinstaller.ProfileInstallReceiver android.permission.DUMP

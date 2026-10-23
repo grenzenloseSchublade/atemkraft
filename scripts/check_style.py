@@ -316,18 +316,21 @@ def sec_room(_: Check) -> dict[str, list[int]]:
 
 
 def sec_repos(_: Check) -> dict[str, list[int]]:
-    """SEC-SUP-01: kein mavenLocal/http, Projekt-Repos verboten; jedes weitere Repo nur mit
-    Content-Filter und SHA-256-Pin in gradle/verification-metadata.xml."""
+    """SEC-SUP-01: kein mavenLocal/http, Projekt-Repos verboten; google(), mavenCentral() und
+    gradlePluginPortal() nur mit Content-Filter; jedes weitere Repo nur in `exclusiveContent`
+    mit `includeGroup` und SHA-256-Pin je Gruppe in gradle/verification-metadata.xml."""
     path = "settings.gradle.kts"
     lines = code_lines(path)
-    found = [i for i, line in enumerate(lines, 1) if re.search(r"mavenLocal|http://", line)]
+    found = [i for i, line in enumerate(lines, 1)
+             if re.search(r"mavenLocal|http://|\b(google|mavenCentral|gradlePluginPortal)\s*\(\s*\)", line)]
     code = "\n".join(lines)
     if "FAIL_ON_PROJECT_REPOS" not in code:
         found.append(0)
-    if re.search(r"\bmaven\s*[({]", code):
+    extra_repos = len(re.findall(r"\bmaven\s*[({]", code))
+    if extra_repos:
         metadata = read("gradle/verification-metadata.xml")
         groups = re.findall(r'includeGroup\(\s*"([^"]+)"', code)
-        if "content {" not in code or not groups or any(
+        if code.count("exclusiveContent") < extra_repos or not groups or any(
             not re.search(rf'group="{re.escape(g)}"[\s\S]*?<sha256', metadata) for g in groups
         ):
             found.append(0)
@@ -340,7 +343,8 @@ def sha256_of(path: Path) -> str:
 
 def sec_pinned_inputs(_: Check) -> dict[str, list[int]]:
     """SEC-SUP-02, SEC-REPO-01: Wrapper gepinnt; Binärdateien nur laut Allowlist, mit gültiger
-    .sha256-Datei und demselben Hash im Herkunftsnachweis von SECURITY.md."""
+    .sha256-Datei und demselben Hash im Herkunftsnachweis von SECURITY.md; ebenso jede in
+    gradle/verification-metadata.xml gepinnte Bibliothek (AAR/JAR)."""
     hits: dict[str, list[int]] = {}
     wrapper = "gradle/wrapper/gradle-wrapper.properties"
     if not re.search(r"^distributionSha256Sum=[0-9a-f]{64}$", read(wrapper), re.M):
@@ -360,6 +364,11 @@ def sec_pinned_inputs(_: Check) -> dict[str, list[int]]:
         target = (ROOT / f).parent / entry[1].lstrip("*") if len(entry) >= 2 else None
         if target is None or not target.is_file() or sha256_of(target) != entry[0] or f"`{entry[0]}`" not in security:
             hits[f] = [0]
+    metadata = "gradle/verification-metadata.xml"
+    if (ROOT / metadata).is_file():
+        pinned = re.findall(r'<artifact name="[^"]+\.(?:aar|jar)">\s*<sha256 value="([0-9a-f]{64})"', read(metadata))
+        if any(f"`{h}`" not in security for h in pinned):
+            hits[metadata] = [0]
     return hits
 
 

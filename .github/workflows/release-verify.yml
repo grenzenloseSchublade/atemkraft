@@ -1,0 +1,87 @@
+# Nachbau jedes Release-Tags (docs/SECURITY.md SEC-BUILD-04, -05, -06; Check release-verify):
+# baut den Tag unsigniert mit JDK 17, prüft die Prüf-APKs gegen die Allowlists und vergleicht sie
+# mit den signierten Release-Assets (apksigcopier compare: Signatur des Assets auf den Nachbau
+# übertragen, dann muss er verifizieren – also bis auf die Signatur bitgleich sein). Genau das
+# macht F-Droid mit `Binaries:` vor jeder Veröffentlichung.
+#
+# Beim Push des Tags gibt es meist noch kein Release (Checkliste: Tag in Schritt 3, Release in
+# Schritt 8); dann baut der Lauf nur und meldet die Prüfsummen. Der Vergleich läuft, sobald das
+# Release veröffentlicht ist, oder von Hand über „Run workflow“ mit dem Tag.
+name: Release-Nachbau
+
+on:
+  push:
+    tags: ["v*"]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release-Tag, z. B. v2.5.0"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-verify-${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  rebuild-compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+      - uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      # Ohne Gradle-Build-Cache: Der Nachbau soll wirklich aus dem Quellstand entstehen.
+      - name: Tag unsigniert bauen
+        run: scripts/build.sh assembleRelease -PunsignedRelease=true --no-build-cache
+      - name: Prüf-APKs gegen die Allowlists
+        run: scripts/verify-apk.sh --allow-unsigned --tag "${TAG}" app/build/outputs/apk/release/*-release-unsigned.apk
+      - name: Prüfsummen des Nachbaus
+        run: |
+          {
+            echo "### Nachbau ${TAG} (unsigniert)"
+            echo '```'
+            sha256sum app/build/outputs/apk/release/*-release-unsigned.apk
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - name: Release-Assets laden
+        id: asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p asset
+          if gh release download "${TAG}" --repo "${GITHUB_REPOSITORY}" --pattern "atemkraft-${TAG}*.apk" --dir asset; then
+            echo "found=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "found=false" >> "${GITHUB_OUTPUT}"
+            echo "::notice::Noch kein Release mit APK für ${TAG}; der Vergleich läuft beim Veröffentlichen des Releases."
+          fi
+      - name: apksigcopier installieren
+        if: steps.asset.outputs.found == 'true'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends apksigcopier
+      - name: Assets prüfen und mit dem Nachbau vergleichen
+        if: steps.asset.outputs.found == 'true'
+        run: |
+          BUILD_TOOLS="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -n 1)"
+          export PATH="${BUILD_TOOLS}:${PATH}"
+          scripts/verify-apk.sh --tag "${TAG}" asset/*.apk
+          OUT=app/build/outputs/apk/release
+          apksigcopier compare --unsigned "asset/atemkraft-${TAG}.apk" "${OUT}/app-universal-release-unsigned.apk"
+          for abi in arm64-v8a armeabi-v7a; do
+            if [[ -f "asset/atemkraft-${TAG}-${abi}.apk" ]]; then
+              apksigcopier compare --unsigned "asset/atemkraft-${TAG}-${abi}.apk" "${OUT}/app-${abi}-release-unsigned.apk"
+            fi
+          done
+          echo "Nachbau stimmt mit den Release-Assets überein." >> "${GITHUB_STEP_SUMMARY}"

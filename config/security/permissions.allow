@@ -1,0 +1,12 @@
+# Berechtigungen des gemergten Release-Manifests (docs/SECURITY.md SEC-PERM-01), geprüft von
+# scripts/verify-apk.sh (apk-permissions): genau diese Menge, keine mehr und keine weniger.
+# Eine neue Zeile nur mit Manifest-Kommentar und Zeile in der Berechtigungstabelle von
+# docs/PRIVACY.md im selben Commit (bei Bibliotheken mit Herkunft).
+android.permission.INTERNET
+android.permission.VIBRATE
+android.permission.WAKE_LOCK
+android.permission.FOREGROUND_SERVICE
+android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
+android.permission.POST_NOTIFICATIONS
+# Von androidx.core erzeugt (signature-geschützt, nur intern); die App deklariert sie auch selbst.
+app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION

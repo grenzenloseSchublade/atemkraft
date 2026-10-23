@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Gradle Dependency Verification (SEC-SUP-01, SEC-SUP-02), gezielt statt flächendeckend:
+  Geprüft werden nur Artefakte von Repositories außerhalb von Google und Maven Central, derzeit
+  allein sherpa-onnx von JitPack. JitPack baut Artefakte bei Bedarf und könnte sie neu erzeugen;
+  der Pin hält den Build an genau der Datei fest, deren Herkunft SECURITY.md nachweist
+  (byte-gleich mit dem Release-Asset v1.13.6 von k2-fsa/sherpa-onnx).
+
+  Alle übrigen Gruppen sind über den regulären Ausdruck unten vertrauenswürdig. Eine volle
+  Verifikation aller Abhängigkeiten ist bewusst nicht aktiv: Dependabot pflegt diese Datei nicht,
+  jeder Update-PR fiele sonst durch (Begründung in SECURITY.md, SEC-SUP-01).
+
+  Neues sherpa-onnx-Release: Version in app/build.gradle.kts ändern, beide Prüfsummen unten
+  ersetzen (sha256sum der Dateien von jitpack.io, AAR vorher mit dem GitHub-Release-Asset
+  vergleichen) und den Herkunftsnachweis in SECURITY.md im selben Commit nachziehen.
+-->
+<verification-metadata xmlns="https://schema.gradle.org/dependency-verification" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://schema.gradle.org/dependency-verification https://schema.gradle.org/dependency-verification/dependency-verification-1.3.xsd">
+   <configuration>
+      <verify-metadata>true</verify-metadata>
+      <verify-signatures>false</verify-signatures>
+      <trusted-artifacts>
+         <trust group="^(?!com[.]github[.]k2-fsa([.]|$)).*$" regex="true"/>
+      </trusted-artifacts>
+   </configuration>
+   <components>
+      <component group="com.github.k2-fsa.sherpa-onnx" name="sherpa-onnx" version="v1.13.6">
+         <artifact name="sherpa-onnx-v1.13.6.aar">
+            <sha256 value="0012d9a28f15bd6fb966b62b70a75da3990512fdccce28b83098248ce4be1698" origin="JitPack, verglichen mit dem Release-Asset v1.13.6 von k2-fsa/sherpa-onnx"/>
+         </artifact>
+         <artifact name="sherpa-onnx-v1.13.6.pom">
+            <sha256 value="5fc81b7b7d5ce566cf574a464c6ee5e733cfdcddaf891771cc0e416d5fe3ec27" origin="JitPack"/>
+         </artifact>
+      </component>
+   </components>
+</verification-metadata>
