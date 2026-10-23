@@ -64,7 +64,7 @@ import app.atemkraft.ui.theme.WarnAmber
  * Atemzug · 3,8/min“, ggf. „intensiv“; während der Vorschau die Phase) · die Atemkurve · darunter
  * rechtsbündig die Vorschau ([PreviewRow]: Play/Pause und Ton-Schalter; Nutzer 2026-10-23: über
  * der Kurve keine Knöpfe) · die Werkzeugleiste (gewählte Phase mit Sekunden-Stepper und
- * Papierkorb, gelb gestrichelt getrennt „Neu nach 2:“ mit + Ein / + Halten / + Aus). Ziel: Kurve
+ * Papierkorb, gelb gestrichelt getrennt „Nach Phase 2:“ mit + Ein / + Halten / + Aus). Ziel: Kurve
  * und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle Höhe, wo Platz ist,
  * sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe ([FirstScreen]; die
  * Tab-Leiste ist in der Tiefe eingeklappt). Darunter Hinweis bei intensiven Mustern, „Ablauf“

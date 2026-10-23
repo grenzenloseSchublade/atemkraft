@@ -175,6 +175,8 @@
          große Play-Knopf „Übung starten, ca. 5 Minuten“ (%1$s = cd_duration_minutes). -->
     <string name="pattern_editor_start">Startpunkt</string>
     <string name="cd_pattern_editor_start">Startpunkt wählen, derzeit %1$s</string>
+    <!-- Satz unter dem Titel des Startpunkt-Blatts: was die Wahl tut (Nutzer 2026-10-24). -->
+    <string name="pattern_editor_start_hint">Womit fängst du an? Die Wahl ersetzt den Ablauf, danach formst du ihn an der Kurve.</string>
     <string name="pattern_editor_minutes">%1$d\u00A0min</string>
     <string name="cd_pattern_editor_play">Übung starten, ca. %1$s</string>
     <!-- Werte über der Kurve (InfoLine, keine Tippfläche): „Box · 16 s je Atemzug · 3,8/min“, bei
@@ -226,9 +228,9 @@
     <string name="cd_pattern_phase_removed" tools:ignore="PluralsCandidate">Phase %1$d entfernt, %2$d von %3$d Phasen</string>
     <!-- Zusatz zur Ansage nach Einfügen/Entfernen, wenn das Muster dadurch nicht mehr intensiv ist (Gegenstück: detail_intense). -->
     <string name="cd_pattern_not_intense">nicht mehr intensiv</string>
-    <!-- Zweite Zeile der Werkzeugleiste: „Neu nach 2:“ (gesprochen „Neue Phase kommt hinter Phase 2,
+    <!-- Zweite Zeile der Werkzeugleiste: „Nach Phase 2:“ (gesprochen „Neue Phase kommt hinter Phase 2,
          Halten voll“) mit drei Knöpfen. -->
-    <string name="pattern_editor_add_after_short" tools:ignore="PluralsCandidate">Neu nach %1$d:</string>
+    <string name="pattern_editor_add_after_short" tools:ignore="PluralsCandidate">Nach Phase %1$d:</string>
     <string name="cd_pattern_add_after" tools:ignore="PluralsCandidate">Neue Phase kommt hinter Phase %1$d, %2$s</string>
     <string name="pattern_editor_add_in">+ Ein</string>
     <string name="pattern_editor_add_hold">+ Halten</string>

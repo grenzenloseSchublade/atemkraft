@@ -139,7 +139,7 @@ internal fun PhaseNumber(index: Int, background: Color) {
     }
 }
 
-/** Gelb gestrichelte Linie zwischen gewählter Phase und „Neu nach …“: Dort kommt die neue Phase hin. */
+/** Gelb gestrichelte Linie zwischen gewählter Phase und „Nach Phase …“: Dort kommt die neue Phase hin. */
 @Composable
 internal fun DashedMark(modifier: Modifier = Modifier) {
     Box(

@@ -26,7 +26,7 @@ import app.atemkraft.ui.theme.Dimens
  * Alle Buttons einer Reihe teilen die Zeilenhöhe (einschließlich 48-dp-Tippfläche); sichtbar
  * sind sie gleich hoch, weil ihre Beschriftungen einzeilig sind und dieselbe Mindesthöhe haben.
  *
- * [leading] ist eine kurze Beschriftung vor der Reihe (Muster-Editor: „Neu nach 2:“). Passen
+ * [leading] ist eine kurze Beschriftung vor der Reihe (Muster-Editor: „Nach Phase 2:“). Passen
  * Beschriftung (einzeilig) und Buttons nach Stufe 1 oder 2 nebeneinander, steht sie links davor,
  * mittig zur Reihe; sonst steht sie in voller Breite darüber (darf dort zwischen Wörtern
  * umbrechen) und die Buttons verteilen sich darunter wie ohne sie. Gemessen wird dafür die
@@ -34,7 +34,7 @@ import app.atemkraft.ui.theme.Dimens
  * `widthIn(min = rememberWidestTextWidth(…))`), damit die Reihe nicht umspringt.
  *
  * [leadingStacked] ist der Alternativinhalt, wenn [leading] nicht in die Zeile passt: Er steht
- * dann statt [leading] in voller Breite über den Buttons (Muster-Editor: „Neu nach 2:“ links in
+ * dann statt [leading] in voller Breite über den Buttons (Muster-Editor: „Nach Phase 2:“ links in
  * der gestrichelten Linie). [aboveInline] steht nur in der einzeiligen Anordnung über der Reihe
  * (Muster-Editor: die gestrichelte Linie allein, die sonst [leadingStacked] trägt). Beide sind
  * vom Inhalt [spacing] entfernt wie die Beschriftung darüber.

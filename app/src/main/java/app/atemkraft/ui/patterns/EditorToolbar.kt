@@ -55,7 +55,7 @@ import app.atemkraft.ui.theme.WarnAmber
 
 /**
  * Werkzeugleiste direkt unter der Kurve (Karte): oben die gewählte Phase (Nummer, Name in
- * Phasenfarbe, Stepper „− 4 s +“, Papierkorb), gelb gestrichelt getrennt darunter „Neu nach 2:“
+ * Phasenfarbe, Stepper „− 4 s +“, Papierkorb), gelb gestrichelt getrennt darunter „Nach Phase 2:“
  * mit + Ein / + Halten / + Aus. Es ist immer eine Phase gewählt; der Papierkorb ist aus, wenn die
  * Folge danach ungültig wäre, die Knöpfe bei 12 Phasen. So ist alles ohne Ziehen bedienbar
  * (TalkBack, Switch Access).
@@ -222,12 +222,12 @@ private fun intensityChange(): (FreePattern, FreePattern) -> String {
 }
 
 /**
- * „Neu nach 2:“ (`WarnAmber`, wie die gestrichelte Linie darüber) und + Ein (`secondary`),
+ * „Nach Phase 2:“ (`WarnAmber`, wie die gestrichelte Linie darüber) und + Ein (`secondary`),
  * + Halten (`onSurfaceVariant`, gestrichelt), + Aus (`BreathExhale`) als kompakte
  * `AppOutlinedButton` in einer `AdaptiveButtonRow`; gesprochen „Einatmen hinzufügen“ usw. Neue
  * Phasen (Ein/Aus 4 s, Halten 2 s) kommen hinter die gewählte und sind danach gewählt. Darüber die
  * gelb gestrichelte Linie; passen Beschriftung und Knöpfe nicht in eine Zeile (360 dp ab Schrift
- * 1,1), steht „Neu nach 2:“ links in dieser Linie statt in einer eigenen Zeile.
+ * 1,1), steht „Nach Phase 2:“ links in dieser Linie statt in einer eigenen Zeile.
  */
 @Composable
 private fun AddRow(state: PatternEditorState, focus: ToolbarFocus) {
@@ -252,7 +252,7 @@ private fun AddRow(state: PatternEditorState, focus: ToolbarFocus) {
         if (buttonFocused && !state.canAdd) focus.pending = focus.trash
     }
     val labelStyle = MaterialTheme.typography.labelMedium
-    // Platz für „Neu nach 12:“: Mit zweistelliger Nummer rutschte die Beschriftung sonst über die
+    // Platz für „Nach Phase 12:“: Mit zweistelliger Nummer rutschte die Beschriftung sonst über die
     // Knöpfe, und die Werkzeugleiste würde beim Wechsel der Auswahl höher.
     val labelWidth = rememberWidestTextWidth(listOf(where, widest), labelStyle)
     val label: @Composable () -> Unit = {
@@ -273,7 +273,7 @@ private fun AddRow(state: PatternEditorState, focus: ToolbarFocus) {
         primaryFirst = false,
         modifier = Modifier.fillMaxWidth().onFocusChanged { buttonFocused = it.hasFocus },
         leading = label,
-        // Zu eng für eine Zeile: „Neu nach 2:“ steht in der gestrichelten Linie, statt eine eigene
+        // Zu eng für eine Zeile: „Nach Phase 2:“ steht in der gestrichelten Linie, statt eine eigene
         // Zeile über den Knöpfen zu belegen.
         leadingStacked = {
             Row(above, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {

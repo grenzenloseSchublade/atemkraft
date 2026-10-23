@@ -52,8 +52,9 @@ import kotlinx.coroutines.launch
  * Vorlagen als Bottom Sheet (Nachtrag 6; wann ein Bottom Sheet passt: MUSTER-11, wie „Klang &
  * Stimme“ in der Meditation, `SoundSheet`): „Startpunkt“ und je Vorlage eine Zeile mit Name und
  * Mini-Kurve ([MiniCurve]), die passende markiert (`selectable`, Rolle RadioButton, Fläche
- * `secondaryContainer`, Rand `SegmentSelected` wie in der Ablauf-Liste). Eine Wahl setzt die Folge
- * (letzte Phase gewählt) und schließt das Sheet; danach meldet es [onPick].
+ * `secondaryContainer`, Rand `SegmentSelected` wie in der Ablauf-Liste); unter dem Titel ein Satz,
+ * was die Wahl tut (Nutzer 2026-10-24). Eine Wahl setzt die Folge (letzte Phase gewählt) und
+ * schließt das Sheet; danach meldet es [onPick].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +77,12 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
                 .verticalScroll(rememberScrollState())
                 .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
         ) {
-            CollapsibleSection(title = stringResource(R.string.pattern_editor_start), color = headingColor(0), headerTop = 0.dp) {
+            CollapsibleSection(
+                title = stringResource(R.string.pattern_editor_start),
+                color = headingColor(0),
+                teaser = stringResource(R.string.pattern_editor_start_hint),
+                headerTop = 0.dp,
+            ) {
                 Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline)) {
                     FreePatternTemplates.all.forEach { template ->
                         TemplateRow(template, selected = template == state.template) {
