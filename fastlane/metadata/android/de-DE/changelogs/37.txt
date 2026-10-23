@@ -1,0 +1,3 @@
+- Anlass-Chips in höchstens zwei Zeilen, sonst seitlich
+- Filter „Bis 3 min“, „Ohne Halten“, „Aus dem Yoga“
+- Eigenes Muster: Werte über der Kurve, Knöpfe neu geordnet
