@@ -150,6 +150,8 @@ Neben jeder Datei liegt `<datei>.sha256` (prüfbar mit `sha256sum -c` im selben 
 
 Grundsatz: **ein Signaturschlüssel für alle Kanäle.** So bleiben Installationen kanalübergreifend updatefähig, und niemand verliert beim Wechsel sein Logbuch.
 
+Der einmalige Weg in die Stores (Konten, Formulare, Grafiken, F-Droid-Rezept, Reihenfolge) steht in [STORE.md](STORE.md).
+
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | SEC-DIST-01 | MUSS | Play App Signing mit dem eigenen Release-Key (vor dem ersten Open-Testing- oder Produktions-Release hochladen) und separatem Upload-Key. F-Droid: reproduzierbarer Build mit `Binaries:` (GitHub-Asset) und `AllowedAPKSigningKeys: 75022def…1890`, ohne eingecheckte Binärartefakte im Build. | Ein Store-eigener Key wäre inkompatibel zu den GitHub-APKs; F-Droid Inclusion Policy. | manuell: Store-Einreichung; auto: `sec-pinned-inputs` |
