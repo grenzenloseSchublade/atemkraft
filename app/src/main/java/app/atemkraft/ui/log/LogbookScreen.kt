@@ -45,6 +45,7 @@ import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
@@ -59,6 +60,7 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.SynthTrack
 import app.atemkraft.ui.theme.TERTIARY
 import java.time.Instant
@@ -189,12 +191,12 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate) {
             ) {
                 Box(
                     modifier = Modifier
-                        .size(18.dp)
+                        .size(Sizes.WeekDot)
                         .clip(CircleShape)
                         .background(fill)
                         .then(
                             if (isToday) {
-                                Modifier.border(1.dp, SynthTrack.copy(alpha = 0.55f), CircleShape)
+                                Modifier.border(Dimens.BorderThin, SynthTrack.copy(alpha = TERTIARY), CircleShape)
                             } else {
                                 Modifier
                             },
@@ -303,11 +305,7 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
                     color = MaterialTheme.colorScheme.onSurface,
                     marks = false,
                 )
-                Text(
-                    text = time,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
+                SecondaryText(time)
             }
             // weight: füllt den Rest der Zeile, damit die Dauer auch umgebrochen rechtsbündig steht.
             // FlowRow entscheidet den Umbruch eines gewichteten Kinds nach seiner min-intrinsischen
@@ -329,15 +327,7 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String) {
                     )
                     // „Runden" nur für Atemübungen; Meditationen zeigen nur die Dauer.
                     if (entry.kind == SessionKind.BREATHING) {
-                        Text(
-                            text = pluralStringResource(
-                                R.plurals.log_rounds,
-                                entry.roundsCompleted,
-                                entry.roundsCompleted,
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                        )
+                        SecondaryText(pluralStringResource(R.plurals.log_rounds, entry.roundsCompleted, entry.roundsCompleted))
                     }
                 }
             }
