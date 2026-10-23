@@ -56,8 +56,6 @@ import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
-import app.atemkraft.ui.components.CurveAxisSeconds
-import app.atemkraft.ui.components.CurveHeightRange
 import app.atemkraft.ui.components.HideableTabBar
 import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
 import app.atemkraft.ui.components.badBreakAt
@@ -65,6 +63,8 @@ import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
 import app.atemkraft.ui.patterns.PatternEditorScreen
 import app.atemkraft.ui.patterns.PatternEditorState
+import app.atemkraft.ui.patterns.curve.CurveAxisSeconds
+import app.atemkraft.ui.patterns.curve.CurveHeightRange
 import app.atemkraft.ui.patterns.rememberPatternEditorState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface

@@ -42,8 +42,6 @@ import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.playback.PhaseAudio
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
-import app.atemkraft.ui.components.BreathCurveEditor
-import app.atemkraft.ui.components.CurvePreviewControls
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PinnedActionBar
@@ -51,9 +49,11 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.components.rememberBreathCurveHeights
-import app.atemkraft.ui.components.rememberCurvePreviewState
 import app.atemkraft.ui.detail.SafetyDialog
+import app.atemkraft.ui.patterns.curve.BreathCurveEditor
+import app.atemkraft.ui.patterns.curve.CurvePreviewControls
+import app.atemkraft.ui.patterns.curve.rememberBreathCurveHeights
+import app.atemkraft.ui.patterns.curve.rememberCurvePreviewState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.WarnAmber
