@@ -40,7 +40,7 @@ import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
-/** Atmen-Tab: startbare Übungen nach Familien + Abschnitt „Programme & Wissen". */
+/** Atmen-Tab: Muster des Tages, startbare Übungen nach Familien + Abschnitt „Programme & Wissen“. */
 @Composable
 fun HomeScreen(
     exercisesByFamily: List<Pair<BreathingFamily, List<Exercise>>>,
