@@ -132,7 +132,7 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
             Editor { PatternEditorState.forEdit(it, 5L, template("Viloma I"), 5, "Stufen am Abend").apply { select(1) } }
         }
         shot(6, tab = Tab.LERNEN) {
-            LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
+            LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
         }
     }
 

@@ -2,6 +2,7 @@ package app.atemkraft.ui.log
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
@@ -77,20 +79,27 @@ private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm"
 /** Familienpunkt vor jedem Eintrag. */
 private val FAMILY_DOT = 10.dp
 
+/** Listen-Schlüssel des Satzes unter dem Verlauf. */
+private const val CLEAR_HINT_KEY = "clear-hint"
+
 private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.")
 
 /**
  * Logbuch als Push-Seite (aus der Karte „Verlauf“ im Tab „Eigene“ und vom Ende einer
  * Übung): Statistik mit 7-Tage-Übersicht, darunter der Verlauf nach Tagen gruppiert (Heute /
  * Gestern / Diese Woche / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
- * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik. [today] nur
- * für reproduzierbare Screenshots.
+ * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik; ein Satz unter
+ * dem Verlauf sagt, wo (Nutzer 2026-10-24). Ein Eintrag, dessen Übung es noch gibt ([canOpen]),
+ * öffnet sie ([onOpenExercise]) – „das von gestern Abend nochmal“. [today] nur für
+ * reproduzierbare Screenshots.
  */
 @Composable
 fun LogbookScreen(
     entries: List<SessionLogEntry>,
     onBack: () -> Unit,
     today: LocalDate = LocalDate.now(),
+    canOpen: (exerciseId: String) -> Boolean = { false },
+    onOpenExercise: (exerciseId: String) -> Unit = {},
 ) {
     val zone = ZoneId.systemDefault()
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
@@ -103,7 +112,12 @@ fun LogbookScreen(
     ) {
         item(key = "stats") { LogStatsCard(entries = entries, today = today) }
         // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
-        itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group -> LogGroupSection(index, group, zone) }
+        itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group ->
+            LogGroupSection(index, group, zone, canOpen, onOpenExercise)
+        }
+        if (entries.isNotEmpty()) {
+            item(key = CLEAR_HINT_KEY) { HintText(stringResource(R.string.log_clear_hint)) }
+        }
     }
 }
 
@@ -262,7 +276,13 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
  * nur die Uhrzeit.
  */
 @Composable
-private fun LogGroupSection(index: Int, group: LogGroup, zone: ZoneId) {
+private fun LogGroupSection(
+    index: Int,
+    group: LogGroup,
+    zone: ZoneId,
+    canOpen: (String) -> Boolean,
+    onOpenExercise: (String) -> Unit,
+) {
     val weekdays = stringArrayResource(R.array.log_weekday_short)
     val title = when (val period = group.period) {
         LogPeriod.Today -> stringResource(R.string.log_group_today)
@@ -299,6 +319,7 @@ private fun LogGroupSection(index: Int, group: LogGroup, zone: ZoneId) {
                             LogEntryRow(
                                 entry = entry,
                                 time = Instant.ofEpochMilli(entry.startedAtEpochMs).atZone(zone).format(TIME_FORMAT),
+                                onClick = if (canOpen(entry.exerciseId)) ({ onOpenExercise(entry.exerciseId) }) else null,
                             )
                         }
                     }
@@ -324,15 +345,19 @@ private fun rememberLogStreak(entries: List<SessionLogEntry>, today: LocalDate):
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LogEntryRow(entry: SessionLogEntry, time: String) {
+private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Unit)?) {
     // Der Punkt gehört zum Namen: oben ausgerichtet und mittig zur ersten Namenszeile, nicht zur
     // Höhe des ganzen Eintrags – sonst schwebt er bei umgebrochener Dauer zwischen den Zeilen.
     val nameStyle = MaterialTheme.typography.titleSmall
     val dotTop = (rememberFirstLineHeight(nameStyle) - FAMILY_DOT) / 2
     // Ein Eintrag ist ein Fokus-Stopp (A11Y-06): Name, Uhrzeit, Dauer und Runden in einer Ansage.
+    // Antippbar, wenn es die Übung noch gibt (nicht Meditation, Tagesmuster eines anderen Tages,
+    // gelöschte Muster); Name samt Uhrzeit, Dauer und Runden ist die Tippfläche.
+    val openLabel = stringResource(R.string.log_open_exercise)
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClickLabel = openLabel, role = Role.Button, onClick = onClick) else Modifier)
             .semantics(mergeDescendants = true) {}
             .padding(vertical = Dimens.CardPadding),
         verticalAlignment = Alignment.Top,

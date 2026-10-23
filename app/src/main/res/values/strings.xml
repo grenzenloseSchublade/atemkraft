@@ -144,7 +144,8 @@
     <!-- Tab „Eigene“: Kopf wie die anderen Tabs, darunter die Karte „Verlauf“ (Einstieg ins Logbuch)
          und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
     <string name="own_title">Eigene</string>
-    <string name="own_subtitle">Gespeichert und selbst zusammengestellt</string>
+    <!-- Untertitel nennt alle drei Inhalte in ihrer Reihenfolge: Verlauf, „Tut mir gut“, Eigene Kreationen (Nutzer 2026-10-24). -->
+    <string name="own_subtitle">Dein Verlauf, was dir guttut, deine Muster</string>
     <!-- „Neues Muster“: Name des „+“ im Kopf von „Eigene Kreationen“ und, ohne eigene Kreationen, des Knopfs. -->
     <string name="own_new_pattern">Neues Muster</string>
     <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung; der Knopf „Neues Muster“ steht darunter. -->
@@ -341,6 +342,10 @@
     </plurals>
     <string name="log_sessions_none">Noch keine Sitzung</string>
     <string name="log_empty_invite">Deine Sitzungen aus Atmen und Meditation erscheinen hier.</string>
+    <!-- Unter dem Verlauf: Leeren liegt bewusst nicht hier, sondern in den Einstellungen (Nutzer 2026-10-24: sagen, wo). -->
+    <string name="log_clear_hint">Leeren kannst du das Logbuch in den Einstellungen unter „Daten“.</string>
+    <!-- TalkBack: ein Eintrag öffnet die Übung (Detailseite), um sie noch einmal zu machen. -->
+    <string name="log_open_exercise">Übung öffnen</string>
 
     <!-- Session -->
     <!-- „Runde 3 von 8“ ist eine Ordnungsangabe, kein Mengenwort: kein plurals nötig. -->

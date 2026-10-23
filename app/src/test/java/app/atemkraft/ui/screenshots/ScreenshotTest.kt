@@ -249,7 +249,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             }
         }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer") }
         snap("15_lernen", tab = Tab.LERNEN) {
-            LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
+            LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
         }
         snap("17_programme") {
             ProgramsScreen(programs = BuiltInExercises.all.filter { !it.guided }, onBack = {}, onOpenExercise = {}, markedIds = setOf("buteyko"))
@@ -265,7 +265,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
 
     @Composable
     private fun Logbook() {
-        LogbookScreen(entries = logEntries(), onBack = {}, today = DAY)
+        // Atemübungen antippbar wie in der App, die Meditation nicht.
+        LogbookScreen(entries = logEntries(), onBack = {}, today = DAY, canOpen = { id -> BuiltInExercises.all.any { it.id == id } })
     }
 
     /**

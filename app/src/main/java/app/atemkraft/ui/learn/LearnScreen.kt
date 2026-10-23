@@ -6,6 +6,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.ScreenHeader
+import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -18,10 +19,12 @@ import app.atemkraft.ui.theme.AtemkraftTheme
  * Begriffe. Atmen = alles, was man starten kann; Lernen = alles, was man liest.
  *
  * Die Kapiteltitel sind die eine Kopf-Ebene des Screens und gehen reihum durch den Kopf-Ring
- * (FARBE-07): Atemlehre 0, Pranayama 1, Programme 2, Begriffe 3.
+ * (FARBE-07): Atemlehre 0, Pranayama 1, Programme 2, Begriffe 3. Rechts im Kopf das Zahnrad wie in
+ * den anderen drei Tabs (Nutzer 2026-10-24: von hier gab es keinen Weg in die Einstellungen).
  */
 @Composable
 fun LearnScreen(
+    onOpenSettings: () -> Unit,
     onOpenAtemlehre: () -> Unit,
     onOpenPranayama: () -> Unit,
     onOpenPrograms: () -> Unit,
@@ -29,7 +32,13 @@ fun LearnScreen(
 ) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
-        header = { scrolled -> ScreenHeader(title = stringResource(R.string.tab_learn), scrolled = scrolled) },
+        header = { scrolled ->
+            ScreenHeader(
+                title = stringResource(R.string.tab_learn),
+                action = { SettingsAction(onClick = onOpenSettings) },
+                scrolled = scrolled,
+            )
+        },
         subtitle = stringResource(R.string.learn_subtitle),
     ) {
         item(key = "atemlehre") {
@@ -79,5 +88,5 @@ private fun ChapterCard(title: String, hint: String, heading: Int, onClick: () -
 @Preview
 @Composable
 private fun LearnScreenPreview() {
-    AtemkraftTheme { LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {}) }
+    AtemkraftTheme { LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {}) }
 }

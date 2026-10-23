@@ -23,6 +23,7 @@ import app.atemkraft.data.Areas
 import app.atemkraft.data.Pranayama
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionLogEntry
@@ -186,6 +187,7 @@ internal fun NavGraphBuilder.appGraph(
     }
     composable<LernenRoute> {
         LearnScreen(
+            onOpenSettings = { navController.navigate(SettingsRoute()) },
             onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
             onOpenPranayama = { navController.navigate(PranayamaRoute) },
             onOpenPrograms = { navController.navigate(ProgramsRoute) },
@@ -253,7 +255,14 @@ internal fun NavGraphBuilder.appGraph(
         )
     }
     pushComposable<LogbookRoute> {
-        LogbookScreen(entries = state.logEntries, onBack = back)
+        LogbookScreen(
+            entries = state.logEntries,
+            onBack = back,
+            // Nur, was sich noch öffnen lässt: eingebaute Übungen und vorhandene gespeicherte
+            // Muster – nicht die Meditation, nicht das Tagesmuster (heute ein anderes) oder der Entwurf.
+            canOpen = { id -> id != ExerciseIds.DAILY && id != ExerciseIds.DRAFT && exercises.byId(id) != null },
+            onOpenExercise = openDetail,
+        )
     }
     pushComposable<GlossaryRoute> {
         GlossaryScreen(onBack = back)
