@@ -120,10 +120,13 @@ class VoiceModelManager(context: Context) {
      */
     private val jobs = mutableMapOf<String, Job>()
 
-    private val _states = MutableStateFlow(
-        VoiceCatalog.all.associate { spec ->
-            spec.id to if (isComplete(spec)) VoiceDownloadState.Downloaded else VoiceDownloadState.NotDownloaded
-        },
+    /**
+     * Startet mit „nicht geladen“ für alle Stimmen; welche schon auf dem Gerät liegen, prüft
+     * [startupCleanup] gleich danach abseits des Main-Threads (Datei-Zugriffe vor dem ersten Frame
+     * vermeiden, A-06). Bis dahin vergehen Millisekunden – lange bevor jemand die Einstellungen öffnet.
+     */
+    private val _states = MutableStateFlow<Map<String, VoiceDownloadState>>(
+        VoiceCatalog.all.associate { spec -> spec.id to VoiceDownloadState.NotDownloaded },
     )
 
     /** Zustand je Stimmen-Id. */
@@ -137,11 +140,19 @@ class VoiceModelManager(context: Context) {
     private val downloadDir = File(baseDir, ".download")
 
     /**
-     * Aufräumen beim Start: Modelle von Stimmen, die nicht mehr im Katalog stehen (GLaDOS bis
-     * 1.5.1, ca. 110 MB), kann niemand mehr wählen oder löschen; dazu Reste abgebrochener
-     * Downloads. Jeder Download wartet darauf ([download]).
+     * Start auf IO: zuerst die vorhandenen Stimmen in [states] eintragen. Dann aufräumen: Modelle
+     * von Stimmen, die nicht mehr im Katalog stehen (GLaDOS bis 1.5.1, ca. 110 MB), kann niemand
+     * mehr wählen oder löschen; dazu Reste abgebrochener Downloads. Jeder Download wartet darauf
+     * ([download]).
      */
     private val startupCleanup: Job = scope.launch {
+        val installed = VoiceCatalog.all.filter { isComplete(it) }.map { it.id }.toSet()
+        // Nur „nicht geladen“ überschreiben: Was seit dem Start schon gesetzt wurde, ist neuer.
+        _states.update { current ->
+            current.mapValues { (id, state) ->
+                if (id in installed && state == VoiceDownloadState.NotDownloaded) VoiceDownloadState.Downloaded else state
+            }
+        }
         deleteOrphanVoiceDirs(baseDir, VoiceCatalog.all)
         downloadDir.deleteRecursively()
         // Bis 2.5.0 lagen Teil-Downloads im Cache.
@@ -187,6 +198,11 @@ class VoiceModelManager(context: Context) {
             jobs[voiceId] = scope.launch {
                 startupCleanup.join()
                 previous?.cancelAndJoin()
+                // Getippt, bevor der Start-Scan die Stimme als vorhanden eingetragen hatte.
+                if (isComplete(spec)) {
+                    setState(voiceId, VoiceDownloadState.Downloaded)
+                    return@launch
+                }
                 runDownload(spec)
             }
         }
