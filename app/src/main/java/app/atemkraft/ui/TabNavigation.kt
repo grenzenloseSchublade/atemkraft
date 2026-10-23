@@ -45,7 +45,7 @@ internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.an
     TAB_ROOTS.any { destination.hasRoute(it) }
 }
 
-private val TAB_ROOTS = listOf(AtmenRoute::class, SituationenRoute::class, EigeneRoute::class, MeditationRoute::class)
+private val TAB_ROOTS = listOf(AtmenRoute::class, SituationenRoute::class, EigeneRoute::class, MeditationRoute::class, LernenRoute::class)
 
 /**
  * Der Tab, zu dessen Stapel die aktuelle Seite gehört – auch auf Push-Seiten und nach einem
@@ -53,7 +53,7 @@ private val TAB_ROOTS = listOf(AtmenRoute::class, SituationenRoute::class, Eigen
  * ohne dass „Eigene“ selbst je aktuell war). Atmen ist Startziel und liegt immer unten; die
  * anderen Tabs stehen nur in ihrem eigenen Stapel. Für die Markierung der Tab-Leiste.
  */
-internal fun NavController.tabOnStack(): Any = listOf(SituationenRoute, EigeneRoute, MeditationRoute)
+internal fun NavController.tabOnStack(): Any = listOf(SituationenRoute, EigeneRoute, MeditationRoute, LernenRoute)
     // getBackStackEntry wirft, wenn das Ziel nicht im Stapel liegt; die öffentliche API kennt
     // keine Abfrage ohne Ausnahme (currentBackStack ist bibliotheksintern).
     .firstOrNull { route -> runCatching { getBackStackEntry(route) }.isSuccess } ?: AtmenRoute

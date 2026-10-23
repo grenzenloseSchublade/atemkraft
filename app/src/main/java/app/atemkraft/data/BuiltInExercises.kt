@@ -296,6 +296,55 @@ object BuiltInExercises {
         ),
     )
 
+    // Ujjayi: Iyengar und Desikachar als Grundtechnik; Takt wie Resonanz, nur kürzer (Pranayama-Seite).
+    private val ujjayi = Exercise(
+        id = "ujjayi",
+        name = "Ujjayi (Siegesatem)",
+        family = BreathingFamily.DOWNREGULATE,
+        evidence = EvidenceLevel.STUDIED,
+        lore = YogaLore(
+            teaser = "Ujjayi gilt in der Yoga-Lehre als wärmend und sammelnd: Atem mit leisem Rauschen.",
+            detail = "*ujjāyī* heißt „die Siegreiche“. Die Hatha Yoga Pradipika beschreibt, wie der Atem mit " +
+                "geschlossenem Mund langsam eingezogen wird, hörbar von der Kehle bis zum Herzen; danach folgen " +
+                "Halten und Ausatmen durch das linke Nasenloch. In der App ohne Halten und durch beide " +
+                "Nasenlöcher. Bei Krishnamacharya, Desikachar und Iyengar ist Ujjayi die Grundtechnik, auf der " +
+                "viele andere aufbauen. Nach der Atemlehre ist das Muster *laṅghana*: Das Ausatmen ist länger.",
+            patternId = "langhana",
+            source = "Hatha Yoga Pradipika 2,51–2,53",
+        ),
+        shortDescription = "Langsam durch die Nase atmen, die Kehle leicht verengt: Beim Ein- und Ausatmen " +
+            "entsteht ein leises, gleichmäßiges Rauschen. Etwa 4\u00A0s ein, 6\u00A0s aus, ohne Halten.",
+        effect = "Langsames Atmen mit leisem Rauschen; das Rauschen brachte in einer Studie keinen Vorteil.",
+        effectDetail = "Den Hauptteil trägt vermutlich das langsame Tempo: Unter etwa 10 Atemzügen pro Minute " +
+            "verschiebt sich die Balance Richtung Parasympathikus, die Herzratenvariabilität steigt " +
+            "(Zaccaro 2018). Ob die verengte Kehle etwas dazugibt, ist offen. Bei 17 Yoga-Anfängern hob " +
+            "langsames Atmen die Empfindlichkeit des Baroreflexes, eines Regelkreises des Blutdrucks; mit Ujjayi " +
+            "beim Ausatmen stieg sie etwas weniger, mit Rauschen beim Ein- und Ausatmen nicht deutlich " +
+            "(Mason 2013). Die Forschenden vermuten, dass der Widerstand in der Kehle den Druck im " +
+            "Brustkorb erhöht und Kraft kostet. Bei 12 Menschen mit Querschnittlähmung hob Ujjayi die " +
+            "Sauerstoffsättigung leicht (Mazur 2024, explorative Studie). Der Wert des Rauschens liegt eher " +
+            "darin, dass du den Atem hörst: Du merkst, ob er gleichmäßig fließt, und bleibst leichter dabei. " +
+            "Strengt es an, mach das Rauschen nur beim Ausatmen.",
+        instructionHint = "Mund zu, durch die Nase atmen\u00A0· Kehle leicht verengen wie beim geflüsterten „haaa“" +
+            "\u00A0· ca. 4\u00A0s ein, 6\u00A0s aus, leise rauschend. Gesicht und Kiefer weich, nie pressen.",
+        cautions = listOf(
+            "Nie pressen: Die Kehle ist nur leicht verengt, der Atem fließt immer weiter.",
+            "Das Rauschen bleibt leise, nur für dich hörbar; laut heißt zu viel Kraft.",
+            "Bei Schwindel, Druck im Kopf oder Atemnot aufhören und normal weiteratmen.",
+        ),
+        references = listOf(Refs.mason2013, Refs.mazur2024, Refs.zaccaro2018),
+        rounds = 1,
+        segments = listOf(
+            Segment(
+                repeat = 30, // ~5 min bei 10 s pro Atemzug
+                phases = listOf(
+                    Phase(PhaseType.INHALE, secs(4.0), note = "mit leisem Rauschen"),
+                    Phase(PhaseType.EXHALE, secs(6.0), note = "mit leisem Rauschen"),
+                ),
+            ),
+        ),
+    )
+
     // ── B · Hochregeln ───────────────────────────────────────────────────────
 
     private val wimHof = Exercise(
@@ -463,6 +512,52 @@ object BuiltInExercises {
                     Phase(PhaseType.HOLD_FULL, secs(2.0), note = "Pause", level = BreathLevel.at(TWO_THIRDS)),
                     Phase(PhaseType.INHALE, secs(2.0), note = "3. Stufe", level = BreathLevel(TWO_THIRDS, 1f)),
                     Phase(PhaseType.EXHALE, secs(8.0), note = "langsam, in einem Zug"),
+                ),
+            ),
+        ),
+    )
+
+    // Dirgha: moderne Lehre (Sivananda, Integral Yoga). Drei Teile ohne Pausen; der Füllstand
+    // lässt den Atemkreis in einem Zug wachsen, die Notizen wechseln mit dem Körperraum.
+    private val dirgha = Exercise(
+        id = "dirgha",
+        name = "Dirgha (dreiteilige Atmung)",
+        family = BreathingFamily.BALANCE,
+        evidence = EvidenceLevel.LITTLE_STUDIED,
+        lore = YogaLore(
+            teaser = "Dirgha gilt in der modernen Yoga-Lehre als Grundübung: Der Atem füllt Bauch, Flanken, Brust.",
+            detail = "*dīrgha* heißt „lang“. Die dreiteilige Atmung stammt aus der modernen Lehre, verbreitet " +
+                "etwa durch die Sivananda-Schule und das Integral Yoga; in den klassischen Texten steht sie " +
+                "nicht. Dort gilt sie als Einstieg, mit dem du den ganzen Atemraum kennenlernst. Nach der " +
+                "Atemlehre ist das Muster *samāna*: Ein- und Ausatmen sind gleich lang.",
+            patternId = "samana",
+            source = "Moderne Lehre: Sivananda-Schule, Integral Yoga",
+        ),
+        shortDescription = "Einatmen in drei fließenden Teilen: erst Bauch, dann Flanken, dann Brust; " +
+            "ausatmen in umgekehrter Folge. Ohne Pausen, 6\u00A0s ein und 6\u00A0s aus.",
+        effect = "Langsames, volles Atmen; zur dreiteiligen Atmung selbst gibt es keine eigenen Studien.",
+        effectDetail = "Dirgha ist eine Form langsamen Atmens: Ein Atemzug dauert 12\u00A0s, also 5 Atemzüge pro " +
+            "Minute. Für langsames Atmen allgemein zeigen Übersichten mehr Herzratenvariabilität und " +
+            "Entspannung (Zaccaro 2018). Ob die Aufteilung in Bauch, Flanken und Brust etwas beiträgt, ist " +
+            "nicht untersucht. Ihr Wert liegt eher im Spüren: Du lernst, wo sich der Körper beim Atmen " +
+            "bewegt. Die drei Teile sind ein Bild für die Aufmerksamkeit; die Lunge füllt sich als Ganzes. " +
+            "Nicht bis zum Anschlag atmen, der Atem bleibt bequem.",
+        instructionHint = "Eine Hand auf den Bauch, eine auf die Brust\u00A0· einatmen in Bauch, Flanken, Brust, " +
+            "ohne Pause\u00A0· ausatmen von der Brust über die Flanken zum Bauch\u00A0· bequem, nicht maximal.",
+        cautions = listOf(
+            "Bequem atmen, nicht bis zum Anschlag; sonst kommt leicht Schwindel.",
+            "Bei schwerer COPD mit überblähter Lunge sanft dosieren.",
+        ),
+        references = listOf(Refs.zaccaro2018),
+        rounds = 1,
+        segments = listOf(
+            Segment(
+                repeat = 25, // ~5 min bei 12 s pro Atemzug
+                phases = listOf(
+                    Phase(PhaseType.INHALE, secs(2.0), note = "Bauch", level = BreathLevel(0f, THIRD)),
+                    Phase(PhaseType.INHALE, secs(2.0), note = "Flanken", level = BreathLevel(THIRD, TWO_THIRDS)),
+                    Phase(PhaseType.INHALE, secs(2.0), note = "Brust", level = BreathLevel(TWO_THIRDS, 1f)),
+                    Phase(PhaseType.EXHALE, secs(6.0), note = "Brust, Flanken, Bauch"),
                 ),
             ),
         ),
@@ -755,9 +850,9 @@ object BuiltInExercises {
 
     /** Alle Übungen in Familien-Reihenfolge (A → D). */
     val all: List<Exercise> = listOf(
-        resonance, cyclicSighing, physiologicalSigh, fourSevenEight, bhramari, diaphragmatic, sitali, vilomaOut,
+        resonance, cyclicSighing, physiologicalSigh, fourSevenEight, bhramari, diaphragmatic, sitali, ujjayi, vilomaOut,
         wimHof, fireBreath,
-        box, nadiShodhana, sky, vilomaIn,
+        box, nadiShodhana, sky, vilomaIn, dirgha,
         pursedLip, walkingBreath, buteyko, nasalBreathing,
     )
 }

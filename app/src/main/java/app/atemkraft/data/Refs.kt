@@ -205,4 +205,69 @@ object Refs {
             "Atmen senkte die HRV, Bhramari hob die Stimmung (Geübte, nur Sofortwirkung).",
         "doi:10.17761/2025-D-25-00006\u00A0· PMID 41580220",
     )
+
+    // ---- Pranayama: Seite im Tab „Lernen“ und die Übungen Ujjayi und Dirgha ----
+    // Geprüft gegen PubMed und Crossref (2026-10-23).
+
+    val mason2013 = Reference(
+        "Mason H. et al. (2013): Cardiovascular and respiratory effect of yogic slow breathing in " +
+            "the yoga beginner: what is the best approach? Evid Based Complement Alternat Med " +
+            "2013:743504. 17 Yoga-Anfänger: Langsames Atmen hob die Baroreflex-Empfindlichkeit; mit " +
+            "Ujjayi beim Ausatmen etwas weniger, mit Ujjayi beim Ein- und Ausatmen nicht deutlich.",
+        "doi:10.1155/2013/743504\u00A0· PMID 23710236",
+    )
+    val mazur2024 = Reference(
+        "Mazur M. D. et al. (2024): Cardiorespiratory Effects of Yogic Versus Slow Breathing in " +
+            "Individuals with a Spinal Cord Injury: An Exploratory Cohort Study. J Integr Complement " +
+            "Med 30(9):878–85. 12 Menschen mit Querschnittlähmung: Ujjayi hob die Sauerstoffsättigung " +
+            "leicht (97,6 statt 96,1 % bei freiem Atmen).",
+        "doi:10.1089/jicm.2023.0641\u00A0· PMID 38507692",
+    )
+    val vanDiest2014 = Reference(
+        "Van Diest I. et al. (2014): Inhalation/Exhalation Ratio Modulates the Effect of Slow " +
+            "Breathing on Heart Rate Variability and Relaxation. Appl Psychophysiol Biofeedback " +
+            "39(3–4):171–80. 30 Teilnehmende: Längeres Ausatmen fühlte sich entspannender an und hob " +
+            "bei 6/min die HRV.",
+        "doi:10.1007/s10484-014-9253-x\u00A0· PMID 25156003",
+    )
+    val finchamHvb2023 = Reference(
+        "Fincham G. W. et al. (2023): High ventilation breathwork practices: An overview of their " +
+            "effects, mechanisms, and considerations for clinical applications. Neurosci Biobehav Rev " +
+            "155:105453. Übersicht zu schnellem, tiefem Atmen (u. a. Wim Hof, Sudarshan Kriya): starke " +
+            "Wirkung auf Nervensystem und Erleben, eigene Sicherheitsfragen.",
+        "doi:10.1016/j.neubiorev.2023.105453\u00A0· PMID 37923236",
+    )
+    val muetze2025 = Reference(
+        "Mütze C. et al. (2025): Effectiveness of pranayama for mental disorders: a systematic " +
+            "review and meta-analysis of randomized controlled trials. Front Psychiatry 16:1616996. " +
+            "6 RCTs, 517 Erkrankte: kurzfristig etwas weniger Symptome, hohes Verzerrungsrisiko; " +
+            "Nebenwirkungen häufiger bei schnellen als bei langsamen Techniken.",
+        "doi:10.3389/fpsyt.2025.1616996\u00A0· PMID 40896223",
+    )
+    val boyd2015 = Reference(
+        "Boyd C. et al. (2015): Fatal and nonfatal drowning outcomes related to dangerous " +
+            "underwater breath-holding behaviors – New York State, 1988–2011. MMWR Morb Mortal Wkly " +
+            "Rep 64(19):518–21. 16 Fälle, darunter tödliche: Wer vor dem Tauchen hyperventiliert und " +
+            "die Luft anhält, kann unter Wasser bewusstlos werden.",
+        "PMID 25996093\u00A0· PMC4584570",
+    )
+    val chetry2022 = Reference(
+        "Chetry D. et al. (2022): A Comparison of Practice Guidelines for Yoga Breathing from the " +
+            "Traditional Texts and PubMed-Indexed Research. Int J Yoga Therap 32:Artikel 17. 73 Studien " +
+            "zu Bhastrika, Bhramari und Kapalabhati: Atemtiefe, Verhältnis und Tempo weichen oft von " +
+            "Hatha Yoga Pradipika und Gheranda Samhita ab.",
+        "doi:10.17761/2022-D-22-00024\u00A0· PMID 36669770",
+    )
+    val telles2024 = Reference(
+        "Telles S. et al. (2024): Heart Rate Variability during Nostril-Regulated Yoga Breathing: " +
+            "A Randomized Crossover Study. Int J Yoga 17(3):203–10. 47 geübte Männer: Einatmen rechts " +
+            "(Surya Bhedana) und links (Chandra Bhedana) veränderten die HRV gleichartig.",
+        "doi:10.4103/ijoy.ijoy_119_24\u00A0· PMID 39959514",
+    )
+    val singh2024 = Reference(
+        "Singh A. et al. (2024): Traditional Nostril Yoga Breathing Practices and Oxygen " +
+            "Consumption: A Randomized, Cross-over Study. Int J Yoga 17(1):53–60. 47 Männer: Der " +
+            "Sauerstoffverbrauch stieg rechts, links und bei der Wechselatmung gleich stark.",
+        "doi:10.4103/ijoy.ijoy_248_23\u00A0· PMID 38899139",
+    )
 }

@@ -1,6 +1,6 @@
 # Atemkraft
 
-Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 18 Atemtechniken; zu jeder steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen.
+Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Töne und Vibration führen dich durch 20 Atemtechniken; zu jeder steht, was die Studienlage hergibt, mit Quellen und Sicherheitshinweisen.
 
 Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf den optionalen Download einer Sprachstimme. Atemkraft ist eine Wellness-App und kein Medizinprodukt; sie ersetzt keinen Rat von Ärztin, Arzt oder anderem Fachpersonal.
 
@@ -13,13 +13,14 @@ Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf den optionalen Download
 
 Beschrieben ist der Stand von `main`; die neueste APK unter Releases kann Einzelnes davon noch nicht haben.
 
-- **Atmen:** 18 Techniken in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen.
+- **Atmen:** 20 Techniken in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
 - **Eigene Muster:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“.
-- **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“, mit Suche nach deinem Befinden.
-- **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter.
-- **Logbuch, Atemlehre, Glossar, Export:** abgeschlossene Sitzungen, Grundlagen aus der Yoga-Lehre (etwa die fünf vāyus), Fachwörter erklärt, gespeicherte Muster als Datei sichern.
+- **Anlässe:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“, mit Suche nach deinem Befinden.
+- **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
+- **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, und Begriffe erklärt.
+- **Logbuch und Export:** abgeschlossene Sitzungen, gespeicherte Muster als Datei sichern.
 
 ## Installieren
 

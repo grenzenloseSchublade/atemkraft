@@ -63,6 +63,7 @@ interface SettingsActions {
     fun setShowProgress(enabled: Boolean)
     fun setShowSeconds(enabled: Boolean)
     fun setAutoCalm(enabled: Boolean)
+    fun setSilenceAfter(enabled: Boolean)
     fun setMeditationAutoCalm(enabled: Boolean)
     fun setMeditationShowProgress(enabled: Boolean)
     fun setMeditationShowTime(enabled: Boolean)
@@ -145,6 +146,8 @@ class SettingsViewModel(
         override fun setShowSeconds(enabled: Boolean) = write { settings.setShowSeconds(enabled) }
 
         override fun setAutoCalm(enabled: Boolean) = write { settings.setAutoCalm(enabled) }
+
+        override fun setSilenceAfter(enabled: Boolean) = write { settings.setSilenceAfter(enabled) }
 
         override fun setMeditationAutoCalm(enabled: Boolean) = write { settings.setMeditationAutoCalm(enabled) }
 

@@ -151,6 +151,9 @@ class SessionViewModel(
 
     // Logbuch-Metadaten der laufenden Session.
     private var currentExercise: Exercise? = null
+
+    /** Kennung der laufenden bzw. eben beendeten Übung; null nach [stop]. */
+    val currentExerciseId: String? get() = currentExercise?.id
     private var startedAtEpochMs = 0L
 
     /**
@@ -227,6 +230,7 @@ class SessionViewModel(
         continueSignal = null
         index = 0
         resumeRemainingMs = null
+        currentExercise = null
         _state.update { SessionUiState() }
     }
 

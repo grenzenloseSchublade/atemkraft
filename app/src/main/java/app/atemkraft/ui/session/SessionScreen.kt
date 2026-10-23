@@ -95,6 +95,7 @@ fun SessionScreen(
     onStop: () -> Unit,
     controlsVisible: Boolean = true,
     onOpenLogbook: (() -> Unit)? = null,
+    onIntoSilence: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -106,6 +107,7 @@ fun SessionScreen(
                 onAgain = onRestart,
                 onExit = onStop,
                 onOpenLogbook = onOpenLogbook,
+                onIntoSilence = onIntoSilence,
                 summary = state.summary?.let { sessionSummaryParts(it.durationMs, rounds = it.rounds, breaths = it.breaths) }.orEmpty(),
             )
         } else {

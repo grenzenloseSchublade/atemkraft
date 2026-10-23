@@ -352,7 +352,7 @@ private fun SourcesContent() {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ExerciseChips(ids: List<String>, onOpenExercise: (String) -> Unit) {
+internal fun ExerciseChips(ids: List<String>, onOpenExercise: (String) -> Unit) {
     if (ids.isEmpty()) return
     val daily = stringResource(R.string.atemlehre_daily_pattern)
     val entries = ids.mapNotNull { id ->
@@ -423,7 +423,7 @@ private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: B
 
 /** Beschrifteter Block („Lehre“, „Typisch“ …): Unter-Überschrift, darunter der Inhalt. */
 @Composable
-private fun Labeled(label: String, content: @Composable () -> Unit) {
+internal fun Labeled(label: String, content: @Composable () -> Unit) {
     Column {
         SubLabel(label, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(Dimens.GapHairline))

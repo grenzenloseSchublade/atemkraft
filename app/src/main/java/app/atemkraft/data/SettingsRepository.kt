@@ -49,12 +49,16 @@ data class SafetySettings(
 /**
  * Was die laufende Atem-Session zeigt (Karte „Während der Atemübung“). [autoCalm] blendet die
  * Bedienelemente nach wenigen Sekunden von selbst aus (Ruhe-Ansicht, SessionOverlay).
+ * [silenceAfter]: Nach dem Ende geht es nahtlos in die stille Meditation, eingestellt wie zuletzt im
+ * Tab Meditation (Nutzer 2026-10-23, Yoga-Sutra 2,52–2,53: Pranayama bereitet die Sammlung vor);
+ * Standard aus.
  */
 data class SessionDisplay(
     val showNextPhase: Boolean = true,
     val showProgress: Boolean = true,
     val showSeconds: Boolean = true,
     val autoCalm: Boolean = true,
+    val silenceAfter: Boolean = false,
 )
 
 /**
@@ -147,6 +151,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val SHOW_PROGRESS = booleanPreferencesKey("show_session_progress")
         val SHOW_SECONDS = booleanPreferencesKey("show_session_seconds")
         val AUTO_CALM = booleanPreferencesKey("session_auto_calm")
+        val SILENCE_AFTER = booleanPreferencesKey("session_silence_after")
         val MED_AUTO_CALM = booleanPreferencesKey("med_auto_calm")
         val MED_SHOW_PROGRESS = booleanPreferencesKey("med_show_progress")
         val MED_SHOW_TIME = booleanPreferencesKey("med_show_time")
@@ -263,6 +268,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             showProgress = prefs[Keys.SHOW_PROGRESS] ?: defaults.showProgress,
             showSeconds = prefs[Keys.SHOW_SECONDS] ?: defaults.showSeconds,
             autoCalm = prefs[Keys.AUTO_CALM] ?: defaults.autoCalm,
+            silenceAfter = prefs[Keys.SILENCE_AFTER] ?: defaults.silenceAfter,
         )
     }
 
@@ -324,6 +330,10 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setAutoCalm(enabled: Boolean) {
         store.edit { it[Keys.AUTO_CALM] = enabled }
+    }
+
+    suspend fun setSilenceAfter(enabled: Boolean) {
+        store.edit { it[Keys.SILENCE_AFTER] = enabled }
     }
 
     val meditationDisplay: Flow<MeditationDisplay> = data.map { prefs ->

@@ -55,20 +55,21 @@
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
-    <string name="tab_situations">Situationen</string>
+    <string name="tab_situations">Anlässe</string>
     <string name="tab_own">Eigene</string>
+    <string name="tab_learn">Lernen</string>
 
     <!-- Situationen -->
     <string name="situations_subtitle">Welche Atmung passt gerade?</string>
     <!-- Befindens-Suche: Platzhalter muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
     <string name="situations_search_placeholder">Wie fühlst du dich?</string>
-    <string name="cd_search_open">Situationen durchsuchen</string>
+    <string name="cd_search_open">Anlässe durchsuchen</string>
     <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
     <string name="cd_search_clear">Eingabe löschen</string>
     <string name="cd_search_close">Suche schließen</string>
     <plurals name="situations_search_count">
-        <item quantity="one">%1$d Situation passt</item>
-        <item quantity="other">%1$d Situationen passen</item>
+        <item quantity="one">%1$d Anlass passt</item>
+        <item quantity="other">%1$d Anlässe passen</item>
     </plurals>
     <string name="situations_search_none">Nichts gefunden</string>
     <string name="action_show_all">Alle zeigen</string>
@@ -189,13 +190,22 @@
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis vor intensiven Übungen</string>
     <string name="settings_safety_hint">Wird vor intensiven Übungen gezeigt, beim ersten Mal immer.</string>
-    <string name="settings_knowledge_title">Wissen</string>
     <string name="settings_glossary">Begriffe erklärt</string>
-    <!-- Untertitel der Wissen-Zeilen: nennen, was dort steht (Abschnitte der Atemlehre, Gruppen des Glossars). -->
-    <string name="settings_glossary_hint">Studien, HRV, Yoga-Begriffe</string>
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>
-    <string name="settings_atemlehre_hint">Phasen, Regeln, Muster</string>
+    <!-- Tab „Lernen“: je Kapitel ein Satz, was drin steht. -->
+    <string name="learn_subtitle">Yoga-Lehre und Praxis, ehrlich eingeordnet</string>
+    <string name="learn_atemlehre_hint">Phasen, vāyus, Regeln und Muster</string>
+    <string name="learn_pranayama_hint">Grundlagen und Techniken, mit Übungen zum Ausprobieren</string>
+    <string name="learn_glossary_hint">Studien, HRV und Yoga-Begriffe</string>
+    <string name="pranayama_title">Pranayama</string>
+    <string name="pranayama_basics">Grundlagen</string>
+    <string name="pranayama_techniques">Techniken</string>
+    <string name="pranayama_pronunciation">gesprochen „%1$s“</string>
+    <string name="pranayama_label_tradition">Tradition</string>
+    <string name="pranayama_label_how">So geht’s</string>
+    <string name="pranayama_label_safety">Sicherheit</string>
+    <string name="pranayama_label_practice">Üben</string>
     <string name="atemlehre_title">Atemlehre</string>
     <string name="atemlehre_phases">Die vier Phasen</string>
     <!-- Sanskrit zwischen Sternchen wird kursiv gesetzt (TEXT-14, sanskritText). -->
@@ -228,6 +238,8 @@
     <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe unter „Begriffe erklärt“. Bei Erkrankungen vorher ärztlich abklären.</string>
     <string name="settings_next_phase">Nächste Phase anzeigen</string>
     <string name="settings_next_phase_hint">Zeigt dezent die kommende Phase – hilfreich für den Anfang.</string>
+    <string name="settings_silence_after">Danach in die Stille</string>
+    <string name="settings_silence_after_hint">Nach der Übung geht es nahtlos in die stille Meditation, mit Dauer, Gong und Stimme wie zuletzt im Tab Meditation.</string>
     <string name="settings_auto_calm">Automatisch ausblenden</string>
     <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück. Ein Tipp neben den Kreis holt sie wieder.</string>
     <string name="settings_progress">Fortschrittsring</string>
@@ -275,6 +287,7 @@
     <string name="session_done_question">Wie fühlst du dich?</string>
     <!-- Link am Ende-Screen (Atem-Session und Meditation): beendet wie „Ende“ und öffnet das Logbuch. -->
     <string name="session_open_logbook">Im Logbuch ansehen</string>
+    <string name="session_into_silence">In der Stille bleiben</string>
     <string name="session_get_ready">Gleich geht’s los</string>
     <string name="session_next">Als Nächstes</string>
     <!-- Bilanz am Ende, Teile mit „ · “ verbunden: „8 Runden · 6:24 min · 60 Atemzüge“.

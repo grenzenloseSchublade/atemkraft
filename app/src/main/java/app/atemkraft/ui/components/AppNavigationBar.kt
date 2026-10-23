@@ -69,7 +69,7 @@ class AppNavItem(
 /**
  * Untere Navigationsleiste der Haupt-Tabs. Beschriftungen brechen nie im Wort (LAYOUT-03):
  * Reicht die Tab-Breite bei großer Schrift nicht, wird die Beschriftung verkleinert
- * ([WholeWordText], bis 50 %).
+ * ([WholeWordText], bis 40 %, damit fünf Tabs bei Schrift 2,0 passen).
  */
 @Composable
 fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
@@ -96,9 +96,9 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
                         style = LocalTextStyle.current.copy(
                             fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Normal,
                         ),
-                        // Ein Viertel der Breite ist bei fontScale 2,0 sehr knapp: „Situationen“
-                        // braucht dann etwa 60 %. Das Icon bleibt groß und trägt die Erkennung.
-                        minScale = 0.5f,
+                        // Ein Fünftel der Breite ist bei fontScale 2,0 sehr knapp: „Meditation“
+                        // braucht dann gut 40 % (360 dp). Das Icon bleibt groß und trägt die Erkennung.
+                        minScale = NAV_LABEL_MIN_SCALE,
                         sharedScale = labelScale,
                         onSharedScaleTooBig = { labelScale = minOf(labelScale, it) },
                     )
@@ -112,12 +112,15 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 /** Deckkraft der Trennlinie über der Tab-Leiste. */
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
+/** Kleinste Beschriftung der Tabs (Anteil der Rolle), damit fünf Namen bei Schrift 2,0 ganz bleiben. */
+private const val NAV_LABEL_MIN_SCALE = 0.4f
+
 /**
  * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Jede neue Seite startet mit
  * der Leiste ([enter]); scrollt der Inhalt mehr als [threshold] px nach unten, klappt sie ein
  * ([collapsed]). Zurück kommt sie nicht von selbst beim Hochscrollen, sondern über die Lasche
  * ([TabBarHandle], [expand]) – danach entscheidet der Nutzer, Scrollen klappt auf dieser Seite nicht
- * mehr ein. Die Scroll-Wege aller Seiten misst [connection] zentral im Rahmen der App; auf den vier
+ * mehr ein. Die Scroll-Wege aller Seiten misst [connection] zentral im Rahmen der App; auf den fünf
  * Tabs selbst bleibt die Leiste immer stehen (das entscheidet der Aufrufer).
  */
 @Stable

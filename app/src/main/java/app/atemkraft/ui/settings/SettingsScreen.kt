@@ -97,15 +97,13 @@ import app.atemkraft.ui.theme.WarnAmber
 import kotlinx.coroutines.flow.first
 
 /**
- * Einstellungen: oben das Wissen (Atemlehre, Glossar), dann Ton, Atmen, Sitzung & Sicherheit,
- * Meditation und Daten, unten Über.
+ * Einstellungen: Ton, Atmen, Sitzung & Sicherheit, Während der Atemübung, Meditation und Daten,
+ * unten Über. Atemlehre und Begriffe stehen seit 2026-10-23 im Tab „Lernen“.
  */
 @Composable
 fun SettingsScreen(
     state: SettingsUiState,
     actions: SettingsActions,
-    onOpenGlossary: () -> Unit,
-    onOpenAtemlehre: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
     transfer: PatternTransfer = PatternTransfer.Idle,
@@ -154,12 +152,8 @@ fun SettingsScreen(
                 }
 
                 // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
-                // Bedeutung (FARBE-07): Wissen 0, Klang 1, Atmen 2, Sitzung 3, Während der Atemübung 4,
-                // Meditation 5, Daten 6.
-                // Wissen zuerst: Atemlehre und Glossar sollen nicht unter den Karten verschwinden.
-                KnowledgeCard(onOpenAtemlehre = onOpenAtemlehre, onOpenGlossary = onOpenGlossary)
-
-                Spacer(Modifier.height(Dimens.ListGap))
+                // Bedeutung (FARBE-07): Klang 0, Atmen 1, Sitzung 2, Während der Atemübung 3,
+                // Meditation 4, Daten 5.
                 TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
 
                 Spacer(Modifier.height(Dimens.ListGap))
@@ -197,55 +191,6 @@ fun SettingsScreen(
     }
 }
 
-/** Wissen: Atemlehre und Glossar als Verweise in einer Karte, je mit kurzem Untertitel. */
-@Composable
-private fun KnowledgeCard(onOpenAtemlehre: () -> Unit, onOpenGlossary: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_knowledge_title), color = headingColor(0))
-            Spacer(Modifier.height(Dimens.GapTiny))
-            KnowledgeRow(
-                title = stringResource(R.string.settings_atemlehre),
-                hint = stringResource(R.string.settings_atemlehre_hint),
-                onClick = onOpenAtemlehre,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
-            KnowledgeRow(
-                title = stringResource(R.string.settings_glossary),
-                hint = stringResource(R.string.settings_glossary_hint),
-                onClick = onOpenGlossary,
-            )
-        }
-    }
-}
-
-/**
- * Verweis in der Wissen-Karte: Titel, Untertitel, Chevron. Die ganze Zeile ist ein Button
- * (TalkBack liest Titel und Untertitel als einen Namen), mindestens Touch-Ziel-hoch.
- */
-@Composable
-private fun KnowledgeRow(title: String, hint: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(vertical = Dimens.GapTiny),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            WholeWordText(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            HintText(hint)
-        }
-        ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
-    }
-}
-
 /**
  * Daten: gespeicherte Muster als Datei sichern und wieder einlesen (Storage Access Framework,
  * keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die Zahl der
@@ -256,7 +201,7 @@ private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () ->
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(6))
+            CardTitle(stringResource(R.string.settings_data_title), color = headingColor(5))
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(stringResource(R.string.settings_data_hint))
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -343,7 +288,7 @@ private fun TonCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_tone_title), color = headingColor(1))
+            CardTitle(stringResource(R.string.settings_tone_title), color = headingColor(0))
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.volume_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -394,7 +339,7 @@ private fun AtmenCard(
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_breathing_title), color = headingColor(2))
+            CardTitle(stringResource(R.string.settings_breathing_title), color = headingColor(1))
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_sound_title), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
@@ -449,7 +394,7 @@ private fun SessionCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_session_title), color = headingColor(3))
+            CardTitle(stringResource(R.string.settings_session_title), color = headingColor(2))
             Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(stringResource(R.string.settings_haptics), haptics, onToggleHaptics)
             HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
@@ -468,7 +413,7 @@ private fun SessionCard(
 private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_display_title), color = headingColor(4))
+            CardTitle(stringResource(R.string.settings_display_title), color = headingColor(3))
             Spacer(Modifier.height(Dimens.GapTiny))
             ToggleRow(
                 label = stringResource(R.string.settings_auto_calm),
@@ -496,6 +441,13 @@ private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions
                 checked = display.showNextPhase,
                 onCheckedChange = actions::setShowNextPhase,
                 hint = stringResource(R.string.settings_next_phase_hint),
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+            ToggleRow(
+                label = stringResource(R.string.settings_silence_after),
+                checked = display.silenceAfter,
+                onCheckedChange = actions::setSilenceAfter,
+                hint = stringResource(R.string.settings_silence_after_hint),
             )
         }
     }
@@ -544,7 +496,7 @@ private fun MeditationCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(5))
+            CardTitle(stringResource(R.string.settings_meditation_title), color = headingColor(4))
 
             Spacer(Modifier.height(Dimens.GapSmall))
             SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())

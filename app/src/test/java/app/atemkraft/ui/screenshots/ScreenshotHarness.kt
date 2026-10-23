@@ -201,7 +201,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     }
 
     /** Tabs der unteren Leiste, in der Reihenfolge der App (MainActivity). */
-    protected enum class Tab { ATMEN, SITUATIONEN, EIGENE, MEDITATION }
+    protected enum class Tab { ATMEN, SITUATIONEN, EIGENE, MEDITATION, LERNEN }
 
     /**
      * [prepare] läuft nach dem Setzen des Inhalts und vor der Aufnahme (z. B. etwas aufklappen).
@@ -284,6 +284,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
                     Tab.SITUATIONEN -> R.string.tab_situations to rememberVectorPainter(Icons.Filled.Search)
                     Tab.EIGENE -> R.string.tab_own to painterResource(R.drawable.ic_bookmark_filled)
                     Tab.MEDITATION -> R.string.tab_meditation to painterResource(R.drawable.ic_meditation)
+                    Tab.LERNEN -> R.string.tab_learn to painterResource(R.drawable.ic_learn)
                 }
                 AppNavItem(label = stringResource(label), selected = tab == selected, onClick = {}) {
                     Icon(icon, contentDescription = null)

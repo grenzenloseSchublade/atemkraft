@@ -16,6 +16,7 @@ object NoOpSettingsActions : SettingsActions {
     override fun setShowProgress(enabled: Boolean) = Unit
     override fun setShowSeconds(enabled: Boolean) = Unit
     override fun setAutoCalm(enabled: Boolean) = Unit
+    override fun setSilenceAfter(enabled: Boolean) = Unit
     override fun setMeditationAutoCalm(enabled: Boolean) = Unit
     override fun setMeditationShowProgress(enabled: Boolean) = Unit
     override fun setMeditationShowTime(enabled: Boolean) = Unit

@@ -239,6 +239,7 @@ fun FinishedPanel(
     modifier: Modifier = Modifier,
     summary: List<String> = emptyList(),
     onOpenLogbook: (() -> Unit)? = null,
+    onIntoSilence: (() -> Unit)? = null,
 ) {
     val pane = stringResource(R.string.session_done_title)
     val againFocus = remember { FocusRequester() }
@@ -284,6 +285,13 @@ fun FinishedPanel(
             Spacer(Modifier.height(Dimens.GapTiny))
             AppTextButton(onClick = onOpenLogbook) {
                 ForwardLinkText(text = stringResource(R.string.session_open_logbook), color = MaterialTheme.colorScheme.secondary)
+            }
+        }
+        // Nach einer Atemübung: auch ohne die Einstellung „Danach in die Stille“ einmal in die
+        // stille Meditation (Nutzer 2026-10-23).
+        if (onIntoSilence != null) {
+            AppTextButton(onClick = onIntoSilence) {
+                ForwardLinkText(text = stringResource(R.string.session_into_silence), color = MaterialTheme.colorScheme.secondary)
             }
         }
         Spacer(Modifier.height(Dimens.SessionPadding))

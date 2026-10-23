@@ -60,6 +60,8 @@ import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
+import app.atemkraft.ui.learn.LearnScreen
+import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.own.OwnPatternsScreen
@@ -167,6 +169,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * (Hinweis nach zurückgesetzten Einstellungen, „Keine Stimme gewählt“, Stimmen-Katalog offen
      * samt Quelle, „Beim Handywechsel?“ offen, längste Daten-Rückmeldungen, leeres Logbuch);
      * Glossar; Über mit Lizenzen; Atemlehre mit aufgeklappten Köpfen (samt den fünf vāyus) und der Karte „Feuer“;
+     * Tab „Lernen“ in Gerätehöhe und Pranayama mit allen Karten aufgeklappt;
      * Mini-Leiste mit längstem Namen und längstem Phasenwort.
      */
     @Test
@@ -183,6 +186,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 compose.onNodeWithText(app.getString(it).withoutMarks()).performClick()
             }
         }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer") }
+        snap("15_lernen", tab = Tab.LERNEN) { LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenGlossary = {}) }
+        snap("16_pranayama_offen") { PranayamaScreen(onBack = {}, onOpenExercise = {}, expanded = true) }
         snap("11_mini_leiste", heightDp = 160) {
             val longestPhase = listOf(R.string.phase_inhale, R.string.phase_exhale, R.string.phase_hold_full, R.string.session_paused)
                 .map(app::getString)
@@ -238,8 +243,6 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 logCount = 0,
             ),
             actions = NoOpSettingsActions,
-            onOpenGlossary = {},
-            onOpenAtemlehre = {},
             onOpenAbout = {},
             onBack = {},
             transfer = PatternTransfer(

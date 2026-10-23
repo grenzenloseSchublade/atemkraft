@@ -81,9 +81,11 @@ import app.atemkraft.ui.AtmenRoute
 import app.atemkraft.ui.DetailRoute
 import app.atemkraft.ui.EigeneRoute
 import app.atemkraft.ui.GlossaryRoute
+import app.atemkraft.ui.LernenRoute
 import app.atemkraft.ui.LogbookRoute
 import app.atemkraft.ui.MeditationRoute
 import app.atemkraft.ui.PatternEditorRoute
+import app.atemkraft.ui.PranayamaRoute
 import app.atemkraft.ui.SettingsRoute
 import app.atemkraft.ui.SituationenRoute
 import app.atemkraft.ui.about.AboutScreen
@@ -99,6 +101,8 @@ import app.atemkraft.ui.detail.rememberDetailExercise
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.isTabRoot
+import app.atemkraft.ui.learn.LearnScreen
+import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
@@ -182,6 +186,21 @@ private fun AtemkraftApp(
     val meditationActive = meditationStatus != MeditationStatus.IDLE
     var meditationExpanded by rememberSaveable { mutableStateOf(false) }
 
+    // Danach in die Stille (Nutzer 2026-10-23): Nach einer Atemübung nahtlos in die stille
+    // Meditation, eingestellt wie zuletzt im Tab Meditation. Nicht nach „Atmen im Gehen“ – wer geht,
+    // setzt sich nicht eben hin. Der Eintrag der Atemübung steht da schon im Logbuch.
+    val silenceAllowed = { sessionViewModel.currentExerciseId != WALKING_EXERCISE_ID }
+    val intoSilence = {
+        val expanded = sessionExpanded
+        sessionViewModel.stop()
+        sessionExpanded = false
+        meditationController.start(meditationConfig)
+        meditationExpanded = expanded
+    }
+    LaunchedEffect(sessionStatus) {
+        if (sessionStatus == SessionStatus.FINISHED && sessionDisplay.silenceAfter && silenceAllowed()) intoSilence()
+    }
+
     KeepScreenOn(
         enabled = sessionStatus == SessionStatus.RUNNING ||
             sessionStatus == SessionStatus.WAITING_FOR_USER ||
@@ -210,6 +229,7 @@ private fun AtemkraftApp(
         currentDestination.isOn(SituationenRoute) -> TopTab.SITUATIONEN
         currentDestination.isOn(EigeneRoute) -> TopTab.EIGENE
         currentDestination.isOn(MeditationRoute) -> TopTab.MEDITATION
+        currentDestination.isOn(LernenRoute) -> TopTab.LERNEN
         else -> null
     }
     // Markiert ist der Tab, zu dessen Stapel die Seite gehört – auch auf Push-Seiten und nach
@@ -220,6 +240,7 @@ private fun AtemkraftApp(
             SituationenRoute -> TopTab.SITUATIONEN
             EigeneRoute -> TopTab.EIGENE
             MeditationRoute -> TopTab.MEDITATION
+            LernenRoute -> TopTab.LERNEN
             else -> TopTab.ATMEN
         }
     }
@@ -286,6 +307,11 @@ private fun AtemkraftApp(
                                     selected = selectedTab == TopTab.MEDITATION,
                                     onClick = { navController.tapTab(MeditationRoute, selected = selectedTab == TopTab.MEDITATION) },
                                 ) { Icon(painterResource(R.drawable.ic_meditation), contentDescription = null) }, // dekorativ: das Label benennt den Tab
+                                AppNavItem(
+                                    label = stringResource(R.string.tab_learn),
+                                    selected = selectedTab == TopTab.LERNEN,
+                                    onClick = { navController.tapTab(LernenRoute, selected = selectedTab == TopTab.LERNEN) },
+                                ) { Icon(painterResource(R.drawable.ic_learn), contentDescription = null) }, // dekorativ: das Label benennt den Tab
                             ),
                         )
                     }
@@ -385,6 +411,13 @@ private fun AtemkraftApp(
                             meditationExpanded = true // Vollbild-Overlay öffnen (wie Session-Start)
                             askNotifications()
                         },
+                    )
+                }
+                composable<LernenRoute> {
+                    LearnScreen(
+                        onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
+                        onOpenPranayama = { navController.navigate(PranayamaRoute) },
+                        onOpenGlossary = { navController.navigate(GlossaryRoute) },
                     )
                 }
                 pushComposable<DetailRoute> { entry ->
@@ -516,8 +549,6 @@ private fun AtemkraftApp(
                     SettingsScreen(
                         state = settingsState,
                         actions = settingsViewModel.actions,
-                        onOpenGlossary = { navController.navigate(GlossaryRoute) },
-                        onOpenAtemlehre = { navController.navigate(AtemlehreRoute()) },
                         onOpenAbout = { navController.navigate(AboutRoute) },
                         onBack = { navController.popBackStack() },
                         transfer = patternTransfer,
@@ -535,6 +566,12 @@ private fun AtemkraftApp(
                         onBack = { navController.popBackStack() },
                         onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
                         focus = entry.toRoute<AtemlehreRoute>().focus,
+                    )
+                }
+                pushComposable<PranayamaRoute> {
+                    PranayamaScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenExercise = { id -> navController.navigate(DetailRoute(id)) },
                     )
                 }
                 pushComposable<AboutRoute> {
@@ -567,6 +604,7 @@ private fun AtemkraftApp(
                         sessionViewModel.stop()
                         sessionExpanded = false
                     },
+                    onIntoSilence = if (silenceAllowed()) intoSilence else null,
                     // „Im Logbuch ansehen ›“ am Ende: beendet wie „Ende“ und öffnet das Logbuch.
                     onOpenLogbook = {
                         sessionViewModel.stop()
@@ -648,7 +686,10 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
 }
 
 /** Die vier Top-Level-Tabs in Leisten-Reihenfolge (für die Markierung, auch auf Push-Zielen). */
-private enum class TopTab { ATMEN, SITUATIONEN, EIGENE, MEDITATION }
+private enum class TopTab { ATMEN, SITUATIONEN, EIGENE, MEDITATION, LERNEN }
+
+/** „Atmen im Gehen“: danach geht es nicht in die stille Meditation. */
+private const val WALKING_EXERCISE_ID = "walking-breath"
 
 /** True, wenn das aktuelle Ziel zu dieser Top-Level-Route gehört. */
 private fun NavDestination?.isOn(route: Any): Boolean = this?.hierarchy?.any { it.hasRoute(route::class) } == true

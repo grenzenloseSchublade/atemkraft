@@ -35,6 +35,8 @@ fun SessionOverlay(
     modifier: Modifier = Modifier,
     // „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
     onOpenLogbook: (() -> Unit)? = null,
+    // „In der Stille bleiben ›“ am Ende-Screen: weiter in die stille Meditation; ohne ihn kein Link.
+    onIntoSilence: (() -> Unit)? = null,
 ) {
     BackHandler { if (state.status == SessionStatus.FINISHED) onStop() else onMinimize() }
     CalmHost(
@@ -61,6 +63,7 @@ fun SessionOverlay(
                 onRestart = onRestart,
                 onStop = onStop,
                 onOpenLogbook = onOpenLogbook,
+                onIntoSilence = onIntoSilence,
             )
         }
     }

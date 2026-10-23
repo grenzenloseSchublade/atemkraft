@@ -4,9 +4,9 @@ import app.atemkraft.domain.PatternSpec
 import kotlinx.serialization.Serializable
 
 /**
- * Type-safe Navigation-Routen. Tabs: Atmen, Situationen, Eigene, Meditation. Push-Seiten mit
- * festem Kopf: Detail, Muster-Editor („Eigenes Muster“), Einstellungen, Logbuch, Glossar, Über,
- * Atemlehre.
+ * Type-safe Navigation-Routen. Tabs: Atmen, Anlässe (Situationen), Eigene, Meditation, Lernen.
+ * Push-Seiten mit festem Kopf: Detail, Muster-Editor („Eigenes Muster“), Einstellungen, Logbuch,
+ * Glossar, Über, Atemlehre, Pranayama.
  */
 @Serializable
 object AtmenRoute
@@ -20,6 +20,14 @@ object EigeneRoute
 
 @Serializable
 object MeditationRoute
+
+/** Tab „Lernen“: Kapitel Atemlehre, Pranayama und Begriffe (Nutzer 2026-10-23). */
+@Serializable
+object LernenRoute
+
+/** Seite „Pranayama“ im Tab „Lernen“: Grundlagen und Techniken mit „Üben ›“. */
+@Serializable
+object PranayamaRoute
 
 /** [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte. */
 @Serializable
