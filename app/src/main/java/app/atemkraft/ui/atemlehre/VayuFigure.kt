@@ -73,6 +73,7 @@ import app.atemkraft.domain.Vayu
 import app.atemkraft.domain.withoutMarks
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
@@ -152,7 +153,7 @@ private fun VayuRow(vayu: LoreVayu, selected: Boolean, onToggle: () -> Unit) {
     val color = vayu.vayu.color()
     val shape = MaterialTheme.shapes.small
     val nameStyle = MaterialTheme.typography.bodyMedium
-    val firstLine = with(LocalDensity.current) { (if (nameStyle.lineHeight.isSpecified) nameStyle.lineHeight else nameStyle.fontSize).toDp() }
+    val firstLine = rememberFirstLineHeight(nameStyle)
     val placeColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
     // Fett über das Gewicht einer Titel-Rolle (TYPO-01: kein eigenes FontWeight).
     val nameWeight = MaterialTheme.typography.titleSmall.fontWeight

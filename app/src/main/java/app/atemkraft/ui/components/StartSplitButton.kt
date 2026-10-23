@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -85,11 +84,9 @@ fun StartSplitButton(
                 modifier = Modifier.heightIn(min = Sizes.ButtonHeight).onFocusChanged { resetFocused = it.hasFocus },
                 contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
             ) {
-                // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt. Zeilenhöhe
-                // wie Compose sie setzt: bei nichtlinearer Systemschrift (Android 14+) im Verhältnis
-                // zur skalierten Schriftgröße, nicht als eigener sp-Wert.
-                val style = LocalTextStyle.current
-                val labelLine = with(LocalDensity.current) { style.fontSize.toDp() * (style.lineHeight.value / style.fontSize.value) }
+                // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt; die
+                // Zeile gemessen, wie „Starten“ sie rendert (auch bei nichtlinearer Schrift).
+                val labelLine = rememberFirstLineHeight(LocalTextStyle.current)
                 Box(Modifier.heightIn(min = labelLine), contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(R.drawable.ic_reset),

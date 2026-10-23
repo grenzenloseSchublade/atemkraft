@@ -96,3 +96,21 @@ private const val BULLET_GLYPH = "•"
  */
 @OptIn(ExperimentalComposeUiApi::class)
 private val DecorativeGlyph = Modifier.semantics { invisibleToUser() }
+
+/**
+ * Höhe der ersten Textzeile in [style], gemessen mit der aktuellen Schrift – für Marken, Punkte
+ * und Icons, die mittig auf der ersten Zeile eines Texts stehen sollen. Gemessen statt aus
+ * `lineHeight` gerechnet: Ab Android 14 wächst große Schrift nichtlinear, die gerenderte Zeile
+ * ist dann höher als ihr `lineHeight` in dp.
+ */
+@Composable
+fun rememberFirstLineHeight(style: TextStyle): androidx.compose.ui.unit.Dp {
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    return androidx.compose.runtime.remember(measurer, density, style) {
+        with(density) { measurer.measure(ONE_LINE, style, maxLines = 1).size.height.toDp() }
+    }
+}
+
+/** Ein Zeichen für die Messung einer Zeile ([rememberFirstLineHeight]). */
+private const val ONE_LINE = "A"
