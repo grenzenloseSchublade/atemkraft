@@ -17,9 +17,10 @@ import java.io.File
  * Ehrliche Texte (STYLEGUIDE §11): Teaser (TEXT-06, -13, MUSTER-03), Heilversprechen samt
  * Store-Disclaimer (TEXT-09, -11, SEC-LEGAL-01/-02) und Typografie (TEXT-10), geprüft über alle
  * Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages (Seeds 0–6), eigene und
- * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Glossar, Situationen samt
- * Suchbegriffen, Quellen und `strings.xml`; dazu die öffentlichen Texte (README,
- * Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen.
+ * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Pranayama, Glossar,
+ * Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die öffentlichen Texte (README,
+ * Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen. Außerdem lösen alle
+ * Querverweise zwischen diesen Inhalten auf (`cross-references`).
  *
  * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Fall | Datensatz | S-nn`). Ein
  * Test sammelt seine Fälle und schlägt fehl bei einem neuen Verstoß und bei einem
@@ -175,6 +176,36 @@ class ContentRulesTest {
         }
     }
 
+    /** Texte der Seite „Pranayama“ (TEXT-13): Grundlagen, Techniken und Quellen. */
+    private val pranayamaTexts: List<Text> by lazy {
+        buildList {
+            add(Text("pranayama.intro", Pranayama.intro))
+            add(Text("pranayama.topicsTeaser", Pranayama.topicsTeaser))
+            Pranayama.topics.forEach { t ->
+                val k = "pranayama.topic.${t.id}"
+                add(Text("$k.title", t.title))
+                add(Text("$k.teaser", t.teaser))
+                t.paragraphs.forEachIndexed { i, para -> add(Text("$k.paragraphs[$i]", para)) }
+                t.source?.let { add(Text("$k.source", it)) }
+            }
+            add(Text("pranayama.techniquesTeaser", Pranayama.techniquesTeaser))
+            Pranayama.techniques.forEach { t ->
+                val k = "pranayama.${t.id}"
+                add(Text("$k.name", t.name))
+                add(Text("$k.sanskrit", t.sanskrit))
+                t.pronunciation?.let { add(Text("$k.pronunciation", it)) }
+                add(Text("$k.teaser", t.teaser))
+                add(Text("$k.tradition", t.tradition))
+                add(Text("$k.howTo", t.howTo))
+                add(Text("$k.studies", t.studies))
+                add(Text("$k.safety", t.safety))
+                t.source?.let { add(Text("$k.source", it)) }
+            }
+            add(Text("pranayama.sourcesTeaser", Pranayama.sourcesTeaser))
+            Pranayama.textSources.forEachIndexed { i, t -> add(Text("pranayama.textSources[$i]", t)) }
+        }
+    }
+
     /** Suchbegriffe einer Situation (MUSTER-09) – sie folgen denselben Inhaltsregeln. */
     private fun keywordTexts(rec: SituationRecommendation): List<Text> = rec.keywords.mapIndexed { i, k -> Text("situation.${rec.situation}.keywords[$i]", k) }
 
@@ -222,7 +253,7 @@ class ContentRulesTest {
         }
     }
 
-    private val contentTexts get() = exerciseTexts + atemlehreTexts + glossaryTexts + situationTexts
+    private val contentTexts get() = exerciseTexts + atemlehreTexts + pranayamaTexts + glossaryTexts + situationTexts
     private val allTexts get() = contentTexts + strings
 
     // ---- Baseline -----------------------------------------------------------------------
@@ -284,7 +315,8 @@ class ContentRulesTest {
 
     /**
      * TEXT-06, MUSTER-03: Teaser und erster Vorsicht-Hinweis; TEXT-13: Teaser der Yoga-Lehre
-     * (Detailseite, Muster-Karten und Abschnitte der Atemlehre) ohne Baseline, zuschreibend statt
+     * (Detailseite, Muster-Karten und Abschnitte der Atemlehre, Grundlagen, Techniken und
+     * Abschnitte der Seite „Pranayama“) ohne Baseline, zuschreibend statt
      * Wirkung zu behaupten („gilt in der Yoga-Lehre als …“, nie „wirkt“). Das Detail beginnt nie
      * mit dem Teaser.
      */
@@ -300,12 +332,17 @@ class ContentRulesTest {
             teaserProblems(e.cautions.first()).map { Finding("${e.key()}.cautions[0]", it) }
         }
         val lore = exercises.mapNotNull { e -> e.lore?.let { Triple("${e.key()}.lore", it.teaser, it.detail) } }
-        val patterns = Atemlehre.patterns.map { Triple("atemlehre.${it.id}", it.teaser, it.teaching) }
+        val patterns = Atemlehre.patterns.map { Triple("atemlehre.${it.id}", it.teaser, it.teaching) } +
+            Pranayama.topics.map { Triple("pranayama.topic.${it.id}", it.teaser, it.paragraphs.first()) } +
+            Pranayama.techniques.map { Triple("pranayama.${it.id}", it.teaser, it.tradition) }
         val sections = listOf(
             "atemlehre.vayusTeaser" to Atemlehre.vayusTeaser,
             "atemlehre.rulesTeaser" to Atemlehre.rulesTeaser,
             "atemlehre.influencesTeaser" to Atemlehre.influencesTeaser,
             "atemlehre.sourcesTeaser" to Atemlehre.sourcesTeaser,
+            "pranayama.topicsTeaser" to Pranayama.topicsTeaser,
+            "pranayama.techniquesTeaser" to Pranayama.techniquesTeaser,
+            "pranayama.sourcesTeaser" to Pranayama.sourcesTeaser,
         )
         val claim = Regex("""\b(wirkt|bewirkt|hilft gegen)\b""", RegexOption.IGNORE_CASE)
         val loreTeaser = (lore + patterns).flatMap { (key, teaser, detail) ->
@@ -320,6 +357,30 @@ class ContentRulesTest {
             "teaser",
             againstBaseline("teaser", teaser) + againstBaseline("first-caution", firstCaution) + strict("lore-teaser", loreTeaser),
         )
+    }
+
+    // ---- Querverweise --------------------------------------------------------------------
+
+    /**
+     * Jeder Verweis zwischen den Inhalten führt auf ein Ziel, das es gibt: Übungen aus Atemlehre
+     * (Karten und „Weitere Einflüsse“), Pranayama-Techniken und Situationen auf
+     * [BuiltInExercises.all] oder das Muster des Tages ([RandomPatternGenerator.ID]); die
+     * Yoga-Lehre jeder Übung (auch der generierten Muster) auf eine Karte in [Atemlehre.patterns].
+     */
+    @Test
+    fun `cross-references`() {
+        val exerciseIds = BuiltInExercises.all.map { it.id }.toSet() + RandomPatternGenerator.ID
+        val patternIds = Atemlehre.patterns.map { it.id }.toSet()
+        val toExercises = Atemlehre.patterns.flatMap { p -> p.exerciseIds.map { "atemlehre.${p.id}" to it } } +
+            Atemlehre.influences.flatMap { inf -> inf.exerciseIds.map { "atemlehre.influence ${inf.label}" to it } } +
+            Pranayama.techniques.flatMap { t -> (listOfNotNull(t.exerciseId) + t.moreExerciseIds).map { "pranayama.${t.id}" to it } } +
+            Situations.all.flatMap { rec -> rec.exerciseIds.map { "situation.${rec.situation}" to it } }
+        val toPatterns = exercises.flatMap { e ->
+            e.lore?.let { l -> (listOf(l.patternId) + l.morePatternIds).map { "${e.key()}.lore" to it } }.orEmpty()
+        }
+        val broken = toExercises.filter { (_, id) -> id !in exerciseIds }.map { (from, id) -> "$from → Übung „$id“" } +
+            toPatterns.filter { (_, id) -> id !in patternIds }.map { (from, id) -> "$from → Atemlehre-Karte „$id“" }
+        assertNone("cross-references", broken.distinct())
     }
 
     // ---- TEXT-09: Heilversprechen -------------------------------------------------------
