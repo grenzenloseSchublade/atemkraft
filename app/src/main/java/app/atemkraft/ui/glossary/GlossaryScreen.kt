@@ -31,13 +31,14 @@ import app.atemkraft.ui.theme.Dimens
  */
 @Composable
 fun GlossaryScreen(onBack: () -> Unit) {
+    val scrollState = rememberScrollState()
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            PushHeader(onBack = onBack, title = stringResource(R.string.glossary_title))
+            PushHeader(onBack = onBack, title = stringResource(R.string.glossary_title), scrolled = scrollState.canScrollBackward)
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 // Abstand über den Gruppen bringt der SectionHeader selbst mit (SectionHeaderTop).

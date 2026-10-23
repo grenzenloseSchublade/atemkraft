@@ -114,7 +114,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            PushHeader(onBack = onBack, title = stringResource(R.string.atemlehre_title))
+            PushHeader(onBack = onBack, title = stringResource(R.string.atemlehre_title), scrolled = scrollState.canScrollBackward)
             Column(
                 modifier = Modifier
                     .weight(1f)

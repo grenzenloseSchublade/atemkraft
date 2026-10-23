@@ -1,10 +1,16 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -22,15 +28,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import app.atemkraft.R
 import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.NeonMagenta
 import app.atemkraft.ui.theme.OnNeon
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
 
 /** Ein Tab der unteren Navigationsleiste. */
@@ -87,11 +97,14 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 /** Deckkraft der Trennlinie über der Tab-Leiste. */
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
+/** Pfeil des [TabBarToggle] nach unten gedreht (Grad). */
+private const val HALF_TURN = 180f
+
 /**
- * Platz der Tab-Leiste für eine Seite, die sie bei Platzmangel ausblenden darf (MUSTER-10, Nutzer
- * 2026-10-22: nur der Muster-Editor). Der Rahmen ([HideableTabBar]) misst [heightPx] und setzt
- * [hidden]; die Seite meldet über [request], ob sie den Platz braucht. Nur die Seite, die das
- * darf, bekommt ihn als Parameter.
+ * Platz der Tab-Leiste für eine Seite, die sie ausblenden darf: der Muster-Editor bei Platzmangel
+ * (MUSTER-10, Nutzer 2026-10-22), die Detailseite beim Scrollen und über [TabBarToggle] (Nutzer
+ * 2026-10-23). Der Rahmen ([HideableTabBar]) misst [heightPx] und setzt [hidden]; die Seite meldet
+ * über [request], ob sie den Platz braucht. Nur die Seiten, die das dürfen, bekommen ihn als Parameter.
  */
 @Stable
 class TabBarSpace {
@@ -129,13 +142,42 @@ fun HideableTabBar(
 ) {
     val hide = allowHide && space.requested
     SideEffect { space.hidden = hide }
-    if (hide) {
-        Spacer(modifier.windowInsetsBottomHeight(systemInsets))
-        return
-    }
     val inset by rememberUpdatedState(systemInsets.getBottom(LocalDensity.current))
-    Column(modifier.onSizeChanged { space.heightPx = it.height - inset }) {
-        HorizontalDivider(thickness = Dimens.BorderThin, color = NeonMagenta.copy(alpha = TAB_DIVIDER_ALPHA))
-        bar()
+    // Die Höhe gleitet (Default-Spring, MOTION-04): Die Startleiste darüber rutscht sanft hinab
+    // bzw. hinauf, statt um die ganze Leiste zu springen.
+    Box(modifier.animateContentSize()) {
+        if (hide) {
+            Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
+        } else {
+            Column(Modifier.onSizeChanged { space.heightPx = it.height - inset }) {
+                HorizontalDivider(thickness = Dimens.BorderThin, color = NeonMagenta.copy(alpha = TAB_DIVIDER_ALPHA))
+                bar()
+            }
+        }
+    }
+}
+
+/**
+ * Kleiner Pfeil am Ende der Startleiste, der die Tab-Leiste ein- und ausblendet ([space]): nach oben,
+ * solange sie weg ist („Tab-Leiste zeigen“), nach unten, solange sie da ist. Statt hochzuscrollen,
+ * bis die Leiste vielleicht wiederkommt, holt ein Tipp sie sicher zurück (Nutzer 2026-10-23).
+ * [onToggle] meldet der Seite die Wahl von Hand – danach blendet Scrollen nicht mehr aus.
+ */
+@Composable
+fun TabBarToggle(space: TabBarSpace, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    val turn by animateFloatAsState(if (space.requested) 0f else HALF_TURN, label = "tabBarToggle")
+    AppIconButton(
+        onClick = {
+            space.request(!space.requested)
+            onToggle()
+        },
+        modifier = modifier,
+    ) {
+        Icon(
+            Icons.Filled.KeyboardArrowUp,
+            contentDescription = stringResource(if (space.requested) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+            modifier = Modifier.rotate(turn),
+        )
     }
 }

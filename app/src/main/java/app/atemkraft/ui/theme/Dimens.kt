@@ -22,10 +22,7 @@ object Dimens {
     /** Rand der Vollbild-Sitzungen (Atem-Session/Meditation). */
     val SessionPadding = 24.dp
 
-    /** Oben auf Tab-Screens. */
-    val ScreenTop = 16.dp
-
-    /** Oben auf Push-Screens, über dem Zurück-Button (der selbst 48 dp Tippfläche mitbringt). */
+    /** Oben über der festen Kopfzeile aller Seiten (Tabs und Push; Pfeil und Icons bringen 48 dp Tippfläche mit). */
     val ScreenTopSub = 8.dp
 
     /** Unten auf allen Scroll-Screens. */

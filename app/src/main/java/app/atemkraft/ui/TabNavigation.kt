@@ -36,10 +36,13 @@ internal fun NavController.switchTab(route: Any) {
 }
 
 /**
- * Ob die Tab-Leiste auf diesem Ziel bei Platzmangel ausgeblendet werden darf: nur im Muster-Editor
- * (MUSTER-10, Nutzer 2026-10-22). Folgt dem Stapel sofort – zurück oder weiter, ist sie wieder da.
+ * Ob die Tab-Leiste auf diesem Ziel ausgeblendet werden darf: im Muster-Editor bei Platzmangel
+ * (MUSTER-10, Nutzer 2026-10-22) und auf der Detailseite beim Scrollen (Nutzer 2026-10-23) – die
+ * beiden Seiten mit fester Startleiste. Folgt dem Stapel sofort – zurück oder weiter, ist sie wieder da.
  */
-internal fun NavDestination?.mayHideTabBar(): Boolean = this?.hierarchy?.any { it.hasRoute(PatternEditorRoute::class) } == true
+internal fun NavDestination?.mayHideTabBar(): Boolean = this?.hierarchy?.any {
+    it.hasRoute(PatternEditorRoute::class) || it.hasRoute(DetailRoute::class)
+} == true
 
 /**
  * Der Tab, zu dessen Stapel die aktuelle Seite gehört – auch auf Push-Seiten und nach einem

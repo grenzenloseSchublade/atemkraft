@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
@@ -28,6 +29,7 @@ import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.ScreenHeader
+import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.headingColor
@@ -53,56 +55,60 @@ fun OwnPatternsScreen(
     onDeletePattern: (Long) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
+    val listState = rememberLazyListState()
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-            // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-            // Listen-Clip sie anschneidet.
-            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-            verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-        ) {
-            item {
-                ScreenHeader(
-                    title = stringResource(R.string.own_title),
-                    subtitle = stringResource(R.string.own_subtitle),
-                    action = { SettingsAction(onClick = onOpenSettings) },
-                )
-            }
+        Column(modifier = Modifier.fillMaxSize()) {
+            ScreenHeader(
+                title = stringResource(R.string.own_title),
+                action = { SettingsAction(onClick = onOpenSettings) },
+                scrolled = listState.canScrollBackward,
+            )
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+                // Listen-Clip sie anschneidet.
+                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
+                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+            ) {
+                item { ScreenSubtitle(stringResource(R.string.own_subtitle)) }
 
-            if (savedPatterns.isEmpty()) {
-                item(key = "empty") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Spacer(Modifier.height(Dimens.SectionGap))
-                        HintText(stringResource(R.string.own_empty))
-                        Spacer(Modifier.height(Dimens.GapSmall))
-                        NewPatternButton(onClick = onNewPattern)
+                if (savedPatterns.isEmpty()) {
+                    item(key = "empty") {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Spacer(Modifier.height(Dimens.SectionGap))
+                            HintText(stringResource(R.string.own_empty))
+                            Spacer(Modifier.height(Dimens.GapSmall))
+                            NewPatternButton(onClick = onNewPattern)
+                        }
+                    }
+                } else {
+                    item(key = "new-pattern") {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Spacer(Modifier.height(Dimens.SectionGap))
+                            NewPatternButton(onClick = onNewPattern)
+                        }
+                    }
+                    // Der einzige Abschnittskopf des Tabs, also der erste im Ring (FARBE-07).
+                    item(key = "my-patterns") {
+                        SectionHeader(title = stringResource(R.string.situations_my_patterns), color = headingColor(0))
+                    }
+                    items(savedPatterns, key = { "pattern-${it.id}" }) { pattern ->
+                        SavedPatternCard(
+                            pattern = pattern,
+                            onClick = { onSelect(pattern.exercise.id) },
+                            onDelete = { onDeletePattern(pattern.id) },
+                        )
                     }
                 }
-            } else {
-                item(key = "new-pattern") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Spacer(Modifier.height(Dimens.SectionGap))
-                        NewPatternButton(onClick = onNewPattern)
-                    }
-                }
-                // Der einzige Abschnittskopf des Tabs, also der erste im Ring (FARBE-07).
-                item(key = "my-patterns") {
-                    SectionHeader(title = stringResource(R.string.situations_my_patterns), color = headingColor(0))
-                }
-                items(savedPatterns, key = { "pattern-${it.id}" }) { pattern ->
-                    SavedPatternCard(
-                        pattern = pattern,
-                        onClick = { onSelect(pattern.exercise.id) },
-                        onDelete = { onDeletePattern(pattern.id) },
-                    )
-                }
-            }
 
-            item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+            }
         }
     }
 }

@@ -2,14 +2,17 @@ package app.atemkraft.ui.situations
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -40,6 +43,7 @@ import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ScreenHeader
+import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.home.ExerciseCard
@@ -75,92 +79,100 @@ fun SituationsScreen(
         searchOpen = false
     }
     BackHandler(enabled = searchOpen, onBack = closeSearch)
+    // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
+    val listState = rememberLazyListState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-            // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-            // Listen-Clip sie anschneidet.
-            contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-            verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-        ) {
-            item {
-                ScreenHeader(
-                    title = stringResource(R.string.tab_situations),
-                    subtitle = stringResource(R.string.situations_subtitle),
-                    action = if (searchOpen) {
-                        null
-                    } else {
-                        {
-                            AppIconButton(onClick = {
-                                searchOpen = true
-                                focusPending = true
-                            }) {
-                                Icon(
-                                    Icons.Filled.Search,
-                                    contentDescription = stringResource(R.string.cd_search_open),
-                                    tint = MaterialTheme.colorScheme.onBackground,
-                                )
-                            }
-                        }
-                    },
-                    subtitleContent = if (searchOpen) {
-                        {
-                            SearchField(
-                                query = query,
-                                onQueryChange = { query = it },
-                                placeholder = stringResource(R.string.situations_search_placeholder),
-                                // Erst leeren, dann schließen: Wer neu tippen will, behält das Feld.
-                                clearDescription = stringResource(
-                                    if (query.isEmpty()) R.string.cd_search_close else R.string.cd_search_clear,
-                                ),
-                                onClear = { if (query.isEmpty()) closeSearch() else query = "" },
-                                focusRequester = focus,
+        Column(modifier = Modifier.fillMaxSize()) {
+            ScreenHeader(
+                title = stringResource(R.string.tab_situations),
+                action = if (searchOpen) {
+                    null
+                } else {
+                    {
+                        AppIconButton(onClick = {
+                            searchOpen = true
+                            focusPending = true
+                        }) {
+                            Icon(
+                                Icons.Filled.Search,
+                                contentDescription = stringResource(R.string.cd_search_open),
+                                tint = MaterialTheme.colorScheme.onBackground,
                             )
-                            LaunchedEffect(focusPending) {
-                                if (focusPending) {
-                                    focus.requestFocus()
-                                    focusPending = false
-                                }
+                        }
+                    }
+                },
+                scrolled = listState.canScrollBackward,
+                // Das Suchfeld steht fest unter der Zeile: Getippt wird oben, die Treffer scrollen.
+                below = if (searchOpen) {
+                    {
+                        SearchField(
+                            query = query,
+                            onQueryChange = { query = it },
+                            placeholder = stringResource(R.string.situations_search_placeholder),
+                            // Erst leeren, dann schließen: Wer neu tippen will, behält das Feld.
+                            clearDescription = stringResource(
+                                if (query.isEmpty()) R.string.cd_search_close else R.string.cd_search_clear,
+                            ),
+                            onClear = { if (query.isEmpty()) closeSearch() else query = "" },
+                            focusRequester = focus,
+                        )
+                        LaunchedEffect(focusPending) {
+                            if (focusPending) {
+                                focus.requestFocus()
+                                focusPending = false
                             }
                         }
-                    } else {
-                        null
-                    },
-                )
-            }
+                    }
+                } else {
+                    null
+                },
+            )
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+                // Listen-Clip sie anschneidet.
+                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
+                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+            ) {
+                // Bei offener Suche ersetzt das Suchfeld unter dem Kopf den Untertitel.
+                if (!searchOpen) {
+                    item(key = "subtitle") { ScreenSubtitle(stringResource(R.string.situations_subtitle)) }
+                }
 
-            if (results != null) {
-                item(key = "search-status") {
-                    SearchStatus(count = results.size, onShowAll = closeSearch)
+                if (results != null) {
+                    item(key = "search-status") {
+                        SearchStatus(count = results.size, onShowAll = closeSearch)
+                    }
+                    // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der
+                    // Übersicht zu überschreiben.
+                    // Köpfe reihum nach ihrer Lage unter den gezeigten Abschnitten (FARBE-07).
+                    itemsIndexed(results, key = { _, rec -> "q-${rec.situation.name}" }) { index, rec ->
+                        SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
+                    }
+                } else {
+                    // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
+                    // als langes Scrollen.
+                    // Köpfe reihum nach ihrer Lage (FARBE-07).
+                    itemsIndexed(recommendations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
+                        SituationSection(
+                            rec,
+                            index,
+                            initiallyExpanded = false,
+                            resolve = resolve,
+                            markedIds = markedIds,
+                            onSelect = onSelect,
+                        )
+                    }
                 }
-                // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der
-                // Übersicht zu überschreiben.
-                // Köpfe reihum nach ihrer Lage unter den gezeigten Abschnitten (FARBE-07).
-                itemsIndexed(results, key = { _, rec -> "q-${rec.situation.name}" }) { index, rec ->
-                    SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
-                }
-            } else {
-                // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
-                // als langes Scrollen.
-                // Köpfe reihum nach ihrer Lage (FARBE-07).
-                itemsIndexed(recommendations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
-                    SituationSection(
-                        rec,
-                        index,
-                        initiallyExpanded = false,
-                        resolve = resolve,
-                        markedIds = markedIds,
-                        onSelect = onSelect,
-                    )
-                }
-            }
 
-            item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+            }
         }
     }
 }

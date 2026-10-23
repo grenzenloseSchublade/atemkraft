@@ -236,10 +236,12 @@ fun PatternEditorScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val scrollState = rememberScrollState()
             PushHeader(
                 onBack = onBack,
                 titleContent = { NameTitle(state, onRename = { showRename = true }) },
                 action = { SaveToggle(state, onSavedChange) },
+                scrolled = scrollState.canScrollBackward,
             )
             // Sichtbare Höhe der Scroll-Fläche: Danach richtet sich die Höhe der Kurve ([FirstScreen]).
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
@@ -247,7 +249,7 @@ fun PatternEditorScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(horizontal = Dimens.ScreenPadding),
                 ) {
                     FirstScreen(

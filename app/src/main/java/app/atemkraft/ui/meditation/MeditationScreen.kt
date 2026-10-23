@@ -49,6 +49,7 @@ import app.atemkraft.ui.components.OverlayChrome
 import app.atemkraft.ui.components.PauseFlash
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.ScreenHeader
+import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SessionControlBar
@@ -116,7 +117,15 @@ private fun SelectionContent(
     var soundExpanded by rememberSaveable { mutableStateOf(false) }
     val mode = if (duration.free) MeditationMode.FREE else MeditationMode.TIMED
 
+    // Scrollt nur als Notlösung (LAYOUT-08); dann zeigt der feste Kopf seine Haarlinie.
+    val scrollState = rememberScrollState()
+
     Column(modifier = Modifier.fillMaxSize()) {
+        ScreenHeader(
+            title = stringResource(R.string.meditation_title),
+            action = { SettingsAction(onClick = onOpenSettings) },
+            scrolled = scrollState.canScrollBackward,
+        )
         // Die Seite scrollt nicht: Der Regler bekommt den Platz zwischen Kopf und „Klang & Stimme“
         // und wird bei großer Schrift oder aufgeklapptem Klang kleiner. Er hängt oben unter dem Kopf,
         // damit er beim Aufklappen nur schrumpft und nicht wandert. Erst wenn selbst seine
@@ -128,15 +137,9 @@ private fun SelectionContent(
                 minCenterHeight = durationPickerMinSide() + Dimens.GapSmall * 2,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = Dimens.ScreenPadding),
-                top = {
-                    ScreenHeader(
-                        title = stringResource(R.string.meditation_title),
-                        subtitle = stringResource(R.string.meditation_subtitle),
-                        action = { SettingsAction(onClick = onOpenSettings) },
-                    )
-                },
+                top = { ScreenSubtitle(stringResource(R.string.meditation_subtitle)) },
                 center = {
                     // Oben Luft wie über einem Abschnittskopf: Mit nur GapSmall klebte die ∞-Marke am
                     // Untertitel, während unter dem Ring viel Platz frei blieb (Nutzer 2026-10-20). Wird

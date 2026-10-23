@@ -436,6 +436,7 @@ private fun AtemkraftApp(
                             navController.popBackStack()
                         },
                         onBack = { navController.popBackStack() },
+                        tabBar = tabBarSpace,
                         onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
                         marked = id in markedExercises,
                         onMarkedChange = if (markable) {

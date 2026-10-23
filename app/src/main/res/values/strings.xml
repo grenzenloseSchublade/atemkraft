@@ -63,6 +63,8 @@
     <!-- Befindens-Suche: Platzhalter muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
     <string name="situations_search_placeholder">Wie fühlst du dich?</string>
     <string name="cd_search_open">Situationen durchsuchen</string>
+    <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
+    <string name="cd_tab_bar_hide">Tab-Leiste ausblenden</string>
     <string name="cd_search_clear">Eingabe löschen</string>
     <string name="cd_search_close">Suche schließen</string>
     <plurals name="situations_search_count">

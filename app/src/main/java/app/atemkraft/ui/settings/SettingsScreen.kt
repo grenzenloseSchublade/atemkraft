@@ -138,7 +138,7 @@ fun SettingsScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Fest über der Scroll-Fläche: Nach dem Sprung zur Meditations-Karte bliebe der
             // Pfeil sonst außerhalb des Bildes (einziger sichtbarer Weg zurück).
-            PushHeader(onBack = onBack, title = stringResource(R.string.settings_title))
+            PushHeader(onBack = onBack, title = stringResource(R.string.settings_title), scrolled = scrollState.canScrollBackward)
             Column(
                 modifier = Modifier
                     .weight(1f)

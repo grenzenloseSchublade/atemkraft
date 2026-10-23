@@ -1,11 +1,14 @@
 package app.atemkraft.ui.detail
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -25,8 +28,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
@@ -61,8 +66,11 @@ import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
+import app.atemkraft.ui.components.TabBarSpace
+import app.atemkraft.ui.components.TabBarToggle
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.BODY
@@ -70,6 +78,7 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
+import kotlinx.coroutines.flow.filter
 import kotlin.math.roundToInt
 
 /**
@@ -98,6 +107,9 @@ fun ExerciseDetailScreen(
     // anpassen“ beim Muster des Tages, sonst „Muster bearbeiten“).
     onEditPattern: (() -> Unit)? = null,
     editDescription: String? = null,
+    // Platz der Tab-Leiste: Beim Runterscrollen weicht sie, der Pfeil an der Startleiste holt sie
+    // zurück (Nutzer 2026-10-23); ohne ihn bleibt die Leiste (Vorschauen, Tests).
+    tabBar: TabBarSpace? = null,
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
@@ -150,6 +162,22 @@ fun ExerciseDetailScreen(
         if (requireSafetyConfirm) showSafety = true else onStart(adjust.config())
     }
 
+    val scrollState = rememberScrollState()
+    // Nur mit Startleiste (getaktete Übungen): Dort sitzt der Pfeil, der die Leiste zurückholt.
+    val tabs = tabBar?.takeIf { exercise.guided }
+    // Wer den Pfeil benutzt hat, entscheidet selbst: Danach blendet Scrollen nicht mehr aus.
+    var tabsByHand by rememberSaveable { mutableStateOf(false) }
+    if (tabs != null) {
+        val threshold = with(LocalDensity.current) { Dimens.SectionGap.roundToPx() }
+        LaunchedEffect(tabs) {
+            // Beim Betreten ist die Leiste da – auch wenn eine andere Seite sie ausgeblendet hatte.
+            if (!tabsByHand) tabs.request(false)
+            snapshotFlow { scrollState.value > threshold }
+                .filter { it }
+                .collect { if (!tabsByHand) tabs.request(true) }
+        }
+    }
+
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Name und Markierung stehen fest wie der Titel jeder anderen Seite; lange Namen
@@ -172,11 +200,12 @@ fun ExerciseDetailScreen(
 
                     else -> null
                 },
+                scrolled = scrollState.canScrollBackward,
             )
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 Spacer(Modifier.height(Dimens.SectionGap))
@@ -374,15 +403,26 @@ fun ExerciseDetailScreen(
                             stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
                         )
                     }
-                    StartSplitButton(
-                        label = startLabel,
-                        resetVisible = adjust.modified,
-                        onStart = { launch() },
-                        onReset = {
-                            adjust.reset()
-                            onIntervalsReset()
-                        },
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        StartSplitButton(
+                            label = startLabel,
+                            resetVisible = adjust.modified,
+                            onStart = { launch() },
+                            onReset = {
+                                adjust.reset()
+                                onIntervalsReset()
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (tabs != null) {
+                            // Glyph an der Inhaltskante, die Tippfläche ragt in den Rand (LAYOUT-07).
+                            Box(Modifier.flushEnd()) { TabBarToggle(tabs, onToggle = { tabsByHand = true }) }
+                        }
+                    }
                 }
             }
         }

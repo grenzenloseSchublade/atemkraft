@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -100,9 +101,11 @@ fun LogbookScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val listState = rememberLazyListState()
             // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild.
-            PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title))
+            PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = listState.canScrollBackward)
             LazyColumn(
+                state = listState,
                 modifier = Modifier.weight(1f),
                 // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
                 // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der

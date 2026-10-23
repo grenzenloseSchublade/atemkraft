@@ -155,7 +155,8 @@ def locale_config(_: Check) -> dict[str, list[int]]:
 def section_header_heading(_: Check) -> dict[str, list[int]]:
     """A11Y-01: Abschnitts-, Seiten- und Kartenköpfe (CardTitle in TextBlocks.kt) sind Überschriften für TalkBack."""
     hits = {}
-    for name in ("SectionHeader", "ScreenHeader", "PushHeader", "TextBlocks"):
+    # ScreenHeader nutzt den Titel der gemeinsamen Kopfzeile (HeaderTitle in PushHeader.kt).
+    for name in ("SectionHeader", "PushHeader", "TextBlocks"):
         path = SRC + f"ui/components/{name}.kt"
         if "heading()" not in (ROOT / path).read_text(encoding="utf-8"):
             hits[path] = [0]

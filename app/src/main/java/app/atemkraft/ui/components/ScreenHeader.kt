@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -23,56 +22,56 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
- * Einheitlicher Kopf der Top-Level-Tabs: Screen-Titel, optionaler Untertitel und rechts die
- * Icon-Aktionen, immer an derselben Stelle: außen höchstens eine Aktion ([action], ein
- * `AppIconButton`) – das Zahnrad ([SettingsAction]) bzw. die Lupe im Situationen-Tab –, links
- * daneben der Kalender zum Logbuch ([onOpenLogbook], [LogbookAction], nur im Atmen-Tab links neben
- * dem Zahnrad, Nutzer 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bricht nie im Wort
- * ([WholeWordText]); neben zwei Icons wird er bei großer Schrift notfalls kleiner.
+ * Fester Kopf der Top-Level-Tabs: dieselbe Zeile wie der Kopf der Push-Seiten ([HeaderBar],
+ * Titel `headlineSmall`), nur ohne Pfeil – beim Wechsel springt nichts. Rechts die Icon-Aktionen,
+ * immer an derselben Stelle: außen höchstens eine Aktion ([action], ein `AppIconButton`) – das
+ * Zahnrad ([SettingsAction]) bzw. die Lupe im Situationen-Tab –, links daneben der Kalender zum
+ * Logbuch ([onOpenLogbook], [LogbookAction], nur im Atmen-Tab links neben dem Zahnrad, Nutzer
+ * 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bricht nie
+ * im Wort ([WholeWordText]); neben zwei Icons wird er bei großer Schrift notfalls kleiner.
  *
- * [subtitleContent] ersetzt den Untertitel (z. B. durch das [SearchField]): Der Kopf wechselt
- * nur seinen Zustand, es entsteht keine neue Fläche (PRIN-03).
+ * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
+ * scrollt“), damit Zahnrad, Kalender und Lupe immer erreichbar sind. Der Untertitel gehört zum
+ * Inhalt ([ScreenSubtitle], erster Eintrag der Liste). [below] steht fest unter der Zeile (das
+ * [SearchField] des Situationen-Tabs, solange die Suche offen ist): Getippt wird oben, die Treffer
+ * scrollen. [scrolled] (Inhalt liegt unter dem Kopf) blendet die Haarlinie an der Unterkante ein.
  */
 @Composable
 fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
     action: (@Composable () -> Unit)? = null,
-    subtitleContent: (@Composable () -> Unit)? = null,
     onOpenLogbook: (() -> Unit)? = null,
+    scrolled: Boolean = false,
+    below: (@Composable () -> Unit)? = null,
 ) {
-    Row(
-        // Einheitlicher Abstand oben auf Tab-Screens.
-        modifier = modifier.fillMaxWidth().padding(top = Dimens.ScreenTop),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            WholeWordText(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.semantics { heading() },
-            )
-            if (subtitleContent != null) {
-                subtitleContent()
-            } else if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
+    Column(modifier.fillMaxWidth().scrolledHairline(scrolled)) {
+        HeaderBar {
+            HeaderTitle(title, Modifier.weight(1f))
+            // Glyph an der Inhaltskante wie der Caret der Abschnittsköpfe darunter; die Tippfläche
+            // ragt in den Screen-Rand (LAYOUT-07).
+            if (action != null || onOpenLogbook != null) {
+                Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically) {
+                    if (onOpenLogbook != null) LogbookAction(onClick = onOpenLogbook)
+                    if (action != null) action()
+                }
             }
         }
-        // Glyph an der Inhaltskante wie der Caret der Abschnittsköpfe darunter; die Tippfläche
-        // ragt in den Screen-Rand (LAYOUT-07).
-        if (action != null || onOpenLogbook != null) {
-            Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically) {
-                if (onOpenLogbook != null) LogbookAction(onClick = onOpenLogbook)
-                if (action != null) action()
-            }
+        if (below != null) {
+            Box(Modifier.padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.GapSmall)) { below() }
         }
     }
+}
+
+/** Untertitel eines Tabs: erster Eintrag des scrollenden Inhalts unter dem festen [ScreenHeader]. */
+@Composable
+fun ScreenSubtitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+        modifier = modifier,
+    )
 }
 
 /**
@@ -108,7 +107,6 @@ private fun ScreenHeaderPreview() {
     AtemkraftTheme {
         ScreenHeader(
             title = stringResource(R.string.tab_breathe),
-            subtitle = stringResource(R.string.home_subtitle),
             action = { SettingsAction(onClick = {}) },
             onOpenLogbook = {},
         )

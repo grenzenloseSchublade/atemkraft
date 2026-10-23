@@ -65,15 +65,16 @@ private const val LICENSES_URL = "https://github.com/grenzenloseSchublade/atemkr
  */
 @Composable
 fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
+    val scrollState = rememberScrollState()
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Titel fest im Kopf wie auf allen Unterseiten (Nutzer 2026-10-21). Nur „Über“: Der
             // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander.
-            PushHeader(onBack = onBack, title = stringResource(R.string.about_title))
+            PushHeader(onBack = onBack, title = stringResource(R.string.about_title), scrolled = scrollState.canScrollBackward)
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = Dimens.ScreenPadding),
             ) {
                 Text(
