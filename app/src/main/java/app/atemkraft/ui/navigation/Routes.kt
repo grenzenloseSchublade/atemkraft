@@ -57,7 +57,7 @@ data class DetailRoute(val exerciseId: String)
  *
  * [daily] trägt die Zahlen genau des Tagesmusters, das die Detailseite zeigt ([of]): Die
  * Detailseite löst es einmal auf, über Mitternacht oder nach „Neu generieren“ wäre ein erneutes
- * `daily()` im Editor ein anderes Muster. Fehlt es (alte Route), gilt das aktuelle Tagesmuster.
+ * Nachschlagen im Editor ein anderes Muster. Fehlt es (alte Route), gilt das aktuelle Tagesmuster.
  */
 @Serializable
 data class PatternEditorRoute(val patternId: Long? = null, val fromDaily: Boolean = false, val daily: String? = null) {

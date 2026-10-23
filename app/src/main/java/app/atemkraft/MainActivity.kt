@@ -207,13 +207,6 @@ private fun AtemkraftApp(
             meditationStatus == MeditationStatus.PREPARING,
     )
 
-    val guidedByFamily = remember {
-        container.exerciseRepository.byFamily()
-            .map { (family, list) -> family to list.filter { it.guided } }
-            .filter { (_, list) -> list.isNotEmpty() }
-    }
-    val programs = remember { container.exerciseRepository.all().filter { !it.guided } }
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     // Tab-Leiste in der Tiefe: klappt beim Runterscrollen ein, Lasche holt sie zurück; jede neue
@@ -277,9 +270,9 @@ private fun AtemkraftApp(
                     popExitTransition = { fadeOut(tween(Motion.NavTab)) },
                 ) {
                     composable<AtmenRoute> {
-                        var dailyPattern by remember {
-                            mutableStateOf(container.exerciseRepository.daily())
-                        }
+                        // Beim Betreten den Tageswechsel prüfen; danach folgt die Karte dem Repository.
+                        remember { container.exerciseRepository.currentDaily() }
+                        val dailyPattern by container.exerciseRepository.daily.collectAsStateWithLifecycle()
                         // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
                         // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
                         // ein eigenes Muster mit gleichen Zahlen zählt nicht (Herkunft).
@@ -289,9 +282,7 @@ private fun AtemkraftApp(
                         HomeScreen(
                             daily = dailyPattern,
                             dailySaved = dailySaved,
-                            onRegenerateDaily = {
-                                dailyPattern = container.exerciseRepository.regenerateDaily()
-                            },
+                            onRegenerateDaily = container.exerciseRepository::regenerateDaily,
                             onDailySavedChange = { save ->
                                 val pattern = dailyPattern
                                 scope.launch {
@@ -302,8 +293,8 @@ private fun AtemkraftApp(
                                     }
                                 }
                             },
-                            exercisesByFamily = guidedByFamily,
-                            programs = programs,
+                            exercisesByFamily = container.exerciseRepository.guidedByFamily,
+                            programs = container.exerciseRepository.programs,
                             onSelect = { id -> navController.navigate(DetailRoute(id)) },
                             onOpenSettings = { navController.navigate(SettingsRoute()) },
                             markedIds = markedExercises,
@@ -432,7 +423,7 @@ private fun AtemkraftApp(
                             // Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen,
                             // ein gespeichertes bearbeiten.
                             onEditPattern = when {
-                                // Die Zahlen genau dieses Musters mitgeben: Ein erneutes daily() im
+                                // Die Zahlen genau dieses Musters mitgeben: Ein erneutes Nachschlagen im
                                 // Editor wäre nach Mitternacht schon das nächste.
                                 id == RandomPatternGenerator.ID -> {
                                     {
@@ -455,7 +446,7 @@ private fun AtemkraftApp(
                             patternId = route.patternId,
                             fromDaily = route.fromDaily,
                             repository = container.savedPatternsRepository,
-                            dailySpec = { route.dailySpec() ?: container.exerciseRepository.daily().spec },
+                            dailySpec = { route.dailySpec() ?: container.exerciseRepository.currentDaily().spec },
                             scope = scope,
                             // Ausprobieren ohne Speichern: Der Editor bleibt unter der Session offen –
                             // probieren, nachstellen, noch einmal probieren.
