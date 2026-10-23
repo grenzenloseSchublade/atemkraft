@@ -19,9 +19,11 @@ import java.util.Locale
  *   Compose für jeden Klick-Knoten automatisch auf 48, auch wenn das Layout nur 40 reserviert und
  *   Nachbarn in die Zone ragen. Ausnahme: Link mitten im Fließtext (WCAG 2.5.8 „Inline“).
  * - `OHNE_KLICK`: klickbar im Layout, aber ohne Klick-Aktion für TalkBack/Switch Access.
- * - `BESCHNITTEN`: ein Elternteil schneidet das Element ab – waagerecht immer, senkrecht nur
- *   außerhalb einer Scroll-Fläche (dort ist es nur weggescrollt).
- * - `AUSSERHALB`: das Element ragt links oder rechts aus dem Bild.
+ * - `BESCHNITTEN`: ein Elternteil schneidet das Element ab – in jeder Richtung außerhalb einer
+ *   Scroll-Fläche dieser Richtung (dort ist es nur weggescrollt; seitlich heute nur die
+ *   Anlass-Chips, MUSTER-09).
+ * - `AUSSERHALB`: das Element ragt links oder rechts aus dem Bild (außer in einer seitlichen
+ *   Scroll-Fläche).
  */
 internal object ControlFindings {
     // Klassennamen der Modifier-Elemente aus compose-foundation (kein offizielles API: nach einem
@@ -67,13 +69,15 @@ internal object ControlFindings {
             val visible = Rect(p.x, p.y, p.x + n.size.width, p.y + n.size.height)
             val clipped = n.boundsInRoot
             val vScroll = ancestors.any { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
-            val scrolledAway = vScroll && clipped.height <= 0f
-            val cutX = clipped.width < visible.width - tolerance
+            // Seitlich scrollende Fläche (Anlass-Chips, MUSTER-09): waagerecht nur weggescrollt.
+            val hScroll = ancestors.any { it.config.contains(SemanticsProperties.HorizontalScrollAxisRange) }
+            val scrolledAway = (vScroll && clipped.height <= 0f) || (hScroll && clipped.width <= 0f)
+            val cutX = !hScroll && clipped.width < visible.width - tolerance
             val cutY = !vScroll && clipped.height < visible.height - tolerance
             if (!scrolledAway && (cutX || cutY)) {
                 out += "BESCHNITTEN\t$where\tsichtbar ${dp(clipped.width)} × ${dp(clipped.height)} von ${dp(visible.width)} × ${dp(visible.height)} dp"
             }
-            if (visible.left < frame.left - 0.5f || visible.right > frame.right + 0.5f) {
+            if (!hScroll && (visible.left < frame.left - 0.5f || visible.right > frame.right + 0.5f)) {
                 out += "AUSSERHALB\t$where\tx ${dp(visible.left - frame.left)} … ${dp(visible.right - frame.left)} dp bei Bildbreite ${dp(frame.width)}"
             }
             out

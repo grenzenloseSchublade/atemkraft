@@ -44,6 +44,18 @@ object Dimens {
     /** Kleine Lücke: Label ↔ Steuerung. */
     val GapSmall = 8.dp
 
+    /**
+     * Waagerechtes Polster der Anlass-Chips (`ChoiceChip`, 12): schmaler als beim M3-Chip (16),
+     * damit die sechs Anlässe auf 360 dp bei Schrift 1,0 in zwei Zeilen passen (Nutzer 2026-10-23).
+     */
+    val ChipPadding = 12.dp
+
+    /**
+     * Breite des Verlaufs, mit dem eine seitlich scrollende Fläche an der Seite mit weiterem
+     * Inhalt in Transparenz ausläuft (`ChoiceChipRow`, 32).
+     */
+    val ScrollEdgeFade = 32.dp
+
     /** Minimale Lücke: Hint unter einer Zeile, Icon ↔ Text. */
     val GapTiny = 4.dp
 

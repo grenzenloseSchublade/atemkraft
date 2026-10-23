@@ -52,7 +52,8 @@ import app.atemkraft.ui.theme.Dimens
  * Abstände: Feld → Chips `GapSmall` – das Feld hat unter seiner Grundlinie schon rund 12 dp
  * unsichtbaren Raum (Tippfläche 48 dp), dazu 4 dp Tippfläche über jedem Chip; `ListGap` risse
  * Feld und Chips sichtbar auseinander. Chips nebeneinander `GapSmall`, untereinander sichtbar
- * ebenfalls 8 dp ([ChoiceChipRow]).
+ * ebenfalls 8 dp, höchstens zwei Zeilen ([ChoiceChipRow]); passen sie nicht, scrollen beide
+ * Zeilen gemeinsam seitlich bis an den Kartenrand, mit Verlauf (Nutzer 2026-10-23).
  *
  * [highlighted]: markierte Chips (gewählter Anlass oder Suchtreffer); die übrigen bleiben
  * unverändert. Die Markierung ändert keine Größe – die Reihe bricht in jedem Zustand gleich um.
@@ -82,14 +83,14 @@ internal fun FeelingBlock(
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             SituationSearchField(query = query, onQueryChange = onQueryChange)
             Spacer(Modifier.height(Dimens.GapSmall))
-            ChoiceChipRow(groupName = name) {
-                situations.forEach { rec ->
-                    ChoiceChip(
-                        label = rec.shortLabel,
-                        selected = rec.situation in highlighted,
-                        onClick = { onChipClick(rec.situation) },
-                    )
-                }
+            // Scrollen die Chips, reicht ihre Fläche bis an den Kartenrand (Polster rechts aufgehoben).
+            ChoiceChipRow(groupName = name, items = situations, endBleed = Dimens.CardPadding) { rec, order ->
+                ChoiceChip(
+                    label = rec.shortLabel,
+                    selected = rec.situation in highlighted,
+                    onClick = { onChipClick(rec.situation) },
+                    modifier = order,
+                )
             }
         }
     }

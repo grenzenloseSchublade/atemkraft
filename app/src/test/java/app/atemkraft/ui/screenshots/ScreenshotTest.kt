@@ -118,7 +118,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Die vier Tabs: Atmen als Liste, mit dem Anlass mit den meisten Übungen gewählt (samt Verweis
      * auf seinen Bereich), mit diesem Bereich gewählt, mit Suchtreffern und mit einem reinen
-     * Bereichstreffer – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht; „Eigene“ mit
+     * Bereichstreffer – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht, und [chipRows],
+     * dass es genau zwei Zeilen sind; „Eigene“ mit
      * Verlauf (Beispieleinträge), „Tut mir gut“ und vier Mustern (eines mit langem Namen) und leer;
      * Meditation mit offener Feinwahl auf 12 min (scrollt bis 1,3 nicht, LAYOUT-08; „Klang & Stimme“
      * mit offenem Blatt: [meditationSoundSheet]).
@@ -130,7 +131,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             val now = chipLayout()
             val first = chips ?: now.also { chips = it }
             assertEquals("Anlass-Chips verrutscht (Größe oder Zeile geändert)", first, now)
-            now.map { "${device.name}\tfs${(fontScale * 100).toInt()}\tCHIP\t$it" }
+            (now + chipRows()).map { "${device.name}\tfs${(fontScale * 100).toInt()}\tCHIP\t$it" }
         }
         snap("01_atmen", measure = sameChips) { BreatheTab() }
         val widest = Situations.all.maxBy { it.exerciseIds.size }
@@ -191,6 +192,24 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             val name = chip.children.firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.Text)?.joinToString() } ?: "?"
             "$name\t${dp(x)},${dp(y)}\t${dp(chip.size.width.toFloat())} × ${dp(chip.size.height.toFloat())} dp"
         }
+    }
+
+    /**
+     * MUSTER-09: Die Anlass-Chips stehen immer in genau zwei Zeilen; auf 360 dp bei Schrift 1,0
+     * passen sie, ohne zu scrollen, sonst scrollen beide Zeilen gemeinsam (Nutzer 2026-10-23); die
+     * Fokusfolge bleibt die der Daten. Ergebnis: Zeilen und Scroll-Weg in dp.
+     */
+    private fun chipRows(): String {
+        val row = compose.onNodeWithTag(CHOICE_CHIPS_TAG, useUnmergedTree = true).fetchSemanticsNode()
+        val lines = row.children.map { it.positionInRoot.y.roundToInt() }.distinct().size
+        val scroller = generateSequence(row.parent) { it.parent }.first { SemanticsProperties.HorizontalScrollAxisRange in it.config }
+        val scroll = (scroller.config[SemanticsProperties.HorizontalScrollAxisRange].maxValue() / compose.density.density).roundToInt()
+        assertEquals("Anlass-Chips nicht in genau zwei Zeilen (MUSTER-09)", 2, lines)
+        // Platzierfolge = Tastatur-Fokusfolge: auch im Scrollfall (abwechselnd) die der Daten.
+        val order = row.children.map { chip -> chip.children.firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.Text)?.joinToString() } }
+        assertEquals("Anlass-Chips nicht in Datenreihenfolge platziert (Fokusfolge, MUSTER-09)", Situations.all.map { it.shortLabel }, order)
+        if (fontScale == 1f) assertEquals("Anlass-Chips scrollen bei Schrift 1,0 auf ${device.widthDp} dp (MUSTER-09)", 0, scroll)
+        return "$lines Zeilen, Scroll-Weg $scroll dp"
     }
 
     @Composable

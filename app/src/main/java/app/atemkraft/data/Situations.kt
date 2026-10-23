@@ -33,6 +33,8 @@ object Situations {
         SituationRecommendation(
             situation = Situation.ACUTE_STRESS,
             title = "Akuter Stress",
+            // Kurz, damit die sechs Chips auf 360 dp in zwei Zeilen passen (Nutzer 2026-10-23).
+            shortLabel = "Stress",
             rationale = "Ein langer Ausatem für den akuten Moment – kurz, einfach und risikoarm.",
             exerciseIds = listOf("physiological-sigh", "cyclic-sighing"),
             keywords = listOf(
