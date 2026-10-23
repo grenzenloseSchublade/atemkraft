@@ -44,14 +44,15 @@ import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ScreenHeader
-import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SearchField
+import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
- * Situationen-Tab: „welche Atmung wann“ als Befindens-Übersicht. Gleiche Optik wie der Atmen-Tab
+ * Tab „Anlass“ (Code: Situationen): „welche Atmung wann“ als Befindens-Übersicht. Gleiche Optik wie der Atmen-Tab
  * (Abschnitts-Header + Übungs-Karten), nur nach Lage gruppiert – mit Begründungssatz als
  * Entscheidungshilfe. Die Situationen sind aufklappbar und starten zu. „Meine Muster“ stehen
  * im eigenen Tab „Eigene“ (`ui/own/OwnPatternsScreen`).
@@ -80,13 +81,8 @@ fun SituationsScreen(
     }
     BackHandler(enabled = searchOpen, onBack = closeSearch)
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
-    val listState = rememberLazyListState()
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    TabListScaffold(
+        header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.tab_situations),
                 action = if (searchOpen) {
@@ -105,7 +101,7 @@ fun SituationsScreen(
                         }
                     }
                 },
-                scrolled = listState.canScrollBackward,
+                scrolled = scrolled,
                 // Das Suchfeld steht fest unter der Zeile: Getippt wird oben, die Treffer scrollen.
                 below = if (searchOpen) {
                     {
@@ -131,47 +127,33 @@ fun SituationsScreen(
                     null
                 },
             )
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-                // Listen-Clip sie anschneidet.
-                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-            ) {
-                // Bei offener Suche ersetzt das Suchfeld unter dem Kopf den Untertitel.
-                if (!searchOpen) {
-                    item(key = "subtitle") { ScreenSubtitle(stringResource(R.string.situations_subtitle)) }
-                }
-
-                if (results != null) {
-                    item(key = "search-status") {
-                        SearchStatus(count = results.size, onShowAll = closeSearch)
-                    }
-                    // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der
-                    // Übersicht zu überschreiben.
-                    // Köpfe reihum nach ihrer Lage unter den gezeigten Abschnitten (FARBE-07).
-                    itemsIndexed(results, key = { _, rec -> "q-${rec.situation.name}" }) { index, rec ->
-                        SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
-                    }
-                } else {
-                    // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
-                    // als langes Scrollen.
-                    // Köpfe reihum nach ihrer Lage (FARBE-07).
-                    itemsIndexed(recommendations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
-                        SituationSection(
-                            rec,
-                            index,
-                            initiallyExpanded = false,
-                            resolve = resolve,
-                            markedIds = markedIds,
-                            onSelect = onSelect,
-                        )
-                    }
-                }
-
-                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+        },
+        // Bei offener Suche ersetzt das Suchfeld unter dem Kopf den Untertitel.
+        subtitle = if (searchOpen) null else stringResource(R.string.situations_subtitle),
+    ) {
+        if (results != null) {
+            item(key = "search-status") {
+                SearchStatus(count = results.size, onShowAll = closeSearch)
+            }
+            // Eigene Schlüssel: Treffer starten aufgeklappt, ohne den Zustand der
+            // Übersicht zu überschreiben.
+            // Köpfe reihum nach ihrer Lage unter den gezeigten Abschnitten (FARBE-07).
+            itemsIndexed(results, key = { _, rec -> "q-${rec.situation.name}" }) { index, rec ->
+                SituationSection(rec, index, initiallyExpanded = true, resolve = resolve, markedIds = markedIds, onSelect = onSelect)
+            }
+        } else {
+            // Standard: alle zu – so liest sich der Tab als kurze Befindens-Übersicht statt
+            // als langes Scrollen.
+            // Köpfe reihum nach ihrer Lage (FARBE-07).
+            itemsIndexed(recommendations, key = { _, rec -> "s-${rec.situation.name}" }) { index, rec ->
+                SituationSection(
+                    rec,
+                    index,
+                    initiallyExpanded = false,
+                    resolve = resolve,
+                    markedIds = markedIds,
+                    onSelect = onSelect,
+                )
             }
         }
     }
@@ -215,14 +197,12 @@ private fun SituationSection(
 @Composable
 private fun SearchStatus(count: Int, onShowAll: () -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-        Text(
+        SecondaryText(
             text = if (count == 0) {
                 stringResource(R.string.situations_search_none)
             } else {
                 pluralStringResource(R.plurals.situations_search_count, count, count)
             },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .semantics { liveRegion = LiveRegionMode.Polite },

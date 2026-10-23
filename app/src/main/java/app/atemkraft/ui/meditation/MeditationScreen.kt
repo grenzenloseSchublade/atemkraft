@@ -275,7 +275,8 @@ private fun SoundOptions(
     onSpeech: (Boolean) -> Unit,
 ) {
     Column {
-        Spacer(Modifier.height(Dimens.GapSmall))
+        // Kopf → Inhalt wie überall HeaderGap; GapSmall davon polstert schon der aufklappbare Kopf.
+        Spacer(Modifier.height(Dimens.HeaderGap - Dimens.GapSmall))
         SubLabel(stringResource(R.string.meditation_gong_label), Modifier.choiceGroupHeading(), color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(Dimens.GapSmall))
         // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.

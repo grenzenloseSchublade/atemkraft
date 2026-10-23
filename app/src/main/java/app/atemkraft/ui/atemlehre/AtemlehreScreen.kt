@@ -5,16 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,13 +46,14 @@ import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ExerciseChips
-import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.ExpanderCard
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PhaseMark
-import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
-import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.ScreenSubtitle
+import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
@@ -75,7 +73,7 @@ import kotlinx.coroutines.flow.first
  *
  * Gliederung: eine Überschrift je Abschnitt (`SectionHeader`); vāyus, Grundregeln, Einflüsse und
  * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster stehen eine Ebene tiefer unter
- * „Die Muster“, jedes in einer eigenen Karte mit `ExpanderSection` (Rhythmusbild und Titel gehören
+ * „Die Muster“, jedes in einer eigenen `ExpanderCard` (Rhythmusbild und Titel gehören
  * sichtbar zusammen).
  *
  * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen [BreathExhale] Koralle,
@@ -104,61 +102,53 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
         focusDone = true
     }
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            PushHeader(onBack = onBack, title = stringResource(R.string.atemlehre_title), scrolled = scrollState.canScrollBackward)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .onPlaced { content = it }
-                    .padding(horizontal = Dimens.ScreenPadding),
-            ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                HintText(Atemlehre.intro)
+    PushScaffold(
+        onBack = onBack,
+        title = stringResource(R.string.atemlehre_title),
+        scrollState = scrollState,
+        contentModifier = Modifier.onPlaced { content = it },
+    ) {
+        ScreenSubtitle(Atemlehre.intro)
 
-                // Köpfe reihum nach ihrer Lage (FARBE-07): Phasen 0, vāyus 1, Grundregeln 2, Muster 3,
-                // Einflüsse 4, Quellen 5.
-                SectionHeader(title = stringResource(R.string.atemlehre_phases), color = headingColor(0))
-                PhasesCard(Atemlehre.phases)
+        // Köpfe reihum nach ihrer Lage (FARBE-07): Phasen 0, vāyus 1, Grundregeln 2, Muster 3,
+        // Einflüsse 4, Quellen 5.
+        CollapsibleSection(title = stringResource(R.string.atemlehre_phases), color = headingColor(0)) {
+            PhasesCard(Atemlehre.phases)
+        }
 
-                ExpandableSection(stringResource(R.string.atemlehre_vayus), Atemlehre.vayusTeaser, headingColor(1)) {
-                    VayusContent()
-                }
+        ExpandableSection(stringResource(R.string.atemlehre_vayus), Atemlehre.vayusTeaser, headingColor(1)) {
+            VayusContent()
+        }
 
-                ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, headingColor(2)) {
-                    RulesContent()
-                }
+        ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, headingColor(2)) {
+            RulesContent()
+        }
 
-                SectionHeader(title = stringResource(R.string.atemlehre_patterns), color = headingColor(3))
-                // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
-                // Balken zu welchem Titel gehört. Die Karten stehen direkt in der Scroll-Spalte, ihre
-                // Lage dient als Sprungziel.
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    Atemlehre.patterns.forEach { pattern ->
-                        LorePatternCard(
-                            pattern = pattern,
-                            focused = pattern.id == focusId,
-                            onOpenExercise = onOpenExercise,
-                            modifier = if (pattern.id == focusId) {
-                                Modifier.onPlaced { card ->
-                                    content?.let { focusY = it.localPositionOf(card, Offset.Zero).y.toInt() }
-                                }
-                            } else {
-                                Modifier
-                            },
-                        )
-                    }
-                }
-
-                ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, headingColor(4)) {
-                    InfluencesContent(onOpenExercise)
-                }
-                ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, headingColor(5)) {
-                    SourcesContent()
-                }
-                Spacer(Modifier.height(Dimens.ScreenBottom))
+        // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
+        // Balken zu welchem Titel gehört. Die Lage der Karten wird gegen den Scroll-Inhalt
+        // gemessen und dient als Sprungziel.
+        CollapsibleSection(title = stringResource(R.string.atemlehre_patterns), color = headingColor(3)) {
+            Atemlehre.patterns.forEach { pattern ->
+                LorePatternCard(
+                    pattern = pattern,
+                    focused = pattern.id == focusId,
+                    onOpenExercise = onOpenExercise,
+                    modifier = if (pattern.id == focusId) {
+                        Modifier.onPlaced { card ->
+                            content?.let { focusY = it.localPositionOf(card, Offset.Zero).y.toInt() }
+                        }
+                    } else {
+                        Modifier
+                    },
+                )
             }
+        }
+
+        ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, headingColor(4)) {
+            InfluencesContent(onOpenExercise)
+        }
+        ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, headingColor(5)) {
+            SourcesContent()
         }
     }
 }
@@ -191,21 +181,18 @@ private fun LorePatternCard(
     onOpenExercise: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(start = Dimens.CardPadding, end = Dimens.CardPadding, top = Dimens.CardPadding)) {
+    ExpanderCard(
+        title = pattern.title,
+        appetizer = pattern.teaser,
+        modifier = modifier,
+        initiallyExpanded = focused,
+        header = {
             RhythmBar(pattern.rhythm)
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(pattern.counts)
-            ExpanderSection(
-                title = pattern.title,
-                appetizer = pattern.teaser,
-                accent = MaterialTheme.colorScheme.onSurface,
-                initiallyExpanded = focused,
-                divider = false,
-            ) {
-                PatternContent(pattern, onOpenExercise)
-            }
-        }
+        },
+    ) {
+        PatternContent(pattern, onOpenExercise)
     }
 }
 
@@ -238,11 +225,7 @@ private fun PhasesCard(phases: List<LorePhase>) {
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Text(
-                            text = sanskritText(phase.meaning),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = dim,
-                        )
+                        SecondaryText(phase.meaning)
                     }
                 }
             }

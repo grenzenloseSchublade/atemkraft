@@ -23,6 +23,15 @@ object Motion {
     /** Tab-Wechsel: nur dezentes Überblenden, kein Gleiten. */
     val NavTab = 180
 
+    /**
+     * Ruhe-Ansicht der Atem-Session: Bedienelemente blenden sanft aus und ein (`HideableSlot`).
+     * Bewusst langsamer als neue UI-Bewegung (MOTION-04): Das Ausblenden soll nicht auffallen.
+     */
+    val CalmFade = 500
+
+    /** Knöpfe der Session-Steuerung erscheinen nach der Vorbereitung (`SessionControlBar`). */
+    val ControlFade = 300
+
     /** Auf- und Zuklappen eines Abschnitts, dessen Nachbarn mitwachsen (Meditation „Klang & Stimme“). */
     val Expand = 250
 

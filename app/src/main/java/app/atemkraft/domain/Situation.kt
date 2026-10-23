@@ -14,7 +14,7 @@ enum class Situation {
  * Empfehlung für eine Situation: Titel, Ein-Satz-Begründung und die empfohlenen
  * Übungs-IDs (Reihenfolge = Priorität). [warn] markiert intensive Empfehlungen.
  *
- * [keywords] sind kuratierte Befindens-Begriffe für die Suche im Situationen-Tab
+ * [keywords] sind kuratierte Befindens-Begriffe für die Suche im Tab „Anlass“
  * ([SituationSearch]): Alltagswörter in Laiensprache, keine Symptome oder Diagnosen. Ein
  * Begriff aus mehreren Wörtern trifft nur als ganze Wendung („wach liegen“), damit seine
  * Einzelwörter nicht woanders hinführen. Eine [warn]-Situation bekommt keine Begriffe.

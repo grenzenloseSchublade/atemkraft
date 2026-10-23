@@ -26,10 +26,8 @@ import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.launch
-
-/** Dauer des sanften Aus-/Einblendens der Session-Bedienelemente (ms). */
-private const val FADE_MS = 500
 
 /**
  * Bereich der Vollbild-Session, der sich ausblenden lässt (Ruhe-Ansicht): blendet sanft aus,
@@ -49,7 +47,7 @@ fun HideableSlot(
 ) {
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(FADE_MS),
+        animationSpec = tween(Motion.CalmFade),
         label = "hideableSlot",
     )
     Box(

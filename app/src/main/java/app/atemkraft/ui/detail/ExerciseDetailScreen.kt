@@ -61,7 +61,7 @@ import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PersonalMarkToggle
 import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PinnedActionBar
-import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.components.SessionAdjustCard
@@ -111,7 +111,8 @@ fun ExerciseDetailScreen(
     // Abschnittsköpfe reihum nach ihrer Lage, ohne Bedeutung (FARBE-07): Index = Zahl der gezeigten
     // Köpfe darüber; fehlt ein Abschnitt (Anleitung, Lehre, Hinweise, Quellen), rückt der nächste
     // nach. Auch „Hinweise & Sicherheit“ geht reihum – die Warnung tragen ⚠-Zeile und Chip. Die
-    // Familienfarbe bleibt beim Inhalt (Familie, Dauer-Chip, Lehre-Verweis).
+    // Familienfarbe bleibt beim Inhalt (Familie, Dauer-Chip); der Lehre-Verweis steht wie jeder
+    // Verweis in secondary (FARBE-04).
     val effectHead = if (exercise.instructionHint != null) 1 else 0
     val loreHead = effectHead + 1
     val cautionsHead = loreHead + (if (exercise.lore != null) 1 else 0)
@@ -158,242 +159,200 @@ fun ExerciseDetailScreen(
 
     val scrollState = rememberScrollState()
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Name und Markierung stehen fest wie der Titel jeder anderen Seite; lange Namen
-            // („Nadi Shodhana (Wechselatmung)“) werden im Kopf zweizeilig, nie im Wort.
-            // Der Slot trägt eine Aktion: die Markierung bei Übungen, der Stift bei generierten Mustern.
-            val editLabel = editDescription ?: stringResource(
-                if (exercise.id == ExerciseIds.DAILY) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
+    // Name und Markierung stehen fest wie der Titel jeder anderen Seite; lange Namen
+    // („Nadi Shodhana (Wechselatmung)“) laufen im Kopf als Laufschrift, nie im Wort umbrochen.
+    // Der Slot trägt eine Aktion: die Markierung bei Übungen, der Stift bei generierten Mustern.
+    val editLabel = editDescription ?: stringResource(
+        if (exercise.id == ExerciseIds.DAILY) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
+    )
+    PushScaffold(
+        onBack = onBack,
+        title = exercise.name,
+        action = when {
+            onMarkedChange != null -> {
+                { PersonalMarkToggle(marked = marked, onMarkedChange = onMarkedChange) }
+            }
+
+            onEditPattern != null && exercise.generated -> {
+                { EditPatternButton(description = editLabel, onClick = onEditPattern) }
+            }
+
+            else -> null
+        },
+        scrollState = scrollState,
+        // Gepinnter Start (immer sichtbar) – nur bei getakteten Übungen.
+        bottomBar = if (exercise.guided) {
+            { StartBar(exercise, adjust, estimatedSeconds, onStart = { launch() }, onIntervalsReset = onIntervalsReset) }
+        } else {
+            null
+        },
+    ) {
+        // Erste Inhaltszeile: Familie und Chips. Passen die Chips nicht neben die Familie,
+        // rutschen sie gemeinsam darunter und brechen nur zwischen den Chips um.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+            verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+        ) {
+            WholeWordText(
+                // Generierte Muster sind keine Übung der Familie: Sie heißen hier „Muster“, die
+                // Familie bleibt nur als Farbe.
+                text = if (exercise.generated) stringResource(R.string.family_pattern) else exercise.family.title(),
+                style = MaterialTheme.typography.labelMedium,
+                color = accent,
+                modifier = Modifier.align(Alignment.CenterVertically),
             )
-            PushHeader(
-                onBack = onBack,
-                title = exercise.name,
-                action = when {
-                    onMarkedChange != null -> {
-                        { PersonalMarkToggle(marked = marked, onMarkedChange = onMarkedChange) }
-                    }
+            if (exercise.evidence != null || exercise.caution) {
+                FlowRow(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                ) {
+                    exercise.evidence?.let { EvidenceChip(it) }
+                    if (exercise.caution) CautionChip()
+                }
+            }
+        }
+        Spacer(Modifier.height(Dimens.GapSmall))
+        BodyText(exercise.shortDescription, style = MaterialTheme.typography.bodyMedium)
 
-                    onEditPattern != null && exercise.generated -> {
-                        { EditPatternButton(description = editLabel, onClick = onEditPattern) }
-                    }
-
-                    else -> null
+        Spacer(Modifier.height(Dimens.GapSmall))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+            verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+        ) {
+            Chip(
+                text = if (roundBased) {
+                    pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
+                } else {
+                    stringResource(R.string.duration_approx, exercise.defaultMinutes())
                 },
-                scrolled = scrollState.canScrollBackward,
+                color = accent,
             )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = Dimens.ScreenPadding),
+            CharacterChip(intense = isIntense, activating = exercise.activating)
+        }
+
+        if (isIntense && exercise.cautions.isNotEmpty()) {
+            Spacer(Modifier.height(Dimens.GapSmall))
+            Text(
+                text = "⚠ " + stringResource(R.string.detail_safety_appetizer),
+                style = MaterialTheme.typography.bodySmall,
+                color = WarnAmber,
+            )
+        }
+
+        Spacer(Modifier.height(Dimens.GapSmall))
+        exercise.instructionHint?.let { hint ->
+            ExpanderSection(stringResource(R.string.detail_instruction), hint, headingColor(0))
+        }
+        ExpanderSection(
+            title = stringResource(R.string.detail_effect),
+            appetizer = exercise.effect,
+            accent = headingColor(effectHead),
+            content = exercise.effectDetail?.let { detail -> { BodyText(detail) } },
+        )
+        // Deutung der Tradition, getrennt von „Wirkung“ (keine Studienlage, TEXT-13).
+        exercise.lore?.let { lore ->
+            // Hauptkarte zuerst, dann weitere (z. B. die Halten-Karte eines Tagesmusters).
+            val patterns = (listOf(lore.patternId) + lore.morePatternIds).mapNotNull(Atemlehre::pattern)
+            ExpanderSection(
+                title = stringResource(R.string.detail_lore),
+                appetizer = lore.teaser,
+                accent = headingColor(loreHead),
             ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                // Erste Inhaltszeile: Familie und Chips. Passen die Chips nicht neben die Familie,
-                // rutschen sie gemeinsam darunter und brechen nur zwischen den Chips um.
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-                ) {
-                    WholeWordText(
-                        // Generierte Muster sind keine Übung der Familie: Sie heißen hier „Muster“, die
-                        // Familie bleibt nur als Farbe.
-                        text = if (exercise.generated) stringResource(R.string.family_pattern) else exercise.family.title(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = accent,
-                        modifier = Modifier.align(Alignment.CenterVertically),
-                    )
-                    if (exercise.evidence != null || exercise.caution) {
-                        FlowRow(
-                            modifier = Modifier.align(Alignment.CenterVertically),
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-                            verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-                        ) {
-                            exercise.evidence?.let { EvidenceChip(it) }
-                            if (exercise.caution) CautionChip()
-                        }
-                    }
-                }
-                Spacer(Modifier.height(Dimens.GapSmall))
-                BodyText(exercise.shortDescription, style = MaterialTheme.typography.bodyMedium)
-
-                Spacer(Modifier.height(Dimens.GapSmall))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-                ) {
-                    Chip(
-                        text = if (roundBased) {
-                            pluralStringResource(R.plurals.detail_meta_rounds, exercise.rounds, exercise.rounds)
-                        } else {
-                            stringResource(R.string.duration_approx, exercise.defaultMinutes())
-                        },
-                        color = accent,
-                    )
-                    CharacterChip(intense = isIntense, activating = exercise.activating)
-                }
-
-                if (isIntense && exercise.cautions.isNotEmpty()) {
-                    Spacer(Modifier.height(Dimens.GapSmall))
-                    Text(
-                        text = "⚠ " + stringResource(R.string.detail_safety_appetizer),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = WarnAmber,
-                    )
-                }
-
-                Spacer(Modifier.height(Dimens.GapSmall))
-                exercise.instructionHint?.let { hint ->
-                    ExpanderSection(stringResource(R.string.detail_instruction), hint, headingColor(0))
-                }
-                ExpanderSection(
-                    title = stringResource(R.string.detail_effect),
-                    appetizer = exercise.effect,
-                    accent = headingColor(effectHead),
-                    content = exercise.effectDetail?.let { detail -> { BodyText(detail) } },
-                )
-                // Deutung der Tradition, getrennt von „Wirkung“ (keine Studienlage, TEXT-13).
-                exercise.lore?.let { lore ->
-                    // Hauptkarte zuerst, dann weitere (z. B. die Halten-Karte eines Tagesmusters).
-                    val patterns = (listOf(lore.patternId) + lore.morePatternIds).mapNotNull(Atemlehre::pattern)
-                    ExpanderSection(
-                        title = stringResource(R.string.detail_lore),
-                        appetizer = lore.teaser,
-                        accent = headingColor(loreHead),
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                            BodyText(lore.detail)
-                            lore.source?.let { source ->
-                                Text(
-                                    text = source,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+                    BodyText(lore.detail)
+                    // Lehrquelle wie in Atemlehre und Pranayama.
+                    lore.source?.let { HintText(it) }
+                    if (onOpenLore != null) {
+                        patterns.forEach { pattern ->
+                            // Der Chevron zeigt „führt weiter“ (ICON-01). Nicht bündig (flushStart): Die
+                            // Höhenanimation des Expanders schneidet alles außerhalb ab.
+                            AppTextButton(onClick = { onOpenLore(pattern.id) }) {
+                                ForwardLinkText(
+                                    text = stringResource(R.string.detail_lore_link, pattern.linkName),
+                                    // Verweise im Inhalt einheitlich in secondary (FARBE-04).
+                                    color = MaterialTheme.colorScheme.secondary,
                                 )
                             }
-                            if (onOpenLore != null) {
-                                patterns.forEach { pattern ->
-                                    // Der Chevron zeigt „führt weiter“ (ICON-01). Nicht bündig (flushStart): Die
-                                    // Höhenanimation des Expanders schneidet alles außerhalb ab.
-                                    AppTextButton(onClick = { onOpenLore(pattern.id) }) {
-                                        ForwardLinkText(
-                                            text = stringResource(R.string.detail_lore_link, pattern.linkName),
-                                            color = accent,
-                                        )
-                                    }
-                                }
-                            }
                         }
                     }
                 }
-                if (exercise.cautions.isNotEmpty()) {
-                    val moreCautions = exercise.cautions.drop(1)
-                    ExpanderSection(
-                        title = stringResource(R.string.detail_cautions),
-                        appetizer = exercise.cautions.first(),
-                        accent = headingColor(cautionsHead),
-                        initiallyExpanded = isIntense,
-                        content = if (moreCautions.isEmpty()) {
-                            null
-                        } else {
-                            {
-                                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                                    moreCautions.forEach { Bullet(it, color = LocalContentColor.current.copy(alpha = BODY)) }
-                                }
-                            }
-                        },
-                    )
-                }
-                if (exercise.references.isNotEmpty()) {
-                    ExpanderSection(
-                        title = stringResource(R.string.detail_references),
-                        appetizer = pluralStringResource(R.plurals.detail_sources_count, exercise.references.size, exercise.references.size),
-                        accent = headingColor(referencesHead),
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                            exercise.references.forEach { ReferenceItem(it) }
-                        }
-                    }
-                }
-
-                if (exercise.guided) {
-                    Spacer(Modifier.height(Dimens.SectionGap))
-                    SessionAdjustCard(
-                        durationLabel = if (roundBased) {
-                            stringResource(R.string.adjust_rounds)
-                        } else {
-                            stringResource(R.string.adjust_minutes)
-                        },
-                        duration = adjust.duration,
-                        durationDefault = defaults.duration,
-                        durationRange = defaults.durationRange,
-                        onDuration = {
-                            adjust.duration = it
-                            persistAdjustments()
-                        },
-                        // Gespeicherte und eigene Muster: nur die Dauer – Phasen ändert der Stift
-                        // (Editor), sonst überstimmten Anpassungen die gespeicherte Folge.
-                        inhale = defaults.inhale?.takeUnless { phasesInEditor }?.let { default ->
-                            PhaseAdjust(adjust.inhale ?: default, default, AdjustLimits.INHALE_S) {
-                                adjust.inhale = it
-                                persistAdjustments()
-                            }
-                        },
-                        hold = defaults.hold?.takeUnless { phasesInEditor }?.let { default ->
-                            PhaseAdjust(adjust.hold ?: default, default, AdjustLimits.HOLD_S) {
-                                adjust.hold = it
-                                persistAdjustments()
-                            }
-                        },
-                        exhale = defaults.exhale?.takeUnless { phasesInEditor }?.let { default ->
-                            PhaseAdjust(adjust.exhale ?: default, default, AdjustLimits.EXHALE_S) {
-                                adjust.exhale = it
-                                persistAdjustments()
-                            }
-                        },
-                        intervalsExpanded = intervalsExpanded,
-                        onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
-                        // Runden sagt TalkBack als „Runden: 4“, Minuten ausgeschrieben.
-                        durationSpokenLabel = if (roundBased) stringResource(R.string.adjust_rounds) else stringResource(R.string.cd_adjust_duration),
-                        durationUnit = if (roundBased) null else R.plurals.cd_duration_minutes,
-                    )
+            }
+        }
+        if (exercise.cautions.isNotEmpty()) {
+            val moreCautions = exercise.cautions.drop(1)
+            ExpanderSection(
+                title = stringResource(R.string.detail_cautions),
+                appetizer = exercise.cautions.first(),
+                accent = headingColor(cautionsHead),
+                initiallyExpanded = isIntense,
+                content = if (moreCautions.isEmpty()) {
+                    null
                 } else {
-                    Spacer(Modifier.height(Dimens.SectionGap))
-                    HintText(stringResource(R.string.detail_info_only))
-                }
-                Spacer(Modifier.height(Dimens.ScreenBottom))
-            }
-
-            // Gepinnter Start (immer sichtbar) – nur bei getakteten Übungen.
-            if (exercise.guided) {
-                PinnedActionBar {
-                    // Gesamtdauer direkt am Start: „Starten · ca. 10 min".
-                    val start = stringResource(R.string.action_start)
-                    val startLabel = when {
-                        estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
-
-                        exercise.hasOpenPhases -> stringResource(
-                            R.string.action_start_duration,
-                            start,
-                            stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
-                        )
-
-                        else -> stringResource(
-                            R.string.action_start_duration,
-                            start,
-                            stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
-                        )
+                    {
+                        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+                            moreCautions.forEach { Bullet(it, color = LocalContentColor.current.copy(alpha = BODY)) }
+                        }
                     }
-                    StartSplitButton(
-                        label = startLabel,
-                        resetVisible = adjust.modified,
-                        onStart = { launch() },
-                        onReset = {
-                            adjust.reset()
-                            onIntervalsReset()
-                        },
-                    )
+                },
+            )
+        }
+        if (exercise.references.isNotEmpty()) {
+            ExpanderSection(
+                title = stringResource(R.string.detail_references),
+                appetizer = pluralStringResource(R.plurals.detail_sources_count, exercise.references.size, exercise.references.size),
+                accent = headingColor(referencesHead),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+                    exercise.references.forEach { ReferenceItem(it) }
                 }
             }
+        }
+
+        if (exercise.guided) {
+            Spacer(Modifier.height(Dimens.SectionGap))
+            SessionAdjustCard(
+                durationLabel = if (roundBased) {
+                    stringResource(R.string.adjust_rounds)
+                } else {
+                    stringResource(R.string.adjust_minutes)
+                },
+                duration = adjust.duration,
+                durationDefault = defaults.duration,
+                durationRange = defaults.durationRange,
+                onDuration = {
+                    adjust.duration = it
+                    persistAdjustments()
+                },
+                // Gespeicherte und eigene Muster: nur die Dauer – Phasen ändert der Stift
+                // (Editor), sonst überstimmten Anpassungen die gespeicherte Folge.
+                inhale = defaults.inhale?.takeUnless { phasesInEditor }?.let { default ->
+                    PhaseAdjust(adjust.inhale ?: default, default, AdjustLimits.INHALE_S) {
+                        adjust.inhale = it
+                        persistAdjustments()
+                    }
+                },
+                hold = defaults.hold?.takeUnless { phasesInEditor }?.let { default ->
+                    PhaseAdjust(adjust.hold ?: default, default, AdjustLimits.HOLD_S) {
+                        adjust.hold = it
+                        persistAdjustments()
+                    }
+                },
+                exhale = defaults.exhale?.takeUnless { phasesInEditor }?.let { default ->
+                    PhaseAdjust(adjust.exhale ?: default, default, AdjustLimits.EXHALE_S) {
+                        adjust.exhale = it
+                        persistAdjustments()
+                    }
+                },
+                intervalsExpanded = intervalsExpanded,
+                onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
+                // Runden sagt TalkBack als „Runden: 4“, Minuten ausgeschrieben.
+                durationSpokenLabel = if (roundBased) stringResource(R.string.adjust_rounds) else stringResource(R.string.cd_adjust_duration),
+                durationUnit = if (roundBased) null else R.plurals.cd_duration_minutes,
+            )
+        } else {
+            Spacer(Modifier.height(Dimens.SectionGap))
+            HintText(stringResource(R.string.detail_info_only))
         }
     }
 
@@ -406,6 +365,47 @@ fun ExerciseDetailScreen(
                 onStart(adjust.config())
             },
             onDismiss = { showSafety = false },
+        )
+    }
+}
+
+/**
+ * Gepinnter Start unter dem Inhalt: [StartSplitButton] mit der Gesamtdauer am Start („Starten ·
+ * ca. 10 min“), das Zurücksetzen erscheint nur nach einer Anpassung.
+ */
+@Composable
+private fun StartBar(
+    exercise: Exercise,
+    adjust: SessionAdjustState,
+    estimatedSeconds: Int,
+    onStart: () -> Unit,
+    onIntervalsReset: () -> Unit,
+) {
+    PinnedActionBar {
+        val start = stringResource(R.string.action_start)
+        val startLabel = when {
+            estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
+
+            exercise.hasOpenPhases -> stringResource(
+                R.string.action_start_duration,
+                start,
+                stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
+            )
+
+            else -> stringResource(
+                R.string.action_start_duration,
+                start,
+                stringResource(R.string.duration_approx, ((estimatedSeconds + 30) / 60).coerceAtLeast(1)),
+            )
+        }
+        StartSplitButton(
+            label = startLabel,
+            resetVisible = adjust.modified,
+            onStart = onStart,
+            onReset = {
+                adjust.reset()
+                onIntervalsReset()
+            },
         )
     }
 }

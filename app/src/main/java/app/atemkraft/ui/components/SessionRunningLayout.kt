@@ -9,6 +9,7 @@ import androidx.compose.ui.layout.SubcomposeMeasureScope
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Dimens
 import kotlin.math.min
 
 /**
@@ -61,7 +62,8 @@ fun SessionRunningLayout(
             collapsedTop[0] = min(collapsedTop[0], topH)
             val reservedTop = collapsedTop[0]
 
-            val gap = GAP.roundToPx()
+            // Abstand zwischen Kopf, Kreis und Steuerung (bzw. den Spalten im Querformat).
+            val gap = Dimens.SectionGap.roundToPx()
             val free = h - reservedTop - bottomH - centerExtra.roundToPx() - 2 * gap
             val side = minOf(w * 0.9f, h * 0.62f, free.toFloat()).coerceAtLeast(MIN_SIDE.toPx())
             val centerP = subcompose("center") { center(side.toDp()) }.map { it.measure(loose) }
@@ -92,7 +94,8 @@ private fun SubcomposeMeasureScope.sidewaysLayout(
     bottom: @Composable () -> Unit,
     center: @Composable (circleSide: Dp) -> Unit,
 ): MeasureResult {
-    val gap = GAP.roundToPx()
+    // Abstand zwischen Kopf, Kreis und Steuerung (bzw. den Spalten im Querformat).
+    val gap = Dimens.SectionGap.roundToPx()
     val leftW = (w - gap) / 2
     val rightW = w - leftW - gap
     val right = loose.copy(maxWidth = rightW)
@@ -110,9 +113,6 @@ private fun SubcomposeMeasureScope.sidewaysLayout(
         topP.forEach { it.placeRelative(rightX + (rightW - it.width) / 2, 0, zIndex = 1f) }
     }
 }
-
-/** Abstand zwischen Kopf, Kreis und Steuerung (bzw. den Spalten im Querformat). */
-private val GAP = 16.dp
 
 /** Kleinste Kantenlänge des Kreises; darunter wäre er nicht mehr lesbar. */
 private val MIN_SIDE = 96.dp

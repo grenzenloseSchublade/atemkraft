@@ -1,14 +1,22 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -65,6 +73,52 @@ fun PushHeader(
             if (title == null && titleContent == null) Spacer(Modifier.weight(1f))
             // Spiegelbild zum Pfeil: Die Tippfläche ragt rechts in den Rand.
             Box(Modifier.flushEnd()) { action() }
+        }
+    }
+}
+
+/**
+ * Gerüst jeder Push-Seite mit scrollendem Inhalt (§4.3): `Surface(background)`, darin fest der
+ * [PushHeader] (Haarlinie, sobald Inhalt unter ihm liegt) und darunter die Scroll-Spalte mit Rand
+ * `ScreenPadding`, oben `SectionGap` bis zum ersten Inhalt, unten `ScreenBottom`. Darunter fest
+ * optional [bottomBar] (`PinnedActionBar` der Detailseite). Titel, [titleContent] und [action]
+ * wie beim [PushHeader]. [contentModifier] liegt zwischen Scroll und Rand – dort misst die
+ * Atemlehre Sprungziele gegen den Scroll-Inhalt. Eine Einleitung steht als [ScreenSubtitle] oben
+ * im Inhalt.
+ */
+@Composable
+fun PushScaffold(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentModifier: Modifier = Modifier,
+    title: String? = null,
+    titleContent: (@Composable () -> Unit)? = null,
+    action: (@Composable () -> Unit)? = null,
+    scrollState: ScrollState = rememberScrollState(),
+    bottomBar: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            PushHeader(
+                onBack = onBack,
+                title = title,
+                titleContent = titleContent,
+                action = action,
+                scrolled = scrollState.canScrollBackward,
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .then(contentModifier)
+                    .padding(horizontal = Dimens.ScreenPadding),
+            ) {
+                Spacer(Modifier.height(Dimens.SectionGap))
+                content()
+                Spacer(Modifier.height(Dimens.ScreenBottom))
+            }
+            bottomBar?.invoke()
         }
     }
 }

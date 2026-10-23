@@ -25,7 +25,8 @@ enum class BreathingFamily {
 enum class SessionKind { BREATHING, MEDITATION }
 
 /**
- * Studienlage einer eingebauten Übung (TEXT-07), sichtbar als Etikett auf Karte und Detailseite.
+ * Studienlage einer eingebauten Übung (TEXT-07), sichtbar als Etikett nur auf der Detailseite
+ * (und bei den Techniken der Seite „Pranayama“), nicht auf der Karte.
  * Jede eingebaute Übung hat genau eine Stufe; generierte Muster haben keine (`null`), weil sie
  * spielerische Variationen ohne eigene Studien sind. Die Stufe sagt, wie sicher das Wissen ist,
  * nicht wie stark eine Übung wirkt.

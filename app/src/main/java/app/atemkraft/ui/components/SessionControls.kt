@@ -131,7 +131,7 @@ fun SessionSecondaryButton(
         modifier = modifier.heightIn(min = Sizes.ButtonHeight),
         contentPadding = SessionButtonPadding,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = SessionButtonCyan),
-        border = BorderStroke(1.dp, SessionButtonCyan),
+        border = BorderStroke(Dimens.BorderThin, SessionButtonCyan),
     ) { Text(text) }
 }
 
@@ -200,7 +200,7 @@ private fun SessionRoundButton(
     visible: Boolean,
     icon: @Composable () -> Unit,
 ) {
-    val alpha by animateFloatAsState(targetValue = if (visible) 1f else 0f, animationSpec = tween(), label = "sessionControl")
+    val alpha by animateFloatAsState(targetValue = if (visible) 1f else 0f, animationSpec = tween(Motion.ControlFade), label = "sessionControl")
     Box(
         modifier = Modifier
             .minimumInteractiveComponentSize()

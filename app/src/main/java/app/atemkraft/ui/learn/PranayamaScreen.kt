@@ -2,16 +2,10 @@ package app.atemkraft.ui.learn
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,12 +24,12 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.ExerciseChips
-import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.ExpanderCard
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.Labeled
-import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
-import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
@@ -52,53 +46,25 @@ import app.atemkraft.ui.theme.Dimens
  */
 @Composable
 fun PranayamaScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, expanded: Boolean = false) {
-    val scrollState = rememberScrollState()
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            PushHeader(onBack = onBack, title = stringResource(R.string.pranayama_title), scrolled = scrollState.canScrollBackward)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = Dimens.ScreenPadding),
-            ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                HintText(Pranayama.intro)
-
-                SectionHeader(title = stringResource(R.string.pranayama_basics), color = headingColor(0), teaser = Pranayama.topicsTeaser)
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    Pranayama.topics.forEach { TopicCard(it, expanded) }
-                }
-
-                SectionHeader(title = stringResource(R.string.pranayama_techniques), color = headingColor(1), teaser = Pranayama.techniquesTeaser)
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
-                }
-
-                SourcesSection(headingColor(2), expanded)
-                Spacer(Modifier.height(Dimens.ScreenBottom))
-            }
+    PushScaffold(onBack = onBack, title = stringResource(R.string.pranayama_title)) {
+        ScreenSubtitle(Pranayama.intro)
+        CollapsibleSection(title = stringResource(R.string.pranayama_basics), color = headingColor(0), teaser = Pranayama.topicsTeaser) {
+            Pranayama.topics.forEach { TopicCard(it, expanded) }
         }
+        CollapsibleSection(title = stringResource(R.string.pranayama_techniques), color = headingColor(1), teaser = Pranayama.techniquesTeaser) {
+            Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
+        }
+        SourcesSection(headingColor(2), expanded)
     }
 }
 
 /** Ein Grundlagen-Thema als Karte: Titel und Teaser, aufgeklappt die Absätze und die Lehrquelle. */
 @Composable
 private fun TopicCard(topic: PranayamaTopic, expanded: Boolean) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(start = Dimens.CardPadding, end = Dimens.CardPadding)) {
-            ExpanderSection(
-                title = topic.title,
-                appetizer = topic.teaser,
-                accent = MaterialTheme.colorScheme.onSurface,
-                initiallyExpanded = expanded,
-                divider = false,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                    topic.paragraphs.forEach { BodyText(it) }
-                    topic.source?.let { HintText(it) }
-                }
-            }
+    ExpanderCard(title = topic.title, appetizer = topic.teaser, initiallyExpanded = expanded) {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+            topic.paragraphs.forEach { BodyText(it) }
+            topic.source?.let { HintText(it) }
         }
     }
 }
@@ -110,33 +76,23 @@ private fun TopicCard(topic: PranayamaTopic, expanded: Boolean) {
  */
 @Composable
 private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String) -> Unit, expanded: Boolean) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(start = Dimens.CardPadding, end = Dimens.CardPadding)) {
-            ExpanderSection(
-                title = technique.name,
-                appetizer = technique.teaser,
-                accent = MaterialTheme.colorScheme.onSurface,
-                initiallyExpanded = expanded,
-                divider = false,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                    val spoken = technique.pronunciation?.let { stringResource(R.string.pranayama_pronunciation, it) }
-                    HintText(listOfNotNull(technique.sanskrit, spoken).joinToString(DOT_SEPARATOR))
-                    Pranayama.evidenceOf(technique)?.let { EvidenceChip(it) }
-                    Labeled(stringResource(R.string.pranayama_label_tradition)) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                            BodyText(technique.tradition)
-                            technique.source?.let { HintText(it) }
-                        }
-                    }
-                    Labeled(stringResource(R.string.pranayama_label_how)) { BodyText(technique.howTo) }
-                    Labeled(stringResource(R.string.atemlehre_label_studies)) { BodyText(technique.studies) }
-                    Labeled(stringResource(R.string.pranayama_label_safety)) { BodyText(technique.safety) }
-                    technique.exerciseId?.let { id ->
-                        Labeled(stringResource(R.string.pranayama_label_practice)) {
-                            ExerciseChips(listOf(id) + technique.moreExerciseIds, BuiltInExercises.all, onOpenExercise)
-                        }
-                    }
+    ExpanderCard(title = technique.name, appetizer = technique.teaser, initiallyExpanded = expanded) {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+            val spoken = technique.pronunciation?.let { stringResource(R.string.pranayama_pronunciation, it) }
+            HintText(listOfNotNull(technique.sanskrit, spoken).joinToString(DOT_SEPARATOR))
+            Pranayama.evidenceOf(technique)?.let { EvidenceChip(it) }
+            Labeled(stringResource(R.string.pranayama_label_tradition)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+                    BodyText(technique.tradition)
+                    technique.source?.let { HintText(it) }
+                }
+            }
+            Labeled(stringResource(R.string.pranayama_label_how)) { BodyText(technique.howTo) }
+            Labeled(stringResource(R.string.atemlehre_label_studies)) { BodyText(technique.studies) }
+            Labeled(stringResource(R.string.pranayama_label_safety)) { BodyText(technique.safety) }
+            technique.exerciseId?.let { id ->
+                Labeled(stringResource(R.string.pranayama_label_practice)) {
+                    ExerciseChips(listOf(id) + technique.moreExerciseIds, BuiltInExercises.all, onOpenExercise)
                 }
             }
         }

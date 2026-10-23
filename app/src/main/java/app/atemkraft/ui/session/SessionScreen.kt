@@ -61,6 +61,7 @@ import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.HideableSlot
 import app.atemkraft.ui.components.PauseFlash
+import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.SessionControlBar
 import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.WholeWordText
@@ -226,13 +227,7 @@ private fun ActiveContent(
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically(),
                     ) {
-                        Text(
-                            text = hint,
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                            modifier = Modifier.padding(top = Dimens.GapHairline),
-                        )
+                        SecondaryText(hint, modifier = Modifier.padding(top = Dimens.GapHairline), textAlign = TextAlign.Center)
                     }
                 }
             }
