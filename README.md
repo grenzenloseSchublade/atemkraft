@@ -5,7 +5,7 @@ Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Tön
 Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf den optionalen Download einer Sprachstimme. Atemkraft ist eine Wellness-App und kein Medizinprodukt; sie ersetzt keinen Rat von Ärztin, Arzt oder anderem Fachpersonal.
 
 <p>
-  <img src="docs/screenshot-atmen.png" width="200" alt="Tab Atmen: Muster des Tages und Liste der Atemübungen">
+  <img src="docs/screenshot-atmen.png" width="200" alt="Tab Atmen: Muster des Tages, Suche „Wie fühlst du dich?“ mit Anlässen als Chips und Liste der Atemübungen">
   <img src="docs/screenshot-sitzung.png" width="200" alt="Laufende Sitzung: Atemkreis mit „Einatmen“, Sekunden und Fortschrittsbogen">
 </p>
 
