@@ -45,6 +45,7 @@ import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SearchField
+import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
@@ -196,14 +197,12 @@ private fun SituationSection(
 @Composable
 private fun SearchStatus(count: Int, onShowAll: () -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-        Text(
+        SecondaryText(
             text = if (count == 0) {
                 stringResource(R.string.situations_search_none)
             } else {
                 pluralStringResource(R.plurals.situations_search_count, count, count)
             },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .semantics { liveRegion = LiveRegionMode.Polite },

@@ -164,12 +164,7 @@ fun SectionHeader(
                 }
             }
             if (teaser != null) {
-                Text(
-                    text = sanskritText(teaser),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                    modifier = Modifier.padding(top = Dimens.GapSmall),
-                )
+                SecondaryText(teaser, modifier = Modifier.padding(top = Dimens.GapSmall))
             }
         }
         // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).

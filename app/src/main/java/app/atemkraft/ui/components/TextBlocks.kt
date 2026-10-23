@@ -14,12 +14,13 @@ import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
-// Textbausteine für die vier Textrollen außerhalb der Köpfe: Fließtext, Hinweis, Aufzählung und
-// Kartentitel. Die Farbe folgt der Fläche (`LocalContentColor`: onBackground auf dem Screen,
+// Textbausteine für die Textrollen außerhalb der Köpfe: Fließtext, Hinweis, Sekundärtext,
+// Aufzählung und Kartentitel. Die Farbe folgt der Fläche (`LocalContentColor`: onBackground auf dem Screen,
 // onSurface in der Karte), die Deckkraft kommt aus den Text-Tokens (§2.2).
 
 /**
@@ -42,6 +43,24 @@ fun HintText(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = LocalContentColor.current.copy(alpha = SECONDARY),
+        modifier = modifier,
+    )
+}
+
+/**
+ * Sekundärtext: zurückgenommene Zeile mit normalem Umbruch – Kurzbeschreibung und Musterzeile auf
+ * Karten, Teaser unter einem Abschnittskopf, Quellenzitat, Uhrzeit und Runden im Logbuch,
+ * Trefferzahl der Suche, Anleitung unter dem Atemkreis. `bodySmall` in `SECONDARY` wie [HintText],
+ * aber als schlichter `Text`: Er bricht an Wortgrenzen um wie Fließtext und verkleinert nie.
+ * [textAlign] nur für zentrierte Zeilen (Session). Sanskrit kursiv ([sanskritText]).
+ */
+@Composable
+fun SecondaryText(text: String, modifier: Modifier = Modifier, textAlign: TextAlign? = null) {
+    Text(
+        text = sanskritText(text),
+        style = MaterialTheme.typography.bodySmall,
+        color = LocalContentColor.current.copy(alpha = SECONDARY),
+        textAlign = textAlign,
         modifier = modifier,
     )
 }

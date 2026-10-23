@@ -65,11 +65,7 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit, modifier: Modifier = M
                 }
             }
             Spacer(Modifier.height(Dimens.GapTiny))
-            Text(
-                text = exercise.shortDescription,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-            )
+            SecondaryText(exercise.shortDescription)
         }
     }
 }
@@ -116,12 +112,7 @@ fun PatternCard(
                 Spacer(Modifier.height(Dimens.GapTiny))
                 // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
                 // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
-                Text(
-                    text = patternLine + DOT_SEPARATOR +
-                        stringResource(R.string.duration_approx, exercise.defaultMinutes()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
+                SecondaryText(patternLine + DOT_SEPARATOR + stringResource(R.string.duration_approx, exercise.defaultMinutes()))
             }
             Box(modifier = Modifier.align(Alignment.TopEnd)) { action() }
         }

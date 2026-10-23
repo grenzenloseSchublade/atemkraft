@@ -58,6 +58,7 @@ import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
+import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
@@ -229,11 +230,7 @@ private fun PhasesCard(phases: List<LorePhase>) {
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Text(
-                            text = sanskritText(phase.meaning),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = dim,
-                        )
+                        SecondaryText(phase.meaning)
                     }
                 }
             }
