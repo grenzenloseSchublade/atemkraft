@@ -244,7 +244,7 @@
 
     <!-- Erweiterte Einstellungen -->
     <string name="settings_safety">Sicherheitshinweis immer zeigen</string>
-    <string name="settings_safety_hint">Erscheint vor jedem Start einer intensiven Übung. Aus: nur, bis du ihn einmal bestätigt hast.</string>
+    <string name="settings_safety_hint">Erscheint vor jedem Start einer intensiven Übung. Aus: je Übung nur, bis du ihn dort einmal bestätigt hast.</string>
     <string name="settings_glossary">Begriffe erklärt</string>
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>

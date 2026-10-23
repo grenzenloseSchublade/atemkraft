@@ -18,18 +18,22 @@ data class CueSettings(
     val gongLong: Boolean = true,
 )
 
-/** Sicherheits-Einstellungen. [acknowledged] = wurde der Hinweis schon einmal bestätigt. */
+/**
+ * Sicherheits-Einstellungen. [acknowledgedIds] = Übungen, deren Hinweis schon einmal bestätigt
+ * wurde – je Übung, nicht einmal für alle (Nutzer 2026-10-24): Wim Hof hat andere Risiken als die
+ * Feueratmung (Atempause, nie im Wasser), eine Bestätigung bei der einen gilt nicht für die andere.
+ */
 data class SafetySettings(
     val showWarning: Boolean = true,
-    val acknowledged: Boolean = false,
+    val acknowledgedIds: Set<String> = emptySet(),
 ) {
     /**
      * Muss vor dem Start von [exercise] der Sicherheitsdialog kommen (MUSTER-06)? Nur bei
      * intensiven Übungen (`caution`, auch intensive eigene Muster), und dann, solange der Hinweis
-     * noch nie bestätigt wurde oder in den Einstellungen eingeschaltet ist. Die eine Regel für
-     * Detailseite und Muster-Editor.
+     * für genau diese Übung noch nie bestätigt wurde oder in den Einstellungen eingeschaltet ist.
+     * Die eine Regel für Detailseite und Muster-Editor.
      */
-    fun requiresConfirm(exercise: Exercise): Boolean = exercise.caution && (!acknowledged || showWarning)
+    fun requiresConfirm(exercise: Exercise): Boolean = exercise.caution && (exercise.id !in acknowledgedIds || showWarning)
 }
 
 /**

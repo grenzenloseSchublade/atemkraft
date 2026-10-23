@@ -87,7 +87,7 @@ internal fun DetailDestination(
             }
         },
         onConfirmedSafety = {
-            scope.launch { settings.setSafetyAcknowledged(true) }
+            scope.launch { settings.acknowledgeSafety(exercise.id) }
         },
         onStart = { config -> onStart(exercise, config) },
         onBack = onBack,

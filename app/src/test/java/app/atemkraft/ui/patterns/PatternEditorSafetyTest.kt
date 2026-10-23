@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.atemkraft.R
+import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePatternTemplates
@@ -15,6 +16,7 @@ import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -46,7 +48,7 @@ class PatternEditorSafetyTest {
                     onOpenLore = {},
                     onBack = {},
                     safety = safety,
-                    onConfirmedSafety = { safety = SafetySettings(showWarning = false, acknowledged = true) },
+                    onConfirmedSafety = { id -> safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(id)) },
                     soundOutput = { SilentPreviewSound },
                 )
             }
@@ -65,5 +67,14 @@ class PatternEditorSafetyTest {
         play.performClick()
         assertEquals(2, started.size)
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Bestätigung gilt nur für die bestätigte Übung`() {
+        val wimHof = BuiltInExercises.all.single { it.id == "wim-hof" }
+        val fire = BuiltInExercises.all.single { it.id == "feueratmung" }
+        val safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(wimHof.id))
+        assertFalse(safety.requiresConfirm(wimHof))
+        assertTrue(safety.requiresConfirm(fire))
     }
 }

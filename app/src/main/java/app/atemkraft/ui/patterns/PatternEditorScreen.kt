@@ -96,7 +96,7 @@ fun PatternEditorScreen(
     cueSettings: CueSettings = CueSettings(),
     otherAudioActive: Boolean = false,
     safety: SafetySettings = SafetySettings(),
-    onConfirmedSafety: () -> Unit = {},
+    onConfirmedSafety: (exerciseId: String) -> Unit = {},
     soundOutput: (Context) -> PreviewSoundOutput = ::AppPreviewSoundOutput,
 ) {
     val exercise = state.exercise()
@@ -124,7 +124,8 @@ fun PatternEditorScreen(
     val start = rememberSafetyGate(
         require = safety.requiresConfirm(exercise),
         cautions = exercise.cautions,
-        onConfirm = onConfirmedSafety,
+        // Bestätigt gilt für dieses Muster, nicht für alle intensiven Übungen (MUSTER-06).
+        onConfirm = { onConfirmedSafety(exercise.id) },
     ) {
         preview.pause()
         onStart(exercise, config)

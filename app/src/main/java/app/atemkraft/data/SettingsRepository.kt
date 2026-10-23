@@ -96,7 +96,8 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val VOLUME_ORDINAL = intPreferencesKey("tone_volume")
         val HAPTICS = booleanPreferencesKey("cue_haptics")
         val SHOW_SAFETY = booleanPreferencesKey("show_safety_warning")
-        val SAFETY_ACK = booleanPreferencesKey("safety_acknowledged")
+        val SAFETY_ACK = booleanPreferencesKey("safety_acknowledged") // alt (bis 2.5): einmal für alle, wird entfernt
+        val SAFETY_ACK_IDS = stringSetPreferencesKey("safety_acknowledged_ids") // je Übung bestätigt
         val SHOW_NEXT = booleanPreferencesKey("show_next_phase")
         val SHOW_PROGRESS = booleanPreferencesKey("show_session_progress")
         val SHOW_SECONDS = booleanPreferencesKey("show_session_seconds")
@@ -249,7 +250,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     val safetySettings: Flow<SafetySettings> = data.map { prefs ->
         SafetySettings(
             showWarning = prefs[Keys.SHOW_SAFETY] ?: true,
-            acknowledged = prefs[Keys.SAFETY_ACK] ?: false,
+            acknowledgedIds = prefs[Keys.SAFETY_ACK_IDS].orEmpty(),
         )
     }
 
@@ -273,8 +274,16 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         store.edit { it[Keys.SHOW_SAFETY] = enabled }
     }
 
-    suspend fun setSafetyAcknowledged(value: Boolean) {
-        store.edit { it[Keys.SAFETY_ACK] = value }
+    /**
+     * Der Sicherheitshinweis von [exerciseId] wurde bestätigt. Die frühere Bestätigung „einmal für
+     * alle“ zählt nicht mehr: Wer den Hinweis abgeschaltet hat, bestätigt jede intensive Übung
+     * einmal neu – lieber einmal zu oft als ein fremder Hinweis, der nie erscheint.
+     */
+    suspend fun acknowledgeSafety(exerciseId: String) {
+        store.edit { prefs ->
+            prefs[Keys.SAFETY_ACK_IDS] = prefs[Keys.SAFETY_ACK_IDS].orEmpty() + exerciseId
+            prefs.remove(Keys.SAFETY_ACK)
+        }
     }
 
     suspend fun setShowNextPhase(enabled: Boolean) {
