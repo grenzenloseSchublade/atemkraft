@@ -46,6 +46,7 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
@@ -142,7 +143,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             val name = "Abendruhe nach dem Spaziergang am See"
             return SavedPattern(
                 id = id,
-                exercise = RandomPatternGenerator.exerciseFrom(pattern, "muster-$id", name, minutes = 5),
+                exercise = GeneratedExercises.exerciseFrom(pattern, "muster-$id", name, minutes = 5),
                 spec = PatternSpec(4.0, 1.0, 6.0, null, activating = false),
                 origin = PatternOrigin.CUSTOM,
                 minutes = 5,

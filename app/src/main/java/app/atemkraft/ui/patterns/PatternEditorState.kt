@@ -19,6 +19,7 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionConfig
@@ -151,7 +152,7 @@ class PatternEditorState internal constructor(
     val saved: Boolean get() = savedId != null && snapshot == current()
 
     private val exercise: Exercise by derivedStateOf {
-        RandomPatternGenerator.exerciseFrom(
+        GeneratedExercises.exerciseFrom(
             pattern = this.pattern,
             id = this.savedId?.let { "muster-$it" } ?: RandomPatternGenerator.DRAFT_ID,
             name = savedName,

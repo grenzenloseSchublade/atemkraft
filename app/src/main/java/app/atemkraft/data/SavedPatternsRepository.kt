@@ -10,9 +10,10 @@ import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +54,7 @@ data class SavedPattern(
      * nicht deren Vier-Felder-Zusammenfassung [spec] – die erfände Phasen, die es nicht gibt.
      */
     val patternLine: String
-        get() = if (freeSequence) pattern.hint() else RandomPatternGenerator.hintFor(spec)
+        get() = if (freeSequence) pattern.hint() else PatternTexts.hintFor(spec)
 }
 
 /**
@@ -359,9 +360,9 @@ class SavedPatternsRepository(
         return SavedPattern(
             id = id,
             exercise = if (free != null) {
-                RandomPatternGenerator.exerciseFrom(free, exerciseId, name, minutes)
+                GeneratedExercises.exerciseFrom(free, exerciseId, name, minutes)
             } else {
-                RandomPatternGenerator.exerciseFrom(spec, exerciseId, name, origin, minutes)
+                GeneratedExercises.exerciseFrom(spec, exerciseId, name, origin, minutes)
             },
             spec = spec,
             origin = origin,

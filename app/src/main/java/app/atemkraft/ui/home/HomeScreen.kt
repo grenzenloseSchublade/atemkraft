@@ -31,7 +31,7 @@ import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
-import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
@@ -216,7 +216,7 @@ private fun DailyPatternCard(
     onClick: () -> Unit,
     onSavedChange: (Boolean) -> Unit,
 ) {
-    PatternCard(exercise = daily.exercise, patternLine = RandomPatternGenerator.hintFor(daily.spec), onClick = onClick) {
+    PatternCard(exercise = daily.exercise, patternLine = PatternTexts.hintFor(daily.spec), onClick = onClick) {
         // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Meine Muster“ – der
         // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
         // erneutes Tippen nimmt das Muster wieder heraus.

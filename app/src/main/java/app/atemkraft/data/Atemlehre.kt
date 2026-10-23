@@ -273,7 +273,7 @@ object Atemlehre {
             linkName = "Viloma II",
             // Die Pausen liegen mitten im Ausatmen, die Lunge ist noch zu zwei bzw. einem Drittel
             // gefüllt: kein Halten leer (*bāhya kumbhaka*). Wie in der Übung und bei Viloma I ein
-            // Halten mit Füllstand, in der App als HOLD_FULL modelliert (RandomPatternGenerator).
+            // Halten mit Füllstand, in der App als HOLD_FULL modelliert (GeneratedExercises).
             rhythm = listOf(inhale(6.0), exhale(2.0), holdFull(2.0), exhale(2.0), holdFull(2.0), exhale(2.0)),
             counts = "z. B. Ein 6\u00A0· Aus in drei Stufen",
             teaser = "Ausatmen in Stufen gilt als sanftes *laṅghana*: loslassen, leicht werden.",

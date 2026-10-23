@@ -1,9 +1,11 @@
 package app.atemkraft.data
 
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
+import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
@@ -62,10 +64,10 @@ class ContentRulesTest {
 
     /** Ältere eigene Muster mit vier Feldern (Herkunft CUSTOM) über alle diese Specs. */
     private val custom: List<Exercise> = composerSpecs.map { spec ->
-        RandomPatternGenerator.exerciseFrom(
+        GeneratedExercises.exerciseFrom(
             spec,
             "muster-1",
-            "Eigenes Muster ${RandomPatternGenerator.numbersOf(spec)}",
+            "Eigenes Muster ${PatternTexts.numbersOf(spec)}",
             PatternOrigin.CUSTOM,
             5,
         )
@@ -73,10 +75,10 @@ class ContentRulesTest {
 
     /** Gespeicherte Muster des Tages (Herkunft SAVED_DAILY) über dieselben Specs. */
     private val savedDaily: List<Exercise> = composerSpecs.map { spec ->
-        RandomPatternGenerator.exerciseFrom(
+        GeneratedExercises.exerciseFrom(
             spec,
             "muster-1",
-            "Tagesmuster ${RandomPatternGenerator.numbersOf(spec)}",
+            "Tagesmuster ${PatternTexts.numbersOf(spec)}",
             PatternOrigin.SAVED_DAILY,
             5,
         )
