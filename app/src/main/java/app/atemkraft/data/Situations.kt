@@ -14,10 +14,20 @@ import app.atemkraft.domain.SituationRecommendation
  * wegen „Staub“). Leitplanken (geprüft in
  * SituationSearchTest und ContentRulesTest): keine Symptome oder Diagnosen, nichts, was etwas
  * verspricht; Müdigkeit führt zu „Erschöpft oder ausgelaugt“; die Warn-Situation „Wach &
- * energiegeladen werden“ bekommt keine einladenden Begriffe und trifft nur über ihren Titel
- * (nicht über ihren Satz mit dem Vorbehalt „gesund und ausgeruht“).
+ * energiegeladen werden“ bekommt keine einladenden Begriffe und trifft nur über ihren Titel.
+ * Die breiteren Wörter der Bereiche (Familien) stehen in [Areas] und belegen kein Wort doppelt.
  */
 object Situations {
+
+    /**
+     * Sicherheitssatz intensiver Empfehlungen (Anlass „Wach & energiegeladen werden“, Bereich
+     * B · Hochregeln), als ⚠-Zeile über den Übungen. Nur, was die Hinweise von Wim Hof und
+     * Feueratmung beide sagen: gesund und ausgeruht (Wim Hof), im Sitzen (beide erlauben es,
+     * Feueratmung nur so), nie beim Fahren (beide), nie im oder am Wasser (Wim Hof „im/am“,
+     * Feueratmung „im“).
+     */
+    const val INTENSE_WARNING = "Nur üben, wenn du dich gesund und ausgeruht fühlst – im Sitzen, " +
+        "nie beim Fahren oder im/am Wasser."
 
     val all: List<SituationRecommendation> = listOf(
         SituationRecommendation(
@@ -83,11 +93,10 @@ object Situations {
         SituationRecommendation(
             situation = Situation.HIGH_PHASE,
             title = "Wach & energiegeladen werden",
-            shortLabel = "Wach & energiegeladen",
-            rationale = "Ein kräftiger, anregender Atem-Reiz, der aktiviert und wach macht. " +
-                "Nur üben, wenn du dich gesund und ausgeruht fühlst.",
+            shortLabel = "Wach werden",
+            rationale = "Ein kräftiger, anregender Atem-Reiz, der aktiviert und wach macht.",
             exerciseIds = listOf("wim-hof", "feueratmung"),
-            warn = true,
+            warning = INTENSE_WARNING,
             // Bewusst keine keywords: Sie würden Leute aktiv zu Hyperventilationstechniken
             // schicken, obwohl die Situation selbst einschränkt („nur, wenn du dich gesund …“).
         ),

@@ -26,11 +26,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.ui.theme.AtemkraftTheme
-import app.atemkraft.ui.theme.CHIP_FILL
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
-import app.atemkraft.ui.theme.WarnAmber
 
 /** Test-Tag der Reihe aus [ChoiceChip]s: Der ScreenshotTest prüft, dass kein Chip beim Markieren oder Abblenden verrutscht. */
 const val CHOICE_CHIPS_TAG = "choice-chips"
@@ -48,9 +46,8 @@ const val CHOICE_CHIPS_TAG = "choice-chips"
  * damit den Umbruch der Reihe. Nicht gewählte Chips bleiben in der Suche unverändert, nicht
  * abgeblendet: Die gefüllten Treffer heben sich genug ab.
  *
- * [warn]: die intensive Situation – Beschriftung und Rand in `WarnAmber` wie der Charakter-Chip
- * „intensiv“; gewählt füllt sie sich mit `WarnAmber` in [CHIP_FILL], Rand bleibt gelb, die
- * Beschriftung steht in `onSurface` (gut lesbar auf der zarten Fläche).
+ * Kein Warnton: Alle Chips sehen gleich aus (Nutzer 2026-10-23); die Warnung einer intensiven
+ * Wahl steht erst als ⚠-Zeile in der Empfehlung darunter ([WarnText]).
  *
  * TalkBack: Rolle Optionsfeld, „ausgewählt“/„nicht ausgewählt“; die Reihe ist eine
  * [ChoiceChipRow] (`selectableGroup`).
@@ -61,20 +58,10 @@ fun ChoiceChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    warn: Boolean = false,
 ) {
     val shape = MaterialTheme.shapes.small
-    val selectedFill = if (warn) WarnAmber.copy(alpha = CHIP_FILL) else SegmentSelected
-    val fill by animateColorAsState(if (selected) selectedFill else Color.Transparent, label = "chipFill")
-    val border by animateColorAsState(
-        when {
-            warn -> WarnAmber
-            selected -> SegmentSelected
-            else -> MaterialTheme.colorScheme.outline
-        },
-        label = "chipBorder",
-    )
-    val text = if (warn && !selected) WarnAmber else MaterialTheme.colorScheme.onSurface
+    val fill by animateColorAsState(if (selected) SegmentSelected else Color.Transparent, label = "chipFill")
+    val border by animateColorAsState(if (selected) SegmentSelected else MaterialTheme.colorScheme.outline, label = "chipBorder")
     Box(
         modifier = modifier
             // Reihenfolge wie AppIconButton (LAYOUT-06): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
@@ -91,7 +78,7 @@ fun ChoiceChip(
         WholeWordText(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = text,
+            color = MaterialTheme.colorScheme.onSurface,
             singleLine = true,
             modifier = Modifier.testTag(CHIP_TEXT_TAG),
         )
@@ -123,7 +110,7 @@ private fun ChoiceChipPreview() {
         ChoiceChipRow(groupName = "Anlass") {
             ChoiceChip(label = "Einschlafen", selected = true, onClick = {})
             ChoiceChip(label = "Fokus", selected = false, onClick = {})
-            ChoiceChip(label = "Wach & energiegeladen", selected = false, onClick = {}, warn = true)
+            ChoiceChip(label = "Wach werden", selected = false, onClick = {})
         }
     }
 }

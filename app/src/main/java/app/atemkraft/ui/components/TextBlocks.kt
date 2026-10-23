@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.WarnAmber
 
 // Textbausteine für die Textrollen außerhalb der Köpfe: Fließtext, Hinweis, Sekundärtext,
 // Aufzählung und Kartentitel. Die Farbe folgt der Fläche (`LocalContentColor`: onBackground auf dem Screen,
@@ -67,6 +68,17 @@ fun SecondaryText(text: String, modifier: Modifier = Modifier, textAlign: TextAl
         textAlign = textAlign,
         modifier = modifier,
     )
+}
+
+/**
+ * Warnzeile „⚠ …“ in `WarnAmber`, `bodySmall`, normaler Umbruch wie [SecondaryText]: Sicherheit
+ * und Intensität mit Zeichen und Text, nie nur Farbe (FARBE-05). Detailseite intensiver Übungen,
+ * Atemlehre-Karten mit Warnung, intensive Empfehlung und Bereich Hochregeln im Atmen-Tab.
+ * [text] ohne das Zeichen.
+ */
+@Composable
+fun WarnText(text: String, modifier: Modifier = Modifier) {
+    Text(text = "⚠ $text", style = MaterialTheme.typography.bodySmall, color = WarnAmber, modifier = modifier)
 }
 
 /**

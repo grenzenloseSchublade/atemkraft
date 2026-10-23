@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,14 +25,23 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import app.atemkraft.R
+import app.atemkraft.domain.BreathingArea
+import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
+import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ChoiceChip
 import app.atemkraft.ui.components.ChoiceChipRow
+import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.components.WarnText
+import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.flushStart
+import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -43,7 +55,9 @@ import app.atemkraft.ui.theme.Dimens
  * ebenfalls 8 dp ([ChoiceChipRow]).
  *
  * [highlighted]: markierte Chips (gewählter Anlass oder Suchtreffer); die übrigen bleiben
- * unverändert. Die Markierung ändert keine Größe – die Reihe bricht in jedem Zustand gleich um. Die intensive Situation steht zuletzt und trägt den Warnton.
+ * unverändert. Die Markierung ändert keine Größe – die Reihe bricht in jedem Zustand gleich um.
+ * Alle sechs Chips sehen gleich aus und stehen in der Reihenfolge der Daten; die Warnung der
+ * intensiven Situation steht erst in ihrer Empfehlung ([RecommendationIntro]).
  *
  * TalkBack: Der Block ist eine Gruppe (`isTraversalGroup`), die Chips eine Auswahlgruppe mit dem
  * Namen „Wie fühlst du dich?“.
@@ -69,13 +83,11 @@ internal fun FeelingBlock(
             SituationSearchField(query = query, onQueryChange = onQueryChange)
             Spacer(Modifier.height(Dimens.GapSmall))
             ChoiceChipRow(groupName = name) {
-                // Stabil sortiert: Die intensive Situation rückt ans Ende, die übrigen behalten ihre Reihenfolge.
-                situations.sortedBy { it.warn }.forEach { rec ->
+                situations.forEach { rec ->
                     ChoiceChip(
                         label = rec.shortLabel,
                         selected = rec.situation in highlighted,
                         onClick = { onChipClick(rec.situation) },
-                        warn = rec.warn,
                     )
                 }
             }
@@ -100,10 +112,11 @@ private fun SituationSearchField(query: String, onQueryChange: (String) -> Unit)
 }
 
 /**
- * Kopf einer Empfehlung unter dem Block: der Begründungssatz, bei der intensiven Situation samt
- * Vorbehalt („Nur üben, wenn …“). [withTitle]: Stehen mehrere Empfehlungen untereinander
- * (Suchtreffer), nennt ein [SubLabel] den Anlass; bei einer einzelnen trägt ihn der markierte Chip.
- * Darunter folgen die Übungskarten als eigene Listeneinträge.
+ * Kopf einer Empfehlung unter dem Block: der Begründungssatz, bei der intensiven Situation
+ * darunter ihre ⚠-Zeile ([WarnText], FARBE-05) – die Chips selbst sind neutral. [withTitle]:
+ * Stehen mehrere Ergebnisse untereinander (Suchtreffer), nennt ein [SubLabel] den Anlass; bei
+ * einem einzelnen trägt ihn der markierte Chip. Darunter folgen die Übungskarten als eigene
+ * Listeneinträge und zuletzt der Verweis auf den Bereich ([AreaLink]).
  */
 @Composable
 internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolean) {
@@ -113,28 +126,75 @@ internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolea
             Spacer(Modifier.height(Dimens.GapTiny))
         }
         SecondaryText(rec.rationale)
+        rec.warning?.let { warning ->
+            Spacer(Modifier.height(Dimens.GapTiny))
+            WarnText(warning)
+        }
     }
 }
 
 /**
- * Trefferzahl unter dem Block, als Live-Region angesagt (A11Y-04). Ohne Treffer „Nichts
- * gefunden“ mit „Alle zeigen“ (MUSTER-04) – keine geratene Empfehlung.
+ * Verweis „Mehr aus A · Herunterregeln ›“ unter einer Empfehlung (MUSTER-09): führt an derselben
+ * Stelle zu allen Übungen ihres Bereichs. In der Farbe der Familie statt in Cyan – die Farbe sagt
+ * hier, wohin es geht, wie der Familienkopf, zu dem der Verweis führt (Ausnahme in FARBE-04).
+ * Bündig: Das Polster des Text-Buttons ragt in den Rand.
+ */
+@Composable
+internal fun AreaLink(family: BreathingFamily, onClick: () -> Unit) {
+    AppTextButton(onClick = onClick, modifier = Modifier.flushStart()) {
+        ForwardLinkText(text = stringResource(R.string.situations_area_link, family.title()), color = family.color())
+    }
+}
+
+/**
+ * Kopf eines Bereichs unter dem Block: der Familienkopf wie in der Liste, bei intensiven Übungen
+ * mit der ⚠-Zeile darunter. [onClose] (nur wenn der Bereich über [AreaLink] gewählt ist): ✕ im
+ * Kopf führt zurück zur Übersicht, wie System-Zurück – kein Chip ist dann markiert, über den man
+ * zurückkäme.
+ */
+@Composable
+internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?) {
+    val family = area.family
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(
+            title = family.title(),
+            color = family.color(),
+            trailingAction = onClose?.let { close ->
+                {
+                    AppIconButton(onClick = close) {
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_show_all), tint = family.color())
+                    }
+                }
+            },
+        )
+        area.warning?.let { warning ->
+            Spacer(Modifier.height(Dimens.GapTiny))
+            WarnText(warning)
+        }
+    }
+}
+
+/**
+ * Trefferstatus unter dem Block, als Live-Region angesagt (A11Y-04): „2 Anlässe“, „1 Anlass,
+ * 1 Bereich“, „1 Bereich“ – kurz genug, dass er nie umbricht. Ohne Treffer „Nichts gefunden“ mit
+ * „Alle zeigen“ (MUSTER-04) – keine geratene Empfehlung.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SearchStatus(count: Int, onShowAll: () -> Unit) {
+internal fun SearchStatus(situations: Int, areas: Int, onShowAll: () -> Unit) {
+    val none = situations == 0 && areas == 0
+    val parts = listOfNotNull(
+        if (situations > 0) pluralStringResource(R.plurals.situations_search_situations, situations, situations) else null,
+        if (areas > 0) pluralStringResource(R.plurals.situations_search_areas, areas, areas) else null,
+    )
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
         SecondaryText(
-            text = if (count == 0) {
-                stringResource(R.string.situations_search_none)
-            } else {
-                pluralStringResource(R.plurals.situations_search_count, count, count)
-            },
+            text = if (none) stringResource(R.string.situations_search_none) else parts.joinToString(", "),
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .semantics { liveRegion = LiveRegionMode.Polite },
         )
-        if (count == 0) {
+        if (none) {
             AppTextButton(onClick = onShowAll) { Text(stringResource(R.string.action_show_all)) }
         }
     }

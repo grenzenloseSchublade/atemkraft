@@ -64,10 +64,17 @@
     <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
     <string name="cd_tab_bar_hide">Tab-Leiste ausblenden</string>
     <string name="cd_search_clear">Eingabe löschen</string>
-    <plurals name="situations_search_count">
-        <item quantity="one">%1$d Anlass passt</item>
-        <item quantity="other">%1$d Anlässe passen</item>
+    <!-- Trefferstatus der Suche: Anlässe und Bereiche, verbunden mit „, “ („1 Anlass, 1 Bereich“). -->
+    <plurals name="situations_search_situations">
+        <item quantity="one">%1$d Anlass</item>
+        <item quantity="other">%1$d Anlässe</item>
     </plurals>
+    <plurals name="situations_search_areas">
+        <item quantity="one">%1$d Bereich</item>
+        <item quantity="other">%1$d Bereiche</item>
+    </plurals>
+    <!-- Verweis unter einer Empfehlung auf ihren Bereich: „Mehr aus A · Herunterregeln“. -->
+    <string name="situations_area_link">Mehr aus %1$s</string>
     <string name="situations_search_none">Nichts gefunden</string>
     <string name="action_show_all">Alle zeigen</string>
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
+import app.atemkraft.data.Areas
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.MeditationDisplay
@@ -112,8 +113,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     private val app get() = RuntimeEnvironment.getApplication()
 
     /**
-     * Die vier Tabs: Atmen als Liste, mit dem Anlass mit den meisten Übungen gewählt und mit
-     * Suchtreffern – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht; „Eigene“ mit
+     * Die vier Tabs: Atmen als Liste, mit dem Anlass mit den meisten Übungen gewählt (samt Verweis
+     * auf seinen Bereich), mit diesem Bereich gewählt, mit Suchtreffern und mit einem reinen
+     * Bereichstreffer – dabei misst [chipLayout], dass kein Anlass-Chip verrutscht; „Eigene“ mit
      * Verlauf (Beispieleinträge), „Tut mir gut“ und vier Mustern (eines mit langem Namen) und leer;
      * Meditation mit offener Feinwahl auf 12 min (scrollt bis 1,3 nicht, LAYOUT-08) und ∞ mit
      * aufgeklapptem Klang (akzeptierte Scroll-Ausnahme S-40).
@@ -132,6 +134,15 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("01_atmen_anlass_offen", prepare = { compose.onNodeWithText(widest.shortLabel).performClick() }, measure = sameChips) { BreatheTab() }
         snap("01_atmen_suche_treffer", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
+        }, measure = sameChips) { BreatheTab() }
+        // Bereich über „Mehr aus … ›“ unter dem Anlass gewählt: Familienkopf mit ✕, kein Chip markiert.
+        snap("01_atmen_bereich", prepare = {
+            compose.onNodeWithText(widest.shortLabel).performClick()
+            compose.onNodeWithText(app.getString(R.string.situations_area_link, ""), substring = true).performClick()
+        }, measure = sameChips) { BreatheTab() }
+        // Reiner Bereichstreffer: „aktivieren“ trifft nur B · Hochregeln, samt ⚠-Zeile.
+        snap("01_atmen_suche_bereich", prepare = {
+            compose.onNode(hasSetTextAction()).performTextInput("aktivieren")
         }, measure = sameChips) { BreatheTab() }
         snap("13_eigene", tab = Tab.EIGENE) {
             // „Tut mir gut“ mit den zwei längsten Übungsnamen.
@@ -189,6 +200,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
                 .filter { (_, list) -> list.isNotEmpty() },
             situations = Situations.all,
+            areas = Areas.all,
             resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
             daily = daily,
             dailySaved = false,

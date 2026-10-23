@@ -17,6 +17,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import app.atemkraft.data.Areas
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
@@ -128,6 +129,7 @@ internal fun NavGraphBuilder.appGraph(
             },
             exercisesByFamily = exercises.guidedByFamily,
             situations = Situations.all,
+            areas = Areas.all,
             resolve = { id -> exercises.byId(id) },
             onSelect = openDetail,
             onOpenSettings = { navController.navigate(SettingsRoute()) },

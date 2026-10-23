@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.domain.BreathingArea
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
@@ -24,6 +25,7 @@ import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
+import app.atemkraft.domain.area
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
@@ -45,19 +47,28 @@ import app.atemkraft.ui.theme.SECONDARY
  * Familien – deren Köpfe sind die einzige große Überschriften-Ebene unter dem Muster des Tages.
  * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
- * Ein Zustand, nicht zwei (MUSTER-09): Ein Tipp auf einen Chip wählt den Anlass – unter dem Block
- * stehen sein Begründungssatz und seine Übungen, die Familien treten zurück; ein zweiter Tipp auf
- * denselben Chip oder System-Zurück zeigt wieder alles. Sobald die Eingabe ein Suchwort enthält
- * ([SituationSearch]), leuchten die Chips der Treffer, die übrigen werden blass, und darunter
- * stehen die Empfehlungen der Treffer, beste zuerst. Ein Chip leert die Eingabe, eine Eingabe hebt
- * die Wahl auf. Das Feld bekommt beim Öffnen keinen Fokus; die Eingabe lebt nur in
- * `rememberSaveable` – nie in DataStore oder Log (SEC-PRIV-03/04). System-Zurück leert zuerst
- * Wahl und Suche und schließt die Tastatur.
+ * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
+ * nichts, dann steht alles da wie immer (Muster des Tages, Block, vier Familien).
+ * - **Anlass:** Ein Tipp auf einen Chip markiert ihn; unter dem Block stehen sein Begründungssatz
+ *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen und „Mehr aus <Bereich> ›“
+ *   ([AreaLink]); die Familien treten zurück. Ein zweiter Tipp auf denselben Chip oder
+ *   System-Zurück zeigt wieder alles.
+ * - **Bereich:** „Mehr aus …“ zeigt an derselben Stelle den Familienkopf und alle Übungen des
+ *   Bereichs ([AreaHeader]); kein Chip ist markiert, die Eingabe leer. ✕ im Kopf oder Zurück
+ *   führt zur Übersicht.
+ * - **Suche:** Sobald die Eingabe ein Suchwort enthält ([SituationSearch]), sind die Chips der
+ *   Treffer markiert, darunter stehen erst die Empfehlungen der Anlässe, beste zuerst, dann die
+ *   direkt getroffenen Bereiche. Ein Chip leert die Eingabe, eine Eingabe hebt die Wahl auf.
+ *
+ * Der Bereich eines Anlasses ist die häufigste Familie seiner Übungen ([area]). Das Feld bekommt
+ * beim Öffnen keinen Fokus; die Eingabe lebt nur in `rememberSaveable` – nie in DataStore oder
+ * Log (SEC-PRIV-03/04). System-Zurück leert zuerst Wahl und Suche und schließt die Tastatur.
  */
 @Composable
 fun HomeScreen(
     exercisesByFamily: List<Pair<BreathingFamily, List<Exercise>>>,
     situations: List<SituationRecommendation>,
+    areas: List<BreathingArea>,
     resolve: (String) -> Exercise?,
     daily: DailyPattern,
     dailySaved: Boolean,
@@ -70,21 +81,33 @@ fun HomeScreen(
     onOpenPatternEditor: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
+    // Höchstens eins von beiden ist gesetzt, und nur bei leerer Eingabe (siehe KDoc).
     var chosen by rememberSaveable { mutableStateOf<Situation?>(null) }
-    val results = remember(query, situations) { SituationSearch.search(query, situations) }
+    var chosenArea by rememberSaveable { mutableStateOf<BreathingFamily?>(null) }
+    val results = remember(query, situations, areas) { SituationSearch.search(query, situations, areas) }
     val focusManager = LocalFocusManager.current
     val showAll = {
         query = ""
         chosen = null
+        chosenArea = null
         focusManager.clearFocus()
     }
-    BackHandler(enabled = query.isNotEmpty() || chosen != null, onBack = showAll)
-    // Was unter dem Block steht: der gewählte Anlass, die Suchtreffer oder nichts (dann die Familien).
-    val shown: List<SituationRecommendation>? = when {
+    BackHandler(enabled = query.isNotEmpty() || chosen != null || chosenArea != null, onBack = showAll)
+    // Was unter dem Block steht: der gewählte Anlass, der gewählte Bereich, die Suchtreffer oder
+    // nichts (dann die Familien).
+    val shownSituations: List<SituationRecommendation> = when {
         chosen != null -> situations.filter { it.situation == chosen }
-        else -> results
+        chosenArea != null -> emptyList()
+        else -> results?.situations.orEmpty()
     }
-    val highlighted = shown.orEmpty().map { it.situation }.toSet()
+    val shownAreas: List<BreathingArea> = when {
+        chosenArea != null -> areas.filter { it.family == chosenArea }
+        chosen != null -> emptyList()
+        else -> results?.areas.orEmpty()
+    }
+    val filtering = chosen != null || chosenArea != null || results != null
+    val highlighted = shownSituations.map { it.situation }.toSet()
+    val familyExercises = exercisesByFamily.toMap()
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled ->
@@ -138,29 +161,54 @@ fun HomeScreen(
                     query = query,
                     onQueryChange = { text ->
                         query = text
-                        if (text.isNotEmpty()) chosen = null
+                        if (text.isNotEmpty()) {
+                            chosen = null
+                            chosenArea = null
+                        }
                     },
                     situations = situations,
                     highlighted = highlighted,
                     onChipClick = { situation ->
                         // Zweiter Tipp auf denselben Chip zeigt wieder alles; ein Chip leert die Eingabe.
                         chosen = if (chosen == situation) null else situation
+                        chosenArea = null
                         query = ""
                         focusManager.clearFocus()
                     },
                 )
             }
         }
-        if (results != null) {
+        if (results != null && chosen == null && chosenArea == null) {
             item(key = "search-status") {
-                SearchStatus(count = results.size, onShowAll = showAll)
+                SearchStatus(situations = results.situations.size, areas = results.areas.size, onShowAll = showAll)
             }
         }
-        if (shown != null) {
-            val withTitle = shown.size > 1
-            shown.forEach { rec ->
+        if (filtering) {
+            val withTitle = shownSituations.size + shownAreas.size > 1
+            val directAreas = shownAreas.map { it.family }.toSet()
+            shownSituations.forEach { rec ->
                 item(key = "rec-${rec.situation.name}") { RecommendationIntro(rec, withTitle) }
                 items(rec.exerciseIds.mapNotNull(resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
+                    ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                }
+                // Steht der Bereich ohnehin als Treffer darunter, braucht es keinen Verweis darauf.
+                val area = rec.area(resolve)
+                if (area != null && area !in directAreas) {
+                    item(key = "rec-${rec.situation.name}-area") {
+                        AreaLink(family = area) {
+                            chosen = null
+                            chosenArea = area
+                            query = ""
+                            focusManager.clearFocus()
+                        }
+                    }
+                }
+            }
+            shownAreas.forEach { area ->
+                item(key = "area-${area.family.name}") {
+                    AreaHeader(area = area, onClose = if (chosenArea != null) showAll else null)
+                }
+                items(familyExercises[area.family].orEmpty(), key = { "area-${area.family.name}-${it.id}" }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
             }

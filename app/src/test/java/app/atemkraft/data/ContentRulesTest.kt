@@ -127,11 +127,12 @@ class ContentRulesTest {
 
     private val situationTexts: List<Text> by lazy {
         Situations.all.flatMap {
-            listOf(
+            listOfNotNull(
                 Text("situation.${it.situation}.title", it.title),
                 Text("situation.${it.situation}.rationale", it.rationale),
+                it.warning?.let { w -> Text("situation.${it.situation}.warning", w) },
             ) + keywordTexts(it)
-        }
+        } + Areas.all.flatMap { a -> a.keywords.mapIndexed { i, k -> Text("area.${a.family}.keywords[$i]", k) } }
     }
 
     /** Texte der Seite „Atemlehre“ (TEXT-13) – sie folgen denselben Inhaltsregeln wie die Übungen. */
@@ -210,7 +211,7 @@ class ContentRulesTest {
         }
     }
 
-    /** Suchbegriffe einer Situation (MUSTER-09) – sie folgen denselben Inhaltsregeln. */
+    /** Suchbegriffe einer Situation (MUSTER-09) – sie folgen denselben Inhaltsregeln wie die Wörter der Bereiche ([Areas]). */
     private fun keywordTexts(rec: SituationRecommendation): List<Text> = rec.keywords.mapIndexed { i, k -> Text("situation.${rec.situation}.keywords[$i]", k) }
 
     /** Alle Quellen aus [Refs] mit ihrem Property-Namen (per Reflexion, damit keine fehlt). */

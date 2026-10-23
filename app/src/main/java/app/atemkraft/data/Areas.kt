@@ -1,0 +1,58 @@
+package app.atemkraft.data
+
+import app.atemkraft.domain.BreathingArea
+import app.atemkraft.domain.BreathingFamily
+
+/**
+ * Die vier Bereiche (Familien) als zweite Ebene im Block „Wie fühlst du dich?“ (MUSTER-09) mit
+ * ihren breiten Suchwörtern, kuratiert wie die Anlass-Begriffe in [Situations]: Laiensprache,
+ * keine Symptome oder Diagnosen, nichts Versprechendes, je Familie ihr eigener Name
+ * („Herunterregeln“). **Kein Wort, das schon zu einem Anlass führt** – „Ruhe“, „entspannen“,
+ * „runterkommen“ (Einschlafen) und „Sport“ (Kurzatmig) bleiben dort.
+ *
+ * Bewusst nicht dabei: „Energie“, „Schwung“ und „munter“ – „keine Energie“, „nicht munter“
+ * meinen meist Müdigkeit, und die führt zu „Erschöpft oder ausgelaugt“, nie zu Hochregeln
+ * (Verneinungen deutet die Suche nicht). „Nase“ und „Mundatmung“ – über den Wortanfang führten
+ * „verstopfte Nase“ und „trockener Mund“, also Beschwerden, zu einer Übung. Hochregeln trägt die
+ * Warnung der intensiven Übungen ([Situations.INTENSE_WARNING]) und erscheint nur, wenn kein
+ * anderer kuratierter Begriff passt.
+ */
+object Areas {
+
+    val all: List<BreathingArea> = listOf(
+        BreathingArea(
+            family = BreathingFamily.DOWNREGULATE,
+            keywords = listOf(
+                "Herunterregeln",
+                "runterregeln",
+                "beruhigen",
+                "Beruhigung",
+                "gelassen",
+                "Gelassenheit",
+                "entschleunigen",
+                "abregen",
+            ),
+        ),
+        BreathingArea(
+            family = BreathingFamily.UPREGULATE,
+            keywords = listOf("Hochregeln", "aktivieren", "anregen"),
+            warning = Situations.INTENSE_WARNING,
+        ),
+        BreathingArea(
+            family = BreathingFamily.BALANCE,
+            keywords = listOf(
+                "Balancieren",
+                "Balance",
+                "ausgleichen",
+                "Ausgleich",
+                "ausgeglichen",
+                "Gleichgewicht",
+                "Mitte",
+            ),
+        ),
+        BreathingArea(
+            family = BreathingFamily.FUNCTIONAL,
+            keywords = listOf("Funktionell", "Atemtechnik", "Atemmuster", "Haltung", "Ausdauer"),
+        ),
+    )
+}

@@ -19,7 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,6 +65,7 @@ import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
+import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushEnd
@@ -76,7 +76,6 @@ import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.TERTIARY
-import app.atemkraft.ui.theme.WarnAmber
 import kotlin.math.roundToInt
 
 /**
@@ -237,11 +236,7 @@ fun ExerciseDetailScreen(
 
         if (isIntense && exercise.cautions.isNotEmpty()) {
             Spacer(Modifier.height(Dimens.GapSmall))
-            Text(
-                text = "⚠ " + stringResource(R.string.detail_safety_appetizer),
-                style = MaterialTheme.typography.bodySmall,
-                color = WarnAmber,
-            )
+            WarnText(stringResource(R.string.detail_safety_appetizer))
         }
 
         Spacer(Modifier.height(Dimens.GapSmall))

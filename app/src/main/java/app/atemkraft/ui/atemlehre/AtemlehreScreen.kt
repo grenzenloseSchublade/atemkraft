@@ -54,6 +54,7 @@ import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
@@ -62,7 +63,6 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
-import app.atemkraft.ui.theme.WarnAmber
 import kotlinx.coroutines.flow.first
 
 /**
@@ -268,11 +268,7 @@ private fun PatternContent(pattern: LorePattern, onOpenExercise: (String) -> Uni
             }
             pattern.warning?.let { warning ->
                 Spacer(Modifier.height(Dimens.GapTiny))
-                Text(
-                    text = "⚠ " + warning,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = WarnAmber,
-                )
+                WarnText(warning)
             }
         }
         Labeled(stringResource(R.string.atemlehre_label_studies)) { BodyText(pattern.studies) }

@@ -39,6 +39,11 @@ import java.text.Normalizer
  * - **Verneinungen** werden nicht gedeutet: „nicht müde“ trifft wie „müde“. Raten wäre
  *   unzuverlässiger als ein ehrlicher Treffer, den man selbst einordnen kann.
  * - **Rangfolge:** mehr getroffene Suchwörter zuerst, sonst die Reihenfolge der Daten.
+ * - **Bereiche** ([BreathingArea]) sind die zweite, breitere Ebene: Ihre kuratierten Wörter
+ *   („beruhigen“, „Gleichgewicht“) laufen nach denselben Regeln mit (Wendungen, genauester
+ *   Begriff), einen Titel- oder Satztext haben sie nicht. Ein Bereich mit Warnung (Hochregeln)
+ *   gilt wie eine Warn-Situation: nur sichtbar, wenn kein anderer kuratierter Begriff trifft.
+ *   Im Ergebnis stehen erst die Anlässe, dann die Bereiche ([Results]).
  */
 object SituationSearch {
 
@@ -52,12 +57,12 @@ object SituationSearch {
      * Diagnose-, Symptom-, Medikamenten- und Verletzungs-Wortteile (normalisiert). Ein Suchwort,
      * das einen davon enthält, trifft keinen Begriff über dessen Verlängerung: „Angststörung“
      * ist nicht „Angst“, „Schlafapnoe“ und „Schlaftabletten“ nicht „Schlaf“, „Ruhepuls“ nicht
-     * „Ruhe“, „Sportverletzung“ nicht „Sport“.
+     * „Ruhe“, „Sportverletzung“ nicht „Sport“, „Haltungsschaden“ nicht „Haltung“.
      */
     val DIAGNOSIS_PARTS = Regex(
         "asthma|copd|depress|stoerung|krank|syndrom|schmerz|atemnot|herz|blutdruck|burnout|covid|" +
             "attacke|anfall|tinnitus|migraene|apnoe|allergi|phobie|trauma|zustand|zustaend|puls|" +
-            "tablett|medikament|mittel|unfall|verletz",
+            "tablett|medikament|mittel|unfall|verletz|schaden",
     )
 
     /**
@@ -93,16 +98,25 @@ object SituationSearch {
 
     private fun isSearchWord(word: String) = word.length >= MIN_WORD && word !in stopWords
 
-    /** Vergleichsdaten einer Situation, einmal pro Suche aufbereitet. */
-    private class Index(val rec: SituationRecommendation) {
-        private val keywordWords = rec.keywords.map(::words)
+    /**
+     * Vergleichsdaten einer Situation oder eines Bereichs, einmal pro Suche aufbereitet. Warn-
+     * Situationen treffen nur über ihren Titel, Bereiche nur über ihre Wörter.
+     */
+    private class Index(val rec: SituationRecommendation?, val area: BreathingArea?) {
+        val warn = rec?.warn ?: area?.warn ?: false
+        private val keywordWords = (rec?.keywords ?: area?.keywords.orEmpty()).map(::words)
         val phrases = keywordWords.filter { it.size > 1 }
         val keywords = keywordWords.filter { it.size == 1 }.map { it.single() }
-        val textWords = (words(rec.title) + if (rec.warn) emptyList() else words(rec.rationale)).filter(::isSearchWord)
+        val textWords = rec?.let { r -> (words(r.title) + if (r.warn) emptyList() else words(r.rationale)).filter(::isSearchWord) }.orEmpty()
 
         /** Genauigkeit des besten Begriffs für [word]; 0 = kein Begriff trifft. */
         fun keywordTier(word: String) = keywords.maxOfOrNull { tier(word, it) } ?: 0
         fun matchesText(word: String) = textWords.any { it.startsWith(word) }
+    }
+
+    /** Ergebnis einer Suche: erst die passenden Anlässe, dann die passenden Bereiche, je beste zuerst. */
+    data class Results(val situations: List<SituationRecommendation>, val areas: List<BreathingArea>) {
+        val isEmpty: Boolean get() = situations.isEmpty() && areas.isEmpty()
     }
 
     /**
@@ -129,15 +143,15 @@ object SituationSearch {
     }
 
     /**
-     * Passende Situationen zu [query], beste zuerst. `null`, solange die Eingabe kein Suchwort
-     * enthält (dann zeigt der Tab die normale Übersicht); eine leere Liste heißt „nichts
-     * gefunden“.
+     * Passende Situationen und Bereiche zu [query], beste zuerst. `null`, solange die Eingabe kein
+     * Suchwort enthält (dann zeigt der Tab die normale Übersicht); ein leeres Ergebnis heißt
+     * „nichts gefunden“.
      */
-    fun search(query: String, situations: List<SituationRecommendation>): List<SituationRecommendation>? {
+    fun search(query: String, situations: List<SituationRecommendation>, areas: List<BreathingArea> = emptyList()): Results? {
         val words = words(query)
         val searchIdx = words.indices.filter { isSearchWord(words[it]) }
         if (searchIdx.isEmpty()) return null
-        val index = situations.map(::Index)
+        val index = situations.map { Index(it, null) } + areas.map { Index(null, it) }
 
         // Wendungen zuerst: Ihre Wörter gehören der Situation der Wendung (erste gewinnt).
         val owner = HashMap<Int, Index>()
@@ -149,7 +163,7 @@ object SituationSearch {
             }
         }
 
-        // Je Suchwort die Genauigkeit des besten Begriffs über alle Situationen.
+        // Je Suchwort die Genauigkeit des besten Begriffs über alle Situationen und Bereiche.
         val best = searchIdx.associateWith { i -> index.maxOf { it.keywordTier(words[i]) } }
         fun keywordMatch(s: Index, i: Int) = best.getValue(i).let { b -> b > 0 && s.keywordTier(words[i]) == b }
 
@@ -157,11 +171,11 @@ object SituationSearch {
             searchIdx.count { i -> owner[i]?.let { it === s } ?: (keywordMatch(s, i) || s.matchesText(words[i])) }
         }
         val keywordHit = index.any { s ->
-            !s.rec.warn && searchIdx.any { i -> owner[i] === s || (owner[i] == null && keywordMatch(s, i)) }
+            !s.warn && searchIdx.any { i -> owner[i] === s || (owner[i] == null && keywordMatch(s, i)) }
         }
-        return index
-            .filter { scores.getValue(it) > 0 && !(it.rec.warn && keywordHit) }
+        val hits = index
+            .filter { scores.getValue(it) > 0 && !(it.warn && keywordHit) }
             .sortedByDescending { scores.getValue(it) } // stabil: Gleichstand behält die Datenreihenfolge
-            .map { it.rec }
+        return Results(situations = hits.mapNotNull { it.rec }, areas = hits.mapNotNull { it.area })
     }
 }

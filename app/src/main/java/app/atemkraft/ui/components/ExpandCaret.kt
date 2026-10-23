@@ -49,7 +49,7 @@ internal fun ExpandCaret(
 /**
  * Chevron „führt weiter“ hinter einem Verweis auf eine andere Seite ([NavCard]: Kapitel im Tab
  * „Lernen“, „Über Atemkraft“ in den Einstellungen; Detailseite: „… in der Atemlehre“; Atmen-Tab:
- * eigenes Muster; Ende-Screen: Logbuch) – als Icon statt Textzeichen „›“ (ICON-01),
+ * eigenes Muster, „Mehr aus <Bereich>“; Ende-Screen: Logbuch) – als Icon statt Textzeichen „›“ (ICON-01),
  * RTL gespiegelt. Rein dekorativ: Den Namen trägt die Zeile bzw. der Button.
  */
 @Composable
