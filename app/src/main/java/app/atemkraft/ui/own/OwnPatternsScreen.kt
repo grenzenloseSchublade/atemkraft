@@ -32,9 +32,9 @@ import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
-import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
+import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -61,73 +61,57 @@ fun OwnPatternsScreen(
     favorites: List<Exercise> = emptyList(),
 ) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
-    val listState = rememberLazyListState()
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    TabListScaffold(
+        header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.own_title),
                 action = { SettingsAction(onClick = onOpenSettings) },
-                scrolled = listState.canScrollBackward,
+                scrolled = scrolled,
             )
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-                // Listen-Clip sie anschneidet.
-                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-            ) {
-                item { ScreenSubtitle(stringResource(R.string.own_subtitle)) }
-
-                if (savedPatterns.isEmpty()) {
-                    item(key = "empty") {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Spacer(Modifier.height(Dimens.SectionGap))
-                            HintText(stringResource(R.string.own_empty))
-                            Spacer(Modifier.height(Dimens.GapSmall))
-                            NewPatternButton(onClick = onNewPattern)
-                        }
-                    }
-                } else {
-                    item(key = "new-pattern") {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Spacer(Modifier.height(Dimens.SectionGap))
-                            NewPatternButton(onClick = onNewPattern)
-                        }
-                    }
+        },
+        subtitle = stringResource(R.string.own_subtitle),
+    ) {
+        if (savedPatterns.isEmpty()) {
+            item(key = "empty") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.height(Dimens.SectionGap))
+                    HintText(stringResource(R.string.own_empty))
+                    Spacer(Modifier.height(Dimens.GapSmall))
+                    NewPatternButton(onClick = onNewPattern)
                 }
-
-                // Köpfe reihum nach ihrer Lage (FARBE-07): „Tut mir gut“ zuerst, wenn es Markierungen gibt.
-                if (favorites.isNotEmpty()) {
-                    item(key = "favorites") {
-                        SectionHeader(title = stringResource(R.string.own_favorites), color = headingColor(0))
-                    }
-                    items(favorites, key = { "favorite-${it.id}" }) { exercise ->
-                        ExerciseCard(exercise = exercise, marked = true, onClick = { onSelect(exercise.id) })
-                    }
+            }
+        } else {
+            item(key = "new-pattern") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.height(Dimens.SectionGap))
+                    NewPatternButton(onClick = onNewPattern)
                 }
+            }
+        }
 
-                if (savedPatterns.isNotEmpty()) {
-                    item(key = "my-patterns") {
-                        SectionHeader(
-                            title = stringResource(R.string.situations_my_patterns),
-                            color = headingColor(if (favorites.isEmpty()) 0 else 1),
-                        )
-                    }
-                    items(savedPatterns, key = { "pattern-${it.id}" }) { pattern ->
-                        SavedPatternCard(
-                            pattern = pattern,
-                            onClick = { onSelect(pattern.exercise.id) },
-                            onDelete = { onDeletePattern(pattern.id) },
-                        )
-                    }
-                }
+        // Köpfe reihum nach ihrer Lage (FARBE-07): „Tut mir gut“ zuerst, wenn es Markierungen gibt.
+        if (favorites.isNotEmpty()) {
+            item(key = "favorites") {
+                SectionHeader(title = stringResource(R.string.own_favorites), color = headingColor(0))
+            }
+            items(favorites, key = { "favorite-${it.id}" }) { exercise ->
+                ExerciseCard(exercise = exercise, marked = true, onClick = { onSelect(exercise.id) })
+            }
+        }
 
-                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+        if (savedPatterns.isNotEmpty()) {
+            item(key = "my-patterns") {
+                SectionHeader(
+                    title = stringResource(R.string.situations_my_patterns),
+                    color = headingColor(if (favorites.isEmpty()) 0 else 1),
+                )
+            }
+            items(savedPatterns, key = { "pattern-${it.id}" }) { pattern ->
+                SavedPatternCard(
+                    pattern = pattern,
+                    onClick = { onSelect(pattern.exercise.id) },
+                    onDelete = { onDeletePattern(pattern.id) },
+                )
             }
         }
     }

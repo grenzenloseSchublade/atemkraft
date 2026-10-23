@@ -31,9 +31,9 @@ import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
-import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
+import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
@@ -58,84 +58,70 @@ fun HomeScreen(
     onOpenLogbook: (() -> Unit)? = null,
 ) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
-    val listState = rememberLazyListState()
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    TabListScaffold(
+        header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.tab_breathe),
                 action = { SettingsAction(onClick = onOpenSettings) },
                 onOpenLogbook = onOpenLogbook,
-                scrolled = listState.canScrollBackward,
+                scrolled = scrolled,
             )
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-                // Listen-Clip sie anschneidet.
-                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+        },
+        subtitle = stringResource(R.string.home_subtitle),
+    ) {
+        item(key = "daily-header") {
+            // „Neu generieren“ betrifft den ganzen Abschnitt („gib mir ein anderes“), nicht
+            // die Karte – deshalb im Kopf, die Karte behält nur ihre eine Aktion (KOMP-02).
+            SectionHeader(
+                title = stringResource(R.string.home_daily_pattern),
+                color = MaterialTheme.colorScheme.secondary,
             ) {
-                item { ScreenSubtitle(stringResource(R.string.home_subtitle)) }
-
-                item(key = "daily-pattern") {
-                    // „Neu generieren“ betrifft den ganzen Abschnitt („gib mir ein anderes“), nicht
-                    // die Karte – deshalb im Kopf, die Karte behält nur ihre eine Aktion (KOMP-02).
-                    SectionHeader(
-                        title = stringResource(R.string.home_daily_pattern),
-                        color = MaterialTheme.colorScheme.secondary,
-                    ) {
-                        AppIconButton(onClick = onRegenerateDaily) {
-                            Icon(
-                                Icons.Filled.Refresh,
-                                contentDescription = stringResource(R.string.cd_pattern_regenerate),
-                                tint = MaterialTheme.colorScheme.secondary,
-                            )
-                        }
-                    }
-                    DailyPatternCard(
-                        daily = daily,
-                        saved = dailySaved,
-                        onClick = { onSelect(daily.exercise.id) },
-                        onSavedChange = onDailySavedChange,
+                AppIconButton(onClick = onRegenerateDaily) {
+                    Icon(
+                        Icons.Filled.Refresh,
+                        contentDescription = stringResource(R.string.cd_pattern_regenerate),
+                        tint = MaterialTheme.colorScheme.secondary,
                     )
-                    // Eigener Weg zum Editor neben der Karte, nicht in ihr: Die Karte behält ihre
-                    // eine Aktion (KOMP-02). Bündig: Das Polster des Text-Buttons ragt in den Rand.
-                    if (onOpenPatternEditor != null) {
-                        AppTextButton(onClick = onOpenPatternEditor, modifier = Modifier.flushStart()) {
-                            ForwardLinkText(
-                                text = stringResource(R.string.home_own_pattern_link),
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                        }
-                    }
                 }
-
-                exercisesByFamily.forEach { (family, exercises) ->
-                    item(key = "header-${family.name}") {
-                        SectionHeader(title = family.title(), color = family.color())
-                    }
-                    items(exercises, key = { it.id }) { exercise ->
-                        ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
-                    }
+            }
+        }
+        item(key = "daily-pattern") {
+            DailyPatternCard(
+                daily = daily,
+                saved = dailySaved,
+                onClick = { onSelect(daily.exercise.id) },
+                onSavedChange = onDailySavedChange,
+            )
+            // Eigener Weg zum Editor neben der Karte, nicht in ihr: Die Karte behält ihre
+            // eine Aktion (KOMP-02). Bündig: Das Polster des Text-Buttons ragt in den Rand.
+            if (onOpenPatternEditor != null) {
+                AppTextButton(onClick = onOpenPatternEditor, modifier = Modifier.flushStart()) {
+                    ForwardLinkText(
+                        text = stringResource(R.string.home_own_pattern_link),
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
                 }
+            }
+        }
 
-                if (programs.isNotEmpty()) {
-                    item(key = "header-programs") {
-                        SectionHeader(
-                            title = stringResource(R.string.home_programs),
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                        )
-                    }
-                    items(programs, key = { it.id }) { program ->
-                        ExerciseCard(exercise = program, onClick = { onSelect(program.id) }, marked = program.id in markedIds)
-                    }
-                }
+        exercisesByFamily.forEach { (family, exercises) ->
+            item(key = "header-${family.name}") {
+                SectionHeader(title = family.title(), color = family.color())
+            }
+            items(exercises, key = { it.id }) { exercise ->
+                ExerciseCard(exercise = exercise, onClick = { onSelect(exercise.id) }, marked = exercise.id in markedIds)
+            }
+        }
 
-                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
+        if (programs.isNotEmpty()) {
+            item(key = "header-programs") {
+                SectionHeader(
+                    title = stringResource(R.string.home_programs),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+                )
+            }
+            items(programs, key = { it.id }) { program ->
+                ExerciseCard(exercise = program, onClick = { onSelect(program.id) }, marked = program.id in markedIds)
             }
         }
     }

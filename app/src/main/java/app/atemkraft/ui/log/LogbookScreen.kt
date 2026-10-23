@@ -42,10 +42,11 @@ import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PushHeader
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
+import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.durationClockText
@@ -96,34 +97,15 @@ fun LogbookScreen(
     val streak = remember(activeDays, today) { currentStreak(activeDays, today) }
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+    // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild. Oben SectionGap wie auf jeder
+    // Push-Seite.
+    TabListScaffold(
+        header = { scrolled -> PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = scrolled) },
+        top = Dimens.SectionGap,
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            val listState = rememberLazyListState()
-            // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild.
-            PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = listState.canScrollBackward)
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f),
-                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-                // Listen-Clip sie anschneidet.
-                contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
-                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-            ) {
-                item {
-                    // Abstand unter dem festen Kopf wie in den Einstellungen.
-                    Spacer(Modifier.height(Dimens.SectionGap))
-                    StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, today = today)
-                }
-
-                // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
-                itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group -> LogGroupSection(index, group, zone) }
-                item { Spacer(Modifier.height(Dimens.ScreenBottom)) }
-            }
-        }
+        item(key = "stats") { StatsCard(entries = entries, streak = streak, minutesPerDay = minutesPerDay, today = today) }
+        // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
+        itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group -> LogGroupSection(index, group, zone) }
     }
 }
 
@@ -252,10 +234,8 @@ private fun LogGroupSection(index: Int, group: LogGroup, zone: ZoneId) {
         )
     }
     val showDay = group.period !is LogPeriod.Today && group.period !is LogPeriod.Yesterday
-    Column {
-        SectionHeader(title = title, color = headingColor(index))
-        group.days.forEachIndexed { dayIndex, day ->
-            if (dayIndex > 0) Spacer(Modifier.height(Dimens.ListGap))
+    CollapsibleSection(title = title, color = headingColor(index)) {
+        group.days.forEach { day ->
             Column {
                 if (showDay) {
                     SubLabel(

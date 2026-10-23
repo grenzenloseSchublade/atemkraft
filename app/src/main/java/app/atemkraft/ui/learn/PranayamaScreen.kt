@@ -2,16 +2,10 @@ package app.atemkraft.ui.learn
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +26,9 @@ import app.atemkraft.ui.components.ExerciseChips
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.Labeled
-import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
-import app.atemkraft.ui.components.SectionHeader
+import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
@@ -51,33 +45,15 @@ import app.atemkraft.ui.theme.Dimens
  */
 @Composable
 fun PranayamaScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, expanded: Boolean = false) {
-    val scrollState = rememberScrollState()
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            PushHeader(onBack = onBack, title = stringResource(R.string.pranayama_title), scrolled = scrollState.canScrollBackward)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = Dimens.ScreenPadding),
-            ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                HintText(Pranayama.intro)
-
-                SectionHeader(title = stringResource(R.string.pranayama_basics), color = headingColor(0), teaser = Pranayama.topicsTeaser)
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    Pranayama.topics.forEach { TopicCard(it, expanded) }
-                }
-
-                SectionHeader(title = stringResource(R.string.pranayama_techniques), color = headingColor(1), teaser = Pranayama.techniquesTeaser)
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
-                    Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
-                }
-
-                SourcesSection(headingColor(2), expanded)
-                Spacer(Modifier.height(Dimens.ScreenBottom))
-            }
+    PushScaffold(onBack = onBack, title = stringResource(R.string.pranayama_title)) {
+        ScreenSubtitle(Pranayama.intro)
+        CollapsibleSection(title = stringResource(R.string.pranayama_basics), color = headingColor(0), teaser = Pranayama.topicsTeaser) {
+            Pranayama.topics.forEach { TopicCard(it, expanded) }
         }
+        CollapsibleSection(title = stringResource(R.string.pranayama_techniques), color = headingColor(1), teaser = Pranayama.techniquesTeaser) {
+            Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
+        }
+        SourcesSection(headingColor(2), expanded)
     }
 }
 

@@ -1,14 +1,22 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -25,7 +35,7 @@ import app.atemkraft.ui.theme.SECONDARY
  * Fester Kopf der Top-Level-Tabs: dieselbe Zeile wie der Kopf der Push-Seiten ([HeaderBar],
  * Titel `headlineSmall`), nur ohne Pfeil – beim Wechsel springt nichts. Rechts die Icon-Aktionen,
  * immer an derselben Stelle: außen höchstens eine Aktion ([action], ein `AppIconButton`) – das
- * Zahnrad ([SettingsAction]) bzw. die Lupe im Situationen-Tab –, links daneben der Kalender zum
+ * Zahnrad ([SettingsAction]) bzw. die Lupe im Tab „Anlass“ –, links daneben der Kalender zum
  * Logbuch ([onOpenLogbook], [LogbookAction], nur im Atmen-Tab links neben dem Zahnrad, Nutzer
  * 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bleibt eine
  * Zeile und läuft notfalls als Laufschrift ([HeaderTitle]).
@@ -33,7 +43,7 @@ import app.atemkraft.ui.theme.SECONDARY
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
  * scrollt“), damit Zahnrad, Kalender und Lupe immer erreichbar sind. Der Untertitel gehört zum
  * Inhalt ([ScreenSubtitle], erster Eintrag der Liste). [below] steht fest unter der Zeile (das
- * [SearchField] des Situationen-Tabs, solange die Suche offen ist): Getippt wird oben, die Treffer
+ * [SearchField] des Tabs „Anlass“, solange die Suche offen ist): Getippt wird oben, die Treffer
  * scrollen. [scrolled] (Inhalt liegt unter dem Kopf) blendet die Haarlinie an der Unterkante ein.
  */
 @Composable
@@ -63,11 +73,58 @@ fun ScreenHeader(
     }
 }
 
-/** Untertitel eines Tabs: erster Eintrag des scrollenden Inhalts unter dem festen [ScreenHeader]. */
+/**
+ * Gerüst der Tabs mit Liste (Atmen, Anlass, Eigene, Lernen) und des Logbuchs (Push-Variante, §4.3):
+ * `Surface(background)`, fest oben der Kopf aus [header] – er bekommt `scrolled` (Inhalt liegt
+ * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [subtitle]
+ * steht als erster Eintrag ([ScreenSubtitle]); [top] ist der Abstand über dem ersten Eintrag (Tabs
+ * 0: der Untertitel gehört zum Titel; Logbuch `SectionGap` wie jede Push-Seite), unten steht
+ * `ScreenBottom`, beides als `contentPadding`.
+ */
+@Composable
+fun TabListScaffold(
+    header: @Composable (scrolled: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    listState: LazyListState = rememberLazyListState(),
+    top: Dp = 0.dp,
+    content: LazyListScope.() -> Unit,
+) {
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            header(listState.canScrollBackward)
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+                // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+                // Listen-Clip sie anschneidet.
+                contentPadding = PaddingValues(
+                    start = Dimens.ScreenPadding,
+                    top = top,
+                    end = Dimens.ScreenPadding,
+                    bottom = Dimens.ScreenBottom,
+                ),
+                verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+            ) {
+                if (subtitle != null) item(key = SUBTITLE_KEY) { ScreenSubtitle(subtitle) }
+                content()
+            }
+        }
+    }
+}
+
+private const val SUBTITLE_KEY = "subtitle"
+
+/**
+ * Einleitung einer Seite unter dem festen Kopf (`bodyMedium` in `SECONDARY`): Untertitel der Tabs
+ * (erster Eintrag der Liste) und Einleitung der Push-Seiten (Atemlehre, Pranayama, Über). Sanskrit
+ * kursiv ([sanskritText]).
+ */
 @Composable
 fun ScreenSubtitle(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = text,
+        text = sanskritText(text),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
         modifier = modifier,

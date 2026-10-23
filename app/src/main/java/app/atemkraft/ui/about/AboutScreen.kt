@@ -12,15 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,7 +42,8 @@ import app.atemkraft.data.ThirdParty
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
-import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.PushScaffold
+import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
@@ -65,67 +63,55 @@ private const val LICENSES_URL = "https://github.com/grenzenloseSchublade/atemkr
  */
 @Composable
 fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
-    val scrollState = rememberScrollState()
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Titel fest im Kopf wie auf allen Unterseiten (Nutzer 2026-10-21). Nur „Über“: Der
-            // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander.
-            PushHeader(onBack = onBack, title = stringResource(R.string.about_title), scrolled = scrollState.canScrollBackward)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = Dimens.ScreenPadding),
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                // Autor gleich bei der Version: gerade bei manuell geteilten APKs sieht man hier die Herkunft.
-                Text(
-                    text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                )
-                Spacer(Modifier.height(Dimens.SectionGap))
-                // Zahl aus dem Katalog: Eine neue Übung zählt mit, ohne dass der Text veraltet.
-                val count = BuiltInExercises.all.size
-                BodyText(pluralStringResource(R.plurals.about_body, count, count), style = MaterialTheme.typography.bodyMedium)
-                Spacer(Modifier.height(Dimens.SectionGap))
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    BodyText(stringResource(R.string.about_disclaimer), modifier = Modifier.padding(Dimens.CardPadding))
-                }
+    // Titel fest im Kopf wie auf allen Unterseiten (Nutzer 2026-10-21). Nur „Über“: Der
+    // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander.
+    PushScaffold(onBack = onBack, title = stringResource(R.string.about_title)) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        // Autor gleich bei der Version: gerade bei manuell geteilten APKs sieht man hier die Herkunft.
+        Text(
+            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+        )
+        Spacer(Modifier.height(Dimens.SectionGap))
+        // Zahl aus dem Katalog: Eine neue Übung zählt mit, ohne dass der Text veraltet.
+        val count = BuiltInExercises.all.size
+        ScreenSubtitle(pluralStringResource(R.plurals.about_body, count, count))
+        Spacer(Modifier.height(Dimens.SectionGap))
+        Card(modifier = Modifier.fillMaxWidth()) {
+            BodyText(stringResource(R.string.about_disclaimer), modifier = Modifier.padding(Dimens.CardPadding))
+        }
 
-                Spacer(Modifier.height(Dimens.ListGap))
-                ExpanderSection(
-                    title = stringResource(R.string.about_licenses_title),
-                    appetizer = stringResource(R.string.about_licenses_teaser),
-                    // Einziger Abschnittskopf der Seite: erste Farbe des Rings (FARBE-07).
-                    accent = headingColor(0),
-                    initiallyExpanded = licensesExpanded,
-                ) { LicenseList() }
+        Spacer(Modifier.height(Dimens.ListGap))
+        ExpanderSection(
+            title = stringResource(R.string.about_licenses_title),
+            appetizer = stringResource(R.string.about_licenses_teaser),
+            // Einziger Abschnittskopf der Seite: erste Farbe des Rings (FARBE-07).
+            accent = headingColor(0),
+            initiallyExpanded = licensesExpanded,
+        ) { LicenseList() }
 
-                Spacer(Modifier.height(Dimens.SectionGap))
-                // Quellcode und Datenschutz als Karte mit Zeilen wie in den Einstellungen (Wissen):
-                // Titel, Untertitel, Symbol an der Kante; die ganze Zeile öffnet den Browser.
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall)) {
-                        ExternalLinkRow(
-                            title = stringResource(R.string.about_source_title),
-                            // Die Adresse darf nur nach „/“ umbrechen; sie ist ein einziges langes Wort (LAYOUT-03).
-                            hint = breakAfterSlashes(REPO_URL.removePrefix(HTTPS)),
-                            url = REPO_URL,
-                        )
-                        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
-                        ExternalLinkRow(
-                            title = stringResource(R.string.about_privacy_link),
-                            hint = stringResource(R.string.about_privacy_hint),
-                            url = PRIVACY_URL,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(Dimens.ScreenBottom))
+        Spacer(Modifier.height(Dimens.SectionGap))
+        // Quellcode und Datenschutz als Karte mit Zeilen wie in den Einstellungen (Wissen):
+        // Titel, Untertitel, Symbol an der Kante; die ganze Zeile öffnet den Browser.
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall)) {
+                ExternalLinkRow(
+                    title = stringResource(R.string.about_source_title),
+                    // Die Adresse darf nur nach „/“ umbrechen; sie ist ein einziges langes Wort (LAYOUT-03).
+                    hint = breakAfterSlashes(REPO_URL.removePrefix(HTTPS)),
+                    url = REPO_URL,
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+                ExternalLinkRow(
+                    title = stringResource(R.string.about_privacy_link),
+                    hint = stringResource(R.string.about_privacy_hint),
+                    url = PRIVACY_URL,
+                )
             }
         }
     }

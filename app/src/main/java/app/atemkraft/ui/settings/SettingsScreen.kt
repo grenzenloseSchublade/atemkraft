@@ -57,7 +57,7 @@ import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.HintText
-import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
@@ -106,62 +106,50 @@ fun SettingsScreen(
             actions.acknowledgeSettingsReset()
         }
     }
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Fest über der Scroll-Fläche: Nach dem Sprung zur Meditations-Karte bliebe der
-            // Pfeil sonst außerhalb des Bildes (einziger sichtbarer Weg zurück).
-            PushHeader(onBack = onBack, title = stringResource(R.string.settings_title), scrolled = scrollState.canScrollBackward)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = Dimens.ScreenPadding),
-            ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                if (showResetNotice) {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        BodyText(stringResource(R.string.settings_reset_notice), modifier = Modifier.padding(Dimens.CardPadding))
-                    }
-                    Spacer(Modifier.height(Dimens.SectionGap))
-                }
-
-                // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
-                // Bedeutung (FARBE-07): Klang 0, Atmen 1, Sitzung 2, Während der Atemübung 3,
-                // Meditation 4, Daten 5.
-                TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
-
-                Spacer(Modifier.height(Dimens.ListGap))
-                AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
-
-                Spacer(Modifier.height(Dimens.ListGap))
-                SessionCard(state.haptics, state.showSafetyWarning, actions::setHaptics, actions::setShowSafetyWarning)
-
-                Spacer(Modifier.height(Dimens.ListGap))
-                SessionDisplayCard(state.sessionDisplay, actions)
-
-                Spacer(Modifier.height(Dimens.ListGap))
-                // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
-                Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
-                    MeditationCard(
-                        state.gongIntervalMin, actions::setGongInterval,
-                        state.voiceStates, state.activeVoiceId, state.piperEngineReady,
-                        actions::sampleVoice, actions::downloadVoice, actions::selectVoice, actions::deleteVoice,
-                        columns,
-                        display = { MeditationDisplayRows(state.meditationDisplay, actions) },
-                    )
-                }
-
-                Spacer(Modifier.height(Dimens.ListGap))
-                DataCard(transfer, state.logCount, actions::clearLog)
-
-                Spacer(Modifier.height(Dimens.ListGap))
-                NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
-
-                Spacer(Modifier.height(Dimens.SectionGap))
-                HintText(stringResource(R.string.settings_about))
-                Spacer(Modifier.height(Dimens.ScreenBottom))
+    // Kopf fest über der Scroll-Fläche: Nach dem Sprung zur Meditations-Karte bliebe der Pfeil
+    // sonst außerhalb des Bildes (einziger sichtbarer Weg zurück).
+    PushScaffold(onBack = onBack, title = stringResource(R.string.settings_title), scrollState = scrollState) {
+        if (showResetNotice) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                BodyText(stringResource(R.string.settings_reset_notice), modifier = Modifier.padding(Dimens.CardPadding))
             }
+            Spacer(Modifier.height(Dimens.SectionGap))
         }
+
+        // Die Kartentitel sind die Köpfe dieser Seite und gehen reihum durch den Ring, ohne
+        // Bedeutung (FARBE-07): Klang 0, Atmen 1, Sitzung 2, Während der Atemübung 3,
+        // Meditation 4, Daten 5.
+        TonCard(state.volume, actions::setVolume, state.gongLong, actions::setGongLong, actions::previewGong)
+
+        Spacer(Modifier.height(Dimens.ListGap))
+        AtmenCard(state.soundMode, state.transition, actions::setSoundMode, actions::setTransition)
+
+        Spacer(Modifier.height(Dimens.ListGap))
+        SessionCard(state.haptics, state.showSafetyWarning, actions::setHaptics, actions::setShowSafetyWarning)
+
+        Spacer(Modifier.height(Dimens.ListGap))
+        SessionDisplayCard(state.sessionDisplay, actions)
+
+        Spacer(Modifier.height(Dimens.ListGap))
+        // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
+        Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
+            MeditationCard(
+                state.gongIntervalMin, actions::setGongInterval,
+                state.voiceStates, state.activeVoiceId, state.piperEngineReady,
+                actions::sampleVoice, actions::downloadVoice, actions::selectVoice, actions::deleteVoice,
+                columns,
+                display = { MeditationDisplayRows(state.meditationDisplay, actions) },
+            )
+        }
+
+        Spacer(Modifier.height(Dimens.ListGap))
+        DataCard(transfer, state.logCount, actions::clearLog)
+
+        Spacer(Modifier.height(Dimens.ListGap))
+        NavRow(stringResource(R.string.settings_about_entry), onOpenAbout)
+
+        Spacer(Modifier.height(Dimens.SectionGap))
+        HintText(stringResource(R.string.settings_about))
     }
 }
 
