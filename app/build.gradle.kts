@@ -9,9 +9,10 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
-// Release-Keystore + Passwörter liegen bewusst außerhalb des Repos (gitignored).
+// Release-Keystore + Passwörter liegen außerhalb des Repo-Baums (SEC-BUILD-02).
 // Suchreihenfolge: Pfad aus ATEMKRAFT_KEYSTORE_PROPERTIES (CI, anderer Rechner),
-// sonst keystore.properties im Projekt-Root (lokaler Maintainer-Checkout).
+// sonst ~/.config/atemkraft/keystore.properties (lokaler Maintainer, Standard),
+// sonst keystore.properties im Projekt-Root (alter Checkout, gitignored).
 // Ist die Variable gesetzt, die Datei aber nicht da, bricht der Build ab: Wer explizit
 // einen Keystore verlangt, soll nicht stillschweigend etwas anderes bekommen.
 val keystoreEnvPath = providers.environmentVariable("ATEMKRAFT_KEYSTORE_PROPERTIES").orNull
@@ -25,8 +26,11 @@ val keystorePropsFile = if (keystoreEnvPath != null) {
         }
     }
 } else {
-    rootProject.file("keystore.properties").takeIf { it.isFile }
+    File(System.getProperty("user.home"), ".config/atemkraft/keystore.properties").takeIf { it.isFile }
+        ?: rootProject.file("keystore.properties").takeIf { it.isFile }
 }
+// Liegt die Properties-Datei außerhalb des Projekts, gilt ein relativer storeFile relativ zu ihr.
+val keystoreOutsideProject = keystorePropsFile != null && keystorePropsFile != rootProject.file("keystore.properties")
 val keystoreProps = keystorePropsFile
     ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
 // Nur für lokale Tests minifizierter Builds ohne Release-Key: -PallowDebugSignedRelease=true.
@@ -98,9 +102,9 @@ android {
                 ?: throw GradleException("'$key' fehlt in ${keystorePropsFile.path}.")
             create("release") {
                 // Relativer storeFile: bei keystore.properties im Root wie bisher relativ zu app/,
-                // bei ATEMKRAFT_KEYSTORE_PROPERTIES relativ zur Properties-Datei (liegt dort meist daneben).
+                // sonst relativ zur Properties-Datei (liegt dort meist daneben).
                 val storePath = prop("storeFile")
-                storeFile = if (keystoreEnvPath != null && !File(storePath).isAbsolute) {
+                storeFile = if (keystoreOutsideProject && !File(storePath).isAbsolute) {
                     File(keystorePropsFile.absoluteFile.parentFile, storePath)
                 } else {
                     file(storePath)

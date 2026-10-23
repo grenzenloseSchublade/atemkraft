@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/keystore.properties)",
+      "Read(**/*.keystore)",
+      "Read(**/*.jks)",
+      "Read(~/.config/atemkraft/**)"
+    ]
+  }
+}

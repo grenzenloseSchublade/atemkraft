@@ -31,3 +31,4 @@
 # Python-Bytecode der Prüfskripte
 __pycache__/
 *.pyc
+/.claude/worktrees/
