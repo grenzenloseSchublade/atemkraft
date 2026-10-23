@@ -37,7 +37,7 @@ internal fun NavController.switchTab(route: Any) {
 }
 
 /**
- * Ob dieses Ziel einer der fünf Tabs ist ([TopTab]): Dort steht die Tab-Leiste immer. In der Tiefe
+ * Ob dieses Ziel einer der vier Tabs ist ([TopTab]): Dort steht die Tab-Leiste immer. In der Tiefe
  * (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Pranayama, Logbuch, Über) klappt
  * sie beim Runterscrollen ein und kommt über die Lasche zurück ([TabBarState], Nutzer 2026-10-23).
  * Vor dem ersten Ziel (null) gilt der Start-Tab.

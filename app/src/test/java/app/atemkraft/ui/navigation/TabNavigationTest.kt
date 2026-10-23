@@ -43,7 +43,7 @@ class TabNavigationTest {
                 composable<GlossaryRoute> {}
             }
         }
-        assertEquals(5, TopTab.entries.size)
+        assertEquals(4, TopTab.entries.size)
         TopTab.entries.forEach { tab ->
             val start = step { nav.tapTab(tab.route, selected = false) }
             assertTab(tab, root = true)

@@ -1,13 +1,11 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
@@ -34,17 +32,15 @@ import app.atemkraft.ui.theme.SECONDARY
 /**
  * Fester Kopf der Top-Level-Tabs: dieselbe Zeile wie der Kopf der Push-Seiten ([HeaderBar],
  * Titel `headlineSmall`), nur ohne Pfeil – beim Wechsel springt nichts. Rechts die Icon-Aktionen,
- * immer an derselben Stelle: außen höchstens eine Aktion ([action], ein `AppIconButton`) – das
- * Zahnrad ([SettingsAction]) bzw. die Lupe im Tab „Anlass“ –, links daneben der Kalender zum
- * Logbuch ([onOpenLogbook], [LogbookAction], nur im Atmen-Tab links neben dem Zahnrad, Nutzer
- * 2026-10-22). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bleibt eine
+ * immer an derselben Stelle: außen höchstens eine Aktion ([action], ein `AppIconButton`, etwa das
+ * Zahnrad [SettingsAction]), links daneben optional der Kalender zum Logbuch ([onOpenLogbook],
+ * [LogbookAction]). Das äußere Icon steht bündig an der Inhaltskante ([flushEnd]). Der Titel bleibt eine
  * Zeile und läuft notfalls als Laufschrift ([HeaderTitle]).
  *
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
- * scrollt“), damit Zahnrad, Kalender und Lupe immer erreichbar sind. Der Untertitel gehört zum
- * Inhalt ([ScreenSubtitle], erster Eintrag der Liste). [below] steht fest unter der Zeile (das
- * [SearchField] des Tabs „Anlass“, solange die Suche offen ist): Getippt wird oben, die Treffer
- * scrollen. [scrolled] (Inhalt liegt unter dem Kopf) blendet die Haarlinie an der Unterkante ein.
+ * scrollt“), damit Zahnrad und Kalender immer erreichbar sind. Der Untertitel gehört zum Inhalt
+ * ([ScreenSubtitle], erster Eintrag der Liste). [scrolled] (Inhalt liegt unter dem Kopf) blendet
+ * die Haarlinie an der Unterkante ein.
  */
 @Composable
 fun ScreenHeader(
@@ -53,7 +49,6 @@ fun ScreenHeader(
     action: (@Composable () -> Unit)? = null,
     onOpenLogbook: (() -> Unit)? = null,
     scrolled: Boolean = false,
-    below: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier.fillMaxWidth().scrolledHairline(scrolled)) {
         HeaderBar {
@@ -67,14 +62,11 @@ fun ScreenHeader(
                 }
             }
         }
-        if (below != null) {
-            Box(Modifier.padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.GapSmall)) { below() }
-        }
     }
 }
 
 /**
- * Gerüst der Tabs mit Liste (Atmen, Anlass, Eigene, Lernen) und des Logbuchs (Push-Variante, §4.3):
+ * Gerüst der Tabs mit Liste (Atmen, Eigene, Lernen) und des Logbuchs (Push-Variante, §4.3):
  * `Surface(background)`, fest oben der Kopf aus [header] – er bekommt `scrolled` (Inhalt liegt
  * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [subtitle]
  * steht als erster Eintrag ([ScreenSubtitle]); [top] ist der Abstand über dem ersten Eintrag (Tabs

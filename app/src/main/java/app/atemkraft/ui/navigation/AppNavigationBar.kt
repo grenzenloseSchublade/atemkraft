@@ -123,7 +123,7 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
 /** Kleinste Beschriftung der Tabs (Anteil der Rolle), damit fünf Namen bei Schrift 2,0 ganz bleiben. */
-private const val NAV_LABEL_MIN_SCALE = 0.4f
+private const val NAV_LABEL_MIN_SCALE = 0.5f
 
 /**
  * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt

@@ -41,10 +41,10 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
- * Einzeiliges Suchfeld ohne eigene Fläche: Text in `bodyLarge` auf einer Grundlinie
+ * Einzeiliges Suchfeld ohne eigene Fläche: Text in `bodyMedium` auf einer Grundlinie
  * (`HorizontalDivider`), daneben das X ([onClear]) als `AppIconButton`, bündig an der
- * Inhaltskante ([flushEnd]) wie die Lupe, die es ablöst. Es ersetzt im
- * [ScreenHeader] den Untertitel (Zustandswechsel statt neuer Fläche, PRIN-03).
+ * Inhaltskante ([flushEnd]) wie die Caret-Spalte der Abschnittsköpfe. Ohne [onClear] kein X
+ * (leeres Feld: nichts zu leeren). Heute die Befindens-Suche im Atmen-Tab (MUSTER-09).
  *
  * Datenschutz (SEC-PRIV-03): Eingaben zum Befinden sind gesundheitsnah. Die Tastatur bekommt
  * deshalb keine Autokorrektur und `IME_FLAG_NO_PERSONALIZED_LEARNING` – sie soll die Wörter
@@ -52,8 +52,7 @@ import app.atemkraft.ui.theme.SECONDARY
  * Aufrufer (nur `rememberSaveable`, nie DataStore oder Log).
  *
  * Die IME-Aktion „Suchen“ schließt nur die Tastatur, gefiltert wird schon beim Tippen.
- * [clearDescription] ist die `contentDescription` des X – je nach Zustand „Eingabe löschen“
- * oder „Suche schließen“.
+ * [clearDescription] ist die `contentDescription` des X („Eingabe löschen“).
  */
 @Composable
 fun SearchField(
@@ -61,7 +60,7 @@ fun SearchField(
     onQueryChange: (String) -> Unit,
     placeholder: String,
     clearDescription: String,
-    onClear: () -> Unit,
+    onClear: (() -> Unit)?,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
 ) {
@@ -104,14 +103,16 @@ fun SearchField(
                     }
                 },
             )
-            // Bündig wie die Lupe im ScreenHeader: Das X steht an derselben Stelle (PRIN-03).
-            Box(Modifier.flushEnd()) {
-                AppIconButton(onClick = onClear) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = clearDescription,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
+            // Bündig an der Inhaltskante wie die Carets der Abschnittsköpfe (LAYOUT-07).
+            if (onClear != null) {
+                Box(Modifier.flushEnd()) {
+                    AppIconButton(onClick = onClear) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = clearDescription,
+                            tint = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
                 }
             }
         }
@@ -152,10 +153,10 @@ private object NoLearningInterceptor : PlatformTextInputInterceptor {
 private fun SearchFieldPreview() {
     AtemkraftTheme {
         SearchField(
-            query = "",
+            query = "Prüfung",
             onQueryChange = {},
             placeholder = stringResource(R.string.situations_search_placeholder),
-            clearDescription = stringResource(R.string.cd_search_close),
+            clearDescription = stringResource(R.string.cd_search_clear),
             onClear = {},
         )
     }

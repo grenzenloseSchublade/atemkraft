@@ -13,15 +13,12 @@ import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 
 /**
- * Die fünf Tabs der App in Leisten-Reihenfolge – die eine Quelle für Startseiten ([TAB_ROOTS],
+ * Die vier Tabs der App in Leisten-Reihenfolge – die eine Quelle für Startseiten ([TAB_ROOTS],
  * [isTabRoot]), Markierung ([tabOnStack]) und Leiste ([AppTabBar]). [route] ist die Startseite des
  * Tabs, [label] seine Beschriftung, [icon] sein Symbol (dekorativ: die Beschriftung benennt den Tab).
  */
 enum class TopTab(val route: Any, @StringRes val label: Int, val icon: @Composable () -> Painter) {
     ATMEN(AtmenRoute, R.string.tab_breathe, { rememberVectorPainter(Icons.Filled.Home) }),
-
-    /** „Anlass“; im Code noch Situationen. Kompass statt Lupe: Die Lupe gehört der Suche im Kopf. */
-    SITUATIONEN(SituationenRoute, R.string.tab_situations, { painterResource(R.drawable.ic_explore) }),
     EIGENE(EigeneRoute, R.string.tab_own, { painterResource(R.drawable.ic_bookmark_filled) }),
     MEDITATION(MeditationRoute, R.string.tab_meditation, { painterResource(R.drawable.ic_meditation) }),
     LERNEN(LernenRoute, R.string.tab_learn, { painterResource(R.drawable.ic_learn) }),

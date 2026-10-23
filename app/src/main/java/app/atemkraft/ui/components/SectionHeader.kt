@@ -53,15 +53,15 @@ import app.atemkraft.ui.theme.Sizes
  * Farbe des Kopfes an Stelle [index] eines Screens (FARBE-07): reihum durch [HeadingRing], der
  * oberste Kopf ist 0. Der Index ist die Lage des Kopfes, ausdrücklich gesetzt, kein Zähler der
  * Komposition – ein zugeklappter Abschnitt behält seine Farbe. Die Farbe trägt keine Bedeutung.
- * Nicht im Atmen-Tab: Dort tragen die Köpfe die Familienfarben.
+ * Im Atmen-Tab nur für die Anlässe: Die übrigen Köpfe dort tragen die Familienfarben.
  */
 fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
 
 /**
- * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen,
- * Anlass, Eigene, Meditation, Atemlehre, Pranayama, Glossar, Logbuch), damit
- * Sektionsüberschriften überall identisch lesen. [color] kommt außerhalb des Atmen-Tabs aus
- * [headingColor] (FARBE-07).
+ * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen samt
+ * Anlässen, Eigene, Meditation, Lernen, Atemlehre, Pranayama, Glossar, Logbuch), damit
+ * Sektionsüberschriften überall identisch lesen. [color] kommt aus [headingColor] (FARBE-07),
+ * im Atmen-Tab außer bei den Anlässen aus der Familie.
  *
  * Abstände: Über einem festen Kopf steht [top] (Standard `SectionHeaderTop`; kleiner nur, wo ein
  * Bildschirm ohne Scrollen auskommen muss). **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
@@ -337,7 +337,7 @@ private fun SectionHeaderExpandablePreview() {
         SectionHeader(
             title = stringResource(R.string.situations_my_patterns),
             color = headingColor(0),
-            teaser = stringResource(R.string.situations_subtitle),
+            teaser = stringResource(R.string.home_subtitle),
             expanded = false,
             status = stringResource(R.string.situations_my_patterns_count, 5),
         )

@@ -72,7 +72,6 @@ import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsUiState
-import app.atemkraft.ui.situations.SituationsScreen
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -109,34 +108,19 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     private val app get() = RuntimeEnvironment.getApplication()
 
     /**
-     * Die vier Tabs: Atmen; Situationen mit der größten aufgeklappt und mit Suchtreffern; „Eigene“
-     * mit vier Mustern (eines mit langem Namen); Meditation mit offener Feinwahl auf 12 min (scrollt
-     * bis 1,3 nicht, LAYOUT-08) und ∞ mit aufgeklapptem Klang (akzeptierte Scroll-Ausnahme S-40).
+     * Die vier Tabs: Atmen als Liste, mit dem größten Anlass aufgeklappt und mit Suchtreffern;
+     * „Eigene“ mit vier Mustern (eines mit langem Namen); Meditation mit offener Feinwahl auf 12 min
+     * (scrollt bis 1,3 nicht, LAYOUT-08) und ∞ mit aufgeklapptem Klang (akzeptierte Scroll-Ausnahme
+     * S-40).
      */
     @Test
     fun tabs() {
-        snap("01_atmen") {
-            HomeScreen(
-                exercisesByFamily = BreathingFamily.entries
-                    .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
-                    .filter { (_, list) -> list.isNotEmpty() },
-                programs = BuiltInExercises.all.filter { !it.guided },
-                daily = daily,
-                dailySaved = false,
-                onRegenerateDaily = {},
-                onDailySavedChange = {},
-                onSelect = {},
-                onOpenSettings = {},
-                onOpenPatternEditor = {},
-                onOpenLogbook = {},
-            )
-        }
+        snap("01_atmen") { BreatheTab() }
         val widest = Situations.all.maxBy { it.exerciseIds.size }
-        snap("02_situationen_aufgeklappt", prepare = { compose.onNodeWithText(widest.title).performClick() }) { SituationsContent() }
-        snap("02_situationen_suche_treffer", prepare = {
-            compose.onNodeWithContentDescription(app.getString(R.string.cd_search_open)).performClick()
+        snap("01_atmen_anlass_offen", prepare = { compose.onNodeWithText(widest.title).performClick() }) { BreatheTab() }
+        snap("01_atmen_suche_treffer", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
-        }) { SituationsContent() }
+        }) { BreatheTab() }
         snap("13_eigene", tab = Tab.EIGENE) {
             // „Tut mir gut“ mit den zwei längsten Übungsnamen.
             val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
@@ -158,11 +142,20 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     }
 
     @Composable
-    private fun SituationsContent() {
-        SituationsScreen(
-            recommendations = Situations.all,
+    private fun BreatheTab() {
+        HomeScreen(
+            exercisesByFamily = BreathingFamily.entries
+                .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
+                .filter { (_, list) -> list.isNotEmpty() },
+            situations = Situations.all,
             resolve = { id -> BuiltInExercises.all.firstOrNull { it.id == id } },
+            daily = daily,
+            dailySaved = false,
+            onRegenerateDaily = {},
+            onDailySavedChange = {},
             onSelect = {},
+            onOpenSettings = {},
+            onOpenPatternEditor = {},
         )
     }
 
@@ -171,7 +164,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * (Hinweis nach zurückgesetzten Einstellungen, „Keine Stimme gewählt“, Stimmen-Katalog offen
      * samt Quelle, „Beim Handywechsel?“ offen, längste Daten-Rückmeldungen, leeres Logbuch);
      * Glossar; Über mit Lizenzen; Atemlehre mit aufgeklappten Köpfen (samt den fünf vāyus) und der Karte „Feuer“;
-     * Tab „Lernen“ in Gerätehöhe und Pranayama mit allen Karten aufgeklappt;
+     * Tab „Lernen“ in Gerätehöhe samt Programmen und Pranayama mit allen Karten aufgeklappt;
      * Mini-Leiste mit längstem Namen und längstem Phasenwort.
      */
     @Test
@@ -188,7 +181,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 compose.onNodeWithText(app.getString(it).withoutMarks()).performClick()
             }
         }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer") }
-        snap("15_lernen", tab = Tab.LERNEN) { LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenGlossary = {}) }
+        snap("15_lernen", tab = Tab.LERNEN) {
+            LearnScreen(onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenGlossary = {}, programs = BuiltInExercises.all.filter { !it.guided })
+        }
         snap("16_pranayama_offen") { PranayamaScreen(onBack = {}, onOpenExercise = {}, expanded = true) }
         snap("11_mini_leiste", heightDp = 160) {
             val longestPhase = listOf(R.string.phase_inhale, R.string.phase_exhale, R.string.phase_hold_full, R.string.session_paused)
