@@ -16,9 +16,10 @@ Beschrieben ist der Stand von `main`; die neueste APK unter Releases kann Einzel
 - **Atmen:** 18 Techniken in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
+- **Eigene Muster:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“.
 - **Situationen:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“, mit Suche nach deinem Befinden.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter.
-- **Logbuch, Glossar, Export:** abgeschlossene Sitzungen, Fachwörter erklärt, gespeicherte Muster als Datei sichern.
+- **Logbuch, Atemlehre, Glossar, Export:** abgeschlossene Sitzungen, Grundlagen aus der Yoga-Lehre (etwa die fünf vāyus), Fachwörter erklärt, gespeicherte Muster als Datei sichern.
 
 ## Installieren
 

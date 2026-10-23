@@ -18,7 +18,7 @@ Sicherheits-, Datenschutz-, Lieferketten- und Release-Regeln für Atemkraft (`ap
 | Eingangsbestätigung | in der Regel innerhalb von 7 Tagen (Ein-Personen-Projekt) |
 | Ersteinschätzung | innerhalb von 30 Tagen |
 | Fix und Offenlegung | koordiniert; Ziel ist ein Fix innerhalb von 90 Tagen, danach ein GitHub Security Advisory mit Nennung (auf Wunsch) |
-| Unterstützte Version | nur die jeweils neueste Release-Version (derzeit 1.6.x), keine Backports |
+| Unterstützte Version | nur die jeweils neueste Release-Version (derzeit 1.7.x), keine Backports |
 | Nicht im Scope | gerootete oder kompromittierte Geräte, Reverse Engineering, fehlende Obfuskation oder Tamper-Erkennung (die App ist Open Source und enthält keine Geheimnisse) |
 
 ### Echtheit einer APK prüfen
