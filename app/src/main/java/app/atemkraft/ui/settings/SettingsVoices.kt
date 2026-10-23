@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceDownloadState
+import app.atemkraft.cue.tts.VoiceFailure
 import app.atemkraft.cue.tts.VoiceGender
 import app.atemkraft.cue.tts.VoiceQuality
 import app.atemkraft.cue.tts.VoiceSpec
@@ -183,7 +184,14 @@ private fun voiceSubtitle(
                 stringResource(R.string.settings_speech_pack_downloading, (state.fraction * 100).toInt())
             }
 
-        is VoiceDownloadState.Failed -> stringResource(R.string.voice_failed_short)
+        is VoiceDownloadState.Failed -> stringResource(
+            when (state.reason) {
+                VoiceFailure.NETWORK -> R.string.voice_failed_network
+                VoiceFailure.STORAGE -> R.string.voice_failed_storage
+                VoiceFailure.DAMAGED -> R.string.voice_failed_damaged
+                VoiceFailure.OTHER -> R.string.voice_failed_short
+            },
+        )
 
         is VoiceDownloadState.Downloaded ->
             if (active && !engineReady) stringResource(R.string.settings_speech_pack_preparing) else null

@@ -179,6 +179,9 @@ internal fun NavGraphBuilder.appGraph(
                 scope.launch { settings.setMeditationConfig(config) }
                 playback.startMeditation(config)
             },
+            onGongInterval = { minutes -> scope.launch { settings.setGongIntervalMin(minutes) } },
+            // Keine deutsche Sprachausgabe: direkt zum aufgeklappten Stimmen-Katalog.
+            onOpenVoices = { navController.navigate(SettingsRoute(focusMeditation = true, showVoices = true)) },
         )
     }
     composable<LernenRoute> {
@@ -246,6 +249,7 @@ internal fun NavGraphBuilder.appGraph(
             onBack = back,
             transfer = patternTransfer,
             focusMeditation = entry.toRoute<SettingsRoute>().focusMeditation,
+            showVoices = entry.toRoute<SettingsRoute>().showVoices,
         )
     }
     pushComposable<LogbookRoute> {

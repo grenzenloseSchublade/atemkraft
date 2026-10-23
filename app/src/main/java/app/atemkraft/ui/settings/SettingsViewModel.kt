@@ -17,7 +17,6 @@ import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
-import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -30,7 +29,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Alles, was die Einstellungen zeigen. Die Standardwerte sind dieselben wie im
- * [SettingsRepository] (Gong-Abstand 5 min, Gong lang, Session-Anzeige komplett an), damit nichts springt,
+ * [SettingsRepository] (Gong lang, Session-Anzeige komplett an), damit nichts springt,
  * falls die gespeicherten Werte einen Augenblick später kommen.
  */
 data class SettingsUiState(
@@ -41,7 +40,6 @@ data class SettingsUiState(
     val showSafetyWarning: Boolean = true,
     val sessionDisplay: SessionDisplay = SessionDisplay(),
     val meditationDisplay: MeditationDisplay = MeditationDisplay(),
-    val gongIntervalMin: Int = GONG_INTERVAL_DEFAULT_MINUTES,
     val gongLong: Boolean = CueSettings().gongLong,
     val voiceStates: Map<String, VoiceDownloadState> = emptyMap(),
     val activeVoiceId: String? = null,
@@ -67,7 +65,6 @@ interface SettingsActions {
     fun setMeditationAutoCalm(enabled: Boolean)
     fun setMeditationShowProgress(enabled: Boolean)
     fun setMeditationShowTime(enabled: Boolean)
-    fun setGongInterval(minutes: Int)
     fun setGongLong(long: Boolean)
     fun previewGong()
     fun sampleVoice(spec: VoiceSpec)
@@ -96,7 +93,7 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val state: StateFlow<SettingsUiState> = combine(
-        combine(settings.cueSettings, settings.safetySettings, settings.sessionDisplay, settings.gongIntervalMin) { cue, safety, display, interval ->
+        combine(settings.cueSettings, settings.safetySettings, settings.sessionDisplay) { cue, safety, display ->
             SettingsUiState(
                 soundMode = cue.soundMode,
                 transition = cue.transition,
@@ -104,7 +101,6 @@ class SettingsViewModel(
                 haptics = cue.haptics,
                 showSafetyWarning = safety.showWarning,
                 sessionDisplay = display,
-                gongIntervalMin = interval,
                 gongLong = cue.gongLong,
             )
         },
@@ -154,8 +150,6 @@ class SettingsViewModel(
         override fun setMeditationShowProgress(enabled: Boolean) = write { settings.setMeditationShowProgress(enabled) }
 
         override fun setMeditationShowTime(enabled: Boolean) = write { settings.setMeditationShowTime(enabled) }
-
-        override fun setGongInterval(minutes: Int) = write { settings.setGongIntervalMin(minutes) }
 
         override fun setGongLong(long: Boolean) = write { settings.setGongLong(long) }
 

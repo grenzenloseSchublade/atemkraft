@@ -20,7 +20,6 @@ object NoOpSettingsActions : SettingsActions {
     override fun setMeditationAutoCalm(enabled: Boolean) = Unit
     override fun setMeditationShowProgress(enabled: Boolean) = Unit
     override fun setMeditationShowTime(enabled: Boolean) = Unit
-    override fun setGongInterval(minutes: Int) = Unit
     override fun setGongLong(long: Boolean) = Unit
     override fun previewGong() = Unit
     override fun sampleVoice(spec: VoiceSpec) = Unit

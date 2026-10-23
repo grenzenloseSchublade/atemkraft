@@ -30,9 +30,13 @@ object PranayamaRoute
 @Serializable
 object ProgramsRoute
 
-/** [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte. */
+/**
+ * [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte.
+ * [showVoices]: dazu der Stimmen-Katalog aufgeklappt („Stimme laden ›“ ohne deutsche
+ * Sprachausgabe im Blatt „Klang & Stimme“).
+ */
 @Serializable
-data class SettingsRoute(val focusMeditation: Boolean = false)
+data class SettingsRoute(val focusMeditation: Boolean = false, val showVoices: Boolean = false)
 
 /** Logbuch als Push-Seite, erreichbar über die Karte „Verlauf“ im Tab „Eigene“. */
 @Serializable

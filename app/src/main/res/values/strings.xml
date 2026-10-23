@@ -497,7 +497,6 @@
     <string name="cd_voice_preview">Stimme %1$s anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>
     <string name="settings_gong_interval">Gong-Abstand</string>
-    <string name="settings_gong_interval_hint">Gilt, wenn im Tab „Meditation“ beim Gong „alle … min“ gewählt ist.</string>
     <string name="settings_gong_length">Gong-Nachhall</string>
     <string name="gong_length_short">Kurz</string>
     <string name="gong_length_long">Lang</string>
@@ -511,7 +510,7 @@
     <string name="settings_speech_pack_preparing">wird vorbereitet …</string>
 
     <!-- Stimmen-Katalog -->
-    <string name="settings_voice_catalog_hint">Erst anhören, dann laden und wählen; behalten kannst du mehrere. Ohne gewählte Stimme spricht die Sprachausgabe deines Geräts, sofern sie Deutsch kann. Die Stimmen kommen von GitHub (sherpa-onnx).</string>
+    <string name="settings_voice_catalog_hint">Erst anhören, dann laden und wählen; behalten kannst du mehrere. Ohne gewählte Stimme spricht die Sprachausgabe deines Geräts, sofern sie Deutsch kann. Die Stimmen kommen von GitHub (sherpa-onnx); lade sie am besten im WLAN.</string>
     <string name="settings_voice_none_installed">Noch keine Stimme geladen</string>
     <string name="settings_voice_none_chosen">Keine Stimme gewählt</string>
     <string name="settings_voice_show">Stimmen zeigen</string>
@@ -527,7 +526,12 @@
     <string name="voice_loading">lädt …</string>
     <string name="voice_non_commercial">nur nicht kommerziell</string>
     <string name="voice_state_downloaded">geladen</string>
+    <!-- Laden fehlgeschlagen, mit Ursache (MUSTER-04, Nutzer 2026-10-24): kein Netz, zu wenig
+         Speicher, Datei beschädigt; sonst allgemein. -->
     <string name="voice_failed_short">fehlgeschlagen – erneut laden</string>
+    <string name="voice_failed_network">kein Netz – später erneut laden</string>
+    <string name="voice_failed_storage">zu wenig Speicher – Platz schaffen, dann laden</string>
+    <string name="voice_failed_damaged">Datei beschädigt – erneut laden</string>
     <!-- Qualität einer Katalog-Stimme (VoiceQuality), klein wie der übrige Untertitel. -->
     <string name="voice_quality_studio_clear">Studio, sehr klar</string>
     <string name="voice_quality_studio">Studio</string>
@@ -569,6 +573,8 @@
     <string name="meditation_speech_label">Sprachanleitung</string>
     <string name="meditation_speech_hint">Spricht in unregelmäßigen Abständen kurze Hinweise.</string>
     <string name="meditation_speech_unavailable">Keine deutsche Sprachausgabe auf dem Gerät verfügbar.</string>
+    <!-- Verweis darunter: öffnet die Einstellungen mit aufgeklapptem Stimmen-Katalog (Nutzer 2026-10-24). -->
+    <string name="meditation_voice_get">Stimme laden</string>
     <string name="meditation_minutes">%1$d\u00A0min</string>
     <string name="meditation_free_symbol">∞</string>
     <!-- Zusammenfassung unter dem zugeklappten Kopf „Klang & Stimme“: Gong-Wahl · Stimme. -->

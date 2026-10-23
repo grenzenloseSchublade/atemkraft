@@ -34,7 +34,7 @@ import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
-/** Gong-Wahl im Tab; die Intervall-Länge steht in den Einstellungen. */
+/** Gong-Wahl im Tab; die Intervall-Länge wählt das Blatt bei „alle … min“ (app-weit gespeichert). */
 internal enum class GongChoice {
     OFF,
     START_END,
@@ -55,12 +55,14 @@ fun MeditationScreen(
     onOpenSettings: () -> Unit,
     onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
+    onGongInterval: (Int) -> Unit = {},
+    onOpenVoices: () -> Unit = onOpenSettings,
 ) {
     // Der Tab zeigt nur die Auswahl; die laufende/abgeschlossene Sitzung liegt als Vollbild-Overlay
     // darüber ([MeditationOverlay]) – so ist sie (wie die Atem-Session) minimierbar und über die
     // Mini-Leiste erreichbar.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart)
+        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart, onGongInterval, onOpenVoices)
     }
 }
 
@@ -72,6 +74,8 @@ private fun SelectionContent(
     onOpenSettings: () -> Unit,
     onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
+    onGongInterval: (Int) -> Unit,
+    onOpenVoices: () -> Unit,
 ) {
     // Saveable: Die Auswahl überlebt den Abstecher in die Einstellungen und Tab-Wechsel. Schlüssel
     // ohne die Intervall-LÄNGE (die ist global, s. SettingsRepository) – sonst würde eine Änderung
@@ -148,7 +152,12 @@ private fun SelectionContent(
                     startEndGong = choice != GongChoice.OFF
                     intervalOn = choice == GongChoice.INTERVAL
                 },
+                onGongInterval = onGongInterval,
                 onSpeech = { speech = it },
+                onOpenVoices = {
+                    soundSheetOpen = false
+                    onOpenVoices()
+                },
                 onDismiss = { soundSheetOpen = false },
             )
         }

@@ -23,20 +23,27 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.domain.GONG_INTERVAL_CHOICES
+import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.choiceGroupHeading
+import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
 /**
  * „Klang & Stimme“ als Bottom Sheet (MUSTER-11, wie das Startpunkt-Sheet `TemplateSheet` im
- * Muster-Editor): Titel als Abschnittskopf, darunter die Gong-Wahl und der Schalter
- * „Sprachanleitung“. Jede Änderung gilt sofort, ein Bestätigen gibt es nicht; schließen per
- * Wischen nach unten, Tipp daneben oder Zurück ([onDismiss]). Der Zeitring darunter bleibt, wie er
- * ist.
+ * Muster-Editor): Titel als Abschnittskopf, darunter die Gong-Wahl – bei „alle … min“ gleich
+ * darunter der Gong-Abstand ([onGongInterval]; seit 2026-10-24 hier statt in den Einstellungen,
+ * wo man ihn neben „alle 5 min“ suchte, ohne ihn ändern zu können) – und der Schalter
+ * „Sprachanleitung“. Kann das Gerät kein Deutsch sprechen, führt „Stimme laden ›“ zum
+ * Stimmen-Katalog der Einstellungen ([onOpenVoices]) statt in eine Sackgasse. Jede Änderung gilt
+ * sofort, ein Bestätigen gibt es nicht; schließen per Wischen nach unten, Tipp daneben oder Zurück
+ * ([onDismiss]). Der Zeitring darunter bleibt, wie er ist.
  *
  * TalkBack: Der Inhalt wird vor dem Griff gelesen (`traversalIndex`), so ist der Titel das erste
  * Element im Blatt und bekommt beim Öffnen den Fokus.
@@ -49,7 +56,9 @@ internal fun SoundSheet(
     speech: Boolean,
     speechAvailable: Boolean,
     onGong: (GongChoice) -> Unit,
+    onGongInterval: (Int) -> Unit,
     onSpeech: (Boolean) -> Unit,
+    onOpenVoices: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -76,12 +85,25 @@ internal fun SoundSheet(
             Spacer(Modifier.height(Dimens.HeaderGap))
             SubLabel(stringResource(R.string.meditation_gong_label), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))
-            // Nur der Modus wird hier gewählt; die Intervall-Länge steht in den Einstellungen.
             SegmentedChoiceRow(GongChoice.entries, gong, onGong, groupLabel = stringResource(R.string.meditation_gong_label)) { choice ->
                 when (choice) {
                     GongChoice.OFF -> stringResource(R.string.meditation_off)
                     GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
                     GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
+                }
+            }
+            // Der Abstand gehört zur Wahl „alle … min“ und steht nur bei ihr (app-weit gespeichert).
+            if (gong == GongChoice.INTERVAL) {
+                Spacer(Modifier.height(Dimens.GapSmall))
+                SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())
+                Spacer(Modifier.height(Dimens.GapSmall))
+                SegmentedChoiceRow(
+                    GONG_INTERVAL_CHOICES,
+                    gongIntervalMin,
+                    onGongInterval,
+                    groupLabel = stringResource(R.string.settings_gong_interval),
+                ) { m ->
+                    stringResource(R.string.meditation_minutes, m)
                 }
             }
             // Abstand wie nach dem Dauer-Raster; der Touch-Rand der Segmente allein wirkte zu eng.
@@ -98,6 +120,12 @@ internal fun SoundSheet(
                 },
                 enabled = speechAvailable,
             )
+            // Ohne deutsche Sprachausgabe: der Weg zu den Stimmen der App, bündig unter dem Hinweis.
+            if (!speechAvailable) {
+                AppTextButton(onClick = onOpenVoices, modifier = Modifier.flushStart()) {
+                    ForwardLinkText(text = stringResource(R.string.meditation_voice_get), color = MaterialTheme.colorScheme.secondary)
+                }
+            }
         }
     }
 }

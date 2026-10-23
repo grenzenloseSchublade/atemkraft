@@ -5,12 +5,15 @@ import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 
-/** Nutzer-Einstellungen für die Begleit-Reize (Cues), persistent via DataStore. */
+/**
+ * Nutzer-Einstellungen für die Begleit-Reize (Cues), persistent via DataStore. Lautstärke ab Werk
+ * „Mittel“ (Nutzer 2026-10-24; vorher „Laut“ – riskant beim ersten Start im Büro oder im Bett).
+ */
 data class CueSettings(
     val soundMode: SoundMode = SoundMode.CUES,
     val haptics: Boolean = true,
     val transition: TransitionEmphasis = TransitionEmphasis.MEDIUM,
-    val volume: ToneVolume = ToneVolume.LOUD,
+    val volume: ToneVolume = ToneVolume.MEDIUM,
     /** Gong-Ausklang lang/kurz (app-weit, auch für den Sitzungs-Abschlussgong). */
     val gongLong: Boolean = true,
 )

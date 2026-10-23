@@ -307,7 +307,6 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 volume = ToneVolume.entries.first(),
                 haptics = true,
                 showSafetyWarning = true,
-                gongIntervalMin = 5,
                 gongLong = false,
                 voiceStates = VoiceCatalog.all.mapIndexed { i, v -> v.id to if (i == 0) VoiceDownloadState.Downloaded else VoiceDownloadState.NotDownloaded }.toMap(),
                 activeVoiceId = null,

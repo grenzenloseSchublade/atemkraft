@@ -23,7 +23,10 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.net.URL
+import java.net.UnknownHostException
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -31,6 +34,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
+import javax.net.ssl.SSLException
 
 /** User-Agent des Stimm-Downloads: nur App-Name und Version, keine Gerätedaten. */
 private val USER_AGENT = "Atemkraft/${BuildConfig.VERSION_NAME}"
@@ -44,8 +48,47 @@ sealed interface VoiceDownloadState {
         val indeterminate: Boolean = false,
     ) : VoiceDownloadState
     data object Downloaded : VoiceDownloadState
-    data class Failed(val message: String) : VoiceDownloadState
+    data class Failed(val reason: VoiceFailure) : VoiceDownloadState
 }
+
+/**
+ * Warum das Laden einer Stimme scheiterte – grob genug für einen Satz in der Liste („kein Netz“,
+ * „zu wenig Speicher“, „Datei beschädigt“), ohne Exception-Text in der UI (MUSTER-04, S-34).
+ */
+enum class VoiceFailure {
+    /** Keine Verbindung, Zeitüberschreitung oder Serverfehler: später erneut versuchen. */
+    NETWORK,
+
+    /** Kein Platz mehr auf dem Gerät. */
+    STORAGE,
+
+    /** Größe, Prüfsumme oder Archiv stimmen nicht: erneut laden. */
+    DAMAGED,
+
+    /** Alles andere. */
+    OTHER,
+    ;
+
+    companion object {
+        /** Ordnet einen Fehler beim Laden einer Ursache zu. */
+        fun of(e: Throwable): VoiceFailure = when {
+            e is VoiceIntegrityException -> DAMAGED
+            e.isOutOfSpace() -> STORAGE
+            e is UnknownHostException || e is SocketException || e is SocketTimeoutException || e is SSLException -> NETWORK
+            e is HttpStatusException -> NETWORK
+            else -> OTHER
+        }
+
+        /** Voller Speicher meldet sich als IOException mit ENOSPC („No space left on device“). */
+        private fun Throwable.isOutOfSpace(): Boolean = generateSequence(this) { it.cause }.any { cause ->
+            val text = cause.message.orEmpty()
+            text.contains("ENOSPC") || text.contains("No space left", ignoreCase = true)
+        }
+    }
+}
+
+/** Der Server antwortete nicht mit 2xx. */
+class HttpStatusException(code: Int) : IOException("HTTP $code")
 
 /** Ein Stimm-Archiv weicht vom gepinnten Stand ab (Größe, Prüfsumme oder unzulässiger Eintrag). */
 class VoiceIntegrityException(message: String) : IOException(message)
@@ -195,7 +238,7 @@ class VoiceModelManager(context: Context) {
             val extracted = File(staging, spec.dirName)
             if (!isCompleteIn(extracted, spec)) {
                 cleanup()
-                setState(spec.id, VoiceDownloadState.Failed("Archiv unvollständig"))
+                setState(spec.id, VoiceDownloadState.Failed(VoiceFailure.DAMAGED))
                 return
             }
             if (!extracted.renameTo(dir)) throw IOException("Stimme konnte nicht installiert werden")
@@ -207,7 +250,7 @@ class VoiceModelManager(context: Context) {
             throw c
         } catch (e: Exception) {
             cleanup()
-            setState(spec.id, VoiceDownloadState.Failed(e.message ?: "Download fehlgeschlagen"))
+            setState(spec.id, VoiceDownloadState.Failed(VoiceFailure.of(e)))
         }
     }
 
@@ -229,7 +272,7 @@ class VoiceModelManager(context: Context) {
         }
         try {
             conn.connect()
-            if (conn.responseCode !in 200..299) throw IOException("HTTP ${conn.responseCode}")
+            if (conn.responseCode !in 200..299) throw HttpStatusException(conn.responseCode)
             val announced = conn.contentLengthLong
             if (announced > 0 && announced != spec.sizeBytes) {
                 throw VoiceIntegrityException(

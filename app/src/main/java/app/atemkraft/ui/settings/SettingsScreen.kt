@@ -89,6 +89,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     transfer: PatternTransfer = PatternTransfer.Idle,
     focusMeditation: Boolean = false,
+    showVoices: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
     val columns = rememberTrailingColumns()
@@ -138,10 +139,10 @@ fun SettingsScreen(
         // Box nur als Messpunkt für den Sprung aus dem Meditations-Tab.
         Box(Modifier.onPlaced { meditationCardY = it.positionInParent().y.toInt() }) {
             MeditationCard(
-                state.gongIntervalMin, actions::setGongInterval,
                 state.voiceStates, state.activeVoiceId, state.piperEngineReady,
                 actions::sampleVoice, actions::downloadVoice, actions::selectVoice, actions::deleteVoice,
                 columns,
+                catalogInitiallyExpanded = showVoices,
                 display = { MeditationDisplayRows(state.meditationDisplay, actions) },
             )
         }
@@ -443,10 +444,13 @@ private fun MeditationDisplayRows(display: MeditationDisplay, actions: SettingsA
     }
 }
 
+/**
+ * Meditation: was die laufende Meditation zeigt und die Stimme der Sprachanleitung. Den
+ * Gong-Abstand wählt seit 2026-10-24 das Blatt „Klang & Stimme“ im Tab bei „alle … min“ – dort,
+ * wo man ihn sucht. [catalogInitiallyExpanded]: aus „Stimme laden ›“ geöffnet, Katalog offen.
+ */
 @Composable
 private fun MeditationCard(
-    gongIntervalMin: Int,
-    onGongInterval: (Int) -> Unit,
     voiceStates: Map<String, VoiceDownloadState>,
     activeVoiceId: String?,
     piperEngineReady: Boolean,
@@ -455,31 +459,17 @@ private fun MeditationCard(
     onSelectVoice: (String?) -> Unit,
     onDeleteVoice: (String) -> Unit,
     columns: TrailingColumns,
+    catalogInitiallyExpanded: Boolean,
     display: @Composable () -> Unit,
 ) {
-    SettingsCard(stringResource(R.string.settings_meditation_title), heading = 3, intro = stringResource(R.string.settings_meditation_intro)) {
-        SubLabel(stringResource(R.string.settings_gong_interval), Modifier.choiceGroupHeading())
-        Spacer(Modifier.height(Dimens.GapSmall))
-        // Eine Reihe à vier: ohne Häkchen passt „15 min“ in ein Viertel der Kartenbreite.
-        SegmentedChoiceRow(
-            GONG_INTERVAL_CHOICES,
-            gongIntervalMin,
-            onGongInterval,
-            groupLabel = stringResource(R.string.settings_gong_interval),
-        ) { m ->
-            stringResource(R.string.meditation_minutes, m)
-        }
-        Spacer(Modifier.height(Dimens.GapTiny))
-        HintText(stringResource(R.string.settings_gong_interval_hint))
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
+    SettingsCard(stringResource(R.string.settings_meditation_title), heading = 3, intro = stringResource(R.string.settings_meditation_intro), titleGap = Dimens.GapTiny) {
         display()
 
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
         // Zugeklappt nur die aktive Stimme; der Katalog klappt darunter auf (Umschalter wie „Wie
         // funktioniert das?“). Solange eine Stimme lädt, bleibt er offen, damit Fortschritt und
         // Abbrechen im Bild bleiben.
-        var catalogExpanded by rememberSaveable { mutableStateOf(false) }
+        var catalogExpanded by rememberSaveable { mutableStateOf(catalogInitiallyExpanded) }
         val downloading = voiceStates.values.any { it is VoiceDownloadState.Downloading }
         val showCatalog = catalogExpanded || downloading
         val active = VoiceCatalog.all.firstOrNull { it.id == activeVoiceId && voiceStates[it.id] is VoiceDownloadState.Downloaded }

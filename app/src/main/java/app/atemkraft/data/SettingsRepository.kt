@@ -241,7 +241,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             haptics = prefs[Keys.HAPTICS] ?: true,
             transition = prefs.enumOf<TransitionEmphasis>(Keys.TRANSITION, Keys.TRANSITION_ORDINAL)
                 ?: TransitionEmphasis.MEDIUM,
-            volume = prefs.enumOf<ToneVolume>(Keys.VOLUME, Keys.VOLUME_ORDINAL) ?: ToneVolume.LOUD,
+            volume = prefs.enumOf<ToneVolume>(Keys.VOLUME, Keys.VOLUME_ORDINAL) ?: CueSettings().volume,
             gongLong = gongLongOf(prefs),
         )
     }
