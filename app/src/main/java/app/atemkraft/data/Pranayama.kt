@@ -101,11 +101,11 @@ object Pranayama {
                 "Was Studien vor allem stützen, ist langsames Atmen allgemein, etwa 6 Atemzüge pro " +
                     "Minute: Die Herzratenvariabilität steigt, viele fühlen sich ruhiger (Zaccaro 2018, " +
                     "Laborde 2022). Über viele Atemformen hinweg berichteten Übende etwas weniger Stress, " +
-                    "ein kleiner bis mittlerer Effekt (Fincham 2023, Meta-Analyse). Das Tempo scheint " +
+                    "ein kleiner bis mittlerer Effekt (Fincham 2023a, Meta-Analyse). Das Tempo scheint " +
                     "wichtiger als die einzelne Technik.",
                 "Kapalabhati, schnelle Bhastrika und die Wim-Hof-Atmung sind eine eigene Klasse: Sie " +
                     "atmen mehr ab, als der Körper braucht. Das senkt das CO₂ im Blut, aktiviert und kann " +
-                    "Schwindel, Kribbeln und starke Gefühle auslösen (Fincham 2023, Übersicht zu schnellem " +
+                    "Schwindel, Kribbeln und starke Gefühle auslösen (Fincham 2023b, Übersicht zu schnellem " +
                     "Atmen). In Studien bei psychischen Erkrankungen traten Nebenwirkungen häufiger bei " +
                     "schnellen als bei langsamen Techniken auf (Mütze 2025).",
                 "Schnelle Techniken gehören nie ins oder ans Wasser, nicht ans Steuer und nicht in Zeiten, " +
@@ -120,9 +120,9 @@ object Pranayama {
                 "Patanjali schreibt der Übung zwei Folgen zu: Der Schleier über dem inneren Licht wird " +
                     "dünner, und der Geist wird fähig zur Sammlung, *dhāraṇā* (Yoga-Sutra 2,52–2,53). " +
                     "*prāṇāyāma* gilt damit als Brücke zwischen Körper und Meditation.",
-                "In der App kannst du das nachbilden: Mit der Einstellung „Danach in die Stille“ " +
-                    "(Einstellungen › Während der Atemübung) geht die Atemübung nahtlos in eine stille " +
-                    "Meditation über.",
+                "In der App kannst du das nachbilden: Mit „Danach in die Stille“ (Einstellungen › " +
+                    "Atemübung, oder oben in der laufenden Übung) geht die Atemübung nahtlos in eine " +
+                    "stille Meditation über.",
                 "Die Hatha-Lehre kennt auch *kevala kumbhaka*, eine Atemruhe, die von selbst entsteht, " +
                     "wenn der Geist still wird. Sie ist ein Bild der Lehre, kein Ziel zum Erzwingen: Lass " +
                     "den Atem in der Stille einfach kommen und gehen.",
@@ -140,8 +140,10 @@ object Pranayama {
                 "Bei Schwindel, Kribbeln, Druck oder Atemnot hörst du auf und atmest normal weiter. Nie " +
                     "pressen: Der Atem bleibt weich, auch beim Halten.",
                 "Bei Schwangerschaft, Bluthochdruck, Herz-, Lungen- oder Augenerkrankungen wie Glaukom " +
-                    "gilt: ohne Anleitung keine langen Halte, keine schnellen Techniken und keine Bandhas. " +
-                    "Langsames Atmen ohne Halten gilt als risikoarm; im Zweifel ärztlich abklären.",
+                    "(grüner Star), bei Epilepsie und bei Panik-, Angst- oder anderen psychischen " +
+                    "Erkrankungen gilt: ohne Anleitung keine langen Halte, keine schnellen Techniken und " +
+                    "keine Bandhas. Schnelles Atmen kann Panikgefühle auslösen. Langsames Atmen ohne " +
+                    "Halten gilt als risikoarm; im Zweifel ärztlich abklären.",
             ),
         ),
     )
@@ -175,7 +177,7 @@ object Pranayama {
                 "mit Querschnittlähmung hob Ujjayi die Sauerstoffsättigung leicht (Mazur 2024, explorativ). " +
                 "Den Nutzen trägt vermutlich vor allem das langsame Tempo; das Rauschen hilft, den Atem " +
                 "gleichmäßig zu halten.",
-            safety = "Kein Pressen und keine Valsalva-Atmung: Die Kehle ist nur leicht verengt, der Atem " +
+            safety = "Nicht pressen, kein Valsalva-Pressen: Die Kehle ist nur leicht verengt, der Atem " +
                 "fließt immer. Bei Schwindel, Druck im Kopf oder Atemnot aufhören und normal weiteratmen.",
             source = "Hatha Yoga Pradipika 2,51–2,53",
             exerciseId = "ujjayi",
@@ -307,9 +309,10 @@ object Pranayama {
                 "Ausführung häufig vom Text ab (Chetry 2022). Dass schnelles Atmen aktiviert, ist " +
                 "plausibel; eine Reinigung oder Entgiftung im wörtlichen Sinn ist nicht belegt.",
             safety = "Nie im oder am Wasser, nie beim Fahren, nur im Sitzen. Nicht bei Schwangerschaft, " +
-                "unkontrolliertem Bluthochdruck, Herzerkrankung, Epilepsie, Glaukom oder Hernie. Bei " +
-                "Schwindel sofort aufhören; nach kräftiger, langer Ausführung ist sehr selten ein " +
-                "Pneumothorax beschrieben (Johnson 2004).",
+                "unkontrolliertem Bluthochdruck, Herzerkrankung, Epilepsie, Glaukom (grüner Star), " +
+                "Hernie (Eingeweidebruch) oder Panikstörung. Bei Schwindel sofort aufhören; nach " +
+                "kräftiger, langer Ausführung ist sehr selten ein Lungenkollaps (Pneumothorax) " +
+                "beschrieben (Johnson 2004).",
             source = "Hatha Yoga Pradipika 2,35",
             exerciseId = "feueratmung",
         ),
@@ -346,13 +349,14 @@ object Pranayama {
                 "Halten (2,59–2,67). Nach der Lehre facht es *agni* an, das innere Feuer am Nabel.",
             howTo = "In der App gibt es Bhastrika bewusst nicht. Wer es lernen will, lernt es mit Lehrer, " +
                 "im Sitzen, anfangs langsam, mit wenigen Atemzügen und ohne langes Halten.",
-            studies = "Was Studien „Bhastrika“ nennen, weicht oft vom Text ab, vor allem in der Atemtiefe " +
-                "(Chetry 2022); die Ergebnisse lassen sich daher schwer vergleichen. Schnelles Atmen senkte " +
-                "in einer Studie die Herzratenvariabilität, es aktiviert (Chetry 2026). Die schnelle Form " +
-                "senkt das CO₂ im Blut wie die Wim-Hof-Atmung.",
+            studies = "Was Studien „Bhastrika“ nennen, weicht oft vom Text ab, vor allem in Tempo und " +
+                "Atemtiefe (Chetry 2022); die Ergebnisse lassen sich daher schwer vergleichen. In einer " +
+                "Studie hob ein tiefes, kaum verlangsamtes Bhastrika die Herzratenvariabilität, schnelles " +
+                "Atmen senkte sie (Chetry 2026, Geübte, nur Sofortwirkung). Die schnelle Form senkt das " +
+                "CO₂ im Blut wie die Wim-Hof-Atmung.",
             safety = "Wie bei Kapalabhati: nie im oder am Wasser, nie beim Fahren, nur im Sitzen. Nicht bei " +
-                "Schwangerschaft, Bluthochdruck, Herzerkrankung, Epilepsie oder Glaukom. Schwindel und " +
-                "Kribbeln sind das Zeichen, aufzuhören.",
+                "Schwangerschaft, Bluthochdruck, Herzerkrankung, Epilepsie, Glaukom (grüner Star) oder " +
+                "Panikstörung. Schwindel und Kribbeln sind das Zeichen, aufzuhören.",
             source = "Hatha Yoga Pradipika 2,59–2,67",
         ),
         PranayamaTechnique(
@@ -370,7 +374,7 @@ object Pranayama {
             studies = "Kaum untersucht. Ein Verschluss der Kehle bei vollem Atem kann dem Pressen " +
                 "(Valsalva) ähneln, das den Blutdruck schwanken lässt.",
             safety = "Nicht in der Schwangerschaft, bei Bluthochdruck, Herz- oder Augenerkrankungen wie " +
-                "Glaukom, bei Hernie oder nach Bauchoperationen. Immer auf leeren Magen und nur mit Anleitung.",
+                "Glaukom (grüner Star), bei Hernie (Eingeweidebruch) oder nach Bauchoperationen. Immer auf leeren Magen und nur mit Anleitung.",
             source = "Hatha Yoga Pradipika 2,45–2,46; Kap. 3",
         ),
     )
@@ -410,8 +414,8 @@ object Pranayama {
     val studyRefs: List<Reference> = listOf(
         Refs.zaccaro2018,
         Refs.laborde2022,
-        Refs.fincham2023,
-        Refs.finchamHvb2023,
+        Refs.fincham2023a,
+        Refs.fincham2023b,
         Refs.muetze2025,
         Refs.vanDiest2014,
         Refs.bae2021,

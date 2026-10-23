@@ -74,6 +74,11 @@ object Glossary {
                 "das bewusst, bei ruhigen Übungen ist es unerwünscht.",
         ),
         GlossaryTerm(
+            "Hypokapnie",
+            "Zu wenig Kohlendioxid im Blut, meist durch schnelles, tiefes Atmen (Hyperventilation). " +
+                "Zeichen sind Kribbeln, Schwindel und Benommenheit; normales Atmen gleicht es wieder aus.",
+        ),
+        GlossaryTerm(
             "Hormese",
             "Die Idee, dass kleine, dosierte Belastungsreize (z. B. Wim Hof) den Körper zur Anpassung " +
                 "anregen. Für Atemtechniken ist das kaum untersucht.",
@@ -85,8 +90,29 @@ object Glossary {
         ),
         GlossaryTerm(
             "PEM – Post-Exertional Malaise",
-            "Verschlechterung des Zustands nach Anstrengung (z. B. bei ME/CFS oder Long COVID). Dann nur " +
-                "sanfte Übungen zum Herunterregeln.",
+            "Verschlechterung des Zustands nach Anstrengung, oft erst Stunden später und über Tage " +
+                "(z. B. bei ME/CFS oder Long COVID). Darauf zielt der Anlass „Erschöpft“: nur sanfte, " +
+                "beruhigende Atmung, nichts Anstrengendes.",
+        ),
+        GlossaryTerm(
+            "Valsalva-Pressen",
+            "Pressen gegen die geschlossene Kehle, wie beim Heben einer schweren Last. Es lässt den " +
+                "Blutdruck stark schwanken; beim Atmen in der App bleibt die Kehle deshalb immer offen.",
+        ),
+        GlossaryTerm(
+            "Pneumothorax",
+            "Ein Lungenkollaps: Luft gelangt zwischen Lunge und Brustwand, die Lunge fällt teilweise " +
+                "zusammen. Zeichen sind plötzlicher Brustschmerz und Atemnot – ein Notfall.",
+        ),
+        GlossaryTerm(
+            "Glaukom",
+            "Grüner Star: eine Augenerkrankung, bei der meist ein erhöhter Augeninnendruck den Sehnerv " +
+                "schädigt. Kräftiges Pressen kann den Druck im Auge kurz erhöhen.",
+        ),
+        GlossaryTerm(
+            "Hernie",
+            "Ein Eingeweidebruch, etwa ein Leistenbruch: Gewebe drückt durch eine schwache Stelle der " +
+                "Bauchwand. Kräftige Bauchstöße und Pressen erhöhen den Druck im Bauch.",
         ),
     )
 

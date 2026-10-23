@@ -138,7 +138,7 @@ object Atemlehre {
                 "die Herzratenvariabilität, das zeigt eine Auswertung von 223 Studien (Laborde " +
                 "2022). Das Tempo zählt dabei mehr als das Verhältnis. Über viele Atemformen hinweg " +
                 "berichteten Übende in 12 Studien etwas weniger Stress als ohne Atemübung, ein " +
-                "kleiner bis mittlerer Effekt (Fincham 2023).",
+                "kleiner bis mittlerer Effekt (Fincham 2023a).",
             exerciseIds = listOf("nadi-shodhana", "dirgha"),
         ),
         LorePattern(
@@ -146,19 +146,22 @@ object Atemlehre {
             title = "Ein gleich Aus, schnell",
             linkName = "Feuer",
             rhythm = List(8) { listOf(inhale(1.0), exhale(1.0)) }.flatten(),
-            counts = "je etwa 1 s, kräftig",
+            counts = "je etwa 1\u00A0s, kräftig",
             teaser = "Schnelles, kräftiges Atmen gilt in der Yoga-Lehre als Feuer: stark wärmend.",
             teaching = "Bhastrika, der „Blasebalg“: Ein- und Ausatmen gleich kräftig und schnell. " +
                 "Nach der Lehre facht es *agni* an, das innere Feuer am Nabel. Die Hatha Yoga " +
                 "Pradipika (2,59–2,67) zählt es zu ihren acht *kumbhakas*; dort folgt dem Blasebalg " +
                 "ein Halten.",
             typical = "Bei Trägheit und Kälte, im Sitzen.",
-            studies = "Schnelles Atmen senkte in einer Studie die Herzratenvariabilität, es " +
-                "aktiviert (Chetry 2026). Es senkt auch das CO₂ im Blut; Schwindel und Kribbeln " +
-                "sind möglich.",
+            // Chetry 2026: Das dort geübte Bhastrika (tief, kaum verlangsamt) hob die HRV, nur die
+            // hochfrequente Atmung senkte sie – nicht dem Blasebalg zuschreiben (Inhalte-Review H1).
+            studies = "In einer Studie senkte schnelles, tiefes Atmen die Herzratenvariabilität; das " +
+                "dort geübte Bhastrika, tief und kaum verlangsamt, hob sie dagegen (Chetry 2026, " +
+                "Geübte, nur Sofortwirkung). Schnelles Atmen senkt zudem das CO₂ im Blut; Schwindel " +
+                "und Kribbeln sind möglich.",
             appNote = "Keine eigene Übung; verwandt ist die Atemphase von Wim Hof.",
             caution = true,
-            warning = "Nie im oder am Wasser, nicht beim Fahren.",
+            warning = "Nie im oder am Wasser, nicht beim Fahren; nur im Sitzen.",
         ),
         LorePattern(
             id = LoreIds.KAPALABHATI,
@@ -175,6 +178,7 @@ object Atemlehre {
             studies = "Kaum untersucht. Dass schnelles Atmen aktiviert, ist plausibel.",
             exerciseIds = listOf("feueratmung"),
             caution = true,
+            warning = "Nie im oder am Wasser, nicht beim Fahren; nur im Sitzen, auf leeren Magen.",
         ),
         LorePattern(
             id = LoreIds.HALTEN_VOLL,
@@ -228,8 +232,8 @@ object Atemlehre {
                 "das Atmen in ungleichen Verhältnissen. Die Lehre sieht darin eine Struktur, die " +
                 "den Geist ordnet.",
             typical = "Zum Fokussieren, wenn es drunter und drüber geht.",
-            studies = "In einer Studie hob täglich 5 Minuten Box-Atmung die Stimmung, aber weniger " +
-                "als Cyclic Sighing (Balban 2023).",
+            studies = "In einer Studie hoben täglich 5 Minuten Box-Atmung die Stimmung direkt nach dem " +
+                "Üben; deutlich stärker als Achtsamkeit war dort aber nur Cyclic Sighing (Balban 2023).",
             exerciseIds = listOf("box-4-4-4-4"),
         ),
         LorePattern(
@@ -260,7 +264,7 @@ object Atemlehre {
             teaser = "Einatmen in Stufen gilt als sanftes *bṛṃhaṇa*: aufbauen, ohne zu drängen.",
             teaching = "*viloma* heißt „gegen den Strich“: Das Einatmen wird in kleine Abschnitte mit " +
                 "kurzen Pausen geteilt, danach fließt das Ausatmen in einem Zug. Stufen beim " +
-                "Einatmen gelten als aufbauend (*bṛṃhaṇa*). Iyengar teilt in Abschnitte von 2–3 s " +
+                "Einatmen gelten als aufbauend (*bṛṃhaṇa*). Iyengar teilt in Abschnitte von 2–3\u00A0s " +
                 "mit ebenso langen Pausen, bis die Lunge voll ist. Die Pausen sind kurzes Halten, " +
                 "aber mitten im Einatmen statt nach dem vollen Atemzug.",
             typical = "Zum Einstieg, im Liegen, wenn lange Phasen noch nicht gehen.",
@@ -331,7 +335,7 @@ object Atemlehre {
     /** Studien, auf die sich die „Studien“-Zeilen der Karten stützen. */
     val studyRefs: List<Reference> = listOf(
         Refs.laborde2022,
-        Refs.fincham2023,
+        Refs.fincham2023a,
         Refs.vanDiest2014,
         Refs.bae2021,
         Refs.meehan2024,

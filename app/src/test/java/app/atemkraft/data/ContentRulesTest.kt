@@ -455,7 +455,8 @@ class ContentRulesTest {
      * TEXT-10: Dezimalkomma (`\d\.\d` außerhalb Kennungen), nur „…“ und ’ (kein ASCII-`"`, kein
      * `”`, kein ASCII-Apostroph zwischen Buchstaben), Trennpunkt „·“ nur nach geschütztem
      * Leerzeichen (sonst könnte der Umbruch ihn an den Zeilenanfang setzen, `DOT_SEPARATOR`), Zahl
-     * und Einheit („4\u00A0s“, „ca.\u00A0%1$d\u00A0min“) in `strings.xml` zusammen.
+     * und Einheit („4\u00A0s“, „ca.\u00A0%1$d\u00A0min“, „7\u00A0mmHg“, „93\u00A0%“) und Fallzahl
+     * („n\u00A0=\u00A040“) in `strings.xml`, allen Fachinhalten und Quellen zusammen.
      */
     @Test
     fun typography() {
@@ -475,8 +476,10 @@ class ContentRulesTest {
         val dots = (contentTexts + strings + refIds).mapNotNull { t ->
             if (Regex("""\s·""").containsMatchIn(t.value.replace("\u00A0·", ""))) Finding(t.id, "„ ·“ ohne geschütztes Leerzeichen") else null
         }
-        val units = strings.mapNotNull { t ->
-            Regex("""\d (s|min)\b""").find(t.value)?.let { Finding(t.id, "„${it.value}“ ohne geschütztes Leerzeichen") }
+        val refTexts = refs.map { (name, ref) -> Text("refs.$name.citation", ref.citation) }
+        val unitPattern = Regex("""\d (s|min|Hz|mmHg)\b|\d %|\bn ?= ?\d""")
+        val units = (contentTexts + strings + refTexts).mapNotNull { t ->
+            unitPattern.find(t.value)?.let { Finding(t.id, "„${it.value}“ ohne geschütztes Leerzeichen") }
         }
         // Die Phasennamen der Domain (PhaseNames) spiegeln strings.xml.
         val phaseNames = mapOf(

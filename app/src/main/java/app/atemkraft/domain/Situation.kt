@@ -12,9 +12,11 @@ enum class Situation {
 
 /**
  * Empfehlung für eine Situation: Titel, Ein-Satz-Begründung und die empfohlenen
- * Übungs-IDs (Reihenfolge = Priorität). [warning] ist der Sicherheitssatz intensiver
- * Empfehlungen: Er steht als ⚠-Zeile über den Übungen, nicht am Anlass-Chip (die Chips sind
- * neutral, MUSTER-09); `null` = nicht intensiv ([warn]).
+ * Übungs-IDs (Reihenfolge = Priorität). [warning] ist ein Sicherheitssatz: Er steht als ⚠-Zeile
+ * über den Übungen, nicht am Anlass-Chip (die Chips sind neutral, MUSTER-09) – bei intensiven
+ * Empfehlungen der Vorbehalt, bei „Kurzatmig“ der Verweis auf den Notruf. Ob eine Empfehlung
+ * intensiv ist ([warn]), sagt [intense]: Der Notfall-Satz macht „Kurzatmig“ nicht intensiv, der
+ * Anlass behält seine Suchbegriffe. Der Wortlaut von [warning] geht nie in die Suche ein.
  * [shortLabel] ist die kurze Beschriftung des Anlass-Chips im Tab „Atmen“ („Einschlafen“ statt
  * „Vor dem Einschlafen“); ohne eigene gilt der Titel.
  *
@@ -31,9 +33,14 @@ data class SituationRecommendation(
     val warning: String? = null,
     val keywords: List<String> = emptyList(),
     val shortLabel: String = title,
+    val intense: Boolean = false,
 ) {
+    init {
+        require(!intense || warning != null) { "Intensive Empfehlung ohne Sicherheitssatz: $title" }
+    }
+
     /** Intensive Empfehlung: Sie trägt einen Sicherheitssatz und keine Suchbegriffe. */
-    val warn: Boolean get() = warning != null
+    val warn: Boolean get() = intense
 }
 
 /**
@@ -57,8 +64,9 @@ data class BreathingArea(
  * zuerst genannten Übung; `null` ohne auflösbare Übung. Abgeleitet statt als eigenes Feld, weil
  * die Ableitung für alle sechs Anlässe fachlich trägt:
  * - Akuter Stress (Seufzer, zyklisches Seufzen) → A · Herunterregeln: langer Ausatem, beruhigen.
- * - Kurzatmig oder aufgeregt (Lippenbremse, Gehen, Buteyko, Nasenatmung) → D · Funktionell: Es
- *   geht um das Atemmuster selbst, flaches, hektisches Atmen wieder gleichmäßig.
+ * - Kurzatmig oder aufgeregt (Lippenbremse, Gehen) → D · Funktionell: Es geht um das Atemmuster
+ *   selbst, flaches, hektisches Atmen wieder gleichmäßig. Buteyko und Nasenatmung (ohne Start)
+ *   stehen im Bereich, nicht in der Empfehlung.
  * - Vor dem Einschlafen (4-7-8, Resonanz, Sitali) → A · Herunterregeln.
  * - Konzentration & Fokus (Box) → C · Balancieren: ruhig und zugleich wach, gleichmäßiger Takt.
  * - Wach & energiegeladen werden (Wim Hof, Feueratmung) → B · Hochregeln.

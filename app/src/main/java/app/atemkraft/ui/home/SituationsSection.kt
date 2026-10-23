@@ -113,8 +113,9 @@ private fun SituationSearchField(query: String, onQueryChange: (String) -> Unit)
 }
 
 /**
- * Kopf einer Empfehlung unter dem Block: der Begründungssatz, bei der intensiven Situation
- * darunter ihre ⚠-Zeile ([WarnText], FARBE-05) – die Chips selbst sind neutral. [withTitle]:
+ * Kopf einer Empfehlung unter dem Block: der Begründungssatz, darunter ihre ⚠-Zeile ([WarnText],
+ * FARBE-05), wenn sie eine hat (intensive Situation, Notfall-Satz bei „Kurzatmig“) – die Chips
+ * selbst sind neutral. [withTitle]:
  * Stehen mehrere Ergebnisse untereinander (Suchtreffer), nennt ein [SubLabel] den Anlass; bei
  * einem einzelnen trägt ihn der markierte Chip. Darunter folgen die Übungskarten als eigene
  * Listeneinträge und zuletzt der Verweis auf den Bereich ([AreaLink]).

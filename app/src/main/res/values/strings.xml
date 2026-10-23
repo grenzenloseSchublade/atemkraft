@@ -234,7 +234,7 @@
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>
     <!-- Tab „Lernen“: je Kapitel ein Satz, was drin steht. -->
-    <string name="learn_subtitle">Yoga-Lehre und Praxis, ehrlich eingeordnet</string>
+    <string name="learn_subtitle">Yoga-Lehre und Praxis, mit Studienlage</string>
     <string name="learn_atemlehre_hint">Phasen, vāyus, Regeln und Muster</string>
     <string name="learn_pranayama_hint">Grundlagen und Techniken, mit Übungen zum Ausprobieren</string>
     <string name="learn_glossary_hint">Studien, HRV und Yoga-Begriffe</string>
@@ -277,8 +277,8 @@
     <string name="about_last_error">Ein Vorgang im Hintergrund ist fehlgeschlagen (%1$s). Die App läuft weiter; eine Änderung wurde womöglich nicht gespeichert.</string>
     <!-- Die Zahl kommt aus dem Übungskatalog (BuiltInExercises.all), nie fest im Text. -->
     <plurals name="about_body">
-        <item quantity="one">%1$d Atemtechnik mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
-        <item quantity="other">%1$d Atemtechniken mit Quellen und ehrlicher Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
+        <item quantity="one">%1$d Atemtechnik mit Quellen und Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
+        <item quantity="other">%1$d Atemtechniken mit Quellen und Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
     </plurals>
     <string name="about_disclaimer">Mit Quellen, aber keine ärztliche Empfehlung. Quellen stehen je Übung im Detail, Fachbegriffe unter „Begriffe erklärt“. Bei Erkrankungen vorher ärztlich abklären.</string>
     <string name="settings_next_phase">Nächste Phase</string>
@@ -416,7 +416,7 @@
     <string name="sound_mode_cues_hint">Ein kurzer Ton bei jedem Phasenwechsel, am Ende ein Gong.</string>
     <string name="sound_mode_continuous_hint">Ein leiser Ton begleitet den ganzen Atemzug: Er steigt beim Einatmen und sinkt beim Ausatmen.</string>
     <string name="settings_sound_more">Wie funktioniert das?</string>
-    <string name="settings_sound_hint">Klinische Atemtrainer wie RESPeRATE führen den Atem nach demselben Prinzip. Langsames, gleichmäßiges Atmen erhöht in Studien die HRV, die Schwankung zwischen den Herzschlägen (Zaccaro 2018). Keine esoterischen Heilfrequenzen.</string>
+    <string name="settings_sound_hint">Klinische Atemtrainer wie RESPeRATE führen den Atem nach demselben Prinzip. Langsames, gleichmäßiges Atmen erhöht in Studien die HRV, die Schwankung zwischen den Herzschlägen (Zaccaro 2018). Eine eigene Wirkung der Tonhöhe ist nicht belegt.</string>
     <string name="emphasis_title">Wechsel betonen</string>
     <string name="emphasis_soft">Sanft</string>
     <string name="emphasis_medium">Mittel</string>

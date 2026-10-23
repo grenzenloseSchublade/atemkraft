@@ -41,7 +41,7 @@ object PatternTexts {
             effectDetail = "Das Muster entsteht deterministisch aus dem Datum: Stil und " +
                 "Phasenlängen werden zufällig gewählt, aber in Grenzen gehalten, die der " +
                 "Forschung zu langsamem Atmen entsprechen (ruhig: 4,6–6,7 Atemzüge pro Minute, " +
-                "Ausatmen ≥ Einatmen, Halten ≤ 4 s; aktivierend: Einatmen länger, nie forciert). " +
+                "Ausatmen ≥ Einatmen, Halten ≤ 4\u00A0s; aktivierend: Einatmen länger, nie forciert). " +
                 "Für regelmäßiges Üben ist ein konstantes Muster – etwa die Resonanz-Atmung – " +
                 "die besser belegte Wahl; das Tagesmuster ist die Einladung, Neues zu entdecken.",
         )

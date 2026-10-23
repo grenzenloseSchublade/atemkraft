@@ -29,6 +29,15 @@ object Situations {
     const val INTENSE_WARNING = "Nur üben, wenn du dich gesund und ausgeruht fühlst – im Sitzen, " +
         "nie beim Fahren oder im/am Wasser."
 
+    /**
+     * Notfall-Satz des Anlasses „Kurzatmig“, als ⚠-Zeile über den Übungen (TEXT-08): Wer akut
+     * keine Luft bekommt, tippt genau diesen Chip an. Atemnot mit Brustschmerz kann ein
+     * Herzinfarkt oder eine Lungenembolie sein; für Asthma gilt der eigene Notfallplan (wie bei
+     * Buteyko). Er macht den Anlass nicht intensiv ([SituationRecommendation.intense]).
+     */
+    const val BREATHLESS_WARNING = "Bei plötzlicher, starker Atemnot oder Brustschmerz: Notruf 112, " +
+        "keine Übung. Bei Asthma gilt dein Notfallplan."
+
     val all: List<SituationRecommendation> = listOf(
         SituationRecommendation(
             situation = Situation.ACUTE_STRESS,
@@ -51,15 +60,22 @@ object Situations {
             situation = Situation.BREATHLESSNESS,
             title = "Kurzatmig oder aufgeregt",
             shortLabel = "Kurzatmig",
+            // Nur Übungen mit Start (UX-Review 2026-10-23): Buteyko und Nasenatmung sind Infoseiten
+            // ohne Takt und wären hier eine Sackgasse; der Satz verweist auf den Bereich darunter
+            // („Mehr aus …“), in dem beide stehen.
             rationale = "Bringt hektisches, flaches Atmen wieder in einen ruhigen, " +
-                "gleichmäßigen Rhythmus.",
-            exerciseIds = listOf("lippenbremse", "walking-breath", "buteyko", "nasenatmung"),
+                "gleichmäßigen Rhythmus. Buteyko und Nasenatmung sind Trainings über Wochen; du " +
+                "findest sie im Bereich darunter.",
+            exerciseIds = listOf("lippenbremse", "walking-breath"),
+            warning = BREATHLESS_WARNING,
             keywords = listOf(
                 "nervös", "Nervosität", "Aufregung", "hektisch", "Hektik", "gehetzt", "abgehetzt", "unruhig",
                 "Unruhe", "ruhelos", "rastlos", "getrieben", "zappelig", "hibbelig", "Lampenfieber", "Auftritt", "Bühne", "Rede",
                 "erstes Date", "Hochzeit", "Vorfreude", "außer Atem", "aus der Puste", "schnaufen", "Treppe",
-                "Treppensteigen", "bergauf", "Spaziergang", "spazieren", "Fahrrad", "Joggen", "Jogging", "Laufen", "Training", "Sport",
-                "aufgedreht", "kribbelig", "Vorspielen", "Wandern", "Schwimmen", "Radfahren",
+                "Treppensteigen", "bergauf", "Spaziergang", "spazieren", "Joggen", "Jogging", "Laufen", "Training", "Sport",
+                "aufgedreht", "kribbelig", "Vorspielen", "Wandern",
+                // Bewusst nicht: „Schwimmen“ (Atemübungen nie im oder am Wasser), „Fahrrad“,
+                // „Radfahren“ (Atmen im Gehen lenkt im Verkehr ab).
             ),
         ),
         SituationRecommendation(
@@ -96,9 +112,11 @@ object Situations {
             situation = Situation.HIGH_PHASE,
             title = "Wach & energiegeladen werden",
             shortLabel = "Wach werden",
-            rationale = "Ein kräftiger, anregender Atem-Reiz, der aktiviert und wach macht.",
+            // „soll“: Dass die Feueratmung wach macht, ist kaum untersucht (TEXT-07).
+            rationale = "Ein kräftiger Atem-Reiz, der anregen und wach machen soll.",
             exerciseIds = listOf("wim-hof", "feueratmung"),
             warning = INTENSE_WARNING,
+            intense = true,
             // Bewusst keine keywords: Sie würden Leute aktiv zu Hyperventilationstechniken
             // schicken, obwohl die Situation selbst einschränkt („nur, wenn du dich gesund …“).
         ),
@@ -106,8 +124,9 @@ object Situations {
             situation = Situation.CRASH,
             title = "Erschöpft oder ausgelaugt",
             shortLabel = "Erschöpft",
+            // Der Nachsatz meint Erschöpfung nach Anstrengung (PEM, Glossar), ohne Diagnose zu nennen.
             rationale = "Nur sanfte, beruhigende Atmung – nichts Anstrengendes, das zusätzlich " +
-                "auslaugt.",
+                "auslaugt; das gilt besonders, wenn Anstrengung dich tageweise zurückwirft.",
             exerciseIds = listOf("resonanz", "cyclic-sighing"),
             keywords = listOf(
                 "müde", "Müdigkeit", "Erschöpfung", "schlapp", "kaputt", "erledigt", "fertig", "platt",
