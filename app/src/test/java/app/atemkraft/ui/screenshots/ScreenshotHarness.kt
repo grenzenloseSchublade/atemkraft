@@ -59,6 +59,7 @@ import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.CurveAxisSeconds
 import app.atemkraft.ui.components.CurveHeightRange
 import app.atemkraft.ui.components.HideableTabBar
+import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
@@ -445,7 +446,9 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
                 val last = layout.lineCount - 1
                 val truncated = last >= 0 &&
                     (layout.isLineEllipsized(last) || layout.getLineEnd(last, visibleEnd = true) < text.trimEnd().length)
-                val clipped = if (truncated) listOf("ABGESCHNITTEN\t$screen\t$text") else emptyList()
+                // Ausnahme (LAYOUT-03): Laufschrift-Titel enden nach ihrem Lauf mit „…“.
+                val marqueeDone = node.config.getOrNull(SemanticsProperties.TestTag) == MARQUEE_TEXT_TAG && layout.lineCount == 1
+                val clipped = if (truncated && !marqueeDone) listOf("ABGESCHNITTEN\t$screen\t$text") else emptyList()
                 // Chips bleiben einzeilig; zu viele Chips brechen zwischen den Chips um (TitleWithChips).
                 val chipWrap = node.config.getOrNull(SemanticsProperties.TestTag) == CHIP_TEXT_TAG && layout.lineCount > 1
                 breaks + clipped + if (chipWrap) listOf("CHIP_UMBRUCH\t$screen\t$text") else emptyList()
