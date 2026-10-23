@@ -253,7 +253,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Muster-Editor in Listenhöhe: Vorlage „Viloma I“ (sieben Phasen), zweite Phase gewählt,
      * „Ablauf“ und „Aus der Yoga-Lehre“ aufgeklappt; dann laufende Vorschau (Uhr fest, Punkt in
-     * „Halten voll“) mit dem Phasennamen am Kopf „Atemzug“.
+     * „Halten voll“) mit dem Phasennamen in der Startzeile.
      */
     @Test
     fun patternEditor() {
@@ -279,7 +279,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     @Test
     fun patternEditorTemplates() {
         assumeTrue(worstCase)
-        snap("14_muster_editor_startpunkt_offen", tab = Tab.EIGENE, screen = true, prepare = {
+        snap("14_muster_editor_startpunkt_offen", tab = Tab.EIGENE, tabBar = false, screen = true, prepare = {
             compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "Box")).performClick()
             compose.waitForIdle()
         }) {

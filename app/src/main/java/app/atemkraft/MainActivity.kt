@@ -89,14 +89,13 @@ import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.AppNavItem
 import app.atemkraft.ui.components.AppNavigationBar
 import app.atemkraft.ui.components.HideableTabBar
-import app.atemkraft.ui.components.TabBarSpace
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.detail.rememberDetailExercise
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
+import app.atemkraft.ui.isTabRoot
 import app.atemkraft.ui.log.LogbookScreen
-import app.atemkraft.ui.mayHideTabBar
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.meditation.MiniMeditationBar
@@ -232,9 +231,6 @@ private fun AtemkraftApp(
     // (A11Y-07, MUSTER-07): Sonst führte Wischen hinter „Beenden“ auf unsichtbare Karten und Tabs.
     val overlayOpen = (sessionActive && sessionExpanded) || (meditationActive && meditationExpanded)
 
-    // Platz der Tab-Leiste, den der Muster-Editor bei Platzmangel für sich beansprucht ([HideableTabBar]).
-    val tabBarSpace = remember { TabBarSpace() }
-
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
         // minimiert erscheinen sie als „Now-Playing"-Mini-Leiste über der Tab-Leiste.
@@ -252,8 +248,8 @@ private fun AtemkraftApp(
                             MiniMeditationBar(state = state, onClick = { meditationExpanded = true })
                         }
                     }
-                    // Im Muster-Editor nur bei Platzmangel ausgeblendet (MUSTER-10, Nutzer 2026-10-22).
-                    HideableTabBar(tabBarSpace, allowHide = currentDestination.mayHideTabBar()) {
+                    // Nur auf den vier Tabs; in der Tiefe weicht sie dem Inhalt (Nutzer 2026-10-23).
+                    HideableTabBar(visible = currentDestination.isTabRoot()) {
                         AppNavigationBar(
                             listOf(
                                 AppNavItem(
@@ -436,7 +432,6 @@ private fun AtemkraftApp(
                             navController.popBackStack()
                         },
                         onBack = { navController.popBackStack() },
-                        tabBar = tabBarSpace,
                         onOpenLore = { patternId -> navController.navigate(AtemlehreRoute(patternId)) },
                         marked = id in markedExercises,
                         onMarkedChange = if (markable) {
@@ -492,7 +487,6 @@ private fun AtemkraftApp(
                         onConfirmedSafety = {
                             scope.launch { container.settingsRepository.setSafetyAcknowledged(true) }
                         },
-                        tabBar = tabBarSpace,
                     )
                 }
                 pushComposable<SettingsRoute> { entry ->

@@ -11,8 +11,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Muster-Editor in Gerätehöhe ([TestMatrix.DEVICE_CONFIGS]): Kurve und Werkzeugleiste stehen bis
- * Schrift 1,3 ohne Scrollen da, die Tab-Leiste weicht genau dann, wenn es sonst nicht passt
- * (MUSTER-10, [editorFit]).
+ * Schrift 1,3 ohne Scrollen da; die Tab-Leiste steht in der Tiefe nie (MUSTER-10, [editorFit]).
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -26,12 +25,12 @@ class DeviceFitTest(device: Device, fontScale: Float) : ScreenshotHarness(device
     }
 
     /**
-     * Ungünstigster Fall: intensives Muster (4-7-8 mit Halten voll 12 s, Chip „intensiv“ am Kopf
-     * „Atemzug“, Hinweiskarte), Startpunkt „angepasst“, längster Phasenname „Halten voll“ in der
+     * Ungünstigster Fall: intensives Muster (4-7-8 mit Halten voll 12 s, Chip „intensiv“ neben dem
+     * Namen, Hinweiskarte), Startpunkt „angepasst“, längster Phasenname „Halten voll“ in der
      * Werkzeugleiste.
      */
     @Test
-    fun patternEditor() = snap("14_muster_editor_kompakt", tab = Tab.EIGENE, measure = { editorFit("14_muster_editor_kompakt") }) {
+    fun patternEditor() = snap("14_muster_editor_kompakt", tab = Tab.EIGENE, tabBar = false, measure = { editorFit("14_muster_editor_kompakt") }) {
         Editor {
             PatternEditorState.new(it, template("4-7-8")).apply {
                 setSeconds(1, 12)

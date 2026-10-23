@@ -97,87 +97,27 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
 /** Deckkraft der Trennlinie über der Tab-Leiste. */
 private const val TAB_DIVIDER_ALPHA = 0.22f
 
-/** Pfeil des [TabBarToggle] nach unten gedreht (Grad). */
-private const val HALF_TURN = 180f
-
 /**
- * Platz der Tab-Leiste für eine Seite, die sie ausblenden darf: der Muster-Editor bei Platzmangel
- * (MUSTER-10, Nutzer 2026-10-22), die Detailseite beim Scrollen und über [TabBarToggle] (Nutzer
- * 2026-10-23). Der Rahmen ([HideableTabBar]) misst [heightPx] und setzt [hidden]; die Seite meldet
- * über [request], ob sie den Platz braucht. Nur die Seiten, die das dürfen, bekommen ihn als Parameter.
- */
-@Stable
-class TabBarSpace {
-    /** So viel Höhe (px) nimmt die Leiste samt Trennlinie dem Inhalt, ohne Systemnavigation; 0, solange nie gemessen. */
-    var heightPx by mutableIntStateOf(0)
-        internal set
-
-    /** Wunsch der Seite: Leiste ausblenden ([request]). */
-    var requested by mutableStateOf(false)
-        private set
-
-    /** True, solange die Leiste ausgeblendet ist (setzt [HideableTabBar]). */
-    var hidden by mutableStateOf(false)
-        internal set
-
-    /** Die Seite braucht den Platz der Leiste ([hide]) bzw. nicht. */
-    fun request(hide: Boolean) {
-        requested = hide
-    }
-}
-
-/**
- * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]). Ausgeblendet, wenn [allowHide]
- * (die Seite, die das darf, liegt oben) und sie es über [space] wünscht – dann bleibt nur der Platz
- * der Systemnavigation [systemInsets], die Leiste der Seite sitzt darüber. Verlässt man die Seite
- * ([allowHide] false), ist die Leiste sofort wieder da.
+ * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), nur auf den vier Tabs
+ * ([visible], `isTabRoot`). In der Tiefe bleibt nur der Platz der Systemnavigation [systemInsets];
+ * die Höhe gleitet dabei (Default-Spring, MOTION-04), sodass eine Startleiste darüber sanft
+ * hinab- bzw. hinaufrutscht, statt um die ganze Leiste zu springen.
  */
 @Composable
 fun HideableTabBar(
-    space: TabBarSpace,
-    allowHide: Boolean,
+    visible: Boolean,
     modifier: Modifier = Modifier,
     systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
     bar: @Composable () -> Unit,
 ) {
-    val hide = allowHide && space.requested
-    SideEffect { space.hidden = hide }
-    val inset by rememberUpdatedState(systemInsets.getBottom(LocalDensity.current))
-    // Die Höhe gleitet (Default-Spring, MOTION-04): Die Startleiste darüber rutscht sanft hinab
-    // bzw. hinauf, statt um die ganze Leiste zu springen.
     Box(modifier.animateContentSize()) {
-        if (hide) {
-            Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
-        } else {
-            Column(Modifier.onSizeChanged { space.heightPx = it.height - inset }) {
+        if (visible) {
+            Column {
                 HorizontalDivider(thickness = Dimens.BorderThin, color = NeonMagenta.copy(alpha = TAB_DIVIDER_ALPHA))
                 bar()
             }
+        } else {
+            Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
         }
-    }
-}
-
-/**
- * Kleiner Pfeil am Ende der Startleiste, der die Tab-Leiste ein- und ausblendet ([space]): nach oben,
- * solange sie weg ist („Tab-Leiste zeigen“), nach unten, solange sie da ist. Statt hochzuscrollen,
- * bis die Leiste vielleicht wiederkommt, holt ein Tipp sie sicher zurück (Nutzer 2026-10-23).
- * [onToggle] meldet der Seite die Wahl von Hand – danach blendet Scrollen nicht mehr aus.
- */
-@Composable
-fun TabBarToggle(space: TabBarSpace, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    val turn by animateFloatAsState(if (space.requested) 0f else HALF_TURN, label = "tabBarToggle")
-    AppIconButton(
-        onClick = {
-            space.request(!space.requested)
-            onToggle()
-        },
-        modifier = modifier,
-    ) {
-        Icon(
-            Icons.Filled.KeyboardArrowUp,
-            contentDescription = stringResource(if (space.requested) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-            modifier = Modifier.rotate(turn),
-        )
     }
 }

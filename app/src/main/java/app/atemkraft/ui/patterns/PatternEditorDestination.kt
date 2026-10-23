@@ -22,7 +22,6 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.ui.components.PushHeader
-import app.atemkraft.ui.components.TabBarSpace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -67,7 +66,6 @@ internal fun PatternEditorDestination(
     otherAudioActive: Boolean = false,
     requireSafetyConfirm: Boolean = true,
     onConfirmedSafety: () -> Unit = {},
-    tabBar: TabBarSpace? = null,
 ) {
     val writes = remember { Mutex() }
     val missing by rememberUpdatedState(onMissing)
@@ -84,7 +82,6 @@ internal fun PatternEditorDestination(
             otherAudioActive = otherAudioActive,
             requireSafetyConfirm = requireSafetyConfirm,
             onConfirmedSafety = onConfirmedSafety,
-            tabBar = tabBar,
         )
     }
 

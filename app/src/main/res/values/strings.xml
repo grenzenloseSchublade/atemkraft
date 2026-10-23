@@ -63,8 +63,6 @@
     <!-- Befindens-Suche: Platzhalter muss bei 360 dp und Schrift 2,0 einzeilig passen (LAYOUT-03). -->
     <string name="situations_search_placeholder">Wie fühlst du dich?</string>
     <string name="cd_search_open">Situationen durchsuchen</string>
-    <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
-    <string name="cd_tab_bar_hide">Tab-Leiste ausblenden</string>
     <string name="cd_search_clear">Eingabe löschen</string>
     <string name="cd_search_close">Suche schließen</string>
     <plurals name="situations_search_count">
@@ -132,8 +130,7 @@
          TalkBack liest die Plural-Form. %2$s = die Rate (pattern_editor_rate_short, für TalkBack
          cd_pattern_editor_rate bzw. _one): Atemzüge pro Minute mit deutschem Komma, gesprochen
          genau „1“ in der Einzahl; „6/min“ bricht nicht am Schrägstrich (Wortverbinder U+2060). -->
-    <string name="pattern_editor_breath">Atemzug</string>
-    <string name="pattern_editor_cycle" tools:ignore="PluralsCandidate">· %1$d\u00A0s\u00A0· %2$s</string>
+    <string name="pattern_editor_cycle" tools:ignore="PluralsCandidate">%1$d\u00A0s\u00A0· %2$s</string>
     <string name="pattern_editor_rate_short">%1$s\u2060/\u2060min</string>
     <string name="cd_pattern_editor_rate" tools:ignore="PluralsCandidate">%1$s Atemzüge pro Minute</string>
     <string name="cd_pattern_editor_rate_one">1 Atemzug pro Minute</string>

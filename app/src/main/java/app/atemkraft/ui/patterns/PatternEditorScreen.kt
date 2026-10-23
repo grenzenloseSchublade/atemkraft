@@ -1,5 +1,6 @@
 package app.atemkraft.ui.patterns
 
+import android.animation.ValueAnimator
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
@@ -8,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -98,6 +100,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -138,7 +141,6 @@ import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.StartPlayButton
-import app.atemkraft.ui.components.TabBarSpace
 import app.atemkraft.ui.components.TonalPillButton
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.accentBorder
@@ -188,8 +190,6 @@ import kotlinx.coroutines.launch
  *
  * Ton der Vorschau ([rememberPreviewSound]): Klang-Einstellungen der App [cueSettings]; still,
  * solange eine Übung oder Meditation läuft ([otherAudioActive]). [soundOutput] tauschen nur Tests.
- *
- * [tabBar]: Platz der Tab-Leiste der App – reicht er nicht, blendet der Editor sie aus ([FirstScreen]).
  */
 @Composable
 fun PatternEditorScreen(
@@ -203,7 +203,6 @@ fun PatternEditorScreen(
     requireSafetyConfirm: Boolean = true,
     onConfirmedSafety: () -> Unit = {},
     soundOutput: (Context) -> PreviewSoundOutput = ::AppPreviewSoundOutput,
-    tabBar: TabBarSpace? = null,
 ) {
     val exercise = state.exercise()
     val config = state.config()
@@ -254,9 +253,16 @@ fun PatternEditorScreen(
                 ) {
                     FirstScreen(
                         viewport = viewport,
-                        tabBar = tabBar,
                         header = {
-                            Breath(state, phase = phaseIndex.takeIf { preview.playing }) {
+                            StartRow(
+                                state = state,
+                                phase = phaseIndex.takeIf { preview.playing },
+                                focus = startFocus,
+                                onPickStart = {
+                                    preview.pause()
+                                    showTemplates = true
+                                },
+                            ) {
                                 CurvePreviewControls(preview) { PreviewSoundSwitch(sound) }
                             }
                         },
@@ -283,10 +289,6 @@ fun PatternEditorScreen(
                     state = state,
                     approxMinutes = approxMinutes,
                     focus = startFocus,
-                    onPickStart = {
-                        preview.pause()
-                        showTemplates = true
-                    },
                     onStart = { if (exercise.caution && requireSafetyConfirm) showSafety = true else start() },
                 )
             }
@@ -324,17 +326,12 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
 }
 
 /**
- * Der erste Bildschirm des Editors (Nachtrag 5 und 6): Kopf „Atemzug“ [header], Atemkurve [curve]
+ * Der erste Bildschirm des Editors (Nachtrag 5 und 6): Startzeile [header], Atemkurve [curve]
  * und Werkzeugleiste [toolbar] untereinander. Die Kurve bekommt die Höhe, mit der alles zusammen in
  * die sichtbare Höhe [viewport] (px) der Scroll-Fläche passt – bevorzugt ihre volle, auf kleinen
  * Bildschirmen weniger, nie unter ihre Mindesthöhe ([BreathCurveHeights.fit]); reicht auch die
- * nicht, scrollt die Seite.
- *
- * Tab-Leiste (Nutzer 2026-10-22): Passen Kopf, Kurve in Mindesthöhe und Werkzeugleiste mit der
- * Tab-Leiste nicht, bittet der Editor sie über [tabBar] auszublenden; die gewonnene
- * Höhe bekommt die Kurve. Entschieden einmal je Fenstergröße und Schrift, beim ersten Messen –
- * ist die Leiste da schon ausgeblendet, zählt ihre Höhe wieder dazu, also fällt die Entscheidung
- * gleich aus und kippt nicht hin und her.
+ * nicht, scrollt die Seite. Die Tab-Leiste steht im Editor nie (Tiefe, Nutzer 2026-10-23), ihre
+ * Höhe gehört der Kurve.
  *
  * Kopf und Werkzeugleiste behalten beim Bearbeiten ihre Höhe (Platz für die längsten Texte
  * reserviert), also auch die Kurve – nichts springt beim Auswählen, Hinzufügen oder Entfernen.
@@ -342,26 +339,17 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
 @Composable
 private fun FirstScreen(
     viewport: Int,
-    tabBar: TabBarSpace?,
     header: @Composable () -> Unit,
     curve: @Composable () -> Unit,
     toolbar: @Composable () -> Unit,
 ) {
     val heights = rememberBreathCurveHeights()
-    val window = LocalWindowInfo.current.containerSize
-    val fontScale = LocalDensity.current.fontScale
-    val tabBarDecision = remember(tabBar, window, fontScale) { Decision() }
     Layout(contents = listOf(header, curve, toolbar)) { (headerSlot, curveSlot, toolbarSlot), constraints ->
         val width = constraints.maxWidth
         val loose = Constraints(maxWidth = width)
         val head = headerSlot.map { it.measure(loose) }
         val tools = toolbarSlot.map { it.measure(loose) }
         fun List<Placeable>.height() = sumOf { it.height }
-        if (tabBar != null && viewport != Constraints.Infinity && !tabBarDecision.made) {
-            tabBarDecision.made = true
-            val withTabBar = viewport - if (tabBar.hidden) tabBar.heightPx else 0
-            tabBar.request(withTabBar < head.height() + heights.min.roundToPx() + tools.height())
-        }
         val curveHeight = if (viewport == Constraints.Infinity) {
             heights.preferred.roundToPx()
         } else {
@@ -379,37 +367,26 @@ private fun FirstScreen(
     }
 }
 
-/** Einmal getroffene Entscheidung (Tab-Leiste im [FirstScreen]); kein State, sie löst nichts neu aus. */
-private class Decision {
-    var made = false
-}
-
 /**
- * Feste Leiste unten (Nachtrag 6 und 7), eine Zeile, alle Bedienelemente sichtbar gleich hoch
- * ([Sizes.IconButtonSize], ein Größentoken je Leiste, LAYOUT-04): links der Startpunkt als tonale
- * Pille „▦ Box“ bzw. „▦ angepasst“ ([TonalPillButton]; [onPickStart] öffnet die Vorlagen,
- * [TemplateSheet]; gesprochen „Startpunkt wählen, aktuell: Box“), mittig die Dauer „− 5 min +“
- * ([CompactStepper], 1–30 min, ändert nie die Folge); rechts, nur wenn geändert, Zurücksetzen auf
- * den Stand beim Öffnen (Kreispfeil, tonal) und Play ([StartPlayButton], hervorgehoben nur durch die
- * Füllung in `primary`): startet die Übung ([onStart], gesprochen „Übung starten, ca. 5 Minuten“).
- * Aufteilung mit gleichen Lücken und ohne Springen: [StartBar].
+ * Feste Leiste unten (Nachtrag 6 und 7; der Startpunkt steht seit 2026-10-23 oben in der
+ * [StartRow]), alle Bedienelemente sichtbar gleich hoch ([Sizes.IconButtonSize], ein Größentoken je
+ * Leiste, LAYOUT-04): links die Dauer „− 5 min +“ ([CompactStepper], 1–30 min, ändert nie die
+ * Folge); rechts, nur wenn geändert, Zurücksetzen auf den Stand beim Öffnen (Kreispfeil, tonal) und
+ * Play ([StartPlayButton], hervorgehoben nur durch die Füllung in `primary`): startet die Übung
+ * ([onStart], gesprochen „Übung starten, ca. 5 Minuten“). Eine Zeile, solange beides nebeneinander
+ * passt (gemessen mit „30 min“ und mit Zurücksetzen, damit nichts springt), sonst Play rechts
+ * darunter ([LeadingAndEnd]).
  *
  * Fokus (A11Y-07): Löst man Zurücksetzen per Tastatur aus, verschwindet der Knopf, der Fokus geht
- * auf Play. Nach der Wahl einer Vorlage geht er auf das Startpunkt-Pille, das einmal ansagt, was
- * jetzt gilt („Startpunkt wählen, aktuell: Viloma I“) – bis sich die Folge ändert.
+ * auf Play; [StartFocus.pending] fokussiert auch die Startpunkt-Pille nach der Wahl einer Vorlage.
  */
 @Composable
 private fun ActionBar(
     state: PatternEditorState,
     approxMinutes: Int,
     focus: StartFocus,
-    onPickStart: () -> Unit,
     onStart: () -> Unit,
 ) {
-    val current = state.template?.label ?: stringResource(R.string.adjust_modified)
-    val startDescription = stringResource(R.string.cd_pattern_editor_start, current)
-    val announce = focus.announces(state.pattern)
-    LaunchedEffect(state.pattern) { focus.forgetUnless(state.pattern) }
     LaunchedEffect(focus.pending) {
         focus.pending?.let {
             it.requestFocus()
@@ -418,22 +395,8 @@ private fun ActionBar(
     }
     var resetFocused by remember { mutableStateOf(false) }
     val playDescription = stringResource(R.string.cd_pattern_editor_play, pluralStringResource(R.plurals.cd_duration_minutes, approxMinutes, approxMinutes))
-    val grid = painterResource(R.drawable.ic_grid_view)
-    // Alles, was die Pille zeigen kann: jede Vorlage und „angepasst“.
-    val labels = FreePatternTemplates.all.map { it.label } + stringResource(R.string.adjust_modified)
-    StartBar(
-        pill = { showLabel ->
-            TonalPillButton(
-                onClick = onPickStart,
-                icon = grid,
-                label = current.takeIf { showLabel },
-                description = startDescription,
-                modifier = Modifier
-                    .focusRequester(focus.start)
-                    .semantics { if (announce) liveRegion = LiveRegionMode.Polite },
-            )
-        },
-        stepper = { DurationStepper(state.minutes) { state.minutes = it } },
+    LeadingAndEnd(
+        leading = { DurationStepper(state.minutes) { state.minutes = it } },
         end = {
             Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                 AnimatedVisibility(
@@ -452,11 +415,7 @@ private fun ActionBar(
                 StartPlayButton(onClick = onStart, description = playDescription, modifier = Modifier.focusRequester(focus.play))
             }
         },
-        // Entschieden für die breiteste Beschriftung, „30 min“ und mit Zurücksetzen: Die Leiste
-        // springt beim Bearbeiten nicht um.
-        pillLabelReserve = { Box { labels.forEach { TonalPillButton(onClick = {}, icon = grid, label = it, description = "") } } },
-        pillIconReserve = { TonalPillButton(onClick = {}, icon = grid, label = null, description = "") },
-        stepperReserve = { DurationStepper(AdjustLimits.MINUTES.last) {} },
+        leadingReserve = { DurationStepper(AdjustLimits.MINUTES.last) {} },
         endReserve = {
             Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                 ResetButton(onClick = {})
@@ -465,61 +424,6 @@ private fun ActionBar(
         },
     )
 }
-
-/**
- * Aufteilung der Leiste unten (Nachtrag 7): [pill] links, [stepper] mittig, [end] rechtsbündig,
- * die beiden Lücken gleich groß. Gerechnet wird mit den Reserven ([pillLabelReserve] mit,
- * [pillIconReserve] ohne Beschriftung, [stepperReserve], [endReserve]; nur gemessen, nie gezeigt oder vorgelesen), damit
- * nichts springt, wenn sich Vorlage, Dauer oder „Zurücksetzen“ ändern. Passt die Pille mit
- * Beschriftung nicht, zeigt sie nur das Symbol (`showLabel` = false, nie ein Wortbruch); passt
- * auch das nicht (erst über Schrift 1,3), steht [end] rechtsbündig in einer zweiten Zeile.
- */
-@Composable
-private fun StartBar(
-    pill: @Composable (showLabel: Boolean) -> Unit,
-    stepper: @Composable () -> Unit,
-    end: @Composable () -> Unit,
-    pillLabelReserve: @Composable () -> Unit,
-    pillIconReserve: @Composable () -> Unit,
-    stepperReserve: @Composable () -> Unit,
-    endReserve: @Composable () -> Unit,
-) {
-    // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
-    val unseen = Modifier.inertWhen(true)
-    SubcomposeLayout(Modifier.fillMaxWidth()) { constraints ->
-        val width = constraints.maxWidth
-        fun reserve(slot: BarSlot, content: @Composable () -> Unit) = subcompose(slot) { Box(unseen) { content() } }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
-        val gap = Dimens.GapSmall.roundToPx()
-        val stepWidth = reserve(BarSlot.STEPPER_RESERVE, stepperReserve)
-        val endWidth = reserve(BarSlot.END_RESERVE, endReserve)
-        val withLabel = reserve(BarSlot.PILL_LABEL_RESERVE, pillLabelReserve)
-        val showLabel = withLabel + stepWidth + endWidth + 2 * gap <= width
-        val pillWidth = if (showLabel) withLabel else reserve(BarSlot.PILL_ICON_RESERVE, pillIconReserve)
-        val loose = Constraints(maxWidth = width)
-        val pillPlaceable = subcompose(BarSlot.PILL) { pill(showLabel) }.single().measure(loose)
-        val stepPlaceable = subcompose(BarSlot.STEPPER, stepper).single().measure(loose)
-        val endPlaceable = subcompose(BarSlot.END, end).single().measure(loose)
-        if (pillWidth + stepWidth + endWidth + 2 * gap <= width) {
-            val free = (width - pillWidth - stepWidth - endWidth) / 2
-            val height = maxOf(pillPlaceable.height, stepPlaceable.height, endPlaceable.height)
-            layout(width, height) {
-                pillPlaceable.placeRelative(0, (height - pillPlaceable.height) / 2)
-                stepPlaceable.placeRelative(pillWidth + free + (stepWidth - stepPlaceable.width) / 2, (height - stepPlaceable.height) / 2)
-                endPlaceable.placeRelative(width - endPlaceable.width, (height - endPlaceable.height) / 2)
-            }
-        } else {
-            val first = maxOf(pillPlaceable.height, stepPlaceable.height)
-            layout(width, first + endPlaceable.height) {
-                pillPlaceable.placeRelative(0, (first - pillPlaceable.height) / 2)
-                stepPlaceable.placeRelative(pillWidth + gap, (first - stepPlaceable.height) / 2)
-                endPlaceable.placeRelative(width - endPlaceable.width, first)
-            }
-        }
-    }
-}
-
-/** Slots von [StartBar]. */
-private enum class BarSlot { PILL, STEPPER, END, PILL_LABEL_RESERVE, PILL_ICON_RESERVE, STEPPER_RESERVE, END_RESERVE }
 
 /** Dauer „− 5 min +“ der Leiste (1–30 min, gesprochen „Dauer, 5 Minuten“). */
 @Composable
@@ -712,15 +616,29 @@ private fun LeadingAndEnd(
 }
 
 /**
- * „Atemzug“: Länge eines Durchlaufs und Atemzüge pro Minute als kurzer Status in der Zeile des
- * Titels („· 10 s · 6/min“, TalkBack in Worten). Läuft die Vorschau, steht statt des Status die
- * Phase [phase] in ihrer Farbe (ohne Live-Region, sie wechselt im Takt). Rechts die Knöpfe der
- * Vorschau ([controls]), mittig auf der Titelzeile. Der Kopf behält seine Höhe: Die Lage des
- * Status ist für alle Texte und beide Zustände reserviert. „intensiv“ steht seit Nachtrag 7 im
- * Seitentitel ([NameTitle]), damit der Status hier in die Zeile passt.
+ * Startzeile über der Kurve (Nutzer 2026-10-23, statt des Kopfs „Atemzug“): links der Startpunkt
+ * als tonale Pille „▦ Box“ bzw. „▦ angepasst“ ([TonalPillButton]; [onPickStart] öffnet die
+ * Vorlagen, [TemplateSheet]; gesprochen „Startpunkt wählen, aktuell: Box“), daneben der Status –
+ * Länge eines Durchlaufs und Atemzüge pro Minute („10 s · 6/min“, TalkBack in Worten), während der
+ * Vorschau die Phase [phase] in ihrer Farbe (ohne Live-Region, sie wechselt im Takt) –, rechts die
+ * Knöpfe der Vorschau ([controls]). So liest sich die Seite in der Reihenfolge der Arbeit: Vorlage
+ * wählen, Kurve formen, starten.
+ *
+ * Ohne Springen: Gemessen wird mit der breitesten Beschriftung der Pille und dem breitesten Status.
+ * Passt die Pille mit Beschriftung nicht daneben, zeigt sie nur das Symbol (nie ein Wortbruch);
+ * passt auch das nicht (große Schrift), steht der Status in einer zweiten Zeile.
+ *
+ * Fokus (A11Y-07): Nach der Wahl einer Vorlage bekommt die Pille den Fokus und sagt einmal an, was
+ * jetzt gilt („Startpunkt wählen, aktuell: Viloma I“) – bis sich die Folge ändert ([StartFocus]).
  */
 @Composable
-private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable () -> Unit) {
+private fun StartRow(
+    state: PatternEditorState,
+    phase: Int?,
+    focus: StartFocus,
+    onPickStart: () -> Unit,
+    controls: @Composable () -> Unit,
+) {
     val pattern = state.pattern
     val total = pattern.totalSeconds
     val rate = pattern.breathsPerMinuteText()
@@ -729,34 +647,69 @@ private fun Breath(state: PatternEditorState, phase: Int?, controls: @Composable
     val running = phase?.takeIf { it in pattern.phases.indices }
     val resting = stringResource(R.string.pattern_editor_cycle, total, stringResource(R.string.pattern_editor_rate_short, rate))
     // Platz für alles, was der Status zeigen kann: den ruhenden Status, einen breiten zweistelligen
-    // (gleich breite Ziffern) und jeden Phasennamen der Vorschau – so ändert der Kopf seine Höhe
-    // weder bei Play/Pause noch beim Phasenwechsel oder beim Bearbeiten der Sekunden.
+    // (gleich breite Ziffern) und jeden Phasennamen der Vorschau – so springt die Zeile weder bei
+    // Play/Pause noch beim Phasenwechsel oder beim Bearbeiten der Sekunden.
     val widest = stringResource(R.string.pattern_editor_cycle, WIDEST_CYCLE_SECONDS, stringResource(R.string.pattern_editor_rate_short, WIDEST_RATE))
-    val reserve = listOf(resting, widest) + FreePattern.PHASE_LABELS.map { "· $it" }
-    val status: String
-    val statusDescription: String
-    if (running != null) {
-        statusDescription = pattern.labelAt(running)
-        status = "· $statusDescription"
-    } else {
-        status = resting
-        statusDescription = pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, spokenRate)
+    val reserve = listOf(resting, widest) + FreePattern.PHASE_LABELS
+    val status = running?.let { pattern.labelAt(it) } ?: resting
+    val statusDescription = running?.let { pattern.labelAt(it) } ?: pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, spokenRate)
+    val statusColor = running?.let { phaseColor(pattern, it, inhale = MaterialTheme.colorScheme.secondary) }
+        ?: MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
+    val statusStyle = MaterialTheme.typography.bodyMedium
+
+    val current = state.template?.label ?: stringResource(R.string.adjust_modified)
+    val startDescription = stringResource(R.string.cd_pattern_editor_start, current)
+    val announce = focus.announces(state.pattern)
+    LaunchedEffect(state.pattern) { focus.forgetUnless(state.pattern) }
+    val grid = painterResource(R.drawable.ic_grid_view)
+    // Alles, was die Pille zeigen kann: jede Vorlage und „angepasst“.
+    val labels = FreePatternTemplates.all.map { it.label } + stringResource(R.string.adjust_modified)
+
+    // Nie platziert; zusätzlich ohne Semantik und Fokus, falls doch jemand den Baum durchsucht.
+    val unseen = Modifier.inertWhen(true)
+    SubcomposeLayout(Modifier.fillMaxWidth().padding(vertical = Dimens.GapSmall)) { constraints ->
+        val width = constraints.maxWidth
+        val gap = Dimens.GapSmall.roundToPx()
+        val loose = Constraints(maxWidth = width)
+        fun reserve(slot: RowSlot, content: @Composable () -> Unit) = subcompose(slot) { Box(unseen) { content() } }.maxOf { it.maxIntrinsicWidth(Constraints.Infinity) }
+        // Ohne System-Animationen fehlen die Vorschau-Knöpfe ganz (MOTION-02).
+        val end = subcompose(RowSlot.CONTROLS) { Box(Modifier.flushEnd()) { controls() } }.map { it.measure(loose) }.filter { it.width > 0 }
+        val endWidth = end.maxOfOrNull { it.width }?.plus(gap) ?: 0
+        val statusWidth = reserve(RowSlot.STATUS_RESERVE) { Box { reserve.forEach { Text(it, style = statusStyle) } } }
+        val withLabel = reserve(RowSlot.PILL_LABEL_RESERVE) { Box { labels.forEach { TonalPillButton(onClick = {}, icon = grid, label = it, description = "") } } }
+        val showLabel = withLabel + gap + statusWidth + endWidth <= width
+        val pillWidth = if (showLabel) withLabel else reserve(RowSlot.PILL_ICON_RESERVE) { TonalPillButton(onClick = {}, icon = grid, label = null, description = "") }
+        val pill = subcompose(RowSlot.PILL) {
+            TonalPillButton(
+                onClick = onPickStart,
+                icon = grid,
+                label = current.takeIf { showLabel },
+                description = startDescription,
+                modifier = Modifier
+                    .focusRequester(focus.start)
+                    .semantics { if (announce) liveRegion = LiveRegionMode.Polite },
+            )
+        }.single().measure(loose)
+        val oneLine = pillWidth + gap + statusWidth + endWidth <= width
+        val text = subcompose(RowSlot.STATUS) {
+            Text(
+                text = status,
+                style = statusStyle,
+                color = statusColor,
+                modifier = Modifier.semantics { contentDescription = statusDescription },
+            )
+        }.single().measure(Constraints(maxWidth = if (oneLine) width - pillWidth - gap - endWidth else width))
+        val firstLine = maxOf(pill.height, end.maxOfOrNull { it.height } ?: 0, if (oneLine) text.height else 0)
+        layout(width, if (oneLine) firstLine else firstLine + text.height) {
+            pill.placeRelative(0, (firstLine - pill.height) / 2)
+            end.forEach { it.placeRelative(width - it.width, (firstLine - it.height) / 2) }
+            if (oneLine) text.placeRelative(pillWidth + gap, (firstLine - text.height) / 2) else text.placeRelative(0, firstLine)
+        }
     }
-    SectionHeader(
-        title = stringResource(R.string.pattern_editor_breath),
-        color = headingColor(0),
-        status = status,
-        statusDescription = statusDescription,
-        smallStatus = true,
-        statusColor = running?.let { phaseColor(pattern, it, inhale = MaterialTheme.colorScheme.secondary) },
-        // Eng unter der Startzeile: Kurve und Werkzeugleiste sollen ohne Scrollen ganz dastehen (Nachtrag 5).
-        top = Dimens.GapSmall,
-        statusReserve = reserve,
-        // Play und Ton mittig auf der Titelzeile.
-        trailingOnTitle = true,
-        trailingAction = controls,
-    )
 }
+
+/** Slots der [StartRow]. */
+private enum class RowSlot { PILL, STATUS, CONTROLS, PILL_LABEL_RESERVE, PILL_ICON_RESERVE, STATUS_RESERVE }
 
 /**
  * Werkzeugleiste direkt unter der Kurve (Karte): oben die gewählte Phase (Nummer, Name in
@@ -1083,7 +1036,8 @@ private fun Sequence(state: PatternEditorState) {
     val count = state.pattern.phases.size
     CollapsibleSection(
         title = stringResource(R.string.pattern_editor_sequence),
-        color = headingColor(1),
+        // Erster Abschnittskopf der Seite (FARBE-07), seit die Startzeile „Atemzug“ ersetzt.
+        color = headingColor(0),
         expanded = open,
         onExpandedChange = { open = it },
         status = stringResource(R.string.pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),
@@ -1259,10 +1213,9 @@ private fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Un
 
 /**
  * Seitentitel (Nachtrag 7): der Name des Musters groß (`headlineSmall`), darunter klein „Eigenes
- * Muster“ als Einordnung, bei intensiven Mustern rechts „intensiv“ (`CharacterChip`, Platz immer
- * reserviert). Der Name
- * steht in einer Zeile und scrollt waagrecht, wenn er nicht passt – nie umbrochen: Der Kopf behält
- * seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Antippen benennt um
+ * Muster“ als Einordnung, bei intensiven Mustern rechts „intensiv“ (`CharacterChip`, nur dann). Der
+ * Name steht in einer Zeile und läuft als Laufschrift, wenn er nicht passt – nie umbrochen: Der Kopf
+ * behält seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Antippen benennt um
  * ([onRename]); TalkBack: „Name: …, umbenennen“ als Überschrift.
  */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -1286,13 +1239,17 @@ private fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
         // Für TalkBack unsichtbar (der Titel sagt „Name: …, umbenennen“); nicht clearAndSetSemantics,
         // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
         Column(Modifier.weight(1f).semantics { invisibleToUser() }) {
+            // Ein langer Name läuft als Laufschrift, statt umzubrechen – zwei Zeilen machten den Kopf
+            // zu hoch (Nutzer 2026-10-23). Dreimal, dann steht er wieder am Anfang (ruhig wie die
+            // App); ohne System-Animationen endet er mit „…“ (MOTION-02).
+            val marquee = remember { ValueAnimator.areAnimatorsEnabled() }
             Text(
                 text = name,
                 style = MaterialTheme.typography.headlineSmall,
                 color = colors.onBackground,
                 maxLines = 1,
-                softWrap = false,
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                overflow = if (marquee) TextOverflow.Clip else TextOverflow.Ellipsis,
+                modifier = if (marquee) Modifier.basicMarquee() else Modifier,
             )
             Text(
                 text = stringResource(R.string.pattern_editor_title),
@@ -1300,10 +1257,9 @@ private fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
                 color = colors.onBackground.copy(alpha = SECONDARY),
             )
         }
-        // Sein Platz bleibt auch ohne ihn frei (unsichtbar, nicht vorgelesen): Kippt das Muster ins
-        // Intensive, bricht „Eigenes Muster“ nicht neu um, und Kurve und Werkzeugleiste rücken nicht.
-        val intense = state.pattern.isIntense
-        Box(Modifier.alpha(if (intense) 1f else 0f).inertWhen(!intense)) { CharacterChip(intense = true, activating = false) }
+        // Nur wenn das Muster intensiv ist: Ohne ihn gehört die Breite dem Namen. Der Name ist
+        // einzeilig, die Zeile springt also nicht in der Höhe.
+        if (state.pattern.isIntense) CharacterChip(intense = true, activating = false)
     }
 }
 
@@ -1395,7 +1351,7 @@ private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
         ExpanderSection(
             title = stringResource(R.string.detail_lore),
             appetizer = lore.teaser,
-            accent = headingColor(3),
+            accent = headingColor(1),
             divider = false,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {

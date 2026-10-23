@@ -28,9 +28,9 @@ object TestMatrix {
     val WIDTH_CONFIGS: List<Pair<Device, Float>> = listOf(COMPACT to 1.0f, COMPACT to MAX_FONT_SCALE)
 
     /**
-     * Gerätehöhen-Matrix des DeviceFitTest (Muster-Editor ohne Scrollen bis Schrift 1,3): 360 × 640
-     * bei 1,3 (Tab-Leiste muss weichen), das A54 bei seiner Voreinstellung 1,1 (Status in der Zeile
-     * von „Atemzug“) und bei 1,3 (Tab-Leiste bleibt).
+     * Gerätehöhen-Matrix des DeviceFitTest (Muster-Editor ohne Scrollen bis Schrift 1,3, ohne
+     * Tab-Leiste): 360 × 640 bei 1,3 (engster Fall), das A54 bei seiner Voreinstellung 1,1 (Status
+     * neben der Startpunkt-Pille) und bei 1,3.
      */
     val DEVICE_CONFIGS: List<Pair<Device, Float>> = listOf(COMPACT to 1.3f, A54 to A54_FONT_SCALE, A54 to 1.3f)
 

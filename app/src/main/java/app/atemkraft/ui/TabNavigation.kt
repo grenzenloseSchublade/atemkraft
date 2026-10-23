@@ -36,13 +36,16 @@ internal fun NavController.switchTab(route: Any) {
 }
 
 /**
- * Ob die Tab-Leiste auf diesem Ziel ausgeblendet werden darf: im Muster-Editor bei Platzmangel
- * (MUSTER-10, Nutzer 2026-10-22) und auf der Detailseite beim Scrollen (Nutzer 2026-10-23) – die
- * beiden Seiten mit fester Startleiste. Folgt dem Stapel sofort – zurück oder weiter, ist sie wieder da.
+ * Ob dieses Ziel einer der vier Tabs ist: Nur dort steht die Tab-Leiste. Sobald man in die Tiefe
+ * geht (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Logbuch, Über), weicht sie
+ * und gibt ihren Platz dem Inhalt; zurück geht es über den Pfeil im Kopf (Nutzer 2026-10-23).
+ * Vor dem ersten Ziel (null) gilt der Start-Tab.
  */
-internal fun NavDestination?.mayHideTabBar(): Boolean = this?.hierarchy?.any {
-    it.hasRoute(PatternEditorRoute::class) || it.hasRoute(DetailRoute::class)
-} == true
+internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.any { destination ->
+    TAB_ROOTS.any { destination.hasRoute(it) }
+}
+
+private val TAB_ROOTS = listOf(AtmenRoute::class, SituationenRoute::class, EigeneRoute::class, MeditationRoute::class)
 
 /**
  * Der Tab, zu dessen Stapel die aktuelle Seite gehört – auch auf Push-Seiten und nach einem

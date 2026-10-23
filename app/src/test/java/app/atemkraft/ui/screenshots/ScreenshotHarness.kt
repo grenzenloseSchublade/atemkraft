@@ -59,7 +59,6 @@ import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.CurveAxisSeconds
 import app.atemkraft.ui.components.CurveHeightRange
 import app.atemkraft.ui.components.HideableTabBar
-import app.atemkraft.ui.components.TabBarSpace
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
@@ -119,9 +118,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
         /** Bis zu dieser Schriftgröße prüft der Muster-Editor hart, dass Kurve und Werkzeugleiste ohne Scrollen dastehen. */
         private const val COMPACT_EDITOR_MAX_FONT_SCALE = 1.3f
-
-        /** Bis zu dieser Schriftgröße bleibt die Tab-Leiste im Muster-Editor auf dem A54 sichtbar. */
-        private const val A54_TAB_BAR_MAX_FONT_SCALE = 1.3f
 
         /** Bottom Sheet der Vorlagen: eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
         private const val SHEET_TEST = "patternEditorTemplates"
@@ -222,6 +218,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         heightDp: Int = tallDp,
         widthDp: Int = device.widthDp,
         tab: Tab? = null,
+        tabBar: Boolean = true,
         frameHeightDp: Int = device.heightDp,
         noScroll: Boolean = false,
         acceptedScroll: Boolean = false,
@@ -232,7 +229,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     ) {
         currentWidthDp = widthDp
         currentHeightDp = if (tab == null) heightDp else frameHeightDp
-        current = if (tab == null) content else ({ TabFrame(tab, content) })
+        current = if (tab == null) content else ({ TabFrame(tab, tabBar, content) })
         prepare()
         val scale = (fontScale * 100).toInt()
         val dir = "${roborazziSystemPropertyOutputDirectory()}/${device.name}/fs$scale"
@@ -259,22 +256,19 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         current = null
     }
 
-    /** Platz der Tab-Leiste im [TabFrame]: Der Muster-Editor blendet sie bei Platzmangel aus (MUSTER-10). */
-    protected val tabBarSpace = TabBarSpace()
-
     /**
      * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
-     * Trennlinie und [AppNavigationBar] mit [selected] markiert ([HideableTabBar] wie in
-     * MainActivity: Der Muster-Editor ([Editor]) darf sie über [tabBarSpace] ausblenden), darunter die
+     * Trennlinie und [AppNavigationBar] mit [selected] markiert – nur auf den vier Tabs ([tabBar];
+     * [HideableTabBar] wie in MainActivity, in der Tiefe ohne Leiste) –, darunter die
      * Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
      */
     @Composable
-    private fun TabFrame(selected: Tab, content: @Composable () -> Unit) {
+    private fun TabFrame(selected: Tab, tabBar: Boolean, content: @Composable () -> Unit) {
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Spacer(Modifier.height(STATUS_BAR_DP.dp))
             Box(Modifier.weight(1f).fillMaxWidth()) { content() }
             // Wie MainActivity (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
-            HideableTabBar(tabBarSpace, allowHide = true, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
+            HideableTabBar(visible = tabBar, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
             Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
         }
     }
@@ -303,12 +297,12 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     private val compactProblems = mutableListOf<String>()
 
     /**
-     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, „Atemzug“, Kurve und Werkzeugleiste
+     * MUSTER-10 (Nachtrag 5): Im Muster-Editor stehen Kopf, Startzeile, Kurve und Werkzeugleiste
      * (gewählte Phase mit Stepper und Papierkorb, + Ein / + Halten / + Aus) ohne Scrollen ganz im
      * Bild – auf jedem Gerät der Matrix bis fontScale [COMPACT_EDITOR_MAX_FONT_SCALE] hart geprüft,
-     * wo nötig ohne Tab-Leiste (Nutzer 2026-10-22); bei 2,0 nur gemessen. Überall ein Fehler: Die Seite scrollt, obwohl die
-     * Mindesthöhe der Kurve gepasst hätte, die Kurve ist nicht so hoch, wie der Platz erlaubt, oder
-     * die Tab-Leiste ist ausgeblendet, obwohl sie gepasst hätte (bzw. umgekehrt).
+     * ohne Tab-Leiste (Tiefe, Nutzer 2026-10-23); bei 2,0 nur gemessen. Überall ein Fehler: Die
+     * Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte, oder die Kurve ist nicht so
+     * hoch, wie der Platz erlaubt.
      */
     @After
     fun editorCompact() {
@@ -323,16 +317,14 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
      * Befund `KOMPAKT` (passt), `KOMPAKT_FEHLT` als Fehler ([compactProblems]) oder
      * `KOMPAKT_SCROLLT` (nur gemessen). Fehler, wo [hard]: Es passt nicht, oder die Kurve ist nicht
      * so hoch wie der freie Platz erlaubt (geklemmt auf ihre Spanne). Ohne [hard] ist es immer noch
-     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Überall
-     * ein Fehler: Die Tab-Leiste ist ausgeblendet, obwohl Kurve (Mindesthöhe) und Werkzeugleiste mit
-     * ihr gepasst hätten, oder umgekehrt; dazu, wo [expectTabBar] gesetzt ist, eine andere Sichtbarkeit,
-     * und auf dem A54 bis Schrift 1,1 ein Status unter statt hinter „Atemzug“ (Nachtrag 7).
+     * ein Fehler, wenn die Seite scrollt, obwohl die Mindesthöhe der Kurve gepasst hätte. Auf dem
+     * A54 bis Schrift 1,1 ist es auch ein Fehler, wenn der Status unter statt neben der
+     * Startpunkt-Pille steht.
      * Alle Werte ab Oberkante der Scroll-Fläche, in dp.
      */
     protected fun editorFit(
         screen: String,
         hard: Boolean = fontScale <= COMPACT_EDITOR_MAX_FONT_SCALE,
-        expectTabBar: Boolean? = expectedTabBar(),
     ): List<String> {
         // Ungeschnittene Lage (boundsInRoot wäre auf den sichtbaren Teil beschnitten).
         fun SemanticsNode.unclipped() = Rect(positionInRoot, size.toSize())
@@ -346,10 +338,15 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val play = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).fetchSemanticsNode().unclipped()
         val durationPlus = compose.onNodeWithContentDescription("${app.getString(R.string.cd_adjust_duration)}, ${app.getString(R.string.adjust_increase)}").fetchSemanticsNode().unclipped()
         val barOneLine = abs(play.center.y - durationPlus.center.y) <= 1f
-        // Status „· 11 s · 5,5/min“ in der Zeile von „Atemzug“ (Nachtrag 7)?
-        val breathTitle = compose.onNode(hasText(app.getString(R.string.pattern_editor_breath)), useUnmergedTree = true).fetchSemanticsNode().unclipped()
-        val status = compose.onNode(hasText("\u00A0s\u00A0·", substring = true), useUnmergedTree = true).fetchSemanticsNode().unclipped()
-        val statusInline = status.top < breathTitle.bottom - 1f
+        // Status „11 s · 5,5/min“ in der Zeile der Startpunkt-Pille (Startzeile, 2026-10-23)?
+        val pill = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_start, "").substringBefore(","), substring = true)
+            .fetchSemanticsNode().unclipped()
+        // Der gezeigte Status trägt die Beschreibung in Worten; die nur gemessenen Reserven nicht.
+        val status = compose.onNode(
+            hasText("\u00A0s\u00A0·", substring = true) and SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription),
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().unclipped()
+        val statusInline = status.center.y in pill.top..pill.bottom
         val density = compose.density.density
         fun dp(px: Float) = (px / density).roundToInt()
         // Platz für die Kurve: sichtbare Höhe minus alles darüber und Werkzeugleiste darunter.
@@ -358,12 +355,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val heightRight = abs(curve.height - expected) <= 1f
         val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom + 0.5f
         val minWouldFit = free >= range.start - 0.5f
-        // Tab-Leiste: ausgeblendet genau dann, wenn die Mindesthöhe mit ihr nicht gepasst hätte.
-        val tabBarHidden = tabBarSpace.hidden
-        val gained = if (tabBarHidden) tabBarSpace.heightPx.toFloat() else 0f
-        val tabBarRight = tabBarHidden == (free - gained < range.start - 0.5f) && (expectTabBar == null || expectTabBar != tabBarHidden)
         val kind = when {
-            !tabBarRight -> "KOMPAKT_FEHLT"
             device == TestMatrix.A54 && fontScale <= TestMatrix.A54_FONT_SCALE && !statusInline -> "KOMPAKT_FEHLT"
             hard && !barOneLine -> "KOMPAKT_FEHLT"
             fits && heightRight -> "KOMPAKT"
@@ -371,24 +363,12 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             hard -> "KOMPAKT_FEHLT"
             else -> "KOMPAKT_SCROLLT"
         }
-        val tabBar = if (tabBarHidden) "ausgeblendet (+${dp(gained)} dp)" else "sichtbar"
-        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tTab-Leiste $tabBar, Kurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
+        val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
             "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
             "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp), " +
-            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Status ${if (statusInline) "in der Zeile von „Atemzug“" else "darunter"}"
+            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Status ${if (statusInline) "neben der Startpunkt-Pille" else "darunter"}"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)
-    }
-
-    /**
-     * Erwartete Tab-Leiste im Muster-Editor in Gerätehöhe (Nutzer 2026-10-22): Auf dem A54 bleibt sie
-     * bis Schrift 1,3 sichtbar (genug Platz, alles wie vorher), auf kompakt360 bei 1,3 ist sie
-     * ausgeblendet (sonst passte die Kurve nicht); sonst nicht festgelegt (true = sichtbar).
-     */
-    private fun expectedTabBar(): Boolean? = when {
-        device == TestMatrix.A54 && fontScale <= A54_TAB_BAR_MAX_FONT_SCALE -> true
-        device == TestMatrix.COMPACT && fontScale == COMPACT_EDITOR_MAX_FONT_SCALE -> false
-        else -> null
     }
 
     /** LAYOUT-08: Der Meditations-Tab scrollt bis fontScale 1,3 nicht. */
@@ -488,8 +468,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             onBack = {},
             // Ohne echten Ton: Die Vorschau-Aufnahme spielt sonst Töne über Robolectric.
             soundOutput = { SilentPreviewSound },
-            // Tab-Leiste im TabFrame (in Listenhöhe ohne Rahmen ohne Wirkung).
-            tabBar = tabBarSpace,
         )
     }
 
