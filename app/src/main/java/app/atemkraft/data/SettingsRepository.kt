@@ -14,7 +14,6 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_MAX_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_MIN_MINUTES
@@ -25,6 +24,7 @@ import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.domain.VoiceCatalog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map

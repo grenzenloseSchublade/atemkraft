@@ -28,8 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import app.atemkraft.R
-import app.atemkraft.cue.AppPreviewSoundOutput
-import app.atemkraft.cue.PreviewSoundOutput
+import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
@@ -38,7 +37,8 @@ import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.approxMinutes
-import app.atemkraft.playback.PhaseAudio
+import app.atemkraft.playback.AppPreviewSoundOutput
+import app.atemkraft.playback.PreviewSoundOutput
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection

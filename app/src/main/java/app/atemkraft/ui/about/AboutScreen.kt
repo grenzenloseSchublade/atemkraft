@@ -41,9 +41,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import app.atemkraft.BuildConfig
 import app.atemkraft.R
-import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.ThirdParty
+import app.atemkraft.domain.VoiceCatalog
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText

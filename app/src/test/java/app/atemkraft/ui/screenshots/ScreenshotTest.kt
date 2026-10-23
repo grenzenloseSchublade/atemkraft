@@ -23,7 +23,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
-import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
@@ -42,6 +41,7 @@ import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.domain.VoiceCatalog
 import app.atemkraft.domain.buildTimeline
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.sessionSummary

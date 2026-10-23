@@ -1,1 +1,2 @@
 import app.atemkraft.domain.Exercise
+import app.atemkraft.data.local.SavedPatternDao

@@ -19,10 +19,10 @@ import androidx.compose.ui.semantics.stateDescription
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceFailure
-import app.atemkraft.cue.tts.VoiceGender
-import app.atemkraft.cue.tts.VoiceQuality
-import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.domain.DOT_SEPARATOR
+import app.atemkraft.domain.VoiceGender
+import app.atemkraft.domain.VoiceQuality
+import app.atemkraft.domain.VoiceSpec
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ConfirmIconButton

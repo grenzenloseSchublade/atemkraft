@@ -2,6 +2,8 @@ package app.atemkraft.cue.tts
 
 import android.content.Context
 import app.atemkraft.BuildConfig
+import app.atemkraft.domain.VoiceCatalog
+import app.atemkraft.domain.VoiceSpec
 import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

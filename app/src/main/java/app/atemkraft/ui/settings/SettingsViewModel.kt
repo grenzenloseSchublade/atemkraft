@@ -11,7 +11,6 @@ import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
-import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationDisplay
@@ -20,6 +19,7 @@ import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.domain.VoiceSpec
 import app.atemkraft.playback.MeditationController
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

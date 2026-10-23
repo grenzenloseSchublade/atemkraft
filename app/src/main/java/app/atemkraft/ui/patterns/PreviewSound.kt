@@ -20,12 +20,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.atemkraft.R
-import app.atemkraft.cue.AppPreviewSoundOutput
-import app.atemkraft.cue.PreviewCuePlayer
-import app.atemkraft.cue.PreviewSoundOutput
+import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.data.CueSettings
 import app.atemkraft.domain.SoundMode
-import app.atemkraft.playback.PhaseAudio
+import app.atemkraft.playback.AppPreviewSoundOutput
+import app.atemkraft.playback.PreviewCuePlayer
+import app.atemkraft.playback.PreviewSoundOutput
 import app.atemkraft.ui.components.SoundSwitch
 
 /**

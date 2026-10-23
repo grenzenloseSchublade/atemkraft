@@ -40,9 +40,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
-import app.atemkraft.cue.tts.VoiceCatalog
 import app.atemkraft.cue.tts.VoiceDownloadState
-import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.Refs
 import app.atemkraft.data.SessionDisplay
@@ -51,6 +49,8 @@ import app.atemkraft.domain.GONG_INTERVAL_CHOICES
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.domain.VoiceCatalog
+import app.atemkraft.domain.VoiceSpec
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.BodyText

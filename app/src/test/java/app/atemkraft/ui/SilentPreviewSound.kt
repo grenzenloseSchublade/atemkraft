@@ -1,9 +1,9 @@
 package app.atemkraft.ui
 
 import app.atemkraft.cue.CueEvent
-import app.atemkraft.cue.PreviewSoundOutput
+import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.data.CueSettings
-import app.atemkraft.playback.PhaseAudio
+import app.atemkraft.playback.PreviewSoundOutput
 
 /** Vorschau des Muster-Editors ohne Ton: Tests spielen sonst Töne über Robolectric. */
 internal object SilentPreviewSound : PreviewSoundOutput {

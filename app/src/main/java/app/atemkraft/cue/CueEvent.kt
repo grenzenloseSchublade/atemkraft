@@ -1,5 +1,6 @@
 package app.atemkraft.cue
 
+import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.PhaseType
 
 /**
@@ -14,3 +15,10 @@ fun PhaseType.toCueEvent(): CueEvent = when (this) {
     PhaseType.EXHALE -> CueEvent.EXHALE
     PhaseType.HOLD_FULL, PhaseType.HOLD_EMPTY, PhaseType.REST -> CueEvent.HOLD
 }
+
+/**
+ * Audio-Info zum Phasenbeginn für den durchgehenden Ton (Typ + Dauer; open = ohne feste Dauer).
+ * Liegt bei den Reizen, weil Session (`SessionAudioCoordinator`) und Editor-Vorschau
+ * (`PreviewCuePlayer`) sie gleichermaßen an die Ton-Ausgabe geben.
+ */
+data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean, val level: BreathLevel? = null)

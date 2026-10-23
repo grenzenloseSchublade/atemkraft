@@ -1,9 +1,9 @@
 package app.atemkraft.ui.settings
 
-import app.atemkraft.cue.tts.VoiceSpec
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import app.atemkraft.domain.VoiceSpec
 
 /** Einstellungs-Aktionen ohne Wirkung – für Screenshot- und Navigationstests. */
 object NoOpSettingsActions : SettingsActions {

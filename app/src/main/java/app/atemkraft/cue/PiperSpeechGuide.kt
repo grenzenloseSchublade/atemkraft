@@ -22,11 +22,11 @@ import java.util.concurrent.Executors
 
 /**
  * Neuronale Sprachanleitung über sherpa-onnx (Piper). Kann zwischen **mehreren installierten**
- * Stimmen ([VoiceCatalog]) umschalten – die aktive Stimme wird per [setActiveVoice] gewählt und
+ * Stimmen (`VoiceCatalog`) umschalten – die aktive Stimme wird per [setActiveVoice] gewählt und
  * geladen. Läuft nach dem Download vollständig offline.
  *
  * Spiegelt die API-Form von [SpeechGuide] (speak/stop/release + [available]) für den
- * [app.atemkraft.ui.meditation.MeditationAudioCoordinator]. Synthese + Wiedergabe seriell auf
+ * `MeditationAudioCoordinator` (`playback/`). Synthese + Wiedergabe seriell auf
  * einem eigenen Thread; ein Epochen-Zähler bricht laufende/wartende Ausgaben sauber ab.
  */
 class PiperSpeechGuide(

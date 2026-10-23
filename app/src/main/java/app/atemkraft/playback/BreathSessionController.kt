@@ -2,6 +2,7 @@ package app.atemkraft.playback
 
 import android.os.SystemClock
 import app.atemkraft.cue.CueEvent
+import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.cue.toCueEvent
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.domain.BreathLevel
@@ -44,9 +45,6 @@ import kotlin.math.min
 
 /** Ablauf-Zustand einer Atem-Session; der [SessionAudioCoordinator] und die UI folgen ihm. */
 enum class SessionStatus { IDLE, PREPARING, RUNNING, PAUSED, WAITING_FOR_USER, FINISHED }
-
-/** Audio-Info zum Phasenbeginn für den durchgehenden Ton (Typ + Dauer; open = ohne feste Dauer). */
-data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean, val level: BreathLevel? = null)
 
 /**
  * Sichtbarer Zustand der laufenden Session. Die UI ist eine reine Funktion davon –

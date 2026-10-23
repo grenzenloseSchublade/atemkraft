@@ -1,4 +1,4 @@
-package app.atemkraft.cue.tts
+package app.atemkraft.domain
 
 /** Geschlecht/Charakter einer Stimme – steuert Icon/Label im UI. */
 enum class VoiceGender { MALE, FEMALE }
@@ -12,7 +12,7 @@ enum class VoiceQuality { STUDIO_CLEAR, STUDIO, SIMPLE, SIMPLE_COMPACT }
  * Die Lizenzen unterscheiden sich je Stimme ([license], [rightsHolder]; Belege und Einschränkungen
  * in THIRD_PARTY_LICENSES.md). [onnxName] und [tarUrl] werden aus [dirName] abgeleitet (Piper-Schema).
  *
- * [sizeBytes] und [sha256] sind auf das Release-Archiv **gepinnt**: [VoiceModelManager] bricht
+ * [sizeBytes] und [sha256] sind auf das Release-Archiv **gepinnt**: `VoiceModelManager` bricht
  * ab, wenn der Download davon abweicht. Wird ein Modell upstream neu hochgeladen, schlägt der
  * Download fehl, bis die Werte hier aktualisiert sind (`curl -L <tarUrl> | sha256sum`).
  */
