@@ -23,8 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -43,6 +41,7 @@ import app.atemkraft.playback.PhaseAudio
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.FillViewportColumn
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
@@ -239,27 +238,13 @@ private fun FirstScreen(
     toolbar: @Composable () -> Unit,
 ) {
     val heights = rememberBreathCurveHeights()
-    Layout(contents = listOf(header, curve, toolbar)) { (headerSlot, curveSlot, toolbarSlot), constraints ->
-        val width = constraints.maxWidth
-        val loose = Constraints(maxWidth = width)
-        val head = headerSlot.map { it.measure(loose) }
-        val tools = toolbarSlot.map { it.measure(loose) }
-        fun List<Placeable>.height() = sumOf { it.height }
-        val curveHeight = if (viewport == Constraints.Infinity) {
-            heights.preferred.roundToPx()
-        } else {
-            heights.fit((viewport - head.height() - tools.height()).toDp()).roundToPx()
-        }
-        val curves = curveSlot.map { it.measure(Constraints(maxWidth = width, minHeight = curveHeight, maxHeight = curveHeight)) }
-        val all = head + curves + tools
-        layout(width, all.height()) {
-            var y = 0
-            all.forEach {
-                it.placeRelative(0, y)
-                y += it.height
-            }
-        }
-    }
+    FillViewportColumn(
+        viewportHeight = viewport,
+        centerHeight = { free -> if (free == Constraints.Infinity) heights.preferred.roundToPx() else heights.fit(free.toDp()).roundToPx() },
+        top = header,
+        center = curve,
+        bottom = toolbar,
+    )
 }
 
 /** Hinweiskarte bei intensiven Mustern: Gründe und Sicherheitssatz ([FreePattern.intensityNote]). */

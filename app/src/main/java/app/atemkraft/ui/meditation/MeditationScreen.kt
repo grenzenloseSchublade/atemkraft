@@ -1,6 +1,5 @@
 package app.atemkraft.ui.meditation
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -15,13 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,40 +25,23 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
-import app.atemkraft.ui.components.BreathingCircle
-import app.atemkraft.ui.components.CircleTapTarget
-import app.atemkraft.ui.components.FinishedPanel
-import app.atemkraft.ui.components.GlowText
-import app.atemkraft.ui.components.MiniNowPlayingBar
-import app.atemkraft.ui.components.OverlayChrome
-import app.atemkraft.ui.components.PauseFlash
+import app.atemkraft.ui.components.FillViewportColumn
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SegmentedChoiceRow
-import app.atemkraft.ui.components.SessionControlBar
-import app.atemkraft.ui.components.SessionRunningLayout
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
-import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.components.rememberTapFlash
-import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 
@@ -131,10 +110,11 @@ private fun SelectionContent(
         // damit er beim Aufklappen nur schrumpft und nicht wandert. Erst wenn selbst seine
         // Mindestgröße nicht passt, scrollt die Seite als Notlösung – abgeschnitten wird nie.
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            val viewport = maxHeight
-            FillBetweenLayout(
-                viewportHeight = viewport,
-                minCenterHeight = durationPickerMinSide() + Dimens.GapSmall * 2,
+            val minCenter = durationPickerMinSide() + Dimens.GapSmall * 2
+            // Kopf oben, der Regler im restlichen Platz, mindestens in seiner Mindestgröße.
+            FillViewportColumn(
+                viewportHeight = constraints.maxHeight,
+                centerHeight = { free -> maxOf(free, minCenter.roundToPx()) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
@@ -221,47 +201,6 @@ private fun DurationPicker(state: DurationPickerState, onTick: (major: Boolean) 
  */
 @Composable
 private fun durationPickerMinSide(): Dp = timeDialMinSide(Dimens.DurationPickerMin)
-
-/**
- * Kopf oben, [center] im restlichen Platz der Ansichtshöhe [viewportHeight], [bottom] darunter.
- * [top] und [bottom] behalten ihre natürliche Höhe; [center] bekommt die volle Breite und den
- * Rest, mindestens [minCenterHeight]. Reicht die Ansicht dafür nicht, wird das Ganze höher als
- * [viewportHeight] (der Aufrufer scrollt dann) – so wird nie etwas abgeschnitten. Gedacht für
- * einen Eltern-`verticalScroll`, in dem die Höhe sonst unbegrenzt wäre.
- */
-@Composable
-private fun FillBetweenLayout(
-    viewportHeight: Dp,
-    minCenterHeight: Dp,
-    top: @Composable () -> Unit,
-    center: @Composable () -> Unit,
-    bottom: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Layout(contents = listOf(top, center, bottom), modifier = modifier) { (topM, centerM, bottomM), constraints ->
-        val w = constraints.maxWidth
-        val loose = Constraints(maxWidth = w)
-        val topP = topM.map { it.measure(loose) }
-        val bottomP = bottomM.map { it.measure(loose) }
-        val topH = topP.sumOf { it.height }
-        val bottomH = bottomP.sumOf { it.height }
-        val centerH = maxOf(viewportHeight.roundToPx() - topH - bottomH, minCenterHeight.roundToPx())
-        val centerP = centerM.map { it.measure(Constraints.fixed(w, centerH)) }
-        layout(w, topH + centerH + bottomH) {
-            var y = 0
-            topP.forEach {
-                it.placeRelative(0, y)
-                y += it.height
-            }
-            centerP.forEach { it.placeRelative(0, y) }
-            y += centerH
-            bottomP.forEach {
-                it.placeRelative(0, y)
-                y += it.height
-            }
-        }
-    }
-}
 
 /**
  * „Klang & Stimme“: zugeklappt nur eine Zeile mit der aktuellen Wahl (MUSTER-03) – eine schlichte

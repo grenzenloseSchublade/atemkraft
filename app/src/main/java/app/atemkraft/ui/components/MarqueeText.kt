@@ -1,6 +1,5 @@
 package app.atemkraft.ui.components
 
-import android.animation.ValueAnimator
 import androidx.compose.foundation.MarqueeDefaults
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material3.Text
@@ -19,6 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
+import app.atemkraft.ui.theme.rememberAnimationsEnabled
 import kotlinx.coroutines.delay
 
 /** Kennzeichnet den Text, damit der ScreenshotTest die erlaubte Ellipse nach dem Lauf nicht meldet. */
@@ -39,7 +39,7 @@ const val MARQUEE_TEXT_TAG = "marquee-text"
  */
 @Composable
 fun MarqueeText(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier) {
-    val animate = remember { ValueAnimator.areAnimatorsEnabled() }
+    val animate = rememberAnimationsEnabled()
     var finished by remember(text) { mutableStateOf(!animate) }
     var containerPx by remember { mutableIntStateOf(0) }
     var textPx by remember(text) { mutableIntStateOf(0) }

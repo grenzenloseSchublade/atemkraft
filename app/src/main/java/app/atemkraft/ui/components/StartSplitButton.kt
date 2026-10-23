@@ -1,34 +1,19 @@
 package app.atemkraft.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,7 +43,6 @@ fun StartSplitButton(
     modifier: Modifier = Modifier,
 ) {
     val startFocus = remember { FocusRequester() }
-    var resetFocused by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -67,35 +51,7 @@ fun StartSplitButton(
         Button(onClick = onStart, modifier = Modifier.weight(1f).heightIn(min = Sizes.ButtonHeight).focusRequester(startFocus)) {
             StartLabel(label)
         }
-        AnimatedVisibility(
-            visible = resetVisible,
-            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
-            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
-        ) {
-            // Gleiche Höhe ohne IntrinsicSize.Min: Das würde die 48-dp-Tippfläche mitmessen und
-            // beide Knöpfe sichtbar auf 48 aufblähen. Stattdessen dieselbe Mindesthöhe, dasselbe
-            // senkrechte Polster wie „Starten“ (M3: 8 dp) und ein Icon-Feld so hoch wie dessen
-            // Textzeile – damit wachsen beide bei großer Schrift gleich mit.
-            FilledTonalButton(
-                onClick = {
-                    if (resetFocused) startFocus.requestFocus()
-                    onReset()
-                },
-                modifier = Modifier.heightIn(min = Sizes.ButtonHeight).onFocusChanged { resetFocused = it.hasFocus },
-                contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
-            ) {
-                // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt; die
-                // Zeile gemessen, wie „Starten“ sie rendert (auch bei nichtlinearer Schrift).
-                val labelLine = rememberFirstLineHeight(LocalTextStyle.current)
-                Box(Modifier.heightIn(min = labelLine), contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_reset),
-                        contentDescription = stringResource(R.string.adjust_reset),
-                        modifier = Modifier.size(Sizes.IconInButton),
-                    )
-                }
-            }
-        }
+        SlidingReset(visible = resetVisible, onReset = onReset, onFocusHandoff = { startFocus.requestFocus() })
     }
 }
 

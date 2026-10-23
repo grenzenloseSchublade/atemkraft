@@ -1,17 +1,10 @@
 package app.atemkraft.ui.patterns
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,15 +12,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -41,9 +30,9 @@ import app.atemkraft.R
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
-import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.CompactStepper
 import app.atemkraft.ui.components.InlineOrBelow
+import app.atemkraft.ui.components.SlidingReset
 import app.atemkraft.ui.components.StartPlayButton
 import app.atemkraft.ui.components.TonalPillButton
 import app.atemkraft.ui.components.flushEnd
@@ -208,32 +197,25 @@ internal fun ActionBar(
             focus.pending = null
         }
     }
-    var resetFocused by remember { mutableStateOf(false) }
     val playDescription = stringResource(R.string.cd_pattern_editor_play, pluralStringResource(R.plurals.cd_duration_minutes, approxMinutes, approxMinutes))
     InlineOrBelow(
         leading = { DurationStepper(state.minutes) { state.minutes = it } },
         end = {
             Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                AnimatedVisibility(
+                SlidingReset(
                     visible = state.modified,
-                    enter = expandHorizontally(expandFrom = Alignment.End) + fadeIn(),
-                    exit = shrinkHorizontally(shrinkTowards = Alignment.End) + fadeOut(),
-                ) {
-                    ResetButton(
-                        onClick = {
-                            if (resetFocused) focus.pending = focus.play
-                            state.reset()
-                        },
-                        modifier = Modifier.onFocusChanged { resetFocused = it.hasFocus },
-                    )
-                }
+                    onReset = state::reset,
+                    onFocusHandoff = { focus.pending = focus.play },
+                    slideFrom = Alignment.End,
+                    compact = true,
+                )
                 StartPlayButton(onClick = onStart, description = playDescription, modifier = Modifier.focusRequester(focus.play))
             }
         },
         leadingReserve = { DurationStepper(AdjustLimits.MINUTES.last) {} },
         endReserve = {
             Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                ResetButton(onClick = {})
+                SlidingReset(visible = true, onReset = {}, onFocusHandoff = {}, compact = true)
                 StartPlayButton(onClick = {}, description = "")
             }
         },
@@ -251,12 +233,4 @@ private fun DurationStepper(minutes: Int, onChange: (Int) -> Unit) {
         spokenLabel = stringResource(R.string.cd_adjust_duration),
         valueUnit = R.plurals.cd_duration_minutes,
     )
-}
-
-/** Zurücksetzen auf den Stand beim Öffnen: Kreispfeil, tonal gefüllt wie die Stepper-Knöpfe. */
-@Composable
-private fun ResetButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    AppIconButton(onClick = onClick, modifier = modifier, colors = IconButtonDefaults.filledTonalIconButtonColors()) {
-        Icon(painterResource(R.drawable.ic_reset), contentDescription = stringResource(R.string.adjust_reset))
-    }
 }

@@ -1,6 +1,5 @@
 package app.atemkraft.ui.patterns.curve
 
-import android.animation.ValueAnimator
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -21,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.ui.components.AppIconButton
+import app.atemkraft.ui.theme.rememberAnimationsEnabled
 import kotlin.math.roundToLong
 
 private const val MILLIS_PER_SECOND = 1000f
@@ -87,7 +87,7 @@ fun CurvePreviewControls(
     modifier: Modifier = Modifier,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
-    val animationsEnabled = remember { ValueAnimator.areAnimatorsEnabled() }
+    val animationsEnabled = rememberAnimationsEnabled()
     if (!animationsEnabled) return
     val tint = MaterialTheme.colorScheme.secondary
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {

@@ -1,6 +1,5 @@
 package app.atemkraft.ui.atemlehre
 
-import android.animation.ValueAnimator
 import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -10,7 +9,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,7 +50,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -64,7 +61,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.isSpecified
 import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.domain.DOT_SEPARATOR
@@ -75,6 +71,7 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.sanskritText
+import app.atemkraft.ui.components.selectedRow
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
@@ -94,6 +91,7 @@ import app.atemkraft.ui.theme.VayuSamana
 import app.atemkraft.ui.theme.VayuUdana
 import app.atemkraft.ui.theme.VayuVyana
 import app.atemkraft.ui.theme.VayuWholeAlpha
+import app.atemkraft.ui.theme.rememberAnimationsEnabled
 
 /**
  * Inhalt des Abschnitts „Die fünf *vāyus*“ der Atemlehre (Design Vayus.dc.html, Nutzer
@@ -166,9 +164,7 @@ private fun VayuRow(vayu: LoreVayu, selected: Boolean, onToggle: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(if (selected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
-            .border(Dimens.BorderThin, if (selected) color else Color.Transparent, shape)
+            .selectedRow(selected, shape, borderColor = color, fill = MaterialTheme.colorScheme.surfaceVariant)
             .toggleable(value = selected, role = Role.Switch, onValueChange = { onToggle() })
             .padding(horizontal = Dimens.ListGap, vertical = Dimens.GapSmall),
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
@@ -205,7 +201,7 @@ private fun VayuRow(vayu: LoreVayu, selected: Boolean, onToggle: () -> Unit) {
  */
 @Composable
 internal fun VayuFigure(selected: Vayu?, onSelect: (Vayu) -> Unit, modifier: Modifier = Modifier) {
-    val animate = remember { ValueAnimator.areAnimatorsEnabled() }
+    val animate = rememberAnimationsEnabled()
     val flow: State<Float>
     val flowFast: State<Float>
     val pulse: State<Float>

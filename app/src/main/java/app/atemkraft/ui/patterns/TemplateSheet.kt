@@ -1,8 +1,6 @@
 package app.atemkraft.ui.patterns
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -40,6 +37,7 @@ import app.atemkraft.ui.components.HoldDash
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.selectedRow
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
@@ -92,8 +90,7 @@ private fun TemplateRow(template: FreeTemplate, selected: Boolean, onClick: () -
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .then(if (selected) Modifier.background(colors.secondaryContainer).border(Dimens.BorderThin, SegmentSelected, shape) else Modifier)
+            .selectedRow(selected, shape, borderColor = SegmentSelected, fill = colors.secondaryContainer)
             .heightIn(min = Dimens.MinTouchTarget)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),

@@ -1,6 +1,5 @@
 package app.atemkraft.ui.components
 
-import android.animation.ValueAnimator
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -70,6 +69,7 @@ import app.atemkraft.ui.theme.SessionTextGlow
 import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.rememberAnimationsEnabled
 import kotlinx.coroutines.delay
 
 // Geteilte Bausteine der Vollbild-Sitzungen (Atem-Session UND Meditation): Glow-Schrift,
@@ -346,10 +346,11 @@ class TapFlashState internal constructor() {
 @Composable
 fun rememberTapFlash(): TapFlashState {
     val state = remember { TapFlashState() }
+    val animate = rememberAnimationsEnabled()
     LaunchedEffect(state.trigger) {
         if (state.trigger > 0) {
             state.alpha = 1f
-            if (ValueAnimator.areAnimatorsEnabled()) {
+            if (animate) {
                 delay(Motion.TapFlashHold) // kurzer Halt
                 val steps = Motion.TapFlashFadeSteps
                 for (i in 1..steps) {

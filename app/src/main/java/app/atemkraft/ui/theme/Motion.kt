@@ -1,5 +1,17 @@
 package app.atemkraft.ui.theme
 
+import android.animation.ValueAnimator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+
+/**
+ * Laufen System-Animationen (Animator-Skala > 0)? Einmal je Komposition gelesen. Sind sie aus,
+ * steht alles still, was sich von selbst bewegt (MOTION-02): Laufschrift, Vorschau der Atemkurve,
+ * vāyu-Bild, Tap-Flash.
+ */
+@Composable
+fun rememberAnimationsEnabled(): Boolean = remember { ValueAnimator.areAnimatorsEnabled() }
+
 /**
  * Zentrale Bewegungs-Tokens (MOTION-04): Dauern in ms. Tap-Flash und Navigation; weitere
  * Dauern (Schimmer) ziehen nach, wenn ihre Stelle angefasst wird.

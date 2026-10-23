@@ -1,7 +1,6 @@
 package app.atemkraft.ui.patterns
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -41,6 +39,7 @@ import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PhaseMark
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.selectedRow
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -96,8 +95,7 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .then(if (selected) Modifier.background(colors.secondaryContainer).border(Dimens.BorderThin, SegmentSelected, shape) else Modifier)
+            .selectedRow(selected, shape, borderColor = SegmentSelected, fill = colors.secondaryContainer)
             .heightIn(min = Dimens.MinTouchTarget)
             .selectable(selected = selected, onClick = { state.select(index) })
             .padding(horizontal = Dimens.GapSmall),
