@@ -57,8 +57,8 @@ import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.MiniNowPlayingBar
+import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.ExerciseDetailScreen
-import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.learn.LearnScreen

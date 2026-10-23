@@ -46,10 +46,10 @@ import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.patterns.curve.BreathCurveEditor
 import app.atemkraft.ui.patterns.curve.CurvePreviewControls
 import app.atemkraft.ui.patterns.curve.rememberBreathCurveHeights

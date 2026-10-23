@@ -1,4 +1,4 @@
-package app.atemkraft.ui.detail
+package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import app.atemkraft.R
-import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.theme.Dimens
 
 /**
