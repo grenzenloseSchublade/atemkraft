@@ -16,7 +16,7 @@ Beschrieben ist der Stand von `main`; die neueste APK unter Releases kann Einzel
 - **Atmen:** 20 Techniken in vier Gruppen, je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen.
 - **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
-- **Eigene Muster:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“.
+- **Eigene Muster:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Vorlagen und Vorschau, gesammelt im Tab „Eigene“ zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast.
 - **Anlass:** Einstiege nach Anlass, etwa „Vor dem Einschlafen“, mit Suche nach deinem Befinden.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
 - **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, und Begriffe erklärt.
@@ -48,7 +48,7 @@ Einzelheiten und Berechtigungen: [Datenschutzerklärung](docs/PRIVACY.md).
 
 Fehler oder Idee? [Issue eröffnen](https://github.com/grenzenloseSchublade/atemkraft/issues/new/choose), bitte ohne Gesundheitsdaten. Sicherheitslücken vertraulich melden: [docs/SECURITY.md](docs/SECURITY.md#melden).
 
-Bauen braucht JDK 17 und das Android SDK (Plattform 36):
+Bauen braucht JDK 17 und das Android SDK (Plattform 37):
 
 ```bash
 scripts/build.sh installDebug    # Debug-APK bauen und installieren

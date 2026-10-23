@@ -18,7 +18,7 @@ Für alle Beiträge gilt der [Verhaltenskodex](CODE_OF_CONDUCT.md).
 ## Entwicklungsumgebung
 
 - JDK 17 (CI und Release-Builds nutzen Temurin 17)
-- Android SDK mit Plattform 36; Pfad in `local.properties` (`sdk.dir=…`, nicht eingecheckt) oder über `ANDROID_HOME`
+- Android SDK mit Plattform 37; Pfad in `local.properties` (`sdk.dir=…`, nicht eingecheckt) oder über `ANDROID_HOME`
 - Python 3 (nur Standardbibliothek) für die Stil-Checks
 - Ein Gerät oder Emulator ab Android 8.0 (API 26)
 
