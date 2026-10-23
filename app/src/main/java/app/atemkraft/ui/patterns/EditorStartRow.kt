@@ -139,7 +139,7 @@ internal fun StartRow(
 private enum class RowSlot { PILL, STATUS, CONTROLS, PILL_LABEL_RESERVE, PILL_ICON_RESERVE }
 
 /**
- * Breitester ruhender Status „· 88 s · 88,8/min“ für den Platz am Kopf „Atemzug“: Die Ziffern der
+ * Breitester ruhender Status „88 s · 88,8/min“ für den Platz in der Startzeile: Die Ziffern der
  * Schrift sind gleich breit, also deckt er jede zweistellige Länge und jede Rate ab.
  */
 private const val WIDEST_CYCLE_SECONDS = 88

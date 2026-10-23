@@ -128,8 +128,9 @@ fun rememberBreathCurveHeights(): BreathCurveHeights {
  * gelbes Band auf der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
  *
  * Vorschau ([preview]): Läuft sie, wandert ein Punkt in Echtzeit über die Kurve. Die Knöpfe
- * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: in den Kopf
- * „Atemzug“), ebenso den Phasennamen und den Ton (`PreviewSoundEffect` mit [CurvePreviewState]).
+ * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: rechts in die
+ * Startzeile über der Kurve), ebenso den Phasennamen und den Ton (`PreviewSoundEffect` mit
+ * [CurvePreviewState]).
  * Eine eigene Zeile unter der Kurve gibt es nicht – die Werkzeugleiste des Editors rückt direkt
  * darunter.
  *

@@ -60,8 +60,10 @@ fun StartPlayButton(onClick: () -> Unit, description: String, modifier: Modifier
  * Startpunkt „▦ Box“, Nachtrag 7): sichtbar so hoch wie die Kreise daneben ([Sizes.IconButtonSize],
  * ein Größentoken je Leiste, LAYOUT-04; wächst bei großer Schrift mit), Fläche wie die
  * Stepper-Knöpfe (`filledTonal`), Tippfläche 48 dp. Ohne [label] nur das Symbol im Kreis – für
- * Leisten, in denen die Beschriftung keinen Platz hat. [description] ist der ganze Wortlaut für
- * TalkBack; die sichtbare Beschriftung liest er nicht noch einmal.
+ * Leisten, in denen die Beschriftung keinen Platz hat; dann in [Sizes.IconDefault] wie die
+ * Icon-Knöpfe daneben (ein Token je Reihe), und [description] steht am `Icon` (ICON-02). Mit
+ * Beschriftung ist [description] der Name des Knopfs; die sichtbare Beschriftung liest TalkBack
+ * nicht noch einmal.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -74,14 +76,16 @@ fun TonalPillButton(onClick: () -> Unit, icon: Painter, label: String?, descript
             .widthIn(min = Sizes.IconButtonSize)
             .clip(CircleShape)
             .background(colors.containerColor)
-            .semantics { contentDescription = description }
+            .then(if (label == null) Modifier else Modifier.semantics { contentDescription = description })
             .clickable(role = Role.Button, onClick = onClick)
             .then(if (label == null) Modifier else Modifier.padding(horizontal = Dimens.ListGap)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall, Alignment.CenterHorizontally),
     ) {
-        Icon(icon, contentDescription = null, tint = colors.contentColor, modifier = Modifier.size(Sizes.IconInButton)) // dekorativ: description benennt den Knopf
-        if (label != null) {
+        if (label == null) {
+            Icon(icon, contentDescription = description, tint = colors.contentColor, modifier = Modifier.size(Sizes.IconDefault))
+        } else {
+            Icon(icon, contentDescription = null, tint = colors.contentColor, modifier = Modifier.size(Sizes.IconInButton)) // dekorativ: description benennt den Knopf
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,

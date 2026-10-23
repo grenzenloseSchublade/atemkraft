@@ -1,9 +1,7 @@
 package app.atemkraft.ui.patterns
 
 import android.content.Context
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -46,7 +45,6 @@ import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.accentBorder
-import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberSafetyGate
 import app.atemkraft.ui.patterns.curve.BreathCurveEditor
@@ -59,16 +57,16 @@ import app.atemkraft.ui.theme.WarnAmber
 
 /**
  * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“, 5 „Kompakt“, 6 „Leiste unten“),
- * Push-Seite. Von oben: Kopf mit Lesezeichen · „Atemzug“ mit kurzem Status (bzw. der
- * Phase der laufenden Vorschau), ggf. „intensiv“ und rechts Play/Pause und Ton-Schalter · die
- * Atemkurve (keine eigene Vorschau-Zeile) · direkt darunter die Werkzeugleiste (gewählte Phase mit
- * Sekunden-Stepper und Papierkorb, gelb gestrichelt getrennt „Neu nach 2:“ mit + Ein / + Halten /
- * + Aus). Ziel: Kurve und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle
- * Höhe, wo Platz ist, sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe
- * ([FirstScreen]; reicht der Platz dafür mit der Tab-Leiste nicht, blendet der Editor sie aus).
- * Darunter Hinweis bei intensiven Mustern, „Ablauf“ (eingeklappt, Überblick und TalkBack),
- * Name, „Aus der Yoga-Lehre“; unten fest eine Leiste ([ActionBar], Nachtrag 6): Startpunkt (Vorlagen
- * als Bottom Sheet), Dauer, Zurücksetzen und der große Play-Knopf.
+ * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, ggf. „intensiv“, und Lesezeichen ·
+ * Startzeile ([StartRow]: Startpunkt-Pille für die Vorlagen, kurzer Status bzw. die Phase der
+ * laufenden Vorschau, rechts Play/Pause und Ton-Schalter) · die Atemkurve (keine eigene
+ * Vorschau-Zeile) · direkt darunter die Werkzeugleiste (gewählte Phase mit Sekunden-Stepper und
+ * Papierkorb, gelb gestrichelt getrennt „Neu nach 2:“ mit + Ein / + Halten / + Aus). Ziel: Kurve
+ * und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle Höhe, wo Platz ist,
+ * sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe ([FirstScreen]; die
+ * Tab-Leiste steht im Editor nie). Darunter Hinweis bei intensiven Mustern, „Ablauf“
+ * (eingeklappt, Überblick und TalkBack), „Aus der Yoga-Lehre“; unten fest eine Leiste
+ * ([ActionBar], Nachtrag 6): Dauer, Zurücksetzen und der große Play-Knopf.
  *
  * Die Seite liest und ändert nur [state] (ARC-7). Was gespeichert wird, entscheidet der Aufrufer:
  * [onSavedChange] (true = speichern bzw. denselben Eintrag aktualisieren, false = aus „Meine
@@ -237,29 +235,33 @@ private fun FirstScreen(
     )
 }
 
-/** Hinweiskarte bei intensiven Mustern: Gründe und Sicherheitssatz ([FreePattern.intensityNote]). */
+/**
+ * Hinweiskarte bei intensiven Mustern: Gründe und Sicherheitssatz ([FreePattern.intensityNote]) –
+ * eine Karte wie jede andere (KOMP-03: Fläche, `shapes.medium`, `CardPadding`, Text `bodySmall`),
+ * Rand `accentBorder(WarnAmber)`.
+ */
 @Composable
 private fun IntenseNote(text: String) {
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = Dimens.ListGap)
-            .border(accentBorder(WarnAmber), MaterialTheme.shapes.small)
-            .padding(Dimens.CardPadding),
+            .padding(top = Dimens.ListGap),
+        border = accentBorder(WarnAmber),
     ) {
-        BodyText("⚠ $text", style = MaterialTheme.typography.bodyMedium)
+        BodyText("⚠ $text", modifier = Modifier.padding(Dimens.CardPadding))
     }
 }
 
 /**
  * „Aus der Yoga-Lehre“: Teaser immer ganz und ohne Live-Region – die eine Ansage je Änderung ist
  * der Stepper-Wert (A11Y-04), TalkBack liest die Einordnung beim Weiterwischen. Aufgeklappt das
- * Detail und je Karte ein Verweis „… in der Atemlehre ›“.
+ * Detail und je Karte ein Verweis „… in der Atemlehre ›“ in `secondary` – Links im Editor tragen
+ * keine Familienfarbe (MUSTER-10).
  */
 @Composable
 private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
     val lore = exercise.lore ?: return
-    val accent = exercise.family.color()
+    val linkColor = MaterialTheme.colorScheme.secondary
     val patterns = (listOf(lore.patternId) + lore.morePatternIds).mapNotNull(Atemlehre::pattern)
     Column(Modifier.fillMaxWidth()) {
         // Der Expander polstert seinen Kopf selbst um ListGap; zusammen steht er so weit vom Namen wie ein Abschnittskopf.
@@ -274,7 +276,7 @@ private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
                 BodyText(lore.detail)
                 patterns.forEach { pattern ->
                     AppTextButton(onClick = { onOpenLore(pattern.id) }) {
-                        ForwardLinkText(text = stringResource(R.string.detail_lore_link, pattern.linkName), color = accent)
+                        ForwardLinkText(text = stringResource(R.string.detail_lore_link, pattern.linkName), color = linkColor)
                     }
                 }
             }
