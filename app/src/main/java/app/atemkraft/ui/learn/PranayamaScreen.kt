@@ -21,16 +21,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
+import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.Pranayama
 import app.atemkraft.domain.PranayamaTechnique
 import app.atemkraft.domain.PranayamaTopic
-import app.atemkraft.ui.atemlehre.ExerciseChips
-import app.atemkraft.ui.atemlehre.Labeled
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.EvidenceChip
+import app.atemkraft.ui.components.ExerciseChips
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
@@ -132,7 +133,7 @@ private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String
                     Labeled(stringResource(R.string.pranayama_label_safety)) { BodyText(technique.safety) }
                     technique.exerciseId?.let { id ->
                         Labeled(stringResource(R.string.pranayama_label_practice)) {
-                            ExerciseChips(listOf(id) + technique.moreExerciseIds, onOpenExercise)
+                            ExerciseChips(listOf(id) + technique.moreExerciseIds, BuiltInExercises.all, onOpenExercise)
                         }
                     }
                 }

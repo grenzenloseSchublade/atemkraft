@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -14,12 +15,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
+import app.atemkraft.data.PatternTransferService
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.data.SettingsRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -49,12 +50,14 @@ private data class Outcome(val label: String? = null, val note: String? = null)
  * Verdrahtet Export/Import über das Storage Access Framework: Der Nutzer wählt Datei und Ort
  * selbst, die App braucht keine Speicher-Berechtigung und behält keinen Zugriff (SEC-STORE-01).
  * Lesen/Schreiben läuft auf [Dispatchers.IO] und [NonCancellable] – ein Zurück während des
- * Imports hinterlässt so kein Muster ohne seine Anpassung.
+ * Imports hinterlässt so kein Muster ohne seine Anpassung. Die Datenlogik (lesen, kodieren,
+ * dekodieren, übernehmen) liegt in [PatternTransferService]; hier bleiben Launcher, Zustand und Texte.
  */
 @Composable
 fun rememberPatternTransfer(saved: SavedPatternsRepository, settings: SettingsRepository): PatternTransfer {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val service = remember(saved, settings) { PatternTransferService(saved, settings) }
     val emptyNote = stringResource(R.string.data_export_empty)
     var exportLabel by rememberSaveable { mutableStateOf<String?>(null) }
     var importLabel by rememberSaveable { mutableStateOf<String?>(null) }
@@ -69,11 +72,11 @@ fun rememberPatternTransfer(saved: SavedPatternsRepository, settings: SettingsRe
         ActivityResultContracts.CreateDocument(MIME_JSON),
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch { show(isExport = true, exportTo(context, uri, saved, settings)) }
+        scope.launch { show(isExport = true, exportTo(context, uri, service)) }
     }
     val openLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch { show(isExport = false, importFrom(context, uri, saved, settings)) }
+        scope.launch { show(isExport = false, importFrom(context, uri, service)) }
     }
 
     return PatternTransfer(
@@ -82,7 +85,7 @@ fun rememberPatternTransfer(saved: SavedPatternsRepository, settings: SettingsRe
         note = note,
         export = {
             scope.launch {
-                if (saved.isEmpty()) {
+                if (service.isEmpty()) {
                     show(isExport = true, Outcome(note = emptyNote))
                 } else {
                     createLauncher.launch("atemkraft-muster-${LocalDate.now()}.json")
@@ -112,56 +115,30 @@ private suspend fun guarded(context: Context, block: suspend () -> Outcome): Out
     }
 }
 
-private suspend fun exportTo(
-    context: Context,
-    uri: Uri,
-    saved: SavedPatternsRepository,
-    settings: SettingsRepository,
-): Outcome = guarded(context) {
-    val file = saved.exportFile(System.currentTimeMillis()) { id -> settings.exerciseIntervals(id).first() }
-    val stream = context.contentResolver.openOutputStream(uri, "wt") ?: throw IOException()
-    stream.bufferedWriter().use { it.write(PatternBackup.encode(file)) }
-    Outcome(label = context.resources.getQuantityString(R.plurals.data_export_done, file.patterns.size, file.patterns.size))
+private suspend fun exportTo(context: Context, uri: Uri, service: PatternTransferService): Outcome = guarded(context) {
+    val count = service.export(System.currentTimeMillis()) { context.contentResolver.openOutputStream(uri, "wt") ?: throw IOException() }
+    Outcome(label = context.resources.getQuantityString(R.plurals.data_export_done, count, count))
 }
 
-private suspend fun importFrom(
-    context: Context,
-    uri: Uri,
-    saved: SavedPatternsRepository,
-    settings: SettingsRepository,
-): Outcome = guarded(context) {
-    val bytes = readAtMost(context, uri, PatternBackup.MAX_BYTES)
-        ?: return@guarded Outcome(note = context.getString(R.string.data_import_too_large))
-    val decoded = PatternBackup.decode(String(bytes, Charsets.UTF_8))
-        ?: return@guarded Outcome(note = context.getString(R.string.data_import_not_backup))
-    val result = saved.import(decoded.entries) { id, o ->
-        settings.setExerciseIntervals(id, o.duration, o.inhale, o.hold, o.exhale)
-    }
-    val notes = buildList {
-        if (decoded.entries.isEmpty()) add(context.getString(R.string.data_import_nothing))
-        if (decoded.invalid > 0) {
-            add(context.resources.getQuantityString(R.plurals.data_import_invalid_entries, decoded.invalid, decoded.invalid))
-        }
-        if (decoded.truncated > 0) add(context.resources.getQuantityString(R.plurals.data_import_truncated, PatternBackup.MAX_PATTERNS, PatternBackup.MAX_PATTERNS))
-    }
-    Outcome(
-        label = context.resources.getQuantityString(R.plurals.data_import_done, result.added, result.added, result.duplicates)
-            .takeIf { decoded.entries.isNotEmpty() },
-        note = notes.joinToString(" ").ifEmpty { null },
-    )
-}
+private suspend fun importFrom(context: Context, uri: Uri, service: PatternTransferService): Outcome = guarded(context) {
+    when (val outcome = service.import { context.contentResolver.openInputStream(uri) ?: throw IOException() }) {
+        PatternTransferService.ImportOutcome.TooLarge -> Outcome(note = context.getString(R.string.data_import_too_large))
 
-/** Liest höchstens [limit] Bytes; null, wenn die Datei größer ist (wird nicht ganz geladen). */
-private fun readAtMost(context: Context, uri: Uri, limit: Int): ByteArray? {
-    val stream = context.contentResolver.openInputStream(uri) ?: throw IOException()
-    return stream.use { input ->
-        val buffer = ByteArray(limit + 1)
-        var read = 0
-        while (read < buffer.size) {
-            val n = input.read(buffer, read, buffer.size - read)
-            if (n < 0) break
-            read += n
+        PatternTransferService.ImportOutcome.NotBackup -> Outcome(note = context.getString(R.string.data_import_not_backup))
+
+        is PatternTransferService.ImportOutcome.Done -> {
+            val notes = buildList {
+                if (outcome.entries == 0) add(context.getString(R.string.data_import_nothing))
+                if (outcome.invalid > 0) {
+                    add(context.resources.getQuantityString(R.plurals.data_import_invalid_entries, outcome.invalid, outcome.invalid))
+                }
+                if (outcome.truncated > 0) add(context.resources.getQuantityString(R.plurals.data_import_truncated, PatternBackup.MAX_PATTERNS, PatternBackup.MAX_PATTERNS))
+            }
+            Outcome(
+                label = context.resources.getQuantityString(R.plurals.data_import_done, outcome.added, outcome.added, outcome.duplicates)
+                    .takeIf { outcome.entries > 0 },
+                note = notes.joinToString(" ").ifEmpty { null },
+            )
         }
-        if (read > limit) null else buffer.copyOf(read)
     }
 }

@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 /**
  * Datei-Format für Export/Import gespeicherter Muster (JSON). Bewusst nur Werte, Herkunft und
  * Dauer, keine Seeds, Texte oder Wiederholungszahlen – die baut
- * [app.atemkraft.domain.RandomPatternGenerator.exerciseFrom] beim Laden aus Werten, Herkunft
+ * [app.atemkraft.domain.GeneratedExercises.exerciseFrom] beim Laden aus Werten, Herkunft
  * (`origin`) und Dauer (`minutes`) neu. Eine Import-Datei ist nicht vertrauenswürdige Eingabe:
  * [PatternBackup.decode] begrenzt Größe und Anzahl und verwirft unplausible Einträge, statt
  * abzubrechen.

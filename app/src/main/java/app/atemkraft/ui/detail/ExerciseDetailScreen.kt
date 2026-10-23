@@ -38,9 +38,9 @@ import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.defaultMinutes
@@ -63,6 +63,7 @@ import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
+import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.WholeWordText
@@ -134,7 +135,7 @@ fun ExerciseDetailScreen(
 
     // Gespeicherte und eigene Muster ändern ihre Phasen nur im Editor (MUSTER-10); das Muster des
     // Tages behält seine Phasen-Stepper wie in v1.6 (nicht gespeichert, siehe persistIntervals).
-    val phasesInEditor = exercise.generated && exercise.id != RandomPatternGenerator.ID
+    val phasesInEditor = exercise.generated && exercise.id != ExerciseIds.DAILY
 
     // Persistierte Anpassung einmalig übernehmen (kommt asynchron aus dem DataStore). Bei
     // gespeicherten und eigenen Mustern gilt von alten Anpassungen nur noch die Dauer.
@@ -163,7 +164,7 @@ fun ExerciseDetailScreen(
             // („Nadi Shodhana (Wechselatmung)“) werden im Kopf zweizeilig, nie im Wort.
             // Der Slot trägt eine Aktion: die Markierung bei Übungen, der Stift bei generierten Mustern.
             val editLabel = editDescription ?: stringResource(
-                if (exercise.id == RandomPatternGenerator.ID) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
+                if (exercise.id == ExerciseIds.DAILY) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
             )
             PushHeader(
                 onBack = onBack,

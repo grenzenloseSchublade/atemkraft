@@ -3,8 +3,6 @@ package app.atemkraft.ui.atemlehre
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -51,19 +49,18 @@ import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.LorePattern
 import app.atemkraft.domain.LorePhase
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.RhythmStep
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CollapsibleSection
+import app.atemkraft.ui.components.ExerciseChips
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
-import app.atemkraft.ui.components.LinkChip
+import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
@@ -144,7 +141,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
                 // Lage dient als Sprungziel.
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.ListGap)) {
                     Atemlehre.patterns.forEach { pattern ->
-                        PatternCard(
+                        LorePatternCard(
                             pattern = pattern,
                             focused = pattern.id == focusId,
                             onOpenExercise = onOpenExercise,
@@ -193,7 +190,7 @@ private fun ExpandableSection(title: String, teaser: String, accent: Color, cont
  * Sprung aus der Detailseite ([focused]) öffnet die Karte gleich.
  */
 @Composable
-private fun PatternCard(
+private fun LorePatternCard(
     pattern: LorePattern,
     focused: Boolean,
     onOpenExercise: (String) -> Unit,
@@ -303,7 +300,7 @@ private fun PatternContent(pattern: LorePattern, onOpenExercise: (String) -> Uni
         Labeled(stringResource(R.string.atemlehre_label_studies)) { BodyText(pattern.studies) }
         if (pattern.exerciseIds.isNotEmpty() || pattern.appNote != null) {
             Labeled(stringResource(R.string.atemlehre_label_app)) {
-                ExerciseChips(pattern.exerciseIds, onOpenExercise)
+                ExerciseChips(pattern.exerciseIds, BuiltInExercises.all, onOpenExercise)
                 pattern.appNote?.let { HintText(it) }
             }
         }
@@ -320,7 +317,7 @@ private fun InfluencesContent(onOpenExercise: (String) -> Unit) {
         Atemlehre.influences.forEach { influence ->
             Labeled(influence.label) {
                 BodyText(influence.text)
-                ExerciseChips(influence.exerciseIds, onOpenExercise)
+                ExerciseChips(influence.exerciseIds, BuiltInExercises.all, onOpenExercise)
             }
         }
         HintText(Atemlehre.influencesQuote)
@@ -342,26 +339,6 @@ private fun SourcesContent() {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                 Atemlehre.studyRefs.forEach { ReferenceItem(it) }
             }
-        }
-    }
-}
-
-/**
- * Antippbare Übungen eines Musters. M3-Chip statt eigener Pille: Rolle Button und 48-dp-Tippfläche
- * (minimumInteractiveComponentSize) kommen mit. Unbekannte Kennungen fallen still weg.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun ExerciseChips(ids: List<String>, onOpenExercise: (String) -> Unit) {
-    if (ids.isEmpty()) return
-    val daily = stringResource(R.string.atemlehre_daily_pattern)
-    val entries = ids.mapNotNull { id ->
-        val name = if (id == RandomPatternGenerator.ID) daily else BuiltInExercises.all.firstOrNull { it.id == id }?.name
-        name?.let { id to it }
-    }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-        entries.forEach { (id, name) ->
-            LinkChip(label = name, onClick = { onOpenExercise(id) })
         }
     }
 }
@@ -419,14 +396,4 @@ private fun PhaseMark(type: PhaseType, modifier: Modifier = Modifier, passive: B
             }
         },
     )
-}
-
-/** Beschrifteter Block („Lehre“, „Typisch“ …): Unter-Überschrift, darunter der Inhalt. */
-@Composable
-internal fun Labeled(label: String, content: @Composable () -> Unit) {
-    Column {
-        SubLabel(label, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(Dimens.GapHairline))
-        content()
-    }
 }

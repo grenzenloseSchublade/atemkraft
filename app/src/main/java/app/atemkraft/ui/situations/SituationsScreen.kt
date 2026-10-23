@@ -42,11 +42,11 @@ import app.atemkraft.domain.SituationSearch
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CollapsibleSection
+import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.home.ExerciseCard
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 

@@ -9,10 +9,12 @@ import app.atemkraft.data.local.toSpec
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.FreePattern
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +55,7 @@ data class SavedPattern(
      * nicht deren Vier-Felder-Zusammenfassung [spec] – die erfände Phasen, die es nicht gibt.
      */
     val patternLine: String
-        get() = if (freeSequence) pattern.hint() else RandomPatternGenerator.hintFor(spec)
+        get() = if (freeSequence) pattern.hint() else PatternTexts.hintFor(spec)
 }
 
 /**
@@ -170,7 +172,7 @@ class SavedPatternsRepository(
             remember(entity)
             entity
         } ?: return null
-        clearOverrides("$ID_PREFIX$id")
+        clearOverrides(ExerciseIds.saved(id))
         return updated.toSaved()
     }
 
@@ -183,7 +185,7 @@ class SavedPatternsRepository(
      */
     suspend fun loadForEdit(id: Long): SavedPattern? {
         val saved = dao.byId(id)?.toSaved() ?: return null
-        val minutes = overrideMinutes("$ID_PREFIX$id")?.coerceIn(AdjustLimits.MINUTES) ?: return saved
+        val minutes = overrideMinutes(ExerciseIds.saved(id))?.coerceIn(AdjustLimits.MINUTES) ?: return saved
         return saved.copy(minutes = minutes)
     }
 
@@ -241,7 +243,7 @@ class SavedPatternsRepository(
                 holdEmpty = e.holdEmpty,
                 activating = e.activating,
                 createdAtEpochMs = e.createdAtEpochMs,
-                overrides = overridesOf("$ID_PREFIX${e.id}")?.let {
+                overrides = overridesOf(ExerciseIds.saved(e.id))?.let {
                     PatternBackupOverrides(it.duration, it.inhale, it.hold, it.exhale)
                 },
                 origin = SavedPatternEntity.storedOrigin(e.patternOrigin()),
@@ -286,7 +288,7 @@ class SavedPatternsRepository(
                     ),
                 )
             }
-            entry.overrides?.let { writeOverrides("$ID_PREFIX${entity.id}", it) }
+            entry.overrides?.let { writeOverrides(ExerciseIds.saved(entity.id), it) }
             added++
         }
         return ImportResult(added = added, duplicates = entries.size - added)
@@ -355,13 +357,13 @@ class SavedPatternsRepository(
         val spec = toSpec()
         val origin = patternOrigin()
         val free = freePattern()
-        val exerciseId = "$ID_PREFIX$id"
+        val exerciseId = ExerciseIds.saved(id)
         return SavedPattern(
             id = id,
             exercise = if (free != null) {
-                RandomPatternGenerator.exerciseFrom(free, exerciseId, name, minutes)
+                GeneratedExercises.exerciseFrom(free, exerciseId, name, minutes)
             } else {
-                RandomPatternGenerator.exerciseFrom(spec, exerciseId, name, origin, minutes)
+                GeneratedExercises.exerciseFrom(spec, exerciseId, name, origin, minutes)
             },
             spec = spec,
             origin = origin,
@@ -372,14 +374,11 @@ class SavedPatternsRepository(
     }
 
     companion object {
-        /** Übungs-Id-Präfix gespeicherter Muster (z. B. „muster-7“). */
-        const val ID_PREFIX = "muster-"
-
         /** Vorschlagsname einer freien Folge, z. B. „Eigenes Muster 3·1·6“ ([FreePattern.numbers]). */
         fun suggestedName(pattern: FreePattern): String = "Eigenes Muster ${pattern.numbers()}"
 
-        /** DB-Id aus einer Übungs-Id („muster-7“ → 7); null für andere Übungen. */
-        fun idOf(exerciseId: String): Long? = exerciseId.takeIf { it.startsWith(ID_PREFIX) }?.removePrefix(ID_PREFIX)?.toLongOrNull()
+        /** DB-Id aus einer Übungs-Id („muster-7“ → 7); null für andere Übungen ([ExerciseIds.savedIdOf]). */
+        fun idOf(exerciseId: String): Long? = ExerciseIds.savedIdOf(exerciseId)
 
         private fun entityOf(spec: PatternSpec, name: String, origin: String, minutes: Int?) = SavedPatternEntity(
             name = name,

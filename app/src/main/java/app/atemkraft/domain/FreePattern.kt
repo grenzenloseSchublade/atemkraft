@@ -33,7 +33,7 @@ enum class IntensityReason(val text: String) {
  * ([PatternSpec]) und die Stil-Regeln ([PatternRules]); das Muster des Tages bleibt bei diesen.
  *
  * Regeln ([validate]): 2 bis 12 Phasen, jede 1 bis 30 s, mindestens ein Ein und ein Aus. Mehr
- * nicht – ob ein Muster ruhig oder belebend ist, ordnet die App nur ein ([RandomPatternGenerator.atemlehreRefs]),
+ * nicht – ob ein Muster ruhig oder belebend ist, ordnet die App nur ein ([PatternLore.atemlehreRefs]),
  * und wo es kräftig wird, sagt [intensityReasons].
  *
  * Mehrere Ein (bzw. Aus) hintereinander – Halten dazwischen erlaubt – teilen sich den Anstieg bis

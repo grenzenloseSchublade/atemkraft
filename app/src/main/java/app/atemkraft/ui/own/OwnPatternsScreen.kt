@@ -28,14 +28,14 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.ConfirmIconButton
+import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.headingColor
-import app.atemkraft.ui.home.ExerciseCard
-import app.atemkraft.ui.home.PatternCard
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes

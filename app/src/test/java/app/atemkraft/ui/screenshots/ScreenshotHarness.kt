@@ -39,6 +39,7 @@ import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternSpec
@@ -47,8 +48,6 @@ import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
-import app.atemkraft.ui.components.CurveAxisSeconds
-import app.atemkraft.ui.components.CurveHeightRange
 import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
@@ -58,6 +57,8 @@ import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
 import app.atemkraft.ui.patterns.PatternEditorScreen
 import app.atemkraft.ui.patterns.PatternEditorState
+import app.atemkraft.ui.patterns.curve.CurveAxisSeconds
+import app.atemkraft.ui.patterns.curve.CurveHeightRange
 import app.atemkraft.ui.patterns.rememberPatternEditorState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
@@ -138,7 +139,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             val name = "Abendruhe nach dem Spaziergang am See"
             return SavedPattern(
                 id = id,
-                exercise = RandomPatternGenerator.exerciseFrom(pattern, "muster-$id", name, minutes = 5),
+                exercise = GeneratedExercises.exerciseFrom(pattern, "muster-$id", name, minutes = 5),
                 spec = PatternSpec(4.0, 1.0, 6.0, null, activating = false),
                 origin = PatternOrigin.CUSTOM,
                 minutes = 5,

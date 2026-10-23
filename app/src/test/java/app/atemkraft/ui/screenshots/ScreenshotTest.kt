@@ -32,11 +32,11 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.RuntimePhase
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
@@ -57,8 +57,8 @@ import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.MiniNowPlayingBar
+import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.ExerciseDetailScreen
-import app.atemkraft.ui.detail.SafetyDialog
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeScreen
 import app.atemkraft.ui.learn.LearnScreen
@@ -303,7 +303,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         val intense = template("Viloma I").let { p -> FreePattern(p.phases.mapIndexed { i, phase -> if (i == 5) phase.copy(seconds = 12) else phase }) }
         val pages = (BuiltInExercises.all + daily.exercise).map { it.id to it } + listOf(
             "eigenes_muster" to saved.last().exercise,
-            "eigenes_muster_intensiv" to RandomPatternGenerator.exerciseFrom(intense, "muster-5", "Stufen mit langem Halten", minutes = 5),
+            "eigenes_muster_intensiv" to GeneratedExercises.exerciseFrom(intense, "muster-5", "Stufen mit langem Halten", minutes = 5),
         )
         pages.forEach { (name, exercise) ->
             val builtIn = exercise in BuiltInExercises.all

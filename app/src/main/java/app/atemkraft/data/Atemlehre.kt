@@ -1,11 +1,12 @@
 package app.atemkraft.data
 
+import app.atemkraft.domain.ExerciseIds
+import app.atemkraft.domain.LoreIds
 import app.atemkraft.domain.LoreInfluence
 import app.atemkraft.domain.LorePattern
 import app.atemkraft.domain.LorePhase
 import app.atemkraft.domain.LoreVayu
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.RhythmStep
 import app.atemkraft.domain.Vayu
@@ -86,7 +87,7 @@ object Atemlehre {
 
     val patterns = listOf(
         LorePattern(
-            id = "langhana",
+            id = LoreIds.LANGHANA,
             title = "Ein kurz, Aus lang",
             linkName = "*laṅghana*",
             rhythm = listOf(inhale(4.0), exhale(6.0)),
@@ -101,10 +102,10 @@ object Atemlehre {
                 "Ausatmen mehr bringt als gleich langes, langsames Atmen, ist offen: Zwei Studien " +
                 "fanden mehr Herzratenvariabilität, eine davon auch mehr Entspannung (Van Diest 2014, " +
                 "Bae 2021), andere keinen Unterschied (Meehan & Shaffer 2024, Birdee 2023).",
-            exerciseIds = listOf("resonanz", "bhramari", "cyclic-sighing", "zwerchfell", "sitali", "ujjayi", "lippenbremse", RandomPatternGenerator.ID),
+            exerciseIds = listOf("resonanz", "bhramari", "cyclic-sighing", "zwerchfell", "sitali", "ujjayi", "lippenbremse", ExerciseIds.DAILY),
         ),
         LorePattern(
-            id = "brmhana",
+            id = LoreIds.BRMHANA,
             title = "Ein lang, Aus kurz",
             linkName = "*bṛṃhaṇa*",
             // Spiegelbild von Langhana (Ein 4 · Aus 6), gleich lang wie Samana (5 · 5): Die drei
@@ -118,11 +119,11 @@ object Atemlehre {
             typical = "Morgens, bei Müdigkeit, Schwere oder Trägheit.",
             studies = "Beim Einatmen steigt der Puls kurz an, die Richtung ist plausibel. Gezielt " +
                 "untersucht ist langes Einatmen kaum.",
-            exerciseIds = listOf(RandomPatternGenerator.ID),
+            exerciseIds = listOf(ExerciseIds.DAILY),
             appNote = "Das Muster des Tages ist an manchen Tagen sanft aktivierend; dann atmet es länger ein als aus.",
         ),
         LorePattern(
-            id = "samana",
+            id = LoreIds.SAMANA,
             title = "Ein gleich Aus, langsam",
             linkName = "*samāna*",
             rhythm = listOf(inhale(5.0), exhale(5.0)),
@@ -141,7 +142,7 @@ object Atemlehre {
             exerciseIds = listOf("nadi-shodhana", "dirgha"),
         ),
         LorePattern(
-            id = "feuer",
+            id = LoreIds.FEUER,
             title = "Ein gleich Aus, schnell",
             linkName = "Feuer",
             rhythm = List(8) { listOf(inhale(1.0), exhale(1.0)) }.flatten(),
@@ -160,7 +161,7 @@ object Atemlehre {
             warning = "Nie im oder am Wasser, nicht beim Fahren.",
         ),
         LorePattern(
-            id = "kapalabhati",
+            id = LoreIds.KAPALABHATI,
             title = "Aus aktiv, Ein passiv, schnell",
             linkName = "Kapalabhati",
             rhythm = List(8) { listOf(exhale(1.0), inhale(1.0, passive = true)) }.flatten(),
@@ -176,7 +177,7 @@ object Atemlehre {
             caution = true,
         ),
         LorePattern(
-            id = "halten-voll",
+            id = LoreIds.HALTEN_VOLL,
             title = "Mit Halten nach dem Einatmen",
             linkName = "Halten voll",
             rhythm = listOf(inhale(4.0), holdFull(4.0), exhale(6.0)),
@@ -189,12 +190,12 @@ object Atemlehre {
             typical = "Zum Sammeln und Konzentrieren.",
             studies = "Zum Halten selbst gibt es kaum Daten. Pressen bei geschlossener Kehle lässt " +
                 "den Blutdruck schwanken.",
-            exerciseIds = listOf("4-7-8", RandomPatternGenerator.ID),
+            exerciseIds = listOf("4-7-8", ExerciseIds.DAILY),
             appNote = "4-7-8 verbindet volles Halten mit langem Ausatmen: erst sammeln, dann loslassen.",
             origin = "Die Zuordnung zu *bṛṃhaṇa* folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
         ),
         LorePattern(
-            id = "halten-leer",
+            id = LoreIds.HALTEN_LEER,
             title = "Mit Halten nach dem Ausatmen",
             linkName = "Halten leer",
             // Dieselben Werte wie „Mit Halten nach dem Einatmen“: Beide Balken sind 14 s lang, Ein
@@ -210,13 +211,13 @@ object Atemlehre {
                 "Beginn des Ausatmens (2,45).",
             typical = "Für Geübte, in ruhiger Verfassung.",
             studies = "Kaum Daten. Mit leerer Lunge ist der Sauerstoffvorrat klein, Atemnot kommt früher.",
-            exerciseIds = listOf("box-4-4-4-4", RandomPatternGenerator.ID),
+            exerciseIds = listOf("box-4-4-4-4", ExerciseIds.DAILY),
             appNote = "Bei der Box-Atmung ist die leere Pause kurz. Wim Hof hält ebenfalls leer, " +
                 "aber nach schnellem Atmen; das ist ein anderer Zusammenhang.",
             origin = "Die Zuordnung zu *laṅghana* folgt der Viniyoga-Lehre; andere Schulen gewichten anders.",
         ),
         LorePattern(
-            id = "sama-vritti",
+            id = LoreIds.SAMA_VRITTI,
             title = "Alle vier Phasen gleich",
             linkName = "*sama vṛtti*",
             rhythm = listOf(inhale(4.0), holdFull(4.0), exhale(4.0), holdEmpty(4.0)),
@@ -232,7 +233,7 @@ object Atemlehre {
             exerciseIds = listOf("box-4-4-4-4"),
         ),
         LorePattern(
-            id = "klassisch",
+            id = LoreIds.KLASSISCH,
             title = "Das klassische Maß 1 : 4 : 2",
             linkName = "1 : 4 : 2",
             rhythm = listOf(inhale(4.0), holdFull(16.0), exhale(8.0)),
@@ -251,7 +252,7 @@ object Atemlehre {
         // Viloma I und II je als eigene Karte wie die beiden Halten-Karten: gegensätzliche
         // Richtung, eigener Rhythmus (Nutzer 2026-10-21). Werte wie die Übungen in der App.
         LorePattern(
-            id = "viloma-ein",
+            id = LoreIds.VILOMA_EIN,
             title = "Einatmen in Stufen (Viloma I)",
             linkName = "Viloma I",
             rhythm = listOf(inhale(2.0), holdFull(2.0), inhale(2.0), holdFull(2.0), inhale(2.0), exhale(8.0)),
@@ -268,12 +269,12 @@ object Atemlehre {
             appNote = "In der App mit drei Stufen; der Atemkreis wächst stufenweise und bleibt in den Pausen stehen.",
         ),
         LorePattern(
-            id = "viloma-aus",
+            id = LoreIds.VILOMA_AUS,
             title = "Ausatmen in Stufen (Viloma II)",
             linkName = "Viloma II",
             // Die Pausen liegen mitten im Ausatmen, die Lunge ist noch zu zwei bzw. einem Drittel
             // gefüllt: kein Halten leer (*bāhya kumbhaka*). Wie in der Übung und bei Viloma I ein
-            // Halten mit Füllstand, in der App als HOLD_FULL modelliert (RandomPatternGenerator).
+            // Halten mit Füllstand, in der App als HOLD_FULL modelliert (GeneratedExercises).
             rhythm = listOf(inhale(6.0), exhale(2.0), holdFull(2.0), exhale(2.0), holdFull(2.0), exhale(2.0)),
             counts = "z. B. Ein 6\u00A0· Aus in drei Stufen",
             teaser = "Ausatmen in Stufen gilt als sanftes *laṅghana*: loslassen, leicht werden.",
