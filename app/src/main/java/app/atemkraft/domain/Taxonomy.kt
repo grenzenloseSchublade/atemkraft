@@ -8,16 +8,16 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 enum class BreathingFamily {
-    /** A · Herunterregeln (fachlich: vagal / parasympathisch). */
+    /** „Beruhigen“, früher A · Herunterregeln (fachlich: vagal / parasympathisch). */
     DOWNREGULATE,
 
-    /** B · Hochregeln (fachlich: sympathisch / energetisierend). */
+    /** „Aktivieren“, früher B · Hochregeln (fachlich: sympathisch / energetisierend). */
     UPREGULATE,
 
-    /** C · Balancieren / strukturierte Programme. */
+    /** „Ausgleichen“, früher C · Balancieren / strukturierte Programme. */
     BALANCE,
 
-    /** D · Funktionell – Atemmuster & CO₂-Toleranz. */
+    /** „Atem schulen“, früher D · Funktionell – Atemmuster & CO₂-Toleranz. */
     FUNCTIONAL,
 }
 

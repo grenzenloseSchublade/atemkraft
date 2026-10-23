@@ -19,14 +19,25 @@ import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.PhaseDuration
+import app.atemkraft.domain.PhaseType
+import app.atemkraft.domain.cardBreath
 import app.atemkraft.domain.defaultMinutes
+import app.atemkraft.domain.estimatedTotalSeconds
+import app.atemkraft.domain.formatDecimal
+import app.atemkraft.domain.hasOpenPhases
+import app.atemkraft.domain.inStages
+import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Übungskarte in Listen. Die Studienlage steht nur auf der Detailseite: Auf der Liste trüge fast
  * jede Karte dasselbe Etikett. Die Karte zeigt, was vor dem Antippen zählt – Vorsicht, „Programm“
- * und die persönliche Markierung ([marked], Atemkreis rechts auf Höhe der ersten Titelzeile).
+ * und die persönliche Markierung ([marked], Atemkreis rechts auf Höhe der ersten Titelzeile) –,
+ * unter dem Titel die Metazeile mit Takt und Dauer wie die Musterzeile der [PatternCard]
+ * („Einatmen 4 s · Ausatmen 6 s · ca. 10 min“, [exerciseMetaLine], Nutzer 2026-10-24), darunter
+ * die Kurzbeschreibung.
  */
 @Composable
 fun ExerciseCard(exercise: Exercise, onClick: () -> Unit, modifier: Modifier = Modifier, marked: Boolean = false) {
@@ -64,11 +75,51 @@ fun ExerciseCard(exercise: Exercise, onClick: () -> Unit, modifier: Modifier = M
                     ) { PersonalMarkIndicator() }
                 }
             }
+            exerciseMetaLine(exercise)?.let { meta ->
+                Spacer(Modifier.height(Dimens.GapTiny))
+                // Eine Stufe heller als die Kurzbeschreibung: die Zeile, nach der man entscheidet.
+                BodyText(meta)
+            }
             Spacer(Modifier.height(Dimens.GapTiny))
             SecondaryText(exercise.shortDescription)
         }
     }
 }
+
+/**
+ * Metazeile einer angeleiteten Übung: ein Atemzug in Worten ([cardBreath], „Einatmen 4 s ·
+ * Ausatmen 6 s“; bei Stufen „in Stufen“; bei mehreren Abschnitten nichts) und die Dauer wie am
+ * Startknopf der Detailseite – ohne eigene Anpassungen, wie der Filter „Bis 3 min“: „ca. 10 min“,
+ * bei offenen Phasen „ab ca. 3 min“, unter einer Minute „unter 1 min“. Programme ohne Takt: null.
+ */
+@Composable
+private fun exerciseMetaLine(exercise: Exercise): String? {
+    if (!exercise.guided || exercise.segments.isEmpty()) return null
+    val rhythm = exercise.cardBreath()?.map { phase ->
+        val seconds = ((phase.duration as PhaseDuration.Fixed).millis / 1000.0).formatDecimal()
+        stringResource(R.string.card_phase_seconds, phaseName(phase.type), seconds)
+    } ?: listOfNotNull(stringResource(R.string.card_in_stages).takeIf { exercise.inStages })
+    val seconds = exercise.estimatedTotalSeconds()
+    val duration = when {
+        exercise.hasOpenPhases -> stringResource(R.string.duration_approx_from, (seconds / 60).coerceAtLeast(1))
+        seconds < 60 -> stringResource(R.string.card_duration_under_minute)
+        else -> stringResource(R.string.duration_approx, minutesRounded(seconds))
+    }
+    return (rhythm + duration).joinToString(DOT_SEPARATOR)
+}
+
+/** Phasenname für die Metazeile; „Halten“ ohne voll/leer wie in der Sitzung (`phase_hold_*`). */
+@Composable
+private fun phaseName(type: PhaseType): String = stringResource(
+    when (type) {
+        PhaseType.INHALE -> R.string.phase_inhale
+        PhaseType.EXHALE -> R.string.phase_exhale
+        PhaseType.HOLD_FULL -> R.string.phase_hold_full
+        PhaseType.HOLD_EMPTY -> R.string.phase_hold_empty
+        PhaseType.INHALE_TOP_UP -> R.string.phase_inhale_top_up
+        PhaseType.REST -> R.string.phase_rest
+    },
+)
 
 /**
  * Karte eines generierten Musters – Muster des Tages und „Eigene Kreationen“ sehen gleich aus: Name

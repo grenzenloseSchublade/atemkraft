@@ -35,7 +35,7 @@ class ExerciseFilterTest {
         assertTrue(ids(setOf(NO_HOLD)).none { it.startsWith("viloma") || it == "box-4-4-4-4" })
         assertTrue(ids(setOf(YOGA)).none { it == "box-4-4-4-4" || it == "4-7-8" })
         assertEquals(listOf("bhramari"), ids(setOf(SHORT, NO_HOLD, YOGA)))
-        // Nur Familien mit Treffern: „Kurz“ trifft weder Hochregeln noch Funktionell.
+        // Nur Familien mit Treffern: „Kurz“ trifft weder „Aktivieren“ noch „Atem schulen“.
         val families = ExerciseFilters.apply(groups, setOf(SHORT), Pranayama.exerciseIds).map { it.first }
         assertEquals(listOf(BreathingFamily.DOWNREGULATE, BreathingFamily.BALANCE), families)
         assertEquals(groups, ExerciseFilters.apply(groups, emptySet(), Pranayama.exerciseIds))

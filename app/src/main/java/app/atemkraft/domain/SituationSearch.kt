@@ -41,7 +41,7 @@ import java.text.Normalizer
  * - **Rangfolge:** mehr getroffene Suchwörter zuerst, sonst die Reihenfolge der Daten.
  * - **Bereiche** ([BreathingArea]) sind die zweite, breitere Ebene: Ihre kuratierten Wörter
  *   („beruhigen“, „Gleichgewicht“) laufen nach denselben Regeln mit (Wendungen, genauester
- *   Begriff), einen Titel- oder Satztext haben sie nicht. Ein Bereich mit Warnung (Hochregeln)
+ *   Begriff), einen Titel- oder Satztext haben sie nicht. Ein Bereich mit Warnung („Aktivieren“)
  *   gilt wie eine Warn-Situation: nur sichtbar, wenn kein anderer kuratierter Begriff trifft.
  *   Im Ergebnis stehen erst die Anlässe, dann die Bereiche ([Results]).
  */

@@ -83,6 +83,27 @@ private const val SECONDS_PER_MINUTE = 60
 val Exercise.hasOpenPhases: Boolean
     get() = segments.any { seg -> seg.phases.any { it.duration !is PhaseDuration.Fixed } }
 
+/** true bei Atmen in Stufen ([Phase.level]: Viloma, Dirgha). */
+val Exercise.inStages: Boolean
+    get() = segments.any { seg -> seg.phases.any { it.level != null } }
+
+/**
+ * Ein Atemzug der Übung für die Metazeile der Übungskarte („Einatmen 4 s · Ausatmen 6 s“, Nutzer
+ * 2026-10-24) – oder null, wo er sich nicht in einer Zeile lesen lässt: mehr als ein Abschnitt
+ * (Wim Hof, Feueratmung), offene Phasen, Phasen unter 1 s oder Atmen in Stufen ([inStages]).
+ * Besteht der Atemzug aus zwei gleichen Hälften, die sich nur in der Seite unterscheiden (Nadi
+ * Shodhana: links ein, rechts aus, rechts ein, links aus), zählt eine Hälfte.
+ */
+fun Exercise.cardBreath(): List<Phase>? {
+    val phases = segments.singleOrNull()?.phases ?: return null
+    if (phases.isEmpty() || inStages) return null
+    if (phases.any { (it.duration as? PhaseDuration.Fixed)?.millis?.let { ms -> ms < 1000L } != false }) return null
+    val half = phases.size / 2
+    val halves = phases.size % 2 == 0 && phases.size >= 4 &&
+        phases.take(half).zip(phases.drop(half)).all { (a, b) -> a.type == b.type && a.duration == b.duration }
+    return if (halves) phases.take(half) else phases
+}
+
 /** Dauer eines Zyklus (eine Segment-Wiederholung) in Sekunden, aus festen Phasen. */
 fun Exercise.cycleSeconds(): Int = (cycleMillis() / 1000L).toInt().coerceAtLeast(1)
 

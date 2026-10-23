@@ -4,6 +4,12 @@
 
     <!-- Startbildschirm -->
     <string name="home_subtitle">Wähle eine Übung oder sag, wie es dir geht</string>
+    <!-- Willkommenskarte beim ersten Start (Nutzer 2026-10-24): Einstieg und Gesundheitshinweis,
+         abweisbar mit ✕. Der Einstieg selbst ist ein Verweis mit dem Namen der Übung. -->
+    <string name="welcome_title">Neu hier?</string>
+    <string name="welcome_body">Fang mit einer ruhigen Übung an: gleichmäßig ein und aus, ohne Halten, ein paar Minuten lang.</string>
+    <string name="welcome_health">Atemkraft ist kein Medizinprodukt. Bei Erkrankungen kläre vorher ärztlich ab, ob eine Übung für dich passt. Wird dir schwindlig, hör auf und atme normal weiter.</string>
+    <string name="cd_welcome_dismiss">Hinweis schließen</string>
 
     <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen) -->
     <string name="phase_inhale">Einatmen</string>
@@ -13,11 +19,12 @@
     <string name="phase_inhale_top_up">Nachatmen</string>
     <string name="phase_rest">Locker atmen</string>
 
-    <!-- Familien (Kategorien) -->
-    <string name="family_downregulate">A\u00A0· Herunterregeln</string>
-    <string name="family_upregulate">B\u00A0· Hochregeln</string>
-    <string name="family_balance">C\u00A0· Balancieren</string>
-    <string name="family_functional">D\u00A0· Funktionell</string>
+    <!-- Familien (Kategorien): Laienwörter ohne die Buchstaben A–D der Entwurfsmatrix (Nutzer
+         2026-10-24); dieselben Namen stehen als Suchwörter in Areas. -->
+    <string name="family_downregulate">Beruhigen</string>
+    <string name="family_upregulate">Aktivieren</string>
+    <string name="family_balance">Ausgleichen</string>
+    <string name="family_functional">Atem schulen</string>
     <!-- Statt der Familie auf der Detailseite generierter Muster (Tagesmuster, Eigene Kreationen) -->
     <string name="family_pattern">Muster</string>
 
@@ -49,6 +56,12 @@
     <!-- Geschützte Leerzeichen: „ca. 4 min“ bricht nie zwischen Zahl und Einheit um (TEXT-10). -->
     <string name="duration_approx">ca.\u00A0%1$d\u00A0min</string>
     <string name="duration_approx_from">ab ca.\u00A0%1$d\u00A0min</string>
+    <!-- Metazeile der Übungskarte (Nutzer 2026-10-24): je Phase „Einatmen 4 s“ (%1$s = Phase, %2$s =
+         Sekunden mit Komma), bei Stufen-Übungen „in Stufen“, unter einer Minute Gesamtdauer
+         „unter 1 min“; Teile mit „ · “ verbunden. -->
+    <string name="card_phase_seconds">%1$s %2$s\u00A0s</string>
+    <string name="card_in_stages">in Stufen</string>
+    <string name="card_duration_under_minute">unter 1\u00A0min</string>
     <!-- „Starten · ca. 10 min“ – Gesamtdauer direkt am Start. Geschütztes Leerzeichen vor „·“:
          Eine Zeile beginnt nie mit dem Trennpunkt (LAYOUT-03). -->
     <string name="action_start_duration">%1$s\u00A0· %2$s</string>
@@ -73,8 +86,8 @@
         <item quantity="one">%1$d Bereich</item>
         <item quantity="other">%1$d Bereiche</item>
     </plurals>
-    <!-- Verweis unter einer Empfehlung auf ihren Bereich: „Mehr aus A · Herunterregeln“. -->
-    <string name="situations_area_link">Mehr aus %1$s</string>
+    <!-- Verweis unter einer Empfehlung auf ihren Bereich: „Mehr: Beruhigen“. -->
+    <string name="situations_area_link">Mehr: %1$s</string>
     <string name="situations_search_none">Nichts gefunden</string>
     <string name="action_show_all">Alle zeigen</string>
 
@@ -148,7 +161,6 @@
     <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 
     <!-- Einstiege in den Muster-Editor: Link unter dem Muster des Tages, Stift auf der Detailseite. -->
-    <string name="home_own_pattern_link">Eigenes Muster zusammenstellen</string>
     <string name="cd_pattern_edit">Muster bearbeiten</string>
     <string name="cd_pattern_adapt_daily">Als eigenes Muster anpassen</string>
 

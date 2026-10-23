@@ -62,7 +62,7 @@ object Situations {
             shortLabel = "Kurzatmig",
             // Nur Übungen mit Start (UX-Review 2026-10-23): Buteyko und Nasenatmung sind Infoseiten
             // ohne Takt und wären hier eine Sackgasse; der Satz verweist auf den Bereich darunter
-            // („Mehr aus …“), in dem beide stehen.
+            // („Mehr: …“), in dem beide stehen.
             rationale = "Bringt hektisches, flaches Atmen wieder in einen ruhigen, " +
                 "gleichmäßigen Rhythmus. Buteyko und Nasenatmung sind Trainings über Wochen; du " +
                 "findest sie im Bereich darunter.",

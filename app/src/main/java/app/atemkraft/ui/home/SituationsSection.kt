@@ -143,7 +143,7 @@ internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolea
 }
 
 /**
- * Verweis „Mehr aus A · Herunterregeln ›“ unter einer Empfehlung (MUSTER-09): führt an derselben
+ * Verweis „Mehr: Beruhigen ›“ unter einer Empfehlung (MUSTER-09): führt an derselben
  * Stelle zu allen Übungen ihres Bereichs. In der Farbe der Familie statt in Cyan – die Farbe sagt
  * hier, wohin es geht, wie der Familienkopf, zu dem der Verweis führt (Ausnahme in FARBE-04).
  * Bündig: Das Polster des Text-Buttons ragt in den Rand.

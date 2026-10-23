@@ -73,7 +73,7 @@ fun SecondaryText(text: String, modifier: Modifier = Modifier, textAlign: TextAl
 /**
  * Warnzeile „⚠ …“ in `WarnAmber`, `bodySmall`, normaler Umbruch wie [SecondaryText]: Sicherheit
  * und Intensität mit Zeichen und Text, nie nur Farbe (FARBE-05). Detailseite intensiver Übungen,
- * Atemlehre-Karten mit Warnung, intensive Empfehlung und Bereich Hochregeln im Atmen-Tab.
+ * Atemlehre-Karten mit Warnung, intensive Empfehlung und Bereich „Aktivieren“ im Atmen-Tab.
  * [text] ohne das Zeichen.
  */
 @Composable

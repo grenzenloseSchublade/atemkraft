@@ -70,6 +70,7 @@ internal class GraphState(
     meditationConfig: State<MeditationConfig>,
     meditationSpeechAvailable: State<Boolean>,
     gongIntervalMin: State<Int>,
+    welcomeDismissed: State<Boolean>,
 ) {
     val safetySettings by safetySettings
     val markedExercises by markedExercises
@@ -77,6 +78,7 @@ internal class GraphState(
     val meditationConfig by meditationConfig
     val meditationSpeechAvailable by meditationSpeechAvailable
     val gongIntervalMin by gongIntervalMin
+    val welcomeDismissed by welcomeDismissed
 }
 
 @Composable
@@ -88,8 +90,11 @@ internal fun rememberGraphState(container: AppContainer): GraphState {
     val meditationConfig = settings.meditationSettings.collectAsStateWithLifecycle(initialValue = MeditationConfig())
     val speech = container.meditationController.speechAvailable.collectAsStateWithLifecycle()
     val gong = settings.gongIntervalMin.collectAsStateWithLifecycle(initialValue = GONG_INTERVAL_DEFAULT_MINUTES)
-    return remember(safety, marked, log, meditationConfig, speech, gong) {
-        GraphState(safety, marked, log, meditationConfig, speech, gong)
+    // Bis DataStore antwortet, gilt die Karte als weggeklickt: Wer sie schon geschlossen hat, sieht
+    // sie beim Start nicht kurz aufblitzen; beim ersten Start erscheint sie einen Augenblick später.
+    val welcome = settings.welcomeDismissed.collectAsStateWithLifecycle(initialValue = true)
+    return remember(safety, marked, log, meditationConfig, speech, gong, welcome) {
+        GraphState(safety, marked, log, meditationConfig, speech, gong, welcome)
     }
 }
 
@@ -140,7 +145,9 @@ internal fun NavGraphBuilder.appGraph(
             onSelect = openDetail,
             onOpenSettings = { navController.navigate(SettingsRoute()) },
             markedIds = state.markedExercises,
-            onOpenPatternEditor = { navController.navigate(PatternEditorRoute()) },
+            // Erster Start: ruhiger Einstieg mit Gesundheitshinweis, bis der Nutzer ihn wegklickt.
+            welcome = if (state.welcomeDismissed) null else exercises.byId(WELCOME_EXERCISE_ID),
+            onDismissWelcome = { scope.launch { settings.dismissWelcome() } },
         )
     }
     composable<EigeneRoute> {
@@ -266,6 +273,12 @@ internal fun NavGraphBuilder.appGraph(
         AboutScreen(onBack = back, lastError = lastError)
     }
 }
+
+/**
+ * Übung der Willkommenskarte im Atmen-Tab: die Resonanz-Atmung, die einzige „gut belegte“ Übung,
+ * ruhig und ohne Halten (Nutzer 2026-10-24).
+ */
+private const val WELCOME_EXERCISE_ID = "resonanz"
 
 /** Zurück, nur solange [entry] oben liegt: Ein spätes „fehlt“ nimmt keine fremde Seite vom Stapel. */
 private fun NavController.popIfTop(entry: NavBackStackEntry) {

@@ -46,7 +46,7 @@ data class SituationRecommendation(
 /**
  * Ein Bereich (eine [BreathingFamily]) als zweite, breitere Ebene im Block „Wie fühlst du dich?“
  * (MUSTER-09): [keywords] sind breite Alltagswörter, über die die Suche den Bereich direkt
- * findet („beruhigen“ → A · Herunterregeln), kuratiert wie die Anlass-Begriffe und nie doppelt
+ * findet („beruhigen“ → „Beruhigen“), kuratiert wie die Anlass-Begriffe und nie doppelt
  * mit ihnen belegt. [warning] wie bei [SituationRecommendation]: Der Bereich enthält intensive
  * Übungen, seine Ansicht trägt die ⚠-Zeile, und die Suche zeigt ihn nur, wenn kein anderer
  * kuratierter Begriff passt.
@@ -63,15 +63,15 @@ data class BreathingArea(
  * Bereich einer Empfehlung: die häufigste Familie unter ihren Übungen, bei Gleichstand die der
  * zuerst genannten Übung; `null` ohne auflösbare Übung. Abgeleitet statt als eigenes Feld, weil
  * die Ableitung für alle sechs Anlässe fachlich trägt:
- * - Akuter Stress (Seufzer, zyklisches Seufzen) → A · Herunterregeln: langer Ausatem, beruhigen.
- * - Kurzatmig oder aufgeregt (Lippenbremse, Gehen) → D · Funktionell: Es geht um das Atemmuster
+ * - Akuter Stress (Seufzer, zyklisches Seufzen) → „Beruhigen“: langer Ausatem, beruhigen.
+ * - Kurzatmig oder aufgeregt (Lippenbremse, Gehen) → „Atem schulen“: Es geht um das Atemmuster
  *   selbst, flaches, hektisches Atmen wieder gleichmäßig. Buteyko und Nasenatmung (ohne Start)
  *   stehen im Bereich, nicht in der Empfehlung.
- * - Vor dem Einschlafen (4-7-8, Resonanz, Sitali) → A · Herunterregeln.
- * - Konzentration & Fokus (Box) → C · Balancieren: ruhig und zugleich wach, gleichmäßiger Takt.
- * - Wach & energiegeladen werden (Wim Hof, Feueratmung) → B · Hochregeln.
- * - Erschöpft oder ausgelaugt (Resonanz, zyklisches Seufzen) → A · Herunterregeln: bewusst
- *   nichts Anregendes, sondern sanft und beruhigend – nicht Hochregeln, obwohl man wacher werden
+ * - Vor dem Einschlafen (4-7-8, Resonanz, Sitali) → „Beruhigen“.
+ * - Konzentration & Fokus (Box) → „Ausgleichen“: ruhig und zugleich wach, gleichmäßiger Takt.
+ * - Wach & energiegeladen werden (Wim Hof, Feueratmung) → „Aktivieren“.
+ * - Erschöpft oder ausgelaugt (Resonanz, zyklisches Seufzen) → „Beruhigen“: bewusst
+ *   nichts Anregendes, sondern sanft und beruhigend – nicht „Aktivieren“, obwohl man wacher werden
  *   möchte.
  */
 fun SituationRecommendation.area(resolve: (String) -> Exercise?): BreathingFamily? {

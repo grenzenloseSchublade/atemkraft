@@ -116,6 +116,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
         val MARKED_EXERCISES = stringSetPreferencesKey("marked_exercises") // Atemkreis „tut mir gut“
         val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked") // einmal gefragt (ab Android 13)
+        val WELCOME_DISMISSED = booleanPreferencesKey("welcome_dismissed") // Willkommenskarte weggeklickt
     }
 
     /**
@@ -159,6 +160,16 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setNotificationAsked() {
         store.edit { it[Keys.NOTIFICATION_ASKED] = true }
+    }
+
+    /**
+     * Wurde die Willkommenskarte im Atmen-Tab weggeklickt (Nutzer 2026-10-24)? Bis dahin steht sie
+     * oben im Tab: Einstieg und Gesundheitshinweis vor der ersten Sitzung.
+     */
+    val welcomeDismissed: Flow<Boolean> = data.map { it[Keys.WELCOME_DISMISSED] ?: false }
+
+    suspend fun dismissWelcome() {
+        store.edit { it[Keys.WELCOME_DISMISSED] = true }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

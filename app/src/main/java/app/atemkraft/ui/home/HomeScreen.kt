@@ -45,18 +45,24 @@ import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
- * Atmen-Tab: alles, was man starten kann. Von oben: Muster des Tages, der Block „Wie fühlst du
- * dich?“ (Suchfeld und die sechs Anlässe als Chips, [FeelingBlock]), dann „Alle Übungen“ mit der
- * Filterreihe und darunter die Übungen nach Familien mit ihren farbigen Köpfen.
+ * Atmen-Tab: alles, was man starten kann. Von oben: beim ersten Start die Willkommenskarte
+ * ([WelcomeCard], abweisbar), der Block „Wie fühlst du dich?“ (Suchfeld und die sechs Anlässe als
+ * Chips, [FeelingBlock]), das Muster des Tages, dann „Alle Übungen“ mit der Filterreihe und
+ * darunter die Übungen nach Familien mit ihren farbigen Köpfen.
  * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
+ * Reihenfolge (Nutzer 2026-10-24): Der Einstieg nach Befinden steht zuerst, das Muster des Tages
+ * – bewusst spielerisch, ohne eigenes Wirkversprechen – rutscht darunter und bleibt auf dem ersten
+ * Bildschirm sichtbar. Den Weg in den Muster-Editor gibt es im Tab „Eigene“ („+“) und über den
+ * Stift auf der Detailseite des Tagesmusters; der Atmen-Tab trägt keinen eigenen Link mehr.
+ *
  * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
- * nichts, dann steht alles da wie immer (Muster des Tages, Block, vier Familien).
+ * nichts, dann steht alles da wie immer (Block, Muster des Tages, vier Familien).
  * - **Anlass:** Ein Tipp auf einen Chip markiert ihn; unter dem Block stehen sein Begründungssatz
- *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen und „Mehr aus <Bereich> ›“
- *   ([AreaLink]); die Familien treten zurück. Ein zweiter Tipp auf denselben Chip oder
- *   System-Zurück zeigt wieder alles.
- * - **Bereich:** „Mehr aus …“ zeigt an derselben Stelle den Familienkopf und alle Übungen des
+ *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen und „Mehr: <Bereich> ›“
+ *   ([AreaLink]); Muster des Tages und Familien treten zurück. Ein zweiter Tipp auf denselben Chip
+ *   oder System-Zurück zeigt wieder alles.
+ * - **Bereich:** „Mehr: …“ zeigt an derselben Stelle den Familienkopf und alle Übungen des
  *   Bereichs ([AreaHeader]); kein Chip ist markiert, die Eingabe leer. ✕ im Kopf oder Zurück
  *   führt zur Übersicht.
  * - **Suche:** Sobald die Eingabe ein Suchwort enthält ([SituationSearch]), sind die Chips der
@@ -72,6 +78,8 @@ import app.atemkraft.ui.theme.SECONDARY
  * Der Bereich eines Anlasses ist die häufigste Familie seiner Übungen ([area]). Das Feld bekommt
  * beim Öffnen keinen Fokus; die Eingabe lebt nur in `rememberSaveable` – nie in DataStore oder
  * Log (SEC-PRIV-03/04). System-Zurück leert zuerst Wahl und Suche und schließt die Tastatur.
+ *
+ * [welcome]: die Übung der Willkommenskarte; null = Karte weggeklickt (oder Übung fehlt).
  */
 @Composable
 fun HomeScreen(
@@ -88,8 +96,8 @@ fun HomeScreen(
     onSelect: (String) -> Unit,
     onOpenSettings: () -> Unit,
     markedIds: Set<String> = emptySet(),
-    // Einstieg in den Muster-Editor unter der Tageskarte; ohne ihn kein Link.
-    onOpenPatternEditor: (() -> Unit)? = null,
+    welcome: Exercise? = null,
+    onDismissWelcome: () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     // Höchstens eins von beiden ist gesetzt, und nur bei leerer Eingabe (siehe KDoc).
@@ -132,41 +140,12 @@ fun HomeScreen(
         },
         subtitle = stringResource(R.string.home_subtitle),
     ) {
-        item(key = "daily-header") {
-            // „Neu generieren“ betrifft den ganzen Abschnitt („gib mir ein anderes“), nicht
-            // die Karte – deshalb im Kopf, die Karte behält nur ihre eine Aktion (KOMP-02).
-            SectionHeader(
-                title = stringResource(R.string.home_daily_pattern),
-                color = MaterialTheme.colorScheme.secondary,
-            ) {
-                AppIconButton(onClick = onRegenerateDaily) {
-                    Icon(
-                        Icons.Filled.Refresh,
-                        contentDescription = stringResource(R.string.cd_pattern_regenerate),
-                        tint = MaterialTheme.colorScheme.secondary,
-                    )
-                }
+        // Erster Start: eine ruhige, abweisbare Karte statt eines Onboardings (Nutzer 2026-10-24).
+        if (welcome != null) {
+            item(key = "welcome") {
+                WelcomeCard(exercise = welcome, onOpen = { onSelect(welcome.id) }, onDismiss = onDismissWelcome)
             }
         }
-        item(key = "daily-pattern") {
-            DailyPatternCard(
-                daily = daily,
-                saved = dailySaved,
-                onClick = { onSelect(daily.exercise.id) },
-                onSavedChange = onDailySavedChange,
-            )
-            // Eigener Weg zum Editor neben der Karte, nicht in ihr: Die Karte behält ihre
-            // eine Aktion (KOMP-02). Bündig: Das Polster des Text-Buttons ragt in den Rand.
-            if (onOpenPatternEditor != null) {
-                AppTextButton(onClick = onOpenPatternEditor, modifier = Modifier.flushStart()) {
-                    ForwardLinkText(
-                        text = stringResource(R.string.home_own_pattern_link),
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                }
-            }
-        }
-
         // Einstieg „nach Befinden“ ohne eigene Überschrift: Feld und Anlässe in einer Fläche.
         if (situations.isNotEmpty()) {
             item(key = "feeling") {
@@ -226,6 +205,30 @@ fun HomeScreen(
                 }
             }
         } else {
+            item(key = "daily-header") {
+                // „Neu generieren“ betrifft den ganzen Abschnitt („gib mir ein anderes“), nicht
+                // die Karte – deshalb im Kopf, die Karte behält nur ihre eine Aktion (KOMP-02).
+                SectionHeader(
+                    title = stringResource(R.string.home_daily_pattern),
+                    color = MaterialTheme.colorScheme.secondary,
+                ) {
+                    AppIconButton(onClick = onRegenerateDaily) {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = stringResource(R.string.cd_pattern_regenerate),
+                            tint = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
+                }
+            }
+            item(key = "daily-pattern") {
+                DailyPatternCard(
+                    daily = daily,
+                    saved = dailySaved,
+                    onClick = { onSelect(daily.exercise.id) },
+                    onSavedChange = onDailySavedChange,
+                )
+            }
             item(key = "all-header") {
                 // Kein Familienkopf: erster Ton des Kopf-Rings (FARBE-07, Ausnahme Atmen-Tab).
                 SectionHeader(title = stringResource(R.string.home_all_exercises), color = headingColor(0))

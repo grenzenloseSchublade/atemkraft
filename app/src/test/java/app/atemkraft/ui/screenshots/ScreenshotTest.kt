@@ -126,6 +126,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             (now + chipRows()).map { "${device.name}\tfs${(fontScale * 100).toInt()}\tCHIP\t$it" }
         }
         snap("01_atmen", measure = sameChips) { BreatheTab() }
+        // Erster Start: Willkommenskarte über dem Block (Nutzer 2026-10-24).
+        snap("01_atmen_willkommen", measure = sameChips) { BreatheTab(welcome = true) }
         // Zwei Filter gewählt (MUSTER-12): Familien ohne Treffer fallen weg, die Reihe bleibt eine Zeile.
         snap("01_atmen_filter", prepare = {
             compose.onNodeWithText(app.getString(R.string.filter_short, ExerciseFilters.SHORT_MAX_MINUTES)).performClick()
@@ -136,12 +138,12 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("01_atmen_suche_treffer", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("Angst vor der Prüfung")
         }, measure = sameChips) { BreatheTab() }
-        // Bereich über „Mehr aus … ›“ unter dem Anlass gewählt: Familienkopf mit ✕, kein Chip markiert.
+        // Bereich über „Mehr: … ›“ unter dem Anlass gewählt: Familienkopf mit ✕, kein Chip markiert.
         snap("01_atmen_bereich", prepare = {
             compose.onNodeWithText(widest.shortLabel).performClick()
             compose.onNodeWithText(app.getString(R.string.situations_area_link, ""), substring = true).performClick()
         }, measure = sameChips) { BreatheTab() }
-        // Reiner Bereichstreffer: „aktivieren“ trifft nur B · Hochregeln, samt ⚠-Zeile.
+        // Reiner Bereichstreffer: „aktivieren“ trifft nur „Aktivieren“, samt ⚠-Zeile.
         snap("01_atmen_suche_bereich", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("aktivieren")
         }, measure = sameChips) { BreatheTab() }

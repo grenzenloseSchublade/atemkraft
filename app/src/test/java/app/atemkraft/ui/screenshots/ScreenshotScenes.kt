@@ -25,9 +25,12 @@ import app.atemkraft.ui.session.SessionOverlay
  * „Atmen“ mit den eingebauten Daten und die Vollbild-Sitzungen in einem festen Zustand.
  */
 
-/** Tab „Atmen“ mit allen angeleiteten Übungen, Anlässen, Bereichen und dem festen Muster des Tages. */
+/**
+ * Tab „Atmen“ mit allen angeleiteten Übungen, Anlässen, Bereichen und dem festen Muster des Tages;
+ * mit [welcome] die Willkommenskarte des ersten Starts (Resonanz-Atmung).
+ */
 @Composable
-internal fun BreatheTab() {
+internal fun BreatheTab(welcome: Boolean = false) {
     HomeScreen(
         exercisesByFamily = BreathingFamily.entries
             .map { f -> f to BuiltInExercises.all.filter { it.family == f && it.guided } }
@@ -42,7 +45,7 @@ internal fun BreatheTab() {
         onDailySavedChange = {},
         onSelect = {},
         onOpenSettings = {},
-        onOpenPatternEditor = {},
+        welcome = if (welcome) BuiltInExercises.all.first { it.id == "resonanz" } else null,
     )
 }
 
