@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -48,6 +49,7 @@ import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.HeadingRing
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Farbe des Kopfes an Stelle [index] eines Screens (FARBE-07): reihum durch [HeadingRing], der
@@ -59,42 +61,32 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
 
 /**
  * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen,
- * Situationen, Meditation), damit Sektionsüberschriften überall identisch lesen. [color] kommt
- * außerhalb des Atmen-Tabs aus [headingColor] (FARBE-07).
+ * Anlass, Eigene, Meditation, Atemlehre, Pranayama, Glossar, Logbuch), damit
+ * Sektionsüberschriften überall identisch lesen. [color] kommt außerhalb des Atmen-Tabs aus
+ * [headingColor] (FARBE-07).
+ *
+ * Abstände: Über einem festen Kopf steht [top] (Standard `SectionHeaderTop`; kleiner nur, wo ein
+ * Bildschirm ohne Scrollen auskommen muss). **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
+ * ist überall `HeaderGap` – in Listen über `spacedBy(ListGap)`, in Spalten über
+ * [CollapsibleSection]. So steht der erste Inhalt unter jedem Kopf gleich weit.
  *
  * [trailingAction] ist eine optionale Aktion für den ganzen Abschnitt (z. B. „Muster neu
  * generieren“), rechts als `AppIconButton`, ihr Glyph bündig an der Inhaltskante ([flushEnd]).
- * Sie steht unten bündig neben dem Kopf samt Abstand darüber: So belegt die 48-dp-Tippfläche
- * den Platz, den der Kopf ohnehin hat, und der Abschnitt rückt nicht nach unten.
+ * Sie steht mittig auf der ersten Titelzeile; ihre 48-dp-Tippfläche ragt dabei in den Abstand
+ * darunter, ohne den Kopf höher zu machen – der Abschnitt rückt nicht nach unten.
  *
  * [teaser] steht als ganzer Satz unter dem Titel (nie gekürzt, LAYOUT-03). Mit [expanded]
  * wird der Kopf zur aufklappbaren Zeile (MUSTER-03): Caret am Titel, die ganze Zeile samt
  * Teaser ist die Tippfläche (≥ 48 dp, Rolle Button, Ausgeklappt/Eingeklappt), den Inhalt
- * zeigt der Aufrufer darunter (in Listen über [CollapsibleSection]). So bleibt ein langer Tab
- * eine kurze Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand.
- * `null` heißt: nicht aufklappbar.
+ * zeigt der Aufrufer darunter (über [CollapsibleSection]). So bleibt ein langer Tab eine kurze
+ * Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt:
+ * nicht aufklappbar.
  *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Meine Muster · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
- * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Genau
- * einstellen · angepasst“, MUSTER-02). Passt er nicht mehr hinter den Titel, steht er darunter,
- * ohne den führenden Punkt.
- *
- * [chip] ist ein Zustands-Chip am Kopf (z. B. „intensiv“ im Muster-Editor): rechts, mit
- * `GapSmall` Abstand zum Titel und mittig auf dessen erster Zeile – auch wenn der Status
- * darunter mehrzeilig wird. Titel und Status messen gegen die Breite neben ihm.
- * [statusLiveRegion] macht den Status zur Live-Region (A11Y-04), nur solange er gerade eine
- * eigene Änderung ansagt. [statusColor] färbt den Status, wenn er gerade etwas mit Bedeutung zeigt
- * (Muster-Editor: Phase der laufenden Vorschau in Phasenfarbe, FARBE-04); sonst `SECONDARY`.
- * [top] ist der Abstand über einem festen Kopf (Standard `SectionHeaderTop`); kleiner nur, wo ein
- * Bildschirm ohne Scrollen auskommen muss (Muster-Editor, „Atemzug“ direkt unter der Startzeile).
- *
- * [statusReserve] sind weitere Texte, die der Status im Wechsel zeigen kann (Muster-Editor: der
- * Phasenname der laufenden Vorschau, der längste Status): Ob der Status hinter oder unter dem
- * Titel steht und wie hoch er ist, richtet sich dann nach dem längsten von allen – der Kopf
- * behält seine Höhe, und was darunter steht, springt nicht (LAYOUT-03). Mit [trailingOnTitle]
- * steht die [trailingAction] (48 dp hoch) mittig auf der ersten Titelzeile wie [chip] und Caret,
- * statt unten bündig – für Köpfe mit Chip und Knöpfen nebeneinander (Muster-Editor).
+ * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Ablauf ·
+ * 4 von 12 Phasen“, MUSTER-02). Passt er nicht mehr hinter den Titel, steht er darunter, ohne den
+ * führenden Punkt.
  */
 @Composable
 fun SectionHeader(
@@ -107,12 +99,7 @@ fun SectionHeader(
     status: String? = null,
     statusDescription: String? = null,
     smallStatus: Boolean = false,
-    chip: (@Composable () -> Unit)? = null,
-    statusLiveRegion: Boolean = false,
-    statusColor: Color? = null,
     top: Dp = Dimens.SectionHeaderTop,
-    statusReserve: List<String> = emptyList(),
-    trailingOnTitle: Boolean = false,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
@@ -134,18 +121,18 @@ fun SectionHeader(
             }
     }
     val inner = if (expanded == null) {
-        Modifier.padding(top = top, bottom = Dimens.GapSmall)
+        Modifier.padding(top = top)
     } else {
         Modifier.padding(vertical = Dimens.GapSmall)
     }
     Row(
         modifier = modifier.fillMaxWidth().then(toggle),
-        verticalAlignment = Alignment.Bottom,
+        verticalAlignment = Alignment.Top,
     ) {
         Column(modifier = Modifier.weight(1f).then(inner)) {
-            // Balken, Caret und [chip] stehen mittig neben der ersten Titelzeile, nicht mittig am
-            // ganzen Block: Rutscht der Status darunter (bis zu drei Zeilen), bliebe der Balken
-            // sonst neben dem Status stehen.
+            // Balken und Caret stehen mittig neben der ersten Titelzeile, nicht mittig am ganzen
+            // Block: Rutscht der Status darunter (bis zu drei Zeilen), bliebe der Balken sonst
+            // neben dem Status stehen.
             Row(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
@@ -154,8 +141,8 @@ fun SectionHeader(
                     Box(
                         modifier = Modifier
                             // Balken so hoch wie die Schrift – folgt der Systemschriftgröße.
-                            .size(width = 4.dp, height = with(density) { titleStyle.fontSize.toDp() })
-                            .clip(RoundedCornerShape(2.dp))
+                            .size(width = Sizes.AccentBar, height = with(density) { titleStyle.fontSize.toDp() })
+                            .clip(CircleShape)
                             .background(color),
                     )
                 }
@@ -169,13 +156,7 @@ fun SectionHeader(
                     statusDescription = statusDescription,
                     statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
-                    statusLiveRegion = statusLiveRegion,
-                    statusColor = statusColor,
-                    statusReserve = statusReserve,
                 )
-                if (chip != null) {
-                    Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) { chip() }
-                }
                 if (expanded != null) {
                     Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
                         ExpandCaret(expanded = expanded, tint = color)
@@ -192,53 +173,65 @@ fun SectionHeader(
             }
         }
         // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).
-        if (trailingAction != null && trailingOnTitle) {
-            // Mitte der Knöpfe auf der Mitte der ersten Titelzeile (wie Chip und Caret).
+        if (trailingAction != null) {
+            // Mitte der Tippfläche auf der Mitte der ersten Titelzeile (wie Balken und Caret).
             val above = if (expanded == null) top else Dimens.GapSmall * 2
-            val shift = (above + titleLine / 2 - Dimens.MinTouchTarget / 2).coerceAtLeast(0.dp)
-            Box(Modifier.align(Alignment.Top).padding(top = shift).flushEnd()) { trailingAction() }
-        } else if (trailingAction != null) {
-            Box(Modifier.flushEnd()) { trailingAction() }
+            Box(Modifier.centeredOverflow(above + titleLine / 2).flushEnd()) { trailingAction() }
         }
     }
 }
 
 /**
- * Aufklappbarer Abschnitt einer Liste (MUSTER-03): [SectionHeader] mit [expanded] und darunter
- * [content], in einer Spalte mit `animateContentSize`, damit das Auf- und Zuklappen die Höhe
- * animiert. `expanded = null` heißt nicht aufklappbar: fester Kopf, Inhalt immer sichtbar.
+ * Stellt den Inhalt mit seiner Mitte auf die Höhe [center] unter der Oberkante, meldet aber keine
+ * Höhe: Die 48-dp-Tippfläche einer Kopf-Aktion ragt so in den Abstand unter dem Kopf, statt ihn
+ * höher zu machen. Kein `offset` – die Breite zählt für die Nachbarn wie gewohnt.
+ */
+private fun Modifier.centeredOverflow(center: Dp): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minHeight = 0))
+    layout(placeable.width, 0) {
+        placeable.placeRelative(0, (center.roundToPx() - placeable.height / 2).coerceAtLeast(0))
+    }
+}
+
+/**
+ * Abschnitt mit Kopf und Inhalt (MUSTER-03): [SectionHeader] und darunter [content], in einer
+ * Spalte mit `animateContentSize`, damit das Auf- und Zuklappen die Höhe animiert.
+ * `expanded = null` heißt nicht aufklappbar: fester Kopf, Inhalt immer sichtbar – so setzen auch
+ * Spalten ohne Liste (Glossar, Pranayama, Atemlehre, Logbuch-Gruppen) den Abstand Kopf → Inhalt
+ * zentral.
  *
- * Höhenausgleich: Der aufklappbare Kopf polstert sich selbst nur 2 × `GapSmall` (Tippfläche
- * ohne Leerraum darüber); bis `SectionHeaderTop` fehlt der Rest, abzüglich [spacingAbove], den
- * die umgebende Liste schon setzt (`spacedBy`). So steht er so weit vom Abschnitt darüber wie
- * ein fester Kopf. [contentSpacing] trennt Kopf und Inhalt sowie die Inhaltsteile.
+ * Abstände: Kopf → Inhalt ist sichtbar immer `HeaderGap` (beim aufklappbaren Kopf abzüglich des
+ * GapSmall, mit dem er seine Tippfläche unten polstert). [contentSpacing] trennt nur die
+ * Inhaltsteile untereinander. Höhenausgleich oben: Der aufklappbare Kopf polstert sich selbst nur
+ * 2 × `GapSmall` (Tippfläche ohne Leerraum darüber); bis `SectionHeaderTop` fehlt der Rest,
+ * abzüglich [spacingAbove], den die umgebende Liste schon setzt (`spacedBy`). So steht er so weit
+ * vom Abschnitt darüber wie ein fester Kopf. [headerTop] ist der Abstand über einem festen Kopf
+ * (0 für den ersten Kopf einer Push-Seite, der schon `SectionGap` unter dem Seitenkopf steht).
  * [headerModifier] gilt für die Kopfzeile selbst (Tippfläche), z. B. ein `FocusRequester`, wenn
  * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07).
  *
- * Für die Atemlehre und den Situationen-Tab. Nicht im Meditations-Tab: Dort kostete jede
- * Höhenänderung den Zeitring Platz (LAYOUT-08).
+ * Nicht im Meditations-Tab: Dort kostete jede Höhenänderung den Zeitring Platz (LAYOUT-08).
  */
 @Composable
 fun CollapsibleSection(
     title: String,
     color: Color,
-    expanded: Boolean?,
-    onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     headerModifier: Modifier = Modifier,
+    expanded: Boolean? = null,
+    onExpandedChange: (Boolean) -> Unit = {},
     teaser: String? = null,
     status: String? = null,
     statusDescription: String? = null,
     smallStatus: Boolean = false,
     spacingAbove: Dp = 0.dp,
+    headerTop: Dp = Dimens.SectionHeaderTop,
     contentSpacing: Dp = Dimens.ListGap,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val topFill = if (expanded == null) 0.dp else (Dimens.SectionHeaderTop - Dimens.GapSmall * 2 - spacingAbove).coerceAtLeast(0.dp)
-    Column(
-        modifier = modifier.animateContentSize(),
-        verticalArrangement = Arrangement.spacedBy(contentSpacing),
-    ) {
+    val headerGap = if (expanded == null) Dimens.HeaderGap else (Dimens.HeaderGap - Dimens.GapSmall).coerceAtLeast(0.dp)
+    Column(modifier = modifier.animateContentSize()) {
         SectionHeader(
             title = title,
             color = color,
@@ -249,8 +242,15 @@ fun CollapsibleSection(
             status = status,
             statusDescription = statusDescription,
             smallStatus = smallStatus,
+            top = headerTop,
         )
-        if (expanded != false) content()
+        if (expanded != false) {
+            Column(
+                modifier = Modifier.padding(top = headerGap),
+                verticalArrangement = Arrangement.spacedBy(contentSpacing),
+                content = content,
+            )
+        }
     }
 }
 

@@ -34,6 +34,13 @@ object Dimens {
     /** Über jedem SectionHeader. */
     val SectionHeaderTop = 24.dp
 
+    /**
+     * Kopf → erster Inhalt: vom Titel bzw. Teaser eines SectionHeader bis zum Inhalt darunter,
+     * überall gleich. Gleich [ListGap], damit Listen ihn über `spacedBy(ListGap)` von selbst treffen;
+     * in Spalten setzt ihn `CollapsibleSection`. Der Kopf selbst trägt unten keinen Abstand.
+     */
+    val HeaderGap = ListGap
+
     /** Kleine Lücke: Label ↔ Steuerung. */
     val GapSmall = 8.dp
 

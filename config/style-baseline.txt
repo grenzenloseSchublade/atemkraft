@@ -8,7 +8,6 @@ theme-tokens	app/src/main/java/app/atemkraft/ui/theme/Theme.kt	2
 type-literal	app/src/main/java/app/atemkraft/ui/navigation/AppNavigationBar.kt	1
 layout-literal	app/src/main/java/app/atemkraft/MainActivity.kt	1
 layout-literal	app/src/main/java/app/atemkraft/ui/components/PauseFlash.kt	1
-layout-literal	app/src/main/java/app/atemkraft/ui/components/SectionHeader.kt	3
 layout-literal	app/src/main/java/app/atemkraft/ui/components/SessionControls.kt	1
 layout-literal	app/src/main/java/app/atemkraft/ui/components/SessionRunningLayout.kt	2
 layout-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	3
