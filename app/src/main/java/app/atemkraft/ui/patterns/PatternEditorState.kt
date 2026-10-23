@@ -15,13 +15,13 @@ import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
 import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternSpec
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.toFreePattern
 
@@ -154,7 +154,7 @@ class PatternEditorState internal constructor(
     private val exercise: Exercise by derivedStateOf {
         GeneratedExercises.exerciseFrom(
             pattern = this.pattern,
-            id = this.savedId?.let { "muster-$it" } ?: RandomPatternGenerator.DRAFT_ID,
+            id = this.savedId?.let(ExerciseIds::saved) ?: ExerciseIds.DRAFT,
             name = savedName,
             minutes = this.minutes,
         )

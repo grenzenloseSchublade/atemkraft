@@ -109,7 +109,7 @@ object GeneratedExercises {
         val reasons = pattern.intensityReasons()
         val intense = reasons.isNotEmpty()
         val refs = PatternLore.atemlehreRefs(pattern)
-        val activating = refs.patternId == "brmhana"
+        val activating = refs.patternId == LoreIds.BRMHANA
         val hint = pattern.hint()
         val perMinute = PatternTexts.breathsPerMinutePhrase(pattern)
         val texts = PatternTexts.freeTexts(hint, perMinute, reasons)

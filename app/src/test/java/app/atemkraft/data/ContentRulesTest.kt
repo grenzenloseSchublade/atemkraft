@@ -1,6 +1,7 @@
 package app.atemkraft.data
 
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
@@ -366,12 +367,12 @@ class ContentRulesTest {
     /**
      * Jeder Verweis zwischen den Inhalten führt auf ein Ziel, das es gibt: Übungen aus Atemlehre
      * (Karten und „Weitere Einflüsse“), Pranayama-Techniken und Situationen auf
-     * [BuiltInExercises.all] oder das Muster des Tages ([RandomPatternGenerator.ID]); die
+     * [BuiltInExercises.all] oder das Muster des Tages ([ExerciseIds.DAILY]); die
      * Yoga-Lehre jeder Übung (auch der generierten Muster) auf eine Karte in [Atemlehre.patterns].
      */
     @Test
     fun `cross-references`() {
-        val exerciseIds = BuiltInExercises.all.map { it.id }.toSet() + RandomPatternGenerator.ID
+        val exerciseIds = BuiltInExercises.all.map { it.id }.toSet() + ExerciseIds.DAILY
         val patternIds = Atemlehre.patterns.map { it.id }.toSet()
         val toExercises = Atemlehre.patterns.flatMap { p -> p.exerciseIds.map { "atemlehre.${p.id}" to it } } +
             Atemlehre.influences.flatMap { inf -> inf.exerciseIds.map { "atemlehre.influence ${inf.label}" to it } } +

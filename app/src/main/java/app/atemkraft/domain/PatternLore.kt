@@ -38,13 +38,13 @@ object PatternLore {
 
     /** Teaser der Einordnung je Hauptkarte (≤ 95 Zeichen, zuschreibend formuliert). */
     private fun teaserFor(patternId: String): String = when (patternId) {
-        "brmhana" -> "Längeres Einatmen gilt in der Yoga-Lehre als *bṛṃhaṇa*: belebend und wärmend."
-        "langhana" -> "Längeres Ausatmen gilt in der Yoga-Lehre als *laṅghana*: beruhigend und kühlend."
+        LoreIds.BRMHANA -> "Längeres Einatmen gilt in der Yoga-Lehre als *bṛṃhaṇa*: belebend und wärmend."
+        LoreIds.LANGHANA -> "Längeres Ausatmen gilt in der Yoga-Lehre als *laṅghana*: beruhigend und kühlend."
         else -> "Gleich langes Ein- und Ausatmen gilt in der Yoga-Lehre als *samāna*: ausgleichend."
     }
 
     /** Satz zum Halten nach dem Einatmen, mit führendem Leerzeichen. */
-    private fun holdFullSentence(patternId: String): String = if (patternId == "brmhana") {
+    private fun holdFullSentence(patternId: String): String = if (patternId == LoreIds.BRMHANA) {
         " Das Halten nach dem Einatmen verstärkt nach der Lehre das Belebende."
     } else {
         " Das Halten nach dem Einatmen gilt in der Lehre als sammelnd und verstärkt eher das " +
@@ -65,17 +65,17 @@ object PatternLore {
      *   Samana: Das Tempo allein macht sie nach der Lehre nicht zu Brmhana.
      * - Ein Halten verweist zusätzlich auf seine Karte: erst „halten-voll“, dann „halten-leer“.
      *
-     * Die Kennungen sind die Muster-Karten der Atemlehre (Datenschicht, hier nur als String).
+     * Die Kennungen sind die Muster-Karten der Atemlehre ([LoreIds]).
      */
     fun atemlehreRefs(spec: PatternSpec): AtemlehreRefs {
         val patternId = when {
-            spec.exhale < spec.inhale -> "brmhana"
-            spec.exhale > spec.inhale -> "langhana"
-            else -> "samana"
+            spec.exhale < spec.inhale -> LoreIds.BRMHANA
+            spec.exhale > spec.inhale -> LoreIds.LANGHANA
+            else -> LoreIds.SAMANA
         }
         val holds = listOfNotNull(
-            "halten-voll".takeIf { spec.holdFull != null },
-            "halten-leer".takeIf { spec.holdEmpty != null },
+            LoreIds.HALTEN_VOLL.takeIf { spec.holdFull != null },
+            LoreIds.HALTEN_LEER.takeIf { spec.holdEmpty != null },
         )
         return AtemlehreRefs(patternId = patternId, morePatternIds = holds)
     }
@@ -88,14 +88,14 @@ object PatternLore {
      */
     fun atemlehreRefs(pattern: FreePattern): AtemlehreRefs {
         val patternId = when {
-            pattern.exhaleSeconds > pattern.inhaleSeconds -> "langhana"
-            pattern.exhaleSeconds < pattern.inhaleSeconds -> "brmhana"
-            else -> "samana"
+            pattern.exhaleSeconds > pattern.inhaleSeconds -> LoreIds.LANGHANA
+            pattern.exhaleSeconds < pattern.inhaleSeconds -> LoreIds.BRMHANA
+            else -> LoreIds.SAMANA
         }
         val positions = pattern.phases.indices.mapNotNull { pattern.holdPositionAt(it) }
         val holds = listOfNotNull(
-            "halten-voll".takeIf { HoldPosition.FULL in positions },
-            "halten-leer".takeIf { HoldPosition.EMPTY in positions },
+            LoreIds.HALTEN_VOLL.takeIf { HoldPosition.FULL in positions },
+            LoreIds.HALTEN_LEER.takeIf { HoldPosition.EMPTY in positions },
         )
         return AtemlehreRefs(patternId = patternId, morePatternIds = holds)
     }
@@ -107,8 +107,8 @@ object PatternLore {
                 "Du hast das Muster selbst zusammengestellt; die Einordnung folgt nur der Summe der " +
                     "Phasen (Einatmen ${pattern.inhaleSeconds}${PatternTexts.NBSP}s, Ausatmen ${pattern.exhaleSeconds}${PatternTexts.NBSP}s).",
             )
-            if ("halten-voll" in refs.morePatternIds) append(holdFullSentence(refs.patternId))
-            if ("halten-leer" in refs.morePatternIds) append(HOLD_EMPTY_SENTENCE)
+            if (LoreIds.HALTEN_VOLL in refs.morePatternIds) append(holdFullSentence(refs.patternId))
+            if (LoreIds.HALTEN_LEER in refs.morePatternIds) append(HOLD_EMPTY_SENTENCE)
         }
         return YogaLore(
             teaser = teaserFor(refs.patternId),

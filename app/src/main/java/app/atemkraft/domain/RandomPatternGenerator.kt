@@ -66,10 +66,8 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
  */
 object RandomPatternGenerator {
 
-    const val ID = "muster-des-tages"
-
-    /** Übungs-Id des noch nicht gespeicherten Entwurfs im Muster-Editor („Starten“ ohne Speichern). */
-    const val DRAFT_ID = "muster-entwurf"
+    /** Übungs-Kennung des Musters des Tages; wie [ExerciseIds.DAILY], bleibt für bestehende Aufrufer (MainActivity). */
+    const val ID = ExerciseIds.DAILY
 
     fun forDate(date: LocalDate): DailyPattern = forSeed(date.toEpochDay())
 
@@ -150,7 +148,7 @@ object RandomPatternGenerator {
         activating: Boolean,
     ): DailyPattern {
         val spec = PatternSpec(inhale.toDouble(), holdFull?.toDouble(), exhale.toDouble(), holdEmpty?.toDouble(), activating)
-        return DailyPattern(GeneratedExercises.exerciseFrom(spec, ID, "Tagesmuster ${PatternTexts.numbersOf(spec)}"), spec)
+        return DailyPattern(GeneratedExercises.exerciseFrom(spec, ExerciseIds.DAILY, "Tagesmuster ${PatternTexts.numbersOf(spec)}"), spec)
     }
 
     // ---- Helfer ----

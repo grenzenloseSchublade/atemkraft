@@ -48,10 +48,10 @@ import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.domain.DOT_SEPARATOR
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.LorePattern
 import app.atemkraft.domain.LorePhase
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.RhythmStep
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.Bullet
@@ -356,7 +356,7 @@ internal fun ExerciseChips(ids: List<String>, onOpenExercise: (String) -> Unit) 
     if (ids.isEmpty()) return
     val daily = stringResource(R.string.atemlehre_daily_pattern)
     val entries = ids.mapNotNull { id ->
-        val name = if (id == RandomPatternGenerator.ID) daily else BuiltInExercises.all.firstOrNull { it.id == id }?.name
+        val name = if (id == ExerciseIds.DAILY) daily else BuiltInExercises.all.firstOrNull { it.id == id }?.name
         name?.let { id to it }
     }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {

@@ -3,6 +3,7 @@ package app.atemkraft.data
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.RandomPatternGenerator
 import java.time.LocalDate
 
@@ -36,8 +37,8 @@ class ExerciseRepository(private val saved: SavedPatternsRepository) {
     fun all(): List<Exercise> = BuiltInExercises.all
 
     fun byId(id: String): Exercise? = when {
-        id == RandomPatternGenerator.ID -> daily().exercise
-        id.startsWith(SavedPatternsRepository.ID_PREFIX) -> saved.byExerciseId(id)
+        id == ExerciseIds.DAILY -> daily().exercise
+        id.startsWith(ExerciseIds.SAVED_PREFIX) -> saved.byExerciseId(id)
         else -> BuiltInExercises.all.firstOrNull { it.id == id }
     }
 
