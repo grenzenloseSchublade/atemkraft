@@ -10,30 +10,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.platform.LocalDensity
-import app.atemkraft.ui.theme.Dimens
 
 /**
- * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Jede neue Seite startet mit
- * der Leiste ([enter]); scrollt der Inhalt mehr als [threshold] px nach unten, klappt sie ein
- * ([collapsed]). Der Knopf auf der Oberkante der untersten Leiste ([TabBarToggle]) klappt sie auf
- * und wieder zu ([toggle]) – danach entscheidet der Nutzer, Scrollen klappt auf dieser Seite nicht
- * mehr ein. Die Scroll-Wege aller Seiten misst [connection] zentral im Rahmen der App; auf den fünf
- * Tabs selbst bleibt die Leiste immer stehen (das entscheidet der Aufrufer).
+ * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Wer von einem Tab in die
+ * Tiefe geht, sieht sie eingeklappt ([collapsed]). Der Knopf auf der Oberkante der untersten Leiste
+ * ([TabBarToggle]) klappt sie auf und wieder zu ([toggle]); diese Wahl gilt auf allen weiteren Seiten
+ * der Tiefe, vor und zurück, bis der Nutzer wieder auf einem Tab steht ([enter]). Auf den fünf Tabs
+ * selbst steht die Leiste immer (das entscheidet der Aufrufer).
  *
  * Wo der Knopf sitzt: auf der Oberkante einer Startleiste, wenn die Seite eine hat
  * (`PinnedActionBar` meldet sich mit [anchorPinnedBar] an), sonst auf der Oberkante der unteren
  * Leisten ([bottomBarTop]). Beides in px im Fenster.
  */
 @Stable
-class TabBarState(private val threshold: Float) {
-    var collapsed by mutableStateOf(false)
+class TabBarState {
+    var collapsed by mutableStateOf(true)
         private set
-    private var byHand = false
-    private var travelled = 0f
+
+    // Tab, zu dessen Stapel die zuletzt gezeigte Seite gehörte: Ein Tab-Wechsel, der gleich in einem
+    // wiederhergestellten Stapel in der Tiefe landet, zählt wie der Weg von einem Tab.
+    private var lastTab: Any? = null
 
     /** Oberkante der unteren Leisten (Mini-Leiste, Tab-Leiste bzw. Systemnavigation), px im Fenster. */
     var bottomBarTop by mutableFloatStateOf(Float.NaN)
@@ -51,17 +47,18 @@ class TabBarState(private val threshold: Float) {
     val anchorTop: Float
         get() = pinnedOwners.lastOrNull()?.let { pinnedTops[it] } ?: bottomBarTop
 
-    /** Neue Seite: Leiste da bzw. eingeklappt ([startCollapsed], Muster-Editor), noch keine Wahl von Hand. */
-    fun enter(startCollapsed: Boolean) {
-        collapsed = startCollapsed
-        byHand = false
-        travelled = 0f
+    /**
+     * Neue Seite: Auf einem Tab ([onTab]) oder nach einem Wechsel des Tabs ([tab]) gilt wieder
+     * „eingeklappt“ für den nächsten Weg in die Tiefe; in der Tiefe bleibt die Wahl von Hand stehen.
+     */
+    fun enter(onTab: Boolean, tab: Any) {
+        if (onTab || tab != lastTab) collapsed = true
+        lastTab = tab
     }
 
-    /** Knopf angetippt: Leiste auf bzw. zu; Scrollen klappt sie auf dieser Seite nicht mehr ein. */
+    /** Knopf angetippt: Leiste auf bzw. zu, bis zur Rückkehr auf einen Tab. */
     fun toggle() {
         collapsed = !collapsed
-        byHand = true
     }
 
     /** Eine Startleiste ([owner]) mit ihrer Oberkante [top] (px im Fenster) an- bzw. nachmelden. */
@@ -75,25 +72,11 @@ class TabBarState(private val threshold: Float) {
         pinnedOwners -= owner
         pinnedTops -= owner
     }
-
-    /** Zählt nur, was der Inhalt wirklich nach unten gescrollt hat (negatives `consumed.y`). */
-    val connection = object : NestedScrollConnection {
-        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-            if (!byHand && !collapsed && consumed.y < 0f) {
-                travelled -= consumed.y
-                if (travelled > threshold) collapsed = true
-            }
-            return Offset.Zero
-        }
-    }
 }
 
 /** Der [TabBarState] der App für Seiten in der Tiefe; null auf den Tabs, in Vorschauen und Tests. */
 val LocalTabBarState = staticCompositionLocalOf<TabBarState?> { null }
 
-/** Der [TabBarState] der App: klappt nach [Dimens.SectionGap] Scrollweg ein, neu je Bildschirmdichte. */
+/** Der [TabBarState] der App. */
 @Composable
-fun rememberTabBarState(): TabBarState {
-    val density = LocalDensity.current
-    return remember(density) { TabBarState(threshold = with(density) { Dimens.SectionGap.toPx() }) }
-}
+fun rememberTabBarState(): TabBarState = remember { TabBarState() }

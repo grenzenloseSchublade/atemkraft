@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
@@ -42,7 +41,6 @@ import app.atemkraft.ui.navigation.TabBarToggle
 import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.navigation.isTabRoot
 import app.atemkraft.ui.navigation.rememberTabBarState
-import app.atemkraft.ui.navigation.startsWithTabBarCollapsed
 import app.atemkraft.ui.navigation.tabOnStack
 import app.atemkraft.ui.navigation.tapTab
 import app.atemkraft.ui.settings.SettingsViewModel
@@ -83,15 +81,15 @@ private fun AtemkraftApp(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    // Tab-Leiste in der Tiefe: klappt beim Runterscrollen ein, Lasche holt sie zurück; jede neue
-    // Seite startet frisch (Muster-Editor eingeklappt).
-    val tabBar = rememberTabBarState()
-    LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(startCollapsed = currentDestination.startsWithTabBarCollapsed()) }
-
     // Markiert ist der Tab, zu dessen Stapel die Seite gehört – auch auf Push-Seiten und nach
     // einem wiederhergestellten Stapel (Eigene › Editor, dann Meditation und zurück); ein erneuter
     // Tipp darauf führt zu seiner Startseite zurück (tapTab).
     val selectedTab = remember(navBackStackEntry) { navController.tabOnStack() }
+
+    // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; die Lasche klappt sie auf, das
+    // gilt bis zur Rückkehr auf einen Tab.
+    val tabBar = rememberTabBarState()
+    LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
@@ -102,7 +100,7 @@ private fun AtemkraftApp(
                 // Ihre Oberkante trägt den Knopf der Tab-Leiste, solange die Seite keine Startleiste hat.
                 Column(Modifier.onGloballyPositioned { tabBar.bottomBarTop = it.positionInRoot().y }) {
                     PlaybackMiniBars(playback)
-                    // Auf den fünf Tabs immer; in der Tiefe, bis gescrollt oder per Knopf zugeklappt wird.
+                    // Auf den fünf Tabs immer; in der Tiefe nur, wenn per Knopf aufgeklappt.
                     HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed) {
                         AppTabBar(selected = selectedTab, onTap = { tab -> navController.tapTab(tab.route, selected = tab == selectedTab) })
                     }
@@ -119,8 +117,6 @@ private fun AtemkraftApp(
                     // die Seitenränder zeigen den (identischen) Fensterhintergrund.
                     modifier = Modifier
                         .padding(innerPadding)
-                        // Misst das Scrollen jeder Seite für die Tab-Leiste, ohne etwas zu verbrauchen.
-                        .nestedScroll(tabBar.connection)
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.CenterHorizontally)
                         .widthIn(max = 600.dp),

@@ -64,7 +64,7 @@ import app.atemkraft.ui.theme.WarnAmber
  * Papierkorb, gelb gestrichelt getrennt „Neu nach 2:“ mit + Ein / + Halten / + Aus). Ziel: Kurve
  * und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle Höhe, wo Platz ist,
  * sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe ([FirstScreen]; die
- * Tab-Leiste steht im Editor nie). Darunter Hinweis bei intensiven Mustern, „Ablauf“
+ * Tab-Leiste ist in der Tiefe eingeklappt). Darunter Hinweis bei intensiven Mustern, „Ablauf“
  * (eingeklappt, Überblick und TalkBack), „Aus der Yoga-Lehre“; unten fest eine Leiste
  * ([ActionBar], Nachtrag 6): Dauer, Zurücksetzen und der große Play-Knopf.
  *
@@ -212,8 +212,8 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
  * und Werkzeugleiste [toolbar] untereinander. Die Kurve bekommt die Höhe, mit der alles zusammen in
  * die sichtbare Höhe [viewport] (px) der Scroll-Fläche passt – bevorzugt ihre volle, auf kleinen
  * Bildschirmen weniger, nie unter ihre Mindesthöhe ([BreathCurveHeights.fit]); reicht auch die
- * nicht, scrollt die Seite. Die Tab-Leiste steht im Editor nie (Tiefe, Nutzer 2026-10-23), ihre
- * Höhe gehört der Kurve.
+ * nicht, scrollt die Seite. Die Tab-Leiste ist in der Tiefe eingeklappt (Nutzer 2026-10-23), ihre
+ * Höhe gehört der Kurve; klappt der Nutzer sie auf, wird die Kurve flacher.
  *
  * Kopf und Werkzeugleiste behalten beim Bearbeiten ihre Höhe (Platz für die längsten Texte
  * reserviert), also auch die Kurve – nichts springt beim Auswählen, Hinzufügen oder Entfernen.
