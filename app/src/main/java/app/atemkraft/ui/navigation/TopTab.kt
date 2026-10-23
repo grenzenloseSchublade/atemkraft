@@ -14,7 +14,7 @@ import app.atemkraft.R
  * [isTabRoot]), Markierung ([tabOnStack]) und Leiste ([AppTabBar]). [route] ist die Startseite des
  * Tabs, [label] seine Beschriftung, [icon] sein Symbol (dekorativ: die Beschriftung benennt den Tab).
  */
-enum class TopTab(val route: Any, @StringRes val label: Int, val icon: @Composable () -> Painter) {
+enum class TopTab(val route: TabRoute, @StringRes val label: Int, val icon: @Composable () -> Painter) {
     ATMEN(AtmenRoute, R.string.tab_breathe, { painterResource(R.drawable.ic_breathe) }),
     EIGENE(EigeneRoute, R.string.tab_own, { painterResource(R.drawable.ic_bookmark_filled) }),
     MEDITATION(MeditationRoute, R.string.tab_meditation, { painterResource(R.drawable.ic_meditation) }),

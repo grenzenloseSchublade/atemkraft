@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * Rückfall auf [switchTab], wenn `popBackStack` nichts entfernt – die Startseite liegt schon
  * oben, oder die Markierung (gemerkter Wert in der Activity) passt nicht zum Stapel.
  */
-internal fun NavController.tapTab(route: Any, selected: Boolean) {
+internal fun NavController.tapTab(route: TabRoute, selected: Boolean) {
     if (selected && popBackStack(route, inclusive = false)) return
     switchTab(route)
 }
@@ -28,7 +28,7 @@ internal fun NavController.tapTab(route: Any, selected: Boolean) {
  * greift dann nicht. Ein Re-Tap über diese Funktion würde den offenen Stapel also nur speichern
  * und sofort wiederherstellen – dafür gibt es [tapTab].
  */
-internal fun NavController.switchTab(route: Any) {
+internal fun NavController.switchTab(route: TabRoute) {
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
@@ -47,7 +47,7 @@ internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.an
 }
 
 /** Die Startseiten der Tabs als Routen-Klassen, aus [TopTab]. */
-internal val TAB_ROOTS: List<KClass<out Any>> = TopTab.entries.map { it.route::class }
+internal val TAB_ROOTS: List<KClass<out TabRoute>> = TopTab.entries.map { it.route::class }
 
 /**
  * Der Tab, zu dessen Stapel die aktuelle Seite gehört – auch auf Push-Seiten und nach einem

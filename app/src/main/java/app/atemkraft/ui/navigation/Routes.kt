@@ -4,23 +4,29 @@ import app.atemkraft.domain.PatternSpec
 import kotlinx.serialization.Serializable
 
 /**
+ * Startseite eines der vier Tabs ([TopTab]): Nur diese Routen nehmen Tab-Wechsel und Markierung
+ * ([tapTab], [switchTab]) – der Typ hält Push-Seiten dort heraus.
+ */
+sealed interface TabRoute
+
+/**
  * Type-safe Navigation-Routen. Tabs: Atmen (mit Anlässen und Suche), Eigene, Meditation, Lernen.
  * Push-Seiten mit festem Kopf: Detail, Muster-Editor („Eigenes Muster“), Einstellungen, Logbuch,
  * Glossar, Über, Atemlehre, Pranayama, Programme.
  */
 @Serializable
-object AtmenRoute
+object AtmenRoute : TabRoute
 
 /** Tab „Eigene“: Karte „Verlauf“, „Tut mir gut“ und „Eigene Kreationen“ mit „Neues Muster“. */
 @Serializable
-object EigeneRoute
+object EigeneRoute : TabRoute
 
 @Serializable
-object MeditationRoute
+object MeditationRoute : TabRoute
 
 /** Tab „Lernen“: Kapitel Atemlehre, Pranayama, Programme & Gewohnheiten und Begriffe (Nutzer 2026-10-23). */
 @Serializable
-object LernenRoute
+object LernenRoute : TabRoute
 
 /** Seite „Pranayama“ im Tab „Lernen“: Grundlagen und Techniken mit „Üben ›“. */
 @Serializable
