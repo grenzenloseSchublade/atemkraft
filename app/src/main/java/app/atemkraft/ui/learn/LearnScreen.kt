@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
-import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
@@ -73,27 +73,12 @@ fun LearnScreen(onOpenAtemlehre: () -> Unit, onOpenPranayama: () -> Unit, onOpen
 }
 
 /**
- * Ein Kapitel: Titel in der Farbe seiner Lage ([heading], FARBE-07), darunter ein Satz, was drin
- * steht, rechts der Chevron. Die ganze Karte ist der Button (Card(onClick), Tippfläche ≥ 48 dp).
+ * Ein Kapitel als [NavCard]: Titel in der Farbe seiner Lage ([heading], FARBE-07), darunter ein
+ * Satz, was drin steht, rechts der Chevron.
  */
 @Composable
 private fun ChapterCard(title: String, hint: String, heading: Int, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = Dimens.MinTouchTarget)
-                .padding(Dimens.CardPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                WholeWordText(text = title, style = MaterialTheme.typography.titleMedium, color = headingColor(heading))
-                HintText(hint)
-            }
-            ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
-        }
-    }
+    NavCard(title = title, hint = hint, titleColor = headingColor(heading), onClick = onClick)
 }
 
 @Preview

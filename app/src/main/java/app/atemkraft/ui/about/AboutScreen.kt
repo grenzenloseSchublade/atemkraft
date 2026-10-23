@@ -42,6 +42,7 @@ import app.atemkraft.data.ThirdParty
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SubLabel
@@ -96,24 +97,23 @@ fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false) {
         ) { LicenseList() }
 
         Spacer(Modifier.height(Dimens.SectionGap))
-        // Quellcode und Datenschutz als Karte mit Zeilen wie in den Einstellungen (Wissen):
-        // Titel, Untertitel, Symbol an der Kante; die ganze Zeile öffnet den Browser.
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall)) {
-                ExternalLinkRow(
-                    title = stringResource(R.string.about_source_title),
-                    // Die Adresse darf nur nach „/“ umbrechen; sie ist ein einziges langes Wort (LAYOUT-03).
-                    hint = breakAfterSlashes(REPO_URL.removePrefix(HTTPS)),
-                    url = REPO_URL,
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
-                ExternalLinkRow(
-                    title = stringResource(R.string.about_privacy_link),
-                    hint = stringResource(R.string.about_privacy_hint),
-                    url = PRIVACY_URL,
-                )
-            }
-        }
+        // Quellcode und Datenschutz als Verweis-Karten wie die Kapitel im Tab „Lernen“: Titel,
+        // Untertitel, Symbol „öffnet im Browser“ an der Kante; die ganze Karte öffnet den Browser.
+        val uriHandler = LocalUriHandler.current
+        NavCard(
+            title = stringResource(R.string.about_source_title),
+            // Die Adresse darf nur nach „/“ umbrechen; sie ist ein einziges langes Wort (LAYOUT-03).
+            hint = breakAfterSlashes(REPO_URL.removePrefix(HTTPS)),
+            onClick = { uriHandler.openUri(REPO_URL) },
+            external = true,
+        )
+        Spacer(Modifier.height(Dimens.ListGap))
+        NavCard(
+            title = stringResource(R.string.about_privacy_link),
+            hint = stringResource(R.string.about_privacy_hint),
+            onClick = { uriHandler.openUri(PRIVACY_URL) },
+            external = true,
+        )
     }
 }
 
@@ -167,40 +167,6 @@ private fun LinkRow(label: String, url: String) {
         contentAlignment = Alignment.CenterStart,
     ) {
         LinkText(label, MaterialTheme.colorScheme.primary)
-    }
-}
-
-/**
- * Verweis nach außen in einer Karte: Titel, Untertitel, Symbol „öffnet im Browser“ an der
- * Kartenkante – gebaut wie die Zeilen der Wissen-Karte in den Einstellungen. Die ganze Zeile ist
- * ein Button (TalkBack liest Titel und Untertitel als einen Namen).
- */
-@Composable
-private fun ExternalLinkRow(title: String, hint: String, url: String) {
-    val uriHandler = LocalUriHandler.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.about_open_link)) { uriHandler.openUri(url) }
-            .padding(vertical = Dimens.GapTiny),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            HintText(hint)
-        }
-        Icon(
-            painter = painterResource(R.drawable.ic_open_in_new),
-            contentDescription = null, // dekorativ: Name und Hinweis „im Browser öffnen“ trägt die Zeile
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-            modifier = Modifier.size(Sizes.IconSmall),
-        )
     }
 }
 

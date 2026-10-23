@@ -52,7 +52,7 @@ import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ExerciseChips
-import app.atemkraft.ui.components.ExpanderSection
+import app.atemkraft.ui.components.ExpanderCard
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushScaffold
@@ -77,7 +77,7 @@ import kotlinx.coroutines.flow.first
  *
  * Gliederung: eine Überschrift je Abschnitt (`SectionHeader`); vāyus, Grundregeln, Einflüsse und
  * Quellen klappen über ihren Kopf auf (MUSTER-03). Die Muster stehen eine Ebene tiefer unter
- * „Die Muster“, jedes in einer eigenen Karte mit `ExpanderSection` (Rhythmusbild und Titel gehören
+ * „Die Muster“, jedes in einer eigenen `ExpanderCard` (Rhythmusbild und Titel gehören
  * sichtbar zusammen).
  *
  * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen [BreathExhale] Koralle,
@@ -185,21 +185,18 @@ private fun LorePatternCard(
     onOpenExercise: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(start = Dimens.CardPadding, end = Dimens.CardPadding, top = Dimens.CardPadding)) {
+    ExpanderCard(
+        title = pattern.title,
+        appetizer = pattern.teaser,
+        modifier = modifier,
+        initiallyExpanded = focused,
+        header = {
             RhythmBar(pattern.rhythm)
             Spacer(Modifier.height(Dimens.GapTiny))
             HintText(pattern.counts)
-            ExpanderSection(
-                title = pattern.title,
-                appetizer = pattern.teaser,
-                accent = MaterialTheme.colorScheme.onSurface,
-                initiallyExpanded = focused,
-                divider = false,
-            ) {
-                PatternContent(pattern, onOpenExercise)
-            }
-        }
+        },
+    ) {
+        PatternContent(pattern, onOpenExercise)
     }
 }
 
