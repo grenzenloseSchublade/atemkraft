@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,9 +15,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -25,10 +26,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.CHIP_FILL
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
-import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.WarnAmber
 
 /** Test-Tag der Reihe aus [ChoiceChip]s: Der ScreenshotTest prüft, dass kein Chip beim Markieren oder Abblenden verrutscht. */
@@ -39,15 +40,17 @@ const val CHOICE_CHIPS_TAG = "choice-chips"
  * einer `SegmentedChoiceRow` (auch eine Auswahl), Tippfläche 48 dp; Form `shapes.small`,
  * Beschriftung `labelLarge` einzeilig über [WholeWordText] (verkleinert statt im Wort zu brechen).
  *
- * **Misst in jedem Zustand gleich** (Nutzer 2026-10-23: Chips verrutschen nie). Die Auswahl zeigen
- * nur Fläche [SegmentSelected] (≥ 3:1 gegen den Grund) und Randfarbe (Akzent statt `outline`,
- * FARBE-05), [dimmed] nur die Deckkraft ([TERTIARY]) – alles gezeichnet, nichts davon geht ins
- * Layout. Keine fette Schrift, kein Häkchen, kein ✕: Sie änderten die Breite und damit den
- * Umbruch der Reihe. Die Größe hängt so nur an Beschriftung, Schrift und verfügbarer Breite.
+ * **Misst in jedem Zustand gleich** (Nutzer 2026-10-23: Chips verrutschen nie). Gewählt füllt sich
+ * der Chip ganz mit [SegmentSelected], Rand in derselben Farbe – wie ein gewähltes Segment, ein
+ * ruhiger Farbton statt Lila mit pinkem Rand (Nutzer 2026-10-23: „das Highlighting ist nicht so
+ * schön“). Fläche und Rand gleiten über (Default-Spring, MOTION-04). Alles gezeichnet, nichts
+ * davon geht ins Layout. Keine fette Schrift, kein Häkchen, kein ✕: Sie änderten die Breite und
+ * damit den Umbruch der Reihe. Nicht gewählte Chips bleiben in der Suche unverändert, nicht
+ * abgeblendet: Die gefüllten Treffer heben sich genug ab.
  *
  * [warn]: die intensive Situation – Beschriftung und Rand in `WarnAmber` wie der Charakter-Chip
- * „intensiv“; gewählt steht die Beschriftung in `onSurface` (`WarnAmber` hielte auf der
- * Auswahlfläche keine 4,5:1), der gelbe Rand bleibt.
+ * „intensiv“; gewählt füllt sie sich mit `WarnAmber` in [CHIP_FILL], Rand bleibt gelb, die
+ * Beschriftung steht in `onSurface` (gut lesbar auf der zarten Fläche).
  *
  * TalkBack: Rolle Optionsfeld, „ausgewählt“/„nicht ausgewählt“; die Reihe ist eine
  * [ChoiceChipRow] (`selectableGroup`).
@@ -58,21 +61,27 @@ fun ChoiceChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    dimmed: Boolean = false,
     warn: Boolean = false,
 ) {
     val shape = MaterialTheme.shapes.small
-    val accent = if (warn) WarnAmber else MaterialTheme.colorScheme.primary
-    val border = if (selected || warn) accent else MaterialTheme.colorScheme.outline
+    val selectedFill = if (warn) WarnAmber.copy(alpha = CHIP_FILL) else SegmentSelected
+    val fill by animateColorAsState(if (selected) selectedFill else Color.Transparent, label = "chipFill")
+    val border by animateColorAsState(
+        when {
+            warn -> WarnAmber
+            selected -> SegmentSelected
+            else -> MaterialTheme.colorScheme.outline
+        },
+        label = "chipBorder",
+    )
     val text = if (warn && !selected) WarnAmber else MaterialTheme.colorScheme.onSurface
     Box(
         modifier = modifier
             // Reihenfolge wie AppIconButton (LAYOUT-06): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
             .minimumInteractiveComponentSize()
             .heightIn(min = Sizes.ButtonHeight)
-            .alpha(if (dimmed) TERTIARY else 1f)
             .clip(shape)
-            .background(if (selected) SegmentSelected else Color.Transparent)
+            .background(fill)
             .border(Dimens.BorderChip, border, shape)
             .selectable(selected = selected, role = Role.RadioButton, interactionSource = null, indication = ripple(), onClick = onClick)
             // Polster wie ein M3-Chip (8 + 8); fest, damit die Rundung keine Glyphen anschneidet (LAYOUT-03).
@@ -113,7 +122,7 @@ private fun ChoiceChipPreview() {
     AtemkraftTheme {
         ChoiceChipRow(groupName = "Anlass") {
             ChoiceChip(label = "Einschlafen", selected = true, onClick = {})
-            ChoiceChip(label = "Fokus", selected = false, onClick = {}, dimmed = true)
+            ChoiceChip(label = "Fokus", selected = false, onClick = {})
             ChoiceChip(label = "Wach & energiegeladen", selected = false, onClick = {}, warn = true)
         }
     }

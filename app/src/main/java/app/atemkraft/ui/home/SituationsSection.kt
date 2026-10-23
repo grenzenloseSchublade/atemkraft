@@ -42,9 +42,8 @@ import app.atemkraft.ui.theme.Dimens
  * Feld und Chips sichtbar auseinander. Chips nebeneinander `GapSmall`, untereinander sichtbar
  * ebenfalls 8 dp ([ChoiceChipRow]).
  *
- * [highlighted]: markierte Chips (gewählter Anlass oder Suchtreffer); [dimmed]: blasse Chips
- * (in der Suche die Nicht-Treffer). Beides ändert keine Größe – die Reihe bricht in jedem Zustand
- * gleich um. Die intensive Situation steht zuletzt und trägt den Warnton.
+ * [highlighted]: markierte Chips (gewählter Anlass oder Suchtreffer); die übrigen bleiben
+ * unverändert. Die Markierung ändert keine Größe – die Reihe bricht in jedem Zustand gleich um. Die intensive Situation steht zuletzt und trägt den Warnton.
  *
  * TalkBack: Der Block ist eine Gruppe (`isTraversalGroup`), die Chips eine Auswahlgruppe mit dem
  * Namen „Wie fühlst du dich?“.
@@ -55,7 +54,6 @@ internal fun FeelingBlock(
     onQueryChange: (String) -> Unit,
     situations: List<SituationRecommendation>,
     highlighted: Set<Situation>,
-    dimmed: Set<Situation>,
     onChipClick: (Situation) -> Unit,
 ) {
     val name = stringResource(R.string.situations_search_placeholder)
@@ -77,7 +75,6 @@ internal fun FeelingBlock(
                         label = rec.shortLabel,
                         selected = rec.situation in highlighted,
                         onClick = { onChipClick(rec.situation) },
-                        dimmed = rec.situation in dimmed,
                         warn = rec.warn,
                     )
                 }

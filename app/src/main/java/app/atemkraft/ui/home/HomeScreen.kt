@@ -85,7 +85,6 @@ fun HomeScreen(
         else -> results
     }
     val highlighted = shown.orEmpty().map { it.situation }.toSet()
-    val dimmed = if (results != null) situations.map { it.situation }.toSet() - highlighted else emptySet()
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled ->
@@ -143,7 +142,6 @@ fun HomeScreen(
                     },
                     situations = situations,
                     highlighted = highlighted,
-                    dimmed = dimmed,
                     onChipClick = { situation ->
                         // Zweiter Tipp auf denselben Chip zeigt wieder alles; ein Chip leert die Eingabe.
                         chosen = if (chosen == situation) null else situation
