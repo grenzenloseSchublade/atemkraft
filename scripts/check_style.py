@@ -505,6 +505,12 @@ CHECKS: list[Check] = [
     # kennt seine Klassen, die Schichten darunter sehen davon nur BuildConfig und R.
     Check("layer-import-root", "CODE-01", [SRC + "data/*.kt", SRC + "playback/*.kt", SRC + "ui/*.kt"],
           [r"^import app\.atemkraft\.(?!(BuildConfig|R)$)[A-Z]\w*$"]),
+    # State-Holder (CODE-02): Repositories, Controller und Scopes nur in ViewModels, Destinations und
+    # dem Export/Import-Holder; Screens bekommen Werte und Lambdas.
+    Check("ui-state-holder", "CODE-02", [SRC + "ui/*.kt"],
+          [r"^import app\.atemkraft\.data\.\w*Repository$", r"^import app\.atemkraft\.playback\.\w*Controller$",
+           r"^import kotlinx\.coroutines\.CoroutineScope$"],
+          exclude=[SRC + "ui/*Destination.kt", SRC + "ui/*ViewModel.kt", SRC + "ui/settings/PatternTransfer.kt"]),
     Check("ordinal-persist", "CODE-05", [SRC + "data/*.kt"], [r"\.ordinal\b"]),
     Check("todo-unlinked", "CODE-06", [SRC + "*.kt"], [r"//\s*TODO(?!\((S|A)-\d+\))"], skip_comments=False),
     # Sicherheit (docs/SECURITY.md, Automatische Prüfung): Null-Toleranz, ohne Baseline.
