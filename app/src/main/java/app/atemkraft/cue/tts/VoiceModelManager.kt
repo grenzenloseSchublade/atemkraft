@@ -123,7 +123,7 @@ class VoiceModelManager(context: Context) {
     /**
      * Startet mit „nicht geladen“ für alle Stimmen; welche schon auf dem Gerät liegen, prüft
      * [startupCleanup] gleich danach abseits des Main-Threads (Datei-Zugriffe vor dem ersten Frame
-     * vermeiden, A-06). Bis dahin vergehen Millisekunden – lange bevor jemand die Einstellungen öffnet.
+     * vermeiden). Bis dahin vergehen Millisekunden – lange bevor jemand die Einstellungen öffnet.
      */
     private val _states = MutableStateFlow<Map<String, VoiceDownloadState>>(
         VoiceCatalog.all.associate { spec -> spec.id to VoiceDownloadState.NotDownloaded },

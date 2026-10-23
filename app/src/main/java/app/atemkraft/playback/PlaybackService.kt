@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 /**
  * Was der [PlaybackService] von der App braucht: die beiden Abläufe und die Activity, die ein Tipp
  * auf die Benachrichtigung öffnet. Die Application implementiert es; so kennt `playback/` weder die
- * Application- noch die Activity-Klasse und hängt nicht am Wurzelpaket (A-10).
+ * Application- noch die Activity-Klasse und hängt nicht am Wurzelpaket.
  */
 interface PlaybackDependencies {
     val meditationController: MeditationController

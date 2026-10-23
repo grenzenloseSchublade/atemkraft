@@ -14,7 +14,7 @@ import java.time.LocalDate
  * Liefert die verfügbaren Übungen: eingebaute aus [BuiltInExercises] (im Code), gespeicherte über
  * [SavedPatternsRepository]. Zusätzlich das generierte „Muster des Tages"
  * ([RandomPatternGenerator]) als beobachtbarer Zustand [daily]; [today] liefert das Datum, gegen
- * das der Tageswechsel geprüft wird (Tests setzen eine feste Uhr, A-24).
+ * das der Tageswechsel geprüft wird (Tests setzen eine feste Uhr).
  */
 class ExerciseRepository(
     private val saved: SavedPatternsRepository,

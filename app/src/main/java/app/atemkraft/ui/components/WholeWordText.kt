@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.isSpecified
  * (lange Komposita bei großer Systemschrift auf schmalen Geräten), wird die Schrift in Schritten
  * von 0,05 verkleinert, bis jedes Wort ganz in eine Zeile passt – höchstens bis [minScale]
  * (Standard 0,7). Die passende Stufe sucht ein [TextMeasurer] mit denselben Vorgaben wie das
- * erste Layout auf einmal; der Text komponiert danach nur noch einmal neu statt einmal je Stufe
- * (A-09). Bis dahin wird nicht gezeichnet, es flackert also nichts. Gleichrangige Texte (z. B.
+ * erste Layout auf einmal; der Text komponiert danach nur noch einmal neu statt einmal je Stufe.
+ * Bis dahin wird nicht gezeichnet, es flackert also nichts. Gleichrangige Texte (z. B.
  * Tab-Beschriftungen) teilen sich eine Größe: Der Aufrufer reicht [sharedScale] herein und
  * übernimmt per [onSharedScaleTooBig] den kleineren Wert – die kleinste nötige gilt für alle.
  * [singleLine]: Der Text muss zusätzlich in eine Zeile passen (Chip-Beschriftungen, LAYOUT-03);

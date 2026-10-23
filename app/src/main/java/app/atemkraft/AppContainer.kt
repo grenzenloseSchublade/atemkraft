@@ -105,7 +105,7 @@ class AppContainer(context: Context) {
     /**
      * Fabrik des [SettingsViewModel], des einzigen ViewModels: zieht Repositories, Stimmen und
      * Player aus diesem Container. Liegt hier statt im ViewModel, damit `ui/` weder die
-     * Application noch den Container kennt (A-10).
+     * Application noch den Container kennt.
      */
     val settingsViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
         initializer {

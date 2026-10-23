@@ -23,7 +23,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 /**
- * CODE-07 „Daten überleben Migration“ für die Einstellungen (A-12): Stände bis 1.6.5 speicherten
+ * CODE-07 „Daten überleben Migration“ für die Einstellungen: Stände bis 1.6.5 speicherten
  * Enums als ordinal-Index, davor den Ton als Schalter `cue_sound`. Eine stille Fehl-Migration
  * setzte Ton-Modus, Zäsur oder Lautstärke zurück.
  */
