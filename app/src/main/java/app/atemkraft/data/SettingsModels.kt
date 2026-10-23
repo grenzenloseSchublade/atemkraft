@@ -1,5 +1,6 @@
 package app.atemkraft.data
 
+import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -18,7 +19,15 @@ data class CueSettings(
 data class SafetySettings(
     val showWarning: Boolean = true,
     val acknowledged: Boolean = false,
-)
+) {
+    /**
+     * Muss vor dem Start von [exercise] der Sicherheitsdialog kommen (MUSTER-06)? Nur bei
+     * intensiven Übungen (`caution`, auch intensive eigene Muster), und dann, solange der Hinweis
+     * noch nie bestätigt wurde oder in den Einstellungen eingeschaltet ist. Die eine Regel für
+     * Detailseite und Muster-Editor.
+     */
+    fun requiresConfirm(exercise: Exercise): Boolean = exercise.caution && (!acknowledged || showWarning)
+}
 
 /**
  * Was die laufende Atem-Session zeigt (Karte „Während der Atemübung“). [autoCalm] blendet die

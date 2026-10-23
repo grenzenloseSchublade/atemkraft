@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.data.CueSettings
+import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.data.SavedPatternsRepository
 import app.atemkraft.domain.Exercise
@@ -47,7 +48,7 @@ import kotlinx.coroutines.sync.withLock
  * Stand ([PatternEditorState.draft]), nicht den nach dem Schreiben.
  *
  * [onStart] startet den Entwurf ohne Speichern; der Aufrufer lässt den Editor dabei offen. Ein
- * intensives Muster fragt vorher den Sicherheitsdialog ab, wenn [requireSafetyConfirm]; die
+ * intensives Muster fragt vorher den Sicherheitsdialog ab, wenn [safety] es verlangt; die
  * Bestätigung meldet [onConfirmedSafety]. [cueSettings] und [otherAudioActive] (Atem-Übung oder
  * Meditation läuft, auch minimiert) steuern den Ton der Vorschau.
  */
@@ -64,7 +65,7 @@ internal fun PatternEditorDestination(
     onMissing: () -> Unit,
     cueSettings: CueSettings = CueSettings(),
     otherAudioActive: Boolean = false,
-    requireSafetyConfirm: Boolean = true,
+    safety: SafetySettings = SafetySettings(),
     onConfirmedSafety: () -> Unit = {},
 ) {
     val writes = remember { Mutex() }
@@ -80,7 +81,7 @@ internal fun PatternEditorDestination(
             onBack = onBack,
             cueSettings = cueSettings,
             otherAudioActive = otherAudioActive,
-            requireSafetyConfirm = requireSafetyConfirm,
+            safety = safety,
             onConfirmedSafety = onConfirmedSafety,
         )
     }

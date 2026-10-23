@@ -31,6 +31,7 @@ import app.atemkraft.cue.AppPreviewSoundOutput
 import app.atemkraft.cue.PreviewSoundOutput
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.CueSettings
+import app.atemkraft.data.SafetySettings
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.PhaseType
@@ -44,10 +45,10 @@ import app.atemkraft.ui.components.FillViewportColumn
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
-import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.rememberSafetyGate
 import app.atemkraft.ui.patterns.curve.BreathCurveEditor
 import app.atemkraft.ui.patterns.curve.CurvePreviewControls
 import app.atemkraft.ui.patterns.curve.rememberBreathCurveHeights
@@ -78,8 +79,8 @@ import app.atemkraft.ui.theme.WarnAmber
  *
  * [onStart] probiert den Entwurf ohne Speichern aus (Übung und Dauer als [SessionConfig]); die
  * Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem Sicherheitsdialog, wenn
- * [requireSafetyConfirm] (wie auf der Detailseite: noch nie bestätigt oder Hinweis eingeschaltet);
- * die Bestätigung meldet [onConfirmedSafety]. [onOpenLore] öffnet eine Karte der Atemlehre.
+ * [safety] es verlangt ([SafetySettings.requiresConfirm], dieselbe Regel wie auf der Detailseite;
+ * [rememberSafetyGate]); die Bestätigung meldet [onConfirmedSafety]. [onOpenLore] öffnet eine Karte der Atemlehre.
  *
  * Ton der Vorschau ([rememberPreviewSound]): Klang-Einstellungen der App [cueSettings]; still,
  * solange eine Übung oder Meditation läuft ([otherAudioActive]). [soundOutput] tauschen nur Tests.
@@ -93,7 +94,7 @@ fun PatternEditorScreen(
     onBack: () -> Unit,
     cueSettings: CueSettings = CueSettings(),
     otherAudioActive: Boolean = false,
-    requireSafetyConfirm: Boolean = true,
+    safety: SafetySettings = SafetySettings(),
     onConfirmedSafety: () -> Unit = {},
     soundOutput: (Context) -> PreviewSoundOutput = ::AppPreviewSoundOutput,
 ) {
@@ -115,12 +116,15 @@ fun PatternEditorScreen(
     }
 
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
-    var showSafety by rememberSaveable { mutableStateOf(false) }
     var showTemplates by rememberSaveable { mutableStateOf(false) }
     var showRename by rememberSaveable { mutableStateOf(false) }
     val toolbarFocus = remember { ToolbarFocus() }
     val startFocus = remember { StartFocus() }
-    val start = {
+    val start = rememberSafetyGate(
+        require = safety.requiresConfirm(exercise),
+        cautions = exercise.cautions,
+        onConfirm = onConfirmedSafety,
+    ) {
         preview.pause()
         onStart(exercise, config)
     }
@@ -181,7 +185,7 @@ fun PatternEditorScreen(
                     state = state,
                     approxMinutes = approxMinutes,
                     focus = startFocus,
-                    onStart = { if (exercise.caution && requireSafetyConfirm) showSafety = true else start() },
+                    onStart = start,
                 )
             }
         }
@@ -196,18 +200,6 @@ fun PatternEditorScreen(
     }
 
     if (showRename) RenameDialog(state, onDismiss = { showRename = false })
-
-    if (showSafety) {
-        SafetyDialog(
-            cautions = exercise.cautions,
-            onConfirm = {
-                showSafety = false
-                onConfirmedSafety()
-                start()
-            },
-            onDismiss = { showSafety = false },
-        )
-    }
 }
 
 /** Ton der Phase [index] von [exercise] (Typ und Füllstand wie in der Übung), Restdauer [remainingMs]. */

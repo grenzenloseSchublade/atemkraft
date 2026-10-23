@@ -68,7 +68,7 @@ internal fun DetailDestination(
         return
     }
     val savedPatternId = ExerciseIds.savedIdOf(id)
-    val requireSafety = exercise.caution && (!safety.acknowledged || safety.showWarning)
+    val requireSafety = safety.requiresConfirm(exercise)
     val persistIntervals = id != ExerciseIds.DAILY
     val markable = exercise in BuiltInExercises.all
     val savedIntervals by remember(id) { settings.exerciseIntervals(id) }.collectAsStateWithLifecycle(initialValue = null)

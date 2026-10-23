@@ -219,7 +219,7 @@ internal fun NavGraphBuilder.appGraph(
             cueSettings = playback.cueSettings,
             otherAudioActive = playback.anyActive,
             // Intensive eigene Muster: derselbe Sicherheitsdialog wie auf der Detailseite.
-            requireSafetyConfirm = !state.safetySettings.acknowledged || state.safetySettings.showWarning,
+            safety = state.safetySettings,
             onConfirmedSafety = {
                 scope.launch { settings.setSafetyAcknowledged(true) }
             },

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.atemkraft.R
+import app.atemkraft.data.SafetySettings
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.ui.SilentPreviewSound
@@ -34,7 +35,7 @@ class PatternEditorSafetyTest {
     fun `intensives Muster ist caution und startet erst nach dem Sicherheitsdialog`() {
         val app = RuntimeEnvironment.getApplication()
         val started = mutableListOf<Exercise>()
-        var requireSafetyConfirm by mutableStateOf(true)
+        var safety by mutableStateOf(SafetySettings())
         val state = PatternEditorState.new(app.getString(R.string.pattern_editor_title), FreePatternTemplates.all.single { it.label == "4-7-8" }.pattern)
         compose.setContent {
             AtemkraftTheme {
@@ -44,8 +45,8 @@ class PatternEditorSafetyTest {
                     onStart = { exercise, _ -> started += exercise },
                     onOpenLore = {},
                     onBack = {},
-                    requireSafetyConfirm = requireSafetyConfirm,
-                    onConfirmedSafety = { requireSafetyConfirm = false },
+                    safety = safety,
+                    onConfirmedSafety = { safety = SafetySettings(showWarning = false, acknowledged = true) },
                     soundOutput = { SilentPreviewSound },
                 )
             }
