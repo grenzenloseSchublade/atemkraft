@@ -64,13 +64,13 @@ import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
-import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.headingColor
+import app.atemkraft.ui.components.rememberSafetyGate
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
@@ -122,8 +122,6 @@ fun ExerciseDetailScreen(
     // die Seite liest und ändert nur ihn (ARC-7).
     val adjust = rememberSessionAdjustState(exercise)
     val defaults = adjust.defaults
-    // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
-    var showSafety by rememberSaveable { mutableStateOf(false) }
     var intervalsExpanded by rememberSaveable(exercise.id) { mutableStateOf(false) }
 
     fun persistAdjustments() {
@@ -154,9 +152,14 @@ fun ExerciseDetailScreen(
     val config = adjust.config()
     val estimatedSeconds = remember(config) { exercise.adjusted(config).estimatedTotalSeconds() }
 
-    fun launch() {
-        if (requireSafetyConfirm) showSafety = true else onStart(adjust.config())
-    }
+    // Sicherheitsdialog vor intensiven Übungen: dieselbe Abfolge wie im Muster-Editor; der offene
+    // Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
+    val launch = rememberSafetyGate(
+        require = requireSafetyConfirm,
+        cautions = exercise.cautions,
+        onConfirm = onConfirmedSafety,
+        proceed = { onStart(adjust.config()) },
+    )
 
     val scrollState = rememberScrollState()
 
@@ -355,18 +358,6 @@ fun ExerciseDetailScreen(
             Spacer(Modifier.height(Dimens.SectionGap))
             HintText(stringResource(R.string.detail_info_only))
         }
-    }
-
-    if (showSafety) {
-        SafetyDialog(
-            cautions = exercise.cautions,
-            onConfirm = {
-                showSafety = false
-                onConfirmedSafety()
-                onStart(adjust.config())
-            },
-            onDismiss = { showSafety = false },
-        )
     }
 }
 

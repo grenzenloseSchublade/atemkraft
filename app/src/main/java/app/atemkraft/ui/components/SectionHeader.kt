@@ -102,7 +102,8 @@ fun SectionHeader(
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
     val density = LocalDensity.current
-    val titleLine = with(density) { (if (titleStyle.lineHeight.isSpecified) titleStyle.lineHeight else titleStyle.fontSize).toDp() }
+    // Gemessen statt aus lineHeight: ab Android 14 wächst die Schrift nichtlinear (rememberFirstLineHeight).
+    val titleLine = rememberFirstLineHeight(titleStyle)
     val toggle = if (expanded == null) {
         Modifier
     } else {
