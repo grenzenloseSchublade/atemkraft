@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -74,6 +75,7 @@ fun Stepper(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .testTag(CONTROL_ROW_TAG)
             .padding(start = horizontal, end = (horizontal - inset).coerceAtLeast(0.dp), top = vertical, bottom = vertical),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

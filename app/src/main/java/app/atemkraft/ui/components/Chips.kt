@@ -103,13 +103,21 @@ fun Chip(
             .then(if (outlined) Modifier.border(Dimens.BorderThin, color, shape) else Modifier.background(color.copy(alpha = CHIP_FILL)))
             .padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapTiny),
     ) {
-        Text(
+        // Einzeilig wie der LinkChip (LAYOUT-03): Neben einem Titel mit Aktionen bleibt einem Chip bei
+        // Schrift 2,0 auf 360 dp weniger Breite als „sanft aktivierend“ braucht – dann verkleinert
+        // der Text bis CHIP_MIN_SCALE, statt im Chip umzubrechen (CHIP_UMBRUCH meldet den Rest).
+        WholeWordText(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = color,
+            singleLine = true,
+            minScale = CHIP_MIN_SCALE,
             modifier = Modifier
                 .testTag(CHIP_TEXT_TAG)
                 .then(if (spokenText == null) Modifier else Modifier.semantics { this.text = AnnotatedString(spokenText) }),
         )
     }
 }
+
+/** Ein Chip-Text verkleinert höchstens bis hierher (LAYOUT-03, wie `LinkChip`). */
+internal const val CHIP_MIN_SCALE = 0.85f

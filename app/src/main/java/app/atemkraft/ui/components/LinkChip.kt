@@ -26,7 +26,7 @@ import app.atemkraft.ui.theme.Sizes
 /**
  * Antippbarer Verweis-Chip (öffnet z. B. eine Übung), auf Basis von Material3 SuggestionChip.
  * Sichtbar [Sizes.ChipHeight] hoch (wächst mit großer Schrift), Tippfläche 48 dp. Die Beschriftung
- * steht in einer Zeile und wird dafür höchstens bis [CHIP_MIN_SCALE] verkleinert. Passt ein langer
+ * steht in einer Zeile und wird dafür höchstens bis [CHIP_MIN_SCALE] verkleinert (Chips.kt). Passt ein langer
  * Name („Nadi Shodhana (Wechselatmung)“ bei großer Schrift auf 360 dp) auch dann nicht, bricht er
  * zwischen den Wörtern um und der Chip wird höher – Layout statt kleinerer Schrift (LAYOUT-03,
  * WCAG 1.4.4); vorher schrumpfte er bis 60 %, bei Schrift 2,0 also fast auf Normalgröße.
@@ -64,9 +64,6 @@ fun LinkChip(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) 
         ),
     )
 }
-
-/** Untergrenze der einzeiligen Chip-Beschriftung; darunter bricht sie zwischen Wörtern um. */
-private const val CHIP_MIN_SCALE = 0.85f
 
 /**
  * Antippbare Übungen als [LinkChip]s (Atemlehre, Pranayama): je Kennung in [ids] ein Chip mit dem

@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -142,7 +142,7 @@ fun SectionHeader(
         Modifier.padding(vertical = Dimens.GapSmall)
     }
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG),
         verticalAlignment = Alignment.Top,
     ) {
         // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
@@ -164,7 +164,7 @@ fun SectionHeader(
                     status = status,
                     statusDescription = statusDescription,
                     statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag(TITLE_ROW_TITLE_TAG),
                     isHeading = onClick == null,
                 )
                 if (onClick != null) {
@@ -185,7 +185,7 @@ fun SectionHeader(
         if (trailingAction != null) {
             // Mitte der Tippfläche auf der Mitte der ersten Titelzeile (wie der Caret).
             val above = if (!tappable) top else Dimens.GapSmall * 2
-            Box(Modifier.centeredOverflow(above + titleLine / 2).flushEnd()) { trailingAction() }
+            Box(Modifier.centeredOverflow(above + titleLine / 2, MAX_OVERHANG).flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
         }
     }
 }
@@ -213,7 +213,7 @@ fun GroupLabel(
 ) {
     val style = MaterialTheme.typography.titleSmall
     val line = rememberFirstLineHeight(style)
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+    Row(modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG), verticalAlignment = Alignment.Top) {
         WholeWordText(
             text = title,
             style = style,
@@ -221,28 +221,12 @@ fun GroupLabel(
             modifier = Modifier
                 .weight(1f)
                 .padding(top = top)
+                .testTag(TITLE_ROW_TITLE_TAG)
                 .semantics { heading() },
         )
         if (trailingAction != null) {
-            Box(Modifier.centeredOverflow(top + line / 2).flushEnd()) { trailingAction() }
+            Box(Modifier.centeredOverflow(top + line / 2, MAX_OVERHANG).flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
         }
-    }
-}
-
-/**
- * Stellt den Inhalt mit seiner Mitte auf die Höhe [center] unter der Oberkante und meldet nur so
- * viel Höhe, dass er höchstens [MAX_OVERHANG] unter den Kopf ragt: Die 48-dp-Tippfläche einer
- * Kopf-Aktion liegt so im Abstand `HeaderGap` unter dem Kopf, statt ihn höher zu machen – aber
- * nie bis an den ersten Inhalt (A11Y-05). Bei kleiner Schrift (0,85) endete sie sonst genau an der
- * Oberkante der ersten Karte; dann wird der Kopf um die fehlenden 2 dp höher. Kein `offset` – die
- * Breite zählt für die Nachbarn wie gewohnt.
- */
-private fun Modifier.centeredOverflow(center: Dp): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints.copy(minHeight = 0))
-    val y = (center.roundToPx() - placeable.height / 2).coerceAtLeast(0)
-    val height = (y + placeable.height - MAX_OVERHANG.roundToPx()).coerceAtLeast(0)
-    layout(placeable.width, height) {
-        placeable.placeRelative(0, y)
     }
 }
 

@@ -96,7 +96,8 @@ internal typealias Tab = TopTab
  * überschätzt das Bild den Platz um rund 150 dp.
  *
  * Der Meditations-Tab scrollt bis fontScale 1,3 nicht (LAYOUT-08, `SCROLLT`); „Klang & Stimme“
- * liegt im Bottom Sheet und ändert die Seite nicht.
+ * liegt im Bottom Sheet und ändert die Seite nicht. Die Layout-Grammatik der Bausteine prüft
+ * [AnatomyFindings] (`ANATOMIE`, STYLEGUIDE §4.5).
  *
  * Endlos-Animationen stehen still (FrozenInfiniteAnimations).
  *
@@ -238,14 +239,16 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)
         val controls = controlFindings(name)
+        val anatomy = anatomyFindings(name)
         val checked = fontScale <= NO_SCROLL_MAX_FONT_SCALE
         val scrolls = if (noScroll && checked) scrollFindings(name) else emptyList()
         val measured = measure()
         // Ohne Aufnahme (normaler Testlauf) legt Roborazzi den Ordner nicht an.
         File(dir).mkdirs()
-        File("$dir/$name.tsv").writeText((findings + controls + scrolls + measured).joinToString("") { "$it\n" })
+        File("$dir/$name.tsv").writeText((findings + controls + anatomy + scrolls + measured).joinToString("") { "$it\n" })
         wordBreaks += findings
         controlProblems += controls
+        anatomyProblems += anatomy
         scrollProblems += scrolls
         current = null
     }
@@ -275,6 +278,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
     private val wordBreaks = mutableListOf<String>()
     private val controlProblems = mutableListOf<String>()
+    private val anatomyProblems = mutableListOf<String>()
     private val scrollProblems = mutableListOf<String>()
     private val compactProblems = mutableListOf<String>()
 
@@ -387,6 +391,21 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         if (controlProblems.isNotEmpty()) {
             fail("Bedienelement zu klein, ohne Klick-Aktion oder abgeschnitten (A11Y-05, A11Y-02, LAYOUT-05):\n" + controlProblems.joinToString("\n"))
         }
+    }
+
+    /** STYLEGUIDE §4.5: Jeder Baustein folgt seiner Anatomie – Glyphen auf der Titelzeile und bündig, Text läuft unter Aktionen durch, Zeilen ≥ 48 dp. */
+    @After
+    fun anatomy() {
+        if (anatomyProblems.isNotEmpty()) {
+            fail("Baustein verletzt die Layout-Grammatik (STYLEGUIDE §4.5, ANATOMIE):\n" + anatomyProblems.joinToString("\n"))
+        }
+    }
+
+    /** Titelzeilen, Aktionen und Steuerzeilen des aktuellen Bildes prüfen ([AnatomyFindings]). */
+    private fun anatomyFindings(screen: String): List<String> {
+        val nodes = compose.onAllNodes(SemanticsMatcher("alle") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+        return AnatomyFindings.findings(nodes, compose.density.density, screen)
+            .map { "${device.name}\tfs${(fontScale * 100).toInt()}\t$it" }
     }
 
     /** Bedienelemente des aktuellen Bildes prüfen ([ControlFindings]). */

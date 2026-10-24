@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.PlatformTextInputInterceptor
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import androidx.compose.ui.platform.PlatformTextInputSession
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -94,6 +95,7 @@ fun SearchField(
     NoPersonalizedLearning {
         Row(
             modifier = modifier
+                .testTag(CONTROL_ROW_TAG)
                 .fillMaxWidth()
                 .heightIn(min = Dimens.MinTouchTarget)
                 .clip(CircleShape)

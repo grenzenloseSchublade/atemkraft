@@ -14,12 +14,15 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import app.atemkraft.R
@@ -160,6 +163,19 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 savedPatterns = saved,
                 actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
                 favorites = favorites,
+                logEntries = logEntries(),
+                today = DAY,
+            )
+        }
+        // Zu „Eigene Kreationen“ gescrollt: Kopf mit Caret und „+“, Kreationen-Karten mit Stift und Mülleimer
+        // auf der Titelzeile (Gate ANATOMIE, STYLEGUIDE §4.5); in Gerätehöhe liegt der Abschnitt sonst außerhalb.
+        snap("13_eigene_kreationen", tab = Tab.EIGENE, prepare = {
+            compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(saved.last().exercise.name))
+        }) {
+            OwnPatternsScreen(
+                savedPatterns = saved,
+                actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
+                favorites = BuiltInExercises.all.take(1),
                 logEntries = logEntries(),
                 today = DAY,
             )
