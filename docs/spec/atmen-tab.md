@@ -1,0 +1,33 @@
+# Spezifikation: Tab „Atmen“
+
+Regeln: [STYLEGUIDE MUSTER-09](../STYLEGUIDE.md#muster) (Suche), MUSTER-12 (Filterreihe), MUSTER-13 (Willkommenskarte); Anatomie der Karten, Köpfe und Chip-Reihen in [§4.5](../STYLEGUIDE.md#anatomie). Suche und Anlass-Chips im Detail: [suche.md](suche.md). Entscheidungen in [DECISIONS.md](../DECISIONS.md). Code: `ui/home/`.
+
+## Aufbau der Liste (`HomeScreen`, `TabListScaffold`)
+
+1. Nur beim ersten Start: **Willkommenskarte** (`WelcomeCard`).
+2. **Block „Wie fühlst du dich?“** (`FeelingBlock`): Suchpille und sechs Anlass-Chips, ohne Kopf, ohne Kasten ([suche.md](suche.md)).
+3. Kopf **„Übungen“** (`SectionHeader`, weiß) mit der **Filterreihe** darunter und – ohne Filter – der **Tagesmuster-Karte** als erste Karte. Kopf, Reihe, Status und Tagesmuster sind ein Listeneintrag mit `GapTiny` dazwischen: Die Chips bringen 8 dp Tippfläche mit, sichtbar bleibt überall `HeaderGap`.
+4. Die vier **Familien** als Gruppen: `GroupLabel` in der Familienfarbe (`top = SectionGap − ListGap`, weil `spacedBy(ListGap)` den Rest setzt), darunter je Übung eine `ExerciseCard` (Rand `accentBorder(Familienfarbe)`).
+
+Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder nichts; dann steht die Liste wie oben ([suche.md](suche.md), „Zwei Ebenen, ein Zustand“).
+
+## Willkommenskarte (MUSTER-13, `WelcomeCard`)
+
+Bis der Nutzer sie wegklickt, steht oben die Karte „Neu hier?“ (`CardHeader` mit einer Aktion ✕ „Hinweis schließen“ auf der Titelzeile), ein Satz zum Einstieg (`BodyText`), der Verweis auf die Resonanz-Atmung mit ihrem Namen (`ForwardLinkText` in `secondary`; ruhig, ohne Halten, einzige „gut belegte“ Übung) und der Gesundheitshinweis als `HintText` („kein Medizinprodukt“, Erkrankungen ärztlich abklären, bei Schwindel aufhören). Die Karte ist nicht klickbar. Weggeklickt bleibt sie weg (`SettingsRepository.welcomeDismissed`, DataStore); bis DataStore antwortet, gilt sie als weggeklickt – nichts blitzt beim Start auf. Kein Dialog, keine zweite Seite, kein Fokus beim Öffnen. Prüfung: `ScreenshotTest` (`01_atmen_willkommen`).
+
+## Tagesmuster-Karte (`DailyPatternCard` → `PatternCard` mit `eyebrow`)
+
+Kopfzeile in der Karte: links die Eyebrow „MUSTER DES TAGES“ (`typography.eyebrow`, `secondary` wie der Rand; TalkBack hört den Originaltext), rechts ↻ „Neu generieren“ (`cd_pattern_regenerate`, betrifft das Tagesmuster als Ganzes) und das Lesezeichen (`AppIconToggle`, Speichern ↔ wieder entfernen; gespeichert gefüllt in `secondary`, sonst `onSurface` · `SECONDARY`), Zeile `MinTouchTarget` hoch, das Kartenpolster oben um `CircleOverhang` kleiner. Darunter Name mit `CharacterChip`, Musterzeile `PatternTexts.hintFor(spec)` mit Dauer. Kein Abschnittskopf über der Karte; gespeicherte Muster erscheinen im Tab „Eigene“ unter „Eigene Kreationen“. Die Karte verschwindet mit dem ersten Filter – sie ist kein Filtertreffer.
+
+## Übungskarte (`ExerciseCard`)
+
+Titel mit seltenen, entscheidungsrelevanten Chips (`CautionChip` „nur gesund & ausgeruht“, `InfoChip` „Programm“; keine Studienlage – die trüge fast jede Karte), rechts auf der ersten Titelzeile die persönliche Markierung (`PersonalMarkIndicator`, nur gesetzt sichtbar, nicht klickbar); darunter die Metazeile (`BodyText`, eine Stufe heller als die Kurzbeschreibung): ein Atemzug in Worten aus `cardBreath()` („Einatmen 4 s · Ausatmen 6 s“; zwei gleiche Hälften wie bei Nadi Shodhana als eine; Stufen-Übungen „in Stufen“; mehrere Abschnitte – Wim Hof, Feueratmung – ohne Takt), dahinter die Dauer wie am Startknopf ohne eigene Anpassung („ca. 10 min“, offene Phasen „ab ca. 3 min“, „unter 1 min“); Programme ohne Zeile. Darunter die Kurzbeschreibung (`SecondaryText`).
+
+## Filterreihe (MUSTER-12, `ExerciseFilterRow`, `FilterChipRow`, `TonalChip`)
+
+- Nur im Grundzustand (kein Anlass, keine Suche, kein Bereich) unter dem Kopf „Übungen“: **eine Zeile** Filter-Chips „Bis 3 min“, „Ohne Halten“, „Aus dem Yoga“. **Nur Filter quer zu den Familien**, nie eine Familie. Aufgenommen wird ein Filter nur, wenn er die angeleiteten Übungen sinnvoll teilt (mindestens 3 Treffer, nicht fast alle; Stand 2026-10-23 bei 17 Übungen: 4, 12, 8), höchstens fünf, Beschriftung kurz, sachlich, ohne Versprechen (TEXT-07). Verworfen: „gut belegt“ (eine Übung; Studienlage nur auf der Detailseite), „sanft“ (alle außer den zwei intensiven).
+- Bedeutung (`ExerciseFilter`, Logik in `src/domain/` als `ExerciseFilters`): **„Bis 3 min“** – Standarddauer wie am Startknopf (`estimatedTotalSeconds`, `minutesRounded`) höchstens 3 min, ohne offene Phasen; eigene Anpassungen zählen nicht. **„Ohne Halten“** – keine Phase Halten voll oder leer, auch nicht in Stufen (Viloma). **„Aus dem Yoga“** – Technik der Seite „Pranayama“ (`Pranayama.exerciseIds`); Box-Atmung und 4-7-8 sind dort nur verwandt.
+- Verhalten: Mehrfachauswahl, UND-verknüpft, ein zweiter Tipp hebt einen Filter auf; die Liste bleibt nach Familien gruppiert, Familien ohne Treffer fallen samt Label weg; die Tagesmuster-Karte verschwindet mit dem ersten Filter. Mit mindestens einem Filter steht unter der Reihe der Trefferstatus („4 Übungen“, Plurals, `liveRegion = Polite`), ohne Treffer „Keine Übung passt zu allen Filtern“ mit „Filter zurücksetzen“ (MUSTER-04). Die Wahl lebt nur in `rememberSaveable` und bleibt erhalten, während ein Anlass, eine Suche oder ein Bereich gewählt ist.
+- Optik: `TonalChip(label, selected, onClick)` – eine Stufe leiser als die Anlässe: sichtbar `ChipHeight` (32), Pille `CircleShape`, Fläche `surfaceContainerHigh` ohne Rand, Beschriftung `labelMedium` einzeilig in `SECONDARY`, Polster `ChipPadding`, Tippfläche 48 (`minimumInteractiveComponentSize`); gewählt Fläche `SegmentSelected` (2,82 gegen die tonale Fläche) und Beschriftung voll `onSurface` – zwei Merkmale statt eines ≥ 3:1 –, weich übergeblendet, misst in jedem Zustand gleich, kein Häkchen. `FilterChipRow(groupName, items, sideBleed) { item -> TonalChip(…) }`: nebeneinander `GapSmall`, nie zwei Zeilen; passt die Zeile nicht (fontScale 2,0), scrollt sie seitlich mit derselben Verlaufs- und Überstandslogik wie `ChoiceChipRow` (`edgeFade`, `bleed`): Die Fläche reicht beidseits um `ScreenPadding` bis an den Bildschirmrand, in Ruhe steht der erste Chip an der Inhaltskante, ganz gescrollt der letzte; Verlauf nur an der Seite mit weiteren Chips. Kein Umbruch im Chip, keine kleinere Schrift.
+- TalkBack: Reihe als Gruppe „Übungen filtern“ (`isTraversalGroup`), Chips als Kontrollkästchen (`toggleable`, `Role.Checkbox`) mit Zustand.
+- Prüfung: `ExerciseFilterTest` (Trefferzahlen, UND, leere Familien), `ScreenshotTest` (`01_atmen_filter`: eine Zeile, `filterRow`), R-A11Y (Ansage der Trefferzahl).

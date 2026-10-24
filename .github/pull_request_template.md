@@ -5,8 +5,8 @@
 ## Checkliste
 
 - [ ] `scripts/check.sh` ist lokal grün (Stil-Checks, ktlint, Unit- und Screenshot-Tests, Android Lint)
-- [ ] Commit-Betreff nach CODE-08: `fix: …`, `docs: …` oder `build: …`, deutsch mit Umlauten
-- [ ] Regeln aus [STYLEGUIDE.md](https://github.com/grenzenloseSchublade/atemkraft/blob/main/docs/STYLEGUIDE.md) eingehalten (Kurz-Checkliste am Anfang)
+- [ ] Commit-Betreff nach PROZ-01 (docs/PROCESS.md): `fix: …`, `docs: …` oder `build: …`, deutsch mit Umlauten
+- [ ] Regeln aus [STYLEGUIDE.md](https://github.com/grenzenloseSchublade/atemkraft/blob/main/docs/STYLEGUIDE.md) eingehalten (Leitplanken §1, Anatomie der Bausteine §4.5)
 - [ ] Texte: du-Anrede, Laiensprache, keine Heil- oder Therapieversprechen (`config/health-claims.txt`), genannte Studien in `Refs.kt`
 - [ ] Keine neue Netzverbindung, Berechtigung, Tracking-Bibliothek oder gespeicherten Daten – oder im selben Commit in [SECURITY.md](https://github.com/grenzenloseSchublade/atemkraft/blob/main/docs/SECURITY.md) und [PRIVACY.md](https://github.com/grenzenloseSchublade/atemkraft/blob/main/docs/PRIVACY.md) nachgetragen
 - [ ] Neue Abhängigkeit mit freier Lizenz und Eintrag in `THIRD_PARTY_LICENSES.md` (falls zutreffend)

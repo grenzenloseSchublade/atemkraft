@@ -27,7 +27,7 @@ scripts/build.sh                 # Debug-APK bauen (sucht JDK 17 und setzt JAVA_
 scripts/build.sh installDebug    # bauen und auf Gerät/Emulator installieren
 ```
 
-`scripts/build.sh` reicht alle Argumente an `./gradlew` durch. Es nimmt bevorzugt JDK 17 wie CI und Release-Builds; ein anderes JDK baut mit Warnung weiter. Für eine Release-APK brauchst du keinen Schlüssel: Ohne Release-Keystore entsteht eine unsignierte APK. Signiert werden offizielle Releases nur vom Maintainer.
+`scripts/build.sh` reicht alle Argumente an `./gradlew` durch und nimmt bevorzugt JDK 17. Für eine Release-APK brauchst du keinen Schlüssel: Ohne Release-Keystore entsteht eine unsignierte APK; eine selbst gebaute Release-APK lässt sich nicht über die offizielle installieren, weil die Signatur abweicht. Signiert werden offizielle Releases nur vom Maintainer.
 
 ### Aufbau
 
@@ -38,54 +38,51 @@ domain/   reines Modell: Phase, Segment, Exercise, Zeitplan, Muster-Generator, B
 data/     Übungen, Situationen und Quellen (Refs.kt), Room (Logbuch, Muster), DataStore (Einstellungen)
 cue/      Töne, Gong, Vibration, Sprachausgabe (System oder Piper-Stimmen über sherpa-onnx)
 playback/ Abläufe ohne UI: Sitzungsstatus, Meditations-Controller, Foreground-Service, Audio-Koordinatoren
-ui/       theme/, components/ und je Screen ein Paket
+ui/       theme/, components/, navigation/ und je Feature ein Paket
 ```
-
-Eine selbst gebaute Release-APK ohne eigenen Schlüssel ist unsigniert (so erwartet es z. B. F-Droid) und lässt sich nicht über die offizielle installieren, weil die Signatur abweicht.
 
 ## Prüfen
 
 Vor jedem Pull Request:
 
 ```bash
-scripts/check.sh          # Stil-Checks, ktlint, Unit-Tests, Android Lint, Release-Build – muss grün sein
+scripts/check.sh          # Stil- und Sicherheits-Checks, ktlint, Unit- und Screenshot-Tests, Android Lint, Release-Build – muss grün sein
 scripts/check.sh --fast   # dasselbe ohne Android Lint und Release-Build, für zwischendurch
 scripts/build.sh ktlintFormat   # Formatierung automatisch korrigieren
 ```
 
-`scripts/check.sh` ist der einzige Prüf-Einstieg, lokal und im CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)). Dazu gehört ein Screenshot-Test, der alle Screens auf drei Breiten und vier Schriftgrößen rendert und fehlschlägt, wenn ein Wort umbricht, ein Text abgeschnitten wird oder eine Tippfläche kleiner als 48 dp ist. Die Bilder erzeugst du mit `scripts/build.sh recordRoborazziDebug`; sie liegen dann unter `app/build/outputs/roborazzi/`.
+`scripts/check.sh` ist der einzige Prüf-Einstieg, lokal und im CI; was genau läuft, steht im [Styleguide §13](docs/STYLEGUIDE.md#automatische-pruefung). Dazu gehören Screenshot-Gates, die alle Screens rendern und fehlschlagen, wenn ein Wort umbricht, ein Text abgeschnitten wird, eine Tippfläche kleiner als 48 dp ist oder ein Baustein von seiner Anatomie abweicht (Styleguide §4.5). Bilder erzeugst du mit `scripts/build.sh recordRoborazziDebug` (unter `app/build/outputs/roborazzi/`).
 
-Der Release-Build in `scripts/check.sh` ist immer unsigniert. Eine signierte `app-release.apk` unter `app/build/outputs/apk/release/` legt das Skript vorher beiseite und stellt sie danach wieder hin, auch wenn eine Prüfung fehlschlägt.
-
-Altlasten sind in Baselines unter `config/` eingefroren. Eine Baseline darf nur sinken, nie wachsen.
+Altlasten der Stil-Checks sind in `config/style-baseline.txt` eingefroren, jede Zeile mit dem Backlog-Punkt, der sie behebt. Die Baseline darf nur sinken, nie wachsen; eine bewusste Ausnahme ist ein Marker `// Abweichung <ID>: <Grund>` an der Zeile.
 
 ## Regeln
 
-Die verbindlichen Regeln stehen in zwei Dokumenten. Jede Regel hat eine ID und nennt, wie sie geprüft wird.
+Die verbindlichen Regeln stehen in drei Dokumenten. Jede Regel hat eine ID und nennt, wie sie geprüft wird.
 
-- [docs/STYLEGUIDE.md](docs/STYLEGUIDE.md): Design, Text und Ton, Barrierefreiheit, Code. Die Kurz-Checkliste am Anfang deckt die meisten Änderungen ab.
+- [docs/STYLEGUIDE.md](docs/STYLEGUIDE.md): Design, Text und Ton, Barrierefreiheit, Code. Die zwölf Leitplanken in §1 decken die meisten Änderungen ab; §4.5 sagt, wie jeder Baustein gebaut ist.
 - [docs/SECURITY.md](docs/SECURITY.md): Datenschutz, Berechtigungen, Netzwerk, Lieferkette, Release.
+- [docs/PROCESS.md](docs/PROCESS.md): Commit, Push, Release und Arbeitsweise. Die Kurzfassung für Agenten ist [CLAUDE.md](CLAUDE.md).
 
 Das Wichtigste in Kürze:
 
 - **Kein Tracking:** keine Analyse-, Absturz-, Werbe- oder Tracking-Bibliotheken, keine Google Play Services, kein Firebase, auch nicht über Abhängigkeiten (SEC-PRIV-01).
 - **Offline:** Die einzige Netzverbindung ist der Stimm-Download, den die Person selbst antippt. Eine neue Verbindung, eine neue Berechtigung oder ein neues gespeichertes Feld braucht im selben Commit die Einträge in SECURITY.md und [Datenschutzerklärung](docs/PRIVACY.md), eine neue Verbindung auch den Satz im README (SEC-PRIV-02, SEC-PRIV-04, SEC-PERM-01).
 - **Nur freie Software:** Neue Abhängigkeiten brauchen eine FLOSS-Lizenz und einen Eintrag in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) (SEC-LEGAL-03).
-- **Oberfläche:** nur dunkles Design, vorhandene Komponenten aus `ui/components/`, Farben und Maße als Tokens aus `ui/theme/`, kein Wortumbruch und keine gekürzten Texte, Tippflächen mindestens 48 dp.
-- **Texte:** Deutsch, Anrede „du“, Laiensprache, deutsche Anführungszeichen „…“. Begriffe nach der Begriffsliste (STYLEGUIDE §11.1, z. B. „Sitzung“ statt „Session“).
+- **Oberfläche:** nur dunkles Design, vorhandene Komponenten aus `ui/components/` (Karten mit Aktionen über `CardHeader`), Farben und Maße als Tokens aus `ui/theme/`, kein Wortumbruch und keine gekürzten Texte, Tippflächen mindestens 48 dp, Auswahl ohne Häkchen.
+- **Texte:** Deutsch, Anrede „du“, Laiensprache, deutsche Anführungszeichen „…“. Begriffe nach der Begriffsliste (STYLEGUIDE §11.1, z. B. „Sitzung“ statt „Session“). Die App zählt, sie bewertet nicht (TEXT-16).
 
 ## Inhalte: evidenzehrlich
 
 Atemkraft ist eine Wellness-App, kein Medizinprodukt. Für Übungstexte, Situationen und alle öffentlichen Texte gilt:
 
-- **Keine Heil-, Therapie- oder Präventionsversprechen** („heilt“, „lindert“, „beugt vor“, „nachweislich“ …). Die vollständige Wortliste steht in [`config/health-claims.txt`](config/health-claims.txt); der `ContentRulesTest` prüft die App-Inhalte dagegen.
-- **Studienlage ehrlich:** Schwache Belege (Einzelstudie, kleine Stichprobe, indirekt) stehen schon im ersten Satz („in einer Studie“, „kaum untersucht“).
+- **Keine Heil-, Therapie- oder Präventionsversprechen** („heilt“, „lindert“, „beugt vor“, „nachweislich“ …). Die vollständige Wortliste steht in [`config/health-claims.txt`](config/health-claims.txt); der `ContentRulesTest` prüft App-Inhalte, README, Store-Texte, Release-Notes und Datenschutzerklärung dagegen (SEC-LEGAL-01).
+- **Studienlage ehrlich:** Schwache Belege stehen schon im ersten Satz („in einer Studie“, „kaum untersucht“); jede eingebaute Übung trägt genau eine Studienlage (TEXT-07).
 - **Jede genannte Studie steht in [`Refs.kt`](app/src/main/java/app/atemkraft/data/Refs.kt)** im Format `Nachname I. et al. (Jahr): Originaltitel. Journal Band(Heft):Seiten. <deutsche Einordnung>.` mit DOI oder PMID. Im Text steht sie als „(Name Jahr)“. Bitte nur Quellen, die du selbst geöffnet und gelesen hast.
 - **Sicherheit sichtbar:** Jeder sicherheitsrelevante Satz steht auch in `cautions`, als Bedingung und Handlung („Bei Schwindel sofort aufhören.“).
 
 ### Eine neue Übung hinzufügen
 
-In [`data/BuiltInExercises.kt`](app/src/main/java/app/atemkraft/data/BuiltInExercises.kt) ein `Exercise` definieren und in `all` aufnehmen. Pflichtfelder sind `id`, `name`, `family`, `shortDescription` und `effect`:
+In [`data/BuiltInExercises.kt`](app/src/main/java/app/atemkraft/data/BuiltInExercises.kt) ein `Exercise` definieren und in `all` aufnehmen. Pflichtfelder sind `id`, `name`, `family`, `shortDescription`, `effect` und `evidence`:
 
 ```kotlin
 private val meine = Exercise(
@@ -94,6 +91,7 @@ private val meine = Exercise(
     family = BreathingFamily.DOWNREGULATE,
     shortDescription = "4 s ein, 6 s aus, ohne Halten.",
     effect = "Ein langer Ausatem lädt zum Herunterfahren ein.",
+    evidence = EvidenceLevel.LITTLE_STUDIED,
     cautions = listOf("Bei Schwindel sofort aufhören."),
     references = listOf(Refs.zaccaro2018),
     rounds = 1,
@@ -109,20 +107,20 @@ private val meine = Exercise(
 )
 ```
 
-Danach `scripts/check.sh`: Der `ContentRulesTest` prüft Teaser-Länge, Typografie (Anführungszeichen, Dezimalkomma, Trennpunkt) und die Wortliste, der Screenshot-Test die neue Detailseite; Anrede und Quellenformat prüft das Review.
+Danach `scripts/check.sh`: Der `ContentRulesTest` prüft Teaser-Länge, Typografie (Anführungszeichen, Dezimalkomma, Trennpunkt, Zahl und Einheit) und die Wortliste ohne Baseline, der Screenshot-Test die neue Detailseite; Anrede und Quellenformat prüft das Review.
 
 ## Commits und Pull Requests
 
-- **Commit-Betreff** (CODE-08, im CI geprüft): `fix: …`, `docs: …` oder `build: …`, Releases `vX.Y.Z: …`. Deutsch, mit echten Umlauten, als kurze Zusammenfassung. Beispiel: `fix: Tipp-Tick am Kreis folgt dem Schalter „Vibration“`.
-- **Git-Hooks** (empfohlen, einmal je Klon): `git config core.hooksPath .githooks`. Dann prüft `commit-msg` den Betreff schon beim Commit und `pre-push` Betreffs und Styleguide-Pflicht aller neuen Commits wie der CI-Job „conventions“; ein falscher Betreff lässt sich so noch ohne Force-Push ändern.
+- **Commit-Betreff** (PROZ-01, im CI geprüft): `fix: …`, `docs: …` oder `build: …`, Releases `vX.Y.Z: …`. Deutsch, mit echten Umlauten, als kurze Zusammenfassung. Beispiel: `fix: Tipp-Tick am Kreis folgt dem Schalter „Vibration“`.
+- **Git-Hooks** (empfohlen, einmal je Klon): `git config core.hooksPath .githooks`. Dann prüft `commit-msg` den Betreff schon beim Commit und `pre-push` die Betreffs und die Styleguide-Pflicht über alle neuen Commits wie der CI-Job „conventions“; ein falscher Betreff lässt sich so noch ohne Force-Push ändern.
 - **Commit-Text** erklärt das Warum, nicht nur das Was.
-- Ändert ein Commit ein Token in `ui/theme/` oder die Signatur einer öffentlichen Funktion in `ui/components/`, ändert er auch den Styleguide (META-01).
+- Ändert ein Push ein Token in `ui/theme/` oder die Signatur einer öffentlichen Funktion in `ui/components/`, ändert er irgendwo im selben Push auch den Styleguide (PROZ-02) – ein eigener Doku-Commit genügt.
 - Bei sichtbaren Änderungen bitte Screenshots vorher und nachher in den Pull Request.
 - Mit dem Einreichen stimmst du zu, dass dein Beitrag unter der [MIT-Lizenz](LICENSE) des Projekts steht.
 
 ## Releases
 
-Releases baut und signiert nur der Maintainer. Der Ablauf steht in der [Release-Checkliste](docs/SECURITY.md#release-checkliste): `versionCode` um 1 erhöhen, Release-Notes unter `docs/release-notes/vX.Y.Z.md` und kurzer Changelog unter `fastlane/metadata/android/de-DE/changelogs/<versionCode>.txt`, Tag, Build aus einem frischen Checkout des Tags, Signatur mit `apksigner` gegen den Fingerabdruck prüfen, dann `gh release create` mit `atemkraft-vX.Y.Z.apk` und den Notes samt SHA-256 der APK. Für Release-Notes und Store-Texte gelten dieselben Textregeln wie in der App (STYLEGUIDE TEXT-09, TEXT-11).
+Releases baut, signiert und veröffentlicht nur der Maintainer. Der Ablauf steht in [PROCESS.md](docs/PROCESS.md) und der [Release-Checkliste](docs/SECURITY.md#release-checkliste): `scripts/bump-version.sh X.Y.Z` setzt Version, Release-Notes, Changelog und Stand-Zeilen; dann Tag, Build aus einem frischen Checkout des Tags, Signaturprüfung, GitHub-Release mit den drei APKs (universal, arm64-v8a, armeabi-v7a) und den Notes samt SHA-256. Für Release-Notes und Store-Texte gelten dieselben Textregeln wie in der App (STYLEGUIDE TEXT-11, SEC-LEGAL-01).
 
 ## Fragen
 

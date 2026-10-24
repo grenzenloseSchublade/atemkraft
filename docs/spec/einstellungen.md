@@ -1,0 +1,30 @@
+# Spezifikation: Einstellungen
+
+Regeln: [STYLEGUIDE TEXT-15](../STYLEGUIDE.md#text) (Texte nach einem Muster), LAYOUT-07 (Steuerung beim Label); Anatomie „Zeile mit Steuerelement“ in [§4.5](../STYLEGUIDE.md#anatomie). Entscheidungen in [DECISIONS.md](../DECISIONS.md). Code: `ui/settings/` (`SettingsScreen`, `SettingsColumns.kt`, `PatternTransfer.kt`).
+
+## Texte nach einem Muster (TEXT-15)
+
+- **Karte:** Titel (`CardTitle`, `onSurface`), direkt darunter höchstens ein Satz, wofür die Karte gilt (`SettingsCard(intro)`), nur wo er etwas sagt, das die Zeilen nicht sagen („Gilt für Atemübungen und Meditation.“).
+- **Schalter** (`ToggleRow`): Name sagt, was geschaltet wird, als Substantiv oder kurze Wendung („Vibration“, „Nächste Phase“, „Sicherheitshinweis immer zeigen“); darunter höchstens ein erklärender Satz zur Wirkung – was sich ändert, wann es nützt, bei Bedarf „Aus: …“ –, kein Hinweis, wenn der Name alles sagt (Fortschrittsring der Meditation).
+- **Auswahlreihe** (`SegmentedChoiceRow`): Unterüberschrift (`SubLabel`) darüber, darunter ein `HintText` zur gewählten Option (Ton) oder zur Wahl allgemein; er wiederholt nicht die Segmentbeschriftungen.
+- **Aktionen** (Export/Import): Unterüberschrift darüber, Satz darunter.
+- Langes, Quellen, Rechtliches nur im Aufklapper (`DisclosureToggle`), dessen Text nicht mit der Frage des Umschalters beginnt.
+- **Nichts doppelt:** Was zwei Karten teilen, steht einmal erklärt, die zweite verweist („Wie bei der Atemübung.“); kein Hinweis wiederholt Titel, Kartensatz oder Beschriftung. Begriffe nach §11.1, Orte als Tab „Meditation“, Startwerte als solche benennen („Danach in die Stille“: nur der Startwert, in der Übung oben umschaltbar).
+
+## Zeilen und Endspalten (LAYOUT-07)
+
+- Ein Schalter steht in der Zeile seines Namens, der Hinweis darunter in der Textspalte: Er endet vor dem Schalter, statt unter ihn zu laufen (`ToggleRow`: Hinweis mit `padding(end = SwitchWidth + Abstand)`). Switch in M3-Größe, sichtbar bündig; die ganze Zeile `toggleable(Role.Switch)`, ≥ 48 dp.
+- **Feste Endspalten** (`TrailingRow` in `SettingsColumns.kt`): Zeilen mit Vorhören und Aktionen haben rechts drei Fächer – Vorhören (48 dp), Zustand (Breite gemessen an der breitesten Beschriftung „Laden“/„Wählen“/„✓ Aktiv“ samt Text-Button-Polster, `rememberWidestTextWidth`) und Icon-Spalte (`flushEnd(inCard = true)`). Leere Fächer behalten ihre Breite: Alle Play-Knöpfe der Stimmenliste stehen untereinander, ebenso Löschen und Abbrechen der Stimmen und der Papierkorb der Zeile „Logbuch“. Passt der Text daneben nicht ohne Wortbruch, stehen die Fächer unter dem Text.
+- Das Gong-Vorhören („Gong-Nachhall“) steht in der Reihe der Auswahl: Kurz/Lang belegen zwei Drittel, das Play mittig im freien Drittel – alle Segmente der Karten „Klang“ und „Atemübung“ sind ein Drittel breit.
+- Stepper (`Stepper`): Label links mit `weight(1f)`, Knöpfe als rechte Spalte, der sichtbare Kreis von „+“ bündig an der Inhaltskante (Polster rechts um `CircleOverhang` kleiner).
+
+## Aufbau und Wege
+
+- Atemlehre und Glossar stehen seit 2026-10-19 nicht mehr in den Einstellungen (Tab „Lernen“); „Über Atemkraft“ als `NavCard`.
+- Karte „Daten“: Exportieren · Importieren (`AppOutlinedButton` in `AdaptiveButtonRow`), „Beim Handywechsel?“ als `DisclosureToggle`, Zeile „Logbuch“ mit der Zahl der Sitzungen und dem Papierkorb (zweistufig, MUSTER-05).
+- Stimmen-Katalog im `DisclosureToggle` „Stimmen zeigen“ (gesperrt während eines Downloads); Fehler inline mit nächstem Schritt (`VoiceFailure` NETWORK/STORAGE/DAMAGED/OTHER, MUSTER-04); der Katalog rät vorab zum WLAN.
+- `SettingsRoute(focusMeditation, showVoices)` öffnet die Seite an der Meditations-Karte mit aufgeklapptem Katalog („Stimme laden ›“ aus dem Bottom Sheet der Meditation).
+
+## Prüfung
+
+`ScreenshotTest` (`05_einstellungen_daten` mit allen längsten Varianten; Gates samt ANATOMIE für `ToggleRow` und `Stepper`), manuell R-TEXT, R-A11Y (Download-Status, Fokus beim Löschen).
