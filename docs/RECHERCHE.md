@@ -1,6 +1,6 @@
 # Recherche- und Entwicklungsplan
 
-Stand: 2026-10-24, App-Version 2.7.0. Dieses Dokument sammelt, was seit dem großen Review am 2026-10-23 untersucht wurde, was daraus geworden ist, und welche Recherchen und Arbeiten als Nächstes anstehen. Die ausführlichen Berichte liegen unter [`docs/recherche/`](recherche/); die Regeln für Texte und Technik stehen im [Styleguide](STYLEGUIDE.md), die für Sicherheit und Recht in [SECURITY.md](SECURITY.md), der Weg in die Stores in [STORE.md](STORE.md).
+Stand: 2026-10-24, App-Version 2.7.1. Dieses Dokument sammelt, was seit dem großen Review am 2026-10-23 untersucht wurde, was daraus geworden ist, und welche Recherchen und Arbeiten als Nächstes anstehen. Die ausführlichen Berichte liegen unter [`docs/recherche/`](recherche/); die Regeln für Texte und Technik stehen im [Styleguide](STYLEGUIDE.md), die für Sicherheit und Recht in [SECURITY.md](SECURITY.md), der Weg in die Stores in [STORE.md](STORE.md).
 
 ## 1. Leitlinie
 
@@ -22,7 +22,7 @@ Der Nutzer mag es bunt, die App soll aber „der Masse gefallen“. Deshalb sind
 | 2026-10-24 | Theoretische Inhalte und Yoga-Geschichte | Bestandsaufnahme des Tabs „Lernen“, 25 Kandidaten mit Quellen, Top 8, Gliederung für ein Kapitel „Geschichte des Atmens“ | [Bericht](recherche/2026-10-24-inhalte-geschichte.md); Umsetzung geplant (Abschnitt 4) |
 | 2026-10-24 | UX-Vergleich mit 13 Apps (Breathwrk, Prana Breath, AtemFlow, Calm, Headspace, Insight Timer u. a.) | Gesamtnote 3,9/5; Inhalte 5, Wiederkommen und Store-Wirkung 3; 20 Empfehlungen, Einzigartiges geprüft, Minimalvorschlag für Befinden und Animation | [Bericht](recherche/2026-10-24-ux-vergleich.md); Entscheidungen offen (Abschnitt 3.1) |
 
-Dazu kleinere, direkt umgesetzte Rückmeldungen vom Gerät (v2.7.1, in Arbeit): Suchtext bleibt beim Schließen der Tastatur stehen, „Muster gestalten ›“ im Leerzustand von Eigene, Stift auf den Karten der Kreationen, Vorschau-Knöpfe im Editor links und rechts in der Kurvenkarte.
+Dazu kleinere, direkt umgesetzte Rückmeldungen vom Gerät (v2.7.1): Suchtext bleibt beim Schließen der Tastatur stehen, „Muster gestalten ›“ im Leerzustand von Eigene, Stift auf den Karten der Kreationen, Vorschau-Knöpfe im Editor links und rechts in der Kurvenkarte.
 
 ## 3. Geplante Recherchen
 

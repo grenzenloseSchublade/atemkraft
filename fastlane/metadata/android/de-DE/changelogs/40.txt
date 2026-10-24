@@ -1,0 +1,3 @@
+- Suchtext bleibt beim Schließen der Tastatur stehen
+- Eigene: „Muster gestalten ›“ im Leerzustand, Stift auf den Kreationen-Karten
+- Editor: Vorschau-Play links, Ton rechts in der Kurvenkarte
