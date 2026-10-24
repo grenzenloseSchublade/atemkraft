@@ -9,6 +9,12 @@
     <string name="welcome_body">Fang mit einer ruhigen Übung an: gleichmäßig ein und aus, ohne Halten, ein paar Minuten lang.</string>
     <string name="welcome_health">Atemkraft ist kein Medizinprodukt. Bei Erkrankungen kläre vorher ärztlich ab, ob eine Übung für dich passt. Wird dir schwindlig, hör auf und atme normal weiter.</string>
     <string name="cd_welcome_dismiss">Hinweis schließen</string>
+    <!-- App-Shortcuts (Long-Press auf das Icon, res/xml/shortcuts.xml). Abweichung TEXT-01: Statische
+         Shortcuts brauchen eine String-Ressource, daher steht der Übungsname hier wie in BuiltInExercises. -->
+    <string name="shortcut_resonance_short">Resonanz</string>
+    <string name="shortcut_resonance_long">Resonanz-Atmung</string>
+    <string name="shortcut_meditation">Meditation</string>
+    <string name="shortcut_last_long">Zuletzt: %1$s</string>
 
     <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen) -->
     <string name="phase_inhale">Einatmen</string>

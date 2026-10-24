@@ -19,6 +19,10 @@ Zentral im App-Rahmen (`MainActivity`, `TabBarState`, keine Seite tut dafür etw
 
 M3 `NavigationBar` (Höhe 80, Indikator 64 × 32 fest in M3 1.3.1, S-37), Trennlinie darüber (`BorderThin`, `primary` mit `TAB_DIVIDER_ALPHA`; Abweichung KOMP-03, Marken-Trenner). Auswahl tonal (`secondaryContainer`, Icon und Beschriftung `primary`, PRIN-02). Eine Beschriftungsgröße für alle Tabs, gleiches Gewicht in jedem Zustand (TYPO-01); verkleinert höchstens auf 85 % der Rolle (`NAV_LABEL_MIN_SCALE`), passt es dann nicht, nur Icons mit dem Namen als `contentDescription`. Auch im `ScreenshotHarness` (`TabFrame`).
 
+## App-Shortcuts (Long-Press auf das App-Symbol)
+
+Statisch (`res/xml/shortcuts.xml`): „Resonanz-Atmung“ öffnet ihre Detailseite im Stapel von „Atmen“, „Meditation“ den Tab Meditation (`switchTab`). Dynamisch (`AppShortcuts.kt`, `ShortcutManagerCompat`): „Zuletzt geübt“ mit dem Namen der neuesten Übung aus dem Logbuch, die sich noch öffnen lässt (`lastPracticed`, dieselbe Regel wie „Zuletzt: … ›“ im Tab „Eigene“); entfällt ohne solche Übung und bei der Resonanz-Atmung (die hat ihren statischen Shortcut). Alle starten `MainActivity` explizit mit einer festen Aktion, ohne Daten oder Extras und in einer frischen Aufgabe; die App vergleicht nur die Aktion (`AppShortcut.fromAction`, SEC-PLAT-02) und navigiert, sobald der NavHost steht – nach dem Drehen nicht erneut. Symbole im Stil des App-Symbols: adaptive Icons `mipmap/ic_shortcut_*` auf `ic_launcher_background` mit hellem Material-Pfad (Air, Timer, Zurücksetzen).
+
 ## Prüfung
 
 `TabNavigationTest` (Re-Tap aus Einstellungen › Glossar zur Tab-Startseite für alle vier Tabs, auf der Startseite ändert er nichts; markiert bleibt der Tab des Stapels; fest steht die Leiste nur auf den Startseiten), `ScreenshotTest` (Tabs mit `TabFrame`, Seiten der Tiefe mit `tabBar = false`), manuell R-VISUAL.

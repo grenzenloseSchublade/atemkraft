@@ -23,6 +23,7 @@ import app.atemkraft.playback.SilenceAfterBreath
 import app.atemkraft.ui.settings.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -101,6 +102,13 @@ class AppContainer(context: Context) {
         meditationConfig = settingsRepository.meditationSettings,
         canStartNow = playbackService::canStartNow,
     )
+
+    /** Zuletzt geübte Übung, die sich noch öffnen lässt ([lastPracticed]): Shortcut „Zuletzt geübt“. */
+    private val lastPracticedExercise = combine(logbookRepository.entries, savedPatternsRepository.patterns, ::lastPracticed)
+
+    init {
+        followLastPracticedShortcut(context.applicationContext, lastPracticedExercise, appScope)
+    }
 
     /**
      * Fabrik des [SettingsViewModel], des einzigen ViewModels: zieht Repositories, Stimmen und

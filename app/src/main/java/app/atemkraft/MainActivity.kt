@@ -34,18 +34,22 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.atemkraft.ui.components.inertWhen
 import app.atemkraft.ui.navigation.AppTabBar
+import app.atemkraft.ui.navigation.DetailRoute
 import app.atemkraft.ui.navigation.HideableTabBar
 import app.atemkraft.ui.navigation.LocalTabBarState
 import app.atemkraft.ui.navigation.LogbookRoute
+import app.atemkraft.ui.navigation.MeditationRoute
 import app.atemkraft.ui.navigation.TabBarToggle
 import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.navigation.isTabRoot
 import app.atemkraft.ui.navigation.rememberTabBarState
+import app.atemkraft.ui.navigation.switchTab
 import app.atemkraft.ui.navigation.tabOnStack
 import app.atemkraft.ui.navigation.tapTab
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Motion
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,9 +60,12 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
+        // App-Shortcut (Long-Press auf das Icon): nur die Aktion zählt, geprüft gegen feste Konstanten
+        // (AppShortcut.fromAction, SEC-PLAT-02); nach dem Drehen nicht noch einmal.
+        val shortcut = if (savedInstanceState == null) AppShortcut.fromAction(intent?.action) else null
         setContent {
             AtemkraftTheme {
-                AtemkraftApp()
+                AtemkraftApp(shortcut = shortcut)
             }
         }
     }
@@ -71,6 +78,8 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 private fun AtemkraftApp(
+    // Geöffnet über einen App-Shortcut: einmal dorthin navigieren.
+    shortcut: AppShortcut? = null,
     // An der Activity und ab App-Start gesammelt: Beim Öffnen springt kein Schalter (ARC-3).
     settingsViewModel: SettingsViewModel = viewModel(factory = appContainer().settingsViewModelFactory),
 ) {
@@ -90,6 +99,25 @@ private fun AtemkraftApp(
     // gilt bis zur Rückkehr auf einen Tab.
     val tabBar = rememberTabBarState()
     LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab) }
+
+    // Shortcut: Resonanz-Atmung und „Zuletzt geübt“ als Detailseite im Stapel von „Atmen“, die
+    // Meditation als Tab. „Zuletzt“ liest die App jetzt selbst aus dem Logbuch – der Shortcut trägt
+    // keine Daten. Gibt es nichts mehr zu öffnen, bleibt die App auf ihrer Startseite.
+    LaunchedEffect(Unit) {
+        if (shortcut == null) return@LaunchedEffect
+        // Erst navigieren, wenn der NavHost seinen Graphen gesetzt hat.
+        navController.currentBackStackEntryFlow.first()
+        when (shortcut) {
+            AppShortcut.RESONANCE -> navController.navigate(DetailRoute(AppShortcut.RESONANCE_EXERCISE_ID))
+
+            AppShortcut.MEDITATION -> navController.switchTab(MeditationRoute)
+
+            AppShortcut.LAST -> {
+                val last = lastPracticed(container.logbookRepository.entries.first(), container.savedPatternsRepository.patterns.first())
+                last?.let { navController.navigate(DetailRoute(it.id)) }
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;

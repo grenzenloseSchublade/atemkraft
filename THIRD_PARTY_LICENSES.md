@@ -76,7 +76,7 @@ Der vollständige Quellstand des AAR ist der Tag [`v1.13.6` von k2-fsa/sherpa-on
 | Teil | Herkunft | Lizenz |
 |---|---|---|
 | Symbole `Icons.*` | Material Icons aus `material-icons-core` (Google) | Apache-2.0 |
-| `ic_delete_forever` (Material „Delete Forever“), `ic_open_in_new` (Material „Open In New“), `ic_remove`, `ic_reset`, `ic_meditation` (Material „Timer“), `ic_sound_on`/`ic_sound_off` (Material „Volume Up/Off“), `ic_pause`, `ic_stop`, `ic_grid_view` (Material „Grid View“), `ic_learn` (Material „Menu Book“), `ic_breathe` (Material „Air“) | Pfade aus den Material Icons/Symbols von Google | Apache-2.0 |
+| `ic_delete_forever` (Material „Delete Forever“), `ic_open_in_new` (Material „Open In New“), `ic_remove`, `ic_reset`, `ic_meditation` (Material „Timer“), `ic_sound_on`/`ic_sound_off` (Material „Volume Up/Off“), `ic_pause`, `ic_stop`, `ic_grid_view` (Material „Grid View“), `ic_learn` (Material „Menu Book“), `ic_breathe` (Material „Air“), Shortcut-Symbole `ic_launcher_shortcut_*` (dieselben Pfade aus „Air“, „Timer“ und `ic_reset`) | Pfade aus den Material Icons/Symbols von Google | Apache-2.0 |
 | App-Symbol (`ic_launcher_foreground`), `ic_breath_mark`/`ic_breath_mark_filled` (Zeichen „zu mir“: „Tut mir gut“, „In Eigene speichern“) | eigene Gestaltung (konzentrische Atemringe bzw. Ring des Atemkreises) | MIT wie die App |
 | Töne und Gong | zur Laufzeit im Code synthetisiert (`ToneCuePlayer`, `ContinuousTonePlayer`, in der Vorschau des Muster-Editors über `PreviewCuePlayer`); keine Audiodateien | MIT wie die App |
 | Schriften | keine gebündelt; die App nutzt die Systemschrift | – |

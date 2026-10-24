@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Statische App-Shortcuts (Long-Press auf das Icon). Jeder startet MainActivity explizit mit einer
+     festen Aktion, ohne Daten oder Extras; die App vergleicht nur die Aktion (AppShortcut.fromAction,
+     SEC-PLAT-02). Der dynamische Shortcut „Zuletzt geübt“ entsteht in AppShortcuts.kt. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="resonance"
+        android:enabled="true"
+        android:icon="@mipmap/ic_shortcut_breathe"
+        android:shortcutShortLabel="@string/shortcut_resonance_short"
+        android:shortcutLongLabel="@string/shortcut_resonance_long">
+        <intent
+            android:action="app.atemkraft.action.OPEN_RESONANCE"
+            android:targetClass="app.atemkraft.MainActivity"
+            android:targetPackage="app.atemkraft" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="meditation"
+        android:enabled="true"
+        android:icon="@mipmap/ic_shortcut_meditation"
+        android:shortcutShortLabel="@string/shortcut_meditation"
+        android:shortcutLongLabel="@string/shortcut_meditation">
+        <intent
+            android:action="app.atemkraft.action.OPEN_MEDITATION"
+            android:targetClass="app.atemkraft.MainActivity"
+            android:targetPackage="app.atemkraft" />
+    </shortcut>
+</shortcuts>

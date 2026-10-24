@@ -125,8 +125,8 @@ internal fun NavGraphBuilder.appGraph(
     val openDetail: (String) -> Unit = { id -> navController.navigate(DetailRoute(id)) }
     val openLore: (String) -> Unit = { patternId -> navController.navigate(AtemlehreRoute(patternId)) }
     // Nur, was sich noch öffnen lässt: eingebaute Übungen und vorhandene gespeicherte Muster – nicht
-    // die Meditation, nicht das Tagesmuster (heute ein anderes) oder der Entwurf. Für Logbuch-Einträge
-    // und „Zuletzt geübt“.
+    // die Meditation, nicht das Tagesmuster (heute ein anderes) oder der Entwurf (Logbuch-Einträge;
+    // „Zuletzt geübt“ nach derselben Regel über lastPracticed).
     val openable: (String) -> Boolean = { id -> id != ExerciseIds.DAILY && id != ExerciseIds.DRAFT && exercises.byId(id) != null }
 
     composable<AtmenRoute> {
@@ -173,10 +173,8 @@ internal fun NavGraphBuilder.appGraph(
     composable<EigeneRoute> {
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
         // „Zuletzt geübt“: der neueste Eintrag, dessen Übung es noch gibt (Liste neueste zuerst);
-        // neu berechnet, wenn ein Muster gelöscht oder umbenannt wird.
-        val lastExercise = remember(state.logEntries, patterns) {
-            state.logEntries.firstOrNull { openable(it.exerciseId) }?.let { exercises.byId(it.exerciseId) }
-        }
+        // neu berechnet, wenn ein Muster gelöscht oder umbenannt wird. Dieselbe Regel wie der Shortcut.
+        val lastExercise = remember(state.logEntries, patterns) { lastPracticed(state.logEntries, patterns) }
         OwnPatternsScreen(
             savedPatterns = patterns,
             actions = OwnActions(

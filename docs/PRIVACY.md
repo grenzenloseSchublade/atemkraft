@@ -11,13 +11,14 @@ Atemkraft erhebt keine Daten über dich. Es gibt kein Konto, keinen Server des A
 
 ## Was auf deinem Gerät gespeichert wird
 
-Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können. Der Anbieter erhält davon nichts.
+Alles liegt im privaten Speicher der App, den andere Apps nicht lesen können; einzige Ausnahme ist die Beschriftung des Shortcuts „Zuletzt geübt“, die Android selbst auf dem Gerät verwaltet. Der Anbieter erhält davon nichts.
 
 | Ort | Inhalt | So löschst du es |
 |---|---|---|
 | Logbuch (Datenbank) | abgeschlossene Sitzungen: Übung bzw. Meditation, Zeitpunkt, Dauer, Runden | *Einstellungen → Daten → „Logbuch leeren“* (ein zweiter Tipp bestätigt); App-Speicher löschen |
 | Eigene Kreationen (Datenbank) | Name (bei selbst zusammengestellten Mustern frei wählbar, höchstens 80 Zeichen), Phasenlängen (bei selbst zusammengestellten Mustern die ganze Folge aus Ein, Halten und Aus), Art (aktivierend oder nicht), Herkunft (Muster des Tages oder selbst zusammengestellt) und Dauer gespeicherter Muster, Zeitpunkt des Speicherns | einzeln löschen im Tab „Eigene“ unter „Eigene Kreationen“ (ein zweiter Tipp bestätigt) oder mit dem Atemkreis ◉ „In Eigene speichern“ im Muster-Editor |
 | Einstellungen | Klang (Lautstärke, Gong-Nachhall), Atemübung (Ton, Vibration, „Danach in die Stille“ als Startwert jeder Atemübung, „Sicherheitshinweis immer zeigen“ und ob du den Sicherheitshinweis schon einmal bestätigt hast), Anzeige der Atemübung (automatisch ausblenden, Fortschrittsring, Sekunden im Kreis, nächste Phase), Meditation (zuletzt gewählte Dauer, Gongs und Anleitung, Gong-Abstand sowie die Anzeige: automatisch ausblenden, Fortschrittsring, Zeit im Kreis), gewählte Stimme, Anpassungen pro Übung, Übungen, die du mit „Tut mir gut“ markiert hast, ob Verlauf und Logbuch die Tage in Folge zeigen („Serie zeigen“), ob du die Willkommenskarte geschlossen hast, ob die App schon nach der Benachrichtigung gefragt hat und, falls die Einstellungsdatei einmal beschädigt war, wann die App sie zurückgesetzt hat und ob du den Hinweis dazu gesehen hast | Anpassungen pro Übung zurücksetzen; Markierung durch erneutes Antippen aufheben; App-Speicher löschen |
+| App-Shortcut „Zuletzt geübt“ (Android) | Name der zuletzt geübten Übung bzw. deines Musters; erscheint, wenn du lange auf das App-Symbol drückst (nicht bei der Resonanz-Atmung, die einen festen Shortcut hat). Android hält ihn auf dem Gerät und sichert ihn nicht. | verschwindet mit dem Leeren des Logbuchs bzw. dem Löschen des Musters; App-Speicher löschen |
 | Stimmen | heruntergeladene Stimmmodelle (öffentliche Dateien; die Größe zeigt die App vor dem Laden) | „Stimme löschen“ in den Einstellungen |
 | Zwischenspeicher | ein laufender Download und beim Entpacken ein Zwischenordner | bei Abbruch oder Fehler löscht die App beides sofort; wird die App mittendrin beendet, beim nächsten Start. In Version 2.5.0 liegt der Download im Cache, den Android auch bei Speichermangel leert; ab der Version danach im Speicher der Stimmen |
 
