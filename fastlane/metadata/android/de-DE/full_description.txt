@@ -17,7 +17,8 @@ Was drin ist
 - Lernen: Atemlehre, Pranayama mit Grundlagen und Techniken wie Ujjayi, Begriffe erklärt, drei Programme zum Nachlesen (SKY, Buteyko, Nasenatmung) und die Kapitel „Geschichte des Atmens“ und „Körper“.
 - Logbuch: abgeschlossene Sitzungen, Wochenübersicht, Tage in Folge (abschaltbar) und Minuten gesamt; im Tab „Eigene“ führt ein Tipp zur zuletzt geübten Übung.
 - Schnellstart: Lange auf das App-Symbol drücken öffnet Resonanz-Atmung, Meditation oder die zuletzt geübte Übung.
-- Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren.
+- Daten sichern: Muster, Logbuch und Einstellungen als eine Datei exportieren und wieder einlesen.
+- Befinden danach: auf Wunsch ein Wort, nur auf deinem Gerät, ohne Auswertung. Dazu eine lokale Erinnerung, ganz ohne Netz.
 
 Datenschutz
 

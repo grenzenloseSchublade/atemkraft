@@ -1,6 +1,6 @@
 # Atemkraft – Styleguide
 
-Normativer Design-, Text- und Code-Leitfaden für Maintainer und Claude: Jede Regel nennt ihre Prüfung. Stand: v2.8.0 und `main`, 2026-10-24. Sicherheit, Datenschutz, Build und Release regelt [SECURITY.md](SECURITY.md); Commit, Push, Release und Arbeitsweise [PROCESS.md](PROCESS.md); die Kurzfassung für Agenten steht in [CLAUDE.md](../CLAUDE.md). Wie ein Feature genau gebaut ist, steht in [docs/spec/](spec/); warum etwas so entschieden wurde, in [DECISIONS.md](DECISIONS.md).
+Normativer Design-, Text- und Code-Leitfaden für Maintainer und Claude: Jede Regel nennt ihre Prüfung. Stand: v2.9.0 und `main`, 2026-10-24. Sicherheit, Datenschutz, Build und Release regelt [SECURITY.md](SECURITY.md); Commit, Push, Release und Arbeitsweise [PROCESS.md](PROCESS.md); die Kurzfassung für Agenten steht in [CLAUDE.md](../CLAUDE.md). Wie ein Feature genau gebaut ist, steht in [docs/spec/](spec/); warum etwas so entschieden wurde, in [DECISIONS.md](DECISIONS.md).
 
 **Inhalt:** [0 Geltung](#geltung) · [1 Leitplanken](#leitplanken) · [2 Farbe](#farbe) · [3 Typografie](#typografie) · [4 Layout](#layout) (4.5 [Anatomie der Bausteine](#anatomie)) · [5 Komponenten](#komponenten) · [6 Muster](#muster) · [7 Icons](#icons) · [8 Bewegung](#bewegung) · [9 Audio und Haptik](#audio) · [10 Barrierefreiheit](#a11y) · [11 Text und Ton](#text) · [12 Code](#code) · [13 Automatische Prüfung](#automatische-pruefung) · [14 Backlog](#backlog) · [Quellen](#quellen)
 

@@ -19,7 +19,7 @@ Beschrieben ist der Stand von `main`; die veröffentlichte Version kann Einzelne
 - **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Startpunkten und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen samt Weg zur zuletzt geübten Übung.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
 - **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, Begriffe erklärt, Programme wie Buteyko und Nasenatmung zum Nachlesen sowie die Kapitel „Geschichte des Atmens“ und „Körper“ (was beim Atmen im Körper geschieht und wann Fachleute gefragt sind).
-- **Logbuch und Export:** abgeschlossene Sitzungen (Tage in Folge abschaltbar), gespeicherte Muster als Datei sichern.
+- **Logbuch, Befinden und Sicherung:** abgeschlossene Sitzungen (Tage in Folge abschaltbar), auf Wunsch ein Wort zum Befinden danach, ohne Auswertung; eine lokale Erinnerung; alles (Muster, Logbuch, Einstellungen) als eine Datei sichern und wieder einlesen.
 
 ## Installieren
 
@@ -28,7 +28,7 @@ Atemkraft läuft ab Android 8.0. Bezugsquellen:
 - **Google Play** und **F-Droid:** folgen; die Links stehen hier, sobald die App dort erscheint.
 - **GitHub:** als APK unter [Releases](https://github.com/grenzenloseSchublade/atemkraft/releases/latest).
 
-Alle Wege liefern dieselbe App mit derselben Signatur. Du kannst deshalb die Quelle wechseln, ohne die App zu deinstallieren: Das Update aus der neuen Quelle installiert sich über die vorhandene App, Logbuch, Muster und Einstellungen bleiben. Das ist wichtig, weil es bewusst kein Cloud-Backup gibt; eine Deinstallation löscht diese Daten, außer du hast deine Muster vorher exportiert.
+Alle Wege liefern dieselbe App mit derselben Signatur. Du kannst deshalb die Quelle wechseln, ohne die App zu deinstallieren: Das Update aus der neuen Quelle installiert sich über die vorhandene App, Logbuch, Muster und Einstellungen bleiben. Das ist wichtig, weil es bewusst kein Cloud-Backup gibt; eine Deinstallation löscht diese Daten, außer du hast vorher eine Sicherung als Datei angelegt.
 
 Ohne Store:
 
