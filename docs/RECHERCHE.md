@@ -20,19 +20,28 @@ Der Nutzer mag es bunt, die App soll aber „der Masse gefallen“. Deshalb sind
 | 2026-10-23 | Store-Recherche: Google Play, F-Droid, IzzyOnDroid, Entwicklerverifizierung | Ablauf, Formulare, Signatur-Strategie, Blocker | [Bericht](recherche/2026-10-23-store.md), Anleitung in [STORE.md](STORE.md); IzzyOnDroid zurückgestellt (Regel gegen KI-generierten Code) |
 | 2026-10-24 | Stimmigkeit der Tabs Atmen und Eigene | zu viele Bausprachen; „Vorschlag B“: Suchfeld als Pille, weiße Köpfe, kleine Filter-Chips, drei gleiche Abschnitte in Eigene; Karten und Merkzeichen bleiben | umgesetzt in v2.7.0 |
 | 2026-10-24 | Theoretische Inhalte und Yoga-Geschichte | Bestandsaufnahme des Tabs „Lernen“, 25 Kandidaten mit Quellen, Top 8, Gliederung für ein Kapitel „Geschichte des Atmens“ | [Bericht](recherche/2026-10-24-inhalte-geschichte.md); Umsetzung geplant (Abschnitt 4) |
-| 2026-10-24 | UX-Vergleich mit beliebten Apps (Breathwrk, Prana Breath, AtemFlow, Calm, Headspace, Insight Timer u. a.) | läuft | Bericht folgt unter `recherche/2026-10-24-ux-vergleich.md` |
+| 2026-10-24 | UX-Vergleich mit 13 Apps (Breathwrk, Prana Breath, AtemFlow, Calm, Headspace, Insight Timer u. a.) | Gesamtnote 3,9/5; Inhalte 5, Wiederkommen und Store-Wirkung 3; 20 Empfehlungen, Einzigartiges geprüft, Minimalvorschlag für Befinden und Animation | [Bericht](recherche/2026-10-24-ux-vergleich.md); Entscheidungen offen (Abschnitt 3.1) |
 
 Dazu kleinere, direkt umgesetzte Rückmeldungen vom Gerät (v2.7.1, in Arbeit): Suchtext bleibt beim Schließen der Tastatur stehen, „Muster gestalten ›“ im Leerzustand von Eigene, Stift auf den Karten der Kreationen, Vorschau-Knöpfe im Editor links und rechts in der Kurvenkarte.
 
 ## 3. Geplante Recherchen
 
-### 3.1 UX-Vergleich (läuft)
+### 3.1 UX-Vergleich – Entscheidungen
 
-Fragen: Ist die App in zehn Sekunden verständlich? Wie viele Tipps bis zur ersten Übung? Was machen AtemFlow (Tagebuch, „wie wirkt der Atem“) und Prana Breath (Muster-Engineering, Reihen) besser, was überladen sie? Was ist an Atemkraft einzigartig (Evidenz-Etiketten, Yoga-Lehre, Muster-Editor, keine Cloud)? Ergebnis: Noten je Dimension, Vergleichstabelle, höchstens 20 Empfehlungen, drei Dinge, die bewusst nicht übernommen werden.
+Der [Bericht](recherche/2026-10-24-ux-vergleich.md) bestätigt: In der Substanz sauber und intuitiv (3,9/5). Einzigartig und in keiner der 13 Apps gefunden: Evidenz-Etikett je Übung mit Quellen, Sicherheitshinweise je Übung mit Dialog, Yoga-Lehre getrennt von Studienlage, Muster-Editor an der Kurve, Befindens-Suche in Alltagswörtern, „Danach in die Stille“, kein Konto und keine Cloud. Schwächer: Wiederkommen (keine Erinnerung, kein Schnellstart) und Store-Wirkung (Screenshots ohne Bildunterschrift).
+
+Zu entscheiden, nach Aufwand:
+- **S:** Bildunterschriften auf den Store-Screenshots; „Zuletzt geübt ›“ unter „Verlauf“ in Eigene; Willkommenskarte verspricht „ein paar Minuten“ und öffnet 10 min – auf 3 bis 5 min stellen; „Alle Übungen ›“ bei gewähltem Anlass.
+- **M:** optionale lokale Erinnerung (Uhrzeit, Wochentage; ohne Netz); Backup als eine Datei mit Logbuch und Einstellungen (Vorbild Prana Breath, ohne Drive); App-Shortcuts.
+- **M–L:** Sprachansage der Phasen in der Atem-Session (Stimmen sind da, nur die Meditation spricht).
+- Prüfen: Tagesmuster als erste Karte unter „Übungen“ lässt Erstnutzer stutzen; drei Speicher-Zeichen (Lesezeichen, Ring, Tab-Icon) vereinheitlichen.
+- Bewusst nicht: Onboarding-Wizard, Lungentest, Paywall, Streak-Druck, Levels, Emoji-Check-in, Soundscape-Bibliotheken, Kontrollpausen-Messung mit Trend (SEC-LEGAL-02).
 
 ### 3.2 Befinden erfassen und zeigen
 
 Idee: vor einer Übung optional, danach auf dem Ende-Screen mit einem Tipp das Befinden erfassen; im Tab „Eigene“ unter „Verlauf“ als zweite Ebene der Wochenpunkte zeigen.
+
+Minimalvorschlag aus dem UX-Vergleich: nur „nachher“, relativ und überspringbar – „ruhiger · wie vorher · unruhiger“ (bei aktivierenden Übungen „wacher · wie vorher · müder“); im Logbuch nur als Wort, nie gerechnet; optionaler Schalter; Satz in PRIVACY.md; vorher in SECURITY.md festhalten: Selbstauskunft ohne Auswertung, keine Aggregation, keine Empfehlung.
 
 Zu klären:
 - **Skala:** fünf Stufen oder drei Wörter? Welche Wörter sind laienverständlich und frei von Diagnose-Anklang (nicht „Angst“, eher „unruhig“)? Vorbilder: AtemFlow, Daylio, Apple Health „Stimmung“.
@@ -44,6 +53,8 @@ Zu klären:
 ### 3.3 „Was passiert“ – die Wirkung einer Übung zeigen
 
 Idee: auf der Detailseite ein Abschnitt mit zwei Sichten, **Körper** (Studienlage: längerer Ausatem, Rate, Halten) und **Yoga-Lehre** (das vāyu-Modell, das die Atemlehre schon beschreibt), dazu eine ruhige, abstrakte Animation im Takt der Übung; optional als zweite Ansicht hinter dem Kreis in der Session.
+
+Vorschlag aus dem UX-Vergleich: zuerst eine parametrierte Animation „Ein Atemzug“ (Zwerchfell, Lunge, Herzschlag-Abstände beim Ausatmen weiter) statisch auf der Atemlehre-Seite mit Umschalter „Lehre: vāyus“ (die vāyu-Figur existiert schon), später Detailseite und Session. Keine App im Vergleich zeigt die Wirkung als Animation, alle erklären als Text.
 
 Zu klären:
 - **Ehrlichkeit:** Die Körper-Sicht darf nur zeigen, was die Übung belegbar tut; Mechanismen (Vagus, Baroreflex, CO₂) als Modelle kennzeichnen. Die Yoga-Sicht ist Lehre, kein Körperbild – die Animation darf beides nicht vermischen.
