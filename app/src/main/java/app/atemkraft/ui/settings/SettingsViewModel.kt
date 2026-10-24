@@ -43,6 +43,8 @@ data class SettingsUiState(
     val settingsResetPending: Boolean = false,
     /** Einträge im Logbuch; bei 0 bietet die Daten-Karte kein Leeren an. */
     val logCount: Int = 0,
+    /** „Serie zeigen“: Tage in Folge in Verlauf und Logbuch (Standard an wie im Repository). */
+    val showStreak: Boolean = true,
 )
 
 /** Was die Einstellungen auslösen (ohne Navigation und Datei-Auswahl, die bleiben im UI). */
@@ -67,6 +69,7 @@ interface SettingsActions {
     fun selectVoice(voiceId: String?)
     fun deleteVoice(voiceId: String)
     fun clearLog()
+    fun setShowStreak(enabled: Boolean)
 
     /** Der Hinweis „Einstellungen wurden zurückgesetzt“ wurde gezeigt; er kommt nicht wieder. */
     fun acknowledgeSettingsReset()
@@ -102,9 +105,10 @@ class SettingsViewModel(
         voices.states,
         settings.neuralVoiceId,
         meditation.piperReady,
-        combine(settings.settingsResetPending, logbook.count, settings.meditationDisplay, ::Triple),
-    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount, meditationDisplay) ->
+        combine(settings.settingsResetPending, logbook.count, settings.meditationDisplay, settings.showStreak, ::LogAndDisplay),
+    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount, meditationDisplay, showStreak) ->
         base.copy(
+            showStreak = showStreak,
             meditationDisplay = meditationDisplay,
             voiceStates = voiceStates,
             activeVoiceId = voiceId,
@@ -164,10 +168,15 @@ class SettingsViewModel(
 
         override fun clearLog() = write { logbook.clear() }
 
+        override fun setShowStreak(enabled: Boolean) = write { settings.setShowStreak(enabled) }
+
         override fun acknowledgeSettingsReset() = write { settings.acknowledgeSettingsReset() }
     }
 
     private fun write(block: suspend () -> Unit) {
         viewModelScope.launch { block() }
     }
+
+    /** Vier Werte für einen `combine`-Arm (mehr als fünf Flows nimmt `combine` nicht typisiert). */
+    private data class LogAndDisplay(val resetPending: Boolean, val logCount: Int, val meditationDisplay: MeditationDisplay, val showStreak: Boolean)
 }

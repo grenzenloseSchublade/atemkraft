@@ -75,6 +75,7 @@ internal class GraphState(
     meditationSpeechAvailable: State<Boolean>,
     gongIntervalMin: State<Int>,
     welcomeDismissed: State<Boolean>,
+    showStreak: State<Boolean>,
 ) {
     val safetySettings by safetySettings
     val markedExercises by markedExercises
@@ -83,6 +84,7 @@ internal class GraphState(
     val meditationSpeechAvailable by meditationSpeechAvailable
     val gongIntervalMin by gongIntervalMin
     val welcomeDismissed by welcomeDismissed
+    val showStreak by showStreak
 }
 
 @Composable
@@ -97,8 +99,9 @@ internal fun rememberGraphState(container: AppContainer): GraphState {
     // Bis DataStore antwortet, gilt die Karte als weggeklickt: Wer sie schon geschlossen hat, sieht
     // sie beim Start nicht kurz aufblitzen; beim ersten Start erscheint sie einen Augenblick später.
     val welcome = settings.welcomeDismissed.collectAsStateWithLifecycle(initialValue = true)
-    return remember(safety, marked, log, meditationConfig, speech, gong, welcome) {
-        GraphState(safety, marked, log, meditationConfig, speech, gong, welcome)
+    val streak = settings.showStreak.collectAsStateWithLifecycle(initialValue = true)
+    return remember(safety, marked, log, meditationConfig, speech, gong, welcome, streak) {
+        GraphState(safety, marked, log, meditationConfig, speech, gong, welcome, streak)
     }
 }
 
@@ -121,6 +124,10 @@ internal fun NavGraphBuilder.appGraph(
     val back: () -> Unit = { navController.popBackStack() }
     val openDetail: (String) -> Unit = { id -> navController.navigate(DetailRoute(id)) }
     val openLore: (String) -> Unit = { patternId -> navController.navigate(AtemlehreRoute(patternId)) }
+    // Nur, was sich noch öffnen lässt: eingebaute Übungen und vorhandene gespeicherte Muster – nicht
+    // die Meditation, nicht das Tagesmuster (heute ein anderes) oder der Entwurf. Für Logbuch-Einträge
+    // und „Zuletzt geübt“.
+    val openable: (String) -> Boolean = { id -> id != ExerciseIds.DAILY && id != ExerciseIds.DRAFT && exercises.byId(id) != null }
 
     composable<AtmenRoute> {
         // Beim Betreten und bei jeder Rückkehr in die App den Tageswechsel prüfen (die App kann
@@ -165,6 +172,11 @@ internal fun NavGraphBuilder.appGraph(
     }
     composable<EigeneRoute> {
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
+        // „Zuletzt geübt“: der neueste Eintrag, dessen Übung es noch gibt (Liste neueste zuerst);
+        // neu berechnet, wenn ein Muster gelöscht oder umbenannt wird.
+        val lastExercise = remember(state.logEntries, patterns) {
+            state.logEntries.firstOrNull { openable(it.exerciseId) }?.let { exercises.byId(it.exerciseId) }
+        }
         OwnPatternsScreen(
             savedPatterns = patterns,
             actions = OwnActions(
@@ -179,6 +191,8 @@ internal fun NavGraphBuilder.appGraph(
             // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge.
             favorites = exercises.all().filter { it.id in state.markedExercises },
             logEntries = state.logEntries,
+            lastExercise = lastExercise,
+            showStreak = state.showStreak,
         )
     }
     composable<MeditationRoute> {
@@ -276,10 +290,9 @@ internal fun NavGraphBuilder.appGraph(
         LogbookScreen(
             entries = state.logEntries,
             onBack = back,
-            // Nur, was sich noch öffnen lässt: eingebaute Übungen und vorhandene gespeicherte
-            // Muster – nicht die Meditation, nicht das Tagesmuster (heute ein anderes) oder der Entwurf.
-            canOpen = { id -> id != ExerciseIds.DAILY && id != ExerciseIds.DRAFT && exercises.byId(id) != null },
+            canOpen = openable,
             onOpenExercise = openDetail,
+            showStreak = state.showStreak,
         )
     }
     pushComposable<GlossaryRoute> {

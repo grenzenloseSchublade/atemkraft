@@ -118,6 +118,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val MARKED_EXERCISES = stringSetPreferencesKey("marked_exercises") // Atemkreis „tut mir gut“
         val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked") // einmal gefragt (ab Android 13)
         val WELCOME_DISMISSED = booleanPreferencesKey("welcome_dismissed") // Willkommenskarte weggeklickt
+        val SHOW_STREAK = booleanPreferencesKey("show_streak") // „Serie zeigen“ (Tage in Folge), Standard an
     }
 
     /**
@@ -171,6 +172,17 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun dismissWelcome() {
         store.edit { it[Keys.WELCOME_DISMISSED] = true }
+    }
+
+    /**
+     * „Serie zeigen“ (Auswertung 2026-10-24): aus = Verlauf und Logbuch nennen keine „Tage in
+     * Folge“, nur Minuten und Sitzungen. Standard an; fehlt der Schlüssel, gilt der Standard – keine
+     * Migration nötig.
+     */
+    val showStreak: Flow<Boolean> = data.map { it[Keys.SHOW_STREAK] ?: true }
+
+    suspend fun setShowStreak(enabled: Boolean) {
+        store.edit { it[Keys.SHOW_STREAK] = enabled }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

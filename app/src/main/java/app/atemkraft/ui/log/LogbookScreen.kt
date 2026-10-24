@@ -89,8 +89,8 @@ private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d
  * Gestern / Diese Woche / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
  * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik; ein Satz unter
  * dem Verlauf sagt, wo (Nutzer 2026-10-24). Ein Eintrag, dessen Übung es noch gibt ([canOpen]),
- * öffnet sie ([onOpenExercise]) – „das von gestern Abend nochmal“. [today] nur für
- * reproduzierbare Screenshots.
+ * öffnet sie ([onOpenExercise]) – „das von gestern Abend nochmal“. [showStreak]: Einstellung
+ * „Serie zeigen“ (aus = keine Tage in Folge). [today] nur für reproduzierbare Screenshots.
  */
 @Composable
 fun LogbookScreen(
@@ -99,6 +99,7 @@ fun LogbookScreen(
     today: LocalDate = LocalDate.now(),
     canOpen: (exerciseId: String) -> Boolean = { false },
     onOpenExercise: (exerciseId: String) -> Unit = {},
+    showStreak: Boolean = true,
 ) {
     val zone = ZoneId.systemDefault()
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
@@ -109,7 +110,7 @@ fun LogbookScreen(
         header = { scrolled -> PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = scrolled) },
         top = Dimens.SectionGap,
     ) {
-        item(key = "stats") { LogStatsCard(entries = entries, today = today) }
+        item(key = "stats") { LogStatsCard(entries = entries, today = today, showStreak = showStreak) }
         items(groups, key = { group -> "group-${group.period}" }) { group ->
             LogGroupSection(group, zone, canOpen, onOpenExercise)
         }
@@ -123,11 +124,12 @@ fun LogbookScreen(
  * Titel „7 Sitzungen · 65 min gesamt“, die Serie als eigene Zeile erst ab zwei Tagen in Folge
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
  * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung. Auf der Logbuch-Seite; im Tab
- * „Eigene“ führt der Kopf „Verlauf“ über [LogHistory] hierher.
+ * „Eigene“ führt der Kopf „Verlauf“ über [LogHistory] hierher. Ohne [showStreak] (Einstellung
+ * „Serie zeigen“ aus) fehlt die Serie ganz.
  */
 @Composable
-internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()) {
-    val streak = rememberLogStreak(entries, today)
+internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now(), showStreak: Boolean = true) {
+    val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
     val minutesPerDay = rememberMinutesPerDay(entries)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
@@ -167,13 +169,14 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
  * die Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min diese
  * Woche“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten Tage;
  * fehlt beides, die Zahl der Sitzungen). Ohne Sitzungen steht statt Punkten und Zeile nur der
- * Satz (MUSTER-04).
+ * Satz (MUSTER-04). Ohne [showStreak] (Einstellung „Serie zeigen“ aus) fehlt die Serie, die
+ * Minuten bleiben.
  *
  * TalkBack hört den Kopf und die Zeile; die Punkte je Tag stehen auf der Logbuch-Seite.
  */
 @Composable
-internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()) {
-    val streak = rememberLogStreak(entries, today)
+internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now(), showStreak: Boolean = true) {
+    val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
     val minutesPerDay = rememberMinutesPerDay(entries)
     val weekMinutes = (0L..6L).sumOf { minutesPerDay[today.minusDays(it).toEpochDay()] ?: 0L }
     Column(modifier = Modifier.fillMaxWidth()) {

@@ -165,6 +165,7 @@
     <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter Wochenpunkte
          und Bilanz; ohne Sitzungen der Satz. -->
     <string name="own_history">Verlauf</string>
+    <string name="own_last_practiced">Zuletzt: %1$s</string>
     <string name="cd_open_logbook">Logbuch öffnen</string>
     <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 
@@ -480,6 +481,8 @@
     <string name="settings_data_transfer_hint">Ab Android 12 kann die direkte Übertragung von Gerät zu Gerät (z. B. Smart Switch per Kabel) Logbuch, eigene Kreationen und Einstellungen ohne Cloud mitnehmen, je nach Hersteller. Stimmen lädst du neu. Sicher mitnehmen kannst du deine Kreationen mit „Exportieren“.</string>
     <string name="settings_log_title">Logbuch</string>
     <string name="settings_log_empty">Noch keine Sitzung</string>
+    <string name="settings_show_streak">Serie zeigen</string>
+    <string name="settings_show_streak_hint">Aus: Verlauf und Logbuch nennen keine Tage in Folge, nur Minuten und Sitzungen.</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
     <!-- Bestätigungszustand von „Logbuch leeren“ (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_log_clear_confirm">Logbuch wirklich leeren?</string>

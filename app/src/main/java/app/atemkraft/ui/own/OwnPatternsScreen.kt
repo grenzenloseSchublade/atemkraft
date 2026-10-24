@@ -87,6 +87,12 @@ data class OwnActions(
  * Jede Kreationen-Karte trägt in der Ecke den Stift (Editor für dieses Muster) und daneben
  * Löschen, zweistufig (MUSTER-05; [SavedPatternCard]). Der Kopf gleicht den anderen Tabs:
  * Titel und Zahnrad zu den Einstellungen. [today] nur für reproduzierbare Screenshots.
+ *
+ * [lastExercise]: die zuletzt geübte Übung, die es noch gibt (eingebaute Übung oder vorhandenes
+ * gespeichertes Muster; keine Meditation, kein Tagesmuster, kein gelöschtes Muster) – unter dem
+ * Verlauf als Verweis „Zuletzt: <Name> ›“ zu ihrer Detailseite (Auswertung 2026-10-24, UX #3:
+ * „das von gestern Abend nochmal“ ohne Umweg über das Logbuch); null = kein Verweis.
+ * [showStreak]: Einstellung „Serie zeigen“; aus = keine Tage in Folge im Verlauf.
  */
 @Composable
 fun OwnPatternsScreen(
@@ -94,6 +100,8 @@ fun OwnPatternsScreen(
     actions: OwnActions,
     favorites: List<Exercise> = emptyList(),
     logEntries: List<SessionLogEntry> = emptyList(),
+    lastExercise: Exercise? = null,
+    showStreak: Boolean = true,
     today: LocalDate = LocalDate.now(),
 ) {
     var favoritesExpanded by rememberSaveable { mutableStateOf(true) }
@@ -124,7 +132,16 @@ fun OwnPatternsScreen(
                 )
                 // Kopf → Inhalt HeaderGap; den GapSmall darunter polstert die tippbare Zeile selbst.
                 Spacer(Modifier.height(Dimens.HeaderGap - Dimens.GapSmall))
-                LogHistory(entries = logEntries, today = today)
+                LogHistory(entries = logEntries, today = today, showStreak = showStreak)
+                if (lastExercise != null) {
+                    // Bündig: Das Polster des Text-Buttons ragt in den Rand.
+                    AppTextButton(onClick = { actions.onSelect(lastExercise.id) }, modifier = Modifier.flushStart()) {
+                        ForwardLinkText(
+                            text = stringResource(R.string.own_last_practiced, lastExercise.name),
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
+                }
             }
         }
 

@@ -147,7 +147,7 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.height(Dimens.ListGap))
-        DataCard(transfer, state.logCount, actions::clearLog)
+        DataCard(transfer, state.logCount, actions::clearLog, state.showStreak, actions::setShowStreak)
 
         Spacer(Modifier.height(Dimens.ListGap))
         NavCard(title = stringResource(R.string.settings_about_entry), onClick = onOpenAbout)
@@ -160,10 +160,12 @@ fun SettingsScreen(
 /**
  * Daten: „Eigene Kreationen“ (gespeicherte Muster) als Datei sichern und wieder einlesen (Storage
  * Access Framework, keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die
- * Zahl der Logbuch-Sitzungen mit Papierkorb, zweistufig (MUSTER-05).
+ * Zahl der Logbuch-Sitzungen mit Papierkorb, zweistufig (MUSTER-05), und der Schalter „Serie
+ * zeigen“ (Tage in Folge in Verlauf und Logbuch; Auswertung 2026-10-24 – passt zu „Atem ist keine
+ * Zahl“: wer die Zählung nicht will, schaltet sie ab).
  */
 @Composable
-private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () -> Unit) {
+private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () -> Unit, showStreak: Boolean, onShowStreak: (Boolean) -> Unit) {
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
     SettingsCard(stringResource(R.string.settings_data_title), intro = stringResource(R.string.settings_data_intro)) {
         SubLabel(stringResource(R.string.settings_data_patterns))
@@ -194,6 +196,12 @@ private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () ->
         if (transferInfoExpanded) BodyText(stringResource(R.string.settings_data_transfer_hint))
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
         LogRow(logCount, onClearLog)
+        ToggleRow(
+            label = stringResource(R.string.settings_show_streak),
+            checked = showStreak,
+            onCheckedChange = onShowStreak,
+            hint = stringResource(R.string.settings_show_streak_hint),
+        )
     }
 }
 

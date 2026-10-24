@@ -157,13 +157,14 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             compose.onNode(hasSetTextAction()).performTextInput("aktivieren")
         }, measure = sameChips) { BreatheTab() }
         snap("13_eigene", tab = Tab.EIGENE) {
-            // „Tut mir gut“ mit den zwei längsten Übungsnamen.
+            // „Tut mir gut“ mit den zwei längsten Übungsnamen; „Zuletzt: …“ mit dem längsten.
             val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
             OwnPatternsScreen(
                 savedPatterns = saved,
                 actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
                 favorites = favorites,
                 logEntries = logEntries(),
+                lastExercise = favorites.first(),
                 today = DAY,
             )
         }
