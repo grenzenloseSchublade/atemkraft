@@ -84,8 +84,8 @@ fun WarnText(text: String, modifier: Modifier = Modifier) {
 /**
  * Titel einer Karte (Einstellungen, Glossar): `titleMedium`, für TalkBack eine Überschrift, damit
  * sich lange Seiten per Überschriften-Navigation durchspringen lassen (A11Y-01). [color] ist
- * `onSurface`, außer die Kartentitel sind die eine farbige Kopf-Ebene des Screens (Einstellungen:
- * [headingColor], FARBE-07).
+ * `onSurface`; nur die Kapitelkarten im Tab „Lernen“ (`NavCard`) färben ihn reihum
+ * ([headingColor], FARBE-07).
  */
 @Composable
 fun CardTitle(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {

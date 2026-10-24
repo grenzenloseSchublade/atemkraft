@@ -38,8 +38,8 @@ import app.atemkraft.ui.theme.SECONDARY
  * Zeile und läuft notfalls als Laufschrift ([HeaderTitle]).
  *
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
- * scrollt“), damit das Zahnrad immer erreichbar ist. Der Untertitel gehört zum Inhalt
- * ([ScreenSubtitle], erster Eintrag der Liste). [scrolled] (Inhalt liegt unter dem Kopf) blendet
+ * scrollt“), damit das Zahnrad immer erreichbar ist. Die Tabs tragen keinen Untertitel mehr
+ * (Nutzer 2026-10-24, Vorschlag B); Push-Seiten leiten mit [ScreenSubtitle] ein. [scrolled] (Inhalt liegt unter dem Kopf) blendet
  * die Haarlinie an der Unterkante ein. Der Titel ist zugleich `paneTitle` des Tabs ([HeaderBar],
  * A11Y-07): TalkBack sagt ihn beim Tab-Wechsel an.
  */
@@ -63,16 +63,15 @@ fun ScreenHeader(
 /**
  * Gerüst der Tabs mit Liste (Atmen, Eigene, Lernen) und des Logbuchs (Push-Variante, §4.3):
  * `Surface(background)`, fest oben der Kopf aus [header] – er bekommt `scrolled` (Inhalt liegt
- * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [subtitle]
- * steht als erster Eintrag ([ScreenSubtitle]); [top] ist der Abstand über dem ersten Eintrag (Tabs
- * 0: der Untertitel gehört zum Titel; Logbuch `SectionGap` wie jede Push-Seite), unten steht
- * `ScreenBottom`, beides als `contentPadding`.
+ * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [top] ist der
+ * Abstand über dem ersten Eintrag (Tabs 0: der erste Eintrag bringt seinen Abstand selbst mit;
+ * Logbuch `SectionGap` wie jede Push-Seite), unten steht `ScreenBottom`, beides als
+ * `contentPadding`.
  */
 @Composable
 fun TabListScaffold(
     header: @Composable (scrolled: Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
     listState: LazyListState = rememberLazyListState(),
     top: Dp = 0.dp,
     content: LazyListScope.() -> Unit,
@@ -94,19 +93,16 @@ fun TabListScaffold(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
             ) {
-                if (subtitle != null) item(key = SUBTITLE_KEY) { ScreenSubtitle(subtitle) }
                 content()
             }
         }
     }
 }
 
-private const val SUBTITLE_KEY = "subtitle"
-
 /**
- * Einleitung einer Seite unter dem festen Kopf (`bodyMedium` in `SECONDARY`): Untertitel der Tabs
- * (erster Eintrag der Liste) und Einleitung der Push-Seiten (Atemlehre, Pranayama, Über). Sanskrit
- * kursiv ([sanskritText]).
+ * Einleitung einer Push-Seite unter dem festen Kopf (`bodyMedium` in `SECONDARY`): Atemlehre,
+ * Pranayama, Über. Die Tabs tragen seit 2026-10-24 keinen Untertitel. Sanskrit kursiv
+ * ([sanskritText]).
  */
 @Composable
 fun ScreenSubtitle(text: String, modifier: Modifier = Modifier) {

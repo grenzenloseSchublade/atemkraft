@@ -38,7 +38,6 @@ import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PhaseMark
 import app.atemkraft.ui.components.WholeWordText
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.selectedRow
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
@@ -60,8 +59,6 @@ internal fun Sequence(state: PatternEditorState) {
     val count = state.pattern.phases.size
     CollapsibleSection(
         title = stringResource(R.string.pattern_editor_sequence),
-        // Erster Abschnittskopf der Seite (FARBE-07), seit über der Kurve nur die Werte stehen statt des Kopfs „Atemzug“.
-        color = headingColor(0),
         expanded = open,
         onExpandedChange = { open = it },
         status = stringResource(R.string.pattern_editor_sequence_count, count, FreePattern.MAX_PHASES),

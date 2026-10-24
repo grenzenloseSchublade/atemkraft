@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -53,7 +53,6 @@ import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.durationClockText
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
 import app.atemkraft.ui.components.title
@@ -111,9 +110,8 @@ fun LogbookScreen(
         top = Dimens.SectionGap,
     ) {
         item(key = "stats") { LogStatsCard(entries = entries, today = today) }
-        // Köpfe reihum nach ihrer Lage in der Liste (FARBE-07).
-        itemsIndexed(groups, key = { _, group -> "group-${group.period}" }) { index, group ->
-            LogGroupSection(index, group, zone, canOpen, onOpenExercise)
+        items(groups, key = { group -> "group-${group.period}" }) { group ->
+            LogGroupSection(group, zone, canOpen, onOpenExercise)
         }
         if (entries.isNotEmpty()) {
             item(key = CLEAR_HINT_KEY) { HintText(stringResource(R.string.log_clear_hint)) }
@@ -270,14 +268,12 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
 }
 
 /**
- * Eine Gruppe des Verlaufs: Abschnittskopf in der Farbe seiner Lage [index] (reihum, FARBE-07),
- * darunter je Tag eine Karte. Heute und Gestern sind ein Tag und brauchen keine Tageszeile; in
+ * Eine Gruppe des Verlaufs: Abschnittskopf, darunter je Tag eine Karte. Heute und Gestern sind ein Tag und brauchen keine Tageszeile; in
  * „Diese Woche“ und den Monaten steht über jeder Karte der Tag („Mi 15.10.“), die Zeilen zeigen
  * nur die Uhrzeit.
  */
 @Composable
 private fun LogGroupSection(
-    index: Int,
     group: LogGroup,
     zone: ZoneId,
     canOpen: (String) -> Boolean,
@@ -298,7 +294,7 @@ private fun LogGroupSection(
         )
     }
     val showDay = group.period !is LogPeriod.Today && group.period !is LogPeriod.Yesterday
-    CollapsibleSection(title = title, color = headingColor(index)) {
+    CollapsibleSection(title = title) {
         group.days.forEach { day ->
             Column {
                 if (showDay) {

@@ -3,7 +3,6 @@
     <string name="app_name">Atemkraft</string>
 
     <!-- Startbildschirm -->
-    <string name="home_subtitle">Wähle eine Übung oder sag, wie es dir geht</string>
     <!-- Willkommenskarte beim ersten Start (Nutzer 2026-10-24): Einstieg und Gesundheitshinweis,
          abweisbar mit ✕. Der Einstieg selbst ist ein Verweis mit dem Namen der Übung. -->
     <string name="welcome_title">Neu hier?</string>
@@ -142,11 +141,9 @@
     <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
 
-    <!-- Tab „Eigene“: Kopf wie die anderen Tabs, darunter die Karte „Verlauf“ (Einstieg ins Logbuch)
-         und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
+    <!-- Tab „Eigene“: Kopf wie die anderen Tabs (ohne Untertitel, Nutzer 2026-10-24), darunter „Verlauf“ (Einstieg
+         ins Logbuch) und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
     <string name="own_title">Eigene</string>
-    <!-- Untertitel nennt alle drei Inhalte in ihrer Reihenfolge: Verlauf, „Tut mir gut“, Eigene Kreationen (Nutzer 2026-10-24). -->
-    <string name="own_subtitle">Dein Verlauf, was dir guttut, deine Muster</string>
     <!-- „Neues Muster“: Name des „+“ im Kopf von „Eigene Kreationen“ und, ohne eigene Kreationen, des Knopfs. -->
     <string name="own_new_pattern">Neues Muster</string>
     <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung; der Knopf „Neues Muster“ steht darunter. -->
@@ -253,7 +250,6 @@
     <string name="glossary_title">Begriffe erklärt</string>
     <string name="settings_atemlehre">Atemlehre</string>
     <!-- Tab „Lernen“: je Kapitel ein Satz, was drin steht. -->
-    <string name="learn_subtitle">Yoga-Lehre und Praxis, mit Studienlage</string>
     <string name="learn_atemlehre_hint">Phasen, vāyus, Regeln und Muster</string>
     <string name="learn_pranayama_hint">Grundlagen und Techniken, mit Übungen zum Ausprobieren</string>
     <string name="learn_glossary_hint">Studien, HRV und Yoga-Begriffe</string>
@@ -572,7 +568,6 @@
     <!-- Meditation -->
     <string name="tab_meditation">Meditation</string>
     <string name="meditation_title">Meditation</string>
-    <string name="meditation_subtitle">Stille Sitzung mit Gong</string>
     <string name="meditation_gong_label">Gong</string>
     <string name="meditation_sound_voice_label">Klang &amp; Stimme</string>
     <string name="meditation_gong_startstop">Start &amp; Ende</string>

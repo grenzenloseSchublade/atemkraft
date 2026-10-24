@@ -48,9 +48,6 @@ object Sizes {
     /** Tagespunkt der 7-Tage-Übersicht im Logbuch (18). */
     val WeekDot = 18.dp
 
-    /** Breite des Akzentbalkens am `SectionHeader` (4); hoch wie die Titelschrift, Enden rund. */
-    val AccentBar = 4.dp
-
     /**
      * Überstand der 48-dp-Tippfläche über ein [IconDefault]-Icon auf jeder Seite (12): Um ihn
      * melden `Modifier.flushStart()`/`flushEnd()` einen Icon-Button schmaler, damit sein Glyph an

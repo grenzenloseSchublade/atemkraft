@@ -39,7 +39,6 @@ fun LearnScreen(
                 scrolled = scrolled,
             )
         },
-        subtitle = stringResource(R.string.learn_subtitle),
     ) {
         item(key = "atemlehre") {
             ChapterCard(

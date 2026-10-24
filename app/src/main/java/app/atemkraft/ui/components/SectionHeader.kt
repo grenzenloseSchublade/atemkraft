@@ -1,7 +1,6 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,25 +8,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -39,54 +34,56 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.isSpecified
 import app.atemkraft.R
 import app.atemkraft.domain.splitAtDots
 import app.atemkraft.domain.withoutLeadingDot
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.FamilyVagal
 import app.atemkraft.ui.theme.HeadingRing
 import app.atemkraft.ui.theme.SECONDARY
-import app.atemkraft.ui.theme.Sizes
 
 /**
- * Farbe des Kopfes an Stelle [index] eines Screens (FARBE-07): reihum durch [HeadingRing], der
- * oberste Kopf ist 0. Der Index ist die Lage des Kopfes, ausdrücklich gesetzt, kein Zähler der
- * Komposition – ein zugeklappter Abschnitt behält seine Farbe. Die Farbe trägt keine Bedeutung.
- * Im Atmen-Tab tragen die Köpfe die Familienfarben; nur „Alle Übungen“ über der Filterreihe steht
- * in `headingColor(0)`.
+ * Farbe des Kapiteltitels an Stelle [index] im Tab „Lernen“ (FARBE-07): reihum durch
+ * [HeadingRing], die oberste Karte ist 0. Der Index ist die Lage, ausdrücklich gesetzt, kein
+ * Zähler der Komposition. Die Farbe trägt keine Bedeutung. Seit 2026-10-24 (Vorschlag B) die
+ * einzige farbige Kopf-Ebene: Abschnittsköpfe ([SectionHeader]) sind überall weiß, Farbe tragen
+ * nur noch Gruppenlabels ([GroupLabel], Familienfarbe) und Kartenränder.
  */
 fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
 
 /**
- * Einheitlicher Abschnitts-Header: farbiger Akzentbalken + Titel. App-weit genutzt (Atmen, Eigene,
- * Meditation, Atemlehre, Pranayama, Glossar, Logbuch), damit Sektionsüberschriften überall
- * identisch lesen. [color] kommt aus [headingColor] (FARBE-07), im Atmen-Tab aus der Familie.
+ * Einheitlicher Abschnitts-Header: Titel in `titleLarge`, `onSurface` – ohne Farbbalken, ohne
+ * Akzentfarbe (Nutzer 2026-10-24, Vorschlag B: eine Kopf-Art, FARBE-07). App-weit genutzt (Atmen
+ * „Übungen“, Eigene, Meditation, Atemlehre, Pranayama, Glossar, Logbuch), damit
+ * Sektionsüberschriften überall identisch lesen. Eine Ebene darunter steht das kleine, farbige
+ * [GroupLabel] (Familien im Atmen-Tab).
  *
  * Abstände: Über einem festen Kopf steht [top] (Standard `SectionHeaderTop`; kleiner nur, wo ein
  * Bildschirm ohne Scrollen auskommen muss). **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
  * ist überall `HeaderGap` – in Listen über `spacedBy(ListGap)`, in Spalten über
  * [CollapsibleSection]. So steht der erste Inhalt unter jedem Kopf gleich weit.
  *
- * [trailingAction] ist eine optionale Aktion für den ganzen Abschnitt (z. B. „Muster neu
- * generieren“, „Neues Muster“), rechts als `AppIconButton`, ihr Glyph bündig an der Inhaltskante
- * ([flushEnd]). Sie steht mittig auf der ersten Titelzeile; ihre 48-dp-Tippfläche ragt dabei in den
- * Abstand darunter, ohne den Kopf höher zu machen – der Abschnitt rückt nicht nach unten. Mit
- * [expanded] stehen Caret und Aktion zusammen: Der Caret bleibt am Titel, die Aktion rechts davon
- * an der Inhaltskante; die Tippfläche des Auf- und Zuklappens endet vor der Aktion, beide sind
- * eigene Bedienelemente („Eigene Kreationen“ im Tab „Eigene“).
+ * [trailingAction] ist eine optionale Aktion für den ganzen Abschnitt (z. B. „Neues Muster“),
+ * rechts als `AppIconButton` in `onSurface`, ihr Glyph bündig an der Inhaltskante ([flushEnd]).
+ * Sie steht mittig auf der ersten Titelzeile; ihre 48-dp-Tippfläche ragt dabei in den Abstand
+ * darunter, ohne den Kopf höher zu machen – der Abschnitt rückt nicht nach unten. Mit [expanded]
+ * stehen Caret und Aktion zusammen: Der Caret bleibt am Titel, die Aktion rechts davon an der
+ * Inhaltskante; die Tippfläche des Auf- und Zuklappens endet vor der Aktion, beide sind eigene
+ * Bedienelemente („Eigene Kreationen“ im Tab „Eigene“).
  *
  * [teaser] steht als ganzer Satz unter dem Titel (nie gekürzt, LAYOUT-03). Mit [expanded]
- * wird der Kopf zur aufklappbaren Zeile (MUSTER-03): Caret am Titel, die ganze Zeile samt
- * Teaser ist die Tippfläche (≥ 48 dp, Rolle Button, Ausgeklappt/Eingeklappt), den Inhalt
- * zeigt der Aufrufer darunter (über [CollapsibleSection]). So bleibt ein langer Tab eine kurze
- * Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null` heißt:
- * nicht aufklappbar.
+ * wird der Kopf zur aufklappbaren Zeile (MUSTER-03): Caret am Titel (gedimmt, `SECONDARY`), die
+ * ganze Zeile samt Teaser ist die Tippfläche (≥ 48 dp, Rolle Button, Ausgeklappt/Eingeklappt),
+ * den Inhalt zeigt der Aufrufer darunter (über [CollapsibleSection]). So bleibt ein langer Tab eine
+ * kurze Übersicht, ohne neue Fläche – der Abschnittskopf wechselt nur seinen Zustand. `null`
+ * heißt: nicht aufklappbar.
  *
  * Mit [onClick] öffnet der Kopf etwas (Bottom Sheet, MUSTER-11: „Klang & Stimme“ im
- * Meditations-Tab): dieselbe Zeile wie aufklappbar, aber mit [ForwardChevron] statt Caret, ohne
- * Zustand. TalkBack liest sie als eine Schaltfläche aus Titel und Teaser, die Trennpunkte als
- * Kommas („Klang & Stimme, Gong Start & Ende, ohne Stimme, Schaltfläche“).
+ * Meditations-Tab; Logbuch-Seite: „Verlauf“ im Tab „Eigene“): dieselbe Zeile wie aufklappbar, aber
+ * mit [ForwardChevron] statt Caret, ohne Zustand. TalkBack liest sie als eine Schaltfläche aus
+ * Titel und Teaser, die Trennpunkte als Kommas („Klang & Stimme, Gong Start & Ende, ohne Stimme,
+ * Schaltfläche“); [onClickLabel] benennt, was der Tipp tut („Logbuch öffnen“).
  *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Eigene Kreationen · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
@@ -97,7 +94,6 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
 @Composable
 fun SectionHeader(
     title: String,
-    color: Color,
     modifier: Modifier = Modifier,
     teaser: String? = null,
     expanded: Boolean? = null,
@@ -107,10 +103,12 @@ fun SectionHeader(
     smallStatus: Boolean = false,
     top: Dp = Dimens.SectionHeaderTop,
     onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
-    val density = LocalDensity.current
+    val color = MaterialTheme.colorScheme.onSurface
+    val dimmed = color.copy(alpha = SECONDARY)
     // Gemessen statt aus lineHeight: ab Android 14 wächst die Schrift nichtlinear (rememberFirstLineHeight).
     val titleLine = rememberFirstLineHeight(titleStyle)
     // Zeile wie aufklappbar: Tippfläche ohne den Leerraum darüber, innen oben und unten GapSmall.
@@ -120,7 +118,7 @@ fun SectionHeader(
         Modifier
             .padding(top = Dimens.GapSmall)
             .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
             // Die Beschreibung geht dem sichtbaren Text vor; der Titel ist hier keine Überschrift.
             .semantics { contentDescription = spoken }
     } else if (expanded == null) {
@@ -150,22 +148,13 @@ fun SectionHeader(
         // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
         // So steckt eine Kopf-Aktion daneben nicht in einem zweiten Button.
         Column(modifier = Modifier.weight(1f).then(toggle).then(inner)) {
-            // Balken und Caret stehen mittig neben der ersten Titelzeile, nicht mittig am ganzen
-            // Block: Rutscht der Status darunter (bis zu drei Zeilen), bliebe der Balken sonst
-            // neben dem Status stehen.
+            // Caret und Chevron stehen mittig neben der ersten Titelzeile, nicht mittig am ganzen
+            // Block: Rutscht der Status darunter (bis zu drei Zeilen), blieben sie sonst neben dem
+            // Status stehen.
             Row(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
             ) {
-                Box(Modifier.height(titleLine), contentAlignment = Alignment.Center) {
-                    Box(
-                        modifier = Modifier
-                            // Balken so hoch wie die Schrift – folgt der Systemschriftgröße.
-                            .size(width = Sizes.AccentBar, height = with(density) { titleStyle.fontSize.toDp() })
-                            .clip(CircleShape)
-                            .background(color),
-                    )
-                }
                 // LAYOUT-03: Das Suffix steht direkt hinter dem Titel und rutscht in die nächste
                 // Zeile, statt ihn zu kürzen, wenn der Platz nicht reicht – dann ohne führenden
                 // Punkt, denn keine Zeile beginnt mit einem Satzzeichen ([TitleWithStatus]).
@@ -180,11 +169,11 @@ fun SectionHeader(
                 )
                 if (onClick != null) {
                     Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
-                        ForwardChevron(tint = color)
+                        ForwardChevron(tint = dimmed)
                     }
                 } else if (expanded != null) {
                     Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
-                        ExpandCaret(expanded = expanded, tint = color)
+                        ExpandCaret(expanded = expanded, tint = dimmed)
                     }
                 }
             }
@@ -194,9 +183,48 @@ fun SectionHeader(
         }
         // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).
         if (trailingAction != null) {
-            // Mitte der Tippfläche auf der Mitte der ersten Titelzeile (wie Balken und Caret).
+            // Mitte der Tippfläche auf der Mitte der ersten Titelzeile (wie der Caret).
             val above = if (!tappable) top else Dimens.GapSmall * 2
             Box(Modifier.centeredOverflow(above + titleLine / 2).flushEnd()) { trailingAction() }
+        }
+    }
+}
+
+/**
+ * Kleines farbiges Gruppenlabel, eine Ebene unter dem [SectionHeader] (Nutzer 2026-10-24,
+ * Vorschlag B): `titleSmall` in [color] – im Atmen-Tab die Familienfarbe über jeder Gruppe von
+ * Übungskarten und über einem geöffneten Bereich (`AreaHeader`, dort mit ✕ als [trailingAction]).
+ * Kein Balken, kein Leerraum darunter: Label → Inhalt ist wie bei jedem Kopf `HeaderGap`, in
+ * Listen über `spacedBy(ListGap)`. Darüber steht [top] (Standard `SectionGap`; in einer Liste
+ * mit `spacedBy` entsprechend weniger).
+ *
+ * [trailingAction] steht als `AppIconButton` mittig auf der Textzeile, Glyph an der Inhaltskante
+ * ([flushEnd]); die 48-dp-Tippfläche ragt in den Abstand darunter, ohne das Label höher zu machen.
+ * TalkBack: Überschrift (`heading()`), damit sich die Liste per Überschriften-Navigation
+ * durchspringen lässt (A11Y-01).
+ */
+@Composable
+fun GroupLabel(
+    title: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    top: Dp = Dimens.SectionGap,
+    trailingAction: (@Composable () -> Unit)? = null,
+) {
+    val style = MaterialTheme.typography.titleSmall
+    val line = rememberFirstLineHeight(style)
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        WholeWordText(
+            text = title,
+            style = style,
+            color = color,
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = top)
+                .semantics { heading() },
+        )
+        if (trailingAction != null) {
+            Box(Modifier.centeredOverflow(top + line / 2).flushEnd()) { trailingAction() }
         }
     }
 }
@@ -244,7 +272,6 @@ private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
 @Composable
 fun CollapsibleSection(
     title: String,
-    color: Color,
     modifier: Modifier = Modifier,
     headerModifier: Modifier = Modifier,
     expanded: Boolean? = null,
@@ -264,7 +291,6 @@ fun CollapsibleSection(
     Column(modifier = modifier.animateContentSize()) {
         SectionHeader(
             title = title,
-            color = color,
             modifier = Modifier.padding(top = topFill).then(headerModifier),
             teaser = teaser,
             expanded = expanded,
@@ -344,7 +370,7 @@ private fun TitleWithStatus(
                 WholeWordText(text = shown, style = statusStyle, color = statusColor, modifier = statusSemantics)
             }.first().measure(loose)
             // Breite in den Grenzen melden: Unter der Mindestbreite (weight) zentrierte das Layout
-            // den Block sonst, und Titel und Status rückten vom Balken ab.
+            // den Block sonst, und Titel und Status rückten von der Kante ab.
             layout(constraints.constrainWidth(maxOf(titlePlaceable.width, statusPlaceable.width)), titlePlaceable.height + statusPlaceable.height) {
                 titlePlaceable.place(0, 0)
                 statusPlaceable.place(0, titlePlaceable.height)
@@ -360,10 +386,9 @@ private enum class StatusSlot { TITLE, INLINE, BELOW }
 @Composable
 private fun SectionHeaderPreview() {
     AtemkraftTheme {
-        val accent = MaterialTheme.colorScheme.secondary
-        SectionHeader(title = stringResource(R.string.home_daily_pattern), color = accent) {
+        SectionHeader(title = stringResource(R.string.own_creations)) {
             AppIconButton(onClick = {}) {
-                Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.cd_pattern_regenerate), tint = accent)
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
@@ -375,10 +400,21 @@ private fun SectionHeaderExpandablePreview() {
     AtemkraftTheme {
         SectionHeader(
             title = stringResource(R.string.own_creations),
-            color = headingColor(0),
-            teaser = stringResource(R.string.home_subtitle),
+            teaser = stringResource(R.string.own_empty),
             expanded = false,
             status = stringResource(R.string.situations_my_patterns_count, 5),
         )
+    }
+}
+
+@Preview
+@Composable
+private fun GroupLabelPreview() {
+    AtemkraftTheme {
+        GroupLabel(title = stringResource(R.string.family_downregulate), color = FamilyVagal) {
+            AppIconButton(onClick = {}) {
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_show_all), tint = MaterialTheme.colorScheme.onSurface)
+            }
+        }
     }
 }

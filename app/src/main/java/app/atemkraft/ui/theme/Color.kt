@@ -128,17 +128,17 @@ const val ALPHA_CURVE_FILL = 0.08f
 
 /**
  * Ausatmen in den Rhythmusbildern der Atemlehre (Koralle), Einatmen ist Cyan (FARBE-04). Derselbe
- * Ton steht im Ring der Abschnittsköpfe ([HeadingRing]); Köpfe tragen keine Bedeutung (FARBE-07).
+ * Ton steht im Ring der Kapiteltitel im Tab „Lernen“ ([HeadingRing]); er trägt keine Bedeutung (FARBE-07).
  */
 val BreathExhale = Color(0xFFFF9E7A)
 
 /**
- * Ring der Abschnittsköpfe (FARBE-07, Nutzerentscheidung 2026-10-19): Pink → Koralle → Lila →
- * Gelb → Grün, reihum nach der Lage des Kopfes auf dem Screen, oben mit Pink beginnend
- * (`headingColor`). Die Farben tragen **keine Bedeutung** – keine Familie, keine Warnung, kein
- * Thema –, deshalb dieselben Töne wie Marke, Ausatmen und Familien statt eigener Tokens.
- * Ausnahme: der Atmen-Tab mit seinen Familienfarben. Alle fünf ≥ 4,5:1 auf Grund und Karte
- * (ThemeContrastTest).
+ * Ring der Kapiteltitel im Tab „Lernen“ (FARBE-07, Nutzerentscheidung 2026-10-19): Pink → Koralle
+ * → Lila → Gelb → Grün, reihum nach der Lage der Karte, oben mit Pink beginnend (`headingColor`).
+ * Die Farben tragen **keine Bedeutung** – keine Familie, keine Warnung, kein Thema –, deshalb
+ * dieselben Töne wie Marke, Ausatmen und Familien statt eigener Tokens. Seit 2026-10-24
+ * (Vorschlag B) sind alle Abschnittsköpfe weiß; der Ring bleibt nur dort. Alle fünf ≥ 4,5:1 auf
+ * Grund und Karte.
  */
 val HeadingRing = listOf(NeonMagenta, BreathExhale, FamilyBalance, FamilySympathetic, FamilyFunctional)
 

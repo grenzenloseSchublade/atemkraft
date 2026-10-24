@@ -55,7 +55,6 @@ import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.WarnText
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
@@ -77,9 +76,8 @@ import kotlinx.coroutines.flow.first
  * sichtbar zusammen).
  *
  * Farbe trägt hier eine Bedeutung, die Atemphase (Einatmen Cyan, Ausatmen [BreathExhale] Koralle,
- * Halten gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe gehen
- * wie auf jedem Screen reihum durch den Kopf-Ring ([headingColor], ohne Bedeutung), die Mustertitel
- * darunter stehen neutral (FARBE-07).
+ * Halten gestrichelt; in der Phasen-Karte in Worten erklärt, FARBE-05). Die Abschnittsköpfe stehen
+ * weiß wie auf jedem Screen, die Mustertitel darunter neutral (FARBE-07).
  *
  * [focus]: Kennung einer Muster-Karte (Sprung aus der Detailseite) – die Karte steht dann
  * aufgeklappt mit ihrem Rhythmusbild oben im Bild.
@@ -110,24 +108,22 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
     ) {
         ScreenSubtitle(Atemlehre.intro)
 
-        // Köpfe reihum nach ihrer Lage (FARBE-07): Phasen 0, vāyus 1, Grundregeln 2, Muster 3,
-        // Einflüsse 4, Quellen 5.
-        CollapsibleSection(title = stringResource(R.string.atemlehre_phases), color = headingColor(0)) {
+        CollapsibleSection(title = stringResource(R.string.atemlehre_phases)) {
             PhasesCard(Atemlehre.phases)
         }
 
-        ExpandableSection(stringResource(R.string.atemlehre_vayus), Atemlehre.vayusTeaser, headingColor(1)) {
+        ExpandableSection(stringResource(R.string.atemlehre_vayus), Atemlehre.vayusTeaser) {
             VayusContent()
         }
 
-        ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser, headingColor(2)) {
+        ExpandableSection(stringResource(R.string.atemlehre_rules), Atemlehre.rulesTeaser) {
             RulesContent()
         }
 
         // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
         // Balken zu welchem Titel gehört. Die Lage der Karten wird gegen den Scroll-Inhalt
         // gemessen und dient als Sprungziel.
-        CollapsibleSection(title = stringResource(R.string.atemlehre_patterns), color = headingColor(3)) {
+        CollapsibleSection(title = stringResource(R.string.atemlehre_patterns)) {
             Atemlehre.patterns.forEach { pattern ->
                 LorePatternCard(
                     pattern = pattern,
@@ -144,10 +140,10 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
             }
         }
 
-        ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser, headingColor(4)) {
+        ExpandableSection(stringResource(R.string.atemlehre_influences), Atemlehre.influencesTeaser) {
             InfluencesContent(onOpenExercise)
         }
-        ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser, headingColor(5)) {
+        ExpandableSection(stringResource(R.string.atemlehre_sources), Atemlehre.sourcesTeaser) {
             SourcesContent()
         }
     }
@@ -158,11 +154,10 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
  * darunter. Standard zu, Zustand per `rememberSaveable` (überlebt den Weg in eine Übung und zurück).
  */
 @Composable
-private fun ExpandableSection(title: String, teaser: String, accent: Color, content: @Composable () -> Unit) {
+private fun ExpandableSection(title: String, teaser: String, content: @Composable () -> Unit) {
     var expanded by rememberSaveable(title) { mutableStateOf(false) }
     CollapsibleSection(
         title = title,
-        color = accent,
         expanded = expanded,
         onExpandedChange = { expanded = it },
         teaser = teaser,

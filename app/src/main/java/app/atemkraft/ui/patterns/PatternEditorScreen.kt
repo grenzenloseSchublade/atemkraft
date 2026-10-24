@@ -49,7 +49,6 @@ import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.accentBorder
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberSafetyGate
 import app.atemkraft.ui.patterns.curve.BreathCurveEditor
 import app.atemkraft.ui.patterns.curve.rememberBreathCurveHeights
@@ -289,7 +288,6 @@ private fun Lore(exercise: Exercise, onOpenLore: (String) -> Unit) {
         ExpanderSection(
             title = stringResource(R.string.detail_lore),
             appetizer = lore.teaser,
-            accent = headingColor(1),
             divider = false,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {

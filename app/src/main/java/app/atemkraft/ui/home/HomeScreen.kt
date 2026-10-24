@@ -34,6 +34,7 @@ import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ForwardLinkText
+import app.atemkraft.ui.components.GroupLabel
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
@@ -41,7 +42,6 @@ import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.SECONDARY
 
@@ -154,7 +154,6 @@ fun HomeScreen(
                 scrolled = scrolled,
             )
         },
-        subtitle = stringResource(R.string.home_subtitle),
     ) {
         // Erster Start: eine ruhige, abweisbare Karte statt eines Onboardings (Nutzer 2026-10-24).
         if (welcome != null) {
@@ -224,10 +223,7 @@ fun HomeScreen(
             item(key = "daily-header") {
                 // „Neu generieren“ betrifft den ganzen Abschnitt („gib mir ein anderes“), nicht
                 // die Karte – deshalb im Kopf, die Karte behält nur ihre eine Aktion (KOMP-02).
-                SectionHeader(
-                    title = stringResource(R.string.home_daily_pattern),
-                    color = MaterialTheme.colorScheme.secondary,
-                ) {
+                SectionHeader(title = stringResource(R.string.home_daily_pattern)) {
                     AppIconButton(onClick = actions.onRegenerateDaily) {
                         Icon(
                             Icons.Filled.Refresh,
@@ -246,8 +242,7 @@ fun HomeScreen(
                 )
             }
             item(key = "all-header") {
-                // Kein Familienkopf: erster Ton des Kopf-Rings (FARBE-07, Ausnahme Atmen-Tab).
-                SectionHeader(title = stringResource(R.string.home_all_exercises), color = headingColor(0))
+                SectionHeader(title = stringResource(R.string.home_all_exercises))
             }
             item(key = "filters") {
                 ExerciseFilterRow(active = filters, onToggle = { filters = if (it in filters) filters - it else filters + it })
@@ -259,7 +254,7 @@ fun HomeScreen(
             }
             filtered.forEach { (family, exercises) ->
                 item(key = "header-${family.name}") {
-                    SectionHeader(title = family.title(), color = family.color())
+                    GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_LIST_TOP)
                 }
                 items(exercises, key = { it.id }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)

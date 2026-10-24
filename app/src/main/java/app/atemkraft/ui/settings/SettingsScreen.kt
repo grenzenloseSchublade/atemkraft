@@ -66,7 +66,6 @@ import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.choiceGroupHeading
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
@@ -166,7 +165,7 @@ fun SettingsScreen(
 @Composable
 private fun DataCard(transfer: PatternTransfer, logCount: Int, onClearLog: () -> Unit) {
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
-    SettingsCard(stringResource(R.string.settings_data_title), heading = 4, intro = stringResource(R.string.settings_data_intro)) {
+    SettingsCard(stringResource(R.string.settings_data_title), intro = stringResource(R.string.settings_data_intro)) {
         SubLabel(stringResource(R.string.settings_data_patterns))
         Spacer(Modifier.height(Dimens.GapSmall))
         // Kurze Labels, damit beide gleich breit nebeneinander passen; worum es geht, sagt die
@@ -251,7 +250,7 @@ private fun TonCard(
     onGongLong: (Boolean) -> Unit,
     onPreviewGong: () -> Unit,
 ) {
-    SettingsCard(stringResource(R.string.settings_tone_title), heading = 0, intro = stringResource(R.string.settings_tone_intro)) {
+    SettingsCard(stringResource(R.string.settings_tone_title), intro = stringResource(R.string.settings_tone_intro)) {
         SubLabel(stringResource(R.string.volume_title), Modifier.choiceGroupHeading())
         Spacer(Modifier.height(Dimens.GapSmall))
         SegmentedChoiceRow(ToneVolume.entries, volume, onVolume, groupLabel = stringResource(R.string.volume_title)) { v ->
@@ -298,7 +297,7 @@ private fun TonCard(
 @Composable
 private fun BreathCard(state: SettingsUiState, actions: SettingsActions) {
     var soundInfoExpanded by rememberSaveable { mutableStateOf(false) }
-    SettingsCard(stringResource(R.string.settings_breathing_title), heading = 1) {
+    SettingsCard(stringResource(R.string.settings_breathing_title)) {
         SubLabel(stringResource(R.string.settings_sound_title), Modifier.choiceGroupHeading())
         Spacer(Modifier.height(Dimens.GapSmall))
         SegmentedChoiceRow(SoundMode.entries, state.soundMode, actions::setSoundMode, groupLabel = stringResource(R.string.settings_sound_title)) { mode ->
@@ -383,7 +382,7 @@ private fun BreathCard(state: SettingsUiState, actions: SettingsActions) {
  */
 @Composable
 private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions) {
-    SettingsCard(stringResource(R.string.settings_display_title), heading = 2, titleGap = Dimens.GapTiny) {
+    SettingsCard(stringResource(R.string.settings_display_title), titleGap = Dimens.GapTiny) {
         ToggleRow(
             label = stringResource(R.string.settings_auto_calm),
             checked = display.autoCalm,
@@ -462,7 +461,7 @@ private fun MeditationCard(
     catalogInitiallyExpanded: Boolean,
     display: @Composable () -> Unit,
 ) {
-    SettingsCard(stringResource(R.string.settings_meditation_title), heading = 3, intro = stringResource(R.string.settings_meditation_intro), titleGap = Dimens.GapTiny) {
+    SettingsCard(stringResource(R.string.settings_meditation_title), intro = stringResource(R.string.settings_meditation_intro), titleGap = Dimens.GapTiny) {
         display()
 
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
@@ -526,7 +525,7 @@ private fun MeditationCard(
 }
 
 /**
- * Eine Karte der Einstellungen: Titel als farbiger Kopf der Seite ([heading], reihum, FARBE-07),
+ * Eine Karte der Einstellungen: Titel als Kartentitel in `onSurface` (FARBE-07: Köpfe weiß),
  * direkt darunter optional [intro] (ein Satz, wofür die Karte gilt – nur, wo er etwas hinzufügt,
  * wie der Hinweis einer [NavCard]), nach [titleGap] der Inhalt; Polster `CardPadding`. [titleGap]
  * ist `GapTiny`, wo der Inhalt mit einer Zeile beginnt, die sich selbst polstert (Schalter), sonst
@@ -535,14 +534,13 @@ private fun MeditationCard(
 @Composable
 private fun SettingsCard(
     title: String,
-    heading: Int,
     titleGap: Dp = Dimens.GapSmall,
     intro: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(title, color = headingColor(heading))
+            CardTitle(title)
             if (intro != null) HintText(intro)
             Spacer(Modifier.height(titleGap))
             content()

@@ -18,7 +18,6 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.PushScaffold
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -30,18 +29,18 @@ fun GlossaryScreen(onBack: () -> Unit) {
     PushScaffold(onBack = onBack, title = stringResource(R.string.glossary_title)) {
         // Die erste Gruppe steht wie jeder erste Inhalt SectionGap unter dem Kopf, ohne den
         // Abstand über weiteren Abschnittsköpfen (SectionHeaderTop).
-        TermGroup(0, stringResource(R.string.glossary_group_body), Glossary.bodyTerms, top = 0.dp)
-        TermGroup(1, stringResource(R.string.glossary_group_yoga), Glossary.yogaTerms)
+        TermGroup(stringResource(R.string.glossary_group_body), Glossary.bodyTerms, top = 0.dp)
+        TermGroup(stringResource(R.string.glossary_group_yoga), Glossary.yogaTerms)
     }
 }
 
 /**
- * Eine Begriffsgruppe: Abschnitts-Header in der Farbe seiner Lage [index] (reihum, FARBE-07),
- * darunter die Karten mit neutralen Titeln, Karte ↔ Karte `ListGap`.
+ * Eine Begriffsgruppe: Abschnitts-Header, darunter die Karten mit neutralen Titeln, Karte ↔ Karte
+ * `ListGap`.
  */
 @Composable
-private fun TermGroup(index: Int, title: String, terms: List<GlossaryTerm>, top: Dp = Dimens.SectionHeaderTop) {
-    CollapsibleSection(title = title, color = headingColor(index), headerTop = top) {
+private fun TermGroup(title: String, terms: List<GlossaryTerm>, top: Dp = Dimens.SectionHeaderTop) {
+    CollapsibleSection(title = title, headerTop = top) {
         terms.forEach { term ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(Dimens.CardPadding)) {

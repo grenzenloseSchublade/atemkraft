@@ -32,7 +32,6 @@ import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.flushStart
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -81,7 +80,7 @@ internal fun SoundSheet(
                 .verticalScroll(rememberScrollState())
                 .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
         ) {
-            SectionHeader(title = stringResource(R.string.meditation_sound_voice_label), color = headingColor(0), top = 0.dp)
+            SectionHeader(title = stringResource(R.string.meditation_sound_voice_label), top = 0.dp)
             Spacer(Modifier.height(Dimens.HeaderGap))
             SubLabel(stringResource(R.string.meditation_gong_label), Modifier.choiceGroupHeading())
             Spacer(Modifier.height(Dimens.GapSmall))

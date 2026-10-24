@@ -39,9 +39,9 @@ import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ChoiceChip
 import app.atemkraft.ui.components.ChoiceChipRow
 import app.atemkraft.ui.components.ForwardLinkText
+import app.atemkraft.ui.components.GroupLabel
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.SecondaryText
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.color
@@ -152,22 +152,24 @@ internal fun AreaLink(family: BreathingFamily, onClick: () -> Unit) {
 }
 
 /**
- * Kopf eines Bereichs unter dem Block: der Familienkopf wie in der Liste, bei intensiven Übungen
- * mit der ⚠-Zeile darunter. [onClose] (nur wenn der Bereich über [AreaLink] gewählt ist): ✕ im
- * Kopf führt zurück zur Übersicht, wie System-Zurück – kein Chip ist dann markiert, über den man
+ * Kopf eines Bereichs unter dem Block: das Gruppenlabel der Familie wie in der Liste
+ * ([GroupLabel], Familienfarbe), bei intensiven Übungen mit der ⚠-Zeile darunter. [onClose] (nur
+ * wenn der Bereich über [AreaLink] gewählt ist): ✕ rechts (in `onSurface` wie jede Kopf-Aktion)
+ * führt zurück zur Übersicht, wie System-Zurück – kein Chip ist dann markiert, über den man
  * zurückkäme.
  */
 @Composable
 internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?) {
     val family = area.family
     Column(modifier = Modifier.fillMaxWidth()) {
-        SectionHeader(
+        GroupLabel(
             title = family.title(),
             color = family.color(),
+            top = GROUP_LABEL_LIST_TOP,
             trailingAction = onClose?.let { close ->
                 {
                     AppIconButton(onClick = close) {
-                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_show_all), tint = family.color())
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_show_all), tint = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             },
@@ -178,6 +180,12 @@ internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?) {
         }
     }
 }
+
+/**
+ * Abstand über einem [GroupLabel] in der Liste des Atmen-Tabs: sichtbar `SectionGap`, wovon die
+ * Liste schon `ListGap` setzt (`spacedBy`).
+ */
+internal val GROUP_LABEL_LIST_TOP = Dimens.SectionGap - Dimens.ListGap
 
 /**
  * Trefferstatus unter dem Block, als Live-Region angesagt (A11Y-04): „2 Anlässe“, „1 Anlass,

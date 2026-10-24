@@ -27,11 +27,9 @@ import app.atemkraft.domain.MeditationMode
 import app.atemkraft.ui.components.FillViewportColumn
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.ScreenHeader
-import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.StartSplitButton
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
 /** Gong-Wahl im Tab; die Intervall-Länge wählt das Blatt bei „alle … min“ (app-weit gespeichert). */
@@ -119,7 +117,8 @@ private fun SelectionContent(
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
                     .padding(horizontal = Dimens.ScreenPadding),
-                top = { ScreenSubtitle(stringResource(R.string.meditation_subtitle)) },
+                // Kein Untertitel mehr (Nutzer 2026-10-24): Der Ring beginnt direkt unter dem Kopf.
+                top = {},
                 center = {
                     // Oben Luft wie über einem Abschnittskopf: Mit nur GapSmall klebte die ∞-Marke am
                     // Untertitel, während unter dem Ring viel Platz frei blieb (Nutzer 2026-10-20). Wird
@@ -223,8 +222,6 @@ private fun SoundRow(gong: GongChoice, gongIntervalMin: Int, speech: Boolean, on
     Column {
         SectionHeader(
             title = stringResource(R.string.meditation_sound_voice_label),
-            // Einziger Abschnittskopf des Tabs: erste Farbe des Rings (FARBE-07).
-            color = headingColor(0),
             teaser = stringResource(
                 R.string.meditation_sound_summary,
                 when (gong) {

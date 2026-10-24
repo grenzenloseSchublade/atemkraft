@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -38,7 +39,6 @@ import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.log.LogHistoryCard
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -67,9 +67,8 @@ data class OwnActions(
  *
  * Einklappbar (MUSTER-03) erst, wenn beide Abschnitte da sind, mit Caret und der Anzahl im Kopf
  * („Tut mir gut · 4“); beide stehen zu Beginn offen, die Wahl gilt für die Sitzung
- * (`rememberSaveable`), nicht dauerhaft. Ein einzelner Abschnitt steht offen ohne Caret. Köpfe
- * reihum nach ihrer Lage (FARBE-07); der Titel der Karte „Verlauf“ steht neutral wie jeder
- * Kartentitel.
+ * (`rememberSaveable`), nicht dauerhaft. Ein einzelner Abschnitt steht offen ohne Caret. Alle
+ * Köpfe weiß (FARBE-07).
  *
  * Löschen bleibt zweistufig in der Kartenecke (MUSTER-05). Der Kopf gleicht den anderen Tabs:
  * Titel, Untertitel, Zahnrad zu den Einstellungen. [today] nur für reproduzierbare Screenshots.
@@ -99,20 +98,15 @@ fun OwnPatternsScreen(
                 scrolled = scrolled,
             )
         },
-        subtitle = stringResource(R.string.own_subtitle),
     ) {
         item(key = "history") {
             LogHistoryCard(entries = logEntries, onClick = actions.onOpenLogbook, today = today)
         }
 
-        // Köpfe reihum nach ihrer Lage (FARBE-07): Es zählen nur die sichtbaren Abschnitte.
-        var head = 0
         if (favorites.isNotEmpty()) {
-            val color = headingColor(head++)
             item(key = "favorites") {
                 OwnSection(
                     title = stringResource(R.string.own_favorites),
-                    color = color,
                     expanded = favoritesExpanded.takeIf { collapsible },
                     onExpandedChange = { favoritesExpanded = it },
                     status = favoritesStatus.takeIf { collapsible },
@@ -126,20 +120,18 @@ fun OwnPatternsScreen(
         }
 
         if (savedPatterns.isNotEmpty()) {
-            val color = headingColor(head)
             item(key = "my-patterns") {
                 OwnSection(
                     title = stringResource(R.string.own_creations),
-                    color = color,
                     expanded = patternsExpanded.takeIf { collapsible },
                     onExpandedChange = { patternsExpanded = it },
                     status = patternsStatus.takeIf { collapsible },
                     statusDescription = patternsDescription,
-                    // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf, so groß wie „Neu
-                    // generieren“ beim Muster des Tages (AppIconButton), in der Farbe des Kopfs.
+                    // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf (AppIconButton) in
+                    // onSurface wie jede Kopf-Aktion.
                     trailingAction = {
                         AppIconButton(onClick = actions.onNewPattern) {
-                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = color)
+                            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = MaterialTheme.colorScheme.onSurface)
                         }
                     },
                 ) {
@@ -176,7 +168,6 @@ fun OwnPatternsScreen(
 @Composable
 private fun OwnSection(
     title: String,
-    color: Color,
     expanded: Boolean?,
     onExpandedChange: (Boolean) -> Unit,
     status: String?,
@@ -186,7 +177,6 @@ private fun OwnSection(
 ) {
     CollapsibleSection(
         title = title,
-        color = color,
         expanded = expanded,
         onExpandedChange = onExpandedChange,
         status = status,

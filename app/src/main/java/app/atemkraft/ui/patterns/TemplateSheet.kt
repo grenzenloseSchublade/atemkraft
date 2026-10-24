@@ -40,7 +40,6 @@ import app.atemkraft.domain.FreeTemplate
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.HoldDash
 import app.atemkraft.ui.components.WholeWordText
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.selectedRow
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
@@ -79,7 +78,6 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
         ) {
             CollapsibleSection(
                 title = stringResource(R.string.pattern_editor_start),
-                color = headingColor(0),
                 teaser = stringResource(R.string.pattern_editor_start_hint),
                 headerTop = 0.dp,
             ) {

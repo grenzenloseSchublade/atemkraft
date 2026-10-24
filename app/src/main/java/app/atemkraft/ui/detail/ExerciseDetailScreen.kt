@@ -70,7 +70,6 @@ import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushEnd
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.components.rememberSafetyGate
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.BODY
@@ -119,15 +118,9 @@ fun ExerciseDetailScreen(
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
     val isIntense = exercise.caution
-    // Abschnittsköpfe reihum nach ihrer Lage, ohne Bedeutung (FARBE-07): Index = Zahl der gezeigten
-    // Köpfe darüber; fehlt ein Abschnitt (Anleitung, Lehre, Hinweise, Quellen), rückt der nächste
-    // nach. Auch „Hinweise & Sicherheit“ geht reihum – die Warnung tragen ⚠-Zeile und Chip. Die
-    // Familienfarbe bleibt beim Inhalt (Familie, Dauer-Chip); der Lehre-Verweis steht wie jeder
-    // Verweis in secondary (FARBE-04).
-    val effectHead = if (exercise.instructionHint != null) 1 else 0
-    val loreHead = effectHead + 1
-    val cautionsHead = loreHead + (if (exercise.lore != null) 1 else 0)
-    val referencesHead = cautionsHead + (if (exercise.cautions.isNotEmpty()) 1 else 0)
+    // Abschnittsköpfe weiß (FARBE-07); die Warnung tragen ⚠-Zeile und Chip. Die Familienfarbe
+    // bleibt beim Inhalt (Familie, Dauer-Chip); der Lehre-Verweis steht wie jeder Verweis in
+    // secondary (FARBE-04).
     // Anpassung (Dauer, optional Phasenlängen hinter „Phasen anpassen“) liegt im SessionAdjustState –
     // die Seite liest und ändert nur ihn (ARC-7).
     val adjust = rememberSessionAdjustState(exercise)
@@ -252,12 +245,11 @@ fun ExerciseDetailScreen(
 
         Spacer(Modifier.height(Dimens.GapSmall))
         exercise.instructionHint?.let { hint ->
-            ExpanderSection(stringResource(R.string.detail_instruction), hint, headingColor(0))
+            ExpanderSection(stringResource(R.string.detail_instruction), hint)
         }
         ExpanderSection(
             title = stringResource(R.string.detail_effect),
             appetizer = exercise.effect,
-            accent = headingColor(effectHead),
             content = exercise.effectDetail?.let { detail -> { BodyText(detail) } },
         )
         // Deutung der Tradition, getrennt von „Wirkung“ (keine Studienlage, TEXT-13).
@@ -267,7 +259,6 @@ fun ExerciseDetailScreen(
             ExpanderSection(
                 title = stringResource(R.string.detail_lore),
                 appetizer = lore.teaser,
-                accent = headingColor(loreHead),
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
                     BodyText(lore.detail)
@@ -294,7 +285,6 @@ fun ExerciseDetailScreen(
             ExpanderSection(
                 title = stringResource(R.string.detail_cautions),
                 appetizer = exercise.cautions.first(),
-                accent = headingColor(cautionsHead),
                 initiallyExpanded = isIntense,
                 content = if (moreCautions.isEmpty()) {
                     null
@@ -311,7 +301,6 @@ fun ExerciseDetailScreen(
             ExpanderSection(
                 title = stringResource(R.string.detail_references),
                 appetizer = pluralStringResource(R.plurals.detail_sources_count, exercise.references.size, exercise.references.size),
-                accent = headingColor(referencesHead),
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
                     exercise.references.forEach { ReferenceItem(it) }

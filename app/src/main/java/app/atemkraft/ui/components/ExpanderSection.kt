@@ -21,7 +21,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -37,15 +36,15 @@ import app.atemkraft.ui.theme.SECONDARY
  * Ausklappen. Der Appetizer steht **immer ganz** da – nie per Ellipse gekürzt, denn er trägt
  * Wirkung und Sicherheit als geschlossenen Satz (TEXT-06, -08, LAYOUT-03). [content] erscheint
  * aufgeklappt darunter und vertieft ihn. Ohne [content] gibt es nichts aufzuklappen: dann
- * ein schlichter Abschnitt ohne Caret und ohne Klick. Caret dreht sich, sanftes
- * Größen-Animieren, TalkBack bekommt Überschrift, Rolle Button und Ausgeklappt/Eingeklappt.
+ * ein schlichter Abschnitt ohne Caret und ohne Klick. Titel in `onSurface` wie jeder Kopf
+ * (FARBE-07), Caret gedimmt; er dreht sich, sanftes Größen-Animieren, TalkBack bekommt Überschrift,
+ * Rolle Button und Ausgeklappt/Eingeklappt.
  * [divider] = false lässt die Trennlinie weg, wo der Abschnitt allein steht. Als Karte: [ExpanderCard].
  */
 @Composable
 fun ExpanderSection(
     title: String,
     appetizer: String,
-    accent: Color,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
     divider: Boolean = true,
@@ -55,7 +54,6 @@ fun ExpanderSection(
         Expander(
             title = title,
             appetizer = appetizer,
-            accent = accent,
             initiallyExpanded = initiallyExpanded,
             rowTop = Dimens.ListGap,
             rowBottom = Dimens.ListGap,
@@ -90,7 +88,6 @@ fun ExpanderCard(
             Expander(
                 title = title,
                 appetizer = appetizer,
-                accent = MaterialTheme.colorScheme.onSurface,
                 initiallyExpanded = initiallyExpanded,
                 rowTop = if (header != null) Dimens.ListGap else Dimens.CardPadding,
                 rowBottom = Dimens.CardPadding,
@@ -109,7 +106,6 @@ fun ExpanderCard(
 private fun Expander(
     title: String,
     appetizer: String,
-    accent: Color,
     rowTop: Dp,
     rowBottom: Dp,
     contentBottom: Dp,
@@ -147,7 +143,7 @@ private fun Expander(
                 WholeWordText(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = accent,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = sanskritText(appetizer),
@@ -161,7 +157,7 @@ private fun Expander(
                 )
             }
             if (expandable) {
-                ExpandCaret(expanded = expanded, tint = accent)
+                ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
             }
         }
         if (expanded && content != null) {

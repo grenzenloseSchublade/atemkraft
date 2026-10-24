@@ -30,7 +30,6 @@ import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
-import app.atemkraft.ui.components.headingColor
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -41,20 +40,20 @@ import app.atemkraft.ui.theme.Dimens
  * Übung der App, wo es eine gibt. Unten die Quellen. Lehre und Studienlage stehen getrennt (TEXT-13);
  * die Studienlage einer Technik trägt das Etikett wie auf der Detailseite.
  *
- * Köpfe reihum nach ihrer Lage (FARBE-07): Grundlagen 0, Techniken 1, Quellen 2; Kartentitel neutral.
+ * Köpfe weiß wie überall (FARBE-07); Kartentitel neutral.
  * [expanded] öffnet alle Karten und die Quellen von Anfang an (Screenshot-Test).
  */
 @Composable
 fun PranayamaScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, expanded: Boolean = false) {
     PushScaffold(onBack = onBack, title = stringResource(R.string.pranayama_title)) {
         ScreenSubtitle(Pranayama.intro)
-        CollapsibleSection(title = stringResource(R.string.pranayama_basics), color = headingColor(0), teaser = Pranayama.topicsTeaser) {
+        CollapsibleSection(title = stringResource(R.string.pranayama_basics), teaser = Pranayama.topicsTeaser) {
             Pranayama.topics.forEach { TopicCard(it, expanded) }
         }
-        CollapsibleSection(title = stringResource(R.string.pranayama_techniques), color = headingColor(1), teaser = Pranayama.techniquesTeaser) {
+        CollapsibleSection(title = stringResource(R.string.pranayama_techniques), teaser = Pranayama.techniquesTeaser) {
             Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
         }
-        SourcesSection(headingColor(2), expanded)
+        SourcesSection(expanded)
     }
 }
 
@@ -101,11 +100,10 @@ private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String
 
 /** Quellen: klassische Texte (Lehre) und Studien (Einordnung), getrennt beschriftet, zum Aufklappen. */
 @Composable
-private fun SourcesSection(accent: Color, initiallyExpanded: Boolean) {
+private fun SourcesSection(initiallyExpanded: Boolean) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
     CollapsibleSection(
         title = stringResource(R.string.atemlehre_sources),
-        color = accent,
         expanded = expanded,
         onExpandedChange = { expanded = it },
         teaser = Pranayama.sourcesTeaser,
