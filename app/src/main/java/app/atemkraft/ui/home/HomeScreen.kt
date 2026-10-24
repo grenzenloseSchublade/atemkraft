@@ -1,12 +1,17 @@
 package app.atemkraft.ui.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
@@ -111,8 +116,10 @@ data class HomeActions(
  * die Reihe ist dann ausgeblendet.
  *
  * Der Bereich eines Anlasses ist die häufigste Familie seiner Übungen ([area]). Das Feld bekommt
- * beim Öffnen keinen Fokus; die Eingabe lebt nur in `rememberSaveable` – nie in DataStore oder
- * Log (SEC-PRIV-03/04). System-Zurück leert zuerst Wahl und Suche und schließt die Tastatur.
+ * beim Öffnen keinen Fokus; die Eingabe lebt nur in einem `TextFieldState` aus
+ * `rememberTextFieldState` (`rememberSaveable`) – nie in DataStore oder Log (SEC-PRIV-03/04).
+ * System-Zurück: Hat das Feld den Fokus, nimmt Zurück nur den Fokus (die Tastatur schließt, die
+ * Eingabe bleibt); ohne Fokus leert es Wahl und Suche (Nutzer 2026-10-24).
  *
  * [welcome]: die Übung der Willkommenskarte; null = Karte weggeklickt (oder Übung fehlt).
  */
@@ -125,20 +132,37 @@ fun HomeScreen(
     markedIds: Set<String> = emptySet(),
     welcome: Exercise? = null,
 ) {
-    var query by rememberSaveable { mutableStateOf("") }
+    // Die Eingabe lebt allein in diesem Zustand (rememberTextFieldState = rememberSaveable, SEC-PRIV-03/04);
+    // das Feld hält keinen zweiten Wert daneben (Nutzer 2026-10-24).
+    val query = rememberTextFieldState()
+    val queryText = query.text.toString()
     // Höchstens eins von beiden ist gesetzt, und nur bei leerer Eingabe (siehe KDoc).
     var chosen by rememberSaveable { mutableStateOf<Situation?>(null) }
     var chosenArea by rememberSaveable { mutableStateOf<BreathingFamily?>(null) }
     var filters by rememberSaveable { mutableStateOf(emptySet<ExerciseFilter>()) }
-    val results = remember(query, catalog.situations, catalog.areas) { SituationSearch.search(query, catalog.situations, catalog.areas) }
+    val results = remember(queryText, catalog.situations, catalog.areas) { SituationSearch.search(queryText, catalog.situations, catalog.areas) }
     val focusManager = LocalFocusManager.current
+    val queryFocus = remember { MutableInteractionSource() }
+    val queryFocused by queryFocus.collectIsFocusedAsState()
+    // Eine Eingabe hebt die Wahl auf – nur Eingaben des Nutzers: Leert ein Chip das Feld
+    // (clearText), läuft die Transformation nicht.
+    val onInput = InputTransformation {
+        if (length > 0) {
+            chosen = null
+            chosenArea = null
+        }
+    }
     val showAll = {
-        query = ""
+        query.clearText()
         chosen = null
         chosenArea = null
         focusManager.clearFocus()
     }
-    BackHandler(enabled = query.isNotEmpty() || chosen != null || chosenArea != null, onBack = showAll)
+    // Zurück mit Fokus im Feld schließt nur die Tastatur (Fokus weg), die Eingabe bleibt – erst
+    // ohne Fokus leert Zurück Wahl und Suche (Nutzer 2026-10-24).
+    BackHandler(enabled = queryFocused || queryText.isNotEmpty() || chosen != null || chosenArea != null) {
+        if (queryFocused) focusManager.clearFocus() else showAll()
+    }
     // Was unter dem Block steht: der gewählte Anlass, der gewählte Bereich, die Suchtreffer oder
     // nichts (dann die Familien).
     val shownSituations: List<SituationRecommendation> = when {
@@ -176,20 +200,15 @@ fun HomeScreen(
             item(key = "feeling") {
                 FeelingBlock(
                     query = query,
-                    onQueryChange = { text ->
-                        query = text
-                        if (text.isNotEmpty()) {
-                            chosen = null
-                            chosenArea = null
-                        }
-                    },
+                    queryFocus = queryFocus,
+                    onInput = onInput,
                     situations = catalog.situations,
                     highlighted = highlighted,
                     onChipClick = { situation ->
                         // Zweiter Tipp auf denselben Chip zeigt wieder alles; ein Chip leert die Eingabe.
                         chosen = if (chosen == situation) null else situation
                         chosenArea = null
-                        query = ""
+                        query.clearText()
                         focusManager.clearFocus()
                     },
                 )
@@ -215,7 +234,7 @@ fun HomeScreen(
                         AreaLink(family = area) {
                             chosen = null
                             chosenArea = area
-                            query = ""
+                            query.clearText()
                             focusManager.clearFocus()
                         }
                     }

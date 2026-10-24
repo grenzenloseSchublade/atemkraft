@@ -3,6 +3,7 @@ package app.atemkraft.ui.components
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,8 +14,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.TextFieldDecorator
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -54,6 +60,16 @@ import app.atemkraft.ui.theme.Sizes
  * `CircleOverhang` über sie hinaus. Heute die Befindens-Suche im Atmen-Tab (MUSTER-09), dort ohne
  * umgebenden Kasten direkt über den Anlass-Chips.
  *
+ * Ein Zustand: Der Text lebt allein im hochgezogenen [state] (`TextFieldState`,
+ * `rememberTextFieldState` beim Aufrufer – das ist `rememberSaveable`). Der Aufrufer liest
+ * `state.text` und setzt den Text über `state.clearText()` bzw. `state.edit { … }`; das Feld
+ * hält keinen zweiten Wert daneben (Nutzer 2026-10-24: Am Gerät stand das Feld nach dem Schließen
+ * der Tastatur ohne „Suchen“ leer da, während die Treffer stehen blieben; der String-Overload von
+ * `BasicTextField` führte einen inneren `TextFieldValue` neben dem Text des Aufrufers – mit einem
+ * Zustand gibt es nichts, das auseinanderlaufen kann). [inputTransformation]
+ * läuft nur bei Eingaben des Nutzers, nicht bei `clearText()` (Atmen-Tab: eine Eingabe hebt die
+ * Wahl auf). [interactionSource] gibt dem Aufrufer den Fokus (`collectIsFocusedAsState`).
+ *
  * Datenschutz (SEC-PRIV-03): Eingaben zum Befinden sind gesundheitsnah. Die Tastatur bekommt
  * deshalb keine Autokorrektur und `IME_FLAG_NO_PERSONALIZED_LEARNING` – sie soll die Wörter
  * weder lernen noch synchronisieren. Das Feld selbst speichert nichts; den Text hält der
@@ -64,14 +80,15 @@ import app.atemkraft.ui.theme.Sizes
  */
 @Composable
 fun SearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
+    state: TextFieldState,
     placeholder: String,
     searchDescription: String,
     clearDescription: String,
     onClear: (() -> Unit)?,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
+    interactionSource: MutableInteractionSource? = null,
+    inputTransformation: InputTransformation? = null,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     NoPersonalizedLearning {
@@ -94,14 +111,13 @@ fun SearchField(
             )
             Spacer(Modifier.width(Dimens.ListGap))
             BasicTextField(
-                value = query,
-                onValueChange = onQueryChange,
+                state = state,
                 modifier = Modifier
                     .weight(1f)
                     // Das Feld selbst ist die Tippfläche (A11Y-05), nicht nur die Pille um es herum.
                     .heightIn(min = Dimens.MinTouchTarget)
                     .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
-                singleLine = true,
+                inputTransformation = inputTransformation,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 keyboardOptions = KeyboardOptions(
@@ -110,8 +126,10 @@ fun SearchField(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Search,
                 ),
-                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
-                decorationBox = { inner ->
+                onKeyboardAction = KeyboardActionHandler { keyboard?.hide() },
+                lineLimits = TextFieldLineLimits.SingleLine,
+                interactionSource = interactionSource,
+                decorator = TextFieldDecorator { inner ->
                     Box(modifier = Modifier.heightIn(min = Dimens.MinTouchTarget), contentAlignment = Alignment.CenterStart) {
                         // Immer im Baum, sichtbar nur bei leerem Feld: Der Platzhalter wird mit dem
                         // Feld zusammengeführt und bleibt so sein Name wie das Label eines
@@ -119,7 +137,7 @@ fun SearchField(
                         // dich?“, Voice Access „Tippe auf …“; A11Y-01). Nur nicht gezeichnet, nicht
                         // per Alpha: Durchsichtige Knoten blendet die Bedienungshilfe aus. Bei
                         // großer Schrift bricht er an Wortgrenzen um, die Pille wächst mit.
-                        val empty = query.isEmpty()
+                        val empty = state.text.isEmpty()
                         Text(
                             text = placeholder,
                             style = MaterialTheme.typography.bodyMedium,
@@ -181,8 +199,7 @@ private object NoLearningInterceptor : PlatformTextInputInterceptor {
 private fun SearchFieldPreview() {
     AtemkraftTheme {
         SearchField(
-            query = "Prüfung",
-            onQueryChange = {},
+            state = rememberTextFieldState("Prüfung"),
             placeholder = stringResource(R.string.situations_search_placeholder),
             searchDescription = stringResource(R.string.cd_search),
             clearDescription = stringResource(R.string.cd_search_clear),

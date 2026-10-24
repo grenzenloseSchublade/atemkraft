@@ -1,6 +1,7 @@
 package app.atemkraft.ui.home
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -9,6 +10,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
@@ -72,8 +76,9 @@ import kotlinx.coroutines.delay
  */
 @Composable
 internal fun FeelingBlock(
-    query: String,
-    onQueryChange: (String) -> Unit,
+    query: TextFieldState,
+    queryFocus: MutableInteractionSource,
+    onInput: InputTransformation,
     situations: List<SituationRecommendation>,
     highlighted: Set<Situation>,
     onChipClick: (Situation) -> Unit,
@@ -84,7 +89,7 @@ internal fun FeelingBlock(
             .fillMaxWidth()
             .semantics { isTraversalGroup = true },
     ) {
-        SituationSearchField(query = query, onQueryChange = onQueryChange)
+        SituationSearchField(query = query, focus = queryFocus, onInput = onInput)
         Spacer(Modifier.height(Dimens.GapSmall))
         // Scrollen die Chips, reicht ihre Fläche bis an den Bildschirmrand (Listenrand aufgehoben).
         ChoiceChipRow(groupName = name, items = situations, endBleed = Dimens.ScreenPadding) { rec, order ->
@@ -100,18 +105,21 @@ internal fun FeelingBlock(
 
 /**
  * Befindens-Suche (MUSTER-09): kein Fokus beim Öffnen des Tabs. Das X erscheint erst mit einer
- * Eingabe und leert sie; das Feld behält dabei den Fokus, wer neu tippen will, tippt weiter. Den
- * Text hält der Aufrufer nur in `rememberSaveable` (SEC-PRIV-03/04).
+ * Eingabe und leert sie (`clearText`); das Feld behält dabei den Fokus, wer neu tippen will, tippt
+ * weiter. Den Text hält der Aufrufer nur im `TextFieldState` aus `rememberTextFieldState`
+ * (`rememberSaveable`, SEC-PRIV-03/04); [focus] meldet ihm den Fokus, [onInput] läuft bei jeder
+ * Eingabe des Nutzers.
  */
 @Composable
-private fun SituationSearchField(query: String, onQueryChange: (String) -> Unit) {
+private fun SituationSearchField(query: TextFieldState, focus: MutableInteractionSource, onInput: InputTransformation) {
     SearchField(
-        query = query,
-        onQueryChange = onQueryChange,
+        state = query,
         placeholder = stringResource(R.string.situations_search_placeholder),
         searchDescription = stringResource(R.string.cd_search),
         clearDescription = stringResource(R.string.cd_search_clear),
-        onClear = if (query.isEmpty()) null else ({ onQueryChange("") }),
+        onClear = if (query.text.isEmpty()) null else ({ query.clearText() }),
+        interactionSource = focus,
+        inputTransformation = onInput,
     )
 }
 
