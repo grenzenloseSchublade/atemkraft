@@ -96,7 +96,7 @@ Der Upload-Schlüssel liegt wie der Release-Schlüssel außerhalb des Repos (SEC
 | Formular | Angabe für Atemkraft |
 |---|---|
 | Datenschutzerklärung | URL der PRIVACY.md (siehe oben) |
-| Datensicherheit | „Keine Daten erhoben, keine Daten geteilt.“ Daten, die das Gerät nicht verlassen, zählen nicht – auch nicht das Befinden am Ende (nur am Logbuch-Eintrag) und die lokale Erinnerung. Der freiwillige Stimmen-Download geht an GitHub; wir erhalten nichts, er ist in der Datenschutzerklärung offengelegt (SEC-DIST-03) |
+| Datensicherheit | „Keine Daten erhoben, keine Daten geteilt.“ Daten, die das Gerät nicht verlassen, zählen nicht – auch nicht das Befinden am Ende (nur am Logbuch-Eintrag), die lokale Erinnerung und die Sicherungsdatei (Ort wählt der Nutzer über das Storage Access Framework). Der freiwillige Stimmen-Download geht an GitHub; wir erhalten nichts, er ist in der Datenschutzerklärung offengelegt (SEC-DIST-03) |
 | Werbe-ID | Nein |
 | Werbung | Keine Werbung |
 | App-Zugriff | Alle Funktionen ohne Anmeldung |

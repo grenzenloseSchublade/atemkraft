@@ -278,7 +278,7 @@ internal fun NavGraphBuilder.appGraph(
     pushComposable<SettingsRoute> { entry ->
         // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
         LaunchedEffect(Unit) { container.meditationController.prepareSpeech() }
-        val patternTransfer = rememberPatternTransfer(savedPatterns, settings)
+        val patternTransfer = rememberPatternTransfer(savedPatterns, settings, container.logbookRepository)
         val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
         SettingsScreen(
             state = settingsState,

@@ -178,8 +178,9 @@ fun SettingsScreen(
 }
 
 /**
- * Daten: „Eigene Kreationen“ (gespeicherte Muster) als Datei sichern und wieder einlesen (Storage
- * Access Framework, keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die
+ * Daten: die Sicherung „alles“ (Kreationen, Logbuch samt Befinden, „Tut mir gut“, Einstellungen)
+ * als Datei schreiben und wieder einlesen, mit Vorschau vor dem Übernehmen (Storage Access
+ * Framework, keine Berechtigung, keine Cloud), der Handywechsel als Aufklapper; unten die
  * Zahl der Logbuch-Sitzungen mit Papierkorb, zweistufig (MUSTER-05), und der Schalter „Serie
  * zeigen“ (Tage in Folge in Verlauf und Logbuch; Auswertung 2026-10-24 – passt zu „Atem ist keine
  * Zahl“: wer die Zählung nicht will, schaltet sie ab) und „Befinden am Ende fragen“ (das Wort am
@@ -189,7 +190,7 @@ fun SettingsScreen(
 private fun DataCard(transfer: PatternTransfer, state: SettingsUiState, actions: SettingsActions) {
     var transferInfoExpanded by rememberSaveable { mutableStateOf(false) }
     SettingsCard(stringResource(R.string.settings_data_title), intro = stringResource(R.string.settings_data_intro)) {
-        SubLabel(stringResource(R.string.settings_data_patterns))
+        SubLabel(stringResource(R.string.settings_data_backup))
         Spacer(Modifier.height(Dimens.GapSmall))
         // Kurze Labels, damit beide gleich breit nebeneinander passen; worum es geht, sagt die
         // Unterüberschrift darüber. Passen sie nicht, stehen sie untereinander (LAYOUT-03).
@@ -206,6 +207,7 @@ private fun DataCard(transfer: PatternTransfer, state: SettingsUiState, actions:
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
+        transfer.preview?.let { BackupPreviewBlock(it, transfer) }
         Spacer(Modifier.height(Dimens.GapTiny))
         HintText(stringResource(R.string.settings_data_hint))
         // Wie „Wie funktioniert das?“ in der Atmen-Karte: Der lange Hinweis steht erst auf Wunsch da.
@@ -300,6 +302,42 @@ private fun ReminderCard(reminder: ReminderSettings, actions: SettingsActions) {
 
 /** Darf die App Benachrichtigungen zeigen (Erlaubnis ab Android 13 und Schalter in den Systemeinstellungen)? */
 private fun notificationsAllowed(context: Context): Boolean = NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+/**
+ * Vorschau einer gelesenen Sicherung, bevor etwas geschrieben wird: was darin ist (Kreationen,
+ * Logbuch-Einträge, Markierungen, Einstellungen), dass zusammengeführt wird, auf Wunsch
+ * „Einstellungen ersetzen“ (Standard aus), dann „Übernehmen“ und „Abbrechen“ als gleichrangige
+ * Knöpfe. Ein Satz statt einer Tabelle; angesagt wird er als Live-Region, wenn er erscheint.
+ */
+@Composable
+private fun BackupPreviewBlock(preview: BackupPreview, transfer: PatternTransfer) {
+    val parts = buildList {
+        if (preview.patterns > 0) add(pluralStringResource(R.plurals.data_preview_patterns, preview.patterns, preview.patterns))
+        if (preview.logbook > 0) add(pluralStringResource(R.plurals.data_preview_logbook, preview.logbook, preview.logbook))
+        if (preview.marked > 0) add(pluralStringResource(R.plurals.data_preview_marked, preview.marked, preview.marked))
+        if (preview.hasSettings) add(stringResource(R.string.data_preview_settings))
+    }
+    Column(modifier = Modifier.padding(top = Dimens.GapSmall)) {
+        Column(modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
+            SubLabel(stringResource(R.string.data_preview_title))
+            BodyText(parts.joinToString(DOT_SEPARATOR))
+            HintText(stringResource(R.string.data_preview_merge))
+        }
+        if (preview.hasSettings) {
+            ToggleRow(
+                label = stringResource(R.string.data_import_settings),
+                checked = transfer.withSettings,
+                onCheckedChange = transfer.toggleSettings,
+                hint = stringResource(R.string.data_import_settings_hint),
+            )
+        }
+        Spacer(Modifier.height(Dimens.GapSmall))
+        AdaptiveButtonRow(modifier = Modifier.fillMaxWidth(), spacing = Dimens.GapSmall) {
+            AppOutlinedButton(onClick = transfer.confirm) { Text(stringResource(R.string.data_import_apply)) }
+            AppOutlinedButton(onClick = transfer.cancel) { Text(stringResource(R.string.data_import_cancel)) }
+        }
+    }
+}
 
 /**
  * Zeile „Logbuch“: links Titel und Zahl der Sitzungen, rechts in derselben Icon-Spalte wie bei

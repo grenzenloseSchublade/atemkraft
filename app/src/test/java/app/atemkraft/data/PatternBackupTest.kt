@@ -1,17 +1,36 @@
 package app.atemkraft.data
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.atemkraft.data.local.SavedPatternEntity
+import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.RandomPatternGenerator
+import app.atemkraft.domain.SessionKind
+import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.domain.ToneVolume
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.time.LocalDate
 
 /** SEC-STORE-01/-02: Export/Import gespeicherter Muster – Round-Trip und Import als nicht vertrauenswürdige Eingabe. */
 class PatternBackupTest {
+
+    @get:Rule
+    val folder = TemporaryFolder()
 
     /** Viloma I: drei Stufen Einatmen mit Pausen, dann Ausatmen. */
     private val viloma = FreePatternTemplates.all.single { it.label == "Viloma I" }.pattern
@@ -67,5 +86,82 @@ class PatternBackupTest {
         val checked = PatternBackup.decode(backup(*(bad + entry("")).toTypedArray()))!!
         assertEquals(bad.size, checked.invalid)
         assertEquals(1, checked.entries.size)
+    }
+
+    /**
+     * Sicherung „alles“ (Version 2): Logbuch samt Befinden, Markierungen und Einstellungen im Rundlauf;
+     * zusammengeführt ohne Dubletten, Einstellungen nur auf Wunsch, die Erinnerung bleibt am Gerät;
+     * eine Datei der Version 1 (nur Muster) bleibt lesbar, Unplausibles im Logbuch fällt weg.
+     */
+    @Test
+    fun `Sicherung alles - Rundlauf, Zusammenführen und alte Musterdatei`() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            fun settings(name: String) = SettingsRepository(PreferenceDataStoreFactory.create(scope = scope) { File(folder.root, "$name.preferences_pb") })
+            val seen = SessionLogEntry(
+                exerciseId = "resonanz",
+                exerciseName = "Resonanz-Atmung",
+                family = BreathingFamily.DOWNREGULATE,
+                startedAtEpochMs = 1_760_000_000_000,
+                durationMs = 300_000,
+                roundsCompleted = 30,
+                feeling = Feeling.CALMER,
+            )
+            val meditation = SessionLogEntry(
+                exerciseId = "meditation",
+                exerciseName = "Meditation",
+                family = null,
+                startedAtEpochMs = 1_760_100_000_000,
+                durationMs = 600_000,
+                roundsCompleted = 0,
+                kind = SessionKind.MEDITATION,
+            )
+
+            val sourceSettings = settings("quelle")
+            sourceSettings.setToneVolume(ToneVolume.QUIET)
+            sourceSettings.setExerciseMarked("resonanz", true)
+            sourceSettings.setExerciseIntervals("resonanz", 7, null, null, null)
+            sourceSettings.setReminderEnabled(true)
+            val sourceLog = LogbookRepository(FakeLogbookDao()).apply {
+                append(seen)
+                append(meditation)
+            }
+            val sourceSaved = SavedPatternsRepository(FakeSavedPatternDao()).apply { saveCustom(viloma, minutes = 7, name = "Stufen") }
+            val file = ByteArrayOutputStream()
+            assertEquals(
+                PatternTransferService.ExportSummary(patterns = 1, logbook = 2),
+                PatternTransferService(sourceSaved, sourceSettings, sourceLog).export(1_000) { file },
+            )
+
+            // Ziel: derselbe Resonanz-Eintrag ist schon da (ohne Befinden), sonst leer.
+            val targetSettings = settings("ziel")
+            val targetDao = FakeLogbookDao()
+            val targetLog = LogbookRepository(targetDao).apply { append(seen.copy(feeling = null)) }
+            val target = PatternTransferService(SavedPatternsRepository(FakeSavedPatternDao()), targetSettings, targetLog)
+            val read = target.read { ByteArrayInputStream(file.toByteArray()) } as PatternTransferService.ReadOutcome.Preview
+            assertEquals(listOf(seen.copy(id = 0), meditation), read.decoded.logbook)
+            assertEquals(setOf("resonanz"), read.decoded.marked)
+
+            // Ohne Einstellungen: Muster und Meditation neu, Resonanz vorhanden; Lautstärke bleibt.
+            assertEquals(PatternTransferService.ApplyResult(added = 2, duplicates = 1, settingsApplied = false), target.apply(read.decoded, withSettings = false))
+            assertEquals(ToneVolume.MEDIUM, targetSettings.cueSettings.first().volume)
+            assertEquals(setOf("resonanz"), targetSettings.markedExercises.first())
+            assertEquals(2, targetDao.rows.size)
+            // Mit Einstellungen: alles schon da, Lautstärke und Anpassung übernommen, Erinnerung nicht.
+            assertEquals(PatternTransferService.ApplyResult(added = 0, duplicates = 3, settingsApplied = true), target.apply(read.decoded, withSettings = true))
+            assertEquals(ToneVolume.QUIET, targetSettings.cueSettings.first().volume)
+            assertEquals(7, targetSettings.exerciseIntervals("resonanz").first()?.duration)
+            assertFalse(targetSettings.reminderSettings.first().enabled)
+        } finally {
+            scope.cancel()
+        }
+
+        // Version 1 (nur Muster) bleibt lesbar; ein Logbuch-Eintrag mit unbekannter Art fällt weg.
+        assertEquals(1, PatternBackup.decode(backup(entry("")))!!.entries.size)
+        val log = """[{"exerciseId":"x","exerciseName":"X","kind":"ANDERS","startedAtEpochMs":1,"durationMs":1},""" +
+            """{"exerciseId":"meditation","exerciseName":"Meditation","kind":"MEDITATION","startedAtEpochMs":1,"durationMs":1,"feeling":"NEU"}]"""
+        val v2 = PatternBackup.decode("""{"format":"atemkraft-muster","version":2,"exportedAtEpochMs":0,"patterns":[],"logbook":$log}""")!!
+        assertEquals(1, v2.invalid)
+        assertNull(v2.logbook.single().feeling)
     }
 }

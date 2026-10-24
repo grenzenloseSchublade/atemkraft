@@ -76,6 +76,7 @@ import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.own.OwnActions
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorState
+import app.atemkraft.ui.settings.BackupPreview
 import app.atemkraft.ui.settings.NoOpSettingsActions
 import app.atemkraft.ui.settings.PatternTransfer
 import app.atemkraft.ui.settings.SettingsScreen
@@ -351,9 +352,12 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             onOpenAbout = {},
             onBack = {},
             transfer = PatternTransfer(
-                exportLabel = pluralStringResource(R.plurals.data_export_done, 120, 120),
+                exportLabel = stringResource(R.string.data_export_done),
                 importLabel = pluralStringResource(R.plurals.data_import_done, 120, 120, 380),
                 note = stringResource(R.string.data_import_not_backup),
+                // Vorschau einer gelesenen Sicherung mit allen Teilen und „Einstellungen ersetzen“.
+                preview = BackupPreview(patterns = 120, logbook = 4_000, marked = 12, hasSettings = true),
+                withSettings = true,
             ),
         )
     }

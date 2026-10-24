@@ -500,12 +500,12 @@
     <string name="settings_reset_notice">Einstellungen wurden zurückgesetzt, weil ihre Datei beschädigt war. Logbuch, eigene Kreationen und geladene Stimmen sind noch da; wähle hier neu, was du anders hattest.</string>
     <string name="settings_data_title">Daten</string>
     <string name="settings_data_intro">Alles bleibt auf deinem Gerät; die App hat kein Konto und keine Cloud.</string>
-    <string name="settings_data_patterns">Eigene Kreationen</string>
-    <string name="settings_data_hint">Als Datei sichern und wieder einlesen; den Speicherort wählst du selbst.</string>
+    <string name="settings_data_backup">Sicherung</string>
+    <string name="settings_data_hint">Eigene Kreationen, Logbuch, „Tut mir gut“ und Einstellungen in einer Datei; den Speicherort wählst du selbst.</string>
     <string name="settings_data_export">Exportieren</string>
     <string name="settings_data_import">Importieren</string>
     <string name="settings_data_transfer_more">Beim Handywechsel?</string>
-    <string name="settings_data_transfer_hint">Ab Android 12 kann die direkte Übertragung von Gerät zu Gerät (z. B. Smart Switch per Kabel) Logbuch, eigene Kreationen und Einstellungen ohne Cloud mitnehmen, je nach Hersteller. Stimmen lädst du neu. Sicher mitnehmen kannst du deine Kreationen mit „Exportieren“.</string>
+    <string name="settings_data_transfer_hint">Ab Android 12 kann die direkte Übertragung von Gerät zu Gerät (z. B. Smart Switch per Kabel) Logbuch, eigene Kreationen und Einstellungen ohne Cloud mitnehmen, je nach Hersteller. Stimmen lädst du neu. Sicher mitnehmen kannst du alles mit „Exportieren“.</string>
     <string name="settings_log_title">Logbuch</string>
     <string name="settings_log_empty">Noch keine Sitzung</string>
     <string name="settings_show_streak">Serie zeigen</string>
@@ -535,16 +535,33 @@
     <string name="settings_ask_feeling_hint">Am Ende ein Tipp, etwa „ruhiger“ oder „wie vorher“; steht als Wort im Logbuch und wird nie ausgewertet.</string>
     <!-- Bestätigungszustand von „Logbuch leeren“ (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_log_clear_confirm">Logbuch wirklich leeren?</string>
-    <plurals name="data_export_done">
-        <item quantity="one">✓ %1$d exportiert</item>
-        <item quantity="other">✓ %1$d exportiert</item>
+    <string name="data_export_done">✓ Gesichert</string>
+    <!-- Vorschau vor dem Übernehmen einer Sicherung: Teile mit „ · “ verbunden. -->
+    <string name="data_preview_title">In der Datei</string>
+    <plurals name="data_preview_patterns">
+        <item quantity="one">%1$d Kreation</item>
+        <item quantity="other">%1$d Kreationen</item>
     </plurals>
-    <string name="data_export_empty">Noch nichts unter „Eigene Kreationen“ – speichere im Tab „Atmen“ das Muster des Tages oder stell dir im Tab „Eigene“ eines zusammen.</string>
+    <plurals name="data_preview_logbook">
+        <item quantity="one">%1$d Logbuch-Eintrag</item>
+        <item quantity="other">%1$d Logbuch-Einträge</item>
+    </plurals>
+    <plurals name="data_preview_marked">
+        <item quantity="one">%1$d-mal „Tut mir gut“</item>
+        <item quantity="other">%1$d-mal „Tut mir gut“</item>
+    </plurals>
+    <string name="data_preview_settings">Einstellungen</string>
+    <string name="data_preview_merge">Kommt zu dem dazu, was hier schon ist; Doppeltes bleibt einmal.</string>
+    <string name="data_import_settings">Einstellungen ersetzen</string>
+    <string name="data_import_settings_hint">Klang, Anzeige, Meditation und Anpassungen wie in der Datei. Stimme und Erinnerung bleiben, wie sie auf diesem Gerät sind.</string>
+    <string name="data_import_apply">Übernehmen</string>
+    <string name="data_import_cancel">Abbrechen</string>
+    <string name="data_import_settings_done">Einstellungen übernommen.</string>
     <plurals name="data_import_done">
         <item quantity="one">✓ %1$d neu\u00A0· %2$d vorhanden</item>
         <item quantity="other">✓ %1$d neu\u00A0· %2$d vorhanden</item>
     </plurals>
-    <string name="data_import_nothing">In der Datei war kein Muster, das sich übernehmen lässt.</string>
+    <string name="data_import_nothing">In der Datei war nichts, das sich übernehmen lässt.</string>
     <plurals name="data_import_invalid_entries">
         <item quantity="one">%1$d Eintrag lag außerhalb der Grenzen und wurde übersprungen.</item>
         <item quantity="other">%1$d Einträge lagen außerhalb der Grenzen und wurden übersprungen.</item>
@@ -553,8 +570,12 @@
         <item quantity="one">Nur das erste Muster wurde gelesen.</item>
         <item quantity="other">Nur die ersten %1$d Muster wurden gelesen.</item>
     </plurals>
-    <string name="data_import_not_backup">Das ist keine Atemkraft-Musterdatei. Bitte eine exportierte .json-Datei wählen.</string>
-    <string name="data_import_too_large">Die Datei ist zu groß für eine Atemkraft-Musterdatei.</string>
+    <plurals name="data_import_log_truncated">
+        <item quantity="one">Nur der erste Logbuch-Eintrag wurde gelesen.</item>
+        <item quantity="other">Nur die ersten %1$d Logbuch-Einträge wurden gelesen.</item>
+    </plurals>
+    <string name="data_import_not_backup">Das ist keine Atemkraft-Sicherung. Bitte eine exportierte .json-Datei wählen.</string>
+    <string name="data_import_too_large">Die Datei ist zu groß für eine Atemkraft-Sicherung.</string>
     <string name="data_io_error">Die Datei ließ sich nicht lesen oder schreiben. Bitte einen anderen Speicherort wählen.</string>
     <string name="cd_voice_preview">Stimme %1$s anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>

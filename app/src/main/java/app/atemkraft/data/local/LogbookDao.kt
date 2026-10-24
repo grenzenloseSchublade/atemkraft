@@ -12,8 +12,16 @@ interface LogbookDao {
     @Insert
     suspend fun insert(entry: LogEntryEntity): Long
 
+    /** Einträge aus einer Sicherung (schon ohne Dubletten). */
+    @Insert
+    suspend fun insertAll(entries: List<LogEntryEntity>)
+
     @Query("SELECT * FROM log_entries ORDER BY startedAtEpochMs DESC")
     fun all(): Flow<List<LogEntryEntity>>
+
+    /** Alle Einträge auf einmal, älteste zuerst (Sicherung, Abgleich beim Einlesen). */
+    @Query("SELECT * FROM log_entries ORDER BY startedAtEpochMs")
+    suspend fun snapshot(): List<LogEntryEntity>
 
     @Query("SELECT COUNT(*) FROM log_entries")
     fun count(): Flow<Int>

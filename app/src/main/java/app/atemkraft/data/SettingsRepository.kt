@@ -28,6 +28,7 @@ import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.domain.VoiceCatalog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 import java.time.DayOfWeek
@@ -245,6 +246,85 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     suspend fun setReminderDays(days: Set<DayOfWeek>) {
         if (days.isEmpty()) return
         store.edit { prefs -> prefs[Keys.REMINDER_DAYS] = days.map { it.name }.toSet() }
+    }
+
+    /**
+     * Einstellungen für die Sicherung ([SettingsBackup]): nur, was auf jedem Gerät gleich gilt, mit den
+     * Werten, die gerade gelten (auch Standardwerte); dazu die Anpassungen der eingebauten Übungen
+     * [builtInIds]. Nicht: Stimme, Erinnerung, bestätigte Sicherheitshinweise, Gerätezustände.
+     */
+    suspend fun exportSettings(builtInIds: Collection<String>): SettingsBackup {
+        val prefs = data.first()
+        val cue = cueSettings.first()
+        val display = sessionDisplay.first()
+        val med = meditationDisplay.first()
+        val config = meditationSettings.first()
+        return SettingsBackup(
+            soundMode = cue.soundMode.name,
+            transition = cue.transition.name,
+            volume = cue.volume.name,
+            haptics = cue.haptics,
+            gongLong = cue.gongLong,
+            showSafetyWarning = safetySettings.first().showWarning,
+            showNextPhase = display.showNextPhase,
+            showProgress = display.showProgress,
+            showSeconds = display.showSeconds,
+            autoCalm = display.autoCalm,
+            silenceAfter = display.silenceAfter,
+            meditationAutoCalm = med.autoCalm,
+            meditationShowProgress = med.showProgress,
+            meditationShowTime = med.showTime,
+            meditationMode = config.mode.name,
+            meditationMinutes = config.minutes,
+            meditationStartEndGong = config.startEndGong,
+            meditationInterval = prefs[Keys.MED_INTERVAL_ON] ?: false,
+            meditationSpeech = config.speech,
+            gongIntervalMinutes = gongIntervalOf(prefs),
+            showStreak = showStreak.first(),
+            askFeeling = prefs[Keys.FEELING_PROMPT],
+            adjustments = builtInIds.mapNotNull { id ->
+                exerciseIntervals(id).first()?.let { id to PatternBackupOverrides(it.duration, it.inhale, it.hold, it.exhale) }
+            }.toMap(),
+        )
+    }
+
+    /**
+     * Übernimmt eine schon geprüfte Sicherung ([PatternBackup.decode]): jedes vorhandene Feld ersetzt
+     * die Einstellung, ein fehlendes lässt sie stehen. Enum-Namen, die es nicht gibt, hat die
+     * Prüfung schon verworfen.
+     */
+    suspend fun importSettings(backup: SettingsBackup) {
+        store.edit { prefs ->
+            backup.soundMode?.let { n -> SoundMode.entries.firstOrNull { it.name == n } }?.let { prefs.putEnum(Keys.SOUND_MODE, Keys.SOUND_MODE_ORDINAL, it) }
+            backup.transition?.let { n -> TransitionEmphasis.entries.firstOrNull { it.name == n } }?.let { prefs.putEnum(Keys.TRANSITION, Keys.TRANSITION_ORDINAL, it) }
+            backup.volume?.let { n -> ToneVolume.entries.firstOrNull { it.name == n } }?.let { prefs.putEnum(Keys.VOLUME, Keys.VOLUME_ORDINAL, it) }
+            backup.meditationMode?.let { n -> MeditationMode.entries.firstOrNull { it.name == n } }?.let { prefs.putEnum(Keys.MED_MODE, Keys.MED_MODE_ORDINAL, it) }
+            backup.haptics?.let { prefs[Keys.HAPTICS] = it }
+            backup.gongLong?.let { prefs[Keys.MED_GONG_LONG] = it }
+            backup.showSafetyWarning?.let { prefs[Keys.SHOW_SAFETY] = it }
+            backup.showNextPhase?.let { prefs[Keys.SHOW_NEXT] = it }
+            backup.showProgress?.let { prefs[Keys.SHOW_PROGRESS] = it }
+            backup.showSeconds?.let { prefs[Keys.SHOW_SECONDS] = it }
+            backup.autoCalm?.let { prefs[Keys.AUTO_CALM] = it }
+            backup.silenceAfter?.let { prefs[Keys.SILENCE_AFTER] = it }
+            backup.meditationAutoCalm?.let { prefs[Keys.MED_AUTO_CALM] = it }
+            backup.meditationShowProgress?.let { prefs[Keys.MED_SHOW_PROGRESS] = it }
+            backup.meditationShowTime?.let { prefs[Keys.MED_SHOW_TIME] = it }
+            backup.meditationMinutes?.let { prefs[Keys.MED_MINUTES] = it.coerceIn(MEDITATION_MIN_MINUTES, MEDITATION_MAX_MINUTES) }
+            backup.meditationStartEndGong?.let { prefs[Keys.MED_START_END_GONG] = it }
+            backup.meditationInterval?.let { prefs[Keys.MED_INTERVAL_ON] = it }
+            backup.meditationSpeech?.let { prefs[Keys.MED_SPEECH] = it }
+            backup.gongIntervalMinutes?.let { prefs[Keys.MED_GONG_INTERVAL] = it.coerceIn(GONG_INTERVAL_MIN_MINUTES, GONG_INTERVAL_MAX_MINUTES) }
+            backup.showStreak?.let { prefs[Keys.SHOW_STREAK] = it }
+            backup.askFeeling?.let { prefs[Keys.FEELING_PROMPT] = it }
+        }
+        backup.adjustments.forEach { (id, o) -> setExerciseIntervals(id, o.duration, o.inhale, o.hold, o.exhale) }
+    }
+
+    /** Fügt Markierungen „Tut mir gut“ hinzu (Sicherung zusammenführen); vorhandene bleiben. */
+    suspend fun addMarkedExercises(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        store.edit { prefs -> prefs[Keys.MARKED_EXERCISES] = prefs[Keys.MARKED_EXERCISES].orEmpty() + ids }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

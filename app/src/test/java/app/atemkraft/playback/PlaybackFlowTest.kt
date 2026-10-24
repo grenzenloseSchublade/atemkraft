@@ -4,10 +4,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.data.BuiltInExercises
+import app.atemkraft.data.FakeLogbookDao
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.SettingsRepository
-import app.atemkraft.data.local.LogEntryEntity
-import app.atemkraft.data.local.LogbookDao
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionConfig
@@ -53,7 +52,7 @@ class PlaybackFlowTest {
 
     private val storeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val box = BuiltInExercises.all.first { it.id == "box-4-4-4-4" } // 4-4-4-4, je Runde 16 s
-    private val dao = MemoryLogbookDao()
+    private val dao = FakeLogbookDao()
     private val holders = Holders()
 
     @After
@@ -210,25 +209,6 @@ class PlaybackFlowTest {
         override fun gong() = Unit
         override fun speak(text: String) = Unit
         override fun stopSpeech() = Unit
-    }
-
-    private class MemoryLogbookDao : LogbookDao {
-        val rows = mutableListOf<LogEntryEntity>()
-
-        override suspend fun insert(entry: LogEntryEntity): Long {
-            rows += entry.copy(id = rows.size + 1L)
-            return rows.size.toLong()
-        }
-
-        override suspend fun setFeeling(id: Long, feeling: String?) {
-            rows.replaceAll { if (it.id == id) it.copy(feeling = feeling) else it }
-        }
-
-        override fun all(): Flow<List<LogEntryEntity>> = MutableStateFlow(rows.toList())
-
-        override fun count(): Flow<Int> = MutableStateFlow(rows.size)
-
-        override suspend fun clear() = rows.clear()
     }
 
     private companion object {
