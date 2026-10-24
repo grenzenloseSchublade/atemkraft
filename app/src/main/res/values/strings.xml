@@ -27,13 +27,13 @@
     <!-- Statt der Familie auf der Detailseite generierter Muster (Tagesmuster, Eigene Kreationen) -->
     <string name="family_pattern">Muster</string>
 
-    <!-- Tags: Studienlage (EvidenceLevel, TEXT-07), Vorsicht, Programm -->
+    <!-- Tags: Studienlage (EvidenceLevel, TEXT-07), Vorsicht, Programm („zum Nachlesen“: Infoseite ohne Start) -->
     <string name="tag_well_supported">gut belegt</string>
     <string name="tag_studied">in Studien geprüft</string>
     <string name="tag_little_studied">kaum untersucht</string>
     <string name="cd_evidence">Studienlage: %1$s</string>
     <string name="tag_caution">nur gesund &amp; ausgeruht</string>
-    <string name="tag_info">Programm</string>
+    <string name="tag_info">zum Nachlesen</string>
 
     <!-- Detailseite -->
     <string name="detail_instruction">Anleitung</string>

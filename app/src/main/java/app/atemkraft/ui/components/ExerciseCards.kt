@@ -27,7 +27,7 @@ import app.atemkraft.ui.theme.Sizes
 
 /**
  * Übungskarte in Listen. Die Studienlage steht nur auf der Detailseite: Auf der Liste trüge fast
- * jede Karte dasselbe Etikett. Die Karte zeigt, was vor dem Antippen zählt – Vorsicht, „Programm“
+ * jede Karte dasselbe Etikett. Die Karte zeigt, was vor dem Antippen zählt – Vorsicht, „zum Nachlesen“
  * und die persönliche Markierung ([marked], Atemkreis rechts auf Höhe der ersten Titelzeile,
  * [CardHeader] mit `indicator`) –, unter dem Titel die Metazeile mit Takt und Dauer wie die
  * Musterzeile der [PatternCard] („Einatmen 4 s · Ausatmen 6 s · ca. 10 min“, [exerciseMetaLine],

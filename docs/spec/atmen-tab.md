@@ -22,7 +22,7 @@ Kopfzeile in der Karte: links die Eyebrow „MUSTER DES TAGES“ (`typography.ey
 
 ## Übungskarte (`ExerciseCard`)
 
-Titel mit seltenen, entscheidungsrelevanten Chips (`CautionChip` „nur gesund & ausgeruht“, `InfoChip` „Programm“; keine Studienlage – die trüge fast jede Karte), rechts auf der ersten Titelzeile die persönliche Markierung (`PersonalMarkIndicator`, nur gesetzt sichtbar, nicht klickbar); darunter die Metazeile (`BodyText`, eine Stufe heller als die Kurzbeschreibung): ein Atemzug in Worten aus `cardBreath()` („Einatmen 4 s · Ausatmen 6 s“; zwei gleiche Hälften wie bei Nadi Shodhana als eine; Stufen-Übungen „in Stufen“; mehrere Abschnitte – Wim Hof, Feueratmung – ohne Takt), dahinter die Dauer wie am Startknopf ohne eigene Anpassung („ca. 10 min“, offene Phasen „ab ca. 3 min“, „unter 1 min“); Programme ohne Zeile. Darunter die Kurzbeschreibung (`SecondaryText`).
+Titel mit seltenen, entscheidungsrelevanten Chips (`CautionChip` „nur gesund & ausgeruht“, `InfoChip` „zum Nachlesen“ an Programmen; keine Studienlage – die trüge fast jede Karte), rechts auf der ersten Titelzeile die persönliche Markierung (`PersonalMarkIndicator`, nur gesetzt sichtbar, nicht klickbar); darunter die Metazeile (`BodyText`, eine Stufe heller als die Kurzbeschreibung): ein Atemzug in Worten aus `cardBreath()` („Einatmen 4 s · Ausatmen 6 s“; zwei gleiche Hälften wie bei Nadi Shodhana als eine; Stufen-Übungen „in Stufen“; mehrere Abschnitte – Wim Hof, Feueratmung – ohne Takt), dahinter die Dauer wie am Startknopf ohne eigene Anpassung („ca. 10 min“, offene Phasen „ab ca. 3 min“, „unter 1 min“); Programme ohne Zeile. Darunter die Kurzbeschreibung (`SecondaryText`).
 
 ## Filterreihe (MUSTER-12, `ExerciseFilterRow`, `FilterChipRow`, `TonalChip`)
 

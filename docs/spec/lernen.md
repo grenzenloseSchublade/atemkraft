@@ -19,7 +19,7 @@ Grundlagen und Techniken als `ExpanderCard`s unter `SectionHeader`s; je Technik 
 
 ## Programme & Gewohnheiten (`ProgramsScreen`)
 
-Die nicht angeleiteten Übungen (`guided = false`, Chip „Programm“) als `ExerciseCard`s ohne Metazeile; persönliche Markierung sichtbar.
+Die nicht angeleiteten Übungen (`guided = false`, Chip „zum Nachlesen“) als `ExerciseCard`s ohne Metazeile; persönliche Markierung sichtbar.
 
 ## Begriffe (`GlossaryScreen`)
 

@@ -52,8 +52,10 @@ fun CautionChip() {
 }
 
 /**
- * „Programm"-Chip für nicht-getaktete Info-Einträge. Umriss statt Füllung: Er nennt eine Art
- * von Eintrag, keine Studienlage, und darf deshalb nicht wie das graue „kaum untersucht“ aussehen.
+ * Chip „zum Nachlesen“ für nicht getaktete Info-Einträge (Programme). Er sagt, was man mit dem
+ * Eintrag tut, statt einer Kategorie „Programm“, die man erst verstehen muss (Auswertung
+ * 2026-10-24, UX #15). Umriss statt Füllung: Er nennt eine Art von Eintrag, keine Studienlage, und
+ * darf deshalb nicht wie das graue „kaum untersucht“ aussehen.
  */
 @Composable
 fun InfoChip() {
@@ -63,7 +65,7 @@ fun InfoChip() {
 /**
  * Charakter einer Übung: „intensiv“ ([intense], Wim Hof, Feueratmung) als einziger gefüllt in
  * `WarnAmber`; „sanft aktivierend“ ([activating], Tagesmuster) und „ruhig“ neutral umrandet wie
- * „Programm“. Ein Charakter ist keine Studienlage und keine Warnung (FARBE-04): In Cyan sähe
+ * „zum Nachlesen“. Ein Charakter ist keine Studienlage und keine Warnung (FARBE-04): In Cyan sähe
  * „ruhig“ aus wie „gut belegt“, in Gelb „sanft aktivierend“ wie eine Warnung.
  */
 @Composable
