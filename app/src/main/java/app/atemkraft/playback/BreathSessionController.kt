@@ -28,7 +28,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -482,7 +481,11 @@ class BreathSessionController(
             durationMs = clock.activeMs,
             roundsCompleted = roundsCompleted,
         )
-        return scope.async { logbook.append(entry) }
+        // launch statt async: Ein Fehler beim Schreiben landet wie bisher bei UncaughtErrors; das
+        // Befinden wartet dann vergeblich und wird nicht gesetzt.
+        val id = CompletableDeferred<Long>()
+        scope.launch { id.complete(logbook.append(entry)) }
+        return id
     }
 
     private companion object {
