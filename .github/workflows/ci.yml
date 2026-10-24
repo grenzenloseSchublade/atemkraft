@@ -42,7 +42,7 @@ jobs:
           if-no-files-found: ignore
 
   conventions:
-    # guide-sync (META-01) und commit-msg (CODE-08) über alle Commits des Pushes bzw. PRs.
+    # commit-msg (PROZ-01) je Commit und guide-sync (PROZ-02) über den ganzen Bereich des Pushes bzw. PRs.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -55,6 +55,6 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          # Neuer Branch: kein Vorgänger, dann nur den letzten Commit prüfen.
+          # Neuer Branch oder Force-Push ohne Vorgänger: dann nur den letzten Commit prüfen (fetch-depth 0 ist gesetzt).
           if [[ -z "${BASE}" || "${BASE}" =~ ^0+$ ]]; then BASE="${HEAD}~1"; fi
           scripts/check-style.sh --ci-range "${BASE}..${HEAD}"

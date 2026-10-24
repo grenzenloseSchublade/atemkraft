@@ -1,0 +1,3 @@
+SectionHeader(title = "Übungen", top = 0.dp)
+CardTitle(text)
+NavCard(title = title, titleColor = headingColor(heading), onClick = onClick)

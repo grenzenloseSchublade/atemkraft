@@ -153,7 +153,7 @@ fun HideableTabBar(
     Box(modifier.animateContentSize()) {
         if (visible) {
             Column {
-                HorizontalDivider(thickness = Dimens.BorderThin, color = MaterialTheme.colorScheme.primary.copy(alpha = TAB_DIVIDER_ALPHA))
+                HorizontalDivider(thickness = Dimens.BorderThin, color = MaterialTheme.colorScheme.primary.copy(alpha = TAB_DIVIDER_ALPHA)) // Abweichung KOMP-03: Marken-Trenner über der Tab-Leiste, kein Karten-Trenner
                 bar()
             }
         } else {

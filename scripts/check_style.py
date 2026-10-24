@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Statische Stil-Checks aus docs/STYLEGUIDE.md §13.3 und Sicherheits-Checks (``sec-*``) aus
-docs/SECURITY.md (Automatische Prüfung).
+"""Statische Stil-Checks aus docs/STYLEGUIDE.md §13.3, Sicherheits-Checks (``sec-*``) aus
+docs/SECURITY.md (Automatische Prüfung) und Doku-Lints (``rule-length``, ``check-table``,
+``catalog-sync``, ``version-sync``).
 
 Jeder Check zählt Treffer pro Datei. Bekannte Altlasten stehen in
-config/style-baseline.txt (``check<TAB>datei<TAB>anzahl``):
+config/style-baseline.txt (``check<TAB>datei<TAB>anzahl<TAB>S-ID``):
   * mehr Treffer als Baseline       → Fehler (neuer Verstoß, bei SOLL nur Warnung)
-  * weniger Treffer als Baseline    → Fehler „Baseline senken“ (baseline-stale, META-01)
+  * weniger Treffer als Baseline    → Fehler „Baseline senken“ (baseline-stale, PROZ-02)
+  * Zeile ohne S-ID                 → Fehler (baseline-ids, §13.2: Altlast ≠ Ausnahme)
 Kommentarzeilen (``//``, ``/*``, ``*``) zählen nicht, außer bei todo-unlinked; ebenso Zeilen
 mit ``// Abweichung <ID>:`` oder ``// dekorativ:``. Die ``sec-*``-Checks haben keine Baseline
 (Null-Toleranz): Jeder Treffer ist ein Fehler, ein Baseline-Eintrag für sie ebenfalls.
@@ -14,7 +16,9 @@ Aufrufe:
   scripts/check-style.sh                     # prüfen
   scripts/check-style.sh --self-test         # jedes Muster gegen config/style-fixtures/<check>.{pos,neg}
   scripts/check-style.sh --update-baseline   # Baseline auf den Ist-Stand setzen (nur zum Senken!)
-  scripts/check-style.sh --ci-range A..B     # nur guide-sync und commit-msg über A..B (CI-Job conventions)
+  scripts/check-style.sh --list              # Check-Tabelle für STYLEGUIDE §13.3 (Markdown)
+  scripts/check-style.sh --update-check-table  # Tabelle in docs/STYLEGUIDE.md neu schreiben
+  scripts/check-style.sh --ci-range A..B     # commit-msg je Commit, guide-sync über den Bereich (CI conventions)
 """
 from __future__ import annotations
 
@@ -33,10 +37,14 @@ RES = "app/src/main/res/"
 MANIFEST = "app/src/main/AndroidManifest.xml"
 JAVA = "app/src/main/java/"
 BASELINE = ROOT / "config/style-baseline.txt"
+STYLEGUIDE = ROOT / "docs/STYLEGUIDE.md"
+CHECK_TABLE_START = "<!-- check-table:start -->"
+CHECK_TABLE_END = "<!-- check-table:end -->"
+BACKLOG_ID = re.compile(r"^(S|A)-\d+$")
 BINARIES_ALLOW = ROOT / "config/security/binaries.allow"
 FIXTURES = ROOT / "config/style-fixtures"
 
-MARKER = re.compile(r"//\s*(Abweichung [A-Z]+-\d+:|dekorativ:)")
+MARKER = re.compile(r"//\s*(Abweichung [A-Z][A-Z0-9]*(?:-[A-Z]+)?-\d+:|dekorativ:)")
 COMMENT = re.compile(r"^\s*(//|/\*|\*)")
 IMPORT = re.compile(r"^\s*import\s")
 
@@ -55,6 +63,19 @@ class Check:
     per_file: bool = False         # höchstens 1 Treffer pro Datei (Datei-Bedingung)
     custom: object = None          # Funktion(files) -> {datei: anzahl}
     baseline: bool = True          # False: Null-Toleranz, kein Eintrag in der Baseline (sec-*)
+    scope: str = ""                # Sonder-Checks: Geltungsbereich für die Check-Tabelle (--list)
+    fixture: object = None         # Sonder-Checks: Funktion(text) -> Trefferzahl für den Self-Test
+
+    def scope_text(self) -> str:
+        """Geltungsbereich für die Check-Tabelle: Include-Muster in Kurzform, Excludes dahinter."""
+        if self.scope:
+            return self.scope
+        def short(g: str) -> str:
+            return g.replace(SRC, "src/").replace(RES, "res/").replace(JAVA, "java/")
+        text = ", ".join(short(g) for g in self.include)
+        if self.exclude:
+            text += " ohne " + ", ".join(short(g) for g in self.exclude)
+        return text
 
     def compiled(self) -> list[re.Pattern[str]]:
         flags = re.MULTILINE if self.multiline else 0
@@ -280,6 +301,140 @@ def ui_literal(check: Check) -> dict[str, list[int]]:
 
 
 # ---------------------------------------------------------------------------
+# Doku- und Katalog-Checks (STYLEGUIDE §0, §5.1, §13.3; PROCESS PROZ-05)
+# ---------------------------------------------------------------------------
+
+PUBLIC_FUN = re.compile(r"^(?:@\w+(?:\([^)]*\))?\s+)*fun\s+(?:[\w<>, ]+\.)?(\w+)\s*[(<]", re.M)
+BACKTICKED = re.compile(r"`([^`]+)`")
+
+
+def public_funs(text: str) -> list[str]:
+    """Namen aller öffentlichen Top-Level-Funktionen einer Kotlin-Datei (Spalte 0, nicht private/internal)."""
+    return [m.group(1) for m in PUBLIC_FUN.finditer(text)]
+
+
+def catalog_missing(kotlin: str, guide: str) -> list[str]:
+    """KOMP-01: öffentliche `fun` aus ui/components, die nicht als `Name` im Guide vorkommen."""
+    names = set()
+    # Code-Blöcke (```…```, ASCII-Skizzen in §4.5) vorher entfernen, sonst verschiebt ein Zaun die Paare.
+    guide = re.sub(r"```.*?```", "", guide, flags=re.S)
+    for token in BACKTICKED.findall(guide):
+        for part in re.split(r"[^\w]+", token):
+            if part:
+                names.add(part)
+    return [n for n in public_funs(kotlin) if n not in names]
+
+
+def catalog_sync(check: Check) -> dict[str, list[int]]:
+    guide = STYLEGUIDE.read_text(encoding="utf-8")
+    hits: dict[str, list[int]] = {}
+    for f in files_for(check.include, check.exclude):
+        text = (ROOT / f).read_text(encoding="utf-8")
+        missing = catalog_missing(text, guide)
+        if missing:
+            hits[f] = [text[: m.start()].count("\n") + 1 for m in PUBLIC_FUN.finditer(text) if m.group(1) in missing]
+    return hits
+
+
+def catalog_fixture(text: str) -> int:
+    """Fixture: Kotlin-Teil und Guide-Teil durch eine Zeile `---` getrennt."""
+    kotlin, _, guide = text.partition("\n---\n")
+    return len(catalog_missing(kotlin, guide))
+
+
+VERSION_FILES = ("docs/STYLEGUIDE.md", "docs/SECURITY.md", "docs/PRIVACY.md", "THIRD_PARTY_LICENSES.md", "docs/STORE.md")
+VERSION_HEAD_LINES = 6
+
+
+def version_problems(version_name: str, version_code: str, heads: dict[str, str], existing: set[str]) -> list[str]:
+    """PROZ-05: versionName in den Kopfzeilen jeder Stand-Datei; Release-Notes und Changelog vorhanden."""
+    out = []
+    for path, head in heads.items():
+        if not re.search(rf"(?<![\d.]){re.escape(version_name)}(?![\d.])", head):
+            out.append(path)
+    if f"docs/release-notes/v{version_name}.md" not in existing:
+        out.append(f"docs/release-notes/v{version_name}.md")
+    if f"fastlane/metadata/android/de-DE/changelogs/{version_code}.txt" not in existing:
+        out.append(f"fastlane/metadata/android/de-DE/changelogs/{version_code}.txt")
+    return out
+
+
+def gradle_version() -> tuple[str, str]:
+    build = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
+    name = re.search(r'versionName\s*=\s*"([^"]+)"', build)
+    code = re.search(r"versionCode\s*=\s*(\d+)", build)
+    return (name.group(1) if name else "?", code.group(1) if code else "?")
+
+
+def version_sync(_: Check) -> dict[str, list[int]]:
+    name, code = gradle_version()
+    heads = {f: "\n".join((ROOT / f).read_text(encoding="utf-8").splitlines()[:VERSION_HEAD_LINES]) for f in VERSION_FILES if (ROOT / f).is_file()}
+    existing = set(files_for(["docs/release-notes/*.md", "fastlane/metadata/android/de-DE/changelogs/*.txt"], []))
+    return {path: [0] for path in version_problems(name, code, heads, existing)}
+
+
+def version_fixture(text: str) -> int:
+    """Fixture: erste Zeile `version code`, danach je Zeile `datei: kopftext`; `existiert: pfad` listet Dateien."""
+    lines = text.splitlines()
+    name, code = lines[0].split()
+    heads, existing = {}, set()
+    for line in lines[1:]:
+        key, _, value = line.partition(": ")
+        if key == "existiert":
+            existing.add(value)
+        elif key:
+            heads[key] = value
+    return len(version_problems(name, code, heads, existing))
+
+
+def check_table_rows() -> list[str]:
+    """Zeilen der Check-Tabelle (§13.3) aus CHECKS: Check | Regel | Scope | Stufe."""
+    rows = ["| Check | Regel | Scope | Stufe |", "|---|---|---|---|"]
+    for c in CHECKS:
+        level = c.level if c.baseline else "MUSS, ohne Baseline"
+        rows.append(f"| `{c.name}` | {c.rule} | {c.scope_text()} | {level} |")
+    rows.append("| `baseline-stale` / `baseline-ids` | PROZ-02, §13.2 | `config/style-baseline.txt` | MUSS |")
+    rows.append("| `guide-sync` (CI) | PROZ-02 | Push-Bereich | MUSS |")
+    rows.append("| `commit-msg` (CI, Hook) | PROZ-01 | Push-Bereich, `.githooks/commit-msg` | MUSS |")
+    return rows
+
+
+def check_table_text() -> str:
+    return "\n".join(check_table_rows())
+
+
+def table_in_guide(guide: str) -> str | None:
+    start, end = guide.find(CHECK_TABLE_START), guide.find(CHECK_TABLE_END)
+    if start < 0 or end < 0:
+        return None
+    return guide[start + len(CHECK_TABLE_START):end].strip()
+
+
+def check_table(_: Check) -> dict[str, list[int]]:
+    """§13.3: Die Tabelle im Guide entspricht `--list`."""
+    guide = STYLEGUIDE.read_text(encoding="utf-8")
+    current = table_in_guide(guide)
+    return {} if current == check_table_text() else {"docs/STYLEGUIDE.md": [0]}
+
+
+def check_table_fixture(text: str) -> int:
+    """Fixture: `{TABLE}` steht für die aktuelle Tabelle, so bleibt das Negativ-Fixture bei jeder Check-Änderung gültig."""
+    return 0 if table_in_guide(text.replace("{TABLE}", check_table_text())) == check_table_text() else 1
+
+
+def update_check_table() -> int:
+    guide = STYLEGUIDE.read_text(encoding="utf-8")
+    start, end = guide.find(CHECK_TABLE_START), guide.find(CHECK_TABLE_END)
+    if start < 0 or end < 0:
+        print("FEHLER  Marker check-table:start/end fehlen in docs/STYLEGUIDE.md")
+        return 1
+    new = guide[: start + len(CHECK_TABLE_START)] + "\n" + check_table_text() + "\n" + guide[end:]
+    STYLEGUIDE.write_text(new, encoding="utf-8")
+    print(f"Check-Tabelle geschrieben: {len(CHECKS)} Checks")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Sicherheits-Checks (docs/SECURITY.md, Automatische Prüfung): Datei-Bedingungen
 # ---------------------------------------------------------------------------
 
@@ -494,7 +649,7 @@ CHECKS: list[Check] = [
           exclude=[RES + "drawable*/ic_launcher_*"]),
     Check("alpha-literal", "FARBE-02", [SRC + "ui/*.kt", SRC + "MainActivity.kt"],
           [r"alpha\s*=\s*(?:if\s*\([^)]*\)[^,)\n]*?)?\d*\.\d+f?"], exclude=[SRC + "ui/theme/*"]),
-    Check("theme-tokens", "FARBE-06", [], custom=theme_tokens),
+    Check("theme-tokens", "FARBE-06", [], custom=theme_tokens, scope="`ui/theme/`"),
     Check("type-literal", "TYPO-01", [SRC + "*.kt"], [r"\b\d+(\.\d+)?f?\.sp\b|FontWeight\.|(fontSize|letterSpacing|lineHeight)\s*="],
           exclude=[SRC + "ui/theme/*"], skip_imports=True),
     Check("layout-literal", "LAYOUT-01", [SRC + "*.kt"], [r"\b([1-9]\d*|\d*\.\d+)f?\.dp\b", r"(RoundedCorner|CutCorner)Shape\(", r"\bDp\.Hairline\b"],
@@ -516,7 +671,7 @@ CHECKS: list[Check] = [
           [r"screenOrientation|requestedOrientation", r"LocalMinimumInteractiveComponentSize\s+provides"]),
     Check("dark-only", "PRIN-01", [SRC + "*.kt", RES + "*.xml"],
           [r"Theme\.Material\.Light|DayNight|lightColorScheme|dynamic(Dark|Light)ColorScheme|enableEdgeToEdge\(\s*\)"], skip_imports=True),
-    Check("dark-only-dirs", "PRIN-01", [], custom=dark_only_dirs),
+    Check("dark-only-dirs", "PRIN-01", [], custom=dark_only_dirs, scope="`res/values-night*/`"),
     Check("neon-fill", "PRIN-02", [SRC + "ui/*.kt", SRC + "MainActivity.kt"],
           [r"(?s)(?<![A-Za-z])Button\(.*(?<![A-Za-z])Button\(",
            r"containerColor\s*=\s*(MaterialTheme\.colorScheme\.(primary|secondary|tertiary)\b|Neon\w+)"],
@@ -543,12 +698,33 @@ CHECKS: list[Check] = [
           [r"\.clickable\s*(?:\((?!(?:[^()]|\([^()]*\))*?\brole\s*=)|\{)",
            r"(?<![\w.])Surface\((?=(?:[^()]|\([^()]*\))*?\bonClick\s*=)(?!(?:[^()]|\([^()]*\))*?\brole\s*=)"],
           multiline=True),
-    Check("semantics-heading", "A11Y-01", [], custom=section_header_heading),
-    Check("pane-title", "A11Y-07", [], custom=pane_title),
+    Check("semantics-heading", "A11Y-01", [], custom=section_header_heading, scope="`ui/components/` (SectionHeader, PushHeader, TextBlocks)"),
+    Check("pane-title", "A11Y-07", [], custom=pane_title, scope="`ui/components/` (PushHeader, ScreenHeader, OverlayChrome)"),
     Check("a11y-ratchet", "A11Y-02", [SRC + "ui/*.kt"], [r"clearAndSetSemantics", r"indication\s*=\s*null"], skip_imports=True),
     Check("switch-unlabeled", "A11Y-03", [SRC + "ui/*.kt"],
           [r"\bSwitch\((?:[^()]|\([^()]*\))*?onCheckedChange\s*=(?!\s*null)"], multiline=True),
     Check("ui-literal", "TEXT-01", [SRC + "ui/*.kt"], custom=ui_literal),
+    # Köpfe weiß (FARBE-07): Kopf- und Kartentitel bekommen keine Farbe; nur NavCard färbt über headingColor.
+    Check("head-color", "FARBE-07", [SRC + "ui/*.kt"],
+          [r"(?<![\w.])(SectionHeader|CollapsibleSection|GroupLabel|CardTitle|CardHeader|ExpanderSection|ExpanderCard)\((?:[^()]|\([^()]*\))*?\b(color|titleColor)\s*=(?!\s*titleColor\b)"],
+          exclude=[SRC + "ui/components/SectionHeader.kt", SRC + "ui/components/TextBlocks.kt", SRC + "ui/components/CardHeader.kt",
+                   SRC + "ui/components/ExpanderSection.kt", SRC + "ui/components/NavCard.kt", SRC + "ui/home/*.kt"],
+          multiline=True),
+    # Auswahl ohne Häkchen (A11Y-03): kein Icon an Segment oder Chip, kein Check-Icon.
+    Check("no-check-icon", "A11Y-03", [SRC + "ui/*.kt"],
+          [r"(?<![\w.])(SegmentedButton|FilterChip|SuggestionChip|InputChip)\((?:[^()]|\([^()]*\))*?\bicon\s*=(?!\s*(?:\{\s*\}|null))",
+           r"Icons\.(Filled|Default)\.Check\b"],
+          multiline=True, skip_imports=True),
+    # Layout-Grammatik (§4.5): Overlays nur in der Titelzeile einer Karte (CardHeader).
+    Check("anatomy-overlay", "KOMP-02", [SRC + "ui/*.kt"], [r"\.align\(\s*Alignment\.(TopEnd|TopStart|BottomEnd|BottomStart)\s*\)"],
+          exclude=[SRC + "ui/components/CardHeader.kt"]),
+    Check("catalog-sync", "KOMP-01", [SRC + "ui/components/*.kt"], custom=catalog_sync, fixture=catalog_fixture),
+    # Doku-Lint (§0): Regelzellen bleiben kurz; Spezifikation und Historie wandern aus.
+    Check("rule-length", "§0", ["docs/STYLEGUIDE.md", "docs/SECURITY.md", "docs/PROCESS.md"],
+          [r"^\| [A-Z][A-Z0-9]*(?:-[A-Z]+)?-\d+ \| [^|]+ \| [^|]{601,} \|"], skip_comments=False),
+    Check("check-table", "§13.3", [], custom=check_table, fixture=check_table_fixture, scope="`docs/STYLEGUIDE.md`"),
+    Check("version-sync", "PROZ-05", [], custom=version_sync, fixture=version_fixture,
+          scope="`app/build.gradle.kts`, Stand-Zeilen, `docs/release-notes/`, `fastlane/…/changelogs/`"),
     Check("locale", "TEXT-03", [SRC + "ui/*.kt"], [r"Locale\.(getDefault|GERMAN|GERMANY)\b|SimpleDateFormat"], skip_imports=True),
     Check("locale-config", "TEXT-03", [], custom=locale_config),
     Check("typo-chars-strings", "TEXT-10", [RES + "values*/strings.xml"], [r"„[^“<]*\"", r"\\'", r"”", r"—", r"~"]),
@@ -590,14 +766,14 @@ CHECKS: list[Check] = [
     Check("sec-device-leaks", "SEC-PRIV-03", SEC_JAVA,
           [r"ANDROID_ID|AdvertisingIdClient|getDeviceId|getImei|Build\.SERIAL",
            r"\bLog\.[vdiwe]\(|\bprintln\(|printStackTrace\(|\bTimber\.", r"ClipboardManager|setPrimaryClip"], baseline=False),
-    Check("sec-privacy-link", "SEC-PRIV-05", [], custom=sec_privacy_link, baseline=False),
+    Check("sec-privacy-link", "SEC-PRIV-05", [], custom=sec_privacy_link, baseline=False, scope="`docs/PRIVACY.md`, `ui/about/AboutScreen.kt`"),
     Check("sec-wakelock", "SEC-PERM-02", SEC_JAVA,
           [r"newWakeLock\((?!\s*(PowerManager\.)?PARTIAL_WAKE_LOCK)", r"\bacquire\(\s*\)"], baseline=False),
     Check("sec-tls", "SEC-NET-01", ["app/src/main/*.kt", "app/src/main/*.java", "app/src/main/*.xml"],
           [r"http://(?!schemas\.android\.com)", r"X509TrustManager|HostnameVerifier|SSLSocketFactory|setDefaultSSL"],
           exclude=["app/src/main/assets/licenses/*"], baseline=False),
-    Check("sec-tls-config", "SEC-NET-01", [], custom=sec_tls_config, baseline=False),
-    Check("sec-download", "SEC-NET-02", [], custom=sec_download, baseline=False),
+    Check("sec-tls-config", "SEC-NET-01", [], custom=sec_tls_config, baseline=False, scope="`res/xml/network_security_config.xml`, Manifest"),
+    Check("sec-download", "SEC-NET-02", [], custom=sec_download, baseline=False, scope="`java/`"),
     Check("sec-components", "SEC-PLAT-01", SEC_JAVA + [MANIFEST],
           [r"<receiver\b", r"registerReceiver\((?!.*RECEIVER_NOT_EXPORTED)"], baseline=False),
     Check("sec-intents", "SEC-PLAT-02", SEC_JAVA + [MANIFEST],
@@ -605,14 +781,14 @@ CHECKS: list[Check] = [
     Check("sec-no-dyncode", "SEC-PLAT-03", SEC_JAVA + [RES + "*.xml"],
           [r"\b(WebView|DexClassLoader|PathClassLoader|InMemoryDexClassLoader)\b|System\.load\("], baseline=False),
     Check("sec-storage", "SEC-STORE-01", SEC_JAVA, [r"getExternal\w*Dir|getExternalStorage|MediaStore|MODE_WORLD_"], baseline=False),
-    Check("sec-backup", "SEC-STORE-02", [], custom=sec_backup, baseline=False),
-    Check("sec-room", "SEC-STORE-03", [], custom=sec_room, baseline=False),
-    Check("sec-repos", "SEC-SUP-01", [], custom=sec_repos, baseline=False),
-    Check("sec-pinned-inputs", "SEC-SUP-02", [], custom=sec_pinned_inputs, baseline=False),
-    Check("sec-gradle-flags", "SEC-BUILD-03", [], custom=sec_gradle_flags, baseline=False),
-    Check("sec-secrets", "SEC-BUILD-02", [], custom=sec_secrets, baseline=False),
-    Check("sec-gitignore", "SEC-REPO-01", [], custom=sec_gitignore, baseline=False),
-    Check("sec-actions", "SEC-REPO-03", [], custom=sec_actions, baseline=False),
+    Check("sec-backup", "SEC-STORE-02", [], custom=sec_backup, baseline=False, scope="Manifest, `res/xml/backup_rules.xml`, `data_extraction_rules.xml`"),
+    Check("sec-room", "SEC-STORE-03", [], custom=sec_room, baseline=False, scope="`java/`, `app/schemas/`"),
+    Check("sec-repos", "SEC-SUP-01", [], custom=sec_repos, baseline=False, scope="`settings.gradle.kts`, `gradle/verification-metadata.xml`"),
+    Check("sec-pinned-inputs", "SEC-SUP-02", [], custom=sec_pinned_inputs, baseline=False, scope="Wrapper, Binärdateien, `.sha256`, `verification-metadata.xml`, SECURITY.md"),
+    Check("sec-gradle-flags", "SEC-BUILD-03", [], custom=sec_gradle_flags, baseline=False, scope="`app/build.gradle.kts`"),
+    Check("sec-secrets", "SEC-BUILD-02", [], custom=sec_secrets, baseline=False, scope="alle Dateien"),
+    Check("sec-gitignore", "SEC-REPO-01", [], custom=sec_gitignore, baseline=False, scope="`.gitignore`"),
+    Check("sec-actions", "SEC-REPO-03", [], custom=sec_actions, baseline=False, scope="`.github/workflows/`, `dependabot.yml`"),
 ]
 
 
@@ -627,63 +803,96 @@ def run_check(check: Check) -> dict[str, list[int]]:
     return hits
 
 
-def load_baseline() -> dict[tuple[str, str], int]:
-    base: dict[tuple[str, str], int] = {}
-    if BASELINE.exists():
-        for line in BASELINE.read_text(encoding="utf-8").splitlines():
-            if not line.strip() or line.startswith("#"):
-                continue
-            name, path, n = line.split("\t")
-            base[(name, path)] = int(n)
+def baseline_line_problem(line: str) -> str | None:
+    """§13.2: `check⇥datei⇥anzahl⇥S-ID` – ohne Backlog-ID ist eine Zeile keine Altlast, sondern ein Schlupfloch."""
+    parts = line.split("\t")
+    if len(parts) != 4:
+        return "Format check⇥datei⇥anzahl⇥S-ID"
+    if not parts[2].isdigit():
+        return "Anzahl keine Zahl"
+    if not BACKLOG_ID.match(parts[3]):
+        return "ohne Backlog-ID (S-nn/A-nn)"
+    return None
+
+
+def baseline_fixture(text: str) -> int:
+    return sum(1 for line in text.splitlines() if line.strip() and not line.startswith("#") and baseline_line_problem(line))
+
+
+def load_baseline() -> dict[tuple[str, str], tuple[int, str]]:
+    """(check, datei) → (anzahl, S-ID); kaputte Zeilen meldet check_all über baseline_problems()."""
+    base: dict[tuple[str, str], tuple[int, str]] = {}
+    for line in baseline_lines():
+        if baseline_line_problem(line):
+            continue
+        name, path, n, backlog = line.split("\t")
+        base[(name, path)] = (int(n), backlog)
     return base
+
+
+def baseline_lines() -> list[str]:
+    if not BASELINE.exists():
+        return []
+    return [ln for ln in BASELINE.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.startswith("#")]
+
+
+def baseline_problems() -> list[str]:
+    return [f"baseline-ids (§13.2) {ln.split(chr(9))[0]} {ln.split(chr(9))[1] if chr(9) in ln else ''}: {why}"
+            for ln in baseline_lines() if (why := baseline_line_problem(ln))]
 
 
 def check_all() -> int:
     base = load_baseline()
-    errors, warnings = [], []
+    errors, warnings = baseline_problems(), []
     seen: set[tuple[str, str]] = set()
     for check in CHECKS:
         for path, lines in run_check(check).items():
             key = (check.name, path)
             seen.add(key)
-            allowed = base.get(key, 0) if check.baseline else 0
+            allowed = base.get(key, (0, ""))[0] if check.baseline else 0
             if len(lines) > allowed:
                 where = ", ".join(str(n) for n in lines) if lines != [0] else "Datei"
                 msg = f"{check.name} ({check.rule}) {path}: {len(lines)} Treffer, Baseline {allowed} – Zeilen {where}"
                 (warnings if check.level == "SOLL" else errors).append(msg)
             elif len(lines) < allowed:
-                errors.append(f"baseline-stale (META-01) {check.name} {path}: {len(lines)} statt {allowed} – Baseline senken")
+                errors.append(f"baseline-stale (PROZ-02) {check.name} {path}: {len(lines)} statt {allowed} – Baseline senken")
     no_baseline = {c.name for c in CHECKS if not c.baseline}
     for key in base:
         if key[0] in no_baseline:
             errors.append(f"baseline-verboten {key[0]} {key[1]}: Sicherheits-Checks haben keine Baseline (SECURITY.md)")
-    for key, n in base.items():
+    for key, (n, _) in base.items():
         if key not in seen and n > 0 and key[0] not in no_baseline:
-            errors.append(f"baseline-stale (META-01) {key[0]} {key[1]}: 0 statt {n} – Baseline senken")
+            errors.append(f"baseline-stale (PROZ-02) {key[0]} {key[1]}: 0 statt {n} – Baseline senken")
     for w in warnings:
         print(f"WARNUNG {w}")
     for e in errors:
         print(f"FEHLER  {e}")
-    total = sum(base.values())
+    total = sum(n for n, _ in base.values())
     print(f"check-style: {len(CHECKS)} Checks, {len(errors)} Fehler, {len(warnings)} Warnungen, {total} Altlasten in der Baseline")
     return 1 if errors else 0
 
 
 def update_baseline() -> int:
     old = load_baseline()
-    rows, raised = [], []
+    rows, raised, unknown = [], [], []
     for check in (c for c in CHECKS if c.baseline):
         for path, lines in sorted(run_check(check).items()):
             n = len(lines)
-            if n > old.get((check.name, path), 0) and old:
-                raised.append(f"{check.name} {path}: {old.get((check.name, path), 0)} → {n}")
-            rows.append(f"{check.name}\t{path}\t{n}")
+            was, backlog = old.get((check.name, path), (0, "S-??"))
+            if n > was and old:
+                raised.append(f"{check.name} {path}: {was} → {n}")
+            if backlog == "S-??":
+                unknown.append(f"{check.name} {path}")
+            rows.append(f"{check.name}\t{path}\t{n}\t{backlog}")
     header = (
         "# Eingefrorene Altlasten der Stil-Checks (docs/STYLEGUIDE.md §13.2).\n"
-        "# check<TAB>datei<TAB>anzahl – darf nur sinken. Erzeugt mit scripts/check-style.sh --update-baseline.\n"
+        "# check<TAB>datei<TAB>anzahl<TAB>S-ID – darf nur sinken; jede Zeile nennt den Backlog-Punkt, der sie behebt.\n"
+        "# Erzeugt mit scripts/check-style.sh --update-baseline (neue Zeilen tragen S-?? und müssen zugeordnet werden).\n"
     )
     BASELINE.write_text(header + "\n".join(rows) + "\n", encoding="utf-8")
     print(f"Baseline geschrieben: {len(rows)} Einträge, {sum(int(r.split(chr(9))[2]) for r in rows)} Treffer")
+    for u in unknown:
+        print(f"ACHTUNG ohne Backlog-ID (S-?? eintragen oder beheben): {u}")
     for r in raised:
         print(f"ACHTUNG gestiegen: {r}")
     return 0
@@ -691,8 +900,9 @@ def update_baseline() -> int:
 
 def self_test() -> int:
     failed = 0
-    for check in CHECKS:
-        if check.custom and check.name != "ui-literal":
+    fixture_checks = list(CHECKS) + [Check("baseline-ids", "§13.2", [], fixture=baseline_fixture)]
+    for check in fixture_checks:
+        if check.custom and check.name != "ui-literal" and check.fixture is None:
             continue
         for kind in ("pos", "neg"):
             fixture = FIXTURES / f"{check.name}.{kind}"
@@ -701,7 +911,9 @@ def self_test() -> int:
                 failed += 1
                 continue
             text = fixture.read_text(encoding="utf-8")
-            if check.name == "ui-literal":
+            if check.fixture is not None:
+                n = check.fixture(text)
+            elif check.name == "ui-literal":
                 n = len(ui_literal_hits(prepared_lines(text, check)))
             else:
                 n = len(count_text(text, Check(**{**check.__dict__, "per_file": False})))
@@ -720,12 +932,23 @@ def self_test() -> int:
     if prepared_lines('Log.d("a", t) // dekorativ: x', SEC_LINES) == [""]:
         print("FEHLER  code_lines blendet Stil-Marker aus")
         failed += 1
+    # guide-sync: Fixture ist ein Diff-Text; pos = Token geändert ohne STYLEGUIDE, neg = mit STYLEGUIDE im Bereich.
+    for kind in ("pos", "neg"):
+        fixture = FIXTURES / f"guide-sync.{kind}"
+        if not fixture.exists():
+            print(f"FEHLER  Fixture fehlt: {fixture.relative_to(ROOT)}")
+            failed += 1
+            continue
+        hit = guide_sync_problem(fixture.read_text(encoding="utf-8"), "")
+        if hit != (kind == "pos"):
+            print(f"FEHLER  guide-sync.{kind}: {'Treffer' if hit else 'kein Treffer'}")
+            failed += 1
     print(f"self-test: {'ok' if not failed else f'{failed} Fehler'}")
     return 1 if failed else 0
 
 
 def commit_subject_ok(subject: str) -> bool:
-    """CODE-08: Betreff beginnt mit vX.Y.Z:, build:, docs: oder fix: (kein feat:, kein Scope)."""
+    """PROZ-01: Betreff beginnt mit vX.Y.Z:, build:, docs: oder fix: (kein feat:, kein Scope)."""
     return re.match(r"^(v\d+\.\d+\.\d+|build|docs|fix): \S", subject) is not None
 
 
@@ -737,28 +960,37 @@ def commit_msg(path: str) -> int:
     # vor dem Push zusammengelegt, und dann prüft --ci-range den echten Betreff.
     if commit_subject_ok(subject) or subject.startswith(("fixup! ", "squash! ", "amend! ")):
         return 0
-    print(f"FEHLER  commit-msg (CODE-08): „{subject}“ – erlaubt sind fix:, docs:, build: und vX.Y.Z:")
+    print(f"FEHLER  commit-msg (PROZ-01): „{subject}“ – erlaubt sind fix:, docs:, build: und vX.Y.Z:")
     return 1
 
 
+API_DIFF = re.compile(
+    rf"^diff --git a/{re.escape(SRC)}ui/theme/[^\n]*\n(?:(?!diff --git)[^\n]*\n)*?[+-]\s*(const\s+)?val\s"
+    rf"|^diff --git a/{re.escape(SRC)}ui/components/[^\n]*\n(?:(?!diff --git)[^\n]*\n)*?[+-]\s*(@Composable\s+)?fun\s",
+    re.M,
+)
+
+
+def guide_sync_problem(diff: str, bodies: str) -> bool:
+    """PROZ-02: Der ganze Bereich ändert Theme-Tokens oder öffentliche Komponenten, aber nirgends den STYLEGUIDE."""
+    return bool(API_DIFF.search(diff)) and "diff --git a/docs/STYLEGUIDE.md" not in diff and "Guide: n/a" not in bodies
+
+
 def ci_range(rev_range: str) -> int:
-    """guide-sync und commit-msg (META-01, CODE-08) über einen Push-Bereich."""
+    """commit-msg je Commit (PROZ-01) und guide-sync über den ganzen Bereich (PROZ-02): Code-Commits
+    und ein Doku-Commit im selben Push brauchen keinen Alibi-Trailer mehr."""
     errors = []
     log = subprocess.run(["git", "log", "--format=%H%x00%s%x00%B%x01", rev_range],
                          cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    bodies = []
     for entry in filter(None, (e.strip("\n") for e in log.split("\x01"))):
         sha, subject, body = entry.split("\x00", 2)
+        bodies.append(body)
         if not commit_subject_ok(subject):
-            errors.append(f"commit-msg (CODE-08) {sha[:8]}: „{subject}“")
-        files = subprocess.run(["git", "diff-tree", "--no-commit-id", "-r", "-U0", "-p", sha],
-                               cwd=ROOT, capture_output=True, text=True, check=True).stdout
-        touched_api = re.search(
-            rf"^diff --git a/{re.escape(SRC)}ui/theme/[^\n]*\n(?:(?!diff --git)[^\n]*\n)*?[+-]\s*(const\s+)?val\s", files, re.M,
-        ) or re.search(
-            rf"^diff --git a/{re.escape(SRC)}ui/components/[^\n]*\n(?:(?!diff --git)[^\n]*\n)*?[+-]\s*(@Composable\s+)?fun\s", files, re.M,
-        )
-        if touched_api and "docs/STYLEGUIDE.md" not in files and "Guide: n/a" not in body:
-            errors.append(f"guide-sync (META-01) {sha[:8]}: Theme-Token oder öffentliche Komponente geändert ohne STYLEGUIDE (Trailer „Guide: n/a“ mit Grund möglich)")
+            errors.append(f"commit-msg (PROZ-01) {sha[:8]}: „{subject}“")
+    diff = subprocess.run(["git", "diff", "-U0", rev_range], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    if guide_sync_problem(diff, "\n".join(bodies)):
+        errors.append(f"guide-sync (PROZ-02) {rev_range}: Theme-Token oder öffentliche Komponente geändert, aber kein Commit des Bereichs ändert docs/STYLEGUIDE.md (Trailer „Guide: n/a – <Grund>“ nur für echte Ausnahmen)")
     for e in errors:
         print(f"FEHLER  {e}")
     print(f"ci-range {rev_range}: {len(errors)} Fehler")
@@ -770,6 +1002,8 @@ def main() -> int:
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--update-baseline", action="store_true")
     ap.add_argument("--ci-range")
+    ap.add_argument("--list", action="store_true")
+    ap.add_argument("--update-check-table", action="store_true")
     ap.add_argument("--commit-msg", metavar="DATEI")
     a = ap.parse_args()
     if a.self_test:
@@ -778,6 +1012,11 @@ def main() -> int:
         return update_baseline()
     if a.ci_range:
         return ci_range(a.ci_range)
+    if a.list:
+        print(check_table_text())
+        return 0
+    if a.update_check_table:
+        return update_check_table()
     if a.commit_msg:
         return commit_msg(a.commit_msg)
     return check_all()

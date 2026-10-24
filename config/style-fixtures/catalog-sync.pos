@@ -1,0 +1,6 @@
+@Composable
+fun NeuerBaustein(text: String) { }
+
+fun Modifier.flushEnd(): Modifier = this
+---
+| `flushEnd` | bündig | – | – |

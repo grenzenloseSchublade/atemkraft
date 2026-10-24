@@ -1,0 +1,5 @@
+SectionHeader(
+    title = "Übungen",
+    color = MaterialTheme.colorScheme.primary,
+)
+CardTitle(text, color = headingColor(2))

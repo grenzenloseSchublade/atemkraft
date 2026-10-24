@@ -1,15 +1,13 @@
 # Eingefrorene Altlasten der Stil-Checks (docs/STYLEGUIDE.md §13.2).
-# check<TAB>datei<TAB>anzahl – darf nur sinken. Erzeugt mit scripts/check-style.sh --update-baseline.
-color-source	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1
-alpha-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
-layout-literal	app/src/main/java/app/atemkraft/MainActivity.kt	1
-layout-literal	app/src/main/java/app/atemkraft/ui/components/PauseFlash.kt	1
-layout-literal	app/src/main/java/app/atemkraft/ui/components/SessionRunningLayout.kt	1
-layout-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1
-card-style	app/src/main/java/app/atemkraft/ui/navigation/AppNavigationBar.kt	1
-motion-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1
-a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/CircleTapTarget.kt	1
-a11y-ratchet	app/src/main/java/app/atemkraft/ui/components/HideableSlot.kt	1
-locale	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2
-locale-config	app/build.gradle.kts	1
-locale-config	app/src/main/AndroidManifest.xml	1
+# check<TAB>datei<TAB>anzahl<TAB>S-ID – darf nur sinken; jede Zeile nennt den Backlog-Punkt, der sie behebt.
+# Erzeugt mit scripts/check-style.sh --update-baseline (neue Zeilen tragen S-?? und müssen zugeordnet werden).
+color-source	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1	S-30
+alpha-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1	S-29
+layout-literal	app/src/main/java/app/atemkraft/MainActivity.kt	1	S-29
+layout-literal	app/src/main/java/app/atemkraft/ui/components/PauseFlash.kt	1	S-29
+layout-literal	app/src/main/java/app/atemkraft/ui/components/SessionRunningLayout.kt	1	S-29
+layout-literal	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	1	S-29
+motion-literal	app/src/main/java/app/atemkraft/ui/components/BreathingCircle.kt	1	S-29
+locale	app/src/main/java/app/atemkraft/ui/log/LogbookScreen.kt	2	S-28
+locale-config	app/build.gradle.kts	1	S-28
+locale-config	app/src/main/AndroidManifest.xml	1	S-28

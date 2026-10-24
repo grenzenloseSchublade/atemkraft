@@ -1,0 +1,5 @@
+<!-- check-table:start -->
+| Check | Regel | Scope | Stufe |
+|---|---|---|---|
+| `color-source` | FARBE-01 | src/ | MUSS |
+<!-- check-table:end -->

@@ -1,0 +1,5 @@
+SegmentedButton(
+    selected = selected,
+    icon = { SegmentedButtonDefaults.Icon(selected) },
+)
+val check = Icons.Filled.Check

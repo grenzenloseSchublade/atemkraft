@@ -1,0 +1,11 @@
+@Composable
+fun NeuerBaustein(text: String) { }
+
+private fun helfer() { }
+
+internal fun Modifier.centeredOverflow(): Modifier = this
+---
+```
+fun Skizze()
+```
+| `NeuerBaustein` / `flushEnd` | bündig | – | – |

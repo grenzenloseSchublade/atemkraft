@@ -69,7 +69,7 @@ fun HideableSlot(
  */
 @OptIn(ExperimentalComposeUiApi::class)
 fun Modifier.inertWhen(hidden: Boolean): Modifier = this
-    .then(if (hidden) Modifier.clearAndSetSemantics {} else Modifier)
+    .then(if (hidden) Modifier.clearAndSetSemantics {} else Modifier) // Abweichung A11Y-02: ausgeblendet ist bewusst ohne Semantik und Fokus (Ruhe-Ansicht)
     .focusProperties { if (hidden) enter = { FocusRequester.Cancel } }
     .then(ReleaseFocusElement(hidden))
     .focusGroup()

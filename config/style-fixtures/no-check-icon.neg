@@ -1,0 +1,7 @@
+SegmentedButton(
+    selected = selected,
+    colors = SegmentedButtonDefaults.colors(activeContainerColor = SegmentSelected),
+    // Kein Häkchen.
+    icon = {},
+)
+SuggestionChip(onClick = onClick, label = { Text(label) }, icon = null)
