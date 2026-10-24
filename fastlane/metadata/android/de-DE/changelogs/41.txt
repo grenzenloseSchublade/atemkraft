@@ -1,0 +1,5 @@
+- Ruhigere Tabs: echtes Suchfeld, weiße Köpfe, kleine Filter
+- „Zuletzt geübt“, „Alle Übungen“, Schnellstart am App-Symbol
+- ◉ als Zeichen für „zu mir“, Serie ausblendbar
+- Eigene Muster: Stift auf den Karten, Vorschau in der Kurvenkarte
+- Weicher Dauerton, Kreis ohne Sprünge
