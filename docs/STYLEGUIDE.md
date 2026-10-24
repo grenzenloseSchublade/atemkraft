@@ -189,7 +189,7 @@ Kartenrand: `Dimens.BorderThin` 1 dp mit `ALPHA_BORDER` in der Akzentfarbe, nur 
 
 | Shape | Radius | Wofür |
 |---|---|---|
-| `extraSmall` / `small` / `medium` / `large` / `extraLarge` | 8 / 12 / 16 / 20 / 28 dp | Info-Chip / FilterChip / Card / `AppTextButton`, `AppOutlinedButton` / Dialog |
+| `extraSmall` / `small` / `medium` / `large` / `extraLarge` | 8 / 12 / 16 / 20 / 28 dp | Info-Chip / `ChoiceChip` (Anlässe) / Card, Leer-Karte „Eigene Kreationen“ / `AppTextButton`, `AppOutlinedButton` / Dialog |
 | `CircleShape` | – | Punkte, Buttons, Pillen (`SearchField`, `TonalChip`) |
 
 | Typ | Container | oben | Kopf | unten |
