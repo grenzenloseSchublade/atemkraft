@@ -1,9 +1,11 @@
 package app.atemkraft.ui.patterns
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.data.Atemlehre
@@ -56,6 +59,7 @@ import app.atemkraft.ui.patterns.curve.rememberCurvePreviewState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.WarnAmber
+import app.atemkraft.ui.theme.rememberAnimationsEnabled
 
 /** Was der Muster-Editor auslöst (CODE-02); Bedeutung siehe [PatternEditorScreen]. */
 @Immutable
@@ -71,9 +75,10 @@ data class PatternEditorActions(
  * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“, 5 „Kompakt“, 6 „Leiste unten“),
  * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, rechts Startpunkt ([StartButton],
  * öffnet die Vorlagen) und Lesezeichen · Werte ohne Tippfläche ([InfoLine]: „Box · 16 s je
- * Atemzug · 3,8/min“, ggf. „intensiv“; während der Vorschau die Phase) · die Atemkurve · darunter
- * rechtsbündig die Vorschau ([PreviewRow]: Play/Pause und Ton-Schalter; Nutzer 2026-10-23: über
- * der Kurve keine Knöpfe) · die Werkzeugleiste (gewählte Phase mit Sekunden-Stepper und
+ * Atemzug · 3,8/min“, ggf. „intensiv“; während der Vorschau die Phase) · die Kurvenkarte
+ * ([CurveCard]: die Atemkurve und am unteren Rand derselben Karte die Vorschau, [PreviewRow]:
+ * Play links, Ton-Schalter rechts, bündig mit den Innenkanten der Kurve; Nutzer 2026-10-23: über
+ * der Kurve keine Knöpfe, 2026-10-24: in die Karte eingebunden) · die Werkzeugleiste (gewählte Phase mit Sekunden-Stepper und
  * Papierkorb, gelb gestrichelt getrennt „Nach Phase 2:“ mit + Ein / + Halten / + Aus). Ziel: Kurve
  * und Werkzeugleiste stehen ohne Scrollen ganz da – die Kurve hat ihre volle Höhe, wo Platz ist,
  * sonst so viel, dass alles passt, nie weniger als ihre Mindesthöhe ([FirstScreen]; die
@@ -171,17 +176,22 @@ fun PatternEditorScreen(
                     FirstScreen(
                         viewport = viewport,
                         header = { InfoLine(state, preview) },
-                        curve = {
-                            BreathCurveEditor(
-                                pattern = pattern,
-                                selected = state.selected,
-                                onSelect = { it?.let(state::select) },
-                                onChangeSeconds = state::setSeconds,
-                                modifier = Modifier.fillMaxWidth(),
-                                preview = preview,
+                        curveCard = {
+                            CurveCard(
+                                curve = {
+                                    BreathCurveEditor(
+                                        pattern = pattern,
+                                        selected = state.selected,
+                                        onSelect = { it?.let(state::select) },
+                                        onChangeSeconds = state::setSeconds,
+                                        // Die Kurve nimmt in der Karte die Resthöhe über der Vorschau-Zeile.
+                                        modifier = Modifier.fillMaxWidth().weight(1f),
+                                        preview = preview,
+                                    )
+                                },
+                                preview = { PreviewRow(preview, sound) },
                             )
                         },
-                        belowCurve = { PreviewRow(preview, sound) },
                         toolbar = { Toolbar(state, toolbarFocus) },
                     )
                     pattern.intensityNote()?.let { IntenseNote(it) }
@@ -220,13 +230,14 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
 }
 
 /**
- * Der erste Bildschirm des Editors (Nachtrag 5 und 6): Werte [header], Atemkurve [curve], darunter
- * die Vorschau [belowCurve] (Nutzer 2026-10-23) und die Werkzeugleiste [toolbar]. Die Kurve bekommt
- * die Höhe, mit der alles zusammen in die sichtbare Höhe [viewport] (px) der Scroll-Fläche passt –
- * bevorzugt ihre volle, auf kleinen Bildschirmen weniger, nie unter ihre Mindesthöhe
- * ([BreathCurveHeights.fit]; Vorschau und Werkzeugleiste zählen beide mit); reicht auch die nicht,
- * scrollt die Seite. Die Tab-Leiste ist in der Tiefe eingeklappt (Nutzer 2026-10-23), ihre Höhe
- * gehört der Kurve; klappt der Nutzer sie auf, wird die Kurve flacher.
+ * Der erste Bildschirm des Editors (Nachtrag 5 und 6): Werte [header], die Kurvenkarte [curveCard]
+ * (Atemkurve und am unteren Rand die Vorschau, [CurveCard]; Nutzer 2026-10-24) und die
+ * Werkzeugleiste [toolbar]. Die Kurve bekommt die Höhe, mit der alles zusammen in die sichtbare
+ * Höhe [viewport] (px) der Scroll-Fläche passt – bevorzugt ihre volle, auf kleinen Bildschirmen
+ * weniger, nie unter ihre Mindesthöhe ([BreathCurveHeights.fit]; Vorschau und Werkzeugleiste zählen
+ * beide mit: Die Karte ist um [PREVIEW_ROW_HEIGHT] höher als die Kurve, solange die Vorschau da ist);
+ * reicht auch die nicht, scrollt die Seite. Die Tab-Leiste ist in der Tiefe eingeklappt (Nutzer
+ * 2026-10-23), ihre Höhe gehört der Kurve; klappt der Nutzer sie auf, wird die Kurve flacher.
  *
  * Werte, Vorschau und Werkzeugleiste behalten beim Bearbeiten ihre Höhe (Platz für die längsten
  * Texte reserviert), also auch die Kurve – nichts springt beim Auswählen, Hinzufügen oder Entfernen.
@@ -235,22 +246,41 @@ private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): Phase
 private fun FirstScreen(
     viewport: Int,
     header: @Composable () -> Unit,
-    curve: @Composable () -> Unit,
-    belowCurve: @Composable () -> Unit,
+    curveCard: @Composable () -> Unit,
     toolbar: @Composable () -> Unit,
 ) {
     val heights = rememberBreathCurveHeights()
+    // Ohne System-Animationen fehlt die Vorschau-Zeile (MOTION-02), die Karte endet mit der Kurve.
+    val previewRow = if (rememberAnimationsEnabled()) PREVIEW_ROW_HEIGHT else 0.dp
     FillViewportColumn(
         viewportHeight = viewport,
-        centerHeight = { free -> if (free == Constraints.Infinity) heights.preferred.roundToPx() else heights.fit(free.toDp()).roundToPx() },
-        top = header,
-        center = curve,
-        // Zwei Teile unten: FillViewportColumn stapelt sie und zieht beide vom Platz der Kurve ab.
-        bottom = {
-            belowCurve()
-            toolbar()
+        centerHeight = { free ->
+            val row = previewRow.roundToPx()
+            if (free == Constraints.Infinity) heights.preferred.roundToPx() + row else heights.fit((free - row).toDp()).roundToPx() + row
         },
+        top = header,
+        center = curveCard,
+        bottom = toolbar,
     )
+}
+
+/**
+ * Kurvenkarte des Editors: eine Fläche (`surface`, `shapes.medium`) um die Atemkurve [curve] und
+ * darunter, am unteren Rand derselben Karte, die Vorschau [preview] ([PreviewRow]: Play links, Ton
+ * rechts, bündig mit den Innenkanten der Kurve) – Knöpfe und Kurve lesen sich als ein Element
+ * (Nutzer 2026-10-24: „sauber optisch in die Graph-Karte eingebunden“). Kein Polster: Die Kurve
+ * trägt ihre Innenränder selbst, die Vorschau ihre Tippflächen.
+ */
+@Composable
+private fun CurveCard(curve: @Composable ColumnScope.() -> Unit, preview: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium),
+    ) {
+        curve()
+        preview()
+    }
 }
 
 /**

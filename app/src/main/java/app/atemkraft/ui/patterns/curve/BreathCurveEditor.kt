@@ -128,9 +128,12 @@ fun rememberBreathCurveHeights(): BreathCurveHeights {
  * gelbes Band auf der Zeitleiste den erlaubten Bereich („1 bis 30 s“).
  *
  * Vorschau ([preview]): Läuft sie, wandert ein Punkt in Echtzeit über die Kurve. Die Knöpfe
- * dazu ([CurvePreviewControls]) stellt der Aufrufer neben die Kurve (Muster-Editor: rechtsbündig in
- * eine Zeile darunter, Nutzer 2026-10-23), ebenso den Phasennamen (Muster-Editor: in den Werten
- * über der Kurve) und den Ton (`PreviewSoundEffect` mit [CurvePreviewState]).
+ * dazu ([CurvePreviewControls]) stellt der Aufrufer zur Kurve (Muster-Editor: am unteren Rand
+ * derselben Karte, Play links, Ton rechts, Nutzer 2026-10-24), ebenso den Phasennamen (Muster-Editor:
+ * in den Werten über der Kurve) und den Ton (`PreviewSoundEffect` mit [CurvePreviewState]).
+ *
+ * Fläche: Die Kurve zeichnet keinen eigenen Grund – die Karte (`surface`, `shapes.medium`) gibt
+ * der Aufrufer per [modifier] bzw. um Kurve und Vorschau herum (Muster-Editor `CurveCard`).
  *
  * Höhe: bevorzugt [BreathCurveHeights.preferred]; gibt der Aufrufer per [modifier] weniger
  * (`Modifier.height`, siehe [rememberBreathCurveHeights]), weicht zuerst der Platz für Beschriftungen
@@ -187,7 +190,7 @@ fun BreathCurveEditor(
             }
         }
     }
-    Box(modifier = modifier.background(colors.surface, MaterialTheme.shapes.medium)) {
+    Box(modifier = modifier) {
         val density = LocalDensity.current
         Canvas(
             modifier = Modifier
@@ -425,6 +428,8 @@ private fun BreathCurveEditorPreview() {
             selected = 3,
             onSelect = {},
             onChangeSeconds = { _, _ -> },
+            // Die Karte um die Kurve gibt in der App der Editor (CurveCard).
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium),
         )
     }
 }

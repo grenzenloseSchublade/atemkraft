@@ -211,8 +211,7 @@
     <!-- TalkBack: die Kurve ist ein Knoten. %1$s = die Folge in Worten (FreePattern.spokenDescription):
          „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“. -->
     <string name="cd_breath_curve">Atemkurve: %1$s</string>
-    <!-- Zeile unter der Kurve: kleine Beschriftung links von Play/Pause und Ton-Schalter. -->
-    <string name="pattern_editor_preview">Vorschau</string>
+    <!-- Vorschau am unteren Rand der Kurvenkarte: Play/Pause links, Ton-Schalter rechts, ohne Beschriftung. -->
     <string name="cd_preview_play">Vorschau abspielen</string>
     <string name="cd_preview_pause">Vorschau anhalten</string>
     <!-- Lautsprecher-Schalter der Editor-Vorschau (Role.Switch, Zustand „An“/„Aus“). -->

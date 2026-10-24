@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -28,7 +27,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -49,6 +47,7 @@ import app.atemkraft.ui.components.InlineOrBelow
 import app.atemkraft.ui.components.SlidingReset
 import app.atemkraft.ui.components.StartPlayButton
 import app.atemkraft.ui.components.flushEnd
+import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.rememberWidestAnnotatedWidth
 import app.atemkraft.ui.patterns.curve.CurvePreviewControls
 import app.atemkraft.ui.patterns.curve.CurvePreviewState
@@ -224,34 +223,37 @@ internal fun StartButton(state: PatternEditorState, focus: StartFocus, onClick: 
 }
 
 /**
- * Vorschau unter der Kurve (Nutzer 2026-10-23): rechtsbündig Play/Pause und der Lautsprecher-
- * Schalter ([CurvePreviewControls] mit [PreviewSoundSwitch], Größen wie überall), links davon klein
- * „Vorschau“ (`labelMedium` `SECONDARY`; für TalkBack unsichtbar, die Knöpfe sagen „Vorschau
- * abspielen“ und „Ton der Vorschau“). Bei abgeschalteten System-Animationen fehlt die ganze Zeile
- * samt Beschriftung (MOTION-02).
+ * Vorschau am unteren Rand der Kurvenkarte (Nutzer 2026-10-24, vorher eine Zeile mit „Vorschau“
+ * rechtsbündig unter der Karte): links Play/Pause ([CurvePreviewControls]), rechts der Lautsprecher-
+ * Schalter ([PreviewSoundSwitch]), ohne Beschriftung – die Knöpfe sagen „Vorschau abspielen“ /
+ * „Vorschau anhalten“ und „Ton der Vorschau“. Die Glyphen stehen bündig an den Innenkanten der
+ * Kurve: links am Beginn der Zeitachse (`CardPadding`, wo die „0“ beginnt), rechts am Ende ihrer
+ * letzten Zahl (`GapSmall` vor dem Kartenrand), die Tippflächen ragen per [flushStart]/[flushEnd]
+ * über diese Kanten. Kein eigener Abstand zur Zeitachse: Unter ihr liegt schon `GapTiny`, dazu der
+ * unsichtbare Rand der Tippflächen – zusammen sichtbar `GapSmall`. Hoch genau [PREVIEW_ROW_HEIGHT];
+ * bei abgeschalteten System-Animationen fehlt die Zeile ganz (MOTION-02), die Karte endet dann mit
+ * der Zeitachse. TalkBack: nach der Kurve erst Play, dann Ton.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun PreviewRow(preview: CurvePreviewState, sound: PreviewSoundState) {
     if (!rememberAnimationsEnabled()) return
     Row(
-        // Kein eigener Abstand zur Kurve: Unter ihrer Zeitachse liegt schon GapTiny, dazu der
-        // unsichtbare Rand der 48-dp-Tippflächen – zusammen sichtbar etwa GapSmall.
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = Dimens.CardPadding, end = Dimens.GapSmall),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = stringResource(R.string.pattern_editor_preview),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-            maxLines = 1,
-            // Nicht clearAndSetSemantics: Die Umbruch- und Zuschnittprüfung braucht das Text-Layout.
-            modifier = Modifier.semantics { invisibleToUser() },
-        )
-        Box(Modifier.flushEnd()) { CurvePreviewControls(preview) { PreviewSoundSwitch(sound) } }
+        Box(Modifier.flushStart()) { CurvePreviewControls(preview) }
+        Box(Modifier.flushEnd()) { PreviewSoundSwitch(sound) }
     }
 }
+
+/**
+ * Höhe der [PreviewRow], solange sie da ist (Tippfläche der Icon-Knöpfe, wächst nicht mit der
+ * Schrift): `FirstScreen` zieht sie innerhalb der Kurvenkarte vom Platz der Kurve ab.
+ */
+internal val PREVIEW_ROW_HEIGHT = Dimens.MinTouchTarget
 
 /**
  * Fokus und Ansage (A11Y-04, A11Y-07): [start] (Startpunkt im Kopf, [StartButton]) und [play] sind
