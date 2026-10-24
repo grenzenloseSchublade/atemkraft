@@ -98,6 +98,8 @@ fun SearchField(
                 onValueChange = onQueryChange,
                 modifier = Modifier
                     .weight(1f)
+                    // Das Feld selbst ist die Tippfläche (A11Y-05), nicht nur die Pille um es herum.
+                    .heightIn(min = Dimens.MinTouchTarget)
                     .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
@@ -110,7 +112,7 @@ fun SearchField(
                 ),
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
-                    Box(contentAlignment = Alignment.CenterStart) {
+                    Box(modifier = Modifier.heightIn(min = Dimens.MinTouchTarget), contentAlignment = Alignment.CenterStart) {
                         // Immer im Baum, sichtbar nur bei leerem Feld: Der Platzhalter wird mit dem
                         // Feld zusammengeführt und bleibt so sein Name wie das Label eines
                         // M3-Textfelds – auch wenn Text drinsteht (TalkBack „Erschö, Wie fühlst du
