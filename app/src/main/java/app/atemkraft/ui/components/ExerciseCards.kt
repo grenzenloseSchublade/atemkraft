@@ -19,6 +19,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
@@ -162,12 +164,16 @@ fun PatternCard(
         modifier = modifier.fillMaxWidth(),
         border = accentBorder(MaterialTheme.colorScheme.secondary),
     ) {
+        // Die Knöpfe halten nur die Titelzeile frei; die Musterzeile läuft unter ihnen durch
+        // (Nutzer 2026-10-24). Ohne Kopfzeile stehen die Glyphen mittig auf der ersten Titelzeile.
+        val actionsWidth = Dimens.MinTouchTarget * actionCount - Sizes.TouchOverhang + Dimens.GapSmall
+        val titleLine = rememberFirstLineHeight(MaterialTheme.typography.titleMedium)
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(
                     start = Dimens.CardPadding,
                     top = if (eyebrow != null) Dimens.CardPadding - Sizes.CircleOverhang else Dimens.CardPadding,
-                    end = if (eyebrow != null) Dimens.CardPadding else Dimens.MinTouchTarget * actionCount,
+                    end = Dimens.CardPadding,
                     bottom = Dimens.CardPadding,
                 ),
             ) {
@@ -177,7 +183,7 @@ fun PatternCard(
                             .fillMaxWidth()
                             .height(Dimens.MinTouchTarget)
                             // Platz für die Knöpfe rechts, die als Overlay darüberliegen.
-                            .padding(end = Dimens.MinTouchTarget * actionCount - Sizes.TouchOverhang + Dimens.GapSmall),
+                            .padding(end = actionsWidth),
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         Text(
@@ -189,7 +195,7 @@ fun PatternCard(
                         )
                     }
                 }
-                PatternBody(exercise, patternLine)
+                PatternBody(exercise, patternLine, titleEndPadding = if (eyebrow != null) 0.dp else actionsWidth)
             }
             // Ein Aufruf des Slots für beide Varianten (Compose-Regel content-slot-reused).
             Box(
@@ -199,7 +205,11 @@ fun PatternCard(
                         if (eyebrow != null) {
                             Modifier.padding(top = Dimens.CardPadding - Sizes.CircleOverhang, end = Dimens.CardPadding - Sizes.TouchOverhang)
                         } else {
-                            Modifier
+                            // Glyph-Mitte auf der Mitte der ersten Titelzeile, Glyph bündig mit der Inhaltskante.
+                            Modifier.padding(
+                                top = (Dimens.CardPadding - (Dimens.MinTouchTarget - titleLine) / 2).coerceAtLeast(0.dp),
+                                end = Dimens.CardPadding - Sizes.TouchOverhang,
+                            )
                         },
                     ),
             ) { action() }
@@ -209,17 +219,20 @@ fun PatternCard(
 
 /** Name mit Charakter-Chip und darunter die Musterzeile mit Dauer – der Textteil der [PatternCard]. */
 @Composable
-private fun PatternBody(exercise: Exercise, patternLine: String) {
-    TitleWithChips(
-        title = exercise.name,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-    ) {
-        // Ein eigenes intensives Muster sieht schon in der Liste so aus wie auf der Detailseite.
-        CharacterChip(intense = exercise.caution, activating = exercise.activating)
+private fun PatternBody(exercise: Exercise, patternLine: String, titleEndPadding: Dp) {
+    Column {
+        TitleWithChips(
+            title = exercise.name,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(end = titleEndPadding),
+        ) {
+            // Ein eigenes intensives Muster sieht schon in der Liste so aus wie auf der Detailseite.
+            CharacterChip(intense = exercise.caution, activating = exercise.activating)
+        }
+        Spacer(Modifier.height(Dimens.GapTiny))
+        // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
+        // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
+        SecondaryText(patternLine + DOT_SEPARATOR + stringResource(R.string.duration_approx, exercise.defaultMinutes()))
     }
-    Spacer(Modifier.height(Dimens.GapTiny))
-    // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
-    // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
-    SecondaryText(patternLine + DOT_SEPARATOR + stringResource(R.string.duration_approx, exercise.defaultMinutes()))
 }
