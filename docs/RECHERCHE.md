@@ -94,6 +94,9 @@ Nach [STORE.md](STORE.md): Play-Konto anlegen (Prüfungen dauern Tage), eigenen 
 
 ## 4. Reihenfolge
 
+Die Auswertung aller Berichte mit Reihenfolge je Release und den offenen Entscheidungen steht in [recherche/2026-10-24-auswertung.md](recherche/2026-10-24-auswertung.md); die Tabelle hier ist die Kurzform.
+
+
 | Phase | Inhalt | Voraussetzung |
 |---|---|---|
 | 1 | v2.7.1 am Gerät prüfen; UX-Vergleich lesen und Entscheidungen treffen | läuft |
