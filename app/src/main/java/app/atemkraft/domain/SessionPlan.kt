@@ -19,6 +19,11 @@ data class RuntimePhase(
     val roundCount: Int,
     /** Füllstand für Atmen in Stufen, siehe [Phase.level]; null = nach Phasentyp. */
     val level: BreathLevel? = null,
+    /**
+     * Füllstand des Atemkreises (und Tonhöhe des Dauertons) zu Beginn und am Ende der Phase,
+     * stetig über die Phasengrenzen ([CircleFractions], MOTION-03); setzt [buildTimeline].
+     */
+    val circle: BreathLevel = BreathLevel.at(0f),
 )
 
 /**
@@ -48,7 +53,7 @@ fun Exercise.buildTimeline(): List<RuntimePhase> {
             }
         }
     }
-    return timeline
+    return CircleFractions.assign(timeline)
 }
 
 /** Rundenbasiert = mehr als eine Runde; sonst kontinuierlich (über Minuten anpassbar). */

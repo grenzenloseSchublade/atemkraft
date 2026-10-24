@@ -436,12 +436,12 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/sess
 |---|---|---|---|---|
 | MOTION-01 | MUSS | Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab, nie aus einer Animations-API. Nach Pause setzt auch der durchgehende Ton an der aktuellen Position fort. | Synchron, Pause friert alles ein, „Animationen entfernen“ bricht nichts. | manuell: R-CODE, R-AUDIO |
 | MOTION-02 | DARF NICHT | Nichts blinkt schneller als 3 Hz; keine rotgesättigte Fläche mit Helligkeitswechsel; Pacer-Phasen < 0,5 s. Dekorative Endlos-Animationen laufen über Compose-APIs (stoppen bei Animator-Skala 0) mit Alpha-Änderung ≤ 0,1. Tap-Flash zeigt bei 0 statisch. Ausnahme vāyu-Bild: gewählte Fläche pulsiert 0,55 ↔ 0,95 in 2,6 s, nur nach Antippen, bei Skala 0 still. | WCAG 2.3.1 / 2.2.2, ruhig. | manuell: R-VISUAL |
-| MOTION-03 | SOLL | Phasenübergänge am Kreis sind stetig: Endskala einer Phase = Startskala der nächsten; Stufen (Viloma) über `Phase.level`, der Kreis wächst stufenweise, der durchgehende Ton folgt. | Sprünge wirken wie ein Blitz. | manuell: R-VISUAL |
+| MOTION-03 | SOLL | Phasenübergänge am Kreis sind stetig: Endskala einer Phase = Startskala der nächsten (`CircleFractions` setzt `RuntimePhase.circle`; die Vorbereitung zeigt den Start der ersten Phase); Stufen (Viloma) über `Phase.level`, der Kreis wächst stufenweise, der durchgehende Ton folgt demselben Füllstand. | Sprünge wirken wie ein Blitz. | manuell: R-VISUAL |
 | MOTION-04 | SOLL | Dauern und Easing aus `Motion.*`; neue UI-Bewegung ≤ 300 ms, Standard-Easing oder Default-Spring, kein Bounce. | Zentral, ruhig. | auto: `motion-literal` |
 
 ## <a id="audio"></a>9 Audio und Haptik
 
-**Ist-Werte** (`src/cue/`): Synthese 44,1 kHz PCM16 mono zur Laufzeit. Wechselton 528/396/440 Hz (Ein/Aus/Halten), 180 ms, Attack 12, Release 60 ms. Gong Teiltöne 330/331,6/894/1698 Hz, „Lang“ 11,5 s + 1,5 s Stille, „Kurz“ 6 + 1,5 s. Durchgehend 196 ↔ 294 Hz. Lautstärke Ton/Gong 0,9/1,4/1,85, Dauerton 1,2/2,0/3,2. Sprache System-TTS de-DE (Rate 0,85, Pitch 0,9) oder Piper (Speed 0,9). Haptik-Raste: Primitive `TICK` 0,6 bzw. `CLICK` 1,0, sonst `EFFECT_TICK`/`EFFECT_HEAVY_CLICK`, sonst One-Shot 30/60 ms; gedrosselt (Tick frühestens 40 ms nach einem Tick, 80 ms nach einem Klick). Ein/Aus 110 ms, Halten 70 ms. Fokus `GAIN_TRANSIENT_MAY_DUCK`, `USAGE_MEDIA`. Defaults: Töne, Haptik an, Zäsur MEDIUM, Lautstärke MEDIUM, Gong lang.
+**Ist-Werte** (`src/cue/`): Synthese 44,1 kHz PCM16 mono zur Laufzeit. Wechselton 528/396/440 Hz (Ein/Aus/Halten), 180 ms, Attack 12, Release 60 ms. Gong Teiltöne 330/331,6/894/1698 Hz, „Lang“ 11,5 s + 1,5 s Stille, „Kurz“ 6 + 1,5 s. Durchgehend 196 ↔ 294 Hz, Tonhöhe nach dem Füllstand des Kreises, Ein- und Ausblende 60 ms. Lautstärke Ton/Gong 0,9/1,4/1,85, Dauerton 1,2/2,0/3,2. Sprache System-TTS de-DE (Rate 0,85, Pitch 0,9) oder Piper (Speed 0,9). Haptik-Raste: Primitive `TICK` 0,6 bzw. `CLICK` 1,0, sonst `EFFECT_TICK`/`EFFECT_HEAVY_CLICK`, sonst One-Shot 30/60 ms; gedrosselt (Tick frühestens 40 ms nach einem Tick, 80 ms nach einem Klick). Ein/Aus 110 ms, Halten 70 ms. Fokus `GAIN_TRANSIENT_MAY_DUCK`, `USAGE_MEDIA`. Defaults: Töne, Haptik an, Zäsur MEDIUM, Lautstärke MEDIUM, Gong lang.
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -681,8 +681,7 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 |---|---|---|---|
 | S-03 | FARBE-03 | Phase auf Kreiszentrum 3,31 (großer Text, ≥ 3); Option Zentrum #A82F80 (Phase 4,55) | S |
 | S-07 | LAYOUT-03 | Ungeprüft: Tablet und Querformat der Tabs (A-12). Bei fontScale 2,0 auf 360 dp stehen im Logbuch Dauer und Runden mit Einzug unter dem Namen – unschön, nicht falsch | S |
-| S-11 | MOTION-03 | Skalensprünge: Vorbereitung → Einatmen bzw. → Ausatmen (Feueratmung); `INHALE` → `INHALE_TOP_UP` (Seufzer); Feueratmung `INHALE` → `REST` → `EXHALE`; Wim Hof Ausatmen „ganz“ und Halten voll → Einatmen | S |
-| S-36 | AUDIO-01 | Dauerton blendet bei Pause, Stumm und Ende in 15 ms aus, nötig ≥ 60 ms (`ContinuousTonePlayer.GAIN_FADE_SECONDS`) | S |
+| S-11 | MOTION-03 | Rest: Wim Hof beginnt Runde 2 und 3 mit Einatmen direkt nach Halten voll – der Kreis steht dann 1,5 s voll, weil der Ablauf dazwischen kein Ausatmen hat (Daten, nicht Anzeige) | S |
 | S-12 | AUDIO-02 | Fokus trotz Stumm; kein Fokus-Listener; Reserve 300 vs. 500 ms; Cue-Thread blockiert 480 ms; Gong-Vorhören ohne Fokus | M |
 | S-15 | FARBE-03, -05 | WeekRow-Punkte α 0,12 / 0,4 nur 1,40 / 1,85; Heute-Ring nicht in der Semantik; Familie nur über Randfarbe/Log-Punkt | S |
 | S-16 | A11Y-04, -07 | Download-Status nicht angesagt; Fokusverlust beim Löschen | M |

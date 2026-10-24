@@ -48,6 +48,8 @@ Datierte Entscheidungen des Eigentümers und Befunde, die eine Regel geprägt ha
 | ID | Erledigt | Was |
 |---|---|---|
 | S-02 | 2026-10-03 | Rest-Ordner `values-night/` gelöscht; `dark-only-dirs` prüft das. |
+| S-11 (Großteil) | 2026-10-24 | Kreis und Dauerton stetig über die Phasengrenzen: `CircleFractions` setzt je Phase Start und Ende (Vorbereitung am Start der ersten Phase; Einatmen vor dem Nachatmen und Ausatmen vor „ganz“ enden vor dem Anschlag; Pause gleitet zur Mitte). Rest im Backlog (Wim Hof, Daten). |
+| S-36 | 2026-10-24 | Dauerton blendet in 60 ms statt 15 ms ein und aus (`GAIN_FADE_SECONDS`), Ausklang vor dem Thread-Ende 180 ms. |
 | S-04 | 2026-10-05/19 | Switches ohne Namen → `ToggleRow`; Stepper-Knöpfe als `AppIconButton`, Wert als Live-Region; Kartentitel `heading()` (`CardTitle`). |
 | S-05 | 2026-10-19/20 | Zweistufiges Löschen über `ConfirmIconButton` (Muster, Stimmen) und Papierkorb der Zeile „Logbuch“. |
 | S-06 | 2026-10-19 | Atemkreis: Name nur am Kreis, Phase und Zeit eigene Knoten, `onClickLabel` je Zustand, Fokusring; „Anleitung“-Zeile mit Ripple. |

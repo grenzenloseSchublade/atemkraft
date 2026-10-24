@@ -180,7 +180,7 @@ class AppPreviewSoundOutput(context: Context) : PreviewSoundOutput {
     }
 
     private companion object {
-        /** Wie im SessionAudioCoordinator: ~15 ms Ausblende des Players plus Puffer-Latenz. */
-        const val FADE_OUT_MS = 120L
+        /** Wie im SessionAudioCoordinator: 60 ms Ausblende des Players plus Puffer-Latenz. */
+        const val FADE_OUT_MS = 180L
     }
 }

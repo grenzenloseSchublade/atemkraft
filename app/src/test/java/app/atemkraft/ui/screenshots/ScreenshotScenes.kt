@@ -66,7 +66,7 @@ internal fun sessionAt(exercise: Exercise, elapsedMs: Long, phase: (RuntimePhase
         exerciseName = exercise.name,
         status = if (totalMs != null) SessionStatus.RUNNING else SessionStatus.WAITING_FOR_USER,
         phaseType = current.type,
-        phaseLevel = current.level,
+        circle = current.circle,
         phaseLabel = current.label,
         phaseNote = current.note,
         remainingMs = totalMs?.let { it - elapsedMs } ?: 0L,

@@ -241,8 +241,11 @@ class ContinuousTonePlayer {
         const val HIGH = 294.0 // D4 (reine Quinte über G3 – deutlichere Richtung)
         const val AMPLITUDE = 0.25 * Short.MAX_VALUE
 
-        /** Ein-/Ausblende des Pegels bei Start, Pause, Stumm und Ende (ToneEnvelopeTest: AUDIO-01). */
-        const val GAIN_FADE_SECONDS = 0.015f
+        /**
+         * Ein-/Ausblende des Pegels bei Start, Pause, Stumm und Ende: 60 ms wie das Release jedes
+         * Tons (AUDIO-01); mit 15 ms knackte das Ausblenden hörbar (S-36).
+         */
+        const val GAIN_FADE_SECONDS = 0.06f
 
         /** Pegel-Faktor je Stufe; „Laut" trägt deutlich, Spitze 0,25 × 3,2 = 0,8 FS (kein Clipping). */
         fun volumeScaleFor(volume: ToneVolume): Float = when (volume) {

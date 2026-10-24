@@ -6,6 +6,7 @@ import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.cue.toCueEvent
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.domain.BreathLevel
+import app.atemkraft.domain.CircleFractions
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
@@ -56,8 +57,11 @@ data class SessionUiState(
     val exerciseName: String = "",
     val status: SessionStatus = SessionStatus.IDLE,
     val phaseType: PhaseType? = null,
-    /** Füllstand für Atmen in Stufen (Viloma); null = Kreis nach [phaseType]. */
-    val phaseLevel: BreathLevel? = null,
+    /**
+     * Füllstand des Atemkreises zu Beginn und am Ende der Phase ([RuntimePhase.circle], stetig über
+     * die Phasengrenzen); in der Vorbereitung der Start der ersten Phase.
+     */
+    val circle: BreathLevel = BreathLevel.at(CircleFractions.REST),
     val phaseLabel: String? = null,
     val phaseNote: String? = null,
     /** Countdown der aktuellen Phase mit fester Dauer (ms). */
@@ -226,7 +230,14 @@ class BreathSessionController(
 
     private suspend fun runCountdown() = clock.countdown { n ->
         _state.update {
-            it.copy(status = SessionStatus.PREPARING, countdown = n, phaseType = null, phaseNote = null)
+            it.copy(
+                status = SessionStatus.PREPARING,
+                countdown = n,
+                phaseType = null,
+                phaseNote = null,
+                // Der Kreis wartet dort, wo die erste Phase beginnt – kein Sprung zum Start (S-11).
+                circle = BreathLevel.at(timeline.firstOrNull()?.circle?.from ?: CircleFractions.REST),
+            )
         }
     }
 
@@ -293,7 +304,8 @@ class BreathSessionController(
             val phase = timeline[index]
             // Durchgehender Ton: Phasenbeginn (auch beim Fortsetzen, damit der Ton wieder anläuft).
             val fixedMs = (phase.duration as? PhaseDuration.Fixed)?.let { resumeRemainingMs ?: it.millis } ?: 0L
-            phaseEvents.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed, phase.level))
+            // Die Tonhöhe folgt dem Füllstand des Kreises – auch sie stetig über die Phasengrenzen.
+            phaseEvents.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed, phase.circle))
             // Cue nur zum echten Phasenbeginn, nicht beim Fortsetzen mitten in der Phase.
             if (resumeRemainingMs == null) {
                 cueEvents.tryEmit(phase.type.toCueEvent())
@@ -331,7 +343,7 @@ class BreathSessionController(
                 it.copy(
                     status = SessionStatus.RUNNING,
                     phaseType = phase.type,
-                    phaseLevel = phase.level,
+                    circle = phase.circle,
                     phaseLabel = phase.label,
                     phaseNote = phase.note,
                     remainingMs = left,
@@ -356,7 +368,7 @@ class BreathSessionController(
             it.copy(
                 status = SessionStatus.WAITING_FOR_USER,
                 phaseType = phase.type,
-                phaseLevel = phase.level,
+                circle = phase.circle,
                 phaseLabel = phase.label,
                 phaseNote = phase.note,
                 remainingMs = 0L,

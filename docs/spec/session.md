@@ -41,7 +41,7 @@ Was von selbst zu Ende läuft, kommt immer ins Logbuch; früher Beendetes („Be
 
 ## Takt
 
-`SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01); `Pacer.ScaleMin`/`ScaleMax` 0,42 / 1,0.
+`SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01); `Pacer.ScaleMin`/`ScaleMax` 0,42 / 1,0. Der Füllstand gleitet je Phase von `RuntimePhase.circle.from` nach `.to` (`CircleFractions`, stetig über die Grenzen, MOTION-03); im Countdown steht der Kreis am Start der ersten Phase, die Tonhöhe des Dauertons folgt demselben Füllstand.
 
 ## Prüfung
 

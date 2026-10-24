@@ -146,8 +146,8 @@ class SessionAudioCoordinator(
     }
 
     private companion object {
-        /** Deckt die ~15-ms-Ausblende des Players plus Puffer-Latenz ab. */
-        const val FADE_OUT_MS = 120L
+        /** Deckt die 60-ms-Ausblende des Players (`GAIN_FADE_SECONDS`) plus Puffer-Latenz ab. */
+        const val FADE_OUT_MS = 180L
 
         /** Reserve über die Gong-Gesamtdauer hinaus, bevor der Fokus abgegeben wird. */
         const val FINISH_MARGIN_MS = 300L
