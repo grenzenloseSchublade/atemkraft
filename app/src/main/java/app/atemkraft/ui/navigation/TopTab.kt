@@ -1,10 +1,13 @@
 package app.atemkraft.ui.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
@@ -13,10 +16,12 @@ import app.atemkraft.R
  * Die vier Tabs der App in Leisten-Reihenfolge – die eine Quelle für Startseiten ([TAB_ROOTS],
  * [isTabRoot]), Markierung ([tabOnStack]) und Leiste ([AppTabBar]). [route] ist die Startseite des
  * Tabs, [label] seine Beschriftung, [icon] sein Symbol (dekorativ: die Beschriftung benennt den Tab).
+ * „Eigene“ trägt die Person (Material „Person“) als eigenes Zeichen: Der Atemkreis ◉ heißt „zu
+ * mir“ (Tut mir gut, In Eigene speichern), das Tab-Symbol den Ort (Auswertung 2026-10-24, 3.2).
  */
 enum class TopTab(val route: TabRoute, @StringRes val label: Int, val icon: @Composable () -> Painter) {
     ATMEN(AtmenRoute, R.string.tab_breathe, { painterResource(R.drawable.ic_breathe) }),
-    EIGENE(EigeneRoute, R.string.tab_own, { painterResource(R.drawable.ic_bookmark_filled) }),
+    EIGENE(EigeneRoute, R.string.tab_own, { rememberVectorPainter(Icons.Filled.Person) }),
     MEDITATION(MeditationRoute, R.string.tab_meditation, { painterResource(R.drawable.ic_meditation) }),
     LERNEN(LernenRoute, R.string.tab_learn, { painterResource(R.drawable.ic_learn) }),
     ;

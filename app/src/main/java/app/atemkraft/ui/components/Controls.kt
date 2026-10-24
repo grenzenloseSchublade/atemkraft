@@ -305,7 +305,7 @@ private fun AppIconTogglePreview() {
     AtemkraftTheme {
         AppIconToggle(checked = true, onCheckedChange = {}, stateDescription = stringResource(R.string.state_saved)) {
             Icon(
-                painterResource(R.drawable.ic_bookmark_filled),
+                painterResource(R.drawable.ic_breath_mark_filled),
                 contentDescription = stringResource(R.string.cd_pattern_save),
                 tint = MaterialTheme.colorScheme.secondary,
             )

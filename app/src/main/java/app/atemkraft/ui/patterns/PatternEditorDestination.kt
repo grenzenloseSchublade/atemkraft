@@ -30,7 +30,7 @@ import kotlinx.coroutines.sync.withLock
 
 /**
  * Ziel „Eigenes Muster“ im NavHost (`PatternEditorRoute`): legt den Zustand des Editors an und
- * schreibt das Lesezeichen ins [repository].
+ * schreibt das Speicherzeichen ins [repository].
  *
  * Startwerte:
  * - ohne Argumente ein neues Muster (Vorlage 4·6, 5 min),
@@ -40,11 +40,11 @@ import kotlinx.coroutines.sync.withLock
  *   nicht (mehr), ruft die Seite [onMissing] (zurück statt leerer Seite, CODE-05). Nach einem
  *   Konfigurationswechsel gilt der gesicherte Entwurf, auch wenn das Muster inzwischen entfernt ist.
  *
- * Lesezeichen: Das erste Speichern legt das Muster an ([SavedPatternsRepository.saveCustom]),
+ * Speicherzeichen: Das erste Speichern legt das Muster an ([SavedPatternsRepository.saveCustom]),
  * jedes weitere schreibt in denselben Eintrag ([SavedPatternsRepository.update]); Entfernen löscht
  * ihn. Die Schreibvorgänge laufen nacheinander in [scope] – dem App-weiten Scope, damit „Zurück“
  * direkt nach dem Tipp nichts verliert – und lesen den Entwurf erst, wenn sie dran sind: Ein
- * Doppeltipp legt so nur einen Eintrag an. Das Lesezeichen merkt sich genau den geschriebenen
+ * Doppeltipp legt so nur einen Eintrag an. Das Speicherzeichen merkt sich genau den geschriebenen
  * Stand ([PatternEditorState.draft]), nicht den nach dem Schreiben.
  *
  * [onStart] startet den Entwurf ohne Speichern; der Aufrufer lässt den Editor dabei offen. Ein
@@ -127,7 +127,7 @@ internal fun PatternEditorDestination(
 }
 
 /**
- * Ein Tipp aufs Lesezeichen: [save] legt an bzw. aktualisiert denselben Eintrag und meldet die Id
+ * Ein Tipp aufs Speicherzeichen: [save] legt an bzw. aktualisiert denselben Eintrag und meldet die Id
  * zurück ([PatternEditorState.markSaved]); sonst wird der Eintrag gelöscht
  * ([PatternEditorState.markRemoved]). Gibt es den Eintrag beim Aktualisieren nicht mehr, [onMissing].
  */
@@ -143,7 +143,7 @@ private suspend fun write(
         return
     }
     // Stand vor dem Schreiben festhalten: Was während des Schreibens geändert wird, ist nicht
-    // gespeichert und darf das Lesezeichen nicht füllen.
+    // gespeichert und darf das Speicherzeichen nicht füllen.
     val draft = state.draft()
     val id = state.savedId
     val stored = if (id == null) {

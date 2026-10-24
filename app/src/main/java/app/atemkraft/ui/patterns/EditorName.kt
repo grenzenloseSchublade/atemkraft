@@ -47,6 +47,7 @@ import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.BreathMarkIcon
 import app.atemkraft.ui.components.MarqueeText
 import app.atemkraft.ui.components.NoPersonalizedLearning
 import app.atemkraft.ui.components.rememberArmedConfirm
@@ -55,9 +56,9 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Lesezeichen im Kopf (MUSTER-02): leer → gefüllt in `secondary`, Zustand per `stateDescription`
+ * Speicherzeichen im Kopf (MUSTER-02): leer → gefüllt in `secondary`, Zustand per `stateDescription`
  * und Live-Region (nur für den eigenen Tipp, nicht wenn eine Wertänderung es leert). Bei einem
- * Muster, das es vor dem Öffnen schon gab, schärft der erste Tipp auf das gefüllte Lesezeichen nur
+ * Muster, das es vor dem Öffnen schon gab, schärft der erste Tipp auf das gefüllte Speicherzeichen nur
  * (Papierkorb mit Kreuz in `error`, „‚Name‘ wirklich löschen?“), erst der zweite entfernt es
  * (MUSTER-05).
  */
@@ -65,11 +66,11 @@ import app.atemkraft.ui.theme.Sizes
 internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Unit) {
     val saved = state.saved
     val confirm = rememberArmedConfirm()
-    // Geänderte Werte leeren das Lesezeichen: Eine halb bestätigte Löschung gilt dann nicht mehr.
+    // Geänderte Werte leeren das Speicherzeichen: Eine halb bestätigte Löschung gilt dann nicht mehr.
     LaunchedEffect(saved) { if (!saved) confirm.disarm() }
     val armed = confirm.armed && saved
     // Eine Ansage je Tipp (A11Y-04): Die Live-Region gilt nur ab dem eigenen Tipp und nur, bis sich
-    // Phasen, Dauer oder Name ändern. Leert oder füllt eine solche Änderung das Lesezeichen, sagt
+    // Phasen, Dauer oder Name ändern. Leert oder füllt eine solche Änderung das Speicherzeichen, sagt
     // also nur der geänderte Wert etwas.
     val draft = PatternSnapshot(state.pattern, state.minutes, state.savedName)
     var announce by remember(draft) { mutableStateOf(false) }
@@ -94,11 +95,8 @@ internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> U
                 tint = MaterialTheme.colorScheme.error,
             )
 
-            else -> Icon(
-                painterResource(if (saved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
-                contentDescription = stringResource(R.string.cd_pattern_save),
-                tint = if (saved) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-            )
+            // Dasselbe Zeichen wie „Tut mir gut“ und am Tagesmuster: ◉ heißt „zu mir“ (in Eigene).
+            else -> BreathMarkIcon(filled = saved, contentDescription = stringResource(R.string.cd_pattern_save))
         }
     }
 }
@@ -106,7 +104,7 @@ internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> U
 /**
  * Seitentitel (Nachtrag 7): der Name des Musters groß (`headlineSmall`), darunter klein „Eigenes
  * Muster“ als Einordnung; „intensiv“ steht seit 2026-10-23 rechts in der Zeile der Werte über der
- * Kurve ([InfoLine]), der Titel bekommt die ganze Breite vor Startpunkt und Lesezeichen. Der
+ * Kurve ([InfoLine]), der Titel bekommt die ganze Breite vor Startpunkt und Speicherzeichen. Der
  * Name steht in einer Zeile und läuft als Laufschrift, wenn er nicht passt – nie umbrochen: Der Kopf
  * behält seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Ein kleiner Stift direkt
  * hinter dem Namen zeigt, dass er änderbar ist (Nutzer 2026-10-23); er bleibt stehen, der Name
@@ -177,7 +175,7 @@ private fun NameWithPencil(name: String) {
 
 /**
  * Umbenennen (Nachtrag 7, Tipp auf den Seitentitel): ein Feld, einzeilig, scrollt waagrecht,
- * höchstens [PatternEditorState.NAME_MAX] Zeichen; es ändert den Namen sofort (das Lesezeichen
+ * höchstens [PatternEditorState.NAME_MAX] Zeichen; es ändert den Namen sofort (das Speicherzeichen
  * leert sich wie bei jeder Änderung). Leer steht der Vorschlagsname als Platzhalter da – so wird
  * auch gespeichert. Zeichen, die der Import nicht annimmt (Steuer- und Formatzeichen, Emoji
  * außerhalb der Grundebene), nimmt das Feld gar nicht erst an; Zeilenumbrüche aus der

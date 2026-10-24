@@ -25,7 +25,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.BreathingArea
@@ -42,6 +41,7 @@ import app.atemkraft.domain.area
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
+import app.atemkraft.ui.components.BreathMarkIcon
 import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.GroupLabel
@@ -83,15 +83,17 @@ data class HomeActions(
 /**
  * Atmen-Tab: alles, was man starten kann. Von oben: beim ersten Start die Willkommenskarte
  * ([WelcomeCard], abweisbar), das Suchfeld „Wie fühlst du dich?“ mit den sechs Anlässen als Chips
- * ([FeelingBlock]), der Kopf „Übungen“ mit der Filterreihe, die Tagesmuster-Karte und darunter die
- * Übungen nach Familien mit ihren kleinen farbigen Gruppenlabels ([GroupLabel]).
+ * ([FeelingBlock]), der Kopf „Übungen“ mit der Filterreihe und darunter die Übungen nach Familien
+ * mit ihren kleinen farbigen Gruppenlabels ([GroupLabel]); hinter der ersten Gruppe die
+ * Tagesmuster-Karte.
  * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
  * Aufbau (Nutzer 2026-10-24, Vorschlag B): ein Abschnittskopf „Übungen“ statt der Köpfe „Muster
  * des Tages“ und „Alle Übungen“; das Tagesmuster – bewusst spielerisch, ohne eigenes
- * Wirkversprechen – ist die erste Karte unter der Filterreihe und trägt seine Kopfzeile („MUSTER
- * DES TAGES“, ↻, Lesezeichen) selbst ([DailyPatternCard]). Es bleibt auf dem ersten Bildschirm
- * sichtbar. Den Weg in den Muster-Editor gibt es im Tab „Eigene“ („+“) und über den Stift auf der
+ * Wirkversprechen – trägt seine Kopfzeile („MUSTER DES TAGES“, ↻, ◉ „In Eigene speichern“) selbst
+ * ([DailyPatternCard]). Seit 2026-10-24 (Auswertung Abschnitt 3.1) steht es nicht mehr als erste
+ * Karte, sondern hinter der ersten Gruppe „Beruhigen“: Erstnutzer sehen zuerst die kuratierten
+ * Übungen, nicht ein Muster ohne erkennbaren Zweck. Den Weg in den Muster-Editor gibt es im Tab „Eigene“ („+“) und über den Stift auf der
  * Detailseite des Tagesmusters; der Atmen-Tab trägt keinen eigenen Link mehr.
  *
  * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
@@ -249,10 +251,14 @@ fun HomeScreen(
                 }
             }
         } else {
-            // Kopf „Übungen“, Filterreihe, Trefferstatus und Tagesmuster in einem Eintrag: Die
-            // Filter-Chips bringen über und unter sich je 8 dp Tippfläche mit; mit dem ListGap der
-            // Liste stünden sie sichtbar 20 dp von Kopf und Karte ab. So sind es überall 12
-            // (HeaderGap) – der Spacer ergänzt die unsichtbaren 8.
+            // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten), das
+            // Tagesmuster folgt hinter der ersten Gruppe.
+            val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
+            // Kopf „Übungen“, Filterreihe und Trefferstatus bzw. das erste Gruppenlabel in einem
+            // Eintrag: Die Filter-Chips bringen über und unter sich je GapSmall Tippfläche mit; mit
+            // dem ListGap der Liste stünden sie sichtbar 20 dp vom Kopf ab. So sind es oben 12
+            // (HeaderGap – der Spacer ergänzt die unsichtbaren 8) und unten bis zum Gruppenlabel 16
+            // (SectionGap).
             item(key = "exercises") {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SectionHeader(title = stringResource(R.string.home_all_exercises))
@@ -261,9 +267,25 @@ fun HomeScreen(
                     if (filters.isNotEmpty()) {
                         Spacer(Modifier.height(Dimens.GapTiny))
                         FilterStatus(count = filtered.sumOf { it.second.size }, onReset = { filters = emptySet() })
-                    } else {
-                        // Das Tagesmuster ist kein Filtertreffer: nur ohne Filter, als erste Karte.
-                        Spacer(Modifier.height(Dimens.GapTiny))
+                    } else if (firstFamily != null) {
+                        GroupLabel(title = firstFamily.title(), color = firstFamily.color(), top = GROUP_LABEL_BELOW_CHIPS)
+                    }
+                }
+            }
+            filtered.forEachIndexed { index, (family, exercises) ->
+                if (index > 0 || firstFamily == null) {
+                    item(key = "header-${family.name}") {
+                        GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_LIST_TOP)
+                    }
+                }
+                items(exercises, key = { it.id }) { exercise ->
+                    ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                }
+                // Das Tagesmuster ist kein Filtertreffer: nur ohne Filter, hinter der ersten Gruppe
+                // („Beruhigen“) – erst die kuratierten Übungen, dann das Spielerische (Nutzer
+                // 2026-10-24, Auswertung Abschnitt 3.1).
+                if (index == 0 && firstFamily != null) {
+                    item(key = "daily") {
                         DailyPatternCard(
                             daily = daily,
                             saved = dailySaved,
@@ -274,24 +296,22 @@ fun HomeScreen(
                     }
                 }
             }
-            filtered.forEach { (family, exercises) ->
-                item(key = "header-${family.name}") {
-                    GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_LIST_TOP)
-                }
-                items(exercises, key = { it.id }) { exercise ->
-                    ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
-                }
-            }
         }
     }
 }
 
 /**
+ * Abstand über dem ersten Gruppenlabel direkt unter der Filterreihe: Die Chips tragen unter sich
+ * GapSmall unsichtbare Tippfläche, sichtbar bleibt so SectionGap.
+ */
+private val GROUP_LABEL_BELOW_CHIPS = Dimens.SectionGap - Dimens.GapSmall
+
+/**
  * Karte für das generierte „Muster des Tages“: [PatternCard] mit Kopfzeile in der Karte (Nutzer
  * 2026-10-24, Vorschlag B) – links die Eyebrow „MUSTER DES TAGES“, rechts ↻ „Neu generieren“
- * ([onRegenerate], betrifft das Tagesmuster als Ganzes: „gib mir ein anderes“) und das Lesezeichen
- * (Speichern ↔ wieder entfernen), beide als Icon-Knöpfe in `onSurface` · `SECONDARY`, das
- * Lesezeichen gespeichert gefüllt in `secondary`. Kein eigener Abschnittskopf mehr über der Karte.
+ * ([onRegenerate], betrifft das Tagesmuster als Ganzes: „gib mir ein anderes“) und der Atemkreis ◉
+ * „In Eigene speichern“ (Speichern ↔ wieder entfernen), beide als Icon-Knöpfe in `onSurface` ·
+ * `SECONDARY`, der Atemkreis gespeichert gefüllt in `secondary`. Kein eigener Abschnittskopf mehr über der Karte.
  */
 @Composable
 private fun DailyPatternCard(
@@ -317,22 +337,15 @@ private fun DailyPatternCard(
                 )
             }
             // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Eigene Kreationen“ – der
-            // Atmen-Tab bleibt schlank. Gefüllt im Akzent = gespeichert (Zustandsakzent, KOMP-02);
-            // erneutes Tippen nimmt das Muster wieder heraus.
+            // Atmen-Tab bleibt schlank. Dasselbe Zeichen wie „Tut mir gut“: ◉ heißt „zu mir“
+            // (Auswertung 2026-10-24, 3.2); gefüllt im Akzent = gespeichert (KOMP-02), erneutes
+            // Tippen nimmt das Muster wieder heraus.
             AppIconToggle(
                 checked = saved,
                 onCheckedChange = onSavedChange,
                 stateDescription = stringResource(if (saved) R.string.state_saved else R.string.state_not_saved),
             ) {
-                Icon(
-                    painterResource(if (saved) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark),
-                    contentDescription = stringResource(R.string.cd_pattern_save),
-                    tint = if (saved) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)
-                    },
-                )
+                BreathMarkIcon(filled = saved, contentDescription = stringResource(R.string.cd_pattern_save))
             }
         }
     }

@@ -11,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Scope-Politik der App (A-05): Jeder prozessweite Scope (`AppContainer.appScope`, die Abläufe,
  * Audio, Stimmen, Musterliste, Service) entsteht über [supervisedScope]. Ein unbehandelter Fehler
- * in einer seiner Coroutines – etwa ein voller Speicher beim Schreiben eines Lesezeichens – beendet
+ * in einer seiner Coroutines – etwa ein voller Speicher beim Schreiben eines Speicherzeichens – beendet
  * die App nicht: Der [SupervisorJob] hält die Geschwister am Leben, [UncaughtErrors.handler] fängt
  * den Fehler statt des Default-Handlers ab. Verschluckt wird er nicht: [UncaughtErrors.last] hält
  * die Art des letzten Fehlers, die Über-Seite zeigt sie als stillen Hinweis. Kein Logcat, keine

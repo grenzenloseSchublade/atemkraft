@@ -122,8 +122,8 @@
     <string name="home_daily_pattern">Muster des Tages</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="cd_pattern_regenerate">Muster neu generieren</string>
-    <string name="cd_pattern_save">Muster speichern</string>
-    <string name="state_saved">Gespeichert</string>
+    <string name="cd_pattern_save">In Eigene speichern</string>
+    <string name="state_saved">In Eigene gespeichert</string>
     <string name="state_not_saved">Nicht gespeichert</string>
     <!-- Persönliche Markierung (Atemkreis): eigene Einschätzung, keine Studienlage. Karte zeigt
          sie nur, wenn gesetzt; gesetzt wird sie auf der Detailseite. -->

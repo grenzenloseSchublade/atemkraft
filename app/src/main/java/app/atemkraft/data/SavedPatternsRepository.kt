@@ -98,7 +98,7 @@ class SavedPatternsRepository(
     }
 
     /**
-     * Schreibvorgänge nacheinander abarbeiten: Das Lesezeichen zeigt den Zustand erst, wenn
+     * Schreibvorgänge nacheinander abarbeiten: Das Speicherzeichen zeigt den Zustand erst, wenn
      * die DB ihn liefert. Ein schneller Doppeltipp löst deshalb zweimal „speichern“ aus, und
      * Speichern/Entfernen dürfen sich nicht überholen.
      */
@@ -190,7 +190,7 @@ class SavedPatternsRepository(
     }
 
     /**
-     * Nimmt das Tagesmuster wieder heraus (Lesezeichen abgewählt). Gesucht wird per Name und
+     * Nimmt das Tagesmuster wieder heraus (Speicherzeichen abgewählt). Gesucht wird per Name und
      * Herkunft in der DB, nicht in [current]: Das hinkt direkt nach dem Speichern noch hinterher.
      * Ein eigenes Muster mit gleichem Namen bleibt stehen.
      */

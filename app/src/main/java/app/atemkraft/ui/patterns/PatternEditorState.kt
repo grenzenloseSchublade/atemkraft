@@ -27,14 +27,14 @@ import app.atemkraft.domain.toFreePattern
 
 /**
  * Was gespeichert ist: Folge, Minuten und Name, so wie sie zuletzt geschrieben wurden. Das
- * Lesezeichen ist gefüllt, solange der Entwurf genau diesem Stand entspricht.
+ * Speicherzeichen ist gefüllt, solange der Entwurf genau diesem Stand entspricht.
  */
 data class PatternSnapshot(val pattern: FreePattern, val minutes: Int, val name: String)
 
 /**
  * Zustand des Muster-Editors („Eigenes Muster“, MUSTER-10, Nachtrag 4 „Frei gestalten“), getrennt
  * von der Darstellung – nach dem Vorbild von `SessionAdjustState` (ARC-7). Kurve, Ablauf-Liste,
- * Hinzufügen-Knöpfe, Vorlagen, Name und Lesezeichen lesen und ändern nur diesen Zustand.
+ * Hinzufügen-Knöpfe, Vorlagen, Name und Speicherzeichen lesen und ändern nur diesen Zustand.
  *
  * **Invariante:** [pattern] ist immer eine gültige freie Folge ([FreePattern.isValid]): 2 bis 12
  * Phasen, jede 1 bis 30 s, mindestens ein Ein und ein Aus. Jede Änderung geht über die
@@ -52,7 +52,7 @@ data class PatternSnapshot(val pattern: FreePattern, val minutes: Int, val name:
  *   Person selbst tippt ([updateName], höchstens [NAME_MAX] Zeichen). Leer gespeichert heißt
  *   Vorschlagsname ([savedName]).
  * - [saved]: Es gibt einen gespeicherten Eintrag ([savedId]) und der Entwurf entspricht ihm
- *   ([snapshot]). Jede Änderung an Folge, Minuten oder Name leert das Lesezeichen.
+ *   ([snapshot]). Jede Änderung an Folge, Minuten oder Name leert das Speicherzeichen.
  *
  * [namePrefix] kommt aus den Ressourcen (`pattern_editor_title`), weil dieser Zustand keine
  * Texte kennen soll.
@@ -112,7 +112,7 @@ class PatternEditorState internal constructor(
         private set
 
     /**
-     * Gab es den Eintrag schon vor dem Öffnen (Bearbeiten-Modus)? Dann entfernt das Lesezeichen
+     * Gab es den Eintrag schon vor dem Öffnen (Bearbeiten-Modus)? Dann entfernt das Speicherzeichen
      * ihn nur zweistufig (MUSTER-05); ein in dieser Sitzung angelegtes Muster nimmt ein erneuter
      * Tipp sofort wieder heraus.
      */
@@ -144,11 +144,11 @@ class PatternEditorState internal constructor(
 
     /**
      * Der Name, unter dem gespeichert wird – so bereinigt wie im Repository ([PatternBackup.cleanName]),
-     * damit das Lesezeichen nach dem Speichern zum gespeicherten Eintrag passt; leer → Vorschlagsname.
+     * damit das Speicherzeichen nach dem Speichern zum gespeicherten Eintrag passt; leer → Vorschlagsname.
      */
     val savedName: String get() = PatternBackup.cleanName(name).ifEmpty { suggestedName }
 
-    /** Entspricht der Entwurf dem gespeicherten Eintrag (Lesezeichen gefüllt)? */
+    /** Entspricht der Entwurf dem gespeicherten Eintrag (Speicherzeichen gefüllt)? */
     val saved: Boolean get() = savedId != null && snapshot == current()
 
     private val exercise: Exercise by derivedStateOf {
@@ -231,7 +231,7 @@ class PatternEditorState internal constructor(
     /**
      * Der Stand [written] wurde unter [id] gespeichert (neu angelegt oder aktualisiert). Hat
      * sich der Entwurf während des Schreibens geändert (Kurve weitergezogen), bleibt das
-     * Lesezeichen leer – gespeichert ist ja der alte Stand.
+     * Speicherzeichen leer – gespeichert ist ja der alte Stand.
      */
     fun markSaved(id: Long, written: PatternSnapshot = current()) {
         savedId = id
@@ -289,7 +289,7 @@ class PatternEditorState internal constructor(
 
         /**
          * Ein gespeichertes Muster bearbeiten ([pattern] = `SavedPattern.pattern`; ältere Muster
-         * mit vier Feldern kommen dort schon als Folge an): Lesezeichen gefüllt, Speichern
+         * mit vier Feldern kommen dort schon als Folge an): Speicherzeichen gefüllt, Speichern
          * aktualisiert denselben Eintrag [id]. [minutes] null (Muster vor der Herkunfts-Spalte)
          * heißt [DEFAULT_MINUTES].
          *

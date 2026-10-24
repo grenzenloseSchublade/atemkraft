@@ -14,10 +14,31 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /*
- * Persönliche Markierung „tut mir gut“: die eigene Einschätzung neben der Studienlage. Kein Herz
- * und kein Lesezeichen (das heißt hier „Muster speichern“), sondern der Atemkreis des Pacers –
- * leer als Ring, markiert gefüllt. Im Akzent `secondary` wie jeder gesetzte Zustand (KOMP-02).
+ * Das eine Zeichen für „zu mir“ (Auswertung 2026-10-24, Abschnitt 3.2): der Atemkreis des Pacers,
+ * leer als Ring, gesetzt gefüllt, im Akzent `secondary` wie jeder gesetzte Zustand (KOMP-02). Er
+ * steht für die persönliche Markierung „tut mir gut“ (die eigene Einschätzung neben der
+ * Studienlage) und fürs Speichern eines Musters „in Eigene“ (Tagesmuster, Muster-Editor) – beides
+ * landet im Tab „Eigene“. Kein Herz, kein Lesezeichen.
  */
+
+/**
+ * Der Atemkreis als Icon eines Schalters: [filled] gefüllt in `secondary`, sonst Ring in
+ * `onSurface` · `SECONDARY`. Für [PersonalMarkToggle] und die Speichern-Schalter der Muster
+ * (in einem [AppIconToggle]); [contentDescription] nennt die Aktion (ICON-02).
+ */
+@Composable
+fun BreathMarkIcon(filled: Boolean, contentDescription: String, modifier: Modifier = Modifier) {
+    Icon(
+        painterResource(if (filled) R.drawable.ic_breath_mark_filled else R.drawable.ic_breath_mark),
+        contentDescription = contentDescription,
+        tint = if (filled) {
+            MaterialTheme.colorScheme.secondary
+        } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)
+        },
+        modifier = modifier,
+    )
+}
 
 /** Atemkreis auf der Karte, nur wenn markiert; TalkBack liest ihn als „Tut mir gut“. */
 @Composable
@@ -39,15 +60,7 @@ fun PersonalMarkToggle(marked: Boolean, onMarkedChange: (Boolean) -> Unit, modif
         stateDescription = stringResource(if (marked) R.string.state_marked else R.string.state_not_marked),
         modifier = modifier,
     ) {
-        Icon(
-            painterResource(if (marked) R.drawable.ic_breath_mark_filled else R.drawable.ic_breath_mark),
-            contentDescription = stringResource(R.string.cd_personal_mark),
-            tint = if (marked) {
-                MaterialTheme.colorScheme.secondary
-            } else {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)
-            },
-        )
+        BreathMarkIcon(filled = marked, contentDescription = stringResource(R.string.cd_personal_mark))
     }
 }
 
@@ -56,5 +69,13 @@ fun PersonalMarkToggle(marked: Boolean, onMarkedChange: (Boolean) -> Unit, modif
 private fun PersonalMarkPreview() {
     AtemkraftTheme {
         PersonalMarkToggle(marked = true, onMarkedChange = {})
+    }
+}
+
+@Preview
+@Composable
+private fun BreathMarkIconPreview() {
+    AtemkraftTheme {
+        BreathMarkIcon(filled = false, contentDescription = stringResource(R.string.cd_pattern_save))
     }
 }

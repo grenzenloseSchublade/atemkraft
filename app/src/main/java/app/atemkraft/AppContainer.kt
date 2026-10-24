@@ -36,7 +36,7 @@ class AppContainer(context: Context) {
 
     /**
      * App-weiter Scope für Schreibvorgänge, die die Oberfläche anstößt und nicht abwartet
-     * (Lesezeichen, Markierung, Anpassungen, Bestätigungen): Er lebt so lange wie der Prozess und
+     * (Speicherzeichen, Markierung, Anpassungen, Bestätigungen): Er lebt so lange wie der Prozess und
      * übersteht Drehen und Verlassen der Seite, anders als `rememberCoroutineScope()`.
      */
     val appScope: CoroutineScope = supervisedScope(Dispatchers.Main.immediate)

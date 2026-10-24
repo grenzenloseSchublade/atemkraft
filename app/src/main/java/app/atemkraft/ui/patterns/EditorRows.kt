@@ -196,7 +196,7 @@ private const val MILLIS_PER_SECOND = 1000.0
 
 /**
  * Startpunkt im Kopf (Nutzer 2026-10-23, vorher eine Pille über der Kurve): Icon-Knopf mit dem
- * Raster ([AppIconButton], `ic_grid_view`, `onBackground` `SECONDARY` wie das leere Lesezeichen
+ * Raster ([AppIconButton], `ic_grid_view`, `onBackground` `SECONDARY` wie das leere Speicherzeichen
  * daneben), gesprochen „Startpunkt wählen, derzeit Box“ bzw. „… angepasst“. [onClick] öffnet die
  * Vorlagen ([TemplateSheet]).
  *

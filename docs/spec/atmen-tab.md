@@ -6,8 +6,9 @@ Regeln: [STYLEGUIDE MUSTER-09](../STYLEGUIDE.md#muster) (Suche), MUSTER-12 (Filt
 
 1. Nur beim ersten Start: **Willkommenskarte** (`WelcomeCard`).
 2. **Block „Wie fühlst du dich?“** (`FeelingBlock`): Suchpille und sechs Anlass-Chips, ohne Kopf, ohne Kasten ([suche.md](suche.md)).
-3. Kopf **„Übungen“** (`SectionHeader`, weiß) mit der **Filterreihe** darunter und – ohne Filter – der **Tagesmuster-Karte** als erste Karte. Kopf, Reihe, Status und Tagesmuster sind ein Listeneintrag mit `GapTiny` dazwischen: Die Chips bringen 8 dp Tippfläche mit, sichtbar bleibt überall `HeaderGap`.
+3. Kopf **„Übungen“** (`SectionHeader`, weiß) mit der **Filterreihe** darunter. Kopf, Reihe und – mit Filter – der Trefferstatus bzw. – ohne Filter – das erste Gruppenlabel sind ein Listeneintrag: Die Chips bringen über und unter sich `GapSmall` Tippfläche mit; sichtbar bleiben oben `HeaderGap` (Spacer `GapTiny`) und unten bis zum Gruppenlabel `SectionGap` (`top = SectionGap − GapSmall`).
 4. Die vier **Familien** als Gruppen: `GroupLabel` in der Familienfarbe (`top = SectionGap − ListGap`, weil `spacedBy(ListGap)` den Rest setzt), darunter je Übung eine `ExerciseCard` (Rand `accentBorder(Familienfarbe)`).
+5. Ohne Filter die **Tagesmuster-Karte** hinter der ersten Gruppe („Beruhigen“), vor dem Label der zweiten: Karte ↔ Karte `ListGap`, zum nächsten Label `SectionGap`. Erst die kuratierten Übungen, dann das Spielerische (DECISIONS 2026-10-24).
 
 Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder nichts; dann steht die Liste wie oben ([suche.md](suche.md), „Zwei Ebenen, ein Zustand“).
 
@@ -17,7 +18,7 @@ Bis der Nutzer sie wegklickt, steht oben die Karte „Neu hier?“ (`CardHeader`
 
 ## Tagesmuster-Karte (`DailyPatternCard` → `PatternCard` mit `eyebrow`)
 
-Kopfzeile in der Karte: links die Eyebrow „MUSTER DES TAGES“ (`typography.eyebrow`, `secondary` wie der Rand; TalkBack hört den Originaltext), rechts ↻ „Neu generieren“ (`cd_pattern_regenerate`, betrifft das Tagesmuster als Ganzes) und das Lesezeichen (`AppIconToggle`, Speichern ↔ wieder entfernen; gespeichert gefüllt in `secondary`, sonst `onSurface` · `SECONDARY`), Zeile `MinTouchTarget` hoch, das Kartenpolster oben um `CircleOverhang` kleiner. Darunter Name mit `CharacterChip`, Musterzeile `PatternTexts.hintFor(spec)` mit Dauer. Kein Abschnittskopf über der Karte; gespeicherte Muster erscheinen im Tab „Eigene“ unter „Eigene Kreationen“. Die Karte verschwindet mit dem ersten Filter – sie ist kein Filtertreffer.
+Kopfzeile in der Karte: links die Eyebrow „MUSTER DES TAGES“ (`typography.eyebrow`, `secondary` wie der Rand; TalkBack hört den Originaltext), rechts ↻ „Neu generieren“ (`cd_pattern_regenerate`, betrifft das Tagesmuster als Ganzes) und der Atemkreis ◉ „In Eigene speichern“ (`AppIconToggle` mit `BreathMarkIcon`, dasselbe Zeichen wie „Tut mir gut“, ICON-03; Speichern ↔ wieder entfernen; gespeichert gefüllt in `secondary`, sonst `onSurface` · `SECONDARY`; Zustand „In Eigene gespeichert“/„Nicht gespeichert“), Zeile `MinTouchTarget` hoch, das Kartenpolster oben um `CircleOverhang` kleiner. Darunter Name mit `CharacterChip`, Musterzeile `PatternTexts.hintFor(spec)` mit Dauer. Kein Abschnittskopf über der Karte; sie steht hinter der Gruppe „Beruhigen“, nicht als erste Karte unter „Übungen“. Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Eigene Kreationen“. Die Karte verschwindet mit dem ersten Filter – sie ist kein Filtertreffer.
 
 ## Übungskarte (`ExerciseCard`)
 

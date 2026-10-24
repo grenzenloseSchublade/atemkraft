@@ -127,7 +127,7 @@ internal fun Modifier.durationSlider(state: DurationPickerState, texts: Duration
 
 /**
  * Antippbare ∞-Marke: runde Tippfläche mit rundem Tipp-Echo. Für TalkBack ein Schalter wie
- * Lesezeichen und „Tut mir gut“: Name „Offene Sitzung“, Rolle Switch, Zustand „An“/„Aus“. Die
+ * „In Eigene speichern“ und „Tut mir gut“: Name „Offene Sitzung“, Rolle Switch, Zustand „An“/„Aus“. Die
  * Größe legt der Aufrufer fest – mindestens 48 dp und so groß, dass das Echo die gezeichnete
  * Marke ganz umfasst.
  */

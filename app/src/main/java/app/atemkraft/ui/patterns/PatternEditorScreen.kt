@@ -74,7 +74,7 @@ data class PatternEditorActions(
 /**
  * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“, 5 „Kompakt“, 6 „Leiste unten“),
  * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, rechts Startpunkt ([StartButton],
- * öffnet die Vorlagen) und Lesezeichen · Werte ohne Tippfläche ([InfoLine]: „Box · 16 s je
+ * öffnet die Vorlagen) und Speicherzeichen · Werte ohne Tippfläche ([InfoLine]: „Box · 16 s je
  * Atemzug · 3,8/min“, ggf. „intensiv“; während der Vorschau die Phase) · die Kurvenkarte
  * ([CurveCard]: die Atemkurve und am unteren Rand derselben Karte die Vorschau, [PreviewRow]:
  * Play links, Ton-Schalter rechts, bündig mit den Innenkanten der Kurve; Nutzer 2026-10-23: über
@@ -90,7 +90,7 @@ data class PatternEditorActions(
  * [PatternEditorActions.onSavedChange] (true = speichern bzw. denselben Eintrag aktualisieren,
  * false = aus „Meine Muster“ entfernen) schreibt ins Repository und meldet das Ergebnis mit
  * [PatternEditorState.markSaved] bzw. [PatternEditorState.markRemoved] zurück. Ein Muster, das es
- * schon vor dem Öffnen gab, entfernt das Lesezeichen nur zweistufig (MUSTER-05); ein in dieser
+ * schon vor dem Öffnen gab, entfernt das Speicherzeichen nur zweistufig (MUSTER-05); ein in dieser
  * Sitzung angelegtes nimmt ein erneuter Tipp sofort wieder heraus (KOMP-02).
  *
  * [PatternEditorActions.onStart] probiert den Entwurf ohne Speichern aus (Übung und Dauer als
@@ -153,7 +153,7 @@ fun PatternEditorScreen(
                 // Fester Bereichsname statt des Musternamens: Umbenennen soll keine neue Seite ansagen.
                 paneTitle = stringResource(R.string.pattern_editor_title),
                 action = {
-                    // Startpunkt links neben dem Lesezeichen (Nutzer 2026-10-23): Über der Kurve stehen nur Werte.
+                    // Startpunkt links neben dem Speicherzeichen (Nutzer 2026-10-23): Über der Kurve stehen nur Werte.
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         StartButton(state, startFocus) {
                             preview.pause()

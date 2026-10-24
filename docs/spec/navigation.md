@@ -4,7 +4,7 @@ Regel: [STYLEGUIDE MUSTER-08](../STYLEGUIDE.md#muster); Anatomie der Tab-Leiste 
 
 ## Tabs und Stapel
 
-- Vier Tabs (`TopTab`, daraus Startseiten `TAB_ROOTS`, Markierung und Leiste): Atmen (`ic_breathe`, Material „Air“), Eigene (`ic_bookmark_filled`), Meditation (`ic_meditation`), Lernen (`ic_learn`). Push-Seiten haben einen festen Kopf (`PushHeader`), Tabs ebenso (`ScreenHeader`); Zurück-Pfeil und Kopf-Icons scrollen nie aus dem Bild.
+- Vier Tabs (`TopTab`, daraus Startseiten `TAB_ROOTS`, Markierung und Leiste): Atmen (`ic_breathe`, Material „Air“), Eigene (`Icons.Filled.Person`, Material „Person“; ◉ bleibt das Zeichen „zu mir“, ICON-03), Meditation (`ic_meditation`), Lernen (`ic_learn`). Push-Seiten haben einen festen Kopf (`PushHeader`), Tabs ebenso (`ScreenHeader`); Zurück-Pfeil und Kopf-Icons scrollen nie aus dem Bild.
 - Ein Tipp auf den markierten Tab führt zu dessen Startseite (`tapTab`: `popBackStack(route, inclusive = false)`, sonst `switchTab`). Ein anderer Tab stellt seinen gemerkten Stapel wieder her (`switchTab`, `restoreState`). Markiert ist immer der Tab, zu dessen Stapel die Seite gehört (`tabOnStack`), auch auf Push-Seiten und wenn ein wiederhergestellter Stapel gleich mit einer Push-Seite beginnt (Eigene › Editor, Meditation, zurück zu Eigene: „Eigene“ bleibt markiert).
 - Die Einstellungen bleiben eine zentrale Route; das Logbuch ist eine Push-Seite im Stapel des Tabs, aus dem es geöffnet wurde ([eigene-tab.md](eigene-tab.md)).
 - Navigation nur über `@Serializable`-Routen in `ui/navigation/Routes.kt`; unauflösbare Route → `popBackStack()` (CODE-05). Übergänge: `Motion.NavPush` 300 ms Slide + Fade (einmal in `pushComposable<T>()`), `Motion.NavTab` 180 ms Fade.
