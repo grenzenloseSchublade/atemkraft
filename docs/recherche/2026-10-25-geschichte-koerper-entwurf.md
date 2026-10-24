@@ -1,6 +1,6 @@
 # Entwurf: Kapitel „Geschichte des Atmens“, Kapitel „Körper“, Karte „Grenzen einer App“
 
-Stand: 2026-10-25. **Status: Entwurf zur Freigabe durch den Eigentümer.** Keine Kotlin-Umsetzung; die Texte sind so geschrieben, dass sie 1 : 1 in die Form von `PranayamaTopic` (`title` · `teaser` · 2–3 `paragraphs` · `source`) passen, ergänzt um optionale `exerciseIds` und Studien aus `Refs`.
+Stand: 2026-10-25. **Status: freigegeben und umgesetzt (Antworten auf die offenen Fragen in [DECISIONS.md](../DECISIONS.md), 2026-10-25).** Keine Kotlin-Umsetzung; die Texte sind so geschrieben, dass sie 1 : 1 in die Form von `PranayamaTopic` (`title` · `teaser` · 2–3 `paragraphs` · `source`) passen, ergänzt um optionale `exerciseIds` und Studien aus `Refs`.
 
 **Grundlage:** `docs/recherche/2026-10-24-inhalte-geschichte.md` (Teil 3: Gliederung, Teaser-Ideen, Quellen) und `docs/recherche/2026-10-24-auswertung.md` Abschnitt E. Ton und Form wie `data/Pranayama.kt` und `data/Atemlehre.kt`: du-Anrede, Laiensprache, Lehre zuschreibend („gilt in der Lehre als“), Studien mit „(Name Jahr)“.
 
