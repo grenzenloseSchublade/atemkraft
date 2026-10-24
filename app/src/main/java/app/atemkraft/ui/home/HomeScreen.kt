@@ -306,6 +306,7 @@ private fun DailyPatternCard(
         patternLine = PatternTexts.hintFor(daily.spec),
         onClick = onClick,
         eyebrow = stringResource(R.string.home_daily_pattern),
+        actionCount = 2,
     ) {
         Row {
             AppIconButton(onClick = onRegenerate) {

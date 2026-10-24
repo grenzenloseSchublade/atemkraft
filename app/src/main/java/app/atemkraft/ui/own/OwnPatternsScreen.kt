@@ -2,6 +2,7 @@ package app.atemkraft.ui.own
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,10 +49,15 @@ import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.log.LogHistory
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import java.time.LocalDate
 
-/** Was der Tab „Eigene“ auslöst (CODE-02): neues Muster, Übung öffnen, Muster löschen, Einstellungen, Logbuch. */
+/**
+ * Was der Tab „Eigene“ auslöst (CODE-02): neues Muster, Übung öffnen, Muster löschen, Einstellungen,
+ * Logbuch; [onEditPattern] öffnet den Muster-Editor für ein gespeichertes Muster (DB-Id, Stift auf
+ * seiner Karte).
+ */
 @Immutable
 data class OwnActions(
     val onNewPattern: () -> Unit,
@@ -58,6 +65,7 @@ data class OwnActions(
     val onDeletePattern: (Long) -> Unit,
     val onOpenSettings: () -> Unit,
     val onOpenLogbook: () -> Unit = {},
+    val onEditPattern: (Long) -> Unit = {},
 )
 
 /**
@@ -76,7 +84,8 @@ data class OwnActions(
  * (`rememberSaveable`), nicht dauerhaft. Ein einzelner Abschnitt steht offen ohne Caret. Alle
  * Köpfe weiß (FARBE-07).
  *
- * Löschen bleibt zweistufig in der Kartenecke (MUSTER-05). Der Kopf gleicht den anderen Tabs:
+ * Jede Kreationen-Karte trägt in der Ecke den Stift (Editor für dieses Muster) und daneben
+ * Löschen, zweistufig (MUSTER-05; [SavedPatternCard]). Der Kopf gleicht den anderen Tabs:
  * Titel und Zahnrad zu den Einstellungen. [today] nur für reproduzierbare Screenshots.
  */
 @Composable
@@ -159,6 +168,7 @@ fun OwnPatternsScreen(
                         SavedPatternCard(
                             pattern = pattern,
                             onClick = { actions.onSelect(pattern.exercise.id) },
+                            onEdit = { actions.onEditPattern(pattern.id) },
                             onDelete = { actions.onDeletePattern(pattern.id) },
                         )
                     }
@@ -220,21 +230,35 @@ private fun OwnSection(
 
 /**
  * Karte eines gespeicherten Musters: aufgebaut wie das Muster des Tages ([PatternCard]), in der
- * Ecke Löschen – zweistufig, ein Fehltipp löscht nichts (MUSTER-05).
+ * Ecke zwei Aktionen nebeneinander (KOMP-02, Ausnahme Kreationen-Karte, Nutzer 2026-10-24): links
+ * der Stift („Muster <Name> bearbeiten“, öffnet den Editor für dieses Muster wie „Anpassen“ auf
+ * seiner Detailseite), rechts Löschen – zweistufig, ein Fehltipp löscht nichts (MUSTER-05). Beide
+ * `AppIconButton`-groß in `onSurface` `SECONDARY`; die Karte wird nicht höher, der Text hält
+ * rechts die Breite beider Tippflächen frei. Ein Tipp auf die Karte öffnet weiter die Detailseite.
  */
 @Composable
 private fun SavedPatternCard(
     pattern: SavedPattern,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val name = pattern.exercise.name
-    PatternCard(exercise = pattern.exercise, patternLine = pattern.patternLine, onClick = onClick) {
-        ConfirmIconButton(
-            name = name,
-            description = stringResource(R.string.cd_pattern_delete, name),
-            onConfirm = onDelete,
-        )
+    PatternCard(exercise = pattern.exercise, patternLine = pattern.patternLine, onClick = onClick, actionCount = 2) {
+        Row {
+            AppIconButton(onClick = onEdit) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = stringResource(R.string.cd_pattern_edit_named, name),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                )
+            }
+            ConfirmIconButton(
+                name = name,
+                description = stringResource(R.string.cd_pattern_delete, name),
+                onConfirm = onDelete,
+            )
+        }
     }
 }
 

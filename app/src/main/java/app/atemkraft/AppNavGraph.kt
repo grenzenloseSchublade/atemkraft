@@ -171,6 +171,8 @@ internal fun NavGraphBuilder.appGraph(
                 onDeletePattern = { id -> scope.launch { savedPatterns.delete(id) } },
                 onOpenSettings = { navController.navigate(SettingsRoute()) },
                 onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
+                // Stift auf der Karte: derselbe Editor wie „Anpassen“ auf der Detailseite des Musters.
+                onEditPattern = { id -> navController.navigate(PatternEditorRoute(patternId = id)) },
             ),
             // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge.
             favorites = exercises.all().filter { it.id in state.markedExercises },

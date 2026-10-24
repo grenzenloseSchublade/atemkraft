@@ -134,11 +134,12 @@ private fun phaseName(type: PhaseType): String = stringResource(
  *
  * [action] liegt als Overlay oben rechts (KOMP-02): Die volle 48-dp-Tippfläche liegt über dem
  * Karten-Padding, die Karte wird nicht höher als ihr Text; ohne [eyebrow] hält der Text rechts die
- * Breite der Tippfläche frei.
+ * Breite der Tippflächen frei – [actionCount] Icon-Knöpfe nebeneinander (Kreationen-Karte: Stift
+ * und Mülleimer, KOMP-02 Ausnahme Kreationen-Karte, Nutzer 2026-10-24; nie mehr als zwei).
  *
  * Mit [eyebrow] (Muster des Tages, Nutzer 2026-10-24, Vorschlag B) trägt die Karte oben eine
  * **Kopfzeile in der Karte**: links die Eyebrow in Großbuchstaben (`eyebrow`-Stil, `secondary` wie
- * der Rand; TalkBack hört den Originaltext), rechts [action] als Reihe von bis zu [EYEBROW_ACTIONS]
+ * der Rand; TalkBack hört den Originaltext), rechts [action] als Reihe von [actionCount]
  * Icon-Knöpfen für den Abschnitt (↻ Neu generieren, Lesezeichen), Glyphen bündig an der
  * Inhaltskante (Polster `CardPadding − TouchOverhang`). Die Zeile ist so hoch wie die Tippfläche
  * der Knöpfe (`MinTouchTarget`); das Polster darüber ist um `CircleOverhang` kleiner, sodass der
@@ -153,6 +154,7 @@ fun PatternCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     eyebrow: String? = null,
+    actionCount: Int = 1,
     action: @Composable () -> Unit,
 ) {
     Card(
@@ -165,7 +167,7 @@ fun PatternCard(
                 modifier = Modifier.padding(
                     start = Dimens.CardPadding,
                     top = if (eyebrow != null) Dimens.CardPadding - Sizes.CircleOverhang else Dimens.CardPadding,
-                    end = if (eyebrow != null) Dimens.CardPadding else Dimens.MinTouchTarget,
+                    end = if (eyebrow != null) Dimens.CardPadding else Dimens.MinTouchTarget * actionCount,
                     bottom = Dimens.CardPadding,
                 ),
             ) {
@@ -175,7 +177,7 @@ fun PatternCard(
                             .fillMaxWidth()
                             .height(Dimens.MinTouchTarget)
                             // Platz für die Knöpfe rechts, die als Overlay darüberliegen.
-                            .padding(end = Dimens.MinTouchTarget * EYEBROW_ACTIONS - Sizes.TouchOverhang + Dimens.GapSmall),
+                            .padding(end = Dimens.MinTouchTarget * actionCount - Sizes.TouchOverhang + Dimens.GapSmall),
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         Text(
@@ -204,9 +206,6 @@ fun PatternCard(
         }
     }
 }
-
-/** Höchstens so viele Icon-Knöpfe stehen in der Kopfzeile einer [PatternCard] mit Eyebrow (↻ und Lesezeichen). */
-private const val EYEBROW_ACTIONS = 2
 
 /** Name mit Charakter-Chip und darunter die Musterzeile mit Dauer – der Textteil der [PatternCard]. */
 @Composable

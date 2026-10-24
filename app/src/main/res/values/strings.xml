@@ -138,6 +138,8 @@
     <!-- Anzahl als Status-Suffix an einem Kopf (Abschnitte im Tab „Eigene“, Vorschau des SectionHeader). -->
     <string name="situations_my_patterns_count">· %1$d</string>
     <string name="cd_pattern_delete">Muster %1$s löschen</string>
+    <!-- Stift auf der Karte einer Kreation (Tab „Eigene“): öffnet den Muster-Editor, mit Namen (A11Y-06). -->
+    <string name="cd_pattern_edit_named">Muster %1$s bearbeiten</string>
     <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
 
