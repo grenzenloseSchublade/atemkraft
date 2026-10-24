@@ -71,7 +71,13 @@ fun CircleTapTarget(
                         Modifier
                             .semantics { contentDescription = description }
                             .onFocusChanged { focused = it.isFocused }
-                            .clickable(role = Role.Button, onClickLabel = clickLabel, interactionSource = null, indication = null, onClick = onTap) // Abweichung A11Y-07: eigener Fokusring, der Atemkreis hat keine Ripple
+                            .clickable(
+                                role = Role.Button,
+                                onClickLabel = clickLabel,
+                                interactionSource = null,
+                                indication = null, // Abweichung A11Y-07: eigener Fokusring, der Atemkreis hat keine Ripple
+                                onClick = onTap,
+                            )
 
                     swallowWhenIdle -> Modifier.pointerInput(Unit) { detectTapGestures { } }
 
