@@ -16,6 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
@@ -30,6 +33,8 @@ import app.atemkraft.domain.inStages
 import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
+import app.atemkraft.ui.theme.eyebrow
 
 /**
  * Übungskarte in Listen. Die Studienlage steht nur auf der Detailseite: Auf der Liste trüge fast
@@ -124,11 +129,22 @@ private fun phaseName(type: PhaseType): String = stringResource(
 /**
  * Karte eines generierten Musters – Muster des Tages und „Eigene Kreationen“ sehen gleich aus: Name
  * mit Charakter-Chip, darunter die kurze Musterzeile mit Dauer, Rand in Cyan (eigene Muster).
- * [action] ist die eine weitere Aktion (KOMP-02) und liegt als Overlay in der Kartenecke statt
- * in der Titelzeile: Die volle 48-dp-Tippfläche liegt über dem Karten-Padding, die Karte wird
- * nicht höher als ihr Text. Der Text hält rechts die Breite der Tippfläche frei, damit nichts
- * darunter liegt. [patternLine] ist die kurze Musterzeile (Muster des Tages aus seinen vier
- * Feldern, eigene Muster ihre Folge); der Chip zeigt „intensiv“, wenn die Übung `caution` trägt.
+ * [patternLine] ist die kurze Musterzeile (Muster des Tages aus seinen vier Feldern, eigene Muster
+ * ihre Folge); der Chip zeigt „intensiv“, wenn die Übung `caution` trägt.
+ *
+ * [action] liegt als Overlay oben rechts (KOMP-02): Die volle 48-dp-Tippfläche liegt über dem
+ * Karten-Padding, die Karte wird nicht höher als ihr Text; ohne [eyebrow] hält der Text rechts die
+ * Breite der Tippfläche frei.
+ *
+ * Mit [eyebrow] (Muster des Tages, Nutzer 2026-10-24, Vorschlag B) trägt die Karte oben eine
+ * **Kopfzeile in der Karte**: links die Eyebrow in Großbuchstaben (`eyebrow`-Stil, `secondary` wie
+ * der Rand; TalkBack hört den Originaltext), rechts [action] als Reihe von bis zu [EYEBROW_ACTIONS]
+ * Icon-Knöpfen für den Abschnitt (↻ Neu generieren, Lesezeichen), Glyphen bündig an der
+ * Inhaltskante (Polster `CardPadding − TouchOverhang`). Die Zeile ist so hoch wie die Tippfläche
+ * der Knöpfe (`MinTouchTarget`); das Polster darüber ist um `CircleOverhang` kleiner, sodass der
+ * sichtbare Kreis `CardPadding` vom Kartenrand steht. Darunter stehen Name, Chip und Musterzeile
+ * wie gewohnt. So braucht das Tagesmuster keinen eigenen Abschnittskopf über der Karte (KOMP-02,
+ * Ausnahme Kopfzeile).
  */
 @Composable
 fun PatternCard(
@@ -136,6 +152,7 @@ fun PatternCard(
     patternLine: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    eyebrow: String? = null,
     action: @Composable () -> Unit,
 ) {
     Card(
@@ -147,25 +164,63 @@ fun PatternCard(
             Column(
                 modifier = Modifier.padding(
                     start = Dimens.CardPadding,
-                    top = Dimens.CardPadding,
-                    end = Dimens.MinTouchTarget,
+                    top = if (eyebrow != null) Dimens.CardPadding - Sizes.CircleOverhang else Dimens.CardPadding,
+                    end = if (eyebrow != null) Dimens.CardPadding else Dimens.MinTouchTarget,
                     bottom = Dimens.CardPadding,
                 ),
             ) {
-                TitleWithChips(
-                    title = exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                ) {
-                    // Ein eigenes intensives Muster sieht schon in der Liste so aus wie auf der Detailseite.
-                    CharacterChip(intense = exercise.caution, activating = exercise.activating)
+                if (eyebrow != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(Dimens.MinTouchTarget)
+                            // Platz für die Knöpfe rechts, die als Overlay darüberliegen.
+                            .padding(end = Dimens.MinTouchTarget * EYEBROW_ACTIONS - Sizes.TouchOverhang + Dimens.GapSmall),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        Text(
+                            text = eyebrow.uppercase(),
+                            style = MaterialTheme.typography.eyebrow,
+                            color = MaterialTheme.colorScheme.secondary,
+                            // Großbuchstaben nur im Bild: TalkBack liest den Text, wie er geschrieben ist.
+                            modifier = Modifier.semantics { text = AnnotatedString(eyebrow) },
+                        )
+                    }
                 }
-                Spacer(Modifier.height(Dimens.GapTiny))
-                // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
-                // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
-                SecondaryText(patternLine + DOT_SEPARATOR + stringResource(R.string.duration_approx, exercise.defaultMinutes()))
+                PatternBody(exercise, patternLine)
             }
-            Box(modifier = Modifier.align(Alignment.TopEnd)) { action() }
+            // Ein Aufruf des Slots für beide Varianten (Compose-Regel content-slot-reused).
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .then(
+                        if (eyebrow != null) {
+                            Modifier.padding(top = Dimens.CardPadding - Sizes.CircleOverhang, end = Dimens.CardPadding - Sizes.TouchOverhang)
+                        } else {
+                            Modifier
+                        },
+                    ),
+            ) { action() }
         }
     }
+}
+
+/** Höchstens so viele Icon-Knöpfe stehen in der Kopfzeile einer [PatternCard] mit Eyebrow (↻ und Lesezeichen). */
+private const val EYEBROW_ACTIONS = 2
+
+/** Name mit Charakter-Chip und darunter die Musterzeile mit Dauer – der Textteil der [PatternCard]. */
+@Composable
+private fun PatternBody(exercise: Exercise, patternLine: String) {
+    TitleWithChips(
+        title = exercise.name,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+    ) {
+        // Ein eigenes intensives Muster sieht schon in der Liste so aus wie auf der Detailseite.
+        CharacterChip(intense = exercise.caution, activating = exercise.activating)
+    }
+    Spacer(Modifier.height(Dimens.GapTiny))
+    // Kurze Musterzeile statt instructionHint: Die Einladung zur Bauchatmung steht
+    // auf der Detailseite unter „Anleitung“, nicht in jeder Karte.
+    SecondaryText(patternLine + DOT_SEPARATOR + stringResource(R.string.duration_approx, exercise.defaultMinutes()))
 }
