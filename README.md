@@ -5,7 +5,7 @@ Android-App für Atemübungen und stille Meditation. Ein mitatmender Kreis, Tön
 Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf das optionale Laden einer Sprachstimme. Atemkraft ist eine Wellness-App und kein Medizinprodukt; sie ersetzt keinen Rat von Ärztin, Arzt oder anderem Fachpersonal.
 
 <p>
-  <img src="docs/screenshot-atmen.png" width="200" alt="Tab Atmen: Suche „Wie fühlst du dich?“ mit Anlässen als Chips, Übungen mit Filtern, Muster des Tages und Liste der Atemübungen nach Bereichen">
+  <img src="docs/screenshot-atmen.png" width="200" alt="Tab Atmen: Suche „Wie fühlst du dich?“ mit Anlässen als Chips, darunter die Übungen mit Filtern, nach Bereichen gruppiert">
   <img src="docs/screenshot-sitzung.png" width="200" alt="Laufende Sitzung: Atemkreis mit „Einatmen“, Sekunden und Fortschrittsbogen">
 </p>
 
@@ -14,12 +14,12 @@ Ohne Konto, ohne Werbung, ohne Tracking; offline bis auf das optionale Laden ein
 Beschrieben ist der Stand von `main`; die veröffentlichte Version kann Einzelnes davon noch nicht haben.
 
 - **Atmen:** 17 Übungen in vier Bereichen (Beruhigen, Aktivieren, Ausgleichen, Atem schulen), je mit Anleitung, Studienlage, Sicherheitshinweisen und Quellen. Zeiten lassen sich pro Übung anpassen. Darüber „Wie fühlst du dich?“: Anlässe wie „Einschlafen“ zum Antippen und eine Suche nach deinem Befinden.
-- **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz.
+- **Sitzung:** Der Kreis wächst beim Einatmen und schrumpft beim Ausatmen, dazu Töne und Vibration. Am Ende eine kurze Bilanz. Schnellstart über langes Drücken auf das App-Symbol.
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
-- **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Startpunkten und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen.
+- **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Startpunkten und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen samt Weg zur zuletzt geübten Übung.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
 - **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, Begriffe erklärt und Programme wie Buteyko und Nasenatmung zum Nachlesen.
-- **Logbuch und Export:** abgeschlossene Sitzungen, gespeicherte Muster als Datei sichern.
+- **Logbuch und Export:** abgeschlossene Sitzungen (Tage in Folge abschaltbar), gespeicherte Muster als Datei sichern.
 
 ## Installieren
 
