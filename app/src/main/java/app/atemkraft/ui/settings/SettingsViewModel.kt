@@ -9,6 +9,7 @@ import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationDisplay
+import app.atemkraft.data.ReminderSettings
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.FeelingPrompt
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 
 /**
  * Alles, was die Einstellungen zeigen. Die Standardwerte sind dieselben wie im
@@ -48,6 +50,8 @@ data class SettingsUiState(
     val showStreak: Boolean = true,
     /** „Befinden am Ende fragen“; an, solange die Reihe noch nie angeboten wurde (sie kommt dann einmal mit Hinweis). */
     val askFeeling: Boolean = true,
+    /** Lokale Erinnerung (aus ab Werk). */
+    val reminder: ReminderSettings = ReminderSettings(),
 )
 
 /** Was die Einstellungen auslösen (ohne Navigation und Datei-Auswahl, die bleiben im UI). */
@@ -74,6 +78,9 @@ interface SettingsActions {
     fun clearLog()
     fun setShowStreak(enabled: Boolean)
     fun setAskFeeling(enabled: Boolean)
+    fun setReminderEnabled(enabled: Boolean)
+    fun setReminderMinute(minuteOfDay: Int)
+    fun setReminderDays(days: Set<DayOfWeek>)
 
     /** Der Hinweis „Einstellungen wurden zurückgesetzt“ wurde gezeigt; er kommt nicht wieder. */
     fun acknowledgeSettingsReset()
@@ -95,7 +102,7 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val state: StateFlow<SettingsUiState> = combine(
-        combine(settings.cueSettings, settings.safetySettings, settings.sessionDisplay) { cue, safety, display ->
+        combine(settings.cueSettings, settings.safetySettings, settings.sessionDisplay, settings.reminderSettings) { cue, safety, display, reminder ->
             SettingsUiState(
                 soundMode = cue.soundMode,
                 transition = cue.transition,
@@ -104,6 +111,7 @@ class SettingsViewModel(
                 showSafetyWarning = safety.showWarning,
                 sessionDisplay = display,
                 gongLong = cue.gongLong,
+                reminder = reminder,
             )
         },
         voices.states,
@@ -176,6 +184,12 @@ class SettingsViewModel(
         override fun setShowStreak(enabled: Boolean) = write { settings.setShowStreak(enabled) }
 
         override fun setAskFeeling(enabled: Boolean) = write { settings.setFeelingPrompt(enabled) }
+
+        override fun setReminderEnabled(enabled: Boolean) = write { settings.setReminderEnabled(enabled) }
+
+        override fun setReminderMinute(minuteOfDay: Int) = write { settings.setReminderMinute(minuteOfDay) }
+
+        override fun setReminderDays(days: Set<DayOfWeek>) = write { settings.setReminderDays(days) }
 
         override fun acknowledgeSettingsReset() = write { settings.acknowledgeSettingsReset() }
     }

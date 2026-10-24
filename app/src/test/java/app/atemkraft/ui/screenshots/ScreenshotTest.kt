@@ -29,6 +29,7 @@ import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
+import app.atemkraft.data.ReminderSettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.ExerciseFilters
 import app.atemkraft.domain.Feeling
@@ -87,6 +88,7 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.time.DayOfWeek
 import java.time.ZoneId
 import kotlin.math.roundToInt
 
@@ -261,6 +263,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             compose.onNodeWithText(app.getString(R.string.settings_voice_show)).performClick()
             compose.onNodeWithText(app.getString(R.string.settings_data_transfer_more)).performClick()
         }) { Settings() }
+        // Erinnerung an: Uhrzeit (breiteste Ziffern) und alle Wochentage als Chips, einer abgewählt.
+        snap("05_einstellungen_erinnerung") {
+            Settings(ReminderSettings(enabled = true, minuteOfDay = 20 * 60 + 45, days = DayOfWeek.entries.toSet() - DayOfWeek.SUNDAY))
+        }
         snap("06_glossar") { GlossaryScreen(onBack = {}) }
         snap("07_ueber_lizenzen") { AboutScreen(onBack = {}, licensesExpanded = true) }
         snap("12_atemlehre_offen", prepare = {
@@ -325,9 +331,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     }
 
     @Composable
-    private fun Settings() {
+    private fun Settings(reminder: ReminderSettings = ReminderSettings()) {
         SettingsScreen(
             state = SettingsUiState(
+                reminder = reminder,
                 soundMode = SoundMode.entries.first(),
                 transition = TransitionEmphasis.entries.first(),
                 volume = ToneVolume.entries.first(),

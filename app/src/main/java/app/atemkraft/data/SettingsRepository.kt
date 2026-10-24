@@ -30,6 +30,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.time.DayOfWeek
+
+/** Uhrzeit der Erinnerung im Raster [ReminderSettings.STEP_MINUTES] und innerhalb eines Tages. */
+internal fun reminderMinute(minuteOfDay: Int): Int {
+    val step = ReminderSettings.STEP_MINUTES
+    return (minuteOfDay / step * step).coerceIn(0, ReminderSettings.MINUTES_PER_DAY - step)
+}
 
 /**
  * Zeitpunkt (Epoch-ms), zu dem eine beschädigte Einstellungsdatei durch eine leere ersetzt wurde.
@@ -121,6 +128,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val WELCOME_DISMISSED = booleanPreferencesKey("welcome_dismissed") // Willkommenskarte weggeklickt
         val SHOW_STREAK = booleanPreferencesKey("show_streak") // „Serie zeigen“ (Tage in Folge), Standard an
         val FEELING_PROMPT = booleanPreferencesKey("feeling_prompt") // „Befinden am Ende fragen“; fehlt = noch nie angeboten
+        val REMINDER_ON = booleanPreferencesKey("reminder_enabled") // Erinnerung an/aus, Standard aus
+        val REMINDER_MINUTE = intPreferencesKey("reminder_minute") // Uhrzeit, Minuten nach Mitternacht
+        val REMINDER_DAYS = stringSetPreferencesKey("reminder_days") // Wochentage als DayOfWeek-Namen
     }
 
     /**
@@ -207,6 +217,34 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     /** Die Reihe wurde zum ersten Mal angeboten: Ab jetzt gilt der Schalter, Standard an. */
     suspend fun feelingOffered() {
         store.edit { prefs -> if (prefs[Keys.FEELING_PROMPT] == null) prefs[Keys.FEELING_PROMPT] = true }
+    }
+
+    /**
+     * Lokale Erinnerung ([ReminderSettings]): Standard aus. Uhrzeit auf das Raster gezogen, Tage unter
+     * ihren Namen (CODE-05); unbekannte Namen fallen weg, ohne Tag gilt jeder Tag.
+     */
+    val reminderSettings: Flow<ReminderSettings> = data.map { prefs ->
+        val defaults = ReminderSettings()
+        val days = prefs[Keys.REMINDER_DAYS]?.mapNotNull { name -> DayOfWeek.entries.firstOrNull { it.name == name } }?.toSet()
+        ReminderSettings(
+            enabled = prefs[Keys.REMINDER_ON] ?: defaults.enabled,
+            minuteOfDay = prefs[Keys.REMINDER_MINUTE]?.let(::reminderMinute) ?: defaults.minuteOfDay,
+            days = days?.takeIf { it.isNotEmpty() } ?: defaults.days,
+        )
+    }
+
+    suspend fun setReminderEnabled(enabled: Boolean) {
+        store.edit { it[Keys.REMINDER_ON] = enabled }
+    }
+
+    suspend fun setReminderMinute(minuteOfDay: Int) {
+        store.edit { it[Keys.REMINDER_MINUTE] = reminderMinute(minuteOfDay) }
+    }
+
+    /** Wochentage der Erinnerung; eine leere Menge wird nicht gespeichert (mindestens ein Tag). */
+    suspend fun setReminderDays(days: Set<DayOfWeek>) {
+        if (days.isEmpty()) return
+        store.edit { prefs -> prefs[Keys.REMINDER_DAYS] = days.map { it.name }.toSet() }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

@@ -46,14 +46,16 @@ import app.atemkraft.ui.theme.Sizes
  * jeder Änderung angesagt (A11Y-04).
  *
  * Label links, Knöpfe als rechte Spalte, der sichtbare Kreis bündig an der Inhaltskante.
- * [horizontal]/[vertical] steuern die Innenabstände.
+ * [horizontal]/[vertical] steuern die Innenabstände; mit `horizontal = 0.dp` (Karte mit eigenem
+ * Polster, Einstellungen) ragt der unsichtbare Rand von „+“ in deren Polster.
  *
  * TalkBack hört Name und Einheit ausgeschrieben (A11Y-06): [spokenLabel] ist das Label ohne
  * sichtbare Einheit („Einatmen“ statt „Einatmen (s)“), [valueUnit] ein Plural für den Wert
  * („4 Sekunden“); ohne ihn die blanke Zahl. [spokenSuffix] hängt an die Ansage des Werts einen
  * Zustand an, den die Änderung mit sich bringt („…: 11 Sekunden, intensiv“) – so bleibt es eine
  * Ansage je Tipp. [announce] = false nimmt die Live-Region weg, solange ein anderer Knoten die
- * Änderung schon ansagt (Muster-Editor: Phase entfernt).
+ * Änderung schon ansagt (Muster-Editor: Phase entfernt). [valueText] zeigt den Wert anders als die
+ * Zahl (Uhrzeit „08:15“ für den Schritt 33), [spokenValue] sagt ihn dann in Worten („8:15 Uhr“).
  */
 @Composable
 fun Stepper(
@@ -68,6 +70,8 @@ fun Stepper(
     @PluralsRes valueUnit: Int? = null,
     spokenSuffix: String? = null,
     announce: Boolean = true,
+    valueText: String = value.toString(),
+    spokenValue: String? = null,
 ) {
     // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
     // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
@@ -84,9 +88,11 @@ fun Stepper(
         // wenig Platz (360 dp, große Schrift) bricht das Label zwischen ganzen Wörtern um,
         // statt „+“ aus der Zeile zu drücken.
         StepperLabel(label, Modifier.weight(1f).padding(end = Dimens.GapSmall))
-        val spokenValue = if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
-        val valueDescription = stepperValueDescription(spokenLabel, spokenValue, spokenSuffix)
-        StepButtons(spokenLabel, valueDescription, value, range, onChange, announce)
+        val spoken = spokenValue ?: if (valueUnit != null) pluralStringResource(valueUnit, value, value) else value.toString()
+        val valueDescription = stepperValueDescription(spokenLabel, spoken, spokenSuffix)
+        // Ohne eigenes Polster (in einer Karte mit Innenabstand) ragt der Rand des „+“-Knopfs über.
+        val edge = if (horizontal < inset) Modifier.flushEnd(inset - horizontal) else Modifier
+        StepButtons(spokenLabel, valueDescription, value, range, onChange, announce, edge, valueText)
     }
 }
 

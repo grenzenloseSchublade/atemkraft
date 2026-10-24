@@ -96,7 +96,7 @@ Der Upload-Schlüssel liegt wie der Release-Schlüssel außerhalb des Repos (SEC
 | Formular | Angabe für Atemkraft |
 |---|---|
 | Datenschutzerklärung | URL der PRIVACY.md (siehe oben) |
-| Datensicherheit | „Keine Daten erhoben, keine Daten geteilt.“ Daten, die das Gerät nicht verlassen, zählen nicht. Der freiwillige Stimmen-Download geht an GitHub; wir erhalten nichts, er ist in der Datenschutzerklärung offengelegt (SEC-DIST-03) |
+| Datensicherheit | „Keine Daten erhoben, keine Daten geteilt.“ Daten, die das Gerät nicht verlassen, zählen nicht – auch nicht das Befinden am Ende (nur am Logbuch-Eintrag) und die lokale Erinnerung. Der freiwillige Stimmen-Download geht an GitHub; wir erhalten nichts, er ist in der Datenschutzerklärung offengelegt (SEC-DIST-03) |
 | Werbe-ID | Nein |
 | Werbung | Keine Werbung |
 | App-Zugriff | Alle Funktionen ohne Anmeldung |
@@ -104,6 +104,7 @@ Der Upload-Schlüssel liegt wie der Release-Schlüssel außerhalb des Repos (SEC
 | Zielgruppe | 18+ (Atemanhalten und intensive Übungen sind für Kinder ungeeignet; unter 13 griffe die Families-Policy) |
 | Health-Apps-Erklärung | Pflicht für alle Apps. Kategorie *Health and fitness → Stress Management, Relaxation, Mental Acuity*; **nicht** „Medical“ oder „Medical Device“ ([14738291](https://support.google.com/googleplay/android-developer/answer/14738291)) |
 | Foreground-Service | Typ `mediaPlayback` begründen, **mit Video** ([13392821](https://support.google.com/googleplay/android-developer/answer/13392821)): 30–60 s, Session starten, Ton läuft, Bildschirm aus, Gong und Phasentöne laufen weiter, Benachrichtigung sichtbar. Als nicht gelistetes Video hochladen. Eine stille Meditation (Gong aus, keine Stimme) spielt nichts ab, nutzt den Typ aber ebenfalls; deshalb im Formular den Zweck als „Gong, Sprachanleitung und Phasentöne bei ausgeschaltetem Bildschirm“ beschreiben und im Video eine Sitzung mit Ton zeigen |
+| Berechtigungen ohne Formular | `RECEIVE_BOOT_COMPLETED` (ab 2.9.0, nur damit die lokale Erinnerung einen Neustart übersteht) und `POST_NOTIFICATIONS` brauchen keine Erklärung; kein `SCHEDULE_EXACT_ALARM`/`USE_EXACT_ALARM` (sonst Formular „Wecker und Erinnerungen“). Die Erinnerung ist aus ab Werk und läuft ohne Netz |
 | Nachrichten, Behörden, Finanzen | jeweils Nein |
 
 Kategorie im Store: *Gesundheit & Fitness*.

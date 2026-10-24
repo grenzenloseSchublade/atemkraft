@@ -15,6 +15,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Nur für die lokale Erinnerung (aus ab Werk): Der JobScheduler behält den geplanten Job über
+         einen Neustart nur mit dieser Berechtigung (JobInfo.setPersisted). Die App hat dafür keinen
+         eigenen Receiver; ohne sie hörte die Erinnerung nach jedem Neustart still auf, bis die App
+         wieder geöffnet wird (docs/DECISIONS.md, 2026-10-24). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Sichtbarkeit der geräteeigenen Text-to-Speech-Engine (Package-Visibility ab Android 11),
          für die optionale gesprochene Meditations-Anleitung; sie erhält nur feste Ansagetexte. -->
@@ -61,5 +66,12 @@
             android:name=".playback.PlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Lokale Erinnerung: nur der JobScheduler des Systems bindet ihn (BIND_JOB_SERVICE),
+             nicht exportiert; kein Netz, kein exakter Wecker. -->
+        <service
+            android:name=".playback.ReminderJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

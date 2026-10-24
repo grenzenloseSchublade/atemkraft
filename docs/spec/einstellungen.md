@@ -21,10 +21,11 @@ Regeln: [STYLEGUIDE TEXT-15](../STYLEGUIDE.md#text) (Texte nach einem Muster), L
 ## Aufbau und Wege
 
 - Atemlehre und Glossar stehen seit 2026-10-19 nicht mehr in den Einstellungen (Tab „Lernen“); „Über Atemkraft“ als `NavCard`.
+- Karte „Erinnerung“ (vor „Daten“): Schalter „Ans Atmen erinnern“ (`ToggleRow`, aus ab Werk); an: `Stepper` „Uhrzeit“ in Viertelstunden (sichtbar „08:15“, gesprochen „8:15 Uhr“, ohne eigenes Polster in der Karte) und „Tage“ als `FilterChipFlow` aus `TonalChip`s „Mo“ … „So“ (gesprochen ganz, der letzte gewählte Tag bleibt). Beim Einschalten fragt Android ab 13 einmal nach der Benachrichtigung; abgelehnt oder in Android aus, sagt der Hinweis das statt der Beschreibung. Planung `playback/ReminderScheduler` (JobScheduler, Fenster 15 min, nichts nach drei Stunden Verspätung), Ausführung `ReminderJobService`, neu geplant bei jedem App-Start und jeder Änderung (`AppContainer`).
 - Karte „Daten“: Exportieren · Importieren (`AppOutlinedButton` in `AdaptiveButtonRow`), „Beim Handywechsel?“ als `DisclosureToggle`, Zeile „Logbuch“ mit der Zahl der Sitzungen und dem Papierkorb (zweistufig, MUSTER-05), darunter die Schalter „Serie zeigen“ (`ToggleRow`, Standard an; aus: Verlauf und Logbuch nennen keine Tage in Folge) und „Befinden am Ende fragen“ (an, solange die Reihe noch nie angeboten wurde; [session.md](session.md), „Befinden am Ende“).
 - Stimmen-Katalog im `DisclosureToggle` „Stimmen zeigen“ (gesperrt während eines Downloads); Fehler inline mit nächstem Schritt (`VoiceFailure` NETWORK/STORAGE/DAMAGED/OTHER, MUSTER-04); der Katalog rät vorab zum WLAN.
 - `SettingsRoute(focusMeditation, showVoices)` öffnet die Seite an der Meditations-Karte mit aufgeklapptem Katalog („Stimme laden ›“ aus dem Bottom Sheet der Meditation).
 
 ## Prüfung
 
-`ScreenshotTest` (`05_einstellungen_daten` mit allen längsten Varianten; Gates samt ANATOMIE für `ToggleRow` und `Stepper`), manuell R-TEXT, R-A11Y (Download-Status, Fokus beim Löschen).
+`ScreenshotTest` (`05_einstellungen_daten` mit allen längsten Varianten, `05_einstellungen_erinnerung` mit Uhrzeit und Tagen; Gates samt ANATOMIE für `ToggleRow` und `Stepper`), manuell R-TEXT, R-A11Y (Download-Status, Fokus beim Löschen).

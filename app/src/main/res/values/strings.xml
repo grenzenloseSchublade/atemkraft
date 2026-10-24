@@ -511,6 +511,26 @@
     <string name="settings_show_streak">Serie zeigen</string>
     <string name="settings_show_streak_hint">Aus: Verlauf und Logbuch nennen keine Tage in Folge, nur Minuten und Sitzungen.</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
+    <string name="settings_reminder_title">Erinnerung</string>
+    <string name="settings_reminder_toggle">Ans Atmen erinnern</string>
+    <string name="settings_reminder_hint">Eine Benachrichtigung zur gewählten Zeit: „Zeit für ein paar Atemzüge?“ Ohne Netz; nichts wird gezählt.</string>
+    <!-- Erinnerung an, aber Benachrichtigungen abgelehnt oder in Android ausgeschaltet. -->
+    <string name="settings_reminder_blocked">Benachrichtigungen sind für Atemkraft aus. Einschalten kannst du sie in den Android-Einstellungen der App.</string>
+    <string name="settings_reminder_time">Uhrzeit</string>
+    <string name="settings_reminder_days">Tage</string>
+    <!-- Sichtbare Uhrzeit im Stepper, gesprochen mit „Uhr“. -->
+    <string name="reminder_time_value">%1$02d:%2$02d</string>
+    <string name="cd_reminder_time">%1$d:%2$02d Uhr</string>
+    <!-- Ganze Namen der Tage für TalkBack; sichtbar stehen die Kürzel aus log_weekday_short. -->
+    <string-array name="reminder_weekday_long">
+        <item>Montag</item>
+        <item>Dienstag</item>
+        <item>Mittwoch</item>
+        <item>Donnerstag</item>
+        <item>Freitag</item>
+        <item>Samstag</item>
+        <item>Sonntag</item>
+    </string-array>
     <string name="settings_ask_feeling">Befinden am Ende fragen</string>
     <string name="settings_ask_feeling_hint">Am Ende ein Tipp, etwa „ruhiger“ oder „wie vorher“; steht als Wort im Logbuch und wird nie ausgewertet.</string>
     <!-- Bestätigungszustand von „Logbuch leeren“ (MUSTER-05), per liveRegion angesagt. -->
@@ -650,4 +670,8 @@
     <string name="session_notification_title">Atemübung läuft</string>
     <string name="meditation_notification_title">Meditation läuft</string>
     <string name="meditation_notification_remaining">%1$s verbleibend</string>
+    <!-- Lokale Erinnerung (ReminderJobService): eigener Kanal, schlichter Text ohne Druck, keine Serie. -->
+    <string name="reminder_channel">Erinnerung</string>
+    <string name="reminder_channel_description">Die Erinnerung zur gewählten Zeit; ein- und ausschalten und Zeit wählen in den Einstellungen von Atemkraft.</string>
+    <string name="reminder_title">Zeit für ein paar Atemzüge?</string>
 </resources>

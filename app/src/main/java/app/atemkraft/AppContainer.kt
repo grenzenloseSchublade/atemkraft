@@ -18,14 +18,17 @@ import app.atemkraft.playback.BreathSessionController
 import app.atemkraft.playback.MeditationAudioCoordinator
 import app.atemkraft.playback.MeditationController
 import app.atemkraft.playback.PlaybackServiceLinks
+import app.atemkraft.playback.ReminderScheduler
 import app.atemkraft.playback.SessionAudioCoordinator
 import app.atemkraft.playback.SilenceAfterBreath
 import app.atemkraft.ui.settings.SettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 /**
  * Manuelles DI: hält Repositories, Player und die app-weiten Abläufe einmalig (keine
@@ -106,8 +109,16 @@ class AppContainer(context: Context) {
     /** Zuletzt geübte Übung, die sich noch öffnen lässt ([lastPracticed]): Shortcut „Zuletzt geübt“. */
     private val lastPracticedExercise = combine(logbookRepository.entries, savedPatternsRepository.patterns, ::lastPracticed)
 
+    /** Plant die lokale Erinnerung (JobScheduler, ohne Netz). */
+    private val reminderScheduler = ReminderScheduler(context.applicationContext)
+
     init {
         followLastPracticedShortcut(context.applicationContext, lastPracticedExercise, appScope)
+        // Erinnerung bei jedem App-Start und jeder Änderung neu planen: hält sie nach einer
+        // Zeitzonen- oder Uhrzeitänderung richtig; aus hebt den Job auf.
+        appScope.launch(Dispatchers.Default) {
+            settingsRepository.reminderSettings.distinctUntilChanged().collect { reminderScheduler.plan(it) }
+        }
     }
 
     /**

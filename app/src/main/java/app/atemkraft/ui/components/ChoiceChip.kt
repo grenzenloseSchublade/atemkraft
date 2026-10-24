@@ -8,6 +8,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -309,6 +311,34 @@ fun <T> FilterChipRow(
         ) {
             items.forEach { chip(it) }
         }
+    }
+}
+
+/**
+ * [TonalChip]s, die zwischen ganzen Chips in weitere Zeilen umbrechen, statt seitlich zu scrollen
+ * (Wochentage der Erinnerung in einer Karte: Sieben kurze Chips sollen alle sichtbar sein, ohne
+ * dass die Kartenkante einen anschneidet). Nebeneinander `GapSmall`, untereinander kein
+ * Layout-Abstand – die 48-dp-Tippflächen der 32 dp hohen Chips lassen sichtbar 16 dp. TalkBack wie
+ * [FilterChipRow]: Traversal-Gruppe namens [groupName], Chips als Kontrollkästchen.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun <T> FilterChipFlow(
+    groupName: String,
+    items: List<T>,
+    modifier: Modifier = Modifier,
+    chip: @Composable (item: T) -> Unit,
+) {
+    FlowRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = groupName
+                isTraversalGroup = true
+            },
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+    ) {
+        items.forEach { chip(it) }
     }
 }
 

@@ -8,5 +8,7 @@ android.permission.WAKE_LOCK
 android.permission.FOREGROUND_SERVICE
 android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
 android.permission.POST_NOTIFICATIONS
+# Lokale Erinnerung: der geplante Job übersteht einen Neustart (JobInfo.setPersisted), ohne eigenen Receiver.
+android.permission.RECEIVE_BOOT_COMPLETED
 # Von androidx.core erzeugt (signature-geschützt, nur intern); die App deklariert sie auch selbst.
 app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION

@@ -1,5 +1,10 @@
 package app.atemkraft.ui.settings
 
+import android.Manifest
+import android.content.Context
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,17 +37,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import app.atemkraft.R
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.Refs
+import app.atemkraft.data.ReminderSettings
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.GONG_INTERVAL_CHOICES
@@ -57,23 +70,27 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
+import app.atemkraft.ui.components.FilterChipFlow
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.SegmentedChoiceRow
+import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
+import app.atemkraft.ui.components.TonalChip
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
 import kotlinx.coroutines.flow.first
+import java.time.DayOfWeek
 
 /**
  * Einstellungen: Klang (beide Sitzungsarten), Atemübung (Ton, Vibration, „Danach in die Stille“,
- * Sicherheitshinweis), Anzeige der Atemübung, Meditation und Daten, unten Über. Atemlehre und
+ * Sicherheitshinweis), Anzeige der Atemübung, Meditation, Erinnerung und Daten, unten Über. Atemlehre und
  * Begriffe stehen seit 2026-10-23 im Tab „Lernen“.
  *
  * Texte nach einem Muster (STYLEGUIDE TEXT-15): Kartentitel, optional ein Satz, wofür die Karte
@@ -147,6 +164,9 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.height(Dimens.ListGap))
+        ReminderCard(state.reminder, actions)
+
+        Spacer(Modifier.height(Dimens.ListGap))
         DataCard(transfer, state, actions)
 
         Spacer(Modifier.height(Dimens.ListGap))
@@ -212,6 +232,74 @@ private fun DataCard(transfer: PatternTransfer, state: SettingsUiState, actions:
         )
     }
 }
+
+/**
+ * Erinnerung (Auswertung B, Nutzer 2026-10-24): aus ab Werk; an mit Uhrzeit (Stepper in
+ * Viertelstunden) und Wochentagen (Filter-Chips, mindestens einer bleibt). Beim Einschalten fragt
+ * Android ab 13 einmal nach der Benachrichtigung – im Moment, in dem sie Sinn ergibt; abgelehnt oder
+ * in den Systemeinstellungen aus, sagt der Hinweis das, statt still nichts zu tun. Keine Serie,
+ * kein Zähler, kein Druck: Die Benachrichtigung fragt nur „Zeit für ein paar Atemzüge?“.
+ */
+@Composable
+private fun ReminderCard(reminder: ReminderSettings, actions: SettingsActions) {
+    val context = LocalContext.current
+    var allowed by remember { mutableStateOf(notificationsAllowed(context)) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { allowed = notificationsAllowed(context) }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed = notificationsAllowed(context) }
+    SettingsCard(stringResource(R.string.settings_reminder_title), titleGap = Dimens.GapTiny) {
+        ToggleRow(
+            label = stringResource(R.string.settings_reminder_toggle),
+            checked = reminder.enabled,
+            onCheckedChange = { on ->
+                actions.setReminderEnabled(on)
+                if (on && !allowed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) ask.launch(Manifest.permission.POST_NOTIFICATIONS)
+            },
+            hint = stringResource(if (reminder.enabled && !allowed) R.string.settings_reminder_blocked else R.string.settings_reminder_hint),
+        )
+        if (reminder.enabled) {
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+            val step = ReminderSettings.STEP_MINUTES
+            val hour = reminder.minuteOfDay / 60
+            val minute = reminder.minuteOfDay % 60
+            Stepper(
+                label = stringResource(R.string.settings_reminder_time),
+                value = reminder.minuteOfDay / step,
+                range = 0 until ReminderSettings.MINUTES_PER_DAY / step,
+                onChange = { actions.setReminderMinute(it * step) },
+                horizontal = 0.dp,
+                vertical = 0.dp,
+                valueText = stringResource(R.string.reminder_time_value, hour, minute),
+                spokenValue = stringResource(R.string.cd_reminder_time, hour, minute),
+            )
+            Spacer(Modifier.height(Dimens.GapSmall))
+            val days = stringResource(R.string.settings_reminder_days)
+            SubLabel(days)
+            Spacer(Modifier.height(Dimens.GapSmall))
+            val short = stringArrayResource(R.array.log_weekday_short)
+            val long = stringArrayResource(R.array.reminder_weekday_long)
+            FilterChipFlow(groupName = days, items = DayOfWeek.entries) { day ->
+                val selected = day in reminder.days
+                val index = day.value - 1
+                TonalChip(
+                    label = short[index],
+                    selected = selected,
+                    // Der letzte gewählte Tag bleibt: ohne Tag gäbe es keine Erinnerung, dafür ist der Schalter da.
+                    onClick = {
+                        if (!selected) {
+                            actions.setReminderDays(reminder.days + day)
+                        } else if (reminder.days.size > 1) {
+                            actions.setReminderDays(reminder.days - day)
+                        }
+                    },
+                    modifier = Modifier.semantics { contentDescription = long[index] },
+                )
+            }
+        }
+    }
+}
+
+/** Darf die App Benachrichtigungen zeigen (Erlaubnis ab Android 13 und Schalter in den Systemeinstellungen)? */
+private fun notificationsAllowed(context: Context): Boolean = NotificationManagerCompat.from(context).areNotificationsEnabled()
 
 /**
  * Zeile „Logbuch“: links Titel und Zahl der Sitzungen, rechts in derselben Icon-Spalte wie bei

@@ -4,6 +4,7 @@ import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.domain.VoiceSpec
+import java.time.DayOfWeek
 
 /** Einstellungs-Aktionen ohne Wirkung – für Screenshot- und Navigationstests. */
 object NoOpSettingsActions : SettingsActions {
@@ -14,6 +15,9 @@ object NoOpSettingsActions : SettingsActions {
     override fun setShowSafetyWarning(enabled: Boolean) = Unit
     override fun setShowStreak(enabled: Boolean) = Unit
     override fun setAskFeeling(enabled: Boolean) = Unit
+    override fun setReminderEnabled(enabled: Boolean) = Unit
+    override fun setReminderMinute(minuteOfDay: Int) = Unit
+    override fun setReminderDays(days: Set<DayOfWeek>) = Unit
     override fun setShowNextPhase(enabled: Boolean) = Unit
     override fun setShowProgress(enabled: Boolean) = Unit
     override fun setShowSeconds(enabled: Boolean) = Unit

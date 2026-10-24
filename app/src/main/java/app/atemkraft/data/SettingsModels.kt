@@ -4,6 +4,7 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
+import java.time.DayOfWeek
 
 /**
  * Nutzer-Einstellungen für die Begleit-Reize (Cues), persistent via DataStore. Lautstärke ab Werk
@@ -60,6 +61,27 @@ data class MeditationDisplay(
     val showProgress: Boolean = true,
     val showTime: Boolean = true,
 )
+
+/**
+ * Lokale Erinnerung (Karte „Erinnerung“): aus ab Werk; an zur Uhrzeit [minuteOfDay] (Minuten nach
+ * Mitternacht, Raster [STEP_MINUTES]) an den Tagen [days]. Ohne Netz, ohne Konto; geplant über den
+ * JobScheduler des Systems (`playback/ReminderScheduler`). Mindestens ein Tag bleibt gewählt.
+ */
+data class ReminderSettings(
+    val enabled: Boolean = false,
+    val minuteOfDay: Int = DEFAULT_MINUTE,
+    val days: Set<DayOfWeek> = DayOfWeek.entries.toSet(),
+) {
+    companion object {
+        /** 8:00 Uhr: früh genug für den Tag, ohne zu wecken. */
+        const val DEFAULT_MINUTE = 8 * 60
+
+        /** Raster der Uhrzeit (Stepper in Viertelstunden). */
+        const val STEP_MINUTES = 15
+
+        const val MINUTES_PER_DAY = 24 * 60
+    }
+}
 
 /** Vom Nutzer angepasste Session-Werte einer Übung: Dauer (Minuten bzw. Runden) und
  *  Phasenlängen in Sekunden; null = nicht angepasst bzw. Phase nicht vorhanden. */
