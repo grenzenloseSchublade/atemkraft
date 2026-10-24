@@ -2,19 +2,22 @@ package app.atemkraft.ui.components
 
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -40,12 +44,15 @@ import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 
 /**
- * Einzeiliges Suchfeld ohne eigene Fläche: Text in `bodyMedium` auf einer Grundlinie
- * (`HorizontalDivider`), daneben das X ([onClear]) als `AppIconButton`, bündig an der
- * Inhaltskante ([flushEnd]) wie die Caret-Spalte der Abschnittsköpfe. Ohne [onClear] kein X
- * (leeres Feld: nichts zu leeren). Heute die Befindens-Suche im Atmen-Tab (MUSTER-09).
+ * Einzeiliges Suchfeld als Pille (Nutzer 2026-10-24, Vorschlag B): `MinTouchTarget` hoch, Fläche
+ * `surfaceContainerHigh`, `CircleShape`, ohne Rand; links die Lupe ([searchDescription] als cd),
+ * Text in `bodyMedium`, rechts das X ([onClear]) als `AppIconButton`. Ohne [onClear] kein X
+ * (leeres Feld: nichts zu leeren); sein Kreis bleibt innerhalb der Pille, die Tippfläche ragt um
+ * `CircleOverhang` über sie hinaus. Heute die Befindens-Suche im Atmen-Tab (MUSTER-09), dort ohne
+ * umgebenden Kasten direkt über den Anlass-Chips.
  *
  * Datenschutz (SEC-PRIV-03): Eingaben zum Befinden sind gesundheitsnah. Die Tastatur bekommt
  * deshalb keine Autokorrektur und `IME_FLAG_NO_PERSONALIZED_LEARNING` – sie soll die Wörter
@@ -60,6 +67,7 @@ fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     placeholder: String,
+    searchDescription: String,
     clearDescription: String,
     onClear: (() -> Unit)?,
     modifier: Modifier = Modifier,
@@ -67,16 +75,32 @@ fun SearchField(
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     NoPersonalizedLearning {
-        Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .heightIn(min = Dimens.MinTouchTarget)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                // Lupe und X stehen um das Polster vom runden Ende ab; das X bringt mit seiner
+                // 48-dp-Tippfläche schon CircleOverhang davon mit.
+                .padding(start = Dimens.CardPadding, end = Dimens.CardPadding - Sizes.CircleOverhang),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Search,
+                contentDescription = searchDescription,
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                modifier = Modifier.size(Sizes.IconDefault),
+            )
+            Spacer(Modifier.width(Dimens.ListGap))
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(min = Dimens.MinTouchTarget)
                     .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onBackground),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
@@ -86,40 +110,36 @@ fun SearchField(
                 ),
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
-                    Column(
-                        modifier = Modifier.heightIn(min = Dimens.MinTouchTarget),
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Box {
-                            // Immer im Baum, sichtbar nur bei leerem Feld: Der Platzhalter wird mit dem
-                            // Feld zusammengeführt und bleibt so sein Name wie das Label eines
-                            // M3-Textfelds – auch wenn Text drinsteht (TalkBack „Erschö, Wie fühlst du
-                            // dich?“, Voice Access „Tippe auf …“; A11Y-01). Nur nicht gezeichnet, nicht
-                            // per Alpha: Durchsichtige Knoten blendet die Bedienungshilfe aus.
-                            val empty = query.isEmpty()
-                            Text(
-                                text = placeholder,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
-                                modifier = Modifier.drawWithContent { if (empty) drawContent() },
-                            )
-                            inner()
-                        }
-                        HorizontalDivider(modifier = Modifier.padding(top = Dimens.GapTiny)) // Abweichung KOMP-03: Grundlinie des Suchfelds
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        // Immer im Baum, sichtbar nur bei leerem Feld: Der Platzhalter wird mit dem
+                        // Feld zusammengeführt und bleibt so sein Name wie das Label eines
+                        // M3-Textfelds – auch wenn Text drinsteht (TalkBack „Erschö, Wie fühlst du
+                        // dich?“, Voice Access „Tippe auf …“; A11Y-01). Nur nicht gezeichnet, nicht
+                        // per Alpha: Durchsichtige Knoten blendet die Bedienungshilfe aus. Bei
+                        // großer Schrift bricht er an Wortgrenzen um, die Pille wächst mit.
+                        val empty = query.isEmpty()
+                        Text(
+                            text = placeholder,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                            modifier = Modifier.drawWithContent { if (empty) drawContent() },
+                        )
+                        inner()
                     }
                 },
             )
-            // Bündig an der Inhaltskante wie die Carets der Abschnittsköpfe (LAYOUT-07).
+            // Ohne Eingabe hält ein Platzhalter die Breite des X: Das Feld springt beim ersten
+            // Buchstaben nicht.
             if (onClear != null) {
-                Box(Modifier.flushEnd()) {
-                    AppIconButton(onClick = onClear) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = clearDescription,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
+                AppIconButton(onClick = onClear) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = clearDescription,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
                 }
+            } else {
+                Spacer(Modifier.size(Dimens.MinTouchTarget))
             }
         }
     }
@@ -162,6 +182,7 @@ private fun SearchFieldPreview() {
             query = "Prüfung",
             onQueryChange = {},
             placeholder = stringResource(R.string.situations_search_placeholder),
+            searchDescription = stringResource(R.string.cd_search),
             clearDescription = stringResource(R.string.cd_search_clear),
             onClear = {},
         )

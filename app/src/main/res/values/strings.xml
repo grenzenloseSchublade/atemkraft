@@ -76,6 +76,7 @@
     <string name="situations_search_placeholder">Wie fühlst du dich?</string>
     <string name="cd_tab_bar_show">Tab-Leiste zeigen</string>
     <string name="cd_tab_bar_hide">Tab-Leiste ausblenden</string>
+    <string name="cd_search">Suche</string>
     <string name="cd_search_clear">Eingabe löschen</string>
     <!-- Trefferstatus der Suche: Anlässe und Bereiche, verbunden mit „, “ („1 Anlass, 1 Bereich“). -->
     <plurals name="situations_search_situations">

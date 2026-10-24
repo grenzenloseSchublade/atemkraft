@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
 
@@ -58,7 +60,8 @@ const val CHOICE_CHIPS_TAG = "choice-chips"
 const val FILTER_CHIPS_TAG = "filter-chips"
 
 /**
- * Auswählbarer Chip (Anlässe und Filter im Tab „Atmen“): sichtbar [Sizes.ButtonHeight] hoch wie die Segmente
+ * Auswählbarer Chip der Anlässe im Tab „Atmen“ (die Filter sind seit 2026-10-24 der kleinere
+ * [TonalChip]): sichtbar [Sizes.ButtonHeight] hoch wie die Segmente
  * einer `SegmentedChoiceRow` (auch eine Auswahl), Tippfläche 48 dp; Form `shapes.small`, Polster
  * waagerecht [Dimens.ChipPadding], Beschriftung `labelLarge` in einer Zeile – nie verkleinert,
  * nie umbrochen: Der Chip ist so breit wie seine Beschriftung; reicht der Platz nicht, scrollt
@@ -108,6 +111,55 @@ fun ChoiceChip(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.testTag(CHIP_TEXT_TAG),
+        )
+    }
+}
+
+/**
+ * Kleiner tonaler Filter-Chip (Filterreihe über der Übungsliste, MUSTER-12, Nutzer 2026-10-24,
+ * Vorschlag B): eine Stufe leiser als der [ChoiceChip] der Anlässe, damit zwei Chip-Sorten nicht
+ * gleich gezeichnet sind. Sichtbar [Sizes.ChipHeight] hoch (wächst mit großer Schrift), Pille
+ * (`CircleShape`), Fläche `surfaceContainerHigh` ohne Rand, Beschriftung `labelMedium` in einer
+ * Zeile – nie verkleinert, nie umbrochen; Tippfläche 48 dp über `minimumInteractiveComponentSize`.
+ * Gewählt füllt sich der Chip mit [SegmentSelected] und die Beschriftung wird voll `onSurface`
+ * (ungewählt `SECONDARY`): Fläche und Text tragen die Wahl zusammen, kein Häkchen (Nutzer), kein
+ * Gewichtswechsel (TYPO-01) – der Chip misst in jedem Zustand gleich. Beides gleitet über
+ * (MOTION-04).
+ *
+ * TalkBack: Kontrollkästchen (`toggleable`, `Role.Checkbox`) mit Zustand, wie die Anlässe; die
+ * Reihe ([FilterChipRow]) trägt den Gruppennamen.
+ */
+@Composable
+fun TonalChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fill by animateColorAsState(if (selected) SegmentSelected else MaterialTheme.colorScheme.surfaceContainerHigh, label = "filterFill")
+    val text by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+        label = "filterText",
+    )
+    Box(
+        modifier = modifier
+            // Reihenfolge wie AppIconButton (LAYOUT-06): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
+            .minimumInteractiveComponentSize()
+            .heightIn(min = Sizes.ChipHeight)
+            .clip(CircleShape)
+            .background(fill)
+            .toggleable(value = selected, role = Role.Checkbox, interactionSource = null, indication = ripple()) { onClick() }
+            // Polster wie der ChoiceChip; in der Pille bleibt der Text so vor der Rundung (LAYOUT-03).
+            .padding(horizontal = Dimens.ChipPadding),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = text,
             maxLines = 1,
             softWrap = false,
             modifier = Modifier.testTag(CHIP_TEXT_TAG),
@@ -218,9 +270,8 @@ private fun flowLines(widths: List<Int>, limit: Int, gap: Int): List<List<Int>> 
 }
 
 /**
- * Einzeilige Reihe aus [ChoiceChip]s (Filterreihe über der
- * Übungsliste, MUSTER-12, Nutzer 2026-10-23): dieselben Chips wie die Anlässe, nebeneinander
- * `GapSmall`, aber **immer eine Zeile**. Passt sie nicht, scrollt sie seitlich wie die
+ * Einzeilige Reihe aus [TonalChip]s (Filterreihe über der
+ * Übungsliste, MUSTER-12, Nutzer 2026-10-23): nebeneinander `GapSmall`, **immer eine Zeile**. Passt sie nicht, scrollt sie seitlich wie die
  * [ChoiceChipRow] (gemeinsam: [bleed], [edgeFade]); die Fläche reicht dabei um [sideBleed] auf
  * beiden Seiten über den Rand hinaus – in einer Liste das `ScreenPadding`, also bis an den
  * Bildschirmrand. In Ruhe steht der erste Chip an der Inhaltskante, ganz gescrollt der letzte; ein

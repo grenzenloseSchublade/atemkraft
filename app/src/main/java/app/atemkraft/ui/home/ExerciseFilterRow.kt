@@ -16,17 +16,18 @@ import app.atemkraft.R
 import app.atemkraft.domain.ExerciseFilter
 import app.atemkraft.domain.ExerciseFilters
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.ChoiceChip
 import app.atemkraft.ui.components.FilterChipRow
 import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.TonalChip
 import app.atemkraft.ui.theme.Dimens
 
 /**
  * Filterreihe über der Übungsliste im Atmen-Tab (MUSTER-12, Nutzer 2026-10-23): „Bis 3 min“,
- * „Ohne Halten“, „Aus dem Yoga“ – quer zu den Familien, deren Köpfe darunter bleiben. Dieselben
- * Chips wie die Anlässe (neutral, gewählt `SegmentSelected`), aber Kontrollkästchen in einer
- * Zeile ([FilterChipRow]); passt sie nicht, scrollt sie seitlich bis an den Bildschirmrand
- * (`ScreenPadding` aufgehoben). Mehrfachauswahl; ein zweiter Tipp hebt einen Filter auf.
+ * „Ohne Halten“, „Aus dem Yoga“ – quer zu den Familien, deren Gruppenlabels darunter bleiben.
+ * Kleine tonale [TonalChip]s (eine Stufe leiser als die Anlass-Chips, Nutzer 2026-10-24) als
+ * Kontrollkästchen in einer Zeile ([FilterChipRow]); passt sie nicht, scrollt sie seitlich bis an
+ * den Bildschirmrand (`ScreenPadding` aufgehoben). Mehrfachauswahl; ein zweiter Tipp hebt einen
+ * Filter auf.
  */
 @Composable
 internal fun ExerciseFilterRow(active: Set<ExerciseFilter>, onToggle: (ExerciseFilter) -> Unit) {
@@ -35,7 +36,7 @@ internal fun ExerciseFilterRow(active: Set<ExerciseFilter>, onToggle: (ExerciseF
         items = ExerciseFilter.entries,
         sideBleed = Dimens.ScreenPadding,
     ) { filter ->
-        ChoiceChip(
+        TonalChip(
             label = filter.label(),
             selected = filter in active,
             onClick = { onToggle(filter) },

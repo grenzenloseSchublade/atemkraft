@@ -52,15 +52,15 @@ import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.delay
 
 /**
- * Block „Wie fühlst du dich?“ im Atmen-Tab (MUSTER-09): eine leicht abgesetzte Fläche ohne eigene
- * Überschrift (`surfaceContainerLow`, Rand `BorderThin` in `outlineVariant`, `shapes.medium`,
- * Polster `CardPadding`) mit dem Suchfeld und darunter den Anlässen als [ChoiceChip]s.
+ * Block „Wie fühlst du dich?“ im Atmen-Tab (MUSTER-09): das Suchfeld als Pille ([SearchField])
+ * und darunter die Anlässe als [ChoiceChip]s – ohne eigene Überschrift und ohne umrahmenden
+ * Kasten (Nutzer 2026-10-24, Vorschlag B: eine Bausprache weniger), direkt auf dem Grund bis an
+ * den `ScreenPadding`.
  *
- * Abstände: Feld → Chips `GapSmall` – das Feld hat unter seiner Grundlinie schon rund 12 dp
- * unsichtbaren Raum (Tippfläche 48 dp), dazu 4 dp Tippfläche über jedem Chip; `ListGap` risse
- * Feld und Chips sichtbar auseinander. Chips nebeneinander `GapSmall`, untereinander sichtbar
- * ebenfalls 8 dp, höchstens zwei Zeilen ([ChoiceChipRow]); passen sie nicht, scrollen beide
- * Zeilen gemeinsam seitlich bis an den Kartenrand, mit Verlauf (Nutzer 2026-10-23).
+ * Abstände: Feld → Chips `GapSmall` – über jedem Chip liegen schon 4 dp Tippfläche; `ListGap`
+ * risse Feld und Chips sichtbar auseinander. Chips nebeneinander `GapSmall`, untereinander
+ * sichtbar ebenfalls 8 dp, höchstens zwei Zeilen ([ChoiceChipRow]); passen sie nicht, scrollen
+ * beide Zeilen gemeinsam seitlich bis an den Bildschirmrand, mit Verlauf (Nutzer 2026-10-23).
  *
  * [highlighted]: markierte Chips (gewählter Anlass oder Suchtreffer); die übrigen bleiben
  * unverändert. Die Markierung ändert keine Größe – die Reihe bricht in jedem Zustand gleich um.
@@ -79,26 +79,21 @@ internal fun FeelingBlock(
     onChipClick: (Situation) -> Unit,
 ) {
     val name = stringResource(R.string.situations_search_placeholder)
-    Surface(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .semantics { isTraversalGroup = true },
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(Dimens.BorderThin, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            SituationSearchField(query = query, onQueryChange = onQueryChange)
-            Spacer(Modifier.height(Dimens.GapSmall))
-            // Scrollen die Chips, reicht ihre Fläche bis an den Kartenrand (Polster rechts aufgehoben).
-            ChoiceChipRow(groupName = name, items = situations, endBleed = Dimens.CardPadding) { rec, order ->
-                ChoiceChip(
-                    label = rec.shortLabel,
-                    selected = rec.situation in highlighted,
-                    onClick = { onChipClick(rec.situation) },
-                    modifier = order,
-                )
-            }
+        SituationSearchField(query = query, onQueryChange = onQueryChange)
+        Spacer(Modifier.height(Dimens.GapSmall))
+        // Scrollen die Chips, reicht ihre Fläche bis an den Bildschirmrand (Listenrand aufgehoben).
+        ChoiceChipRow(groupName = name, items = situations, endBleed = Dimens.ScreenPadding) { rec, order ->
+            ChoiceChip(
+                label = rec.shortLabel,
+                selected = rec.situation in highlighted,
+                onClick = { onChipClick(rec.situation) },
+                modifier = order,
+            )
         }
     }
 }
@@ -114,6 +109,7 @@ private fun SituationSearchField(query: String, onQueryChange: (String) -> Unit)
         query = query,
         onQueryChange = onQueryChange,
         placeholder = stringResource(R.string.situations_search_placeholder),
+        searchDescription = stringResource(R.string.cd_search),
         clearDescription = stringResource(R.string.cd_search_clear),
         onClear = if (query.isEmpty()) null else ({ onQueryChange("") }),
     )
