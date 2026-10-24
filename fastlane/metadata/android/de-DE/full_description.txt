@@ -10,12 +10,13 @@ Was drin ist
 
 - Atmen: 17 angeleitete Atemübungen in vier Bereichen (Beruhigen, Aktivieren, Ausgleichen, Atem schulen), etwa Resonanz-Atmung, 4-7-8, Box-Atmung und Lippenbremse. Ein-, Aus- und Halte-Zeiten lassen sich pro Übung anpassen. Vor intensiven Übungen wie Wim Hof oder Feueratmung zeigt die App einen Sicherheitshinweis.
 - Wie fühlst du dich?: sechs Anlässe wie „Einschlafen“, „Fokus“ oder „Stress“ zum Antippen und eine Suche nach deinem Befinden. Sie läuft ohne Netz und wird nicht gespeichert.
-- Sitzung: Kreis, Fortschrittsbogen und eine Ruhe-Ansicht ohne Bedienelemente. Am Ende fragt die App, wie du dich fühlst, und zeigt eine kurze Bilanz.
+- Sitzung: Kreis, Fortschrittsbogen und eine Ruhe-Ansicht ohne Bedienelemente. Am Ende lädt sie ein, kurz nachzuspüren, und zeigt eine kurze Bilanz.
 - Muster des Tages: jeden Tag ein neues Atemmuster in festen Grenzen, als Abwechslung ohne Wirkversprechen. Neu würfeln oder speichern.
 - Eigene Kreationen: einen Atemzug selbst zusammenstellen, Punkte der Atemkurve ziehen, mit Vorschau und Ton.
 - Meditation: Dauer am Zeitring einstellen (1–60 min oder offen mit Stoppuhr), Gong zu Start und Ende oder in Abständen, optional eine gesprochene Anleitung. Läuft auch bei ausgeschaltetem Bildschirm; auf Wunsch geht eine Atemübung nahtlos in die Stille über.
 - Lernen: Atemlehre, Pranayama mit Grundlagen und Techniken wie Ujjayi, Begriffe erklärt und drei Programme zum Nachlesen (SKY, Buteyko, Nasenatmung).
-- Logbuch: abgeschlossene Sitzungen, Wochenübersicht, Tage in Folge und Minuten gesamt.
+- Logbuch: abgeschlossene Sitzungen, Wochenübersicht, Tage in Folge (abschaltbar) und Minuten gesamt; im Tab „Eigene“ führt ein Tipp zur zuletzt geübten Übung.
+- Schnellstart: Lange auf das App-Symbol drücken öffnet Resonanz-Atmung, Meditation oder die zuletzt geübte Übung.
 - Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren.
 
 Datenschutz

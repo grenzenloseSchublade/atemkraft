@@ -4,11 +4,14 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.AdaptiveIconDrawable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,16 +23,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.res.ResourcesCompat
@@ -46,6 +55,7 @@ import app.atemkraft.ui.theme.DarkBackground
 import app.atemkraft.ui.theme.DarkOnBackground
 import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.NeonMagenta
+import app.atemkraft.ui.theme.OutlineVariantIndigo
 import app.atemkraft.ui.theme.SurfaceContainerLowest
 import app.atemkraft.ui.theme.SynthCircleCenter
 import app.atemkraft.ui.theme.SynthCircleEdge
@@ -65,15 +75,18 @@ import javax.imageio.ImageIO
 /**
  * Bilder für Google Play und F-Droid (`fastlane/metadata/android/<sprache>/images/`, docs/STORE.md):
  * App-Icon 512 × 512 aus dem adaptiven Launcher-Icon, Feature-Grafik 1024 × 500 und sechs
- * Telefon-Screenshots 1080 × 1920 (9:16, ohne Alpha) in repräsentativen Zuständen. Durch dieselben
- * Gates wie die übrigen Screenshots ([ScreenshotHarness]).
+ * Telefon-Screenshots 1080 × 1920 (9:16, ohne Alpha) in repräsentativen Zuständen. Jeder Screenshot
+ * trägt oben einen Nutzensatz je Sprache ([Caption], Auswertung 2026-10-24, UX #1) auf dem Grund der
+ * Feature-Grafik in der Schrift der App, darunter den verkleinerten Bildschirm. Bildschirm und
+ * fertiges Bild laufen durch dieselben Gates wie die übrigen Screenshots ([ScreenshotHarness]).
  *
  * Läuft nur auf Wunsch; im normalen Testlauf (`scripts/check.sh`) schließt Gradle die Klasse aus:
  *
  *     scripts/build.sh testDebugUnitTest --tests '*StoreScreenshotTest' -PstoreScreenshots
  *
  * Gradle setzt dann `atemkraft.storeOut` auf `fastlane/metadata/android`; de-DE und en-US
- * bekommen dieselben Dateien.
+ * bekommen dieselben Bildschirme (die App ist deutsch) mit eigener Bildunterschrift, Icon und
+ * Feature-Grafik sind gleich.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -87,6 +100,11 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
         private const val SHOT_HEIGHT = 1920
         private const val STATUS_BAR_DP = 24
         private val LOCALES = listOf("de-DE", "en-US")
+    }
+
+    /** Nutzensatz über einem Screenshot, je Sprache des Store-Eintrags. */
+    private class Caption(val de: String, val en: String) {
+        fun of(locale: String) = if (locale == "de-DE") de else en
     }
 
     private val out: File? = System.getProperty("atemkraft.storeOut")?.let(::File)
@@ -105,13 +123,14 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
         val resonance = BuiltInExercises.all.first { it.id == "resonanz" }
         var inhales = 0
         val session = sessionAt(resonance, elapsedMs = 2_000) { it.type == PhaseType.INHALE && ++inhales == 12 }
-        shot(1) { SessionShot(session) }
+        // Geschützte Leerzeichen vor dem Gedankenstrich: Keine Zeile beginnt mit „–“ (badBreakAt).
+        shot(1, Caption("Ein Kreis atmet mit dir", "A circle breathes with you")) { SessionShot(session) }
         // Anlass „Einschlafen“ gewählt, Liste bis zum Block „Wie fühlst du dich?“ gescrollt.
-        shot(2, tab = Tab.ATMEN, prepare = {
+        shot(2, Caption("Sag, wie es dir geht\u00A0– die App schlägt vor", "Say how you feel\u00A0– the app suggests an exercise"), tab = Tab.ATMEN, prepare = {
             compose.onNode(hasScrollToKeyAction()).performScrollToKey("feeling")
             compose.onNodeWithText("Einschlafen").performClick()
         }) { BreatheTab() }
-        shot(3) {
+        shot(3, Caption("Zu jeder Übung die Studienlage", "The state of research for every exercise")) {
             WithStatusBar {
                 ExerciseDetailScreen(
                     exercise = resonance,
@@ -130,11 +149,11 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
                 )
             }
         }
-        shot(4, tab = Tab.MEDITATION) { MeditationTab(MeditationConfig(minutes = 10)) }
-        shot(5, tab = Tab.EIGENE, tabBar = false) {
+        shot(4, Caption("Stille Meditation mit Gong", "Silent meditation with a gong"), tab = Tab.MEDITATION) { MeditationTab(MeditationConfig(minutes = 10)) }
+        shot(5, Caption("Eigene Muster an der Kurve formen", "Shape your own patterns on the curve"), tab = Tab.EIGENE, tabBar = false) {
             Editor { PatternEditorState.forEdit(it, 5L, template("Viloma I"), 5, "Stufen am Abend").apply { select(1) } }
         }
-        shot(6, tab = Tab.LERNEN) {
+        shot(6, Caption("Yoga-Lehre und Wissen, offline", "Yoga teachings and background, offline"), tab = Tab.LERNEN) {
             LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
         }
     }
@@ -166,20 +185,71 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
         FeatureGraphic()
     }
 
-    /** Ein Screenshot in Gerätehöhe; [tab] wie in der App mit Status-, Tab- und Systemleiste. */
-    private fun shot(n: Int, tab: Tab? = null, tabBar: Boolean = true, prepare: () -> Unit = {}, content: @Composable () -> Unit) = snap(
-        "store_$n",
-        heightDp = device.heightDp,
-        tab = tab,
-        tabBar = tabBar,
-        prepare = prepare,
-        export = { image ->
-            val bitmap = image.asAndroidBitmap()
-            assertTrue("Screenshot zu klein: ${bitmap.width} × ${bitmap.height}", bitmap.width >= SHOT_WIDTH && bitmap.height >= SHOT_HEIGHT)
-            write(Bitmap.createBitmap(bitmap, 0, 0, SHOT_WIDTH, SHOT_HEIGHT), "phoneScreenshots/$n.png")
-        },
-        content = content,
-    )
+    /**
+     * Ein Screenshot: erst der Bildschirm in Gerätehöhe ([tab] wie in der App mit Status-, Tab- und
+     * Systemleiste), dann je Sprache das fertige Bild mit [caption] darüber ([CaptionedShot]).
+     */
+    private fun shot(n: Int, caption: Caption, tab: Tab? = null, tabBar: Boolean = true, prepare: () -> Unit = {}, content: @Composable () -> Unit) {
+        var screen: ImageBitmap? = null
+        snap("store_$n", heightDp = device.heightDp, tab = tab, tabBar = tabBar, prepare = prepare, export = { screen = crop(it) }, content = content)
+        val shown = checkNotNull(screen)
+        LOCALES.forEach { locale ->
+            snap("store_${n}_$locale", heightDp = device.heightDp, export = { write(crop(it).asAndroidBitmap(), "phoneScreenshots/$n.png", listOf(locale)) }) {
+                CaptionedShot(caption.of(locale), shown)
+            }
+        }
+    }
+
+    /** Das Bild auf 1080 × 1920 px: 683 dp bei 450 dpi ergeben eine Zeile zu viel. */
+    private fun crop(image: ImageBitmap): ImageBitmap {
+        val bitmap = image.asAndroidBitmap()
+        assertTrue("Screenshot zu klein: ${bitmap.width} × ${bitmap.height}", bitmap.width >= SHOT_WIDTH && bitmap.height >= SHOT_HEIGHT)
+        return Bitmap.createBitmap(bitmap, 0, 0, SHOT_WIDTH, SHOT_HEIGHT).asImageBitmap()
+    }
+
+    /**
+     * Fertiges Store-Bild: oben der Nutzensatz ([caption], `headlineMedium` der App, zentriert) mit
+     * dem Farbstrich der Feature-Grafik, darunter der Bildschirm ([screen]) verkleinert mit runden
+     * Ecken; Grund wie die Feature-Grafik.
+     */
+    @Composable
+    private fun CaptionedShot(caption: String, screen: ImageBitmap) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(SurfaceContainerLowest, DarkBackground, SynthCircleEdge))),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(Modifier.height(36.dp))
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.headlineMedium,
+                color = DarkOnBackground,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 28.dp),
+            )
+            Spacer(Modifier.height(16.dp))
+            Box(
+                Modifier
+                    .width(72.dp)
+                    .height(3.dp)
+                    .background(Brush.horizontalGradient(listOf(NeonMagenta, NeonCyan))),
+            )
+            Spacer(Modifier.height(24.dp))
+            Image(
+                bitmap = screen,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                filterQuality = FilterQuality.High,
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(SHOT_WIDTH / SHOT_HEIGHT.toFloat())
+                    .clip(MaterialTheme.shapes.large)
+                    .border(1.dp, OutlineVariantIndigo, MaterialTheme.shapes.large),
+            )
+            Spacer(Modifier.height(28.dp))
+        }
+    }
 
     /** Seiten der Tiefe liegen in der App unter der Statusleiste. */
     @Composable
@@ -242,15 +312,15 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
         }
     }
 
-    /** Schreibt [bitmap] als PNG in jede Sprache; ohne [alpha] als 24-Bit-RGB (Play: Screenshots und Feature-Grafik ohne Alpha). */
-    private fun write(bitmap: Bitmap, path: String, alpha: Boolean = false) {
+    /** Schreibt [bitmap] als PNG in [locales]; ohne [alpha] als 24-Bit-RGB (Play: Screenshots und Feature-Grafik ohne Alpha). */
+    private fun write(bitmap: Bitmap, path: String, locales: List<String> = LOCALES, alpha: Boolean = false) {
         System.setProperty("java.awt.headless", "true")
         val w = bitmap.width
         val h = bitmap.height
         val pixels = IntArray(w * h).also { bitmap.getPixels(it, 0, w, 0, 0, w, h) }
         val image = BufferedImage(w, h, if (alpha) BufferedImage.TYPE_INT_ARGB else BufferedImage.TYPE_INT_RGB)
         image.setRGB(0, 0, w, h, pixels, 0, w)
-        LOCALES.forEach { locale ->
+        locales.forEach { locale ->
             val file = File(checkNotNull(out), "$locale/images/$path")
             file.parentFile?.mkdirs()
             check(ImageIO.write(image, "png", file)) { "Kein PNG-Writer für $file" }

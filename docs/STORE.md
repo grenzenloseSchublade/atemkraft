@@ -45,9 +45,9 @@ Alles, was beide Stores aus dem Repo lesen, liegt unter `fastlane/metadata/andro
 |---|---|---|
 | `de-DE/images/icon.png` | 512 × 512 px, 32-Bit-PNG mit Alpha, höchstens 1 MB | aus dem adaptiven Launcher-Icon gerendert (sichtbare 72 dp der 108-dp-Ebenen); Ecken rundet Play |
 | `de-DE/images/featureGraphic.png` | 1024 × 500 px, JPEG oder 24-Bit-PNG **ohne** Alpha. Play-Pflicht, F-Droid zeigt es als Kopfbild | Atemringe des Icons, App-Name, „Atemübungen und Meditation“ |
-| `de-DE/images/phoneScreenshots/1.png` … `6.png` | Play: mindestens 2, höchstens 8; Seiten 320–3840 px, Seitenverhältnis höchstens 2:1, ohne Alpha. Für Empfehlungen in Play mindestens 4 im Hochformat ab 1080 × 1920 px | 1080 × 1920 px (384 dp bei 450 dpi wie das A54, Höhe 9:16): Sitzung, Atmen mit Anlass „Einschlafen“, Detail Resonanz-Atmung, Meditation, Muster-Editor, Lernen |
+| `de-DE/images/phoneScreenshots/1.png` … `6.png` | Play: mindestens 2, höchstens 8; Seiten 320–3840 px, Seitenverhältnis höchstens 2:1, ohne Alpha. Für Empfehlungen in Play mindestens 4 im Hochformat ab 1080 × 1920 px | 1080 × 1920 px (384 dp bei 450 dpi wie das A54, Höhe 9:16), oben ein Nutzensatz je Sprache auf dem Grund der Feature-Grafik in der Schrift der App (`headlineMedium`), darunter der verkleinerte Bildschirm: 1 Sitzung „Ein Kreis atmet mit dir“, 2 Atmen mit Anlass „Einschlafen“ „Sag, wie es dir geht – die App schlägt vor“, 3 Detail Resonanz-Atmung „Zu jeder Übung die Studienlage“, 4 Meditation „Stille Meditation mit Gong“, 5 Muster-Editor „Eigene Muster an der Kurve formen“, 6 Lernen „Yoga-Lehre und Wissen, offline“ (englisch entsprechend) |
 
-Alle Bilder erzeugt `StoreScreenshotTest` (Robolectric, dieselben Gates wie der Screenshot-Test) und schreibt sie nach `de-DE/images/` und `en-US/images/` (gleiche Dateien):
+Alle Bilder erzeugt `StoreScreenshotTest` (Robolectric, dieselben Gates wie der Screenshot-Test, für den Bildschirm und das fertige Bild mit Bildunterschrift) und schreibt sie nach `de-DE/images/` und `en-US/images/`: Icon und Feature-Grafik gleich, die Screenshots mit demselben (deutschen) Bildschirm und der Bildunterschrift der jeweiligen Sprache; die Sätze stehen im Test (`Caption`):
 
 ```bash
 scripts/build.sh testDebugUnitTest --tests '*StoreScreenshotTest' -PstoreScreenshots
