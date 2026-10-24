@@ -35,6 +35,8 @@ import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeActions
 import app.atemkraft.ui.home.HomeCatalog
 import app.atemkraft.ui.home.HomeScreen
+import app.atemkraft.ui.learn.GeschichteScreen
+import app.atemkraft.ui.learn.KoerperScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
@@ -45,7 +47,9 @@ import app.atemkraft.ui.navigation.AtemlehreRoute
 import app.atemkraft.ui.navigation.AtmenRoute
 import app.atemkraft.ui.navigation.DetailRoute
 import app.atemkraft.ui.navigation.EigeneRoute
+import app.atemkraft.ui.navigation.GeschichteRoute
 import app.atemkraft.ui.navigation.GlossaryRoute
+import app.atemkraft.ui.navigation.KoerperRoute
 import app.atemkraft.ui.navigation.LernenRoute
 import app.atemkraft.ui.navigation.LogbookRoute
 import app.atemkraft.ui.navigation.MeditationRoute
@@ -220,6 +224,8 @@ internal fun NavGraphBuilder.appGraph(
             onOpenPranayama = { navController.navigate(PranayamaRoute) },
             onOpenPrograms = { navController.navigate(ProgramsRoute) },
             onOpenGlossary = { navController.navigate(GlossaryRoute) },
+            onOpenHistory = { navController.navigate(GeschichteRoute) },
+            onOpenBody = { navController.navigate(KoerperRoute) },
         )
     }
     pushComposable<DetailRoute> { entry ->
@@ -305,6 +311,12 @@ internal fun NavGraphBuilder.appGraph(
     }
     pushComposable<PranayamaRoute> {
         PranayamaScreen(onBack = back, onOpenExercise = openDetail)
+    }
+    pushComposable<GeschichteRoute> {
+        GeschichteScreen(onBack = back, onOpenExercise = openDetail)
+    }
+    pushComposable<KoerperRoute> {
+        KoerperScreen(onBack = back, onOpenExercise = openDetail)
     }
     pushComposable<ProgramsRoute> {
         // Programme: Infoseiten ohne Start, gelesen statt geübt (Nutzer 2026-10-23).

@@ -64,6 +64,8 @@ import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.DetailActions
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
+import app.atemkraft.ui.learn.GeschichteScreen
+import app.atemkraft.ui.learn.KoerperScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
@@ -246,8 +248,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * (Hinweis nach zurückgesetzten Einstellungen, „Keine Stimme gewählt“, Stimmen-Katalog offen
      * samt Quelle, „Beim Handywechsel?“ offen, längste Daten-Rückmeldungen, leeres Logbuch);
      * Glossar; Über mit Lizenzen; Atemlehre mit aufgeklappten Köpfen (samt den fünf vāyus) und der Karte „Feuer“;
-     * Tab „Lernen“ mit vier Kapiteln, die Programme als eigene Seite und Pranayama mit allen Karten
-     * aufgeklappt;
+     * Tab „Lernen“ mit sechs Kapiteln, die Programme als eigene Seite, Pranayama, Geschichte des
+     * Atmens und Körper mit allen Karten und Quellen aufgeklappt;
      * Mini-Leiste mit längstem Namen und längstem Phasenwort.
      */
     @Test
@@ -265,12 +267,14 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             }
         }) { AtemlehreScreen(onBack = {}, onOpenExercise = {}, focus = "feuer") }
         snap("15_lernen", tab = Tab.LERNEN) {
-            LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
+            LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {}, onOpenHistory = {}, onOpenBody = {})
         }
         snap("17_programme") {
             ProgramsScreen(programs = BuiltInExercises.all.filter { !it.guided }, onBack = {}, onOpenExercise = {}, markedIds = setOf("buteyko"))
         }
         snap("16_pranayama_offen") { PranayamaScreen(onBack = {}, onOpenExercise = {}, expanded = true) }
+        snap("18_geschichte_offen") { GeschichteScreen(onBack = {}, onOpenExercise = {}, expanded = true) }
+        snap("19_koerper_offen") { KoerperScreen(onBack = {}, onOpenExercise = {}, expanded = true) }
         snap("11_mini_leiste", heightDp = 160) {
             val longestPhase = listOf(R.string.phase_inhale, R.string.phase_exhale, R.string.phase_hold_full, R.string.session_paused)
                 .map(app::getString)

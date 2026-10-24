@@ -145,6 +145,8 @@ object Pranayama {
                     "keine Bandhas. Schnelles Atmen kann Panikgefühle auslösen. Langsames Atmen ohne " +
                     "Halten gilt als risikoarm; im Zweifel ärztlich abklären.",
             ),
+            seeAlso = "Wann eine App nicht reicht und Fachleute gefragt sind, steht im Kapitel „Körper“ " +
+                "auf der Karte „Grenzen einer App: wann Fachleute“.",
         ),
     )
 
