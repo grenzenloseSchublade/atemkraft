@@ -211,7 +211,7 @@ def ui_literal_hits(lines: list[str]) -> list[int]:
 
 # Feature-Pakete unter ui/ greifen nur auf Gemeinsames zu; Ausnahmen mit Begründung in CODE-01.
 UI_SHARED = {"theme", "components", "navigation"}
-UI_FEATURE_EXCEPTIONS = {("own", "app.atemkraft.ui.log.LogHistoryCard")}  # Verlaufskarte im Tab „Eigene“
+UI_FEATURE_EXCEPTIONS = {("own", "app.atemkraft.ui.log.LogHistory")}  # Verlauf (Wochenpunkte, Bilanz) im Tab „Eigene“
 UI_FEATURE_IMPORT = re.compile(r"^import (app\.atemkraft\.ui\.(\w+)\.[\w.]+)", re.MULTILINE)
 
 

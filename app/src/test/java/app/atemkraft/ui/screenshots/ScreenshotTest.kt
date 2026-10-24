@@ -164,7 +164,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 today = DAY,
             )
         }
-        // Leer: Verlauf mit dem Satz statt der Punkte, ohne Kopf „Eigene Kreationen“, voller Knopf.
+        // Leer: Verlauf mit dem Satz statt der Punkte; Kopf „Eigene Kreationen“ mit „+“ über der ruhigen Leer-Karte.
         snap("13_eigene_leer", tab = Tab.EIGENE) {
             OwnPatternsScreen(savedPatterns = emptyList(), actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}), today = DAY)
         }

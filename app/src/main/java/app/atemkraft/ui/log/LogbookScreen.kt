@@ -123,7 +123,7 @@ fun LogbookScreen(
  * Titel „7 Sitzungen · 65 min gesamt“, die Serie als eigene Zeile erst ab zwei Tagen in Folge
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
  * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung. Auf der Logbuch-Seite; im Tab
- * „Eigene“ führt [LogHistoryCard] hierher.
+ * „Eigene“ führt der Kopf „Verlauf“ über [LogHistory] hierher.
  */
 @Composable
 internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()) {
@@ -162,44 +162,36 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
 }
 
 /**
- * Einstieg ins Logbuch oben im Tab „Eigene“ (Nutzer 2026-10-23): Titel „Verlauf“ mit Chevron, die
- * Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min diese Woche“
- * (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten Tage; fehlt beides,
- * die Zahl der Sitzungen). Die ganze Karte ist der Button zur Logbuch-Seite ([onClick]). Ohne
- * Sitzungen steht statt Punkten und Zeile ein Satz; die Karte bleibt (MUSTER-04).
+ * Verlauf im Tab „Eigene“ unter dem Kopf „Verlauf“ (Nutzer 2026-10-23; seit 2026-10-24 ohne
+ * Karte, Vorschlag B – der Kopf ist ein `SectionHeader` mit Chevron und führt zur Logbuch-Seite):
+ * die Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min diese
+ * Woche“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten Tage;
+ * fehlt beides, die Zahl der Sitzungen). Ohne Sitzungen steht statt Punkten und Zeile nur der
+ * Satz (MUSTER-04).
  *
- * TalkBack hört „Verlauf“ und die Zeile; die Punkte je Tag stehen auf der Logbuch-Seite.
+ * TalkBack hört den Kopf und die Zeile; die Punkte je Tag stehen auf der Logbuch-Seite.
  */
 @Composable
-internal fun LogHistoryCard(entries: List<SessionLogEntry>, onClick: () -> Unit, today: LocalDate = LocalDate.now()) {
+internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now()) {
     val streak = rememberLogStreak(entries, today)
     val minutesPerDay = rememberMinutesPerDay(entries)
     val weekMinutes = (0L..6L).sumOf { minutesPerDay[today.minusDays(it).toEpochDay()] ?: 0L }
-    // Card(onClick): Ripple in Kartenform, Tippfläche ≥ 48 dp aus der M3-Surface (KOMP-02).
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                CardTitle(stringResource(R.string.own_history), modifier = Modifier.weight(1f))
-                ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (entries.isEmpty()) {
+            HintText(stringResource(R.string.own_history_empty))
+        } else {
+            WeekRow(minutesPerDay = minutesPerDay, today = today, spoken = false)
+            Spacer(Modifier.height(Dimens.ListGap))
+            val parts = buildList {
+                if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
+                if (weekMinutes > 0) add(stringResource(R.string.log_minutes_week, weekMinutes))
+                if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
             }
-            if (entries.isEmpty()) {
-                Spacer(Modifier.height(Dimens.GapTiny))
-                HintText(stringResource(R.string.own_history_empty))
-            } else {
-                Spacer(Modifier.height(Dimens.ListGap))
-                WeekRow(minutesPerDay = minutesPerDay, today = today, spoken = false)
-                Spacer(Modifier.height(Dimens.ListGap))
-                val parts = buildList {
-                    if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
-                    if (weekMinutes > 0) add(stringResource(R.string.log_minutes_week, weekMinutes))
-                    if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
-                }
-                // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
-                DotSeparatedFlow(
-                    parts = parts.map { part -> { SecondaryText(part) } },
-                    separator = { SecondaryText(DOT_SEPARATOR) },
-                )
-            }
+            // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
+            DotSeparatedFlow(
+                parts = parts.map { part -> { SecondaryText(part) } },
+                separator = { SecondaryText(DOT_SEPARATOR) },
+            )
         }
     }
 }
@@ -209,7 +201,7 @@ internal fun LogHistoryCard(entries: List<SessionLogEntry>, onClick: () -> Unit,
  * wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine Wertung). Bewusst ohne Zahlen und
  * ohne Druck; heute bekommt nur einen sanften Ring. Beschriftung zweibuchstabig („Mo“ … „So“),
  * weil einzelne Buchstaben doppeldeutig sind (M/D/S). Details stehen für TalkBack bereit, außer
- * mit `spoken = false` ([LogHistoryCard]).
+ * mit `spoken = false` ([LogHistory]).
  */
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)

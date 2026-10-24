@@ -250,8 +250,11 @@ private fun Modifier.centeredOverflow(center: Dp): Modifier = layout { measurabl
 private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
 
 /**
- * Abschnitt mit Kopf und Inhalt (MUSTER-03): [SectionHeader] und darunter [content], in einer
- * Spalte mit `animateContentSize`, damit das Auf- und Zuklappen die Höhe animiert.
+ * Abschnitt mit Kopf und Inhalt (MUSTER-03): [SectionHeader] und darunter [content]; der
+ * Inhaltsteil steht in einer Spalte mit `animateContentSize`, damit das Auf- und Zuklappen die
+ * Höhe animiert. Nur der Inhalt, nicht der Kopf: `animateContentSize` schneidet an seinen Rändern
+ * ab, und die bündige Kopf-Aktion ([flushEnd]) ragt um ihre Tippfläche über die Inhaltskante
+ * hinaus – im Kopf wäre ihr Kreis angeschnitten (LAYOUT-05).
  * `expanded = null` heißt nicht aufklappbar: fester Kopf, Inhalt immer sichtbar – so setzen auch
  * Spalten ohne Liste (Glossar, Pranayama, Atemlehre, Logbuch-Gruppen) den Abstand Kopf → Inhalt
  * zentral.
@@ -288,7 +291,7 @@ fun CollapsibleSection(
 ) {
     val topFill = if (expanded == null) 0.dp else (Dimens.SectionHeaderTop - Dimens.GapSmall * 2 - spacingAbove).coerceAtLeast(0.dp)
     val headerGap = if (expanded == null) Dimens.HeaderGap else (Dimens.HeaderGap - Dimens.GapSmall).coerceAtLeast(0.dp)
-    Column(modifier = modifier.animateContentSize()) {
+    Column(modifier = modifier) {
         SectionHeader(
             title = title,
             modifier = Modifier.padding(top = topFill).then(headerModifier),
@@ -301,12 +304,15 @@ fun CollapsibleSection(
             top = headerTop,
             trailingAction = trailingAction,
         )
-        if (expanded != false) {
-            Column(
-                modifier = Modifier.padding(top = headerGap),
-                verticalArrangement = Arrangement.spacedBy(contentSpacing),
-                content = content,
-            )
+        // Volle Breite, damit beim Aufklappen nur die Höhe gleitet, nicht auch die Breite.
+        Column(modifier = Modifier.fillMaxWidth().animateContentSize()) {
+            if (expanded != false) {
+                Column(
+                    modifier = Modifier.padding(top = headerGap),
+                    verticalArrangement = Arrangement.spacedBy(contentSpacing),
+                    content = content,
+                )
+            }
         }
     }
 }

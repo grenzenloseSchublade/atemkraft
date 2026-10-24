@@ -144,9 +144,9 @@
     <!-- Tab „Eigene“: Kopf wie die anderen Tabs (ohne Untertitel, Nutzer 2026-10-24), darunter „Verlauf“ (Einstieg
          ins Logbuch) und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
     <string name="own_title">Eigene</string>
-    <!-- „Neues Muster“: Name des „+“ im Kopf von „Eigene Kreationen“ und, ohne eigene Kreationen, des Knopfs. -->
+    <!-- „Neues Muster“: Name des „+“ im Kopf von „Eigene Kreationen“ (auch im Leerzustand). -->
     <string name="own_new_pattern">Neues Muster</string>
-    <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung; der Knopf „Neues Muster“ steht darunter. -->
+    <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung in einer ruhigen Karte unter dem Kopf. -->
     <string name="own_empty">Noch keine eigenen Kreationen. Stell dir ein Muster zusammen oder speichere im Tab „Atmen“ das Muster des Tages.</string>
     <!-- Abschnitte des Tabs einklappbar (MUSTER-03): Anzahl als Status hinter dem Titel, für TalkBack in Worten. -->
     <plurals name="cd_own_favorites_count">
@@ -157,8 +157,10 @@
         <item quantity="one">%d Muster</item>
         <item quantity="other">%d Muster</item>
     </plurals>
-    <!-- Karte „Verlauf“: Einstieg ins Logbuch mit Wochenpunkten und Bilanz; ohne Sitzungen der Satz. -->
+    <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter Wochenpunkte
+         und Bilanz; ohne Sitzungen der Satz. -->
     <string name="own_history">Verlauf</string>
+    <string name="cd_open_logbook">Logbuch öffnen</string>
     <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 
     <!-- Einstiege in den Muster-Editor: Link unter dem Muster des Tages, Stift auf der Detailseite. -->
