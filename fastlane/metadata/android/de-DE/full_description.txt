@@ -13,7 +13,7 @@ Was drin ist
 - Sitzung: Kreis, Fortschrittsbogen und eine Ruhe-Ansicht ohne Bedienelemente. Am Ende fragt die App, wie du dich fühlst, und zeigt eine kurze Bilanz.
 - Muster des Tages: jeden Tag ein neues Atemmuster in festen Grenzen, als Abwechslung ohne Wirkversprechen. Neu würfeln oder speichern.
 - Eigene Kreationen: einen Atemzug selbst zusammenstellen, Punkte der Atemkurve ziehen, mit Vorschau und Ton.
-- Meditation: Dauer am Zeitring einstellen (1–60 min oder offen mit Stoppuhr), Gong zu Start und Ende oder in Abständen, optional eine gesprochene Anleitung. Läuft auch bei ausgeschaltetem Bildschirm; auf Wunsch geht eine Atemübung nahtlos in die Stille über.
+- Meditation: Dauer am Zeitring einstellen (1–60 min oder offen mit Stoppuhr), Gong zu Start und Ende oder in Abständen, optional eine gesprochene Anleitung. Läuft auch bei ausgeschaltetem Bildschirm; auf Wunsch geht eine Atemübung nahtlos in die Stille über.
 - Lernen: Atemlehre, Pranayama mit Grundlagen und Techniken wie Ujjayi, Begriffe erklärt und drei Programme zum Nachlesen (SKY, Buteyko, Nasenatmung).
 - Logbuch: abgeschlossene Sitzungen, Wochenübersicht, Tage in Folge und Minuten gesamt.
 - Daten sichern: gespeicherte Muster als Datei exportieren und wieder importieren.

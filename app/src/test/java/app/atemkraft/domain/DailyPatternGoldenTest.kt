@@ -15,7 +15,7 @@ class DailyPatternGoldenTest {
 
     /**
      * Specs von forSeed 0 bis 4999, alle Tage 2026 (Spec, Name, repeat; forDate nutzt andere Seeds)
-     * und die Texte von forSeed 0 bis 199 (Herkunft TODAY; zuletzt geändert: geschütztes Leerzeichen in „4\u00A0s“, TEXT-10).
+     * und die Texte von forSeed 0 bis 199 (Herkunft TODAY; zuletzt geändert 2026-10-24: Teaser `effect` unter 95 Zeichen, TEXT-06 ohne Baseline).
      */
     @Test
     fun `Specs, Namen und Texte der Tagesmuster bleiben unveraendert`() {
@@ -25,7 +25,7 @@ class DailyPatternGoldenTest {
             specsHash((0L until 5000L).map { RandomPatternGenerator.forSeed(it) }),
         )
         assertEquals("Jahr 2026", "d5c0ae95467e7f394301194c39d9100c2b568a6fba3538b49839d99b0103c378", yearHash())
-        assertEquals("Texte forSeed 0..199", "14e142b9ea173804aa73339dcdf9e3aa5a2d560afef9a16e6bcb620bff5afbb3", textHash())
+        assertEquals("Texte forSeed 0..199", "c553660932b90e1b36026e7420387ab7c6c6a09d7f44904ebbc4e6dc3e4360d0", textHash())
     }
 
     private companion object {

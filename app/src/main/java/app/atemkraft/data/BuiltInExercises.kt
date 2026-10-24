@@ -383,8 +383,7 @@ object BuiltInExercises {
         instructionHint = "30 tiefe Atemzüge (tief ein, locker durch den Mund aus, nicht ganz leeren) → ausatmen und halten, so lange " +
             "angenehm → tief einatmen, 15\u00A0s halten\u00A0· 3 Runden\u00A0· nur im Sitzen/Liegen.",
         cautions = listOf(
-            "Nur im Sitzen oder Liegen – nie im/am Wasser, beim Duschen, Fahren oder Stehen " +
-                "(Ohnmachtsgefahr).",
+            "Nur im Sitzen oder Liegen – nie im/am Wasser, beim Duschen, Fahren, Stehen: Ohnmachtsgefahr.",
             "Leichtes Kribbeln kommt vor. Wird es stark oder kommt Schwindel dazu, sofort aufhören " +
                 "und normal atmen.",
             "Nur, wenn du dich gesund und ausgeruht fühlst – nicht bei einem akuten Infekt, wenn " +

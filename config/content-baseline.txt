@@ -1,7 +1,0 @@
-# Bekannte Verstöße gegen die Inhaltsregeln (STYLEGUIDE §13.2): Fall | Datensatz | S-nn
-# Ein behobener Verstoß fällt im selben Commit hier weg (META-01); neue Verstöße kommen nicht
-# hierher, sondern werden behoben. health-claims hat keine Baseline (TEXT-09).
-
-teaser | muster-des-tages.effect | S-21
-first-caution | wim-hof.cautions[0] | S-21
-

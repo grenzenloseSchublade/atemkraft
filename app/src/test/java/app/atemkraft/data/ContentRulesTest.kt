@@ -23,12 +23,11 @@ import java.io.File
  * Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages (Seeds 0–6), eigene und
  * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Pranayama, Glossar,
  * Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die öffentlichen Texte (README,
- * Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen. Außerdem lösen alle
- * Querverweise zwischen diesen Inhalten auf (`cross-references`).
+ * Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen und Zahl-Einheit-Abstände.
+ * Außerdem lösen alle Querverweise zwischen diesen Inhalten auf (`cross-references`).
  *
- * Bekannte Verstöße stehen in `config/content-baseline.txt` (`Fall | Datensatz | S-nn`). Ein
- * Test sammelt seine Fälle und schlägt fehl bei einem neuen Verstoß und bei einem
- * Baseline-Eintrag, der nicht mehr zutrifft (dann Eintrag streichen, META-01).
+ * Ohne Baseline (STYLEGUIDE §13.2): Jeder Fund ist ein Fehler und wird im Text behoben, nicht
+ * eingefroren – zwei Teaser über 95 Zeichen standen sonst zwei Wochen in einer Baseline.
  */
 class ContentRulesTest {
 
@@ -261,20 +260,10 @@ class ContentRulesTest {
     private val contentTexts get() = exerciseTexts + atemlehreTexts + pranayamaTexts + glossaryTexts + situationTexts
     private val allTexts get() = contentTexts + strings
 
-    // ---- Baseline -----------------------------------------------------------------------
+    // ---- Funde --------------------------------------------------------------------------
 
-    /** Ein Fund: Datensatz plus lesbare Begründung (die Begründung zählt nicht für die Baseline). */
+    /** Ein Fund: Datensatz plus lesbare Begründung. */
     private data class Finding(val dataset: String, val why: String)
-
-    private val baseline: Map<String, Set<String>> by lazy {
-        repoFile("config/content-baseline.txt").readLines()
-            .map { it.substringBefore("#").trim() }
-            .filter { it.isNotEmpty() }
-            .map { line -> line.split("|").map(String::trim) }
-            .onEach { require(it.size == 3 && it[2].matches(Regex("S-\\d+"))) { "Baseline-Zeile kaputt: $it" } }
-            .groupBy({ it[0] }, { it[1] })
-            .mapValues { it.value.toSet() }
-    }
 
     /**
      * Die Muster des Tages teilen sich ihre Texte; ein Fund, der in jedem Seed gleich auftritt,
@@ -282,18 +271,8 @@ class ContentRulesTest {
      */
     private fun List<Finding>.collapseSeeds(): List<Finding> = map { it.copy(dataset = it.dataset.replace(Regex("#seed\\d+"), "")) }.distinctBy { it.dataset to it.why }
 
-    /** MUSS-Fall gegen die Baseline: neue Funde und veraltete Baseline-Einträge als Meldungen. */
-    private fun againstBaseline(case: String, allFindings: List<Finding>): List<String> {
-        val findings = allFindings.collapseSeeds()
-        val known = baseline[case].orEmpty()
-        val found = findings.map { it.dataset }.toSet()
-        return findings.filter { it.dataset !in known }.distinctBy { it.dataset }.map { "$case neu: ${it.dataset} – ${it.why}" } +
-            (known - found).map { "$case behoben, Baseline-Eintrag streichen: $case | $it" }
-    }
-
-    /** Fall ohne Baseline: jeder Fund ist ein Fehler, ein Baseline-Eintrag ebenso. */
-    private fun strict(case: String, findings: List<Finding>): List<String> = (if (baseline[case].orEmpty().isNotEmpty()) listOf("$case: keine Baseline erlaubt, Einträge streichen") else emptyList()) +
-        findings.collapseSeeds().map { "$case: ${it.dataset} – ${it.why}" }
+    /** Jeder Fund ist ein Fehler (keine Baseline). */
+    private fun strict(case: String, findings: List<Finding>): List<String> = findings.collapseSeeds().map { "$case: ${it.dataset} – ${it.why}" }
 
     private fun assertNone(test: String, messages: List<String>) {
         if (messages.isNotEmpty()) fail("ContentRulesTest $test:\n" + messages.joinToString("\n") { "  $it" })
@@ -360,7 +339,7 @@ class ContentRulesTest {
             }
         assertNone(
             "teaser",
-            againstBaseline("teaser", teaser) + againstBaseline("first-caution", firstCaution) + strict("lore-teaser", loreTeaser),
+            strict("teaser", teaser) + strict("first-caution", firstCaution) + strict("lore-teaser", loreTeaser),
         )
     }
 
@@ -475,7 +454,8 @@ class ContentRulesTest {
      * `”`, kein ASCII-Apostroph zwischen Buchstaben), Trennpunkt „·“ nur nach geschütztem
      * Leerzeichen (sonst könnte der Umbruch ihn an den Zeilenanfang setzen, `DOT_SEPARATOR`), Zahl
      * und Einheit („4\u00A0s“, „ca.\u00A0%1$d\u00A0min“, „7\u00A0mmHg“, „93\u00A0%“) und Fallzahl
-     * („n\u00A0=\u00A040“) in `strings.xml`, allen Fachinhalten und Quellen zusammen.
+     * („n\u00A0=\u00A040“) in `strings.xml`, allen Fachinhalten, Quellen und den öffentlichen
+     * Texten (README, PRIVACY, Release-Notes, Store) zusammen.
      */
     @Test
     fun typography() {
@@ -497,7 +477,7 @@ class ContentRulesTest {
         }
         val refTexts = refs.map { (name, ref) -> Text("refs.$name.citation", ref.citation) }
         val unitPattern = Regex("""\d (s|min|Hz|mmHg)\b|\d %|\bn ?= ?\d""")
-        val units = (contentTexts + strings + refTexts).mapNotNull { t ->
+        val units = (contentTexts + strings + refTexts + publicTexts).mapNotNull { t ->
             unitPattern.find(t.value)?.let { Finding(t.id, "„${it.value}“ ohne geschütztes Leerzeichen") }
         }
         // Die Phasennamen der Domain (PhaseNames) spiegeln strings.xml.
@@ -512,8 +492,8 @@ class ContentRulesTest {
         }
         assertNone(
             "typography",
-            againstBaseline("decimal-comma", decimal) + againstBaseline("quotes", quotes) +
-                againstBaseline("dot-separator", dots) + againstBaseline("number-unit", units) +
+            strict("decimal-comma", decimal) + strict("quotes", quotes) +
+                strict("dot-separator", dots) + strict("number-unit", units) +
                 strict("phase-names", phaseNames),
         )
     }

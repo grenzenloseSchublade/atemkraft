@@ -36,8 +36,7 @@ object PatternTexts {
         return OriginTexts(
             shortDescription = "$hint – heute $character.$bellyNote Jeden Tag ein neues, " +
                 "zufällig erzeugtes Muster in physiologisch üblichen Grenzen.",
-            effect = "Spielerische Abwechslung: ein generiertes Muster zum Ausprobieren – " +
-                "ohne spezifisches Wirkversprechen.",
+            effect = "Spielerische Abwechslung: ein generiertes Muster zum Ausprobieren, ohne Wirkversprechen.",
             effectDetail = "Das Muster entsteht deterministisch aus dem Datum: Stil und " +
                 "Phasenlängen werden zufällig gewählt, aber in Grenzen gehalten, die der " +
                 "Forschung zu langsamem Atmen entsprechen (ruhig: 4,6–6,7 Atemzüge pro Minute, " +
