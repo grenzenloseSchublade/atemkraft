@@ -38,11 +38,13 @@ import kotlinx.coroutines.launch
  * - Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen, ein gespeichertes
  *   bearbeiten. [onOpenEditor] bekommt die Route des Editors; der Aufrufer navigiert.
  *
- * [onStart] startet die Übung; der Aufrufer schließt die Seite dabei.
+ * [onStart] startet die Übung; der Aufrufer schließt die Seite dabei. [initialMinutes]: Dauer für
+ * diesen Einstieg (`DetailRoute.minutes`), nicht als Anpassung gespeichert.
  */
 @Composable
 internal fun DetailDestination(
     exerciseId: String,
+    initialMinutes: Int?,
     exercises: ExerciseRepository,
     savedPatterns: SavedPatternsRepository,
     settings: SettingsRepository,
@@ -113,5 +115,6 @@ internal fun DetailDestination(
             },
         ),
         marked = id in markedIds,
+        initialMinutes = initialMinutes,
     )
 }

@@ -114,6 +114,8 @@ fun ExerciseDetailScreen(
     // Wortlaut des Stifts für TalkBack; null = nach Herkunft („Als eigenes Muster anpassen“ beim
     // Muster des Tages, sonst „Muster bearbeiten“).
     editDescription: String? = null,
+    // Dauer für diesen Einstieg (Willkommenskarte), nicht gespeichert; null = Voreinstellung.
+    initialMinutes: Int? = null,
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
@@ -123,7 +125,7 @@ fun ExerciseDetailScreen(
     // secondary (FARBE-04).
     // Anpassung (Dauer, optional Phasenlängen hinter „Phasen anpassen“) liegt im SessionAdjustState –
     // die Seite liest und ändert nur ihn (ARC-7).
-    val adjust = rememberSessionAdjustState(exercise)
+    val adjust = rememberSessionAdjustState(exercise, initialMinutes)
     val defaults = adjust.defaults
     var intervalsExpanded by rememberSaveable(exercise.id) { mutableStateOf(false) }
 

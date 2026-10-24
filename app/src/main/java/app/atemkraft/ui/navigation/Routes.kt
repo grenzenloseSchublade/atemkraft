@@ -58,8 +58,13 @@ object AboutRoute
 @Serializable
 data class AtemlehreRoute(val focus: String? = null)
 
+/**
+ * Detailseite einer Übung. [minutes]: Dauer, mit der die Seite für diesen Einstieg öffnet, statt der
+ * Voreinstellung (Willkommenskarte: Resonanz-Atmung „ein paar Minuten“); wird nicht als Anpassung
+ * gespeichert. Null = Voreinstellung bzw. die gespeicherte Anpassung.
+ */
 @Serializable
-data class DetailRoute(val exerciseId: String)
+data class DetailRoute(val exerciseId: String, val minutes: Int? = null)
 
 /**
  * Muster-Editor „Eigenes Muster“. Ohne Argumente ein neues Muster (Tab „Eigene“, Link im

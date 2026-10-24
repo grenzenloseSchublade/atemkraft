@@ -78,6 +78,8 @@ data class HomeActions(
     val onSelect: (String) -> Unit,
     val onOpenSettings: () -> Unit,
     val onDismissWelcome: () -> Unit = {},
+    /** Verweis der Willkommenskarte; öffnet die Übung mit kurzer Dauer statt der Voreinstellung. */
+    val onOpenWelcome: (String) -> Unit = onSelect,
 )
 
 /**
@@ -194,7 +196,7 @@ fun HomeScreen(
         // Erster Start: eine ruhige, abweisbare Karte statt eines Onboardings (Nutzer 2026-10-24).
         if (welcome != null) {
             item(key = "welcome") {
-                WelcomeCard(exercise = welcome, onOpen = { actions.onSelect(welcome.id) }, onDismiss = actions.onDismissWelcome)
+                WelcomeCard(exercise = welcome, onOpen = { actions.onOpenWelcome(welcome.id) }, onDismiss = actions.onDismissWelcome)
             }
         }
         // Einstieg „nach Befinden“ ohne eigene Überschrift: Feld und Anlässe in einer Fläche.

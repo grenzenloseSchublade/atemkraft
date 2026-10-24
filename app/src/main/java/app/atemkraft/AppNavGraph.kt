@@ -155,6 +155,8 @@ internal fun NavGraphBuilder.appGraph(
                 onSelect = openDetail,
                 onOpenSettings = { navController.navigate(SettingsRoute()) },
                 onDismissWelcome = { scope.launch { settings.dismissWelcome() } },
+                // Die Karte verspricht „ein paar Minuten“: Die Resonanz-Atmung öffnet mit 3 statt 10 min.
+                onOpenWelcome = { id -> navController.navigate(DetailRoute(id, minutes = WELCOME_MINUTES)) },
             ),
             markedIds = state.markedExercises,
             // Erster Start: ruhiger Einstieg mit Gesundheitshinweis, bis der Nutzer ihn wegklickt.
@@ -209,8 +211,10 @@ internal fun NavGraphBuilder.appGraph(
         )
     }
     pushComposable<DetailRoute> { entry ->
+        val route = entry.toRoute<DetailRoute>()
         DetailDestination(
-            exerciseId = entry.toRoute<DetailRoute>().exerciseId,
+            exerciseId = route.exerciseId,
+            initialMinutes = route.minutes,
             exercises = exercises,
             savedPatterns = savedPatterns,
             settings = settings,
@@ -306,6 +310,12 @@ internal fun NavGraphBuilder.appGraph(
  * ruhig und ohne Halten (Nutzer 2026-10-24).
  */
 private const val WELCOME_EXERCISE_ID = "resonanz"
+
+/**
+ * Dauer, mit der die Willkommenskarte die Übung öffnet („ein paar Minuten“), statt ihrer
+ * Voreinstellung; nur für diesen Einstieg, nicht als Anpassung gespeichert (Auswertung 2026-10-24).
+ */
+private const val WELCOME_MINUTES = 3
 
 /** Zurück, nur solange [entry] oben liegt: Ein spätes „fehlt“ nimmt keine fremde Seite vom Stapel. */
 private fun NavController.popIfTop(entry: NavBackStackEntry) {

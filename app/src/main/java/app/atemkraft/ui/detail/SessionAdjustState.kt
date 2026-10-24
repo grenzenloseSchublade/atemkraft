@@ -134,9 +134,17 @@ class SessionAdjustState(
  * [SessionAdjustState] der Übung über rememberSaveable, geschlüsselt nach ihrer Id und ihren
  * Vorgaben: Ändert sich ein gespeichertes Muster bei gleicher Id (Editor), beginnt die Anpassung
  * neu – offen auf der Seite über den Schlüssel, nach „Zurück“ über den [SessionAdjustState.saver].
+ *
+ * [initialMinutes]: Dauer für diesen Einstieg (Willkommenskarte), nur bei Übungen nach Minuten,
+ * geklemmt auf die Grenzen des Steppers. Sie gilt als Abweichung ([SessionAdjustState.modified]):
+ * Der Reset führt zur Voreinstellung zurück, eine gespeicherte Anpassung überschreibt sie nicht, und
+ * gespeichert wird sie erst, wenn der Nutzer selbst etwas verstellt.
  */
 @Composable
-fun rememberSessionAdjustState(exercise: Exercise): SessionAdjustState {
+fun rememberSessionAdjustState(exercise: Exercise, initialMinutes: Int? = null): SessionAdjustState {
     val defaults = remember(exercise) { AdjustDefaults.of(exercise) }
-    return rememberSaveable(exercise.id, defaults, saver = SessionAdjustState.saver(defaults)) { SessionAdjustState(defaults) }
+    return rememberSaveable(exercise.id, defaults, saver = SessionAdjustState.saver(defaults)) {
+        val duration = initialMinutes?.takeIf { !defaults.roundBased }?.coerceIn(defaults.durationRange) ?: defaults.duration
+        SessionAdjustState(defaults, duration = duration)
+    }
 }
