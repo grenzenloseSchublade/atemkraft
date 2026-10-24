@@ -1,0 +1,3 @@
+- Ruhigere Tabs: echtes Suchfeld, weiße Köpfe, Farbe nur bei Gruppen und Kartenrändern
+- Filter als kleine Chips, Muster des Tages als erste Karte
+- Eigene: drei gleiche Abschnitte, Verlauf ohne Karte
