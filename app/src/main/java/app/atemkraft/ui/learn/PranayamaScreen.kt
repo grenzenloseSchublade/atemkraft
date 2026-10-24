@@ -7,10 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -19,7 +15,6 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.Pranayama
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.PranayamaTechnique
-import app.atemkraft.domain.PranayamaTopic
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.EvidenceChip
@@ -28,7 +23,6 @@ import app.atemkraft.ui.components.ExpanderCard
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushScaffold
-import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.theme.Dimens
 
@@ -48,23 +42,18 @@ fun PranayamaScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, expand
     PushScaffold(onBack = onBack, title = stringResource(R.string.pranayama_title)) {
         ScreenSubtitle(Pranayama.intro)
         CollapsibleSection(title = stringResource(R.string.pranayama_basics), teaser = Pranayama.topicsTeaser) {
-            Pranayama.topics.forEach { TopicCard(it, expanded) }
+            Pranayama.topics.forEach { TopicCard(it, expanded, onOpenExercise) }
         }
         CollapsibleSection(title = stringResource(R.string.pranayama_techniques), teaser = Pranayama.techniquesTeaser) {
             Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
         }
-        SourcesSection(expanded)
-    }
-}
-
-/** Ein Grundlagen-Thema als Karte: Titel und Teaser, aufgeklappt die Absätze und die Lehrquelle. */
-@Composable
-private fun TopicCard(topic: PranayamaTopic, expanded: Boolean) {
-    ExpanderCard(title = topic.title, appetizer = topic.teaser, initiallyExpanded = expanded) {
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-            topic.paragraphs.forEach { BodyText(it) }
-            topic.source?.let { HintText(it) }
-        }
+        LearnSources(
+            teaser = Pranayama.sourcesTeaser,
+            textsLabel = stringResource(R.string.atemlehre_sources_texts),
+            texts = Pranayama.textSources,
+            studies = Pranayama.studyRefs,
+            initiallyExpanded = expanded,
+        )
     }
 }
 
@@ -93,30 +82,6 @@ private fun TechniqueCard(technique: PranayamaTechnique, onOpenExercise: (String
                 Labeled(stringResource(R.string.pranayama_label_practice)) {
                     ExerciseChips(listOf(id) + technique.moreExerciseIds, BuiltInExercises.all, onOpenExercise)
                 }
-            }
-        }
-    }
-}
-
-/** Quellen: klassische Texte (Lehre) und Studien (Einordnung), getrennt beschriftet, zum Aufklappen. */
-@Composable
-private fun SourcesSection(initiallyExpanded: Boolean) {
-    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    CollapsibleSection(
-        title = stringResource(R.string.atemlehre_sources),
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        teaser = Pranayama.sourcesTeaser,
-        contentSpacing = Dimens.GapSmall,
-    ) {
-        Labeled(stringResource(R.string.atemlehre_sources_texts)) {
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
-                Pranayama.textSources.forEach { HintText(it) }
-            }
-        }
-        Labeled(stringResource(R.string.atemlehre_sources_studies)) {
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                Pranayama.studyRefs.forEach { ReferenceItem(it) }
             }
         }
     }

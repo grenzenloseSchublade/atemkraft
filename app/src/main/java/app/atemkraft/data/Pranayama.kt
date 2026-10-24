@@ -1,8 +1,8 @@
 package app.atemkraft.data
 
 import app.atemkraft.domain.EvidenceLevel
+import app.atemkraft.domain.LearnTopic
 import app.atemkraft.domain.PranayamaTechnique
-import app.atemkraft.domain.PranayamaTopic
 import app.atemkraft.domain.Reference
 
 /**
@@ -28,7 +28,7 @@ object Pranayama {
     val topicsTeaser = "Was *prāṇāyāma* ist, wie du beginnst und worauf du achtest."
 
     val topics = listOf(
-        PranayamaTopic(
+        LearnTopic(
             id = "was",
             title = "Was Pranayama ist",
             teaser = "*prāṇāyāma* heißt in der Yoga-Lehre, den Atem bewusst zu lenken und zu weiten.",
@@ -43,7 +43,7 @@ object Pranayama {
             ),
             source = "Patanjali: Yoga-Sutra 2,29; 2,49–2,50",
         ),
-        PranayamaTopic(
+        LearnTopic(
             id = "haltung",
             title = "Haltung und Vorbereitung",
             teaser = "Übe aufrecht sitzend oder liegend, mit leerem Magen, freier Nase und in Ruhe.",
@@ -58,7 +58,7 @@ object Pranayama {
             ),
             source = "B. K. S. Iyengar: Light on Pranayama",
         ),
-        PranayamaTopic(
+        LearnTopic(
             id = "aufbau",
             title = "Schrittweise aufbauen",
             teaser = "*krama* heißt Schritt für Schritt: erst ohne Halten, dann mit, nie mit Zwang.",
@@ -75,7 +75,7 @@ object Pranayama {
             ),
             source = "Hatha Yoga Pradipika 2,15–2,17; T. K. V. Desikachar: The Heart of Yoga",
         ),
-        PranayamaTopic(
+        LearnTopic(
             id = "verhaeltnisse",
             title = "Verhältnisse",
             teaser = "Gleich lange Phasen heißen *sama vṛtti*, ungleiche *viṣama vṛtti*.",
@@ -93,7 +93,7 @@ object Pranayama {
             ),
             source = "B. K. S. Iyengar: Light on Pranayama; Gheranda Samhita, Kap. 5 (Versangaben je nach Ausgabe)",
         ),
-        PranayamaTopic(
+        LearnTopic(
             id = "tempo",
             title = "Langsam und schnell",
             teaser = "Langsames Atmen ist gut untersucht; schnelle Techniken tragen ein eigenes Risiko.",
@@ -112,7 +112,7 @@ object Pranayama {
                     "in denen du dich krank oder erschöpft fühlst.",
             ),
         ),
-        PranayamaTopic(
+        LearnTopic(
             id = "stille",
             title = "Übergang in die Stille",
             teaser = "Nach der Lehre bereitet *prāṇāyāma* den Geist auf die Sammlung vor, auf *dhāraṇā*.",
@@ -129,7 +129,7 @@ object Pranayama {
             ),
             source = "Patanjali: Yoga-Sutra 2,52–2,53",
         ),
-        PranayamaTopic(
+        LearnTopic(
             id = "sicherheit",
             title = "Sicherheit",
             teaser = "Nie im oder am Wasser, nie beim Fahren; bei Schwindel aufhören und normal weiteratmen.",
