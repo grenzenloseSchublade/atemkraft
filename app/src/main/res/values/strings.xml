@@ -88,6 +88,7 @@
     </plurals>
     <!-- Verweis unter einer Empfehlung auf ihren Bereich: „Mehr: Beruhigen“. -->
     <string name="situations_area_link">Mehr: %1$s</string>
+    <string name="situations_all_link">Alle Übungen</string>
     <string name="situations_search_none">Nichts gefunden</string>
     <!-- Unter „Nichts gefunden“ (MUSTER-09, Nutzer 2026-10-24): was die Suche kennt und was bewusst nicht. -->
     <string name="situations_search_none_hint">Die Suche kennt Alltagswörter wie ‚nervös‘, ‚müde‘, ‚Prüfung‘ oder ‚Bett‘ – keine Beschwerden.</string>

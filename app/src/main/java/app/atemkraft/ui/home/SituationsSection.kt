@@ -160,6 +160,18 @@ internal fun AreaLink(family: BreathingFamily, onClick: () -> Unit) {
 }
 
 /**
+ * Verweis „Alle Übungen ›“ unter einem gewählten Anlass (Auswertung 2026-10-24, UX #8): zeigt
+ * wieder den Grundzustand wie ein zweiter Tipp auf den Chip – ein sichtbarer Weg zurück zur ganzen
+ * Liste. Dieselbe Bauart wie [AreaLink], als Verweis im Inhalt in `secondary` (FARBE-04).
+ */
+@Composable
+internal fun AllExercisesLink(onClick: () -> Unit) {
+    AppTextButton(onClick = onClick, modifier = Modifier.flushStart()) {
+        ForwardLinkText(text = stringResource(R.string.situations_all_link), color = MaterialTheme.colorScheme.secondary)
+    }
+}
+
+/**
  * Kopf eines Bereichs unter dem Block: das Gruppenlabel der Familie wie in der Liste
  * ([GroupLabel], Familienfarbe), bei intensiven Übungen mit der ⚠-Zeile darunter. [onClose] (nur
  * wenn der Bereich über [AreaLink] gewählt ist): ✕ rechts (in `onSurface` wie jede Kopf-Aktion)

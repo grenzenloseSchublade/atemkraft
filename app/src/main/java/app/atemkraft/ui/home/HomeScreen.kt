@@ -102,8 +102,9 @@ data class HomeActions(
  * nichts, dann steht alles da wie immer (Suchfeld und Chips, „Übungen“ mit Filterreihe,
  * Tagesmuster, vier Familien).
  * - **Anlass:** Ein Tipp auf einen Chip markiert ihn; unter dem Block stehen sein Begründungssatz
- *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen und „Mehr: <Bereich> ›“
- *   ([AreaLink]); Muster des Tages und Familien treten zurück. Ein zweiter Tipp auf denselben Chip
+ *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen, „Mehr: <Bereich> ›“
+ *   ([AreaLink]) und „Alle Übungen ›“ ([AllExercisesLink], wie ein zweiter Chip-Tipp); Muster des
+ *   Tages und Familien treten zurück. Ein zweiter Tipp auf denselben Chip
  *   oder System-Zurück zeigt wieder alles.
  * - **Bereich:** „Mehr: …“ zeigt an derselben Stelle das Gruppenlabel der Familie und alle Übungen
  *   des Bereichs ([AreaHeader]); kein Chip ist markiert, die Eingabe leer. ✕ am Label oder Zurück
@@ -232,14 +233,22 @@ fun HomeScreen(
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
                 // Steht der Bereich ohnehin als Treffer darunter, braucht es keinen Verweis darauf.
-                val area = rec.area(catalog.resolve)
-                if (area != null && area !in directAreas) {
-                    item(key = "rec-${rec.situation.name}-area") {
-                        AreaLink(family = area) {
-                            chosen = null
-                            chosenArea = area
-                            query.clearText()
-                            focusManager.clearFocus()
+                // Bei einem gewählten Anlass führt darunter „Alle Übungen ›“ zurück zur ganzen
+                // Liste; beide Verweise stehen ohne Abstand untereinander (je 48 dp Tippfläche).
+                val area = rec.area(catalog.resolve)?.takeIf { it !in directAreas }
+                val showAllLink = chosen != null
+                if (area != null || showAllLink) {
+                    item(key = "rec-${rec.situation.name}-links") {
+                        Column {
+                            if (area != null) {
+                                AreaLink(family = area) {
+                                    chosen = null
+                                    chosenArea = area
+                                    query.clearText()
+                                    focusManager.clearFocus()
+                                }
+                            }
+                            if (showAllLink) AllExercisesLink(onClick = showAll)
                         }
                     }
                 }
