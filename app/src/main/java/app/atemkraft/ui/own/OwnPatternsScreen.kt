@@ -32,16 +32,18 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.AppIconButton
-import app.atemkraft.ui.components.AppOutlinedButton
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ExerciseCard
+import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
+import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.log.LogHistory
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -66,7 +68,8 @@ data class OwnActions(
  * persönlichen Markierung, [favorites]) und „Eigene Kreationen“ (gespeicherte Tagesmuster und
  * selbst zusammengestellte Muster, neueste zuerst wie aus der Datenbank) mit „+“ rechts im Kopf
  * (öffnet den Muster-Editor). Ohne eigene Kreationen bleibt der Kopf mit „+“ stehen, darunter eine
- * ruhige Karte mit dem Satz des Leerzustands (MUSTER-04, kein großer Knopf).
+ * ruhige Karte mit dem Satz des Leerzustands und dem Verweis „Muster gestalten ›“ ([EmptyCreationsCard];
+ * MUSTER-04, kein großer Knopf).
  *
  * Einklappbar (MUSTER-03) erst, wenn beide Abschnitte gefüllt sind, mit Caret und der Anzahl im
  * Kopf („Tut mir gut · 4“); beide stehen zu Beginn offen, die Wahl gilt für die Sitzung
@@ -140,7 +143,7 @@ fun OwnPatternsScreen(
                 status = patternsStatus.takeIf { collapsible },
                 statusDescription = patternsDescription,
                 // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf (AppIconButton) in
-                // onSurface wie jede Kopf-Aktion – auch im Leerzustand der einzige Einstieg.
+                // onSurface wie jede Kopf-Aktion; im Leerzustand kommt der Verweis in der Karte dazu.
                 trailingAction = {
                     AppIconButton(onClick = actions.onNewPattern) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = MaterialTheme.colorScheme.onSurface)
@@ -148,7 +151,7 @@ fun OwnPatternsScreen(
                 },
             ) {
                 if (savedPatterns.isEmpty()) {
-                    EmptyCreationsCard()
+                    EmptyCreationsCard(onNewPattern = actions.onNewPattern)
                 }
                 savedPatterns.forEach { pattern ->
                     // Je Muster ein eigener Zustand des zweistufigen Löschens, auch wenn die Liste sich ändert.
@@ -167,17 +170,25 @@ fun OwnPatternsScreen(
 
 /**
  * Leerzustand unter „Eigene Kreationen“ (MUSTER-04): eine ruhige Fläche (`surfaceContainerLow`,
- * Kartenform, Polster `CardPadding`) mit dem Satz „Noch keine eigenen Kreationen …“ – kein Knopf,
- * der Weg ist das „+“ im Kopf (Nutzer 2026-10-24, Vorschlag B).
+ * Kartenform, Polster `CardPadding`) mit dem Satz „Noch keine eigenen Kreationen …“ und darunter
+ * der Einstieg „Muster gestalten ›“ als Verweis ([ForwardLinkText] im bündigen [AppTextButton] in
+ * `primary`, wie der Verweis der Willkommenskarte) – kein großer Knopf (Nutzer 2026-10-24); das
+ * „+“ im Kopf bleibt der zweite Weg und mit Kreationen der einzige.
  */
 @Composable
-private fun EmptyCreationsCard() {
+private fun EmptyCreationsCard(onNewPattern: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        HintText(stringResource(R.string.own_empty), modifier = Modifier.padding(Dimens.CardPadding))
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+            HintText(stringResource(R.string.own_empty))
+            // Bündig: Das Polster des Text-Buttons ragt in den Rand.
+            AppTextButton(onClick = onNewPattern, modifier = Modifier.flushStart(inCard = true)) {
+                ForwardLinkText(text = stringResource(R.string.own_design_pattern), color = MaterialTheme.colorScheme.primary)
+            }
+        }
     }
 }
 
