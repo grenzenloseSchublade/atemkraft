@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.PatternOrigin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -22,7 +23,7 @@ import org.robolectric.annotation.Config
  * Versionssprung bis zur aktuellen Version überstehen, und die App muss sie danach lesen.
  *
  * 2.json stammt aus v1.3.1 (letzter Stand vor „Meine Muster“), 3.json aus v1.6.8 (letzter Stand
- * vor dem Muster-Editor). Schema v1 gab es nur in v0.2, das nie öffentlich war.
+ * vor dem Muster-Editor), 5.json aus v2.8.0 (letzter Stand vor dem Befinden). Schema v1 gab es nur in v0.2, das nie öffentlich war.
  * Eigene [Application], damit der App-Start nicht nebenher die echte Datenbank öffnet.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -52,6 +53,10 @@ class DatabaseMigrationTest {
             assertEquals(listOf("resonanz", "meditation"), entries.map { it.exerciseId })
             assertEquals(listOf(300000L, 600000L), entries.map { it.durationMs })
             assertEquals(listOf("BREATHING", "MEDITATION"), entries.map { it.kind })
+            // v6: Befinden ist nach der Migration unbeantwortet und lässt sich nachträglich setzen.
+            assertEquals(listOf(null, null), entries.map { it.feeling })
+            room.logbookDao().setFeeling(entries.first().id, Feeling.CALMER.name)
+            assertEquals(Feeling.CALMER, room.logbookDao().all().first().single { it.id == entries.first().id }.toDomain().feeling)
         }
     }
 
@@ -103,6 +108,6 @@ class DatabaseMigrationTest {
         const val DB_NAME = "migration-test.db"
 
         /** Aktuelle Schemaversion (`@Database(version = …)`). */
-        const val LATEST = 5
+        const val LATEST = 6
     }
 }

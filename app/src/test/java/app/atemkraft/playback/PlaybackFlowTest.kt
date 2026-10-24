@@ -8,6 +8,7 @@ import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.local.LogEntryEntity
 import app.atemkraft.data.local.LogbookDao
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.SessionTiming
@@ -96,6 +97,11 @@ class PlaybackFlowTest {
         assertEquals(round + round + CueEvent.FINISH, audio.cues)
         // Ein Eintrag, die aktive Zeit genau ohne Pause, alle Runden.
         assertEquals(listOf(2 * ROUND_MS to 2), dao.rows.map { it.durationMs to it.roundsCompleted })
+        // Befinden am Ende (Box ist „Beruhigen“): ruhige Reihe, die Antwort steht am Eintrag (SEC-LEGAL-04).
+        assertEquals(Feeling.CALM_SCALE, c.state.value.feelingOptions)
+        c.answerFeeling(Feeling.CALMER)
+        runCurrent()
+        assertEquals(Feeling.CALMER.name, dao.rows.single().feeling)
 
         // Früh beendet ab einer Minute: echte Dauer, nur die vollständigen Runden (70 s = 4 Runden + 6 s).
         c.start(box, SessionConfig(rounds = 8))
@@ -209,8 +215,13 @@ class PlaybackFlowTest {
     private class MemoryLogbookDao : LogbookDao {
         val rows = mutableListOf<LogEntryEntity>()
 
-        override suspend fun insert(entry: LogEntryEntity) {
-            rows += entry
+        override suspend fun insert(entry: LogEntryEntity): Long {
+            rows += entry.copy(id = rows.size + 1L)
+            return rows.size.toLong()
+        }
+
+        override suspend fun setFeeling(id: Long, feeling: String?) {
+            rows.replaceAll { if (it.id == id) it.copy(feeling = feeling) else it }
         }
 
         override fun all(): Flow<List<LogEntryEntity>> = MutableStateFlow(rows.toList())

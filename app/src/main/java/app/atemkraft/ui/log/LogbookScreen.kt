@@ -53,6 +53,7 @@ import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.durationClockText
+import app.atemkraft.ui.components.feelingText
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
 import app.atemkraft.ui.components.title
@@ -382,6 +383,17 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
                     marks = false,
                 )
                 SecondaryText(time)
+                // Befinden danach (SEC-LEGAL-04): nur das Wort, gedämpft, ohne Farbe, Icon oder Summe.
+                entry.feeling?.let { feeling ->
+                    val word = feelingText(feeling)
+                    val spoken = stringResource(R.string.log_feeling_spoken, word)
+                    Text(
+                        text = word,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
+                        modifier = Modifier.semantics { contentDescription = spoken },
+                    )
+                }
             }
             // weight: füllt den Rest der Zeile, damit die Dauer auch umgebrochen rechtsbündig steht.
             // FlowRow entscheidet den Umbruch eines gewichteten Kinds nach seiner min-intrinsischen

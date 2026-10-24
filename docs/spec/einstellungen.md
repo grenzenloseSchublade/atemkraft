@@ -21,7 +21,7 @@ Regeln: [STYLEGUIDE TEXT-15](../STYLEGUIDE.md#text) (Texte nach einem Muster), L
 ## Aufbau und Wege
 
 - Atemlehre und Glossar stehen seit 2026-10-19 nicht mehr in den Einstellungen (Tab „Lernen“); „Über Atemkraft“ als `NavCard`.
-- Karte „Daten“: Exportieren · Importieren (`AppOutlinedButton` in `AdaptiveButtonRow`), „Beim Handywechsel?“ als `DisclosureToggle`, Zeile „Logbuch“ mit der Zahl der Sitzungen und dem Papierkorb (zweistufig, MUSTER-05), darunter der Schalter „Serie zeigen“ (`ToggleRow`, Standard an; aus: Verlauf und Logbuch nennen keine Tage in Folge).
+- Karte „Daten“: Exportieren · Importieren (`AppOutlinedButton` in `AdaptiveButtonRow`), „Beim Handywechsel?“ als `DisclosureToggle`, Zeile „Logbuch“ mit der Zahl der Sitzungen und dem Papierkorb (zweistufig, MUSTER-05), darunter die Schalter „Serie zeigen“ (`ToggleRow`, Standard an; aus: Verlauf und Logbuch nennen keine Tage in Folge) und „Befinden am Ende fragen“ (an, solange die Reihe noch nie angeboten wurde; [session.md](session.md), „Befinden am Ende“).
 - Stimmen-Katalog im `DisclosureToggle` „Stimmen zeigen“ (gesperrt während eines Downloads); Fehler inline mit nächstem Schritt (`VoiceFailure` NETWORK/STORAGE/DAMAGED/OTHER, MUSTER-04); der Katalog rät vorab zum WLAN.
 - `SettingsRoute(focusMeditation, showVoices)` öffnet die Seite an der Meditations-Karte mit aufgeklapptem Katalog („Stimme laden ›“ aus dem Bottom Sheet der Meditation).
 

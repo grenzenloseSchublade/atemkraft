@@ -3,12 +3,14 @@ package app.atemkraft.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 
 /**
  * Room-Persistenzform eines Logbuch-Eintrags. Familie als Enum-Name gespeichert (bei
- * Meditation `null`); [kind] unterscheidet Atemübung von Meditation.
+ * Meditation `null`); [kind] unterscheidet Atemübung von Meditation. [feeling] ist das Befinden
+ * danach unter seinem Enum-Namen ([Feeling]), `null` = nicht beantwortet (ab Schema v6).
  */
 @Entity(tableName = "log_entries")
 data class LogEntryEntity(
@@ -20,6 +22,7 @@ data class LogEntryEntity(
     val durationMs: Long,
     val roundsCompleted: Int,
     val kind: String = SessionKind.BREATHING.name,
+    val feeling: String? = null,
 )
 
 fun LogEntryEntity.toDomain(): SessionLogEntry = SessionLogEntry(
@@ -33,6 +36,7 @@ fun LogEntryEntity.toDomain(): SessionLogEntry = SessionLogEntry(
     durationMs = durationMs,
     roundsCompleted = roundsCompleted,
     kind = runCatching { SessionKind.valueOf(kind) }.getOrDefault(SessionKind.BREATHING),
+    feeling = Feeling.fromName(feeling),
 )
 
 fun SessionLogEntry.toEntity(): LogEntryEntity = LogEntryEntity(
@@ -43,4 +47,5 @@ fun SessionLogEntry.toEntity(): LogEntryEntity = LogEntryEntity(
     durationMs = durationMs,
     roundsCompleted = roundsCompleted,
     kind = kind.name,
+    feeling = feeling?.name,
 )

@@ -286,6 +286,23 @@ mit Eyebrow (Tagesmuster): Polster oben CardPadding − CircleOverhang
 - Anlass-Chips 40 dp mit Rand (eine Antwort), Filter-Chips 32 dp tonal (mehrere); Abstand `GapSmall` nebeneinander und untereinander (sichtbar); Reihe bündig mit `ScreenPadding`/`CardPadding`, die Scroll-Fläche reicht bis an den Bildschirmrand und läuft über `ScrollEdgeFade` aus. Anlässe höchstens zwei Zeilen, Filter genau eine. Chips messen in jedem Zustand gleich; nie Umbruch im Chip ([spec/suche.md](spec/suche.md), [spec/atmen-tab.md](spec/atmen-tab.md)).
 - **Prüfung:** `ScreenshotTest` (`chipLayout`, `chipRows`, `filterRow`, `CHIP_UMBRUCH`), `no-check-icon`.
 
+#### Antwortreihe (`FinishedPanel` mit `FeelingAsk`: Befinden am Ende)
+
+```
+ ✓ Geschafft  labelMedium TERTIARY
+ GapSmall
+ Spür kurz nach, wie es dir geht.   ← Titel headlineSmall, zentriert
+ ListGap 12
+ [ ruhiger | wie vorher | unruhiger ]  ← SegmentedChoiceRow: drei gleich breite Segmente, ButtonHeight 40, Tippfläche 48, ohne Häkchen
+ GapSmall                              (nur beim ersten Mal:)
+ Nur auf diesem Gerät gespeichert. …   ← bodySmall TERTIARY, zentriert
+ GapSmall · Bilanz · Links · SessionPadding · [Nochmal][Ende]
+```
+
+- Keine neue Optik: Die Reihe ist eine `SegmentedChoiceRow` (Einzelwahl aus drei, Fläche `SegmentSelected` + SemiBold, bei Platzmangel gemeinsam bis 85 % kleiner, dann Radioliste); keine vorgewählt, eine Wahl ersetzt die vorige, nie abwählen, nie Pflicht. Breite wie die Knopfreihe darunter (volle Breite im `SessionPadding`). Bei aktivierenden Übungen „wacher · wie vorher · müder“.
+- Erscheint nur, wenn ein Logbuch-Eintrag entstand (`feelingOptions` nicht leer) und die Einstellung es will; der Hinweis des ersten Mals bleibt für diesen Ende-Screen stehen. Passt der Ende-Screen nicht in die Höhe (Schrift 2,0), scrollt er; mittig bleibt er, solange alles passt.
+- **Prüfung:** `ScreenshotTest` (`09_session_ende_befinden*`, `10_meditation_ende_befinden`: `WORTBRUCH`, `TIPPFLAECHE`, `BESCHNITTEN`), `no-check-icon`; manuell R-A11Y (Gruppe „Befinden“, Auswahl angesagt).
+
 #### Kurvenkarte des Editors (`CurveCard`, `BreathCurveEditor`, `CurvePreviewControls`)
 
 ```
@@ -380,7 +397,7 @@ Je Zeile Nutzen, Nicht-für und A11y-Pflicht; wie etwas im Detail gebaut ist, st
 | `TitleWithChips` | Titel mit nachgestellten Chips (Karten); Chips rutschen bei Platzmangel unter den Titel; `titleModifier` für den Titeltext | Abschnittsköpfe (→ `SectionHeader`) | Titel-Rolle und Farbe vom Aufrufer; keine Chips → `null` |
 | `StartSplitButton` / `StartPlayButton` | **jeder** Start einer konfigurierbaren Session (Start in Restbreite, Reset gleitet ein, gleiche Höhe über `ButtonHeight`; Start und Dauer bei Platzmangel in zwei Zeilen ohne Punkt) bzw. runder Start-Knopf in knappen Leisten (Editor: gefüllter Kreis `primary` in `IconButtonSize`) | andere Aktionspaare; Vorschau (→ `CurvePreviewControls`) | Reset Icon-only, cd `adjust_reset`, Fokus → Start, wenn Reset verschwindet; `StartPlayButton` mit vollem Wortlaut |
 | `ToggleRow` (`Controls.kt`) | Ein/Aus-Einstellung: Label, Switch in derselben Zeile, Hinweis darunter endet vor dem Switch (Anatomie §4.5) | Auswahl aus mehreren (→ `SegmentedChoiceRow`) | ganze Zeile `toggleable(Role.Switch)`, Name = Label (A11Y-03) |
-| `SessionControls.kt`: `GlowText`, `SessionControlBar`, `SessionPrimaryButton`, `SessionSecondaryButton`, `FinishedPanel`, `rememberTapFlash`; `PauseFlash`; `CircleTapTarget` | Text, Buttons und Tap-Rückmeldung **nur** in Vollbild-Sessions ([spec/session.md](spec/session.md)) | normale Screens, stehender Status | `FinishedPanel`: `paneTitle` „Geschafft“, Fokus auf „Nochmal“; `PauseFlash` dekorativ (`maxSize` Pflicht); `CircleTapTarget` mit Namen, `Role.Button`, `onClickLabel` |
+| `SessionControls.kt`: `GlowText`, `SessionControlBar`, `SessionPrimaryButton`, `SessionSecondaryButton`, `FinishedPanel`, `rememberTapFlash`; `PauseFlash`; `CircleTapTarget` | Text, Buttons und Tap-Rückmeldung **nur** in Vollbild-Sessions ([spec/session.md](spec/session.md)) | normale Screens, stehender Status | `FinishedPanel`: `paneTitle` „Geschafft“, Fokus auf „Nochmal“, Antwortreihe als `SegmentedChoiceRow` mit Gruppenname „Befinden“, scrollt bei großer Schrift statt abzuschneiden; `PauseFlash` dekorativ (`maxSize` Pflicht); `CircleTapTarget` mit Namen, `Role.Button`, `onClickLabel` |
 | `SafetyDialog` / `rememberSafetyGate` | Sicherheitsbestätigung vor intensiven Übungen (Hinweisliste scrollt, `Bullet`); das Gate je Übung (`SafetySettings.acknowledgedIds`, MUSTER-06) | Infos ohne Risiko | nicht außen schließbar; Warn-Icon dekorativ |
 | `BodyText` / `HintText` / `SecondaryText` / `WarnText` / `CardTitle` / `Bullet` (`TextBlocks.kt`) | Textrollen außerhalb der Köpfe, Farbe aus `LocalContentColor`: Fließtext `bodySmall` `BODY` (Kurzbeschreibung `bodyMedium`); Hinweis `SECONDARY` über `WholeWordText`; Sekundärtext mit normalem Umbruch (Kurz- und Musterzeile, Teaser, Trefferzahl); Warnzeile „⚠ …“ in `WarnAmber`; Kartentitel `titleMedium` (Glossar, Einstellungen); Aufzählungspunkt | Köpfe (→ `SectionHeader`); Einleitung (→ `ScreenSubtitle`) | `CardTitle` ist `heading()` (`semantics-heading`); Bullet-Glyph `invisibleToUser()` |
 | `ConfirmIconButton` / `rememberArmedConfirm` (`ConfirmAction.kt`) | zerstörende Aktion zweistufig im selben Element (MUSTER-05): Papierkorb `SECONDARY` → `ic_delete_forever` in `error`, Rückfall nach 4 s, nicht bei Fokus oder aktiver Bedienungshilfe | Abbruch eines Downloads; sofort umkehrbare Aktionen | cd mit Namen, bestätigt „‚X‘ wirklich löschen?“; `liveRegion = Polite` am Knopf; in Listen `key(id)` |
@@ -390,6 +407,7 @@ Je Zeile Nutzen, Nicht-für und A11y-Pflicht; wie etwas im Detail gebaut ist, st
 | `flushEnd` / `flushStart` (`FlushEdge.kt`) | bündige Kante für Bedienelemente mit unsichtbarem Rand (§4.5 Bündigkeit): meldet sich um `TouchOverhang` schmaler, in Karten höchstens `CardPadding` | `offset` | Tippfläche bleibt 48 dp |
 | `color` / `title` (auf `BreathingFamily`), `label` (auf `EvidenceLevel`) (`FamilyPresentation.kt`) | Familienfarbe und -name, Etikett der Studienlage – einmal für Karten, Köpfe, Chips | eigene `when`-Zuordnungen | – |
 | `sessionSummaryText` / `sessionSummaryParts` / `spokenDuration` / `durationClockText` (`SessionSummaryText.kt`, `domain/`) | Bilanz einer Sitzung aus echten Werten; Dauer sichtbar „6:05 min“, gesprochen „6 Minuten 5 Sekunden“ | eigene Formatierung | – |
+| `feelingText` / `FeelingAsk` (`FeelingText.kt`) | Wort eines Befindens („ruhiger“, „wie vorher“, „wacher“ …) für Antwortreihe und Logbuch; `FeelingAsk` = Frage des Ende-Screens (`onAnswer`, einmal `intro`) | Farbe, Icon, Zahl oder Summe zum Befinden (SEC-LEGAL-04) | Logbuch: gesprochen „danach ruhiger“ |
 
 Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/session/`), `MiniMeditationBar`, `MeditationOverlay` (`ui/meditation/`). Entfallen: `SelectChip` (2026-10-19), `AccentBar` (2026-10-24), siehe [DECISIONS.md](DECISIONS.md).
 

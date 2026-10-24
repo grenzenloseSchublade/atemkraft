@@ -14,6 +14,7 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import app.atemkraft.domain.FeelingPrompt
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_MAX_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_MIN_MINUTES
@@ -119,6 +120,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked") // einmal gefragt (ab Android 13)
         val WELCOME_DISMISSED = booleanPreferencesKey("welcome_dismissed") // Willkommenskarte weggeklickt
         val SHOW_STREAK = booleanPreferencesKey("show_streak") // „Serie zeigen“ (Tage in Folge), Standard an
+        val FEELING_PROMPT = booleanPreferencesKey("feeling_prompt") // „Befinden am Ende fragen“; fehlt = noch nie angeboten
     }
 
     /**
@@ -183,6 +185,28 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setShowStreak(enabled: Boolean) {
         store.edit { it[Keys.SHOW_STREAK] = enabled }
+    }
+
+    /**
+     * „Befinden am Ende fragen“ (SEC-LEGAL-04): fehlt der Schlüssel, wurde die Antwortreihe noch nie
+     * angeboten ([FeelingPrompt.UNSET]) – dann erscheint sie beim nächsten regulären Ende einmal mit dem
+     * Hinweis, dass man sie abschalten kann, und [feelingOffered] setzt den Schalter auf an.
+     */
+    val feelingPrompt: Flow<FeelingPrompt> = data.map { prefs ->
+        when (prefs[Keys.FEELING_PROMPT]) {
+            null -> FeelingPrompt.UNSET
+            true -> FeelingPrompt.ON
+            false -> FeelingPrompt.OFF
+        }
+    }
+
+    suspend fun setFeelingPrompt(enabled: Boolean) {
+        store.edit { it[Keys.FEELING_PROMPT] = enabled }
+    }
+
+    /** Die Reihe wurde zum ersten Mal angeboten: Ab jetzt gilt der Schalter, Standard an. */
+    suspend fun feelingOffered() {
+        store.edit { prefs -> if (prefs[Keys.FEELING_PROMPT] == null) prefs[Keys.FEELING_PROMPT] = true }
     }
 
     /** Gong-Ausklang: true = voller/langer Ausklang (~7 s), false = kürzer (~5 s). Standard: lang. */

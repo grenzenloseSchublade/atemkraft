@@ -8,6 +8,7 @@ import app.atemkraft.data.LogbookRepository
 import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.CircleFractions
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RuntimePhase
@@ -24,8 +25,10 @@ import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -91,6 +94,13 @@ data class SessionUiState(
      * Übung umschaltbar ([BreathSessionController.toggleSilenceAfter]); nie, wenn nicht erlaubt.
      */
     val silenceAfter: Boolean = false,
+    /**
+     * Antwortreihe am Ende-Screen („ruhiger · wie vorher · unruhiger“ bzw. bei aktivierenden Übungen
+     * „wacher · wie vorher · müder“); leer, wenn kein Logbuch-Eintrag entstand – dann keine Reihe.
+     */
+    val feelingOptions: List<Feeling> = emptyList(),
+    /** Gewählte Antwort ([BreathSessionController.answerFeeling]); `null` = nicht beantwortet. */
+    val feeling: Feeling? = null,
 )
 
 /**
@@ -180,6 +190,9 @@ class BreathSessionController(
     private var currentExercise: Exercise? = null
     private var startedAtEpochMs = 0L
 
+    /** Id des Eintrags, den das natürliche Ende geschrieben hat (für das Befinden am Ende-Screen). */
+    private var finishedEntry: Deferred<Long>? = null
+
     /**
      * Startet [exercise] mit der Anpassung [config]. Die Übung kommt als aufgelöstes Objekt von der
      * Detailseite – genau das Muster, das dort zu sehen war; „Von vorne“ nimmt dasselbe Objekt
@@ -200,6 +213,7 @@ class BreathSessionController(
         index = 0
         resumeRemainingMs = null
         currentExercise = adjusted
+        finishedEntry = null
         startedAtEpochMs = System.currentTimeMillis()
         clock.reset()
         _state.value = SessionUiState(
@@ -283,6 +297,7 @@ class BreathSessionController(
         index = 0
         resumeRemainingMs = null
         currentExercise = null
+        finishedEntry = null
         // Zuerst IDLE, dann den Service lösen: Sein Benachrichtigungs-Collector überspringt IDLE und
         // postet nach dem Wegräumen nichts mehr nach (wie beim MeditationController).
         _state.update { SessionUiState() }
@@ -401,10 +416,12 @@ class BreathSessionController(
         // Logbuch direkt in diesem Scope schreiben (kein UI-Collector nötig) – der Eintrag geht
         // damit auch bei gesperrtem Bildschirm oder ohne Activity nicht verloren.
         val exercise = currentExercise
-        exercise?.let { appendLog(roundsCompleted = it.rounds) }
+        val entry = exercise?.let { appendLog(roundsCompleted = it.rounds) }
+        finishedEntry = entry
         _state.update {
             it.copy(
                 status = SessionStatus.FINISHED,
+                feelingOptions = if (entry != null && exercise != null) Feeling.scaleFor(exercise.family, exercise.activating) else emptyList(),
                 phaseType = null,
                 remainingMs = 0L,
                 elapsedMs = 0L,
@@ -437,10 +454,26 @@ class BreathSessionController(
         appendLog(roundsCompleted = timeline.getOrNull(index)?.roundIndex ?: 0)
     }
 
-    /** Schreibt den Eintrag der laufenden Übung direkt in diesem Scope (auch ohne sichtbare Oberfläche). */
-    private fun appendLog(roundsCompleted: Int) {
-        val exercise = currentExercise ?: return
+    /**
+     * Befinden danach am Ende-Screen (SEC-LEGAL-04): zeigt die Wahl sofort und setzt sie am Eintrag des
+     * natürlichen Endes, sobald der geschrieben ist. Ohne Eintrag (kein Logbuch) oder außerhalb des
+     * Ende-Screens ohne Wirkung; eine zweite Wahl ersetzt die erste.
+     */
+    fun answerFeeling(feeling: Feeling) {
+        val entry = finishedEntry ?: return
         val logbook = logbook ?: return
+        if (_state.value.status != SessionStatus.FINISHED || feeling !in _state.value.feelingOptions) return
+        _state.update { it.copy(feeling = feeling) }
+        scope.launch { logbook.setFeeling(entry.await(), feeling) }
+    }
+
+    /**
+     * Schreibt den Eintrag der laufenden Übung direkt in diesem Scope (auch ohne sichtbare
+     * Oberfläche); das Ergebnis liefert seine Id, `null` ohne Logbuch.
+     */
+    private fun appendLog(roundsCompleted: Int): Deferred<Long>? {
+        val exercise = currentExercise ?: return null
+        val logbook = logbook ?: return null
         val entry = SessionLogEntry(
             exerciseId = exercise.id,
             exerciseName = exercise.name,
@@ -449,7 +482,7 @@ class BreathSessionController(
             durationMs = clock.activeMs,
             roundsCompleted = roundsCompleted,
         )
-        scope.launch { logbook.append(entry) }
+        return scope.async { logbook.append(entry) }
     }
 
     private companion object {

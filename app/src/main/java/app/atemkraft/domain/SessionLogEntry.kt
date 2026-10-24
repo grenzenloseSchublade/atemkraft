@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
  * @param startedAtEpochMs Startzeit (Unix-ms) – für Datum/Uhrzeit und Sortierung.
  * @param durationMs Aktive Zeit ohne Pausen.
  * @param roundsCompleted Anzahl abgeschlossener Runden (bei Meditation 0).
+ * @param feeling Befinden danach als Selbstauskunft ([Feeling], SEC-LEGAL-04); `null` = nicht beantwortet.
  */
 @Serializable
 data class SessionLogEntry(
@@ -22,4 +23,5 @@ data class SessionLogEntry(
     val durationMs: Long,
     val roundsCompleted: Int,
     val kind: SessionKind = SessionKind.BREATHING,
+    val feeling: Feeling? = null,
 )

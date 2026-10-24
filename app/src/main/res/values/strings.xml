@@ -374,6 +374,20 @@
     <!-- Ende-Screen: eine Einladung zum Nachspüren, keine Frage ohne Antwortmöglichkeit und nicht
          derselbe Satz wie das Suchfeld im Atmen-Tab (Nutzer 2026-10-24). -->
     <string name="session_done_prompt">Spür kurz nach, wie es dir geht.</string>
+    <!-- Befinden danach (SEC-LEGAL-04): relativ zu vorher, ein Tipp, überspringbar; Wörter statt
+         Zeichen. Ruhige Reihe nach beruhigenden Übungen und der Meditation, aktivierende nach
+         „Aktivieren“ und sanft aktivierenden Mustern. -->
+    <string name="feeling_calmer">ruhiger</string>
+    <string name="feeling_same">wie vorher</string>
+    <string name="feeling_restless">unruhiger</string>
+    <string name="feeling_more_awake">wacher</string>
+    <string name="feeling_more_tired">müder</string>
+    <!-- Name der Antwortreihe für TalkBack. -->
+    <string name="feeling_group">Befinden</string>
+    <!-- Steht nur beim ersten Erscheinen der Reihe darunter. -->
+    <string name="feeling_intro">Nur auf diesem Gerät gespeichert. Abschalten kannst du die Frage in den Einstellungen.</string>
+    <!-- Logbuch: TalkBack hört das Befinden mit Bezug („danach ruhiger“), sichtbar steht nur das Wort. -->
+    <string name="log_feeling_spoken">danach %1$s</string>
     <!-- Link am Ende-Screen (Atem-Session und Meditation): beendet wie „Ende“ und öffnet das Logbuch. -->
     <string name="session_open_logbook">Im Logbuch ansehen</string>
     <!-- Link am Ende einer Atemübung: weiter in die stille Meditation; derselbe Begriff wie die
@@ -497,6 +511,8 @@
     <string name="settings_show_streak">Serie zeigen</string>
     <string name="settings_show_streak_hint">Aus: Verlauf und Logbuch nennen keine Tage in Folge, nur Minuten und Sitzungen.</string>
     <string name="settings_data_clear_log">Logbuch leeren</string>
+    <string name="settings_ask_feeling">Befinden am Ende fragen</string>
+    <string name="settings_ask_feeling_hint">Am Ende ein Tipp, etwa „ruhiger“ oder „wie vorher“; steht als Wort im Logbuch und wird nie ausgewertet.</string>
     <!-- Bestätigungszustand von „Logbuch leeren“ (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_log_clear_confirm">Logbuch wirklich leeren?</string>
     <plurals name="data_export_done">

@@ -42,6 +42,7 @@ import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.CalmHost
 import app.atemkraft.ui.components.CircleTapTarget
+import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.MiniNowPlayingBar
@@ -65,7 +66,8 @@ import app.atemkraft.ui.theme.Dimens
 
 /**
  * Was die laufende Meditation auslöst (CODE-02). [onOpenLogbook]: „Im Logbuch ansehen ›“ am
- * Ende-Screen; ohne ihn kein Link.
+ * Ende-Screen; ohne ihn kein Link. [feelingAsk]: Antwortreihe zum Befinden am Ende-Screen wie bei
+ * der Atemübung; ohne sie fragt er nicht.
  */
 @Immutable
 data class MeditationActions(
@@ -74,6 +76,7 @@ data class MeditationActions(
     val onRestart: () -> Unit,
     val onEnd: () -> Unit,
     val onOpenLogbook: (() -> Unit)? = null,
+    val feelingAsk: FeelingAsk? = null,
 )
 
 /**
@@ -124,6 +127,9 @@ private fun MeditationContent(
             onAgain = actions.onRestart,
             onExit = actions.onEnd,
             onOpenLogbook = actions.onOpenLogbook,
+            feelingOptions = state.feelingOptions,
+            feeling = state.feeling,
+            feelingAsk = actions.feelingAsk,
             // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
             // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
             summary = sessionSummaryParts(durationMs = state.elapsedMs),

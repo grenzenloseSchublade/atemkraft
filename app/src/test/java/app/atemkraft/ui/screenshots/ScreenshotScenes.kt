@@ -16,6 +16,7 @@ import app.atemkraft.domain.buildTimeline
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
 import app.atemkraft.playback.SessionUiState
+import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.home.HomeActions
 import app.atemkraft.ui.home.HomeCatalog
 import app.atemkraft.ui.home.HomeScreen
@@ -83,22 +84,34 @@ internal fun sessionAt(exercise: Exercise, elapsedMs: Long, phase: (RuntimePhase
     )
 }
 
-/** Vollbild-Session ohne automatische Ruhe, damit nichts von selbst ausblendet. */
+/**
+ * Vollbild-Session ohne automatische Ruhe, damit nichts von selbst ausblendet; mit [feelingAsk] fragt
+ * der Ende-Screen nach dem Befinden.
+ */
 @Composable
-internal fun SessionShot(state: SessionUiState) = SessionOverlay(
+internal fun SessionShot(state: SessionUiState, feelingAsk: FeelingAsk? = null) = SessionOverlay(
     state = state,
     display = SessionDisplay(autoCalm = false),
-    actions = SessionActions(onTogglePause = {}, onTapHaptic = {}, onContinue = {}, onRestart = {}, onStop = {}, onOpenLogbook = {}),
+    actions = SessionActions(
+        onTogglePause = {},
+        onTapHaptic = {},
+        onContinue = {},
+        onRestart = {},
+        onStop = {},
+        onOpenLogbook = {},
+        onIntoSilence = {},
+        feelingAsk = feelingAsk,
+    ),
     onMinimize = {},
     onToggleMute = {},
 )
 
-/** Vollbild-Meditation ohne automatische Ruhe. */
+/** Vollbild-Meditation ohne automatische Ruhe; mit [feelingAsk] wie [SessionShot]. */
 @Composable
-internal fun MeditationShot(state: MeditationUiState) = MeditationOverlay(
+internal fun MeditationShot(state: MeditationUiState, feelingAsk: FeelingAsk? = null) = MeditationOverlay(
     state = state,
     display = MeditationDisplay(autoCalm = false),
-    actions = MeditationActions(onTogglePause = {}, onTapHaptic = {}, onRestart = {}, onEnd = {}, onOpenLogbook = {}),
+    actions = MeditationActions(onTogglePause = {}, onTapHaptic = {}, onRestart = {}, onEnd = {}, onOpenLogbook = {}, feelingAsk = feelingAsk),
     onMinimize = {},
     onToggleMute = {},
 )

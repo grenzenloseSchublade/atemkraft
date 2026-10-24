@@ -4,6 +4,7 @@ import android.os.SystemClock
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationCues
 import app.atemkraft.data.SettingsRepository
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SessionClock
@@ -46,6 +47,10 @@ data class MeditationUiState(
     val countdown: Int = 0,
     /** Transienter In-Session-Stummschalter (übersteuert Gong/Sprache, ohne die Einstellung zu ändern). */
     val muted: Boolean = false,
+    /** Antwortreihe am Ende-Screen („ruhiger · wie vorher · unruhiger“); leer ohne Logbuch-Eintrag. */
+    val feelingOptions: List<Feeling> = emptyList(),
+    /** Gewählte Antwort ([MeditationController.answerFeeling]); `null` = nicht beantwortet. */
+    val feeling: Feeling? = null,
 )
 
 /**
@@ -92,6 +97,9 @@ class MeditationController(
 
     private var startedAtEpochMs = 0L
 
+    /** Id des Eintrags, den der reguläre Abschluss geschrieben hat (für das Befinden am Ende-Screen). */
+    private var finishedEntryId: Long? = null
+
     // Intervall-Gong an der AKTIVEN Zeit verankert (pausenbereinigt), damit Pausen nicht driften.
     private var gongIntervalMs = 0L
     private var nextGongAtMs = Long.MAX_VALUE
@@ -135,6 +143,17 @@ class MeditationController(
         audio.deleteVoice(voiceId)
     }
 
+    /**
+     * Befinden danach am Ende-Screen (SEC-LEGAL-04): zeigt die Wahl sofort und setzt sie am Eintrag
+     * des Abschlusses; außerhalb des Ende-Screens ohne Wirkung, eine zweite Wahl ersetzt die erste.
+     */
+    fun answerFeeling(feeling: Feeling) {
+        val id = finishedEntryId ?: return
+        if (_state.value.status != MeditationStatus.FINISHED || feeling !in _state.value.feelingOptions) return
+        _state.update { it.copy(feeling = feeling) }
+        scope.launch { logbook.setFeeling(id, feeling) }
+    }
+
     /** Dieselbe Sitzung noch einmal starten (vom „Nochmal" auf dem Abschluss-Screen). */
     fun restart() = start(currentConfig)
 
@@ -167,6 +186,7 @@ class MeditationController(
         nextGongAtMs = if (gongIntervalMs > 0L) gongIntervalMs else Long.MAX_VALUE
         resumeRemainingMs = null
         resumeElapsedMs = null
+        finishedEntryId = null
         startedAtEpochMs = System.currentTimeMillis()
         clock.reset()
         _state.value = MeditationUiState(
@@ -234,6 +254,7 @@ class MeditationController(
         audio.abandonFocus()
         resumeRemainingMs = null
         resumeElapsedMs = null
+        finishedEntryId = null
         // Zuerst IDLE setzen, dann Service/Notification entfernen: So kann der Notification-
         // Collector im Service (er überspringt IDLE) nach unserem cancel() nichts mehr nachposten.
         _state.value = MeditationUiState()
@@ -401,9 +422,11 @@ class MeditationController(
         if (currentConfig.startEndGong) audio.gong()
         // Hierher kommen nur der natürlich abgelaufene Timer und ein Beenden ab einer Minute (end()):
         // beide zählen nach der Logbuch-Regel ([SessionTiming.MIN_LOG_MS]).
-        logbook.append(logEntry())
+        finishedEntryId = logbook.append(logEntry())
         // Die Bilanz am Ende zeigt dieselbe aktive Zeit, die ins Logbuch geht (nicht die Sollzeit).
-        _state.update { it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = clock.activeMs) }
+        _state.update {
+            it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = clock.activeMs, feelingOptions = Feeling.CALM_SCALE)
+        }
         // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
         // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
         if (currentConfig.startEndGong) delay(audio.gongTotalMs().toLong() + FINISH_ABANDON_MARGIN_MS)

@@ -7,7 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +19,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
@@ -36,6 +40,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +65,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
+import app.atemkraft.domain.Feeling
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
@@ -222,9 +228,11 @@ private fun SessionRoundButton(
 }
 
 /**
- * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft"-Eyebrow, [title], optional eine kurze
- * Bilanz aus den Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), darunter
- * mit [onOpenLogbook] der Link „Im Logbuch ansehen ›“, dann Nochmal/Ende.
+ * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft"-Eyebrow, [title], mit [feelingAsk] darunter
+ * die Antwortreihe zum Befinden aus [feelingOptions] (gewählt: [feeling]; überspringbar, nur wenn ein
+ * Logbuch-Eintrag entstand, SEC-LEGAL-04), optional eine kurze Bilanz aus den
+ * Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), darunter mit
+ * [onOpenLogbook] der Link „Im Logbuch ansehen ›“, dann Nochmal/Ende.
  *
  * Für TalkBack ein eigener Bereich („Geschafft“ als `paneTitle`, beim Erscheinen angesagt). Wer
  * per Tastatur oder D-Pad bedient, landet auf „Nochmal“ – der zuletzt fokussierte Pause-Knopf
@@ -240,70 +248,136 @@ fun FinishedPanel(
     summary: List<String> = emptyList(),
     onOpenLogbook: (() -> Unit)? = null,
     onIntoSilence: (() -> Unit)? = null,
+    feelingOptions: List<Feeling> = emptyList(),
+    feeling: Feeling? = null,
+    feelingAsk: FeelingAsk? = null,
 ) {
     val pane = stringResource(R.string.session_done_title)
     val againFocus = remember { FocusRequester() }
     val inputMode = LocalInputModeManager.current
     LaunchedEffect(Unit) { if (inputMode.inputMode == InputMode.Keyboard) againFocus.requestFocus() }
+    // Mittig, solange alles passt; mit Antwortreihe und großer Schrift scrollt der Ende-Screen, statt
+    // „Nochmal“ und „Ende“ abzuschneiden (LAYOUT-05).
+    BoxWithConstraints(modifier = modifier.fillMaxSize().semantics { paneTitle = pane }) {
+        FinishedColumn(minHeight = maxHeight) {
+            FinishedContent(title, onAgain, onExit, againFocus, summary, onOpenLogbook, onIntoSilence, feelingOptions, feeling, feelingAsk)
+        }
+    }
+}
+
+/** Spalte des Ende-Screens: mindestens [minHeight] hoch, Inhalt mittig, darüber hinaus scrollbar. */
+@Composable
+private fun FinishedColumn(minHeight: Dp, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .semantics { paneTitle = pane }
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .heightIn(min = minHeight)
             .padding(Dimens.SessionPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = "✓ " + stringResource(R.string.session_done_title),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
-        )
+        content = content,
+    )
+}
+
+@Composable
+private fun ColumnScope.FinishedContent(
+    title: String,
+    onAgain: () -> Unit,
+    onExit: () -> Unit,
+    againFocus: FocusRequester,
+    summary: List<String>,
+    onOpenLogbook: (() -> Unit)?,
+    onIntoSilence: (() -> Unit)?,
+    feelingOptions: List<Feeling>,
+    feeling: Feeling?,
+    feelingAsk: FeelingAsk?,
+) {
+    Text(
+        text = "✓ " + stringResource(R.string.session_done_title),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
+    )
+    Spacer(Modifier.height(Dimens.GapSmall))
+    Text(
+        text = title,
+        style = MaterialTheme.typography.headlineSmall,
+        color = MaterialTheme.colorScheme.onBackground,
+        textAlign = TextAlign.Center,
+    )
+    if (feelingAsk != null && feelingOptions.isNotEmpty()) FeelingRow(feelingOptions, feeling, feelingAsk)
+    if (summary.isNotEmpty()) {
         Spacer(Modifier.height(Dimens.GapSmall))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
+        val summaryStyle = MaterialTheme.typography.bodySmall
+        val summaryColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
+        // Eine Ansage für TalkBack statt einzelner Teile, mit Pause statt vorgelesenem Trennpunkt.
+        val spoken = summary.joinToString(", ")
+        DotSeparatedFlow(
+            parts = summary.map { part ->
+                { WholeWordText(text = part, style = summaryStyle, color = summaryColor, textAlign = TextAlign.Center) }
+            },
+            separator = { Text(text = DOT_SEPARATOR, style = summaryStyle, color = summaryColor) },
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
         )
-        if (summary.isNotEmpty()) {
+    }
+    // Unter der Bilanz der Weg zum Eintrag (Nachtrag 2, Nutzer 2026-10-22): beendet wie
+    // „Ende“ und öffnet das Logbuch.
+    if (onOpenLogbook != null) {
+        Spacer(Modifier.height(Dimens.GapTiny))
+        AppTextButton(onClick = onOpenLogbook) {
+            ForwardLinkText(text = stringResource(R.string.session_open_logbook), color = MaterialTheme.colorScheme.secondary)
+        }
+    }
+    // Nach einer Atemübung: auch ohne die Einstellung „Danach in die Stille“ einmal in die
+    // stille Meditation (Nutzer 2026-10-23).
+    if (onIntoSilence != null) {
+        AppTextButton(onClick = onIntoSilence) {
+            ForwardLinkText(text = stringResource(R.string.session_into_silence), color = MaterialTheme.colorScheme.secondary)
+        }
+    }
+    Spacer(Modifier.height(Dimens.SessionPadding))
+    AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
+        SessionPrimaryButton(
+            text = stringResource(R.string.action_again),
+            onClick = onAgain,
+            modifier = Modifier.focusRequester(againFocus),
+        )
+        SessionSecondaryButton(
+            text = stringResource(R.string.action_end),
+            onClick = onExit,
+        )
+    }
+}
+
+/**
+ * Antwortreihe unter der Einladung „Spür kurz nach, wie es dir geht.“ (Anatomie §4.5): drei gleich
+ * breite, stille Segmente ohne Häkchen ([SegmentedChoiceRow]), keine gewählt, bis jemand tippt; kein
+ * Pflichtfeld – „Nochmal“ und „Ende“ gehen jederzeit. Der Hinweis des ersten Mals bleibt für diesen
+ * Ende-Screen stehen, auch wenn [FeelingAsk.onIntroShown] den Schalter schon gesetzt hat.
+ */
+@Composable
+private fun FeelingRow(options: List<Feeling>, selected: Feeling?, ask: FeelingAsk) {
+    var showIntro by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(ask.intro) {
+        if (ask.intro) {
+            showIntro = true
+            ask.onIntroShown()
+        }
+    }
+    Column(modifier = Modifier.padding(top = Dimens.ListGap), horizontalAlignment = Alignment.CenterHorizontally) {
+        SegmentedChoiceRow<Feeling?>(
+            items = options,
+            selected = selected,
+            onSelect = { it?.let(ask.onAnswer) },
+            groupLabel = stringResource(R.string.feeling_group),
+        ) { option -> option?.let { feelingText(it) }.orEmpty() }
+        if (showIntro) {
             Spacer(Modifier.height(Dimens.GapSmall))
-            val summaryStyle = MaterialTheme.typography.bodySmall
-            val summaryColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
-            // Eine Ansage für TalkBack statt einzelner Teile, mit Pause statt vorgelesenem Trennpunkt.
-            val spoken = summary.joinToString(", ")
-            DotSeparatedFlow(
-                parts = summary.map { part ->
-                    { WholeWordText(text = part, style = summaryStyle, color = summaryColor, textAlign = TextAlign.Center) }
-                },
-                separator = { Text(text = DOT_SEPARATOR, style = summaryStyle, color = summaryColor) },
-                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
-            )
-        }
-        // Unter der Bilanz der Weg zum Eintrag (Nachtrag 2, Nutzer 2026-10-22): beendet wie
-        // „Ende“ und öffnet das Logbuch.
-        if (onOpenLogbook != null) {
-            Spacer(Modifier.height(Dimens.GapTiny))
-            AppTextButton(onClick = onOpenLogbook) {
-                ForwardLinkText(text = stringResource(R.string.session_open_logbook), color = MaterialTheme.colorScheme.secondary)
-            }
-        }
-        // Nach einer Atemübung: auch ohne die Einstellung „Danach in die Stille“ einmal in die
-        // stille Meditation (Nutzer 2026-10-23).
-        if (onIntoSilence != null) {
-            AppTextButton(onClick = onIntoSilence) {
-                ForwardLinkText(text = stringResource(R.string.session_into_silence), color = MaterialTheme.colorScheme.secondary)
-            }
-        }
-        Spacer(Modifier.height(Dimens.SessionPadding))
-        AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SessionPrimaryButton(
-                text = stringResource(R.string.action_again),
-                onClick = onAgain,
-                modifier = Modifier.focusRequester(againFocus),
-            )
-            SessionSecondaryButton(
-                text = stringResource(R.string.action_end),
-                onClick = onExit,
+            WholeWordText(
+                text = stringResource(R.string.feeling_intro),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY),
+                textAlign = TextAlign.Center,
             )
         }
     }

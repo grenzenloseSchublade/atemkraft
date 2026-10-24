@@ -33,7 +33,16 @@ Beide Sitzungsarten laufen app-weit weiter (`MeditationController`, `BreathSessi
 
 ## Ende
 
-Beide Sitzungsarten gleich: „✓ Geschafft“ (`paneTitle` „Geschafft“), die Einladung „Spür kurz nach, wie es dir geht.“, Bilanz nur aus echten Werten (`sessionSummaryText`; Meditation: Dauer), „Nochmal“/„Ende“ (`FinishedPanel`, bei Tastatur Fokus auf „Nochmal“), darunter „Im Logbuch ansehen ›“ (`AppTextButton` + `ForwardLinkText`, beendet wie „Ende“ und öffnet das Logbuch) und ohne Stille-Wunsch „In die Stille ›“.
+Beide Sitzungsarten gleich: „✓ Geschafft“ (`paneTitle` „Geschafft“), die Einladung „Spür kurz nach, wie es dir geht.“, darunter die Antwortreihe zum Befinden (siehe unten), Bilanz nur aus echten Werten (`sessionSummaryText`; Meditation: Dauer), „Nochmal“/„Ende“ (`FinishedPanel`, bei Tastatur Fokus auf „Nochmal“), darunter „Im Logbuch ansehen ›“ (`AppTextButton` + `ForwardLinkText`, beendet wie „Ende“ und öffnet das Logbuch) und ohne Stille-Wunsch „In die Stille ›“.
+
+## Befinden am Ende
+
+Regel [SEC-LEGAL-04](../SECURITY.md#recht): Selbstauskunft ohne Auswertung. Unter der Einladung drei gleich breite, stille Wahlflächen („ruhiger · wie vorher · unruhiger“, nach Übungen der Familie „Aktivieren“ und sanft aktivierenden Mustern „wacher · wie vorher · müder“, `Feeling.scaleFor`), Anatomie „Antwortreihe“ in [§4.5](../STYLEGUIDE.md#anatomie). Ein Tipp, keine vorgewählt, eine zweite Wahl ersetzt die erste; „Nochmal“, „Ende“, Zurück und die Links gehen jederzeit, ohne Nachfrage. Keine Abfrage vor dem Start.
+
+- Nur wenn ein Logbuch-Eintrag entstand: Die Atemübung zeigt den Ende-Screen nur am natürlichen Ende (Eintrag immer), die Meditation auch nach „Beenden“ ab einer Minute (Eintrag ebenfalls). Der Ablauf merkt sich die Id des Eintrags (`BreathSessionController.answerFeeling`, `MeditationController.answerFeeling`) und setzt die Antwort nachträglich (`LogbookDao.setFeeling`); die Wahl erscheint sofort.
+- Einstellung „Befinden am Ende fragen“ (Einstellungen › Daten, DataStore `feeling_prompt`): Fehlt sie, erscheint die Reihe beim ersten regulären Ende einmal mit dem Satz „Nur auf diesem Gerät gespeichert. Abschalten kannst du die Frage in den Einstellungen.“; das Erscheinen setzt den Schalter auf an (`SettingsRepository.feelingOffered`). Aus: keine Reihe.
+- Nach „Danach in die Stille“ fragt erst der Ende-Screen der Meditation; der Eintrag der Atemübung bleibt unbeantwortet.
+- Im Logbuch steht das Wort gedämpft unter der Uhrzeit (`TERTIARY`, gesprochen „danach ruhiger“), ohne Farbe, Icon oder Summe; „Logbuch leeren“ löscht es mit.
 
 ## Logbuch und Ersetzen
 
@@ -45,4 +54,4 @@ Was von selbst zu Ende läuft, kommt immer ins Logbuch; früher Beendetes („Be
 
 ## Prüfung
 
-`ScreenshotTest` (`09_session_*`, `10_meditation_*`, auch quer), `PlaybackFlowTest`, R-A11Y (TalkBack, Switch Access, D-Pad: Pause/Weiter ohne Kreis-Geste erreichbar), R-AUDIO.
+`ScreenshotTest` (`09_session_*`, `10_meditation_*` samt `*_ende_befinden*`, auch quer), `PlaybackFlowTest`, R-A11Y (TalkBack, Switch Access, D-Pad: Pause/Weiter ohne Kreis-Geste erreichbar), R-AUDIO.

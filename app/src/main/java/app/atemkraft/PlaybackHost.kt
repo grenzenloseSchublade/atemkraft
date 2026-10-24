@@ -27,10 +27,13 @@ import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.Feeling
+import app.atemkraft.domain.FeelingPrompt
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.SessionStatus
+import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.meditation.MeditationActions
 import app.atemkraft.ui.meditation.MeditationOverlay
 import app.atemkraft.ui.meditation.MiniMeditationBar
@@ -63,6 +66,7 @@ internal class PlaybackState(
     cueSettings: State<CueSettings>,
     sessionDisplay: State<SessionDisplay>,
     meditationDisplay: State<MeditationDisplay>,
+    feelingPrompt: State<FeelingPrompt>,
     private val askNotifications: (then: () -> Unit) -> Unit,
 ) {
     val sessionStatus by sessionStatus
@@ -74,6 +78,9 @@ internal class PlaybackState(
     val cueSettings by cueSettings
     val sessionDisplay by sessionDisplay
     val meditationDisplay by meditationDisplay
+
+    /** „Befinden am Ende fragen“: bis zum ersten Anbieten [FeelingPrompt.UNSET], dann der Schalter. */
+    val feelingPrompt by feelingPrompt
 
     /** „Aktiv“ (auch am Ende-Screen) steuert Overlay und Mini-Leiste. */
     val sessionActive: Boolean get() = sessionStatus != SessionStatus.IDLE
@@ -99,6 +106,22 @@ internal class PlaybackState(
     val meditation get() = container.meditationController
     val haptics get() = container.hapticPlayer
     val silenceAfterBreath get() = container.silenceAfterBreath
+
+    /**
+     * Frage nach dem Befinden für den Ende-Screen ([answer] setzt die Antwort am Eintrag); `null`, wenn
+     * die Einstellung aus ist. Beim ersten Mal mit Hinweis, das Erscheinen setzt den Schalter auf an.
+     */
+    fun feelingAsk(answer: (Feeling) -> Unit): FeelingAsk? = when (feelingPrompt) {
+        FeelingPrompt.OFF -> null
+
+        FeelingPrompt.ON -> FeelingAsk(onAnswer = answer)
+
+        FeelingPrompt.UNSET -> FeelingAsk(
+            onAnswer = answer,
+            intro = true,
+            onIntroShown = { container.appScope.launch { container.settingsRepository.feelingOffered() } },
+        )
+    }
 
     /**
      * Atemübung starten und ihr Overlay öffnen; „Danach in die Stille“ startet mit dem Standard aus den
@@ -154,9 +177,14 @@ internal fun rememberPlaybackState(container: AppContainer): PlaybackState {
     val cueSettings = settings.cueSettings.collectAsStateWithLifecycle(initialValue = CueSettings())
     val sessionDisplay = settings.sessionDisplay.collectAsStateWithLifecycle(initialValue = SessionDisplay())
     val meditationDisplay = settings.meditationDisplay.collectAsStateWithLifecycle(initialValue = MeditationDisplay())
+    // Bis der gespeicherte Stand da ist: nicht fragen (kein Hinweis, der beim Laden wieder verschwindet).
+    val feelingPrompt = settings.feelingPrompt.collectAsStateWithLifecycle(initialValue = FeelingPrompt.OFF)
     // Erlaubnis für die Benachrichtigung beim ersten Start einer Sitzung, gleich welcher Art (ARC-6).
     val askNotifications = rememberNotificationAsk(settings, container.appScope)
-    val playback = remember(container, sessionStatus, meditationStatus, sessionExpanded, meditationExpanded, cueSettings, sessionDisplay, meditationDisplay, askNotifications) {
+    val playback = remember(
+        container, sessionStatus, meditationStatus, sessionExpanded, meditationExpanded, cueSettings, sessionDisplay, meditationDisplay, feelingPrompt,
+        askNotifications,
+    ) {
         PlaybackState(
             container = container,
             sessionStatus = sessionStatus,
@@ -166,6 +194,7 @@ internal fun rememberPlaybackState(container: AppContainer): PlaybackState {
             cueSettings = cueSettings,
             sessionDisplay = sessionDisplay,
             meditationDisplay = meditationDisplay,
+            feelingPrompt = feelingPrompt,
             askNotifications = askNotifications,
         )
     }
@@ -231,6 +260,7 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
                     },
                     // Derselbe Weg wie „Danach in die Stille“; nicht nach Atmen im Gehen.
                     onIntoSilence = if (state.silenceAfterAllowed) playback.silenceAfterBreath::intoSilence else null,
+                    feelingAsk = playback.feelingAsk(breath::answerFeeling),
                 ),
                 onMinimize = { playback.sessionExpanded = false },
                 onToggleMute = breath::toggleMute,
@@ -266,6 +296,7 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
                         playback.meditationExpanded = false
                         onOpenLogbook()
                     },
+                    feelingAsk = playback.feelingAsk(meditation::answerFeeling),
                 ),
                 onMinimize = { playback.meditationExpanded = false },
                 onToggleMute = meditation::toggleMute,

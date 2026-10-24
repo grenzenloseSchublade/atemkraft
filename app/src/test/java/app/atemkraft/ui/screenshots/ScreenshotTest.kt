@@ -31,6 +31,7 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.ExerciseFilters
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
@@ -59,6 +60,7 @@ import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.components.CHOICE_CHIPS_TAG
 import app.atemkraft.ui.components.FILTER_CHIPS_TAG
+import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.DetailActions
@@ -306,6 +308,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 startedAtEpochMs = at(daysAgo[i], 7, 30),
                 durationMs = if (e.rounds > 1) e.estimatedTotalSeconds() * 1_000L else (5 + i) * 60_000L + 5_000L,
                 roundsCompleted = e.rounds,
+                // Befinden an einigen Einträgen, das längste Wort dabei; die übrigen unbeantwortet.
+                feeling = listOf(Feeling.CALMER, null, Feeling.SAME, Feeling.MORE_TIRED, null, Feeling.RESTLESS)[i],
             )
         } + SessionLogEntry(
             id = 99,
@@ -316,6 +320,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             durationMs = 20 * 60_000L,
             roundsCompleted = 0,
             kind = SessionKind.MEDITATION,
+            feeling = Feeling.SAME,
         )
     }
 
@@ -493,6 +498,15 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             ),
         )
         states.forEach { (name, state) -> snap("09_session_$name", heightDp = device.heightDp) { SessionShot(state) } }
+        // Ende mit Antwortreihe zum Befinden (SEC-LEGAL-04): erstes Mal mit Hinweis und ohne Wahl
+        // (ruhige Reihe, längste Beschriftungen), danach mit gewählter Antwort (aktivierende Reihe).
+        val end = states.getValue("ende")
+        snap("09_session_ende_befinden", heightDp = device.heightDp) {
+            SessionShot(end.copy(feelingOptions = Feeling.CALM_SCALE), FeelingAsk(onAnswer = {}, intro = true))
+        }
+        snap("09_session_ende_befinden_gewaehlt", heightDp = device.heightDp) {
+            SessionShot(end.copy(feelingOptions = Feeling.ACTIVATING_SCALE, feeling = Feeling.MORE_AWAKE), FeelingAsk(onAnswer = {}))
+        }
         val meditation = mapOf(
             "vorbereitung" to MeditationUiState(status = MeditationStatus.PREPARING, countdown = 3),
             "laeuft" to MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L),
@@ -500,6 +514,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             "ende" to MeditationUiState(status = MeditationStatus.FINISHED, elapsedMs = 10 * 60_000L),
         )
         meditation.forEach { (name, state) -> snap("10_meditation_$name", heightDp = device.heightDp) { MeditationShot(state) } }
+        snap("10_meditation_ende_befinden", heightDp = device.heightDp) {
+            MeditationShot(meditation.getValue("ende").copy(feelingOptions = Feeling.CALM_SCALE, feeling = Feeling.SAME), FeelingAsk(onAnswer = {}, intro = true))
+        }
     }
 
     /** Querformat: Steuerung rechts neben dem Kreis, Breite und Höhe getauscht (Statusleiste vernachlässigt). */

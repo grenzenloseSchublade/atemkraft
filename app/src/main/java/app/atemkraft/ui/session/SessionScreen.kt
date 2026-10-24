@@ -58,6 +58,7 @@ import app.atemkraft.playback.SessionUiState
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.CircleTapTarget
 import app.atemkraft.ui.components.DotSeparatedFlow
+import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
 import app.atemkraft.ui.components.HideableSlot
@@ -85,6 +86,7 @@ import kotlin.math.ceil
  * - [onOpenLogbook]: „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
  * - [onIntoSilence]: „In die Stille ›“ am Ende-Screen, weiter in die stille Meditation; ohne ihn
  *   kein Link.
+ * - [feelingAsk]: Antwortreihe zum Befinden am Ende-Screen; ohne sie fragt er nicht (Einstellung aus).
  */
 @Immutable
 data class SessionActions(
@@ -95,6 +97,7 @@ data class SessionActions(
     val onStop: () -> Unit,
     val onOpenLogbook: (() -> Unit)? = null,
     val onIntoSilence: (() -> Unit)? = null,
+    val feelingAsk: FeelingAsk? = null,
 )
 
 /**
@@ -123,6 +126,9 @@ fun SessionScreen(
                 onExit = actions.onStop,
                 onOpenLogbook = actions.onOpenLogbook,
                 onIntoSilence = actions.onIntoSilence,
+                feelingOptions = state.feelingOptions,
+                feeling = state.feeling,
+                feelingAsk = actions.feelingAsk,
                 summary = state.summary?.let { sessionSummaryParts(it.durationMs, rounds = it.rounds, breaths = it.breaths) }.orEmpty(),
             )
         } else {

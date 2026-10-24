@@ -11,6 +11,7 @@ import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
+import app.atemkraft.domain.FeelingPrompt
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -45,6 +46,8 @@ data class SettingsUiState(
     val logCount: Int = 0,
     /** „Serie zeigen“: Tage in Folge in Verlauf und Logbuch (Standard an wie im Repository). */
     val showStreak: Boolean = true,
+    /** „Befinden am Ende fragen“; an, solange die Reihe noch nie angeboten wurde (sie kommt dann einmal mit Hinweis). */
+    val askFeeling: Boolean = true,
 )
 
 /** Was die Einstellungen auslösen (ohne Navigation und Datei-Auswahl, die bleiben im UI). */
@@ -70,6 +73,7 @@ interface SettingsActions {
     fun deleteVoice(voiceId: String)
     fun clearLog()
     fun setShowStreak(enabled: Boolean)
+    fun setAskFeeling(enabled: Boolean)
 
     /** Der Hinweis „Einstellungen wurden zurückgesetzt“ wurde gezeigt; er kommt nicht wieder. */
     fun acknowledgeSettingsReset()
@@ -105,10 +109,11 @@ class SettingsViewModel(
         voices.states,
         settings.neuralVoiceId,
         meditation.piperReady,
-        combine(settings.settingsResetPending, logbook.count, settings.meditationDisplay, settings.showStreak, ::LogAndDisplay),
-    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount, meditationDisplay, showStreak) ->
+        combine(settings.settingsResetPending, logbook.count, settings.meditationDisplay, settings.showStreak, settings.feelingPrompt, ::LogAndDisplay),
+    ) { base, voiceStates, voiceId, piperReady, (resetPending, logCount, meditationDisplay, showStreak, feelingPrompt) ->
         base.copy(
             showStreak = showStreak,
+            askFeeling = feelingPrompt != FeelingPrompt.OFF,
             meditationDisplay = meditationDisplay,
             voiceStates = voiceStates,
             activeVoiceId = voiceId,
@@ -170,6 +175,8 @@ class SettingsViewModel(
 
         override fun setShowStreak(enabled: Boolean) = write { settings.setShowStreak(enabled) }
 
+        override fun setAskFeeling(enabled: Boolean) = write { settings.setFeelingPrompt(enabled) }
+
         override fun acknowledgeSettingsReset() = write { settings.acknowledgeSettingsReset() }
     }
 
@@ -177,6 +184,12 @@ class SettingsViewModel(
         viewModelScope.launch { block() }
     }
 
-    /** Vier Werte für einen `combine`-Arm (mehr als fünf Flows nimmt `combine` nicht typisiert). */
-    private data class LogAndDisplay(val resetPending: Boolean, val logCount: Int, val meditationDisplay: MeditationDisplay, val showStreak: Boolean)
+    /** Fünf Werte für einen `combine`-Arm (mehr als fünf Flows nimmt `combine` nicht typisiert). */
+    private data class LogAndDisplay(
+        val resetPending: Boolean,
+        val logCount: Int,
+        val meditationDisplay: MeditationDisplay,
+        val showStreak: Boolean,
+        val feelingPrompt: FeelingPrompt,
+    )
 }
