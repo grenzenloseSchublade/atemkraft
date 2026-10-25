@@ -114,37 +114,6 @@ object Glossary {
             "Ein Eingeweidebruch, etwa ein Leistenbruch: Gewebe drückt durch eine schwache Stelle der " +
                 "Bauchwand. Kräftige Bauchstöße und Pressen erhöhen den Druck im Bauch.",
         ),
-        GlossaryTerm(
-            "Cochrane-Übersicht",
-            "Eine Übersicht des Cochrane-Netzwerks, die alle Studien zu einer Frage nach festen Regeln " +
-                "sucht, bewertet und zusammenfasst. Sie sagt auch, wenn die Studien für eine Aussage nicht reichen.",
-        ),
-        GlossaryTerm(
-            "Biofeedback",
-            "Ein Messgerät zeigt eine Körperfunktion wie Puls oder Atem auf dem Bildschirm oder als Ton, " +
-                "damit du sie wahrnimmst und lenken lernst. Beim HRV-Biofeedback übt man so das Atemtempo, " +
-                "bei dem die Herzratenvariabilität am stärksten schwingt.",
-        ),
-        GlossaryTerm(
-            "Bohr-Effekt",
-            "Mehr CO₂ im Gewebe lässt das Blut dort Sauerstoff leichter abgeben, beschrieben 1904. Das ist " +
-                "Lehrbuchwissen; dass Atemtraining diese Abgabe im Alltag verbessert, ist nicht gezeigt.",
-        ),
-        GlossaryTerm(
-            "Stickstoffmonoxid (NO)",
-            "Ein Gas, das in den Nasennebenhöhlen laufend entsteht und beim Einatmen durch die Nase in die " +
-                "Lunge gelangt; dort weitet es Gefäße. Beim Summen steigt die Menge in der Nase stark an.",
-        ),
-        GlossaryTerm(
-            "Dysfunktionale Atmung",
-            "Ein Atemmuster, das dauerhaft nicht zum Bedarf passt: zu schnell, unruhig oder mit vielen " +
-                "Seufzern, oft mit Kurzatmigkeit und Schwindel. Die Ursache gehört ärztlich abgeklärt.",
-        ),
-        GlossaryTerm(
-            "Schlafapnoe",
-            "Atemaussetzer im Schlaf, oft mit lautem Schnarchen und Müdigkeit am Tag. Ob sie vorliegt, " +
-                "klärt eine Untersuchung im Schlaflabor.",
-        ),
     )
 
     /**
@@ -211,12 +180,6 @@ object Glossary {
             "*bandha*",
             "Ein Muskelverschluss, der beim Anhalten *prāṇa* lenken soll, etwa das gesenkte Kinn " +
                 "(*jālandhara bandha*) oder der eingezogene Bauch (*uḍḍīyāna bandha*).",
-        ),
-        GlossaryTerm(
-            "*haṭha*",
-            "„Kraft, Nachdruck“: Name der Yoga-Richtung, deren Texte ab dem 11. Jahrhundert Körpertechniken " +
-                "lehren, darunter Halten (*kumbhaka*) und Verschlüsse (*bandha*). Die Deutung als „Sonne " +
-                "und Mond“ ist jünger.",
         ),
     )
 }

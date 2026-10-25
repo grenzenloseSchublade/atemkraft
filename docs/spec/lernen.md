@@ -1,10 +1,10 @@
-# Spezifikation: Tab „Lernen“ – Atemlehre, Pranayama, Programme, Begriffe, Geschichte, Körper
+# Spezifikation: Tab „Lernen“ – Atemlehre, Pranayama, Programme, Begriffe
 
-Regeln: [STYLEGUIDE TEXT-13](../STYLEGUIDE.md#text) (Yoga-Lehre getrennt von der Studienlage), TEXT-14 (Sanskrit), FARBE-04/-07, MOTION-02; Anatomie der Karten und Köpfe in [§4.5](../STYLEGUIDE.md#anatomie). Entscheidungen in [DECISIONS.md](../DECISIONS.md). Code: `ui/learn/`, `ui/atemlehre/`, `ui/glossary/`, Inhalte in `data/Atemlehre.kt`, `data/Pranayama.kt`, `data/Geschichte.kt`, `data/Koerper.kt`, `data/Glossary.kt`.
+Regeln: [STYLEGUIDE TEXT-13](../STYLEGUIDE.md#text) (Yoga-Lehre getrennt von der Studienlage), TEXT-14 (Sanskrit), FARBE-04/-07, MOTION-02; Anatomie der Karten und Köpfe in [§4.5](../STYLEGUIDE.md#anatomie). Entscheidungen in [DECISIONS.md](../DECISIONS.md). Code: `ui/learn/`, `ui/atemlehre/`, `ui/glossary/`, Inhalte in `data/Atemlehre.kt`, `data/Pranayama.kt`, `data/Glossary.kt`.
 
 ## Tab „Lernen“ (`LearnScreen`)
 
-Sechs gleich gebaute Kapitelkarten (`NavCard`): Atemlehre, Pranayama, Programme & Gewohnheiten, Begriffe, Geschichte des Atmens, Körper – je mit Hinweis und eigener Push-Seite. Nur hier färben sich die Kartentitel reihum durch den Kopf-Ring (`headingColor(index)`: Pink → Koralle → Lila → Gelb → Grün → wieder Pink; Lage der Karte, ohne Bedeutung; Ring-Töne dürfen Inhaltsfarben gleichen, deshalb aus der ΔE-Prüfung ausgenommen, jeder Ton ≥ 4,5:1 auf Grund und Karte). Zahnrad im Kopf wie auf jedem Tab.
+Vier gleich gebaute Kapitelkarten (`NavCard`): Atemlehre, Pranayama, Programme & Gewohnheiten, Begriffe – je mit Hinweis und eigener Push-Seite. Nur hier färben sich die Kartentitel reihum durch den Kopf-Ring (`headingColor(index)`: Pink → Koralle → Lila → Gelb → Grün; Lage der Karte, ohne Bedeutung; Ring-Töne dürfen Inhaltsfarben gleichen, deshalb aus der ΔE-Prüfung ausgenommen, jeder Ton ≥ 4,5:1 auf Grund und Karte). Zahnrad im Kopf wie auf jedem Tab.
 
 ## Atemlehre (`AtemlehreScreen`)
 
@@ -21,18 +21,6 @@ Grundlagen und Techniken als `ExpanderCard`s unter `SectionHeader`s; je Technik 
 
 Die nicht angeleiteten Übungen (`guided = false`, Chip „zum Nachlesen“) als `ExerciseCard`s ohne Metazeile; persönliche Markierung sichtbar.
 
-## Geschichte des Atmens (`GeschichteScreen`)
-
-Gebaut wie Pranayama: `ScreenSubtitle`, je Abschnitt ein fester Kopf (`CollapsibleSection` ohne Aufklappen) mit Teaser – Indien, Andere Wege, Der Westen, Heute –, darunter die Karten als `TopicCard` (`ExpanderCard`; über dem Titel die Zeitangabe `period` als `HintText` im `header`). Aufgeklappt: Absätze, Quelle, „In der App“ mit Übungs-Chips (`ExerciseChips`) und dem Seitenverweis als Satz (`seeAlso`, „Siehe Seite „Atemlehre“, …“ – Seitenlinks gibt es nicht). In „Heute“ zuerst die Zeitleiste als schlichte Liste unter `Labeled` „Zeitleiste“ (`Bullet`, Jahr fett über das Gewicht von `titleSmall`, dann ein Halbsatz; nur sichere Jahre, Unsicheres im Nachsatz), danach die Karte zum Alter des Yoga. Unten „Quellen“ (`LearnSources`): „Literatur“ (Bücher, `HintText`) und „Studien“ (`ReferenceItem` aus `Refs`). Datierungen mit „etwa“/„um“, Legenden benannt, keine „5000 Jahre“.
-
-## Körper (`KoerperScreen`)
-
-`ScreenSubtitle`, darunter ohne Abschnittskopf die Karten (`TopicCard`; Einleitung → Karten `SectionGap`, Karte ↔ Karte `ListGap`): Atemmechanik, CO₂ als Atemantrieb, Nase, Modelle für langsames Atmen, Atem und Gefühl; als Schlusskarte „Grenzen einer App: wann Fachleute“ (`Koerper.limits`) mit dem Disclaimer aus SEC-LEGAL-02 wörtlich und Verweisen auf Fachleute, nie als Wirkung der App. Die Karte „Sicherheit“ in Pranayama verweist mit einem Satz hierher. Quellen wie bei der Geschichte; Aufsätze mit DOI unter „Literatur“ als `ReferenceItem` (`literatureRefs`). Lehrbuchwissen als solches, Modelle und Vermutungen benannt.
-
-## Schreibweisen (TEXT-14)
-
-Klein, kursiv, IAST zwischen Sternchen: *prāṇa*, *prāṇāyāma*, *āyāma*, *āsana*, *vāyu(s)* (*apāna*, *samāna*, *udāna*, *vyāna*), *pūraka*, *recaka*, *kumbhaka(s)* (*antara*, *bāhya*, *kevala kumbhaka*), *bandha(s)* (*mūla*, *uḍḍīyāna*, *jālandhara bandha*), *nāḍī(s)*, *iḍā*, *piṅgalā*, *bṛṃhaṇa*, *laṅghana*, *sama vṛtti*, *viṣama vṛtti*, *krama*, *dhāraṇā*, *haṭha*, *mātrās*, *ṣaṭkarma*; Wörter von Techniken nur, wo es um die Wortbedeutung geht (*ujjāyī*, *dīrgha*, *viloma*, *bhrāmarī*, *kapālabhāti*, *nāḍī śodhana* …). Pāli wie Sanskrit (*ānāpānasati*), Chinesisch in Pinyin mit Tonzeichen (*xíngqì*). Aufrecht: Techniken und Schulen (Ujjayi, Viloma, Haṭha-Yoga, Tummo, Zen, Qigong), Personen (Patanjali, Krishnamacharya), Texttitel (Hatha Yoga Pradipika, Gheranda Samhita, Upaniṣaden, Śivasaṃhitā, Bhagavadgītā, Amṛtasiddhi).
-
 ## Begriffe (`GlossaryScreen`)
 
 Zwei Gruppen (Körper & Studien, Yoga-Lehre) als `CollapsibleSection`s (erster Kopf mit `headerTop = 0`), Einträge als Karten mit `CardTitle` und `BodyText`. Jeder Fachbegriff aus Übungen, Situationen und Lehre steht hier (TEXT-05; `ContentRulesTest glossary-terms`).
@@ -43,4 +31,4 @@ Eigener Abschnitt nur für Übungen yogischen Ursprungs und generierte Muster (`
 
 ## Prüfung
 
-`ScreenshotTest` (`15_lernen` mit sechs Kapiteln, `12_atemlehre_offen` samt vāyus, `16_pranayama_offen`, `17_programme`, `18_geschichte_offen`, `19_koerper_offen`, `06_glossar`), `ContentRulesTest` (`lore-teaser` samt Geschichte und Körper, `cross-references`, `glossary-terms`), manuell R-TEXT (Auszeichnung vollständig, zuschreibend), R-A11Y.
+`ScreenshotTest` (`15_lernen`, `12_atemlehre_offen` samt vāyus, `16_pranayama_offen`, `17_programme`, `06_glossar`), `ContentRulesTest` (`lore-teaser`, `cross-references`, `glossary-terms`), manuell R-TEXT (Auszeichnung vollständig, zuschreibend), R-A11Y.

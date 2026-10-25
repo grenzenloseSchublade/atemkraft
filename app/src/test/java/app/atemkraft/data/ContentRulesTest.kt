@@ -3,7 +3,6 @@ package app.atemkraft.data
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.GeneratedExercises
-import app.atemkraft.domain.LearnTopic
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
@@ -22,8 +21,7 @@ import java.io.File
  * Ehrliche Texte (STYLEGUIDE §11): Teaser (TEXT-06, -13, MUSTER-03), Heilversprechen samt
  * Store-Disclaimer (TEXT-09, -11, SEC-LEGAL-01/-02) und Typografie (TEXT-10), geprüft über alle
  * Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages (Seeds 0–6), eigene und
- * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Pranayama, die Kapitel
- * „Geschichte des Atmens“ und „Körper“, Glossar,
+ * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Pranayama, Glossar,
  * Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die öffentlichen Texte (README,
  * Datenschutzerklärung, Release-Notes, Store) auf Heilversprechen und Zahl-Einheit-Abstände.
  * Außerdem lösen alle Querverweise zwischen diesen Inhalten auf (`cross-references`).
@@ -193,7 +191,6 @@ class ContentRulesTest {
                 add(Text("$k.teaser", t.teaser))
                 t.paragraphs.forEachIndexed { i, para -> add(Text("$k.paragraphs[$i]", para)) }
                 t.source?.let { add(Text("$k.source", it)) }
-                t.seeAlso?.let { add(Text("$k.seeAlso", it)) }
             }
             add(Text("pranayama.techniquesTeaser", Pranayama.techniquesTeaser))
             Pranayama.techniques.forEach { t ->
@@ -210,44 +207,6 @@ class ContentRulesTest {
             }
             add(Text("pranayama.sourcesTeaser", Pranayama.sourcesTeaser))
             Pranayama.textSources.forEachIndexed { i, t -> add(Text("pranayama.textSources[$i]", t)) }
-        }
-    }
-
-    /** Eine Lese-Karte ([LearnTopic]) mit allen Feldern unter [prefix]. */
-    private fun MutableList<Text>.addTopic(prefix: String, t: LearnTopic) {
-        val k = "$prefix.${t.id}"
-        add(Text("$k.title", t.title))
-        add(Text("$k.teaser", t.teaser))
-        t.period?.let { add(Text("$k.period", it)) }
-        t.paragraphs.forEachIndexed { i, para -> add(Text("$k.paragraphs[$i]", para)) }
-        t.source?.let { add(Text("$k.source", it)) }
-        t.seeAlso?.let { add(Text("$k.seeAlso", it)) }
-    }
-
-    /** Kapitel „Geschichte des Atmens“ (TEXT-13): Abschnitte, Karten, Zeitleiste und Quellen. */
-    private val geschichteTexts: List<Text> by lazy {
-        buildList {
-            add(Text("geschichte.intro", Geschichte.intro))
-            (Geschichte.sections + Geschichte.today).forEach { s ->
-                add(Text("geschichte.${s.id}.title", s.title))
-                add(Text("geschichte.${s.id}.teaser", s.teaser))
-                s.topics.forEach { addTopic("geschichte", it) }
-            }
-            Geschichte.timeline.forEachIndexed { i, e -> add(Text("geschichte.timeline[$i]", "${e.year} ${e.text}")) }
-            add(Text("geschichte.timelineNote", Geschichte.timelineNote))
-            add(Text("geschichte.sourcesTeaser", Geschichte.sourcesTeaser))
-            Geschichte.textSources.forEachIndexed { i, t -> add(Text("geschichte.textSources[$i]", t)) }
-        }
-    }
-
-    /** Kapitel „Körper“: Karten samt „Grenzen einer App“ und Quellen. */
-    private val koerperTexts: List<Text> by lazy {
-        buildList {
-            add(Text("koerper.intro", Koerper.intro))
-            Koerper.topics.forEach { addTopic("koerper", it) }
-            add(Text("koerper.sourcesTeaser", Koerper.sourcesTeaser))
-            Koerper.textSources.forEachIndexed { i, t -> add(Text("koerper.textSources[$i]", t)) }
-            Koerper.literatureRefs.forEachIndexed { i, r -> add(Text("koerper.literatureRefs[$i]", r.citation)) }
         }
     }
 
@@ -298,7 +257,7 @@ class ContentRulesTest {
         }
     }
 
-    private val contentTexts get() = exerciseTexts + atemlehreTexts + pranayamaTexts + geschichteTexts + koerperTexts + glossaryTexts + situationTexts
+    private val contentTexts get() = exerciseTexts + atemlehreTexts + pranayamaTexts + glossaryTexts + situationTexts
     private val allTexts get() = contentTexts + strings
 
     // ---- Funde --------------------------------------------------------------------------
@@ -359,9 +318,7 @@ class ContentRulesTest {
         val lore = exercises.mapNotNull { e -> e.lore?.let { Triple("${e.key()}.lore", it.teaser, it.detail) } }
         val patterns = Atemlehre.patterns.map { Triple("atemlehre.${it.id}", it.teaser, it.teaching) } +
             Pranayama.topics.map { Triple("pranayama.topic.${it.id}", it.teaser, it.paragraphs.first()) } +
-            Pranayama.techniques.map { Triple("pranayama.${it.id}", it.teaser, it.tradition) } +
-            (Geschichte.sections + Geschichte.today).flatMap { it.topics }.map { Triple("geschichte.${it.id}", it.teaser, it.paragraphs.first()) } +
-            Koerper.topics.map { Triple("koerper.${it.id}", it.teaser, it.paragraphs.first()) }
+            Pranayama.techniques.map { Triple("pranayama.${it.id}", it.teaser, it.tradition) }
         val sections = listOf(
             "atemlehre.vayusTeaser" to Atemlehre.vayusTeaser,
             "atemlehre.rulesTeaser" to Atemlehre.rulesTeaser,
@@ -370,9 +327,7 @@ class ContentRulesTest {
             "pranayama.topicsTeaser" to Pranayama.topicsTeaser,
             "pranayama.techniquesTeaser" to Pranayama.techniquesTeaser,
             "pranayama.sourcesTeaser" to Pranayama.sourcesTeaser,
-            "geschichte.sourcesTeaser" to Geschichte.sourcesTeaser,
-            "koerper.sourcesTeaser" to Koerper.sourcesTeaser,
-        ) + (Geschichte.sections + Geschichte.today).map { "geschichte.${it.id}.teaser" to it.teaser }
+        )
         val claim = Regex("""\b(wirkt|bewirkt|hilft gegen)\b""", RegexOption.IGNORE_CASE)
         val loreTeaser = (lore + patterns).flatMap { (key, teaser, detail) ->
             val repeats = detail.startsWith(teaser.trimEnd('.').take(40))
@@ -403,8 +358,6 @@ class ContentRulesTest {
         val toExercises = Atemlehre.patterns.flatMap { p -> p.exerciseIds.map { "atemlehre.${p.id}" to it } } +
             Atemlehre.influences.flatMap { inf -> inf.exerciseIds.map { "atemlehre.influence ${inf.label}" to it } } +
             Pranayama.techniques.flatMap { t -> (listOfNotNull(t.exerciseId) + t.moreExerciseIds).map { "pranayama.${t.id}" to it } } +
-            (Pranayama.topics + (Geschichte.sections + Geschichte.today).flatMap { it.topics } + Koerper.topics)
-                .flatMap { t -> t.exerciseIds.map { "lernen.${t.id}" to it } } +
             Situations.all.flatMap { rec -> rec.exerciseIds.map { "situation.${rec.situation}" to it } }
         val toPatterns = exercises.flatMap { e ->
             e.lore?.let { l -> (listOf(l.patternId) + l.morePatternIds).map { "${e.key()}.lore" to it } }.orEmpty()

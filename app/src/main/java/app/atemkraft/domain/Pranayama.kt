@@ -1,6 +1,20 @@
 package app.atemkraft.domain
 
 /**
+ * Ein Grundlagen-Abschnitt der Seite „Pranayama“ im Tab „Lernen“ (Nutzer 2026-10-23: Yoga-Theorie
+ * mit Praxis verbinden). [teaser] ist ein geschlossener Satz (≤ ~95 Zeichen, TEXT-Teaser-Regel),
+ * [paragraphs] führen denselben Punkt aus; [source] nennt die Lehrquelle (Vers oder Buch).
+ * Sanskrit klein in IAST zwischen Sternchen (TEXT-14).
+ */
+data class PranayamaTopic(
+    val id: String,
+    val title: String,
+    val teaser: String,
+    val paragraphs: List<String>,
+    val source: String? = null,
+)
+
+/**
  * Eine Technik im Praxisteil der Seite „Pranayama“: [name] wie in der App (Eigenname, aufrecht),
  * [sanskrit] in IAST zwischen Sternchen, [pronunciation] als deutsche Lesehilfe („udsch-dschá-jii“),
  * [teaser] ein geschlossener Satz (≤ ~95 Zeichen). Aufgeklappt: [tradition] (Herkunft, zuschreibend

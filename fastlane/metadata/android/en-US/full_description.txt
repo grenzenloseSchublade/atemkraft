@@ -6,7 +6,7 @@ Atemkraft guides you through breathing exercises and silent meditation. A circle
 - Pick a situation such as falling asleep or focus, or search for how you feel.
 - A new breathing pattern every day, and an editor to build your own.
 - Meditation timer with gong and optional spoken guidance; keeps running with the screen off.
-- Background reading on breathing in yoga, pranayama, a glossary, three programmes (SKY, Buteyko, nasal breathing) and chapters on the history of breathing and on the body.
+- Background reading on breathing in yoga, pranayama, a glossary and three programmes (SKY, Buteyko, nasal breathing).
 - Log of completed sessions (the day streak can be turned off); a one-word note on how you feel afterwards (stored only on your device, never evaluated); a local reminder; back up patterns, log and settings as one file.
 - Long-press the app icon to jump to resonance breathing, meditation or your last exercise.
 

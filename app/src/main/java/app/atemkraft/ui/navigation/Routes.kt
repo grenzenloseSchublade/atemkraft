@@ -12,7 +12,7 @@ sealed interface TabRoute
 /**
  * Type-safe Navigation-Routen. Tabs: Atmen (mit Anlässen und Suche), Eigene, Meditation, Lernen.
  * Push-Seiten mit festem Kopf: Detail, Muster-Editor („Eigenes Muster“), Einstellungen, Logbuch,
- * Glossar, Über, Atemlehre, Pranayama, Programme, Geschichte des Atmens, Körper.
+ * Glossar, Über, Atemlehre, Pranayama, Programme.
  */
 @Serializable
 object AtmenRoute : TabRoute
@@ -24,10 +24,7 @@ object EigeneRoute : TabRoute
 @Serializable
 object MeditationRoute : TabRoute
 
-/**
- * Tab „Lernen“: Kapitel Atemlehre, Pranayama, Programme & Gewohnheiten, Begriffe (Nutzer 2026-10-23),
- * Geschichte des Atmens und Körper (Eigentümer 2026-10-25).
- */
+/** Tab „Lernen“: Kapitel Atemlehre, Pranayama, Programme & Gewohnheiten und Begriffe (Nutzer 2026-10-23). */
 @Serializable
 object LernenRoute : TabRoute
 
@@ -38,14 +35,6 @@ object PranayamaRoute
 /** Seite „Programme & Gewohnheiten“ im Tab „Lernen“: Infoseiten ohne Start (SKY, Buteyko, Nasenatmung). */
 @Serializable
 object ProgramsRoute
-
-/** Kapitel „Geschichte des Atmens“ im Tab „Lernen“: Indien, andere Wege, der Westen, Zeitleiste. */
-@Serializable
-object GeschichteRoute
-
-/** Kapitel „Körper“ im Tab „Lernen“: wie Atmen im Körper funktioniert, dazu die Grenzen einer App. */
-@Serializable
-object KoerperRoute
 
 /**
  * [focusMeditation]: vom Meditations-Tab geöffnet – springt direkt zur Meditations-Karte.

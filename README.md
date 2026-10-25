@@ -18,7 +18,7 @@ Beschrieben ist der Stand von `main`; die veröffentlichte Version kann Einzelne
 - **Muster des Tages:** jeden Tag ein neues, ruhiges oder sanft aktivierendes Muster zum Ausprobieren und Speichern.
 - **Eigene Kreationen:** einen Atemzug frei aus Einatmen, Halten und Ausatmen zusammenstellen, mit Atemkurve, Startpunkten und Vorschau, gesammelt im Tab „Eigene“, zusammen mit den Übungen, die du mit „Tut mir gut“ markiert hast, und dem Verlauf deiner Sitzungen samt Weg zur zuletzt geübten Übung.
 - **Meditation:** Timer mit Zeitring, Gong und optional gesprochener Anleitung; läuft bei ausgeschaltetem Bildschirm weiter. Auf Wunsch geht eine Atemübung nahtlos in die stille Meditation über.
-- **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, Begriffe erklärt, Programme wie Buteyko und Nasenatmung zum Nachlesen sowie die Kapitel „Geschichte des Atmens“ und „Körper“ (was beim Atmen im Körper geschieht und wann Fachleute gefragt sind).
+- **Lernen:** Atemlehre (etwa die fünf vāyus), Pranayama mit Grundlagen und Techniken wie Ujjayi, jeweils mit Übung zum Ausprobieren, Begriffe erklärt und Programme wie Buteyko und Nasenatmung zum Nachlesen.
 - **Logbuch, Befinden und Sicherung:** abgeschlossene Sitzungen (Tage in Folge abschaltbar), auf Wunsch ein Wort zum Befinden danach, ohne Auswertung; eine lokale Erinnerung; alles (Muster, Logbuch, Einstellungen) als eine Datei sichern und wieder einlesen.
 
 ## Installieren

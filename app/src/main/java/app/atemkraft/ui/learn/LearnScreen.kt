@@ -13,17 +13,14 @@ import app.atemkraft.ui.theme.AtemkraftTheme
 
 /**
  * Tab „Lernen“ (Nutzer 2026-10-23): Yoga-Theorie und Praxis an einem Ort, ehrlich eingeordnet.
- * Sechs gleich gebaute Kapitel als Karten, jede öffnet ihre Seite: Atemlehre (wie die Lehre Ein,
+ * Vier gleich gebaute Kapitel als Karten, jede öffnet ihre Seite: Atemlehre (wie die Lehre Ein,
  * Aus und Halten deutet), Pranayama (Grundlagen und Techniken, mit „Üben ›“ zur Übung), Programme
- * & Gewohnheiten (Infoseiten ohne Startknopf wie SKY, Buteyko, Nasenatmung, [ProgramsScreen]),
- * Begriffe, Geschichte des Atmens ([GeschichteScreen]) und Körper ([KoerperScreen], Eigentümer
- * 2026-10-25). Atmen = alles, was man starten kann; Lernen = alles, was man liest.
+ * & Gewohnheiten (Infoseiten ohne Startknopf wie SKY, Buteyko, Nasenatmung, [ProgramsScreen]) und
+ * Begriffe. Atmen = alles, was man starten kann; Lernen = alles, was man liest.
  *
  * Die Kapiteltitel sind die eine Kopf-Ebene des Screens und gehen reihum durch den Kopf-Ring
- * (FARBE-07): Atemlehre 0, Pranayama 1, Programme 2, Begriffe 3, Geschichte 4, Körper 5 – der Ring
- * hat fünf Töne, Körper beginnt ihn wieder (Pink wie Atemlehre, nicht benachbart). Rechts im Kopf
- * das Zahnrad wie in den anderen drei Tabs (Nutzer 2026-10-24: von hier gab es keinen Weg in die
- * Einstellungen).
+ * (FARBE-07): Atemlehre 0, Pranayama 1, Programme 2, Begriffe 3. Rechts im Kopf das Zahnrad wie in
+ * den anderen drei Tabs (Nutzer 2026-10-24: von hier gab es keinen Weg in die Einstellungen).
  */
 @Composable
 fun LearnScreen(
@@ -32,8 +29,6 @@ fun LearnScreen(
     onOpenPranayama: () -> Unit,
     onOpenPrograms: () -> Unit,
     onOpenGlossary: () -> Unit,
-    onOpenHistory: () -> Unit,
-    onOpenBody: () -> Unit,
 ) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
@@ -77,22 +72,6 @@ fun LearnScreen(
                 onClick = onOpenGlossary,
             )
         }
-        item(key = "history") {
-            ChapterCard(
-                title = stringResource(R.string.history_title),
-                hint = stringResource(R.string.learn_history_hint),
-                heading = 4,
-                onClick = onOpenHistory,
-            )
-        }
-        item(key = "body") {
-            ChapterCard(
-                title = stringResource(R.string.body_title),
-                hint = stringResource(R.string.learn_body_hint),
-                heading = 5,
-                onClick = onOpenBody,
-            )
-        }
     }
 }
 
@@ -108,5 +87,5 @@ private fun ChapterCard(title: String, hint: String, heading: Int, onClick: () -
 @Preview
 @Composable
 private fun LearnScreenPreview() {
-    AtemkraftTheme { LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {}, onOpenHistory = {}, onOpenBody = {}) }
+    AtemkraftTheme { LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {}) }
 }

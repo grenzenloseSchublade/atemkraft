@@ -1,5 +1,4 @@
 - Befinden danach: ein Tipp, nur als Wort im Logbuch, nie ausgewertet
 - Lokale Erinnerung ohne Netz
 - Sicherung von Mustern, Logbuch und Einstellungen in einer Datei
-- Neue Kapitel „Geschichte des Atmens“ und „Körper“
 - Ruhigere Tabs, Schnellstart, „Zuletzt geübt“

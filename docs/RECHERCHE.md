@@ -62,7 +62,9 @@ Zu klären:
 - **Barrierefreiheit:** ohne Systemanimationen eine stehende Darstellung; TalkBack liest den Text, nicht die Animation.
 - **Aufwand:** je Übung Daten (Richtung, Phase), eine Animations-Komponente, zwei Textabschnitte je Übung.
 
-### 3.4 Kapitel „Geschichte des Atmens“ und Kapitel „Körper“
+### 3.4 Kapitel „Geschichte des Atmens“ und Kapitel „Körper“ (verworfen)
+
+Geschrieben und eingebaut, vor der Veröffentlichung wieder entfernt (Eigentümer 2026-10-25): Die App konzentriert sich auf das Üben und ihre Eigenheit, nicht auf mehr Lesetext. Der Entwurf bleibt in docs/recherche/ als Archiv.
 
 Grundlage ist der [Inhalte-Bericht](recherche/2026-10-24-inhalte-geschichte.md). Reihenfolge nach dessen Top 8:
 
@@ -101,7 +103,7 @@ Die Auswertung aller Berichte mit Reihenfolge je Release und den offenen Entsche
 |---|---|---|
 | 1 | v2.7.1 am Gerät prüfen; UX-Vergleich lesen und Entscheidungen treffen | läuft |
 | 2 | Befinden (3.2) und „Was passiert“ (3.3) als Canvas zeichnen, entscheiden, umsetzen | Phase 1 |
-| 3 | Kapitel „Geschichte des Atmens“ und „Körper“ schreiben (Texte zuerst, Freigabe, dann Einbau) | unabhängig, parallel zu 2 möglich |
+| 3 | ~~Kapitel „Geschichte des Atmens“ und „Körper“~~ – verworfen 2026-10-25, kein weiterer Lesetext | – |
 | 4 | Store: Konto, Test, Veröffentlichung | Nutzer-Entscheidungen aus 3.6 |
 | 5 | Reihen mit Start (3.5) | nach 2 |
 
