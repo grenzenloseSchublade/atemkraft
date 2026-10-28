@@ -86,21 +86,21 @@ data class HomeActions(
  * Atmen-Tab: alles, was man starten kann. Von oben: beim ersten Start die Willkommenskarte
  * ([WelcomeCard], abweisbar), das Suchfeld „Wie fühlst du dich?“ mit den sechs Anlässen als Chips
  * ([FeelingBlock]), der Kopf „Übungen“ mit der Filterreihe und darunter die Übungen nach Familien
- * mit ihren kleinen farbigen Gruppenlabels ([GroupLabel]); hinter der ersten Gruppe die
+ * mit ihren kleinen farbigen Gruppenlabels ([GroupLabel]); zwischen Anlässen und „Übungen“ die
  * Tagesmuster-Karte.
  * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
  * Aufbau (Nutzer 2026-10-24, Vorschlag B): ein Abschnittskopf „Übungen“ statt der Köpfe „Muster
  * des Tages“ und „Alle Übungen“; das Tagesmuster – bewusst spielerisch, ohne eigenes
  * Wirkversprechen – trägt seine Kopfzeile („MUSTER DES TAGES“, ↻, ◉ „In Eigene speichern“) selbst
- * ([DailyPatternCard]). Seit 2026-10-24 (Auswertung Abschnitt 3.1) steht es nicht mehr als erste
- * Karte, sondern hinter der ersten Gruppe „Beruhigen“: Erstnutzer sehen zuerst die kuratierten
- * Übungen, nicht ein Muster ohne erkennbaren Zweck. Den Weg in den Muster-Editor gibt es im Tab „Eigene“ („+“) und über den Stift auf der
+ * ([DailyPatternCard]). Seit 2026-10-28 steht es als Appetithappen über dem Kopf „Übungen“,
+ * losgelöst von Familien und Filterreihe – es wechselt täglich und gehört zu keiner Gruppe;
+ * Erstnutzer sehen darüber die Willkommenskarte. Den Weg in den Muster-Editor gibt es im Tab „Eigene“ („+“) und über den Stift auf der
  * Detailseite des Tagesmusters; der Atmen-Tab trägt keinen eigenen Link mehr.
  *
  * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
- * nichts, dann steht alles da wie immer (Suchfeld und Chips, „Übungen“ mit Filterreihe,
- * Tagesmuster, vier Familien).
+ * nichts, dann steht alles da wie immer (Suchfeld und Chips, Tagesmuster, „Übungen“ mit
+ * Filterreihe, vier Familien).
  * - **Anlass:** Ein Tipp auf einen Chip markiert ihn; unter dem Block stehen sein Begründungssatz
  *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen, „Mehr: <Bereich> ›“
  *   ([AreaLink]) und „Alle Übungen ›“ ([AllExercisesLink], wie ein zweiter Chip-Tipp); Muster des
@@ -115,8 +115,8 @@ data class HomeActions(
  *
  * Im Grundzustand steht über den Familien der Kopf „Übungen“ mit der Filterreihe
  * ([ExerciseFilterRow], MUSTER-12, Nutzer 2026-10-23): Filter quer zu den Familien, UND-verknüpft;
- * die Liste bleibt nach Familien gruppiert, Familien ohne Treffer fallen samt Label weg. Mit einem
- * aktiven Filter verschwindet die Tagesmuster-Karte – sie ist kein Filtertreffer. Die Wahl lebt nur
+ * die Liste bleibt nach Familien gruppiert, Familien ohne Treffer fallen samt Label weg. Die
+ * Tagesmuster-Karte steht über dem Kopf und bleibt mit Filter stehen. Die Wahl lebt nur
  * in `rememberSaveable` und bleibt, während ein Anlass, eine Suche oder ein Bereich gewählt ist –
  * die Reihe ist dann ausgeblendet.
  *
@@ -262,8 +262,18 @@ fun HomeScreen(
                 }
             }
         } else {
-            // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten), das
-            // Tagesmuster folgt hinter der ersten Gruppe.
+            // Das Tagesmuster steht als Appetithappen über „Übungen“, losgelöst von Familien und
+            // Filterreihe: Es wechselt täglich und gehört zu keiner Gruppe (Nutzer 2026-10-28).
+            item(key = "daily") {
+                DailyPatternCard(
+                    daily = daily,
+                    saved = dailySaved,
+                    onClick = { actions.onSelect(daily.exercise.id) },
+                    onSavedChange = actions.onDailySavedChange,
+                    onRegenerate = actions.onRegenerateDaily,
+                )
+            }
+            // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten).
             val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
             // Kopf „Übungen“, Filterreihe und Trefferstatus bzw. das erste Gruppenlabel in einem
             // Eintrag: Die Filter-Chips bringen über und unter sich je GapSmall Tippfläche mit; mit
@@ -291,20 +301,6 @@ fun HomeScreen(
                 }
                 items(exercises, key = { it.id }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
-                }
-                // Das Tagesmuster ist kein Filtertreffer: nur ohne Filter, hinter der ersten Gruppe
-                // („Beruhigen“) – erst die kuratierten Übungen, dann das Spielerische (Nutzer
-                // 2026-10-24, Auswertung Abschnitt 3.1).
-                if (index == 0 && firstFamily != null) {
-                    item(key = "daily") {
-                        DailyPatternCard(
-                            daily = daily,
-                            saved = dailySaved,
-                            onClick = { actions.onSelect(daily.exercise.id) },
-                            onSavedChange = actions.onDailySavedChange,
-                            onRegenerate = actions.onRegenerateDaily,
-                        )
-                    }
                 }
             }
         }
