@@ -344,8 +344,8 @@ data class FreePattern(val phases: List<FreePhase>) {
         private const val LEVEL_EPSILON = 1e-4f
         private const val HALF = 0.5f
 
-        /** Ab halb voll gehört ein Füllstand zur oberen Seite ([isUpperSide]). */
-        private fun isUpperLevel(level: Float): Boolean = level >= HALF
+        /** Ab halb voll gehört ein Füllstand zur oberen Seite ([isUpperSide], Rhythmuskurve der Detailseite). */
+        fun isUpperLevel(level: Float): Boolean = level >= HALF
 
         /** Längster Text, den [parse] annimmt: 12 × „hold:30“ und Kommas, großzügig gerundet. */
         private const val MAX_COMPACT_LENGTH = 200

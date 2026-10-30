@@ -103,10 +103,7 @@ fun Exercise.cardBreath(): List<Phase>? {
     val phases = segments.singleOrNull()?.phases ?: return null
     if (phases.isEmpty() || inStages) return null
     if (phases.any { (it.duration as? PhaseDuration.Fixed)?.millis?.let { ms -> ms < 1000L } != false }) return null
-    val half = phases.size / 2
-    val halves = phases.size % 2 == 0 && phases.size >= 4 &&
-        phases.take(half).zip(phases.drop(half)).all { (a, b) -> a.type == b.type && a.duration == b.duration }
-    return if (halves) phases.take(half) else phases
+    return phases.oneHalfIfMirrored()
 }
 
 /** Dauer eines Zyklus (eine Segment-Wiederholung) in Sekunden, aus festen Phasen. */

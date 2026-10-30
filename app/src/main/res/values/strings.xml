@@ -71,6 +71,21 @@
     <string name="card_phase_seconds">%1$s %2$s\u00A0s</string>
     <string name="card_in_stages">in Stufen</string>
     <string name="card_duration_under_minute">unter 1\u00A0min</string>
+    <!-- Rhythmuskurve oben auf der Detailseite (RhythmCurve): Zeile unter der Kurve, je Phase
+         „Halten voll 7 s“ (geschützt vor der Zahl, im Namen ebenso: die Zeile bricht nur am
+         Trennpunkt um), gleiche Phasen hintereinander als „3 × Einatmen 2 s“ (%1$d = Anzahl,
+         %2$s = Phase mit Sekunden); bei Wim Hof nur die Atemfolge, mit der jede Runde beginnt. -->
+    <string name="rhythm_phase_seconds">%1$s\u00A0%2$s\u00A0s</string>
+    <string name="rhythm_repeat">%1$d\u00A0\u00D7\u00A0%2$s</string>
+    <string name="rhythm_first_part">Zu Beginn jeder Runde: %1$s</string>
+    <!-- TalkBack: die Kurve ist ein Knoten (cd_breath_curve), je Phase „Einatmen 4 Sekunden“
+         (%1$s = Phase, %2$s = Sekunden mit Komma), wiederholt „3-mal Einatmen 2 Sekunden“. -->
+    <plurals name="cd_rhythm_phase_seconds">
+        <item quantity="one">%1$s %2$s Sekunde</item>
+        <item quantity="other">%1$s %2$s Sekunden</item>
+    </plurals>
+    <string name="cd_rhythm_repeat" tools:ignore="PluralsCandidate">%1$d-mal %2$s</string>
+    <string name="cd_rhythm_first_part">Atemkurve zu Beginn jeder Runde: %1$s</string>
     <!-- „Starten · ca. 10 min“ – Gesamtdauer direkt am Start. Geschütztes Leerzeichen vor „·“:
          Eine Zeile beginnt nie mit dem Trennpunkt (LAYOUT-03). -->
     <string name="action_start_duration">%1$s\u00A0· %2$s</string>

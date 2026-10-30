@@ -126,6 +126,21 @@ object Sizes {
     val MiniCurveWidth = 64.dp
     val MiniCurveHeight = IconDefault
 
+    // Rhythmuskurve oben auf der Detailseite (`RhythmCurve`): ein Atemzug, ruhig und klein; die
+    // Breite folgt dem Platz.
+
+    /**
+     * Höhe der Rhythmuskurve samt Rand für den Punkt oben und unten (56): Abstand leer–voll 48,
+     * so lesen sich auch drei Stufen (Viloma) mit ihren Pausen.
+     */
+    val RhythmCurveHeight = 56.dp
+
+    /** Strich der Rhythmuskurve (2), halb so stark wie die Kurve des Editors ([CurveStroke]). */
+    val RhythmCurveStroke = 2.dp
+
+    /** Punkt, der im Takt der Übung über die Rhythmuskurve läuft (8), kleiner als [CurveDot]. */
+    val RhythmCurveDot = 8.dp
+
     /** Höchstbreite des vāyu-Bilds der Atemlehre (280, ein Fünftel unter der Breite der Vorlage); schmaler skaliert es mit. */
     val VayuFigureMaxWidth = 280.dp
 }

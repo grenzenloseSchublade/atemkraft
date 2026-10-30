@@ -39,10 +39,13 @@ import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseIds
+import app.atemkraft.domain.GeneratedExercises
+import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.adjusted
+import app.atemkraft.domain.breathRhythm
 import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
@@ -64,6 +67,7 @@ import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
+import app.atemkraft.ui.components.RhythmCurve
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
@@ -159,7 +163,14 @@ fun ExerciseDetailScreen(
     // Grobe Gesamtdauer der aktuell eingestellten Session (Runden/Minuten + Intervalle) –
     // live neu berechnet, wenn sich einer der Anpassungswerte ändert.
     val config = adjust.config()
-    val estimatedSeconds = remember(config) { exercise.adjusted(config).estimatedTotalSeconds() }
+    val adjusted = remember(exercise, config) { exercise.adjusted(config) }
+    val estimatedSeconds = remember(adjusted) { adjusted.estimatedTotalSeconds() }
+    // Ein Atemzug als Kurve, mit den aktuellen Anpassungen; null, wo er nichts Wahres zeigte.
+    val rhythm = remember(adjusted) { adjusted.breathRhythm() }
+    // Muster des Tages: dieselbe Musterzeile wie auf seiner Karte.
+    val rhythmLine = remember(adjusted) {
+        if (exercise.id == ExerciseIds.DAILY) GeneratedExercises.specOf(adjusted)?.let(PatternTexts::cardLineFor) else null
+    }
 
     // Sicherheitsdialog vor intensiven Übungen: dieselbe Abfolge wie im Muster-Editor; der offene
     // Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
@@ -236,6 +247,13 @@ fun ExerciseDetailScreen(
         }
         Spacer(Modifier.height(Dimens.GapSmall))
         BodyText(exercise.shortDescription, style = MaterialTheme.typography.bodyMedium)
+
+        // Der Rhythmus gleich unter dem, was die Übung ist, und vor Dauer und Charakter – wie auf
+        // der Karte (Takt · Dauer); eine weitere Zeile des Kopfblocks, daher GapSmall (§4.5).
+        rhythm?.let {
+            Spacer(Modifier.height(Dimens.GapSmall))
+            RhythmCurve(it, line = rhythmLine)
+        }
 
         Spacer(Modifier.height(Dimens.GapSmall))
         FlowRow(

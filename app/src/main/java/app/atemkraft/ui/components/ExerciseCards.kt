@@ -93,7 +93,7 @@ private fun exerciseMetaLine(exercise: Exercise): String? {
 
 /** Phasenname für die Metazeile; „Halten voll“/„Halten leer“ wie in der Sitzung (`phase_hold_*`, TEXT-02). */
 @Composable
-private fun phaseName(type: PhaseType): String = stringResource(
+internal fun phaseName(type: PhaseType): String = stringResource(
     when (type) {
         PhaseType.INHALE -> R.string.phase_inhale
         PhaseType.EXHALE -> R.string.phase_exhale
