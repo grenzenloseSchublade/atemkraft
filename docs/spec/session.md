@@ -50,7 +50,7 @@ Was von selbst zu Ende läuft, kommt immer ins Logbuch; früher Beendetes („Be
 
 ## Takt
 
-`SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01); Der Kreis wächst von 0,42 seiner vollen Größe bis zur vollen (`MIN_SCALE` = 0,42 × `MAX_SCALE`, `MAX_SCALE` 0,97 des Außenradius in `BreathingCircle.kt`). Der Füllstand gleitet je Phase von `RuntimePhase.circle.from` nach `.to` (`CircleFractions`, stetig über die Grenzen, MOTION-03); im Countdown steht der Kreis am Start der ersten Phase, die Tonhöhe des Dauertons folgt demselben Füllstand. Nach Weiter setzt der Dauerton an der Tonhöhe fort, bei der die Pause begann (`PhaseAudio.elapsedMs`), nicht am Anfang der Phase.
+`SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01). Der Kreis wächst von 0,42 seiner vollen Größe bis zur vollen (`MIN_SCALE` = 0,42 × `MAX_SCALE`, `MAX_SCALE` 0,97 des Außenradius in `BreathingCircle.kt`). Der Füllstand gleitet je Phase von `RuntimePhase.circle.from` nach `.to` (`CircleFractions`, stetig über die Grenzen, MOTION-03); im Countdown steht der Kreis am Start der ersten Phase, die Tonhöhe des Dauertons folgt demselben Füllstand. Nach Weiter setzt der Dauerton an der Tonhöhe fort, bei der die Pause begann (`PhaseAudio.elapsedMs`), nicht am Anfang der Phase.
 
 ## Audio-Fokus
 

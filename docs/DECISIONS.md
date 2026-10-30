@@ -57,6 +57,7 @@ Datierte Entscheidungen des Eigentümers und Befunde, die eine Regel geprägt ha
 
 - compose-rules 0.6.x lief erst mit neuerem Gradle (`NoSuchMethodError` im ktlint-Worker); seit Gradle 9.8.2 (2026-10-21) ist 0.6.8 eingebunden. ktlint ohne Baseline seit 2026-10-19 (eine ktlint-Baseline hängt an Zeilennummern).
 - `ScreenshotTest`: Breiten-Matrix 360 dp bei 1,0 und 2,0 (vorher drei Breiten × vier Schriftgrößen, 2026-10-22 verschlankt); Gerätehöhen-Matrix im `DeviceFitTest`.
+- Room-Schema 1 gab es nur in der nie veröffentlichten v0.2; deshalb liegt in `app/schemas/` erst ab Version 2 ein Export, obwohl `MIGRATION_1_2` existiert (SEC-STORE-03).
 - Entfallene Tokens und Komponenten: `SelectChip` (2026-10-19, Einzelwahl → `SegmentedChoiceRow`), `AccentBar`/`AccentBarWidth` (2026-10-24, Köpfe ohne Balken), `LoreAccent` (2026-10-19 → `BreathExhale`), `SynthText`, `SynthGlow`, `PauseGlyphCreme` (2026-10-19), `TEXT_SCALE`, `scaledLayout` (2026-10-19).
 
 ## Erledigte Backlog-Punkte (zur Nachlese)
