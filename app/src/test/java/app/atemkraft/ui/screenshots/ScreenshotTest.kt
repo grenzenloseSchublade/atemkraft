@@ -496,8 +496,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
 
     /**
      * Querformat: Steuerung rechts neben dem Kreis, Breite und Höhe getauscht (Statusleiste
-     * vernachlässigt); die Detailseite mit festem Kopf und fester Start-Leiste samt „Anpassen ›“ –
-     * 360 dp hoch, also enger als das A54 quer (384 dp).
+     * vernachlässigt); die Detailseite mit festem Kopf und fester Start-Leiste samt „Anpassen ›“
+     * wie in der App im Rahmen ([TabFrame] ohne Tab-Leiste, Tiefe): 360 dp hoch abzüglich Status-
+     * und Navigationsleiste, also 288 dp – enger als das A54 quer (384 dp, 312 dp). Gemessen wird
+     * die sichtbare Höhe des scrollenden Inhalts (`SICHT`).
      */
     @Test
     @Config(qualifiers = "w920dp-h8000dp-xhdpi")
@@ -509,7 +511,21 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("10_meditation_quer", heightDp = device.widthDp, widthDp = device.heightDp) {
             MeditationShot(MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L))
         }
-        snap("08_detail_quer", heightDp = device.widthDp, widthDp = device.heightDp) { DetailPage(fourSevenEight) }
+        snap(
+            "08_detail_quer",
+            widthDp = device.heightDp,
+            tab = Tab.START,
+            tabBar = false,
+            frameHeightDp = device.widthDp,
+            measure = { detailViewport("08_detail_quer") },
+        ) { DetailPage(fourSevenEight) }
+    }
+
+    /** Sichtbare Höhe des scrollenden Inhalts zwischen festem Kopf und fester Leiste, nur gemessen (`SICHT`). */
+    private fun detailViewport(screen: String): List<String> {
+        val viewport = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).fetchSemanticsNode()
+        val visible = (viewport.size.height / compose.density.density).roundToInt()
+        return listOf("${device.name}\tfs${(fontScale * 100).toInt()}\tSICHT\t$screen\t$visible dp")
     }
 
     /**
