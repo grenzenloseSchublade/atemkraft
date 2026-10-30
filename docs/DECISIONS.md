@@ -57,6 +57,22 @@ Datierte Entscheidungen des Eigentümers und Befunde, die eine Regel geprägt ha
 
 | ID | Erledigt | Was |
 |---|---|---|
+| S-45 | 2026-10-30 | Sprachmodell lädt erst mit `MeditationController.start` (Sprachanleitung), frei nach Ende, Abbruch und bei `onTrimMemory`; `setActiveVoice` merkt sich nur die Stimme (942bf46). |
+| S-46 | 2026-10-30 | „Letzte 7 Tage“ als eine Definition (`isRecentDay`) für Wochenpunkte, Minuten und Logbuch-Gruppe; Minuten über alle Sitzungen summiert, erst am Ende abgerundet (3b8ab22). |
+| S-47 | 2026-10-30 | Ein unbehandelter Fehler im Ablauf beendet die Sitzung wie Stopp bzw. Abbruch und gibt den Service frei (`launchGuarded` in beiden Controllern, 942bf46); Regel CODE-09. |
+| S-48 | 2026-10-30 | Kopfhörer abziehen schaltet stumm wie Fokusverlust, Ablauf und Vibration laufen weiter (`UnplugWatcher`, dynamisch und nur während Sitzung bzw. hörbarer Vorschau; 942bf46); R-AUDIO-Schritt. |
+| S-49 (Teil) | 2026-10-30 | Referenzmessung am A54 (Release v2.10.0): Kaltstart, Scrollen, Editor, Speicher mit Stimme im [Qualitätsbericht](recherche/2026-10-30-iso25010.md#messwerte) (c1d148f). Rest im Backlog. |
+| S-50 | 2026-10-30 | Regel PERF-01, Check `perf-main`, Checkliste R-PERF (c1d148f). |
+| – | 2026-10-30 | Blätter schließen erst, dann öffnet die nächste Seite (`AppBottomSheetScope.closeThen`, 9223912, 08e80c4); Anlass: Blatt → Editor 6 % Ruckler, p99 97–150 ms am A54. Nachmessung in S-49. |
+| S-19 | 2026-10-30 | Dauerton setzt nach Weiter an der Tonhöhe der Pause fort (82356e7); die Frequenzen der Wechseltöne bleiben (Entscheidung 2026-10-30). |
+| A-15 | 2026-10-30 | `VoiceArchiveSafetyTest`: falscher Hash, Übergröße, `../`, Symlink, zu viele Einträge, zu viel Inhalt (ae3af11); SEC-NET-03/-04 automatisch. |
+| A-16 | 2026-10-30 | Self-Test verlangt für jeden Check ein Fixture, auch für Sonder- und `sec-*`-Checks (7013d6a). |
+| A-17 | 2026-10-30 | `DatabaseMigrationTest` mit Editor-Muster und Logbuch aus Schema 5 (d31d59d). |
+| A-18 | 2026-10-30 | Alte Exportdateien (v1 aus 1.6.8 und 2.8.0, v2 aus 2.9.0) und ein Fall mit BOM als Golden-Fixtures im `PatternBackupTest` (41ad5e9); Regel PROZ-08. |
+| A-19 | 2026-10-30 | Sicherheitsdialog der Detailseite im `PatternEditorSafetyTest`, „eingebaut und intensiv ⇒ `caution` mit Wasser“ im `ContentRulesTest` (6629d37, 284e72f). |
+| A-20 | 2026-10-30 | `PlaybackFlowTest`: offene Meditation (Gong, Pause, Ende unter und ab 1 min), Wim Hof mit offenem Halten, abgezogener Kopfhörer, Fehler im Ablauf (942bf46). „Still bei Fokusverlust“ bleibt R-AUDIO: Der Test dafür prüfte nur die Attrappe (4cf2f2e). |
+| A-21 | 2026-10-30 | `ThemeContrastTest` rechnet die Tabellen §2.1 und §2.2 aus den Tokens nach (6629d37). |
+| S-57 (Teil) | 2026-10-30 | „Unterstützte Version“ in SECURITY.md ohne Versionsnummer, damit sie nicht mehr veraltet. Rest (Tag, F-Droid-Probebau) im Backlog. |
 | S-18 | 2026-10-30 | `SessionButtonPink` entfällt, „Beenden“ nimmt `error`; `SecondaryContainer` #5A4890 (1,91 auf Karte); gewählter Tab in `onSecondaryContainer`; `TonalDeep` (#3A2C60) für Session-Seitenknöpfe und gewählte Editor-Zeilen. |
 | S-25 | 2026-10-30 | Markenkopf auf „Über“ in `onBackground` statt `primary`. |
 | S-32 | 2026-10-30 | `modifier` an Chips und `SafetyDialog`, Vorschauen in sechs Dateien, 54 Kommentarzeilen mit „…“. |

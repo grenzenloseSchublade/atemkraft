@@ -177,7 +177,7 @@ Der einmalige Weg in die Stores (Konten, Formulare, Grafiken, F-Droid-Rezept, Re
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | SEC-REPO-01 | MUSS | Nie im Repo: Keystores (außer `app/debug.keystore`), Passwörter, `keystore.properties`, `local.properties`, APK/AAB/`.idsig`, lokale Agent-Einstellungen. `.gitignore` deckt das per Muster ab (`*.jks`, `*.keystore`, `*.p12`, `**/keystore.properties`, `*.idsig`, `.claude/settings.local.json`). | Secret Scanning erkennt binäre Keystores nicht zuverlässig. | auto: `sec-gitignore`, `sec-pinned-inputs` |
-| SEC-REPO-02 | MUSS | GitHub: 2FA, Secret Scanning, Push Protection und Private Vulnerability Reporting sind an. Rulesets: `main` ohne Force-Push und Löschen, Tags `v*` unveränderlich. | Account-Übernahme, Leaks, unveränderliche Release-Referenzen. | auto (lokal): `check-github` |
+| SEC-REPO-02 | MUSS | GitHub: 2FA, Secret Scanning, Push Protection und Private Vulnerability Reporting sind an. Rulesets: `main` ohne Force-Push und Löschen, Tags `v*` unveränderlich. | Account-Übernahme, Leaks, unveränderliche Release-Referenzen. | auto (lokal): `check-github`; Rulesets offen: [S-43](STYLEGUIDE.md#backlog) |
 | SEC-REPO-03 | MUSS | CI-Workflows: `permissions: contents: read` als Default, Actions per 40-stelligem Commit-SHA gepinnt, nachinstallierte Werkzeuge mit fester Version (`apksigcopier=1.1.1-1` aus Ubuntu noble/universe in `release-verify.yml`), `persist-credentials: false`. Keine Release-Signatur und keine Keystore-Secrets in CI. | Kompromittierte Actions, Key-Leck. | auto: `sec-actions` |
 
 <a id="recht"></a>

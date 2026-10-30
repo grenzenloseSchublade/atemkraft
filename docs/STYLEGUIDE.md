@@ -608,6 +608,7 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | CODE-06 | MUSS | ktlint (`intellij_idea`, ohne Zeilenlimit, keine Wildcards, keine voll qualifizierten Namen). Kommentare und KDoc deutsch, erklären das Warum; `TODO` nennt eine Backlog-ID (`// TODO(S-12)`). | Diff-Ruhe, Nachverfolgbarkeit. | auto: `ktlintCheck`, `todo-unlinked` |
 | CODE-07 | SOLL | Tests nur für den Kern: Daten überleben Migration und Export/Import, Muster des Tages unverändert, Sicherheitsgrenzen der freien Folge, Gates (Wortbruch, Abschneiden, Tippfläche, Anatomie), ehrliche Texte, Navigations-Grundregel. Neue Tests nur, wo ein Fehler Daten, Sicherheit oder diese Gates trifft; Namen als deutscher Satz in Backticks. | „Kürze ab und schmeiße eher raus als zu behalten“ (DECISIONS 2026-10-22). | auto: `testDebugUnitTest` |
 | CODE-08 | – | entfällt → PROZ-01 ([PROCESS.md](PROCESS.md)): Commit-Betreff `fix:`/`docs:`/`build:`/`vX.Y.Z:`. | Prozessregel. | auto: `commit-msg` |
+| CODE-09 | MUSS | **Ablauf fehlertolerant:** Ein unbehandelter Fehler im Ablauf einer Sitzung (Atemübung, Meditation) beendet sie wie Stopp bzw. Abbruch, gibt den `PlaybackService` frei und geht an `UncaughtErrors`; keine Sitzung bleibt laufend stehen. Abbrechen ist kein Fehler (CODE-03). | Eine hängende Sitzung hielte Service, Wakelock und Benachrichtigung ohne Ende. | auto: `PlaybackFlowTest` (Fehler im Ablauf) |
 | PERF-01 | SOLL | **Leistung.** Kein I/O und kein `runBlocking` auf dem Main-Thread (Room, DataStore, Dateien, Netz nur über `suspend`/`Flow` abseits von Main). Endlos-Animationen lesen die Zeit nur im Draw und laufen nur sichtbar (`RhythmCurve` ruht unter dem Vollbild). Keine Arbeit pro Frame in der Komposition: Werte je Frame liest erst Layout oder Draw, Teures steht in `remember(key)`. | Ruckelfreies Bild auf 120 Hz, Akku in langen Sitzungen; Referenz am A54 im [Qualitätsbericht](recherche/2026-10-30-iso25010.md#messwerte). | auto: `perf-main`; manuell: R-PERF |
 
 ## <a id="automatische-pruefung"></a>13 Automatische Prüfung
@@ -727,7 +728,7 @@ Weitere Prüfungen außerhalb von `check_style.py`:
 | `ContentRulesTest` | `teaser` (Fälle `teaser`, `first-caution`, `lore-teaser`: ganzer Satz ≤ 95 Zeichen, Detail beginnt nicht mit dem Teaser, Lehre zuschreibend), `health-claims` (App-Inhalte, `strings.xml`, README, PRIVACY, Release-Notes, `fastlane/**` je Zeile; Disclaimer wörtlich), `store-lengths`, `typography` (`decimal-comma`, `quotes`, `dot-separator`, `number-unit` in Inhalten, `strings.xml`, Quellen und öffentlichen Texten, `phase-names`), `cross-references`, `glossary-terms`, `intense-caution` (eingebaut und nach den Phasen intensiv ⇒ `caution`, Hinweise nennen Wasser); alle ohne Baseline | TEXT-05, -06, -10, -11, -13, MUSTER-03, -06, SEC-LEGAL-01/-02 |
 | `ScreenshotTest`, `DeviceFitTest` | Gates aus §13.1; dazu `chipLayout`/`chipRows`/`filterRow` (MUSTER-09, -12), `RING` (LAYOUT-08), `editorFit` (MUSTER-10) | LAYOUT-03, -04, -05, -07, -08, A11Y-02, -05, §4.5 |
 | `TabNavigationTest` | Re-Tap auf den markierten Tab führt zur Tab-Startseite; markiert bleibt der Tab des Stapels; Leiste fest nur auf den Startseiten | MUSTER-08 |
-| `DatabaseMigrationTest`, `PatternBackupTest`, `DailyPatternGoldenTest`, `FreePatternTest`, `PatternEditorSafetyTest`, `PlaybackFlowTest` | Room-Migrationen (auch Schema 5 mit Daten); Export/Import-Rundlauf und alte Exportdateien als Golden-Fixtures (auch mit BOM); Muster des Tages unverändert (Hashes), in den Erzeugungsregeln und nie intensiv, auch als freie Folge, mit der „Selbst gestalten“ den Editor öffnet (`toFreePattern`); Grenzen der freien Folge; Sicherheitsdialog je Übung wie in der App (Editor und Detailseite, mit und ohne „immer zeigen“); Abläufe beider Sitzungsarten (offene Meditation, Wim Hof mit offenem Halten, abgezogener Kopfhörer, Fehler im Ablauf), „Letzte 7 Tage“ an einem Montag | SEC-STORE-01 … -03, PROZ-08, MUSTER-06, -07, -10, TEXT-16 |
+| `DatabaseMigrationTest`, `PatternBackupTest`, `DailyPatternGoldenTest`, `FreePatternTest`, `PatternEditorSafetyTest`, `PlaybackFlowTest` | Room-Migrationen (auch Schema 5 mit Daten); Export/Import-Rundlauf und alte Exportdateien als Golden-Fixtures (auch mit BOM); Muster des Tages unverändert (Hashes), in den Erzeugungsregeln und nie intensiv, auch als freie Folge, mit der „Selbst gestalten“ den Editor öffnet (`toFreePattern`); Grenzen der freien Folge; Sicherheitsdialog je Übung wie in der App (Editor und Detailseite, mit und ohne „immer zeigen“); Abläufe beider Sitzungsarten (offene Meditation, Wim Hof mit offenem Halten, abgezogener Kopfhörer, Fehler im Ablauf), „Letzte 7 Tage“ an einem Montag | SEC-STORE-01 … -03, PROZ-08, MUSTER-06, -07, -10, CODE-09, TEXT-16 |
 | `VoiceArchiveSafetyTest` | Stimmen-Archiv: falscher Hash, Übergröße, `../`, Symlink, zu viele Einträge, zu viel Inhalt – abgelehnt, Staging-Ordner gelöscht, nichts daneben | SEC-NET-03, -04 |
 | `ThemeContrastTest` | Kontrastwerte der Tabellen §2.1 und §2.2 aus den Tokens nachgerechnet: Text ≥ 4,5, großer Text und Grafik ≥ 3, Abweichung zur Tabelle ≤ 0,05 | FARBE-03 |
 | `ExerciseFilterTest` | jeder Filter trifft mindestens 3 und nicht alle Übungen, „Bis 3 min“ wie am Startknopf, UND, leere Familien fallen weg | MUSTER-12 |
@@ -749,14 +750,36 @@ Weitere Prüfungen außerhalb von `check_style.py`:
 
 ## <a id="backlog"></a>14 Backlog
 
-Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefunde werden nicht öffentlich geführt ([SECURITY.md](SECURITY.md#melden)). Reihenfolge = Priorität. Aufwand **S** < 1 h · **M** ≤ 1 Tag · **L** > 1 Tag.
+Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefunde werden nicht öffentlich geführt ([SECURITY.md](SECURITY.md#melden)). Reihenfolge = Priorität. Aufwand **S** < 1 h · **M** ≤ 1 Tag · **L** > 1 Tag. IDs werden nie neu vergeben; die nächste freie ist S-63 bzw. A-23.
+
+### Qualität (Maßnahmen aus dem [Qualitätsbericht 2026-10-30](recherche/2026-10-30-iso25010.md), [ISO-Zuordnung](PROCESS.md#iso25010))
+
+| ID | Regel | Befund und Maßnahme | Aufwand |
+|---|---|---|---|
+| S-43 | SEC-REPO-02 | **Nur der Eigentümer:** Rulesets anlegen – `main` ohne Force-Push und Löschen, Tags `refs/tags/v*` ohne Update und Löschen; danach `scripts/check-github.sh` grün (heute 4× „fehlt“). | S |
+| S-44 | A11Y-01 … -07, FARBE-05 | **Nur der Eigentümer (Gerät):** R-A11Y am A54 (TalkBack, Switch Access, D-Pad, Accessibility Scanner, Kontrast) mit Protokoll `docs/recherche/<datum>-a11y.md` (Screen × Prüfpunkt × ok/Befund); die Release-Checkliste verweist darauf. | M |
+| S-49 | PERF-01 | Rest der Referenzmessung (R-PERF): `meminfo` ohne installierte Stimme (Anteil des Sprachmodells), `gfxinfo` in der laufenden Sitzung, Blatt „Muster des Tages“ → Editor nach `closeThen` nachmessen. | S |
+| S-51 | MUSTER-06, TEXT-08 | Abschnitt „Gesundheitliche Sicherheit“: Gefahr (Ohnmacht, Wasser, Hypokapnie, Pressen, Schwangerschaft) → Maßnahme → Prüfung; Herleitung der Intensitäts-Schwellen (Halten voll > 10 s, leer > 8 s, > 20 Atemzüge/min) in DECISIONS. | M |
+| S-52 | SEC-BUILD-04 | SSH-Signatur mindestens für Release-Tags; `git tag -v` in `verify-release-body`. | S |
+| S-53 | SEC-SUP-02 | Dependency Verification auf Gradle-Plugins ausweiten, langfristig auf alle Gruppen. | M |
+| S-54 | LAYOUT-03, -05 | Querformat bei Schrift 2,0: Mindesthöhe des Inhalts (z. B. ≥ 120 dp, Detailseite heute 94 dp) im `ScreenshotTest` prüfen; Kopf und Leiste mitscrollen lassen oder einklappen. | M |
+| S-55 | CODE-02 | Lange Composables aufteilen (`SettingsScreen` nach Karten, `ExerciseDetailScreen` in Abschnitte), dazu Check `composable-length` (> 120 Zeilen) mit Baseline; überschneidet sich mit S-41. | M |
+| S-56 | – (Kompatibilität) | minSdk 26–32 absichern: kritische Robolectric-Tests mit `@Config(sdk = [26, 35])`, einmal ein Smoke-Test im Emulator – oder minSdk bewusst anheben. | M |
+| S-57 | PROZ-04, SEC-BUILD-04 | **Push und Tag nur nach Bestätigung:** Tag v2.10.0 mit grünem `release-verify`, F-Droid-Probebau im fdroidserver-Container. | S/M |
+| S-58 | LAYOUT-03, -05 | Splitscreen (320 × 640) und Tablet bei Schrift 2,0 in die `TestMatrix` (nur Gates); R-VISUAL bekommt einen Splitscreen-Schritt. | S |
+| S-59 | KOMP-01 | Kurvenzeichnung zusammenführen (`drawLevelSegments`), Farbregel nur an einer Stelle. | S |
+| S-60 | – (Interaktion) | Laut-Denken-Test mit 3–5 Personen: erste Übung, eigenes Muster, Logbuch finden. | M |
+| S-61 | MUSTER-05 | Zweistufiges Löschen (`rememberArmedConfirm`) im Compose-Test mit Uhr +4 s und mit Bedienungshilfe. | S |
+
+Kleinere Punkte ohne ID (Gong-Import auf wählbare Werte, `withinCreationRules` im `DailyPatternGoldenTest`, Fall für den `corruptionHandler` u. a.) führt der Bericht unter „Niedrig, bei Gelegenheit“.
 
 ### Automatisierung
 
 | ID | Aufgabe | Aufwand |
 |---|---|---|
+| A-10 | vorgezogen (Qualitätsbericht): Compose-Semantiktests – `enableAccessibilityChecks()` im `ScreenshotHarness`, Live-Regionen je Szene zählen (A11Y-04), Glyphen als eigene Fokus-Stopps melden (A11Y-06) | M |
+| A-22 | monatlicher OSV-Abgleich der nativen Komponenten (sherpa-onnx, onnxruntime, espeak-ng) aus einer kleinen SBOM-Liste (SEC-SUP-03) | M |
 | A-14 | Check `icon-size` (ICON-01, LAYOUT-04): `Icon(` ohne Größen-Token außerhalb von `AppIconButton`; regulär nicht ohne Fehlalarm, erst mit Parser | S |
-| A-10 | später: Compose-UI-Semantiktests (`isHeading`, `hasClickAction`, `enableAccessibilityChecks()`) | L |
 
 ### Design und Code
 
@@ -764,7 +787,7 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 |---|---|---|---|
 | S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) wird genutzt: „Mehr zum Dauerton“ in den Einstellungen und `settings_sound_hint` nennen RESPeRATE. Entscheidung offen: als Quelle des Prinzips behalten oder samt Satz streichen | S |
 | S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review 2026-10-24): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (`ExerciseDetailScreen`, `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
-| S-39 | MUSTER-09 | nur auf Zuruf: Embeddings für die Befindens-Suche (erst bei Hunderten freier Inhalte sinnvoll) | L |
+| S-62 | MUSTER-09 | nur auf Zuruf: Embeddings für die Befindens-Suche (erst bei Hunderten freier Inhalte sinnvoll) | L |
 | S-42 | §4.5 | Rest: `LogEntryCard` ist eine Listenzeile (Familienpunkt vorn, `titleSmall`, Dauer-Spalte) ohne passende Slots in `CardHeader`; erst mit einem Zeilen-Baustein überführen | S |
 
 ## <a id="quellen"></a>Quellen
