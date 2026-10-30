@@ -1,2 +1,3 @@
 ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
 <service android:name=".ui.meditation.MeditationService" />
+appContext.unregisterReceiver(receiver)

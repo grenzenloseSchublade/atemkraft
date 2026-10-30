@@ -779,7 +779,7 @@ CHECKS: list[Check] = [
     Check("sec-tls-config", "SEC-NET-01", [], custom=sec_tls_config, baseline=False, scope="`res/xml/network_security_config.xml`, Manifest"),
     Check("sec-download", "SEC-NET-02", [], custom=sec_download, baseline=False, scope="`java/`"),
     Check("sec-components", "SEC-PLAT-01", SEC_JAVA + [MANIFEST],
-          [r"<receiver\b", r"registerReceiver\((?!.*RECEIVER_NOT_EXPORTED)"], baseline=False),
+          [r"<receiver\b", r"(?<!un)registerReceiver\((?!.*RECEIVER_NOT_EXPORTED)"], baseline=False),
     Check("sec-intents", "SEC-PLAT-02", SEC_JAVA + [MANIFEST],
           [r"\bintent\.(data|extras)\b|\bget\w*Extra\(", r"<data\s", r"FLAG_MUTABLE(?!.*//\s*mutable:)"], baseline=False),
     Check("sec-no-dyncode", "SEC-PLAT-03", SEC_JAVA + [RES + "*.xml"],

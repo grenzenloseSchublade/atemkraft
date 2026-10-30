@@ -218,7 +218,7 @@ scripts/check-github.sh [--repo owner/name]         # Repo-Einstellungen per gh 
 | `sec-tls` | check-style | SEC-NET-01 | `http://` in `app/src/main` (`*.kt`, `*.java`, `*.xml`; ohne `schemas.android.com` und ohne die wortgetreuen Lizenztexte unter `assets/licenses/`) → 0; `X509TrustManager\|HostnameVerifier\|SSLSocketFactory\|setDefaultSSL` → 0 |
 | `sec-tls-config` | check-style | SEC-NET-01 | `res/xml/network_security_config.xml` mit `cleartextTrafficPermitted="false"` existiert und ist im Manifest referenziert |
 | `sec-download` | check-style | SEC-NET-02 | jede Datei mit `openConnection` setzt `connectTimeout`, `readTimeout` und `"User-Agent"`. Die sichtbare Quelle vor dem Tap prüft nur das Review (es gibt keinen eigenen String dafür) |
-| `sec-components` | check-style | SEC-PLAT-01 | `<receiver` im Quell-Manifest → 0; jede Zeile mit `registerReceiver\(` enthält `RECEIVER_NOT_EXPORTED` |
+| `sec-components` | check-style | SEC-PLAT-01 | `<receiver` im Quell-Manifest → 0; jede Zeile mit `registerReceiver\(` (Abmelden `unregisterReceiver` ausgenommen) enthält `RECEIVER_NOT_EXPORTED` |
 | `sec-intents` | check-style | SEC-PLAT-02 | `intent\.(data\|extras)\|get\w*Extra\(` → 0; `<data ` im Manifest → 0; `FLAG_MUTABLE` → 0 außer mit `// mutable:`-Begründung |
 | `sec-no-dyncode` | check-style | SEC-PLAT-03 | `WebView\|DexClassLoader\|PathClassLoader\|InMemoryDexClassLoader\|System\.load\(` → 0 |
 | `sec-storage` | check-style | SEC-STORE-01 | `getExternal\w*Dir\|getExternalStorage\|MediaStore\|MODE_WORLD_` → 0 |
