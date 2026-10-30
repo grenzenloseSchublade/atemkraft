@@ -599,6 +599,7 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | CODE-06 | MUSS | ktlint (`intellij_idea`, ohne Zeilenlimit, keine Wildcards, keine voll qualifizierten Namen). Kommentare und KDoc deutsch, erklären das Warum; `TODO` nennt eine Backlog-ID (`// TODO(S-12)`). | Diff-Ruhe, Nachverfolgbarkeit. | auto: `ktlintCheck`, `todo-unlinked` |
 | CODE-07 | SOLL | Tests nur für den Kern: Daten überleben Migration und Export/Import, Muster des Tages unverändert, Sicherheitsgrenzen der freien Folge, Gates (Wortbruch, Abschneiden, Tippfläche, Anatomie), ehrliche Texte, Navigations-Grundregel. Neue Tests nur, wo ein Fehler Daten, Sicherheit oder diese Gates trifft; Namen als deutscher Satz in Backticks. | „Kürze ab und schmeiße eher raus als zu behalten“ (DECISIONS 2026-10-22). | auto: `testDebugUnitTest` |
 | CODE-08 | – | entfällt → PROZ-01 ([PROCESS.md](PROCESS.md)): Commit-Betreff `fix:`/`docs:`/`build:`/`vX.Y.Z:`. | Prozessregel. | auto: `commit-msg` |
+| PERF-01 | SOLL | **Leistung.** Kein I/O und kein `runBlocking` auf dem Main-Thread (Room, DataStore, Dateien, Netz nur über `suspend`/`Flow` abseits von Main). Endlos-Animationen lesen die Zeit nur im Draw und laufen nur sichtbar (`RhythmCurve` ruht unter dem Vollbild). Keine Arbeit pro Frame in der Komposition: Werte je Frame liest erst Layout oder Draw, Teures steht in `remember(key)`. | Ruckelfreies Bild auf 120 Hz, Akku in langen Sitzungen; Referenz am A54 im [Qualitätsbericht](recherche/2026-10-30-iso25010.md#messwerte). | auto: `perf-main`; manuell: R-PERF |
 
 ## <a id="automatische-pruefung"></a>13 Automatische Prüfung
 
@@ -683,6 +684,7 @@ Erzeugt aus `scripts/check-style.sh --list` (`check-table` meldet Abweichungen; 
 | `ui-feature-import` | CODE-01 | src/ui/*.kt | MUSS |
 | `ordinal-persist` | CODE-05 | src/data/*.kt | MUSS |
 | `todo-unlinked` | CODE-06 | src/*.kt | MUSS |
+| `perf-main` | PERF-01 | java/*.kt | SOLL |
 | `sec-deny-deps` | SEC-PRIV-01 | gradle/libs.versions.toml, *.gradle.kts | MUSS, ohne Baseline |
 | `sec-net-endpoints` | SEC-PRIV-02 | java/*.kt, java/*.java ohne src/domain/VoiceCatalog.kt, src/ui/about/AboutScreen.kt | MUSS, ohne Baseline |
 | `sec-net-client` | SEC-NET-02 | java/*.kt, java/*.java ohne src/cue/tts/VoiceModelManager.kt | MUSS, ohne Baseline |
@@ -731,8 +733,9 @@ Weitere Prüfungen außerhalb von `check_style.py`:
 | R-TEXT | Inhaltsänderung | Teaser vollständig, derselbe Punkt wie das Detail, Studienlage-Stufe passend (TEXT-07) · keine Heilaussage, Begriffsliste, Laiensprache, zählt statt bewertet (TEXT-16) · Sicherheitsrelevantes in `cautions`, Studien mit Originaltitel in `Refs.kt` · Leer- und Fehlertexte mit nächstem Schritt |
 | R-AUDIO | Änderung in `src/cue/` oder Session-Abläufen | alle Lautstärkestufen ohne Klicks, Gong klingt aus · stumm: fremde Musik nicht geduckt; Pause gibt Fokus ab · Vibration aus: kein Tick; System-Tippvibration aus, App-Schalter an: Tick spürbar · Bildschirm aus, Home-Taste: Ton läuft, nach Fortsetzen synchron · Kopfhörer abziehen (Kabel, Bluetooth) in Übung, Meditation und Editor-Vorschau: kein Ton aus dem Lautsprecher, Ablauf und Vibration laufen weiter, Ton-Schalter auf stumm bzw. aus |
 | R-CODE | Code-Änderung | CODE-01 … -03, -05; KOMP-01; TYPO-02; MOTION-01; AUDIO-01; Layout nach §4.5 |
+| R-PERF | vor Release; Änderung an Start, Listen, Editor, Sitzung oder Abhängigkeiten | Release-Build am A54, Werte mit Datum und Version zur letzten Messung legen ([Qualitätsbericht](recherche/2026-10-30-iso25010.md#messwerte)) · Kaltstart: `adb shell am start -S -W app.atemkraft/.MainActivity`, `TotalTime` als Median aus 3 · Bildraten: `adb shell dumpsys gfxinfo app.atemkraft reset`, dann im Atmen-Tab scrollen bzw. „Muster des Tages“ → „Selbst gestalten“ → Editor öffnen, danach `dumpsys gfxinfo app.atemkraft` (Frames, Ruckler-Anteil, p50/p90/p99) · Speicher: `adb shell dumpsys meminfo app.atemkraft` nach dem Start mit und ohne installierte Stimme (PSS, Native Heap) |
 | R-STORE | Store-Update | Screenshots aus Release-Build, dunkel, Demo-Statusleiste, ohne echte Logbuchdaten · Feature-Grafik 1024 × 500 ohne Alpha, Icon 512 × 512 aus der Palette · Texte nach TEXT-11 ([STORE.md](STORE.md)) |
-| Vor Release | jedes Release (Design-Teil) | `check.sh` grün · R-A11Y, R-VISUAL (Mensch), R-AUDIO auf echtem Gerät, bei Store-Update R-STORE · Changelog nach TEXT-11 · Backlog und Baseline aktuell. Ablauf: [PROCESS.md](PROCESS.md), [SECURITY.md, Release-Checkliste](SECURITY.md#release-checkliste) |
+| Vor Release | jedes Release (Design-Teil) | `check.sh` grün · R-A11Y, R-VISUAL (Mensch), R-AUDIO und R-PERF auf echtem Gerät, bei Store-Update R-STORE · Changelog nach TEXT-11 · Backlog und Baseline aktuell. Ablauf: [PROCESS.md](PROCESS.md), [SECURITY.md, Release-Checkliste](SECURITY.md#release-checkliste) |
 
 ## <a id="backlog"></a>14 Backlog
 

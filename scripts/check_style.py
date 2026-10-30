@@ -762,6 +762,8 @@ CHECKS: list[Check] = [
     Check("ui-feature-import", "CODE-01", [SRC + "ui/*.kt"], custom=ui_feature_import),
     Check("ordinal-persist", "CODE-05", [SRC + "data/*.kt"], [r"\.ordinal\b"]),
     Check("todo-unlinked", "CODE-06", [SRC + "*.kt"], [r"//\s*TODO(?!\((S|A)-\d+\))"], skip_comments=False),
+    # Leistung (PERF-01): Datenbank auf dem Main-Thread und blockierendes Warten frieren die UI ein.
+    Check("perf-main", "PERF-01", [JAVA + "*.kt"], [r"\ballowMainThreadQueries\b", r"\brunBlocking\b"], skip_imports=True, level="SOLL"),
     # Sicherheit (docs/SECURITY.md, Automatische Prüfung): Null-Toleranz, ohne Baseline.
     Check("sec-deny-deps", "SEC-PRIV-01", ["gradle/libs.versions.toml", "*.gradle.kts"],
           [r"(?i)firebase|crashlytics|play-services|\bgms\b|admob|analytics|sentry|bugsnag|appcenter|facebook"], baseline=False),

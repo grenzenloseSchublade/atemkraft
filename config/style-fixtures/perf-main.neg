@@ -1,0 +1,5 @@
+import kotlinx.coroutines.runBlocking
+// runBlocking und allowMainThreadQueries nur in Tests
+val db = Room.databaseBuilder(context, AppDatabase::class.java, "atemkraft").build()
+suspend fun load() = withContext(Dispatchers.IO) { dao.all() }
+val settings = repository.settings.collectAsStateWithLifecycle(initialValue = Settings())

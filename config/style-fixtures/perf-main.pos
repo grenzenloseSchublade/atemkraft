@@ -1,0 +1,2 @@
+val db = Room.databaseBuilder(context, AppDatabase::class.java, "atemkraft").allowMainThreadQueries().build()
+val settings = runBlocking { repository.settings.first() }
