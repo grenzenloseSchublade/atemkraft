@@ -66,14 +66,35 @@ jobs:
         id: asset
         env:
           GH_TOKEN: ${{ github.token }}
+        # Fail-closed: Nur „kein Release“ oder „Release ohne APK“ ist der normale Fall beim Tag-Push
+        # (Hinweis, grün). Jeder andere Lesefehler und jeder Download-Fehler bei vorhandenen APKs
+        # bricht ab – sonst fielen Body-Prüfung und Nachbau-Vergleich still weg.
         run: |
           mkdir -p asset
-          if gh release download "${TAG}" --repo "${GITHUB_REPOSITORY}" --pattern "atemkraft-${TAG}*.apk" --dir asset; then
-            echo "found=true" >> "${GITHUB_OUTPUT}"
-          else
+          if ! count="$(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json assets \
+            --jq '[.assets[].name | select(endswith(".apk"))] | length' 2> release-view.err)"; then
+            if grep -qi "release not found" release-view.err; then
+              count=0
+            else
+              cat release-view.err >&2
+              echo "::error::Release ${TAG} nicht lesbar."
+              exit 1
+            fi
+          fi
+          if [[ ! "${count}" =~ ^[0-9]+$ ]]; then
+            echo "::error::Unerwartete Antwort beim Zählen der Assets: ${count}"
+            exit 1
+          fi
+          if [[ "${count}" -eq 0 ]]; then
             echo "found=false" >> "${GITHUB_OUTPUT}"
             echo "::notice::Noch kein Release mit APK für ${TAG}; der Vergleich läuft beim Veröffentlichen des Releases."
+            exit 0
           fi
+          if ! gh release download "${TAG}" --repo "${GITHUB_REPOSITORY}" --pattern "atemkraft-${TAG}*.apk" --dir asset; then
+            echo "::error::Release ${TAG} hat ${count} APK(s), der Download von atemkraft-${TAG}*.apk ist gescheitert."
+            exit 1
+          fi
+          echo "found=true" >> "${GITHUB_OUTPUT}"
       - name: Release-Body prüfen
         if: steps.asset.outputs.found == 'true'
         env:
@@ -81,9 +102,11 @@ jobs:
         run: |
           gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json body --jq .body > release-body.md
           scripts/verify-release-body.sh --tag "${TAG}" --body release-body.md asset/*.apk
+      # Version gepinnt (SECURITY.md, Lieferkette): 1.1.1-1 aus noble/universe (ubuntu-24.04). Gibt
+      # das Runner-Image sie nicht mehr her, scheitert der Schritt laut statt still eine andere zu nehmen.
       - name: apksigcopier installieren
         if: steps.asset.outputs.found == 'true'
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends apksigcopier
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends apksigcopier=1.1.1-1
       - name: Assets prüfen und mit dem Nachbau vergleichen
         if: steps.asset.outputs.found == 'true'
         run: |
