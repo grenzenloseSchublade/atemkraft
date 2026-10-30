@@ -2,7 +2,7 @@
 
 Offene Arbeit zu den Regeln aus [STYLEGUIDE.md](STYLEGUIDE.md), [SECURITY.md](SECURITY.md) und [PROCESS.md](PROCESS.md). Die IDs `S-n` und `A-n` nennen die Baseline (`config/style-baseline.txt`, STYLEGUIDE §13.2) und `// TODO(S-n)` im Code (CODE-06). Regelzellen der S-Zeilen prüft `rule-length` wie im Styleguide (≤ 400 Zeichen).
 
-Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefunde werden nicht öffentlich geführt ([SECURITY.md](SECURITY.md#melden)). Reihenfolge = Priorität. Aufwand **S** < 1 h · **M** ≤ 1 Tag · **L** > 1 Tag. IDs werden nie neu vergeben; die nächste freie ist S-63 bzw. A-23.
+Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefunde werden nicht öffentlich geführt ([SECURITY.md](SECURITY.md#melden)). Reihenfolge = Priorität. Aufwand **S** < 1 h · **M** ≤ 1 Tag · **L** > 1 Tag. IDs werden nie neu vergeben; die nächste freie ist S-64 bzw. A-23.
 
 ### Qualität (Maßnahmen aus dem [Qualitätsbericht 2026-10-30](recherche/2026-10-30-iso25010.md), [ISO-Zuordnung](PROCESS.md#iso25010))
 
@@ -40,4 +40,5 @@ Kleinere Punkte ohne ID (Gong-Import auf wählbare Werte, `withinCreationRules` 
 | S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) wird genutzt: „Mehr zum Dauerton“ in den Einstellungen und `settings_sound_hint` nennen RESPeRATE. Entscheidung offen: als Quelle des Prinzips behalten oder samt Satz streichen | S |
 | S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (S-55, dazu `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
 | S-62 | MUSTER-09 | nur auf Zuruf: Embeddings für die Befindens-Suche (erst bei Hunderten freier Inhalte sinnvoll) | L |
-| S-42 | STYLEGUIDE §4.5 | Rest: `LogEntryCard` ist eine Listenzeile (Familienpunkt vorn, `titleSmall`, Dauer-Spalte) ohne passende Slots in `CardHeader`; erst mit einem Zeilen-Baustein überführen | S |
+| S-63 | FARBE-02 | Freie Alpha-Konstanten außerhalb von `ui/theme/` (`TAB_DIVIDER_ALPHA` in `AppNavigationBar`, `AURA_LAYER` in `VayuFigure`, Glow-Alpha in `BreathingCircle`) als Tokens in `Color.kt` und §2.2 führen; `alpha-literal` findet benannte Konstanten nicht. | S |
+| S-42 | STYLEGUIDE §4.5 | Rest: `LogEntryRow` (Logbuch) ist eine Listenzeile (Familienpunkt vorn, `titleSmall`, Dauer-Spalte) ohne passende Slots in `CardHeader`; erst mit einem Zeilen-Baustein überführen | S |
