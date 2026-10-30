@@ -7,14 +7,19 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.FakeLogbookDao
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.SettingsRepository
+import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
+import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SessionTiming
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.UncaughtErrors
+import app.atemkraft.ui.log.LogPeriod
+import app.atemkraft.ui.log.groupLogEntries
+import app.atemkraft.ui.log.recentMinutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,6 +45,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneOffset
 import kotlin.random.Random
 
 /**
@@ -47,7 +55,8 @@ import kotlin.random.Random
  * Dispatcher kommen vom Test-Scheduler, Audio, Service und Logbuch sind Attrappen, die mitschreiben.
  * Geprüft wird, was sonst nur das Gerät zeigt: Takt, Pause und Logbuch-Regel der Atemübung und der
  * offenen Meditation, offenes Halten (Wim Hof) bei Fokusverlust und abgezogenem Kopfhörer, die
- * Übergabe „Danach in die Stille“ samt Foreground-Service und das Aufräumen nach einem Fehler im Ablauf.
+ * Übergabe „Danach in die Stille“ samt Foreground-Service und das Aufräumen nach einem Fehler im Ablauf;
+ * dazu, wie das Logbuch die letzten 7 Tage zählt.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackFlowTest {
@@ -138,6 +147,34 @@ class PlaybackFlowTest {
         assertEquals(2, dao.rows.size)
         assertTrue("Service am Ende frei", holders.held.isEmpty())
         assertEquals(errorsBefore, UncaughtErrors.last.value)
+    }
+
+    /**
+     * S-46: „Letzte 7 Tage“ heißt überall dasselbe – heute und die sechs Tage davor wie die
+     * Wochenpunkte, nicht ab Montag (Gruppe und Minuten aus derselben Definition); die Minuten
+     * werden über alle Sitzungen summiert und erst am Ende abgerundet.
+     */
+    @Test
+    fun `Logbuch zählt die letzten 7 Tage wie die Wochenpunkte, Minuten erst am Ende gerundet`() {
+        val zone = ZoneOffset.UTC
+        val monday = LocalDate.of(2026, 10, 26) // ab Montag gezählt, wäre die Woche heute fast leer
+        fun entry(daysAgo: Long, seconds: Long) = SessionLogEntry(
+            exerciseId = "resonanz",
+            exerciseName = "Resonanz-Atmung",
+            family = BreathingFamily.DOWNREGULATE,
+            startedAtEpochMs = monday.minusDays(daysAgo).atTime(7, 30).toInstant(zone).toEpochMilli(),
+            durationMs = seconds * 1_000,
+            roundsCompleted = 10,
+        )
+        // Je 90 s an vier der sieben Tage: 6 min (je Tag abgerundet wären es 4); vor sieben Tagen zählt nicht mehr.
+        val entries = listOf(0L, 1L, 3L, 6L).map { entry(it, 90) } + entry(7, 600)
+        assertEquals(6L, recentMinutes(entries, monday, zone))
+        val groups = groupLogEntries(entries, monday, zone)
+        assertEquals(
+            listOf(LogPeriod.Today, LogPeriod.Yesterday, LogPeriod.LastSevenDays, LogPeriod.Month(YearMonth.of(2026, 10))),
+            groups.map { it.period },
+        )
+        assertEquals(listOf(monday.minusDays(3), monday.minusDays(6)), groups[2].days.map { it.date })
     }
 
     @Test

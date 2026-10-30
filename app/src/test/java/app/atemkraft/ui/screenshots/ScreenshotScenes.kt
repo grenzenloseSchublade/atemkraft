@@ -85,7 +85,7 @@ internal fun LearnTab() = LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {},
 
 /**
  * Beispieleinträge für Logbuch und „Eigene“: relativ zum festen DAY, damit jede Gruppe vorkommt
- * (Heute, Gestern, Diese Woche, zwei Monate).
+ * (Heute, Gestern, Letzte 7 Tage, zwei Monate).
  */
 internal fun logEntries(): List<SessionLogEntry> {
     fun at(daysAgo: Long, hour: Int, minute: Int): Long = ScreenshotHarness.DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

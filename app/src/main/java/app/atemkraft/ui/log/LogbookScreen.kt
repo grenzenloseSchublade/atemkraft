@@ -81,7 +81,7 @@ private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d
 /**
  * Logbuch als Push-Seite (aus der Karte „Verlauf“ im Tab „Eigene“ und vom Ende einer
  * Übung): Statistik mit 7-Tage-Übersicht, darunter der Verlauf nach Tagen gruppiert (Heute /
- * Gestern / Diese Woche / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
+ * Gestern / Letzte 7 Tage / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
  * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik; ein Satz unter
  * dem Verlauf sagt, wo (Nutzer 2026-10-24). Ein Eintrag, dessen Übung es noch gibt ([canOpen]),
  * öffnet sie ([onOpenExercise]) – „das von gestern Abend nochmal“. [showStreak]: Einstellung
@@ -162,9 +162,9 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
 /**
  * Verlauf im Tab „Eigene“ unter dem Kopf „Verlauf“ (Nutzer 2026-10-23; seit 2026-10-24 ohne
  * Karte, Vorschlag B – der Kopf ist ein `SectionHeader` mit Chevron und führt zur Logbuch-Seite):
- * die Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min diese
- * Woche“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten Tage;
- * fehlt beides, die Zahl der Sitzungen). Ohne Sitzungen steht statt Punkten und Zeile nur der
+ * die Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min in den
+ * letzten 7 Tagen“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten
+ * Tage, [recentMinutes]; fehlt beides, die Zahl der Sitzungen). Ohne Sitzungen steht statt Punkten und Zeile nur der
  * Satz (MUSTER-04). Ohne [showStreak] (Einstellung „Serie zeigen“ aus) fehlt die Serie, die
  * Minuten bleiben.
  *
@@ -174,7 +174,7 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
 internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now(), showStreak: Boolean = true) {
     val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
     val minutesPerDay = rememberMinutesPerDay(entries)
-    val weekMinutes = (0L..6L).sumOf { minutesPerDay[today.minusDays(it).toEpochDay()] ?: 0L }
+    val weekMinutes = remember(entries, today) { recentMinutes(entries, today, ZoneId.systemDefault()) }
     Column(modifier = Modifier.fillMaxWidth()) {
         if (entries.isEmpty()) {
             HintText(stringResource(R.string.own_history_empty))
@@ -183,7 +183,7 @@ internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = Local
             Spacer(Modifier.height(Dimens.ListGap))
             val parts = buildList {
                 if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
-                if (weekMinutes > 0) add(stringResource(R.string.log_minutes_week, weekMinutes))
+                if (weekMinutes > 0) add(stringResource(R.string.log_minutes_recent, weekMinutes))
                 if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
             }
             // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
@@ -210,7 +210,7 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
         modifier = Modifier.fillMaxWidth().then(if (spoken) Modifier else Modifier.semantics { hideFromAccessibility() }),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        for (offset in 6 downTo 0) {
+        for (offset in RECENT_DAYS - 1 downTo 0) {
             val day = today.minusDays(offset.toLong())
             val minutes = minutesPerDay[day.toEpochDay()] ?: 0L
             // Sequenzielle Rampe (eine Hue): leise → präsent → voll, jede Stufe ≥ 3:1 zum Grund.
@@ -260,7 +260,7 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
 
 /**
  * Eine Gruppe des Verlaufs: Abschnittskopf, darunter je Tag eine Karte. Heute und Gestern sind ein Tag und brauchen keine Tageszeile; in
- * „Diese Woche“ und den Monaten steht über jeder Karte der Tag („Mi 15.10.“), die Zeilen zeigen
+ * „Letzte 7 Tage“ und den Monaten steht über jeder Karte der Tag („Mi 15.10.“), die Zeilen zeigen
  * nur die Uhrzeit.
  */
 @Composable
@@ -276,7 +276,7 @@ private fun LogGroupSection(
 
         LogPeriod.Yesterday -> stringResource(R.string.log_group_yesterday)
 
-        LogPeriod.ThisWeek -> stringResource(R.string.log_group_week)
+        LogPeriod.LastSevenDays -> stringResource(R.string.log_group_recent)
 
         is LogPeriod.Month -> stringResource(
             R.string.log_group_month,
@@ -316,7 +316,7 @@ private fun LogGroupSection(
     }
 }
 
-/** Geübte Minuten je Tag (Epochentag → Minuten). */
+/** Geübte Minuten je Tag (Epochentag → Minuten), nur für die Stufe des Punkts; die Summe rechnet [recentMinutes]. */
 @Composable
 private fun rememberMinutesPerDay(entries: List<SessionLogEntry>): Map<Long, Long> = remember(entries) {
     entries.groupBy { it.startedAtEpochMs.toEpochDay() }

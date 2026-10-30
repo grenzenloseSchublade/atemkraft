@@ -464,8 +464,8 @@
         <item quantity="other">%d Sitzungen</item>
     </plurals>
     <string name="log_minutes_total">%1$d\u00A0min gesamt</string>
-    <!-- Minuten der sieben Tage der Wochenpunkte (Karte „Verlauf“ im Tab „Eigene“). -->
-    <string name="log_minutes_week">%1$d\u00A0min diese Woche</string>
+    <!-- Minuten der sieben Tage der Wochenpunkte, heute und die sechs davor (Verlauf im Tab „Eigene“). -->
+    <string name="log_minutes_recent">%1$d\u00A0min in den letzten 7\u00A0Tagen</string>
     <plurals name="log_rounds">
         <item quantity="one">%d Runde</item>
         <item quantity="other">%d Runden</item>
@@ -473,11 +473,12 @@
     <!-- Verlauf nach Tagen gruppiert; ältere Einträge je Monat („September 2026“). -->
     <string name="log_group_today">Heute</string>
     <string name="log_group_yesterday">Gestern</string>
-    <string name="log_group_week">Diese Woche</string>
+    <!-- Dieselben sieben Tage wie die Wochenpunkte, ohne Heute und Gestern. -->
+    <string name="log_group_recent">Letzte 7\u00A0Tage</string>
     <string name="log_group_month">%1$s %2$d</string>
-    <!-- Tageszeile über den Sitzungen eines Tages in „Diese Woche“ und den Monaten: „Mi 15.10.“ -->
+    <!-- Tageszeile über den Sitzungen eines Tages in „Letzte 7 Tage“ und den Monaten: „Mi 15.10.“ -->
     <string name="log_day_label">%1$s %2$s</string>
-    <!-- Wochentage Montag … Sonntag, kurz (7-Tage-Übersicht, Zeiten dieser Woche). -->
+    <!-- Wochentage Montag … Sonntag, kurz (7-Tage-Übersicht, Tageszeilen im Verlauf). -->
     <string-array name="log_weekday_short">
         <item>Mo</item>
         <item>Di</item>
