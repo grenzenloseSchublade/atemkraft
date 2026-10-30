@@ -87,7 +87,7 @@ class MeditationController(
     /** Verfügbarkeit einer deutschen TTS-Stimme (steuert den Sprach-Schalter im UI). */
     val speechAvailable: StateFlow<Boolean> = audio.speechAvailable
 
-    /** Ist die hochwertige Piper-Stimme tatsächlich einsatzbereit? (fürs UI/Preview-Routing) */
+    /** Ist die aktive neuronale Stimme installiert? (Ihr Modell lädt erst [start]; fürs UI/Preview-Routing) */
     val piperReady = audio.piperReady
 
     private var currentConfig = MeditationConfig()

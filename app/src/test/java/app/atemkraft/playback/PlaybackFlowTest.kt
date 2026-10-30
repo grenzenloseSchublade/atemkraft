@@ -22,10 +22,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -208,6 +206,7 @@ class PlaybackFlowTest {
         // Kopfhörer abgezogen: stumm wie mit dem Schalter, die Meditation läuft weiter (S-48).
         audio.unplugged?.invoke()
         assertTrue(m.state.value.muted)
+        assertTrue("an den Ton weitergegeben", audio.muted)
         advance(5_000L)
         assertEquals(MeditationStatus.RUNNING, m.state.value.status)
         m.end()
@@ -215,7 +214,6 @@ class PlaybackFlowTest {
         assertEquals(MeditationStatus.FINISHED, m.state.value.status)
         assertEquals(70_000L, m.state.value.elapsedMs)
         assertEquals(listOf(70_000L), dao.rows.map { it.durationMs })
-        assertEquals("der End-Gong schweigt, weil stumm", 2, audio.gongs)
         // Ausklang abgewartet: Service, Modell und Empfänger sind frei.
         advance(7_000L + 500L)
         assertTrue(holders.held.isEmpty())
@@ -225,14 +223,12 @@ class PlaybackFlowTest {
     }
 
     @Test
-    fun `Wim Hof - offenes Halten wartet, Fokusverlust und abgezogener Kopfhörer pausieren nicht`() = runTest {
+    fun `Wim Hof - offenes Halten wartet und zählt hoch, abgezogener Kopfhörer pausiert nicht`() = runTest {
         val audio = RecordingBreathAudio()
         val c = breath(audio)
         c.start(wimHof, SessionConfig(rounds = 1))
         advance(COUNTDOWN_MS)
-        assertEquals(CueEvent.INHALE, audio.heard.single())
-        // Ein Anruf nimmt den Fokus (die Attrappe meldet „lost“ wie der Listener): still, der Ablauf läuft.
-        audio.lost = true
+        assertEquals(CueEvent.INHALE, audio.felt.single())
         advance(WIM_HOF_BREATHS_MS + 2_000L)
         assertEquals(SessionStatus.WAITING_FOR_USER, c.state.value.status)
         assertEquals(PhaseType.HOLD_EMPTY, c.state.value.phaseType)
@@ -243,17 +239,15 @@ class PlaybackFlowTest {
         c.continueFromUserPaced()
         runCurrent()
         assertEquals(SessionStatus.RUNNING, c.state.value.status)
-        // Kopfhörer abgezogen: stumm (sichtbar am Schalter), auch nachdem der Fokus zurückkam.
+        // Kopfhörer abgezogen: stumm (sichtbar am Schalter), der Ablauf läuft weiter.
         audio.unplugged()
-        audio.lost = false
         advance(19_000L - 1)
         assertEquals(SessionStatus.RUNNING, c.state.value.status)
         assertTrue(c.state.value.muted)
         advance(1)
         assertEquals(SessionStatus.FINISHED, c.state.value.status)
-        // Gespürt wird jede Phase (Haptik), gehört nur die erste.
+        // Gespürt wird jede Phase (Haptik), auch stumm.
         assertEquals(60 + 5 + 1, audio.felt.size) // 30 Atemzüge, 5 Phasen ums Halten, Abschluss
-        assertEquals(1, audio.heard.size)
         val activeMs = WIM_HOF_BREATHS_MS + 2_000L + 45_000L + 19_000L
         assertEquals(listOf(activeMs to 1), dao.rows.map { it.durationMs to it.roundsCompleted })
         assertEquals(errorsBefore, UncaughtErrors.last.value)
@@ -298,14 +292,12 @@ class PlaybackFlowTest {
     }
 
     /**
-     * Schreibt die Cues mit: [felt] alle (die Haptik folgt jedem), [heard] nur ohne Stummschalter und
-     * ohne Fokusverlust [lost] – die Regel des `SessionAudioCoordinator`. [unplugged] ist der Rückruf
+     * Schreibt die Cues mit ([felt]: die Haptik folgt jedem). Ob ein Cue klingt, regelt der
+     * `SessionAudioCoordinator` (R-AUDIO am Gerät), nicht diese Attrappe. [unplugged] ist der Rückruf
      * für den abgezogenen Kopfhörer; mit [tailFails] scheitert das Ende.
      */
     private class RecordingBreathAudio(private val tailFails: Boolean = false) : BreathAudio {
         val felt = mutableListOf<CueEvent>()
-        val heard = mutableListOf<CueEvent>()
-        var lost = false
         var unplugged: () -> Unit = {}
 
         override fun bind(
@@ -317,19 +309,13 @@ class PlaybackFlowTest {
             onUnplugged: () -> Unit,
         ) {
             unplugged = onUnplugged
-            val mutedNow = muted.stateIn(scope, SharingStarted.Eagerly, false)
-            scope.launch {
-                cues.collect {
-                    felt += it
-                    if (!lost && !mutedNow.value) heard += it
-                }
-            }
+            scope.launch { cues.collect { felt += it } }
         }
 
         override fun finishTailMs(muted: Boolean) = if (tailFails) throw TailBroke() else 0L
     }
 
-    /** Merkt sich Gongs und Ansagen (stumm: keine), das geladene Sprachmodell und den Kopfhörer-Rückruf. */
+    /** Merkt sich Gongs, Ansagen, den Stummschalter, das geladene Sprachmodell und den Kopfhörer-Rückruf. */
     private class RecordingMeditationAudio(speech: Boolean = false, private val gongFails: Boolean = false) : MeditationAudio {
         override val speechAvailable: StateFlow<Boolean> = MutableStateFlow(speech)
         override val piperReady: StateFlow<Boolean> = MutableStateFlow(false)
@@ -337,7 +323,8 @@ class PlaybackFlowTest {
         val spoken = mutableListOf<String>()
         var modelLoaded = false
         var unplugged: (() -> Unit)? = null
-        private var muted = false
+        var muted = false
+            private set
 
         override fun checkSpeech() = Unit
 
@@ -368,13 +355,13 @@ class PlaybackFlowTest {
 
         override fun gong() {
             if (gongFails) throw GongBroke()
-            if (!muted) gongs++
+            gongs++
         }
 
         override fun silenceGong() = Unit
 
         override fun speak(text: String) {
-            if (!muted) spoken += text
+            spoken += text
         }
 
         override fun stopSpeech() = Unit
