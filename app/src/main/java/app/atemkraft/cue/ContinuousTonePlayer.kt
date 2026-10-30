@@ -85,10 +85,11 @@ class ContinuousTonePlayer {
         if (running) return
         running = true
         targetGain = 0f
-        thread = Thread { runLoop() }.apply {
-            isDaemon = true
-            start()
-        }
+        // Erst zuweisen, dann starten: runLoop prüft `thread === self` und endete sonst sofort, wenn
+        // der neue Thread vor der Zuweisung zum ersten Mal hinsieht.
+        val next = Thread { runLoop() }.apply { isDaemon = true }
+        thread = next
+        next.start()
     }
 
     /**
@@ -150,9 +151,11 @@ class ContinuousTonePlayer {
         var articStage = 2 // 0 = absenken, 1 = anschwellen, 2 = ruhend
         var articPos = 0
         // Lokale Ramp-Sicht des Audio-Threads: Position gehört dem Thread, Parameter kommen
-        // atomar über die ramp-Referenz; neue Identität = Position zurück auf ihren Start.
+        // atomar über die ramp-Referenz; neue Identität = Position zurück auf ihren Start. Auch die
+        // erste Sicht beginnt dort: Setzt onPhase den Glide (Weiter mitten in der Phase), bevor der
+        // Thread anläuft, setzt der Ton an der Pausen-Tonhöhe fort statt am Phasenanfang (S-19).
         var curRamp = ramp
-        var rampPos = 0L
+        var rampPos = curRamp.startSample
         try {
             while (running && thread === self) {
                 val r = ramp
