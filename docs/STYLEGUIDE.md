@@ -520,7 +520,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | Bereich (die vier Familien in UI und Store: „Mehr: …“, „17 Atemübungen in vier Bereichen“) | Gruppe, Familie (nur Code) |
 | Eigenes Muster (selbst zusammengestellt), Eigene Kreationen (Liste im Tab „Eigene“), Tab „Eigene“, Verlauf (Kopf mit Wochenpunkten, führt zum Logbuch) | Custom, Vorlage, Konfigurator, Meine Muster (nur in Code und Doku) |
 | Atemkurve (Bild eines Atemzugs im Editor), Griff, Startpunkt (Ausgangsfolgen im Editor), Ablauf (Liste der Phasen), Phase hinzufügen, intensiv | Graph, Diagramm, Feinjustieren, Zufallsmuster, Sequenz |
-| Halten voll / Halten leer (wo beide nebeneinander stehen: Muster-Editor; zwischen zwei Stufen nur „Halten“) | Halten oben/unten |
+| Halten voll / Halten leer (Session, Karten, Muster-Editor; zwischen zwei Stufen und am Stepper für beide nur „Halten“) | Halten oben/unten |
 | Laden, wird geladen | Download |
 | Sprachanleitung, Stimme | Sprach-Stimme, Stimmmodell (nur Credits) |
 | Beenden (laufende Sitzung abbrechen) | Ende (nur als Knopf am Ende-Screen) |

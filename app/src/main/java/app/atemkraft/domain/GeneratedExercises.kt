@@ -43,11 +43,11 @@ object GeneratedExercises {
     ): Exercise {
         val phases = buildList {
             add(Phase(PhaseType.INHALE, secs(spec.inhale)))
-            // Notiz wie bei Box und 4-7-8: Beide Haltephasen heißen „Halten“, erst „voll“/„leer“
-            // darunter unterscheidet sie (TEXT-02).
-            spec.holdFull?.let { add(Phase(PhaseType.HOLD_FULL, secs(it), note = "voll")) }
+            // Wie bei Box und 4-7-8 heißen die Haltephasen nach ihrem Typ „Halten voll“ und
+            // „Halten leer“ (TEXT-02), ohne Notiz, die das wiederholte.
+            spec.holdFull?.let { add(Phase(PhaseType.HOLD_FULL, secs(it))) }
             add(Phase(PhaseType.EXHALE, secs(spec.exhale)))
-            spec.holdEmpty?.let { add(Phase(PhaseType.HOLD_EMPTY, secs(it), note = "leer")) }
+            spec.holdEmpty?.let { add(Phase(PhaseType.HOLD_EMPTY, secs(it))) }
         }
         val cycleSeconds = spec.inhale + (spec.holdFull ?: 0.0) + spec.exhale + (spec.holdEmpty ?: 0.0)
         val targetSeconds = minutes?.let { it * 60.0 } ?: TARGET_SECONDS
@@ -90,8 +90,9 @@ object GeneratedExercises {
      * bei [exerciseFrom] mit [PatternSpec].
      *
      * Phasen: Ein → [PhaseType.INHALE], Aus → [PhaseType.EXHALE], Halten oben →
-     * [PhaseType.HOLD_FULL] („voll“), unten → [PhaseType.HOLD_EMPTY] („leer“), dazwischen →
-     * [PhaseType.HOLD_FULL] mit Füllstand („Pause“) wie bei Viloma. Einen Füllstand
+     * [PhaseType.HOLD_FULL] („Halten voll“), unten → [PhaseType.HOLD_EMPTY] („Halten leer“),
+     * dazwischen → [PhaseType.HOLD_FULL] mit Füllstand, Label „Halten“ und Notiz „Pause“ wie bei
+     * Viloma. Einen Füllstand
      * ([Phase.level]) bekommt eine Phase nur, wo er vom Phasentyp abweicht (Stufen); Stufen tragen
      * „1. Stufe“, „2. Stufe“ … als Notiz.
      *
@@ -166,9 +167,9 @@ object GeneratedExercises {
                 FreePhaseType.OUT -> Phase(PhaseType.EXHALE, duration, note = stage, level = level.takeUnless { it == FULL_EXHALE })
 
                 FreePhaseType.HOLD -> when (pattern.holdPositionAt(i)) {
-                    HoldPosition.FULL -> Phase(PhaseType.HOLD_FULL, duration, note = "voll")
-                    HoldPosition.EMPTY -> Phase(PhaseType.HOLD_EMPTY, duration, note = "leer")
-                    else -> Phase(PhaseType.HOLD_FULL, duration, note = "Pause", level = level)
+                    HoldPosition.FULL -> Phase(PhaseType.HOLD_FULL, duration)
+                    HoldPosition.EMPTY -> Phase(PhaseType.HOLD_EMPTY, duration)
+                    else -> Phase(PhaseType.HOLD_FULL, duration, label = PhaseNames.HOLD, note = "Pause", level = level)
                 }
             }
         }

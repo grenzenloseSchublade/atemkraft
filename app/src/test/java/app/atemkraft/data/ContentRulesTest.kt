@@ -484,8 +484,9 @@ class ContentRulesTest {
         val phaseNames = mapOf(
             "phase_inhale" to PhaseNames.INHALE,
             "phase_exhale" to PhaseNames.EXHALE,
-            "phase_hold_full" to PhaseNames.HOLD,
-            "phase_hold_empty" to PhaseNames.HOLD,
+            "phase_hold" to PhaseNames.HOLD,
+            "phase_hold_full" to PhaseNames.HOLD_FULL,
+            "phase_hold_empty" to PhaseNames.HOLD_EMPTY,
         ).mapNotNull { (key, name) ->
             val value = strings.firstOrNull { it.id == "strings:$key" }?.value
             if (value != name) Finding("strings:$key", "„$value“ statt „$name“ wie PhaseNames") else null

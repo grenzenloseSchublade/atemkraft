@@ -78,6 +78,8 @@ data class SessionUiState(
     val countdown: Int = 0,
     /** Typ der kommenden Phase (für die dezente „Als Nächstes"-Anzeige); null am Ende. */
     val nextPhaseType: PhaseType? = null,
+    /** Eigenes Label der kommenden Phase (Pause zwischen Stufen: „Halten“), sonst null. */
+    val nextPhaseLabel: String? = null,
     /** Kurze Muster-Anleitung (für die Übersicht im Start-Countdown). */
     val patternHint: String? = null,
     /** Transienter In-Session-Stummschalter (übersteuert den Ton, nicht die Einstellung). */
@@ -366,6 +368,7 @@ class BreathSessionController(
                     roundIndex = phase.roundIndex,
                     roundCount = phase.roundCount,
                     nextPhaseType = nextPhaseType(),
+                    nextPhaseLabel = timeline.getOrNull(index + 1)?.label,
                     progress = progressTracker.at(index, totalMs - left),
                 )
             }
@@ -391,6 +394,7 @@ class BreathSessionController(
                 roundIndex = phase.roundIndex,
                 roundCount = phase.roundCount,
                 nextPhaseType = nextPhaseType(),
+                nextPhaseLabel = timeline.getOrNull(index + 1)?.label,
                 progress = progressTracker.at(index, 0L),
             )
         }

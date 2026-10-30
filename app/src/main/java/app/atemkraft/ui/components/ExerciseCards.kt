@@ -89,7 +89,7 @@ private fun exerciseMetaLine(exercise: Exercise): String? {
     return (rhythm + duration).joinToString(DOT_SEPARATOR)
 }
 
-/** Phasenname für die Metazeile; „Halten“ ohne voll/leer wie in der Sitzung (`phase_hold_*`). */
+/** Phasenname für die Metazeile; „Halten voll“/„Halten leer“ wie in der Sitzung (`phase_hold_*`, TEXT-02). */
 @Composable
 private fun phaseName(type: PhaseType): String = stringResource(
     when (type) {

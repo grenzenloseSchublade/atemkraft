@@ -16,11 +16,15 @@
     <string name="shortcut_meditation">Meditation</string>
     <string name="shortcut_last_long">Zuletzt: %1$s</string>
 
-    <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen) -->
+    <!-- Phasen-Labels (Standard; Übungen können eigene Labels mitbringen). Halten voll und leer
+         heißen verschieden, damit Kreis, „Als Nächstes“, Mini-Leiste und TalkBack sie unterscheiden
+         (TEXT-02); „Halten“ allein für die Pause zwischen zwei Stufen und den Stepper, der beide
+         Haltephasen zugleich stellt. Gespiegelt in domain/PhaseNames.kt. -->
     <string name="phase_inhale">Einatmen</string>
     <string name="phase_exhale">Ausatmen</string>
-    <string name="phase_hold_full">Halten</string>
-    <string name="phase_hold_empty">Halten</string>
+    <string name="phase_hold">Halten</string>
+    <string name="phase_hold_full">Halten voll</string>
+    <string name="phase_hold_empty">Halten leer</string>
     <string name="phase_inhale_top_up">Nachatmen</string>
     <string name="phase_rest">Locker atmen</string>
 

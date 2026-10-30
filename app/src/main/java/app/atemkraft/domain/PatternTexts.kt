@@ -27,11 +27,21 @@ object PatternTexts {
      * steht ein geschütztes Leerzeichen ([NBSP]): Bei großer Schrift bricht die Zeile sonst
      * zwischen „1" und „s" um (TEXT-10). Teile werden mit [DOT_SEPARATOR] verbunden.
      */
-    fun hintFor(spec: PatternSpec): String = buildList {
+    fun hintFor(spec: PatternSpec): String = inWords(spec, PhaseNames.HOLD, PhaseNames.HOLD)
+
+    /**
+     * Musterzeile der Karte, z. B. „Einatmen 4 s · Halten voll 2 s · Ausatmen 6 s · Halten leer 1 s“:
+     * wie [hintFor], aber Halten voll und leer unterscheidbar wie in der Session und bei eigenen
+     * Mustern (TEXT-02). [hintFor] selbst bleibt „Halten“, weil es in die Texte des Tagesmusters
+     * eingeht, die bytegleich mit 1.6.8 bleiben (DailyPatternGoldenTest).
+     */
+    fun cardLineFor(spec: PatternSpec): String = inWords(spec, PhaseNames.HOLD_FULL, PhaseNames.HOLD_EMPTY)
+
+    private fun inWords(spec: PatternSpec, holdFull: String, holdEmpty: String): String = buildList {
         add("${PhaseNames.INHALE} ${spec.inhale.fmt()}${NBSP}s")
-        spec.holdFull?.let { add("${PhaseNames.HOLD} ${it.fmt()}${NBSP}s") }
+        spec.holdFull?.let { add("$holdFull ${it.fmt()}${NBSP}s") }
         add("${PhaseNames.EXHALE} ${spec.exhale.fmt()}${NBSP}s")
-        spec.holdEmpty?.let { add("${PhaseNames.HOLD} ${it.fmt()}${NBSP}s") }
+        spec.holdEmpty?.let { add("$holdEmpty ${it.fmt()}${NBSP}s") }
     }.joinToString(DOT_SEPARATOR)
 
     /** Geschütztes Leerzeichen zwischen Zahl und Einheit. */

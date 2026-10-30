@@ -76,6 +76,7 @@ internal fun sessionAt(exercise: Exercise, elapsedMs: Long, phase: (RuntimePhase
         roundIndex = current.roundIndex,
         roundCount = current.roundCount,
         nextPhaseType = timeline.getOrNull(index + 1)?.type,
+        nextPhaseLabel = timeline.getOrNull(index + 1)?.label,
         patternHint = exercise.instructionHint,
         progress = SessionProgress(timeline).at(index, if (totalMs != null) elapsedMs else 0L),
         // Kopfzeile mit „Danach in die Stille“ neben dem Ton (nicht bei Atmen im Gehen).

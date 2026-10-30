@@ -57,7 +57,7 @@ data class SavedPattern(
      * nicht deren Vier-Felder-Zusammenfassung [spec] – die erfände Phasen, die es nicht gibt.
      */
     val patternLine: String
-        get() = if (freeSequence) pattern.hint() else PatternTexts.hintFor(spec)
+        get() = if (freeSequence) pattern.hint() else PatternTexts.cardLineFor(spec)
 }
 
 /**

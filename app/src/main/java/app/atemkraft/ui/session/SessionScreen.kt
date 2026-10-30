@@ -355,6 +355,7 @@ private fun ActiveContent(
                 HideableSlot(visible = controlsVisible) {
                     NextPhaseRow(
                         nextPhaseType = if (preparing) null else state.nextPhaseType,
+                        nextPhaseLabel = state.nextPhaseLabel,
                         minHeight = nextRowHeight,
                     )
                 }
@@ -414,7 +415,7 @@ private fun SessionTitle(state: SessionUiState) {
  * Phasennamen.
  */
 @Composable
-private fun NextPhaseRow(nextPhaseType: PhaseType?, minHeight: Dp) {
+private fun NextPhaseRow(nextPhaseType: PhaseType?, nextPhaseLabel: String?, minHeight: Dp) {
     val hintColor = MaterialTheme.colorScheme.onBackground.copy(alpha = TERTIARY)
     Box(
         modifier = Modifier.fillMaxWidth().heightIn(min = minHeight),
@@ -424,7 +425,7 @@ private fun NextPhaseRow(nextPhaseType: PhaseType?, minHeight: Dp) {
             // Bei sehr großer Schrift auf schmalem Gerät bricht die Zeile zwischen Wörtern um,
             // ganz statt abgeschnitten (LAYOUT-03).
             WholeWordText(
-                text = stringResource(R.string.session_next) + DOT_SEPARATOR + phaseDisplayLabel(nextPhaseType, null),
+                text = stringResource(R.string.session_next) + DOT_SEPARATOR + phaseDisplayLabel(nextPhaseType, nextPhaseLabel),
                 style = MaterialTheme.typography.labelSmall,
                 color = hintColor,
                 textAlign = TextAlign.Center,

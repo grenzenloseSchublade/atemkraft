@@ -104,7 +104,8 @@ fun SessionAdjustCard(
                                 range = it.range,
                                 onChange = it.onChange,
                                 vertical = Dimens.GapTiny,
-                                spokenLabel = stringResource(R.string.phase_hold_full),
+                                // Ein Wert für Halten voll und leer zugleich (SessionConfig.holdSeconds).
+                                spokenLabel = stringResource(R.string.phase_hold),
                                 valueUnit = R.plurals.cd_duration_seconds,
                             )
                         }

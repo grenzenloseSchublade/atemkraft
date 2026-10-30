@@ -7,6 +7,7 @@ import app.atemkraft.domain.EvidenceLevel
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.Phase
 import app.atemkraft.domain.PhaseDuration
+import app.atemkraft.domain.PhaseNames
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.Segment
 import app.atemkraft.domain.YogaLore
@@ -165,7 +166,7 @@ object BuiltInExercises {
             Segment(
                 phases = listOf(
                     Phase(PhaseType.INHALE, secs(4.0), note = "durch die Nase"),
-                    Phase(PhaseType.HOLD_FULL, secs(7.0), note = "voll"),
+                    Phase(PhaseType.HOLD_FULL, secs(7.0)),
                     Phase(PhaseType.EXHALE, secs(8.0), note = "durch den Mund"),
                 ),
             ),
@@ -392,10 +393,10 @@ object BuiltInExercises {
                     Phase(
                         PhaseType.HOLD_EMPTY,
                         PhaseDuration.UntilUrge,
-                        note = "leer – tippen beim Atemreiz",
+                        note = "tippen beim Atemreiz",
                     ),
                     Phase(PhaseType.INHALE, secs(2.0), note = "tief"),
-                    Phase(PhaseType.HOLD_FULL, secs(15.0), note = "voll"),
+                    Phase(PhaseType.HOLD_FULL, secs(15.0)),
                     // Nach dem Erholungsatem wird ausgeatmet, bevor die nächste Runde mit Einatmen
                     // beginnt – sonst stünde der Kreis dort voll (MOTION-03, S-11).
                     Phase(PhaseType.EXHALE, secs(2.0), note = "loslassen"),
@@ -507,9 +508,9 @@ object BuiltInExercises {
                 repeat = 17, // 18-s-Zyklus → gut 5 min
                 phases = listOf(
                     Phase(PhaseType.INHALE, secs(2.0), note = "1. Stufe", level = BreathLevel(0f, THIRD)),
-                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "Pause", level = BreathLevel.at(THIRD)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), label = PhaseNames.HOLD, note = "Pause", level = BreathLevel.at(THIRD)),
                     Phase(PhaseType.INHALE, secs(2.0), note = "2. Stufe", level = BreathLevel(THIRD, TWO_THIRDS)),
-                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "Pause", level = BreathLevel.at(TWO_THIRDS)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), label = PhaseNames.HOLD, note = "Pause", level = BreathLevel.at(TWO_THIRDS)),
                     Phase(PhaseType.INHALE, secs(2.0), note = "3. Stufe", level = BreathLevel(TWO_THIRDS, 1f)),
                     Phase(PhaseType.EXHALE, secs(8.0), note = "langsam, in einem Zug"),
                 ),
@@ -591,9 +592,9 @@ object BuiltInExercises {
                 phases = listOf(
                     Phase(PhaseType.INHALE, secs(6.0), note = "ruhig, in einem Zug"),
                     Phase(PhaseType.EXHALE, secs(2.0), note = "1. Stufe", level = BreathLevel(1f, TWO_THIRDS)),
-                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "Pause", level = BreathLevel.at(TWO_THIRDS)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), label = PhaseNames.HOLD, note = "Pause", level = BreathLevel.at(TWO_THIRDS)),
                     Phase(PhaseType.EXHALE, secs(2.0), note = "2. Stufe", level = BreathLevel(TWO_THIRDS, THIRD)),
-                    Phase(PhaseType.HOLD_FULL, secs(2.0), note = "Pause", level = BreathLevel.at(THIRD)),
+                    Phase(PhaseType.HOLD_FULL, secs(2.0), label = PhaseNames.HOLD, note = "Pause", level = BreathLevel.at(THIRD)),
                     Phase(PhaseType.EXHALE, secs(2.0), note = "3. Stufe", level = BreathLevel(THIRD, 0f)),
                 ),
             ),
@@ -635,9 +636,9 @@ object BuiltInExercises {
             Segment(
                 phases = listOf(
                     Phase(PhaseType.INHALE, secs(4.0)),
-                    Phase(PhaseType.HOLD_FULL, secs(4.0), note = "voll"),
+                    Phase(PhaseType.HOLD_FULL, secs(4.0)),
                     Phase(PhaseType.EXHALE, secs(4.0)),
-                    Phase(PhaseType.HOLD_EMPTY, secs(4.0), note = "leer"),
+                    Phase(PhaseType.HOLD_EMPTY, secs(4.0)),
                 ),
             ),
         ),

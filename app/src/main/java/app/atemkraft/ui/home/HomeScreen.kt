@@ -330,7 +330,7 @@ private fun DailyPatternCard(
 ) {
     PatternCard(
         exercise = daily.exercise,
-        patternLine = PatternTexts.hintFor(daily.spec),
+        patternLine = PatternTexts.cardLineFor(daily.spec),
         onClick = onClick,
         eyebrow = stringResource(R.string.home_daily_pattern),
         actionCount = 2,
