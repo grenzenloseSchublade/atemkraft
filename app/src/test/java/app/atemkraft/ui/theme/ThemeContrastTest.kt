@@ -32,8 +32,7 @@ class ThemeContrastTest {
     private fun surface(fg: Color, bg: Color) = Probe(fg, bg, null)
 
     /** Farbe als Text auf Grund und Karte. */
-    private fun textRow(cell: String, colors: List<Color>) =
-        Row(cell, colors.map { text(it, background) }, colors.map { text(it, card) })
+    private fun textRow(cell: String, colors: List<Color>) = Row(cell, colors.map { text(it, background) }, colors.map { text(it, card) })
 
     /** §2.1: Token-Farbe als Vordergrund gegen `background` und Card. */
     private val tokenRows = listOf(
