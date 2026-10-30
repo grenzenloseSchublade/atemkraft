@@ -111,6 +111,13 @@ object Dimens {
     /** Mindesthöhe eigener klickbarer Flächen (Material-Touch-Ziel), unabhängig vom Padding. */
     val MinTouchTarget = 48.dp
 
+    /**
+     * Platz unter dem letzten Inhalt einer Seite der Tiefe (`PushScaffold`, Logbuch, Muster-Editor):
+     * so hoch wie die Tippfläche des Griffs, der über der Oberkante der untersten Leiste schwebt
+     * (`TabBarToggle`). Am Ende der Seite liegt darunter nichts, was man antippen oder lesen will.
+     */
+    val TabBarGripClearance = MinTouchTarget
+
     /** Strichstärke von Spur und Fortschrittsbogen um den Atemkreis (3, Raster-Ausnahme). */
     val SessionRingStroke = 3.dp
 

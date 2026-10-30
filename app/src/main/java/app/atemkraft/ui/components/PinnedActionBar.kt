@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import app.atemkraft.ui.navigation.LocalTabBarState
@@ -23,8 +24,11 @@ import app.atemkraft.ui.theme.Dimens
  * Meditations-Tab ginge jedes dp dem Zeitring ab (LAYOUT-08). Inhalt ist der `StartSplitButton`,
  * auf der Detailseite darüber genau eine Zeile „Anpassen ›“ (`SectionHeader` mit `onClick`).
  *
- * In der Tiefe meldet sie ihre Oberkante beim [TabBarState] an ([LocalTabBarState]): Dort sitzt
- * dann der Knopf, der die Tab-Leiste auf- und zuklappt ([TabBarToggle]).
+ * Im App-Rahmen meldet sie ihre Oberkante beim [TabBarState] an ([LocalTabBarState]): In der Tiefe
+ * sitzt dort der Griff, der die Tab-Leiste auf- und zuklappt (`TabBarToggle`, Tippfläche ganz über
+ * der Kante), und Wischen nach oben auf der Leiste öffnet die Tab-Leiste (`TabBarState.detectSwipe`,
+ * erst nach dem Touch-Slop – Tipps auf Start und „Anpassen ›“ bleiben Tipps). Auf den Tabs ändert
+ * das Wischen nichts.
  */
 @Composable
 fun PinnedActionBar(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
@@ -33,7 +37,13 @@ fun PinnedActionBar(modifier: Modifier = Modifier, content: @Composable BoxScope
     if (tabBar != null) DisposableEffect(tabBar) { onDispose { tabBar.releasePinnedBar(owner) } }
     Surface(
         modifier = modifier.then(
-            if (tabBar != null) Modifier.onGloballyPositioned { tabBar.anchorPinnedBar(owner, it.positionInRoot().y) } else Modifier,
+            if (tabBar == null) {
+                Modifier
+            } else {
+                Modifier
+                    .onGloballyPositioned { tabBar.anchorPinnedBar(owner, it.positionInRoot().y) }
+                    .pointerInput(tabBar) { with(tabBar) { detectSwipe(opens = true, closes = false) { pinnedTop(owner) } } }
+            },
         ),
         tonalElevation = Dimens.PinnedBarElevation,
         color = MaterialTheme.colorScheme.surface,

@@ -99,11 +99,12 @@ fun LogbookScreen(
     val zone = ZoneId.systemDefault()
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
 
-    // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild. Oben SectionGap wie auf jeder
-    // Push-Seite.
+    // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild. Oben SectionGap, unten Platz für
+    // den Griff der Tab-Leiste wie auf jeder Push-Seite.
     TabListScaffold(
         header = { scrolled -> PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = scrolled) },
         top = Dimens.SectionGap,
+        bottom = Dimens.TabBarGripClearance,
     ) {
         item(key = "stats") { LogStatsCard(entries = entries, today = today, showStreak = showStreak) }
         items(groups, key = { group -> "group-${group.period}" }) { group ->

@@ -39,7 +39,7 @@ internal fun NavController.switchTab(route: TabRoute) {
 /**
  * Ob dieses Ziel einer der vier Tabs ist ([TopTab]): Dort steht die Tab-Leiste immer. In der Tiefe
  * (Detailseite, Muster-Editor, Einstellungen, Glossar, Atemlehre, Pranayama, Logbuch, Über) ist
- * sie eingeklappt und kommt über die Lasche zurück ([TabBarState], Nutzer 2026-10-23).
+ * sie eingeklappt und kommt über den Griff oder Wischen zurück ([TabBarState], Nutzer 2026-10-23).
  * Vor dem ersten Ziel (null) gilt der Start-Tab.
  */
 internal fun NavDestination?.isTabRoot(): Boolean = this == null || hierarchy.any { destination ->

@@ -1,23 +1,18 @@
 package app.atemkraft.ui.navigation
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,33 +20,26 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
@@ -147,16 +135,26 @@ private const val NAV_LABEL_MIN_SCALE = 0.85f
  * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt
  * nur der Platz der Systemnavigation [systemInsets]. Die Höhe gleitet dabei ([Motion.Disclosure],
  * MOTION-04), sodass eine Startleiste darüber sanft hinab- bzw. hinaufrutscht, statt um die ganze
- * Leiste zu springen.
+ * Leiste zu springen. Mit [state] (der App-Rahmen) schließt Wischen nach unten die offene Leiste
+ * in der Tiefe ([TabBarState.detectSwipe]); Tipps auf die Tabs bleiben Tipps.
  */
 @Composable
 fun HideableTabBar(
     visible: Boolean,
     modifier: Modifier = Modifier,
+    state: TabBarState? = null,
     systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
     bar: @Composable () -> Unit,
 ) {
-    Box(modifier.animateContentSize(Motion.Disclosure)) {
+    var top by remember { mutableFloatStateOf(0f) }
+    val swipe = if (state == null) {
+        Modifier
+    } else {
+        Modifier
+            .onGloballyPositioned { top = it.positionInRoot().y }
+            .pointerInput(state) { with(state) { detectSwipe(opens = false, closes = true) { top } } }
+    }
+    Box(modifier.then(swipe).animateContentSize(Motion.Disclosure)) {
         if (visible) {
             Column {
                 HorizontalDivider(thickness = Dimens.BorderThin, color = MaterialTheme.colorScheme.primary.copy(alpha = TAB_DIVIDER_ALPHA)) // Abweichung KOMP-03: Marken-Trenner über der Tab-Leiste, kein Karten-Trenner
@@ -168,65 +166,56 @@ fun HideableTabBar(
     }
 }
 
+/** Test-Tag des Griffs ([TabBarToggle]): Die Screenshot-Gates prüfen, dass seine Tippfläche nichts überdeckt. */
+const val TAB_BAR_GRIP_TAG = "tabBarGrip"
+
 /**
- * Knopf, der die Tab-Leiste in der Tiefe auf- und zuklappt (Nutzer 2026-10-23, Variante B „Lasche“):
- * ein kleiner Reiter ([Sizes.TabBarHandleWidth] × [Sizes.TabBarHandleHeight], oben abgerundet), der
- * aus der Oberkante der untersten Leiste wächst – in deren Farbe, damit er sichtbar zu ihr gehört:
- * die Startleiste ([TabBarState.anchoredToPinnedBar], `surface` mit ihrer tonalen Erhöhung), sonst
- * die Tab-Leiste (`DarkSurface`, auch eingeklappt: der Reiter der verborgenen Leiste). Ohne eigene
- * Zeile, eingeklappt gewinnt der Inhalt die ganze Leiste. Pfeil nach oben, solange sie zu ist
- * („Tab-Leiste zeigen“), nach unten, solange sie offen ist („Tab-Leiste ausblenden“). Die
- * Tippfläche ist so breit wie der Reiter und [Dimens.MinTouchTarget] hoch (A11Y-05). Sie liegt zu drei
- * Vierteln über der Kante und ragt nur [TOUCH_BELOW_EDGE] in die Leiste darunter – das ist das
- * Polster der Startleiste, der Start-Button selbst bleibt frei (vorher die halbe Tippfläche, sie
- * deckte dessen obere 12 dp ab).
+ * Griff, der die Tab-Leiste in der Tiefe auf- und zuklappt (Nutzer 2026-10-30, ersetzt die Lasche
+ * mit Pfeil, die mit „Anpassen ›“ der Startleiste kollidierte): ein schmaler Strich wie oben an
+ * einem Bottom Sheet ([Sizes.TabBarGripWidth] × [Sizes.TabBarGripHeight], `onSurface` in
+ * [SECONDARY], ≥ 3:1), mittig über der Oberkante der untersten Leiste – der Startleiste, wenn die
+ * Seite eine hat ([TabBarState.anchoredToPinnedBar]), sonst der unteren Leisten. Die Tippfläche
+ * ([Dimens.MinTouchTarget] im Quadrat, A11Y-05) liegt ganz über der Kante und überdeckt nichts in
+ * der Leiste; den Platz darüber halten die Seiten am Ende frei ([Dimens.TabBarGripClearance]).
+ * Antippen klappt um ([TabBarState.toggle]), Wischen nach oben öffnet, nach unten schließt
+ * ([TabBarState.detectSwipe]). TalkBack: Schaltfläche „Tab-Leiste zeigen“ bzw. „Tab-Leiste ausblenden“
+ * mit dem Zustand der Leiste – so ist die Funktion auch ohne Geste erreichbar.
+ *
+ * [modifier] setzt den Griff oben mittig in einen Rahmen, der wie der App-Rahmen das Fenster füllt;
+ * die Kante kommt in px im Fenster, darum misst der Griff die Lage dieses Rahmens selbst.
  */
 @Composable
 fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
-    val top = state.anchorTop
-    if (top.isNaN()) return
-    val turn by animateFloatAsState(if (state.collapsed) 0f else HALF_TURN, label = "tabBarToggle")
-    // Abstand von der Oberkante der Tippfläche bis zur Kante der Leiste.
-    val above = Dimens.MinTouchTarget - TOUCH_BELOW_EDGE
-    val abovePx = with(LocalDensity.current) { above.toPx() }
-    val fill = if (state.anchoredToPinnedBar) {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(Dimens.PinnedBarElevation)
-    } else {
-        TabBarContainer
-    }
-    Box(
-        modifier = modifier
-            .offset { IntOffset(0, (top - abovePx).roundToInt()) }
-            .size(width = Sizes.TabBarHandleWidth, height = Dimens.MinTouchTarget)
-            .clickable(role = Role.Button, onClick = state::toggle),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        // Der Reiter endet genau auf der Oberkante der Leiste.
+    val edge = state.anchorTop
+    var origin by remember { mutableFloatStateOf(0f) }
+    val touch = with(LocalDensity.current) { Dimens.MinTouchTarget.toPx() }
+    val name = stringResource(if (state.collapsed) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide)
+    val status = stringResource(if (state.collapsed) R.string.tab_bar_state_hidden else R.string.tab_bar_state_shown)
+    Box(modifier.fillMaxWidth().onGloballyPositioned { origin = it.positionInRoot().y }, contentAlignment = Alignment.TopCenter) {
+        if (edge.isNaN()) return@Box
         Box(
             modifier = Modifier
-                .padding(top = above - Sizes.TabBarHandleHeight)
-                .size(width = Sizes.TabBarHandleWidth, height = Sizes.TabBarHandleHeight)
-                .background(fill, Sizes.TabBarHandleShape),
-            contentAlignment = Alignment.Center,
+                // Unterkante der Tippfläche auf der Kante der Leiste.
+                .offset { IntOffset(0, (edge - origin - touch).roundToInt()) }
+                .size(Dimens.MinTouchTarget)
+                .testTag(TAB_BAR_GRIP_TAG)
+                .pointerInput(state) { with(state) { detectSwipe(opens = true, closes = true) { anchorTop - touch } } }
+                .clickable(role = Role.Button, onClick = state::toggle)
+                .semantics {
+                    contentDescription = name
+                    stateDescription = status
+                },
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            Icon(
-                Icons.Filled.KeyboardArrowUp,
-                contentDescription = stringResource(if (state.collapsed) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                modifier = Modifier.size(Sizes.IconSmall).rotate(turn),
+            Box(
+                Modifier
+                    .padding(bottom = Dimens.GapSmall)
+                    .size(width = Sizes.TabBarGripWidth, height = Sizes.TabBarGripHeight)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), CircleShape),
             )
         }
     }
 }
-
-/**
- * Teil der Tippfläche des [TabBarToggle] unter der Kante: so viel, wie die Startleiste über ihrem
- * Button polstert (`PinnedActionBar`, `ListGap`), ein Viertel der Tippfläche.
- */
-private val TOUCH_BELOW_EDGE = Dimens.ListGap
-
-/** Pfeil des [TabBarToggle] nach unten gedreht (Grad). */
-private const val HALF_TURN = 180f
 
 @Preview
 @Composable

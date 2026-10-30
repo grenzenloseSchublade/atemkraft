@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -198,7 +199,7 @@ fun PatternEditorScreen(
                     pattern.intensityNote()?.let { IntenseNote(it) }
                     Sequence(state)
                     Lore(exercise, actions.onOpenLore)
-                    Spacer(Modifier.height(Dimens.ScreenBottom))
+                    Spacer(Modifier.height(Dimens.TabBarGripClearance))
                 }
             }
             PinnedActionBar {
@@ -257,6 +258,10 @@ private fun FirstScreen(
     val heights = rememberBreathCurveHeights()
     // Ohne System-Animationen fehlt die Vorschau-Zeile (MOTION-02), die Karte endet mit der Kurve.
     val previewRow = if (rememberAnimationsEnabled()) PREVIEW_ROW_HEIGHT else 0.dp
+    // Unter der Werkzeugleiste bleibt die Tippfläche des Griffs der Tab-Leiste frei (`TabBarToggle`
+    // schwebt über der Startleiste, sonst läge sie über „+ Halten“) – solange die Kurve dann noch
+    // ihre Mindesthöhe hat; sonst geht MUSTER-10 vor.
+    val gripClearance = with(LocalDensity.current) { Dimens.TabBarGripClearance.roundToPx() }
     FillViewportColumn(
         viewportHeight = viewport,
         centerHeight = { free ->
@@ -266,6 +271,7 @@ private fun FirstScreen(
         top = header,
         center = curveCard,
         bottom = toolbar,
+        bottomReserve = gripClearance,
     )
 }
 

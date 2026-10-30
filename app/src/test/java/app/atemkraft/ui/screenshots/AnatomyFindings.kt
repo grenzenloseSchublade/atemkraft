@@ -13,6 +13,7 @@ import app.atemkraft.ui.components.TITLE_ROW_ACTIONS_TAG
 import app.atemkraft.ui.components.TITLE_ROW_INDICATOR_TAG
 import app.atemkraft.ui.components.TITLE_ROW_TAG
 import app.atemkraft.ui.components.TITLE_ROW_TITLE_TAG
+import app.atemkraft.ui.navigation.TAB_BAR_GRIP_TAG
 import app.atemkraft.ui.theme.Dimens
 import java.util.Locale
 import kotlin.math.abs
@@ -28,7 +29,9 @@ import kotlin.math.abs
  * - Fließtext einer Karte mit Aktionen endet vor der Inhaltskante (er muss unter den Aktionen
  *   durchlaufen; ohne Aktionen – Zeichen, Expander, Einstellungen – gibt es nichts zu unterlaufen,
  *   und Zeilen im Inhalt dürfen dort eigene Endspalten haben),
- * - Steuerzeile oder tippbare Kopfzeile niedriger als 48 dp.
+ * - Steuerzeile oder tippbare Kopfzeile niedriger als 48 dp,
+ * - Tippfläche des Griffs der Tab-Leiste (Tiefe) über einem Bedienelement, das nicht wegscrollen
+ *   kann (Startleiste, „Anpassen ›“, Ende der Seite).
  */
 internal object AnatomyFindings {
 
@@ -113,7 +116,22 @@ internal object AnatomyFindings {
                     }
             }
         }
+
+        // Griff der Tab-Leiste in der Tiefe: Seine Tippfläche überdeckt kein Bedienelement – weder in
+        // der Startleiste noch im Inhalt, der dort steht, wenn die Seite nicht weiter scrollen kann.
+        // Inhalt, der weiterscrollt, läuft nur unter ihm durch (am Ende hält TabBarGripClearance frei).
+        placed.firstOrNull { it.tag() == TAB_BAR_GRIP_TAG }?.let { grip ->
+            val zone = grip.rect().deflate(EDGE_TOLERANCE_DP * density / 2)
+            ControlFindings.controls(placed)
+                .filter { it.id != grip.id && it.visible() && !it.scrollsOn() && it.boundsInRoot.overlaps(zone) }
+                .forEach { out += "ANATOMIE\t$screen\tGriff der Tab-Leiste über „${nameOf(it)}“" }
+        }
         return out
+    }
+
+    /** Liegt in einer senkrechten Scroll-Fläche, die noch weiter nach unten scrollen kann. */
+    private fun SemanticsNode.scrollsOn(): Boolean = generateSequence(parent) { it.parent }.any { a ->
+        a.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)?.let { it.value() < it.maxValue() } == true
     }
 
     private fun SemanticsNode.tag() = config.getOrNull(SemanticsProperties.TestTag)

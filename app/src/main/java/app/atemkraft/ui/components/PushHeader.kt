@@ -84,7 +84,8 @@ fun PushHeader(
 /**
  * Gerüst jeder Push-Seite mit scrollendem Inhalt (§4.3): `Surface(background)`, darin fest der
  * [PushHeader] (Haarlinie, sobald Inhalt unter ihm liegt) und darunter die Scroll-Spalte mit Rand
- * `ScreenPadding`, oben `SectionGap` bis zum ersten Inhalt, unten `ScreenBottom`. Darunter fest
+ * `ScreenPadding`, oben `SectionGap` bis zum ersten Inhalt, unten `TabBarGripClearance` (der Griff
+ * der Tab-Leiste schwebt über der untersten Leiste, am Ende liegt nichts unter ihm). Darunter fest
  * optional [bottomBar] (`PinnedActionBar` der Detailseite). Titel, [titleContent] und [action]
  * wie beim [PushHeader]. [contentModifier] liegt zwischen Scroll und Rand – dort misst die
  * Atemlehre Sprungziele gegen den Scroll-Inhalt. Eine Einleitung steht als [ScreenSubtitle] oben
@@ -120,7 +121,7 @@ fun PushScaffold(
             ) {
                 Spacer(Modifier.height(Dimens.SectionGap))
                 content()
-                Spacer(Modifier.height(Dimens.ScreenBottom))
+                Spacer(Modifier.height(Dimens.TabBarGripClearance))
             }
             bottomBar?.invoke()
         }

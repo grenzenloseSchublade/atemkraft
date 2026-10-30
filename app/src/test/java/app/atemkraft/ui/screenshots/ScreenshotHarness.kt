@@ -11,13 +11,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.InfiniteAnimationPolicy
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
@@ -53,6 +58,9 @@ import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AppTabBar
 import app.atemkraft.ui.navigation.HideableTabBar
+import app.atemkraft.ui.navigation.LocalTabBarState
+import app.atemkraft.ui.navigation.TabBarState
+import app.atemkraft.ui.navigation.TabBarToggle
 import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.patterns.PATTERN_INFO_TAG
 import app.atemkraft.ui.patterns.PATTERN_TOOLBAR_TAG
@@ -64,6 +72,7 @@ import app.atemkraft.ui.patterns.curve.CurveHeightRange
 import app.atemkraft.ui.patterns.rememberPatternEditorState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
+import app.atemkraft.ui.theme.Dimens
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziTaskType
@@ -283,18 +292,27 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
     /**
      * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
-     * Trennlinie und [AppTabBar] mit [selected] markiert – ohne [tabBar] eingeklappt wie eine
-     * Seite der Tiefe ([HideableTabBar]; der Knopf dazu schwebt über dem Inhalt) –, darunter die
-     * Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
+     * Trennlinie und [AppTabBar] mit [selected] markiert – ohne [tabBar] eine Seite der Tiefe wie
+     * in der App: Leiste eingeklappt ([HideableTabBar]), darüber der Griff ([TabBarToggle]) auf der
+     * Oberkante der Startleiste bzw. der unteren Leisten; ein Tipp darauf klappt die Leiste auf –,
+     * darunter die Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
      */
     @Composable
     private fun TabFrame(selected: Tab, tabBar: Boolean, content: @Composable () -> Unit) {
-        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            Spacer(Modifier.height(STATUS_BAR_DP.dp))
-            Box(Modifier.weight(1f).fillMaxWidth()) { content() }
-            // Wie der Rahmen der App (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
-            HideableTabBar(visible = tabBar, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
-            Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
+        val state = remember { TabBarState().apply { enter(onTab = tabBar, tab = selected) } }
+        Box(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                Spacer(Modifier.height(STATUS_BAR_DP.dp))
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    CompositionLocalProvider(LocalTabBarState provides state.takeUnless { tabBar }) { content() }
+                }
+                // Wie der Rahmen der App (Scaffold-bottomBar); die Systemnavigation steht hier darunter.
+                Column(Modifier.onGloballyPositioned { state.bottomBarTop = it.positionInRoot().y }) {
+                    HideableTabBar(visible = tabBar || !state.collapsed, systemInsets = WindowInsets(0)) { TabNavigation(selected) }
+                    Spacer(Modifier.fillMaxWidth().height(SYSTEM_NAV_DP.dp).background(DarkSurface))
+                }
+            }
+            if (!tabBar) TabBarToggle(state, Modifier.align(Alignment.TopCenter))
         }
     }
 
@@ -356,11 +374,16 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             .config[SemanticsProperties.Text].joinToString { it.text.replace('\u00A0', ' ').replace("\u2060", "") }
         val density = compose.density.density
         fun dp(px: Float) = (px / density).roundToInt()
-        // Platz für die Kurve: sichtbare Höhe minus alles darüber und Werkzeugleiste darunter.
-        val free = viewport.height - (curve.top - viewport.top) - (toolbar.bottom - curve.bottom)
+        // Platz für die Kurve: sichtbare Höhe minus alles darüber und Werkzeugleiste darunter; dazu
+        // die Tippfläche des Griffs der Tab-Leiste über der Startleiste, wo die Kurve dann noch ihre
+        // Mindesthöhe hat (der Editor gibt diese Reserve als Erstes her).
+        val grip = Dimens.TabBarGripClearance.value * compose.density.density
+        val room = viewport.height - (curve.top - viewport.top) - (toolbar.bottom - curve.bottom)
+        val reserved = room - grip >= range.start - 0.5f
+        val free = if (reserved) room - grip else room
         val expected = free.coerceIn(range.start, range.endInclusive)
         val heightRight = abs(curve.height - expected) <= 1f
-        val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom + 0.5f
+        val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom - (if (reserved) grip else 0f) + 0.5f
         val minWouldFit = free >= range.start - 0.5f
         val kind = when {
             hard && !barOneLine -> "KOMPAKT_FEHLT"
@@ -371,7 +394,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         }
         val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
             "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
-            "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp), " +
+            "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp, Griff ${if (reserved) "frei" else "über der Leiste"}), " +
             "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Werte „$info“"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)

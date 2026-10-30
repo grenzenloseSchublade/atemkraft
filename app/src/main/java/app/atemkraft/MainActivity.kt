@@ -11,15 +11,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemGestures
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -27,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -73,7 +78,7 @@ class MainActivity : ComponentActivity() {
 
 /**
  * Rahmen der App: Scaffold mit Mini-Leisten und Tab-Leiste unten, darin der NavHost ([appGraph]);
- * darüber der Knopf der Tab-Leiste in der Tiefe und die Overlays laufender Sitzungen
+ * darüber der Griff der Tab-Leiste in der Tiefe und die Overlays laufender Sitzungen
  * ([PlaybackOverlays]).
  */
 @Composable
@@ -95,10 +100,14 @@ private fun AtemkraftApp(
     // Tipp darauf führt zu seiner Startseite zurück (tapTab).
     val selectedTab = remember(navBackStackEntry) { navController.tabOnStack() }
 
-    // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; die Lasche klappt sie auf, das
-    // gilt bis zur Rückkehr auf einen Tab.
+    // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; Griff oder Wischen klappen sie
+    // auf, das gilt bis zur Rückkehr auf einen Tab.
     val tabBar = rememberTabBarState()
     LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab) }
+    // Was in den Systemgesten am unteren Rand aufsetzt (Home), bleibt dem System.
+    val gestureBottom = WindowInsets.systemGestures.getBottom(LocalDensity.current)
+    val windowHeight = LocalWindowInfo.current.containerSize.height
+    SideEffect { tabBar.gestureZoneTop = (windowHeight - gestureBottom).toFloat() }
 
     // Shortcut: Resonanz-Atmung und „Zuletzt geübt“ als Detailseite im Stapel von „Atmen“, die
     // Meditation als Tab. „Zuletzt“ liest die App jetzt selbst aus dem Logbuch – der Shortcut trägt
@@ -125,11 +134,11 @@ private fun AtemkraftApp(
         Scaffold(
             modifier = Modifier.inertWhen(playback.overlayOpen),
             bottomBar = {
-                // Ihre Oberkante trägt den Knopf der Tab-Leiste, solange die Seite keine Startleiste hat.
+                // Ihre Oberkante trägt den Griff der Tab-Leiste, solange die Seite keine Startleiste hat.
                 Column(Modifier.onGloballyPositioned { tabBar.bottomBarTop = it.positionInRoot().y }) {
                     PlaybackMiniBars(playback)
-                    // Auf den vier Tabs immer; in der Tiefe nur, wenn per Knopf aufgeklappt.
-                    HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed) {
+                    // Auf den vier Tabs immer; in der Tiefe nur, wenn per Griff oder Wischen aufgeklappt.
+                    HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed, state = tabBar) {
                         AppTabBar(selected = selectedTab, onTap = { tab -> navController.tapTab(tab.route, selected = tab == selectedTab) })
                     }
                 }
@@ -158,7 +167,7 @@ private fun AtemkraftApp(
             }
         }
 
-        // Knopf der Tab-Leiste in der Tiefe: auf der Oberkante der Startleiste bzw. der unteren Leisten,
+        // Griff der Tab-Leiste in der Tiefe: über der Oberkante der Startleiste bzw. der unteren Leisten,
         // über dem Inhalt; Overlays darüber verdecken ihn.
         if (!currentDestination.isTabRoot()) TabBarToggle(tabBar, Modifier.align(Alignment.TopCenter))
 

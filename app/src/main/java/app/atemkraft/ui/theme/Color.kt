@@ -19,7 +19,7 @@ val OnCyan = Color(0xFF042A2C)
 val DarkBackground = Color(0xFF160F2E)
 val DarkSurface = Color(0xFF211640)
 
-/** Fläche der Tab-Leiste und des Reiters, der sie in der Tiefe zurückholt (`TabBarToggle`). */
+/** Fläche der Tab-Leiste (`AppNavigationBar`). */
 val TabBarContainer = DarkSurface
 val DarkSurfaceVariant = Color(0xFF2E2150)
 val DarkOnBackground = Color(0xFFF0E6FF)

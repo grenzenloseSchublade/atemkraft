@@ -70,6 +70,7 @@ import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.navigation.TAB_BAR_GRIP_TAG
 import app.atemkraft.ui.own.OwnActions
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorState
@@ -427,6 +428,29 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             // Das Blatt ist offen und zeigt die Phasen.
             compose.onNodeWithText(app.getString(R.string.adjust_exhale)).assertExists()
         }) { DetailPage(fourSevenEight) }
+    }
+
+    /**
+     * Detailseite in der Tiefe wie in der App ([TabFrame] ohne Tab-Leiste, Gerätehöhe): der Griff
+     * der Tab-Leiste über der Startleiste mit „Anpassen ›“, eingeklappt und nach einem Tipp auf den
+     * Griff mit offener Tab-Leiste. `ANATOMIE` prüft, dass seine Tippfläche weder „Anpassen ›“ noch
+     * Start überdeckt.
+     */
+    @Test
+    fun detailDepth() {
+        snap("08_detail_tiefe", tab = Tab.START, tabBar = false, measure = { gripAbove("08_detail_tiefe") }) { DetailPage(fourSevenEight) }
+        snap("08_detail_tiefe_tab_leiste", tab = Tab.START, tabBar = false, prepare = {
+            compose.onNodeWithTag(TAB_BAR_GRIP_TAG).assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
+            compose.waitForIdle()
+        }, measure = { gripAbove("08_detail_tiefe_tab_leiste") }) { DetailPage(fourSevenEight) }
+    }
+
+    /** Abstand der Tippfläche des Griffs über „Anpassen ›“ in der Startleiste, nur gemessen (`GRIFF`). */
+    private fun gripAbove(screen: String): List<String> {
+        val grip = compose.onNodeWithTag(TAB_BAR_GRIP_TAG).fetchSemanticsNode()
+        val adjust = compose.onNodeWithContentDescription(app.getString(R.string.adjust_title), substring = true).fetchSemanticsNode()
+        val gap = (adjust.positionInRoot.y - (grip.positionInRoot.y + grip.size.height)) / compose.density.density
+        return listOf("${device.name}\tfs${(fontScale * 100).toInt()}\tGRIFF\t$screen\t${gap.roundToInt()} dp über „Anpassen ›“")
     }
 
     /**

@@ -65,8 +65,8 @@ fun ScreenHeader(
  * `Surface(background)`, fest oben der Kopf aus [header] – er bekommt `scrolled` (Inhalt liegt
  * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [top] ist der
  * Abstand über dem ersten Eintrag (Tabs 0: der erste Eintrag bringt seinen Abstand selbst mit;
- * Logbuch `SectionGap` wie jede Push-Seite), unten steht `ScreenBottom`, beides als
- * `contentPadding`.
+ * Logbuch `SectionGap` wie jede Push-Seite), unten [bottom] (Tabs `ScreenBottom`, Logbuch
+ * `TabBarGripClearance` wie jede Seite der Tiefe), beides als `contentPadding`.
  */
 @Composable
 fun TabListScaffold(
@@ -74,6 +74,7 @@ fun TabListScaffold(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     top: Dp = 0.dp,
+    bottom: Dp = Dimens.ScreenBottom,
     content: LazyListScope.() -> Unit,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -89,7 +90,7 @@ fun TabListScaffold(
                     start = Dimens.ScreenPadding,
                     top = top,
                     end = Dimens.ScreenPadding,
-                    bottom = Dimens.ScreenBottom,
+                    bottom = bottom,
                 ),
                 verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
             ) {
