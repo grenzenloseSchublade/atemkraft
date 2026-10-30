@@ -354,7 +354,7 @@ private fun ColumnScope.FinishedContent(
 }
 
 /**
- * Antwortreihe unter der Einladung „Spür kurz nach, wie es dir geht.“ (Anatomie §4.5): drei gleich
+ * Antwortreihe unter der Einladung „Spür kurz nach, wie es dir geht.“ (Anatomie in spec/session.md): drei gleich
  * breite, stille Segmente ohne Häkchen ([SegmentedChoiceRow]), keine gewählt, bis jemand tippt; kein
  * Pflichtfeld – „Nochmal“ und „Ende“ gehen jederzeit. Der Hinweis des ersten Mals bleibt für diesen
  * Ende-Screen stehen, auch wenn [FeelingAsk.onIntroShown] den Schalter schon gesetzt hat.

@@ -252,7 +252,7 @@ fun ExerciseDetailScreen(
         BodyText(exercise.shortDescription, style = MaterialTheme.typography.bodyMedium)
 
         // Der Rhythmus gleich unter dem, was die Übung ist, und vor Dauer und Charakter – wie auf
-        // der Karte (Takt · Dauer); eine weitere Zeile des Kopfblocks, daher GapSmall (§4.5).
+        // der Karte (Takt · Dauer); eine weitere Zeile des Kopfblocks, daher GapSmall (spec/detail.md).
         rhythm?.let {
             Spacer(Modifier.height(Dimens.GapSmall))
             RhythmCurve(it, line = rhythmLine, running = !covered)

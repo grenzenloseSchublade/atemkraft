@@ -1,6 +1,6 @@
 # Spezifikation: Muster-Editor („Eigenes Muster“)
 
-Regel: [STYLEGUIDE MUSTER-10](../STYLEGUIDE.md#muster); Anatomie der Kurvenkarte und der Knopfleiste unten: [§4.5](../STYLEGUIDE.md#anatomie). Entscheidungen und ihre Daten in [DECISIONS.md](../DECISIONS.md). Code: `ui/patterns/` (Screen, Werkzeugleiste, Vorschau), `ui/patterns/curve/` (`BreathCurveEditor`), `domain/FreePattern.kt`.
+Regel: [STYLEGUIDE MUSTER-10](../STYLEGUIDE.md#muster); Anatomie der Knopfleiste unten: [STYLEGUIDE §4.5](../STYLEGUIDE.md#anatomie), der Kurvenkarte [unten](#kurvenkarte). Entscheidungen und ihre Daten in [DECISIONS.md](../DECISIONS.md). Code: `ui/patterns/` (Screen, Werkzeugleiste, Vorschau), `ui/patterns/curve/` (`BreathCurveEditor`), `domain/FreePattern.kt`.
 
 ## Datenmodell
 
@@ -34,6 +34,22 @@ Der Startpunkt im Kopf öffnet die Vorlagen als Bottom Sheet (`TemplateSheet` ü
 - Name frei (Dialog des Seitentitels), vorausgefüllt mit dem Vorschlagsnamen („Eigenes Muster 4·1·6“, folgt den Zahlen, bis der Nutzer selbst tippt); leer gespeichert → Vorschlagsname. Der Name wird bewusst gespeichert (SEC-PRIV-06, Ausnahme).
 - „Starten“ probiert ohne Speichern (die Seite bleibt offen; nach dem Start bleibt der Editor unter der Sitzung auf dem Stapel). Speichern über ◉ „In Eigene speichern“ im Kopf (MUSTER-01): Ein in dieser Sitzung angelegtes Muster nimmt ein erneuter Tipp sofort wieder heraus; ein Muster, das es vor dem Öffnen schon gab, wird nur zweistufig entfernt (MUSTER-05); geänderte Werte leeren das Speicherzeichen, ein Tipp schreibt sie in denselben Eintrag; das Leeren bzw. Wiederfüllen sagt TalkBack nicht an, nur der geänderte Wert.
 - Einstiege: „+“ im Kopf „Eigene Kreationen“ (Tab „Eigene“), Stift auf den Kreationen-Karten, Stift auf der Detailseite generierter Muster (beim Muster des Tages „Als eigenes Muster anpassen“: übernimmt dessen vier Felder als freie Folge); ältere eigene Muster mit vier Feldern öffnen als Folge. Auf der Detailseite gespeicherter und eigener Muster bleibt nur die Dauer anpassbar, die Phasen ändert der Editor (das Muster des Tages behält seine Phasen-Stepper); in „Eigene Kreationen“ zeigt die Karte freier Folgen die Folge selbst und „intensiv“ und folgt der Datenbank sofort.
+
+## <a id="kurvenkarte"></a>Anatomie der Kurvenkarte (`CurveCard`, `BreathCurveEditor`, `CurvePreviewControls`)
+
+```
+ Box · 16 s je Atemzug · 3,8/min          [intensiv]   ← Werte-Zeile, eine Textzeile, nicht klickbar
+ GapSmall
+ ┌ CurveCard surface · ohne Polster ────────────────────┐
+ │  voll ────────────────○──────────                     │  Höhe aus BreathCurveHeights (min CurveSpanMin … CurveSpan)
+ │      ╱       ╲ · · · ╲                                │
+ │  leer ─●──────────────────●─── 0  5  10 s             │
+ │ (▶) ← Play bündig links an der Zeitachse   Ton (🔊) → │  PreviewRow genau MinTouchTarget hoch
+ └──────────────────────────────────────────────────────┘
+```
+
+- Werte über der Kurve (nicht klickbar, Reserven gegen Springen), Kurve, am unteren Kartenrand Play bündig links am Beginn der Zeitachse (`flushStart`, `CardPadding`) und Ton bündig rechts (`flushEnd`, `GapSmall` wie das Ende der letzten Zahl); Mindesthöhe aus `BreathCurveHeights` (Höhe: [Atemkurve](#atemkurve-breathcurveeditor-uipatternscurve)).
+- **Prüfung:** `DeviceFitTest` (`KOMPAKT_FEHLT`), `ScreenshotTest` (`14_muster_editor_*`).
 
 ## Atemkurve (`BreathCurveEditor`, `ui/patterns/curve/`)
 

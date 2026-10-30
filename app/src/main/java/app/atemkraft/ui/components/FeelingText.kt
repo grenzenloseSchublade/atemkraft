@@ -23,8 +23,8 @@ fun feelingText(feeling: Feeling): String = stringResource(
 )
 
 /**
- * Frage nach dem Befinden am Ende-Screen ([FinishedPanel], Anatomie „Antwortreihe“ in STYLEGUIDE
- * §4.5); fehlt sie, fragt der Ende-Screen nicht (Einstellung aus). [onAnswer] setzt die Antwort.
+ * Frage nach dem Befinden am Ende-Screen ([FinishedPanel], Anatomie „Antwortreihe“ in
+ * docs/spec/session.md); fehlt sie, fragt der Ende-Screen nicht (Einstellung aus). [onAnswer] setzt die Antwort.
  * [intro]: Die Reihe erscheint zum ersten Mal – darunter steht einmal, dass sie nur auf dem Gerät
  * bleibt und abschaltbar ist; [onIntroShown] meldet das Erscheinen (danach gilt der Schalter).
  */

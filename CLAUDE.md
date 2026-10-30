@@ -21,8 +21,9 @@ Eigentümer.
 
 ## Arbeitsweise (PROZ-07)
 - Erst Analyse mit Befunden (Datei:Zeile), bei UI ein Entwurf; dann umsetzen, im Worktree, nichts über den Auftrag hinaus.
-- Vorhandene Komponente suchen (STYLEGUIDE §5.1); Layout nach der Anatomie §4.5, Karten mit Aktionen nur über
-  `CardHeader`; Maße benachbarter Elemente im Code vergleichen (ein Größentoken je Leiste, LAYOUT-04).
+- Einstieg: STYLEGUIDE §0 „Einstieg nach Aufgabe“. Vorhandene Komponente suchen (§5.1); Layout nach der Anatomie
+  §4.5 (Feature-Anatomien in docs/spec/), Karten mit Aktionen nur über `CardHeader`; Maße benachbarter Elemente im
+  Code vergleichen (ein Größentoken je Leiste, LAYOUT-04).
 - Screenshots nicht ansehen: Gates (WORTBRUCH, ABGESCHNITTEN, TIPPFLAECHE, ANATOMIE, SCROLLT) und Token-Maße (R-VISUAL).
 - Texte: strings.xml (UI) oder src/data/ (Inhalte); Begriffe nach §11.1; „…“; Einheit mit geschütztem Leerzeichen;
   Sanskrit *kursiv* (TEXT-01, -02, -10, -14).

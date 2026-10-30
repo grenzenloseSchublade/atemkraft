@@ -6,7 +6,8 @@ import androidx.compose.ui.unit.dp
  * Größen-Tokens der Bedienelemente (STYLEGUIDE §4.2, LAYOUT-04) = Material-3-Maße. Seit die
  * Schrift wieder Material-Standard ist (Nutzerentscheidung 2026-10-19), stehen Bedienelement und
  * Beschriftung ohne eigenen Faktor im M3-Verhältnis (Button 40 dp zu `labelLarge` 14 sp).
- * Gesetzt werden sie nur in den Komponenten unter `ui/components`, nie am Aufrufort. An
+ * Größen von Bedienelementen setzen nur die Komponenten unter `ui/components`, nie der Aufrufort;
+ * Zeichen- und Grafikmaße (Kurve, Punkte, Icons in Feature-Zeichnungen) auch Feature-Dateien. An
  * M3-Elementen wirken sie nur als Mindestwert (`heightIn(min = …)`), damit das Element bei großer
  * Systemschrift mit seiner Beschriftung mitwächst. Die Tippfläche ([Dimens.MinTouchTarget])
  * hängt nie hieran (A11Y-05).
@@ -46,10 +47,13 @@ object Sizes {
     /** Standard-Icon: Icon-Buttons, Zurück, Zahnrad, Expander-Caret, Mini-Leiste (M3 24). */
     val IconDefault = 24.dp
 
-    /** Icon neben einer Beschriftung im Button: Reset, Ausklapp-Caret (M3 18). */
+    /** Icon neben einer Beschriftung im Button: Reset, Ausklapp-Caret, `ForwardChevron` (M3 18). */
     val IconInButton = 18.dp
 
-    /** Kleines Inline-Icon neben `label*`-Text (16). */
+    /**
+     * Kleines Inline-Icon neben `label*`-Text (16): Info „Anleitung“, Atemkreis „tut mir gut“ auf
+     * Karten, Stift im Editor-Kopf, „öffnet im Browser“.
+     */
     val IconSmall = 16.dp
 
     /** Inline-Fortschrittskreis neben einer Zeile (20). */

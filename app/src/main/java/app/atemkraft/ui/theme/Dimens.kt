@@ -91,8 +91,8 @@ object Dimens {
     val BorderThin = 1.dp
 
     /**
-     * Rand der Verweis-Chips: etwas kräftiger als [BorderThin], weil 1 dp um die engen Rundungen
-     * auf dem Gerät dünn und ausgefranst wirkt.
+     * Rand der Chips mit Umriss (`LinkChip`, `ChoiceChip`): etwas kräftiger als [BorderThin], weil
+     * 1 dp um die engen Rundungen auf dem Gerät dünn und ausgefranst wirkt.
      */
     val BorderChip = 1.5.dp
 

@@ -89,8 +89,8 @@ object Motion {
 
     /**
      * Schimmer des Scheins hinter dem Atemkreis (`BreathingCircle`): 8 s hin, 8 s zurück, sanft
-     * an den Enden – Yoga-Tempo, kein Puls-Gefühl. Bewusst langsamer als neue UI-Bewegung
-     * (MOTION-04); bei Animator-Skala 0 steht er still (MOTION-02).
+     * an den Enden – Yoga-Tempo, kein Puls-Gefühl; der Schein bleibt bei Alpha ≤ 0,16. Bewusst
+     * langsamer als neue UI-Bewegung (MOTION-04); bei Animator-Skala 0 steht er still (MOTION-02).
      */
     val AmbientShimmer: DurationBasedAnimationSpec<Float> = tween(durationMillis = 8000, easing = EaseInOutSine)
 }

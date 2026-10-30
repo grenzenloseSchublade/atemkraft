@@ -6,11 +6,25 @@ Normativer Design-, Text- und Code-Leitfaden für Maintainer und Claude: Jede Re
 
 ## <a id="geltung"></a>0 Geltung
 
+**Einstieg nach Aufgabe:** erst die Leitplanken (§1), dann die Zeile unten, dazu immer der Katalog (§5.1) und die Spec des Features ([docs/spec/](spec/)).
+
+| Du baust … | lies | baue mit |
+|---|---|---|
+| eine Karte | [Karte mit Aktionen](#anat-karte), KOMP-02, -03, FARBE-07 | `CardHeader`, `ExerciseCard`, `NavCard` |
+| einen Abschnitt, eine Liste | [Abschnittskopf](#anat-kopf), §4.1, LAYOUT-02, MUSTER-03 | `SectionHeader`, `CollapsibleSection`, `GroupLabel` |
+| eine Einstellung | [Zeile mit Steuerelement](#anat-steuerzeile), A11Y-03, LAYOUT-07, TEXT-15, [spec/einstellungen.md](spec/einstellungen.md) | `ToggleRow`, `Stepper`, `SegmentedChoiceRow` |
+| ein Blatt | [Bottom Sheet](#anat-sheet), MUSTER-11 | `AppBottomSheet` |
+| eine neue Seite | §4.3, LAYOUT-02, MUSTER-08, A11Y-07, [spec/navigation.md](spec/navigation.md) | `PushScaffold`, `TabListScaffold` |
+| Start, Leiste unten | [Knopfleiste unten](#anat-leiste), MUSTER-01, LAYOUT-04 | `PinnedActionBar`, `StartSplitButton` |
+| Chips, Suche, Filter | [Chip-Reihen](#anat-chips), [Suchpille](#anat-pille), MUSTER-09, -12 | `ChoiceChip`, `TonalChip`, `SearchField` |
+| Farbe, Maß, Token | §2, §4.1, §4.2, FARBE-*, LAYOUT-01, PROZ-02 | `ui/theme/` |
+| Text, Inhalt | §11, §11.1, R-TEXT | `BodyText`, `HintText`, `WholeWordText` |
+| Sitzung, Ton, Bewegung, Übergang | MUSTER-07, §8, §9, PERF-01, [spec/session.md](spec/session.md) | `OverlayChrome`, `SessionControlBar` |
+
 - **Pfade:** `src/` = `app/src/main/java/app/atemkraft/`, `res/` = `app/src/main/res/`.
 - **Regelformat:** `ID | Stufe | Regel | Warum | Prüfung`. Eine Regelzelle sagt in höchstens 400 Zeichen, *was gilt* (Doku-Lint `rule-length` prüft die dritte Spalte jeder Zeile mit ID, auch die S-Zeilen in BACKLOG.md); die Spalte Warum gibt den Grund in einem Halbsatz (Richtwert 120 Zeichen, ungeprüft). Spezifikation gehört nach `docs/spec/` oder in die KDoc, Historie und Nutzerentscheidungen nach [DECISIONS.md](DECISIONS.md), Offenes nach [BACKLOG.md](BACKLOG.md).
 - **IDs** sind stabil und werden nie neu vergeben. Gestrichen bzw. verschoben, aber gesperrt: META-01 → PROZ-02, LAYOUT-06 und KOMP-04 → LAYOUT-04, MUSTER-02 → MUSTER-01, TEXT-09 → SEC-LEGAL-01, CODE-08 → PROZ-01. Eine künftig gestrichene Regel kommt in diese Zeile.
 - **Prüfung:** `auto: <check>` verweist auf die Check-Tabelle ([CHECKS.md](CHECKS.md#checks), §13.3), `manuell: R-…` auf eine Checkliste in §13.4.
-- **Qualitätsmerkmale:** Welche Regel welchem Merkmal nach ISO/IEC 25010:2023 dient, wie es geprüft wird und wo es dünn ist, zeigt [PROCESS.md, Qualitätsmerkmale](PROCESS.md#iso25010); vor jedem Release läuft der Kurzcheck (PROZ-09).
 
 | Stufe | Bei Verstoß |
 |---|---|
@@ -93,7 +107,7 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | Tertiär | `TERTIARY` | 0,55 | 5,27 / 4,69 (Leiste 4,78) | DOI/PMID, Zeitstempel, Wochentage, Session-Hilfszeilen, „✓ Fertig“, unselektierte Tabs, Ton aus, Zeitleiste und Linien „voll“/„leer“ der Atemkurve |
 | Disabled | M3-intern | 0,38 | – | nur inaktive Bedienelemente |
 | Flächen | `ALPHA_BORDER` · `CHIP_FILL` · `ALPHA_HEAT_LOW` / `_MID` · `ALPHA_CURVE_FILL` · `ALPHA_CIRCLE_EDGE` · `ALPHA_TRACK` / `ALPHA_DISABLED_BORDER` | 0,35 · 0,16 · 0,70 / 0,85 · 0,08 · 0,72 · 0,10 / 0,4 | `primary` 0,70: 3,50 / 3,01 | Kartenrand (`accentBorder`) · Fläche gefüllter Chips · Stufen der Logbuch-Wochenzeile (Zustandsgrafik; Tag ohne Übung = leerer Ring in `TERTIARY`, 4,70 auf Card) · Füllung unter der Atemkurve (dekorativ) · Rand des Atemkreis-Verlaufs · Kreis-Track, inaktiver Rand |
-| vāyu-Bild | `VayuAlpha(selected, idle, dimmed)`: `VayuFieldAlpha` · `VayuWholeAlpha` · `VayuAuraAlpha` · `VayuLineAlpha` · `VayuLabelAlpha`; `VAYU_PULSE_LOW` / `_HIGH` | 0,95/0,55/0,10 · 0,32/0,10/0,04 · 0,90/0,35/0,08 · 1/0,55/0 · 1/1/0,30; 0,55 / 0,95 | Beschriftung voll 6,76 auf `surface` | Zustände im vāyu-Bild: gewählt / nichts gewählt / ein anderer gewählt; Pulsieren der gewählten Fläche ([spec/lernen.md](spec/lernen.md)) |
+| vāyu-Bild | `VayuAlpha(selected, idle, dimmed)`: `VayuFieldAlpha` · `VayuWholeAlpha` · `VayuAuraAlpha` · `VayuLineAlpha` · `VayuLabelAlpha`; `VAYU_PULSE_LOW` / `_HIGH` | Werte in `Color.kt` | Beschriftung voll 6,76 auf `surface` | Zustände gewählt / nichts gewählt / ein anderer gewählt, Pulsieren der gewählten Fläche ([spec/lernen.md](spec/lernen.md)) |
 
 ### 2.3 Regeln
 
@@ -136,65 +150,42 @@ Quelle [Type.kt](../app/src/main/java/app/atemkraft/ui/theme/Type.kt): M3 `Typog
 
 ### 4.1 Abstände ([Dimens.kt](../app/src/main/java/app/atemkraft/ui/theme/Dimens.kt)), Raster 4 dp
 
-Ränder und Karten-Innenabstand wie M3 (16 dp). Touch-Ziele hängen nie an diesen Werten: Eigene klickbare Flächen tragen `heightIn(min = MinTouchTarget)`; die Optik der Bedienelemente kommt aus §4.2. Wann welcher Abstand gilt, sagt die Abstandsskala in §4.5.
+Ränder und Karten-Innenabstand wie M3 (16 dp). Touch-Ziele hängen nie an diesen Werten: Eigene klickbare Flächen tragen `heightIn(min = MinTouchTarget)`; die Optik der Bedienelemente kommt aus §4.2. Keine Zwischenwerte, keine Summen „8 + 4“ am Aufrufort (LAYOUT-01, -02).
 
-| Token | dp | Rolle |
+| Token | dp | Wann |
 |---|---|---|
-| `ScreenPadding` | 16 | horizontaler Screen-Rand |
+| `ScreenPadding` | 16 | Screen-Rand, Rand der Chip-Reihen und Blätter |
 | `CardPadding` | 16 | Karten-Innenabstand |
-| `ListGap` | 12 | **Karte ↔ Karte (immer)**, Listen, Button-Reihen, Lupe → Text im Suchfeld |
-| `SessionPadding` | 24 | Rand der Vollbild-Sessions |
-| `ScreenTopSub` / `ScreenBottom` | 8 / 24 | oben über der festen Kopfzeile / unten alle Scroll-Screens |
-| `SectionGap` / `SectionHeaderTop` | 16 / 24 | nur zwischen Blöcken **verschiedenen Typs**, oben auf jeder Push-Seite / über `SectionHeader`; auch der Abstand Name ↔ Schalter in `ToggleRow` |
-| `HeaderGap` | 12 (= `ListGap`) | **Kopf → erster Inhalt**, unter jedem `SectionHeader` und `GroupLabel` gleich: Der Kopf trägt unten keinen Abstand; Listen treffen ihn über `spacedBy(ListGap)`, Spalten über `CollapsibleSection` |
-| `ChipPadding` | 12 | waagerechtes Polster der Anlass-Chips (`ChoiceChip`) und Filter-Chips (`TonalChip`) |
-| `ScrollEdgeFade` | 32 | Verlauf in Transparenz an der Seite einer seitlich scrollenden Chip-Reihe mit weiterem Inhalt |
-| `GapSmall` / `GapTiny` / `GapHairline` | 8 / 4 / 2 | Label → Steuerung / Hint, Titel → Aktionen, Chips nebeneinander / Icon ↔ Text, Titel → Metazeile / enge Divider, Auswahlzeilen mit Fläche untereinander, Rest des Überstands einer Kopf-Aktion |
+| `ListGap` | 12 | **Karte ↔ Karte (immer)**, Listen, Button-Reihen (Start ↔ Reset), Rand einer Leiste bis zu ihrer ersten Tippfläche, Lupe → Text im Suchfeld |
+| `HeaderGap` | 12 (= `ListGap`) | **Kopf → erster Inhalt**, unter jedem `SectionHeader` und `GroupLabel`: Der Kopf trägt unten keinen Abstand; Listen treffen ihn über `spacedBy(ListGap)`, Spalten über `CollapsibleSection` |
+| `SectionGap` | 16 | senkrecht nur zwischen Blöcken **verschiedenen Typs** (Gruppenlabel ↔ Block darüber, oben auf jeder Push-Seite); waagerecht Name ↔ Schalter in `ToggleRow` |
+| `SectionHeaderTop` | 24 | über einem `SectionHeader` |
+| `ScreenTopSub` / `ScreenBottom` | 8 / 24 | oben über der festen Kopfzeile / unten auf allen Scroll-Screens |
+| `TabBarGripClearance` | 48 (= `MinTouchTarget`) | unten auf jeder Seite der Tiefe statt `ScreenBottom`: Platz für die Tippfläche des Griffs der Tab-Leiste ([spec/navigation.md](spec/navigation.md)) |
+| `GapSmall` | 8 | Titel → Aktionen/Zeichen, Abschnittstitel → Teaser bzw. Intro, Label → Steuerung/Hinweis, Steuerzeile → Steuerzeile (jede genau `MinTouchTarget` hoch), Chips nebeneinander, Feld → Chip-Reihe, Werte → Kurve, Rand über der Tippfläche eines tippbaren Kopfs |
+| `GapTiny` | 4 | Titel → Metazeile, Icon ↔ Text in einer Zeile, Hinweis unter einer Zeile |
+| `GapHairline` | 2 | Auswahlzeile ↔ Auswahlzeile einer `selectableGroup` mit Fläche (`selectedRow`), enge Divider, Rest des Überstands einer Kopf-Aktion |
+| `ChipPadding` | 12 | waagerechtes Polster der Anlass- und Filter-Chips (`ChoiceChip`, `TonalChip`) |
 | `MinTouchTarget` | 48 | Mindesthöhe eigener klickbarer Flächen, Höhe der Kopfzeile in der Karte |
-| `TabBarGripClearance` | 48 (= `MinTouchTarget`) | unten auf jeder Seite der Tiefe statt `ScreenBottom` (`PushScaffold`, Logbuch, Ende des Muster-Editors; unter seiner Werkzeugleiste als Reserve von `FillViewportColumn`): Platz für die Tippfläche des Griffs der Tab-Leiste; ohne Startleiste zugleich Höhe des Wischbands, das sie öffnet |
-| `PinnedBarElevation` | 3 | tonale Erhöhung der gepinnten Start-Leiste (`PinnedActionBar`) |
-| `FocusRing` | 2 | Fokusring um Atemkreis und Meditationsring (`CircleTapTarget`; Raster-Ausnahme) |
-| `BorderThin` | 1 | Kartenrand (`accentBorder`, `ALPHA_BORDER`), Rand von `AppOutlinedButton`, umrandeten Info-Chips und ∞-Knopf |
-| `BorderChip` | 1,5 | Rand der `LinkChip` in `outline` |
-| `BorderSection` | 2 | Bereichs-Trenner unter „Muster des Tages ›“ (`outlineVariant`) |
-| `SessionRingStroke` | 3 | Spur und Fortschrittsbogen um den Atemkreis (Raster-Ausnahme) |
-| `SessionMainButton` / `SessionSideButton` | 76 / 56 | Kreise der `SessionControlBar`: Pause/Weiter / „Von vorne“, „Beenden“; fest, selbst Tippfläche |
-| `SessionMainIcon` / `SessionSideIcon` | 32 / 28 | Icons in diesen Kreisen |
-| `SessionControlGap` | 40 | Abstand der Knöpfe in der `SessionControlBar` |
-| `OverlayIconButton` | 40 | Kreis der Kopfleisten-Knöpfe im Session-Overlay |
-| `DurationPickerMin` | 200 | Mindestkante des Zeitrings; bei großer Schrift `timeDialMinSide` ([spec/meditation.md](spec/meditation.md)) |
-| `ContentMaxWidth` | 600 | Höchstbreite der Inhalte auf Tablets und Foldables, mittig (`MainActivity`) |
-| `SessionCircleMin` · `SessionCircleWidthShare` · `SessionCircleHeightShare` | 96 · 0,9 · 0,62 | Session-Kreis (`SessionRunningLayout`): kleinste Kante · Höchstanteil an der Spaltenbreite · an der Höhe im Hochformat |
+| `BorderThin` / `BorderChip` | 1 / 1,5 | Kartenrand (`accentBorder`), Rand von `AppOutlinedButton`, Info-Chips und ∞-Knopf / Rand von `LinkChip` und `ChoiceChip` in `outline` |
+
+Feature-Maße mit Wert und Zweck in der KDoc von `Dimens`: `SessionPadding`, `SessionRingStroke`, `SessionMainButton`/`SessionSideButton`, `SessionMainIcon`/`SessionSideIcon`, `SessionControlGap`, `OverlayIconButton`, `SessionCircleMin`/`WidthShare`/`HeightShare`, `DurationPickerMin`, `ContentMaxWidth`, `PinnedBarElevation`, `FocusRing`, `BorderSection`, `ScrollEdgeFade`.
 
 ### 4.2 Größen ([Sizes.kt](../app/src/main/java/app/atemkraft/ui/theme/Sizes.kt))
 
-**Bedienelemente haben Material-3-Größe.** Die **Tippfläche** ist `Dimens.MinTouchTarget` 48 (A11Y-05). Gesetzt werden die Tokens nur in `src/ui/components/`, an M3-Elementen nur als `heightIn(min = …)` (LAYOUT-04). Ob Optik und Tippfläche stimmen, prüfen die Gates (`TIPPFLAECHE`, `BESCHNITTEN`, `ANATOMIE`).
+**Bedienelemente haben Material-3-Größe.** Die **Tippfläche** ist `Dimens.MinTouchTarget` 48 (A11Y-05). Größen von Bedienelementen setzen nur die Komponenten in `src/ui/components/`, an M3-Elementen nur als `heightIn(min = …)` (LAYOUT-04); Zeichen- und Grafikmaße (Kurve, Punkte, Icons in Feature-Zeichnungen) dürfen auch Feature-Dateien setzen. Ob Optik und Tippfläche stimmen, prüfen die Gates (`TIPPFLAECHE`, `BESCHNITTEN`, `ANATOMIE`).
 
-| Token | dp (M3) | Verwendung |
+| Token | dp (M3) | Wofür |
 |---|---|---|
-| `ButtonHeight` | 40 | Mindesthöhe: Start und Reset, `Session*Button`, `AppTextButton`, `AppOutlinedButton`, `DisclosureToggle`, Segmente, `ChoiceChip` |
-| `ChipHeight` | 32 | `LinkChip`, `TonalChip` (Filter-Chips) |
-| `ButtonMinWidth` | 58 | M3-Mindestbreite eines Buttons; feste Breite des Reset im `StartSplitButton` (`ResetWidth`: Icon mit Polster 50 liegt darunter), damit der Start seine Restbreite vorab kennt |
-| `SwitchWidth` | 52 | Breite des M3-Switch; der Hinweis einer `ToggleRow` endet um diese Breite plus Abstand vor der Kante |
+| `ButtonHeight` | 40 | Mindesthöhe von Buttons, Segmenten, `DisclosureToggle`, `ChoiceChip` (Anlass, eine Antwort) |
+| `ChipHeight` | 32 | `LinkChip`, `TonalChip` (Filter, mehrere) |
+| `ButtonMinWidth` | 58 | M3-Mindestbreite; feste Breite des Reset im `StartSplitButton` (`ResetWidth`) |
 | `IconButtonSize` | 40 | Kreis von `AppIconButton`, `AppIconToggle`, `SoundSwitch`, Stepper-Knöpfen, `StartPlayButton` |
-| `TabBarGripWidth` · `TabBarGripHeight` | 32 · 4 | Griff `TabBarToggle` (wie M3 `BottomSheetDefaults.DragHandle`, `CircleShape`), Tippfläche 48 × 48 ([spec/navigation.md](spec/navigation.md)) |
-| `TabBarSwipeDistance` | 24 | Wischweg ab dem Aufsetzen, bis die Tab-Leiste in der Tiefe auf- bzw. zugeht (Schwelle, gewertet erst nach dem Touch-Slop) |
-| `IconDefault` | 24 | Icon in `AppIconButton`, Expander-Caret, Mini-Leiste, Lupe |
-| `IconInButton` | 18 | Icon neben Beschriftung: Reset, `DisclosureToggle`-Caret, `ForwardChevron` |
-| `SegmentIconReserve` | 26 | Platz, den M3-`SegmentedButton` (1.3) für das Häkchen reserviert; `SegmentedChoiceRow` gibt ihn der Beschriftung zurück (an M3 1.3 gebunden) |
-| `IconSmall` | 16 | Info-Icon „Anleitung“, Atemkreis „tut mir gut“ auf Karten, Stift im Editor-Kopf, „öffnet im Browser“ |
-| `ProgressInline` / `ProgressStroke` | 20 / 2 | Lade-Kreis in der Stimmenliste |
-| `WeekDot` · `FamilyDot` | 18 · 10 | Tagespunkt der 7-Tage-Übersicht · Familienpunkt vor jedem Logbuch-Eintrag |
-| `PauseFlashSize` | 150 | Pause-/Play-Symbol, das beim Antippen des Atemkreises aufblinkt (`PauseFlash`); nie größer als der Kreis |
-| `TouchOverhang` | 12 | (48 − `IconDefault`) / 2: Überstand der Tippfläche über das Icon; um ihn melden `flushStart`/`flushEnd` einen Icon-Button schmaler |
-| `CircleOverhang` | 4 | (48 − `IconButtonSize`) / 2: Überstand der Tippfläche über den Knopf-Kreis (Stepper, Kopfzeile in der Karte) |
-| `StepperValueMinWidth` | 48 | Mindestbreite des Wertfelds im Stepper (kein Touch-Ziel); mit Einheit („30 s“) hält `widestValues` die Breite des größten Werts |
-| `CurveSpan` · `CurveHandle` · `CurveHandleSelected` · `CurveSpanMin` | 88 · 18 · 22 · 48 | Atemkurve: Abstand „voll“/„leer“ · Griff · gewählter Griff · kleinster Abstand (= `MinTouchTarget`) |
-| `MiniCurveWidth` · `MiniCurveHeight` | 64 · 24 | Mini-Kurve je Vorlage im Startpunkt-Sheet (dekorativ) |
-| `RhythmCurveHeight` · `RhythmCurveStroke` · `RhythmCurveDot` | 56 · 2 · 8 | Rhythmuskurve der Detailseite (`RhythmCurve`): Höhe samt Rand für den Punkt · Strich · laufender Punkt |
-| `VayuFigureMaxWidth` | 280 | Höchstbreite des vāyu-Bilds (Seitenverhältnis 352 : 450) |
-| `CurveLabelMinSpacing` · `CurveTickMinSpacing` | 30 · 6 | Atemkurve: Mindestabstand der Zeitleisten-Zahlen · feine Striche ab diesem Abstand (Schwellen, kein Layout-Abstand) |
-| `CurveStroke` · `CurveStrokeSelected` · `CurveHoldStroke` · `CurveDash` · `CurveDot` | 4 · 6 · 3 · 6 · 14 | Atemkurve: Striche, Strichlänge Halten, Punkt der Vorschau |
+| `SwitchWidth` | 52 | M3-Switch; der Hinweis einer `ToggleRow` endet davor |
+| `IconDefault` / `IconInButton` / `IconSmall` | 24 / 18 / 16 | Icon in Tippfläche 48 / Icon neben Beschriftung / Zeichen auf Karten neben `label*`-Text |
+| `TouchOverhang` / `CircleOverhang` | 12 / 4 | Überstand der Tippfläche 48 über ein `IconDefault`-Icon bzw. einen `IconButtonSize`-Kreis; um ihn melden `flushStart`/`flushEnd` bzw. der Stepper sich schmaler |
+
+Feature- und Zeichenmaße mit Wert und Zweck in der KDoc von `Sizes`: `TabBarGripWidth`/`TabBarGripHeight`, `TabBarSwipeDistance`, `SegmentIconReserve`, `StepperValueMinWidth`, `ProgressInline`/`ProgressStroke`, `WeekDot`, `FamilyDot`, `PauseFlashSize`, `Curve*`, `MiniCurve*`, `RhythmCurve*`, `VayuFigureMaxWidth`.
 
 Switch und RadioButton stehen in M3-Größe. `AppTextButton` trägt `shapes.large` (20 dp = halbe `ButtonHeight`): mehrzeilig schneidet keine große Rundung Glyphen an. Eigene Maße außerhalb von `Sizes`: `NavigationBar` (M3 1.4: Höhe mindestens 80, wächst mit der Beschriftung; Indikator 64 × 32), die Icons von `OverlayChrome` und die `SessionControlBar` (Bedienung mit halb geschlossenen Augen, `Dimens.Session*`). Kartenrand nur über `accentBorder(color)`; gestrichelter Rand über `dashedBorder(color, shape, width = BorderThin, dash = GapTiny)` (`CardBorder.kt`).
 
@@ -216,7 +207,7 @@ Switch und RadioButton stehen in M3-Größe. `AppTextButton` trägt `shapes.larg
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | LAYOUT-01 | MUSS | Abstände nur über `Dimens`, Größen über `Sizes`, Formen über `MaterialTheme.shapes.*` oder `CircleShape`. Keine `.dp`-Literale (außer `0.dp`), kein `RoundedCornerShape`/`CutCornerShape`, kein `Dp.Hairline` außerhalb `src/ui/theme/`. Nie eckige Schnitte. | Ein Raster, eine Quelle ([DECISIONS 2026-10-03](DECISIONS.md)). | auto: `layout-literal` |
-| LAYOUT-02 | MUSS | Screens folgen dem Gerüst §4.3 und der Abstandsskala §4.5: Karte ↔ Karte immer `ListGap`, `SectionGap` nur zwischen Blöcken verschiedenen Typs, Kopf → Inhalt `HeaderGap`. Insets nur über `Scaffold`-`innerPadding` oder `safeDrawingPadding()`, keine festen Leistenhöhen. | Nachgebaute Kopf-Blöcke, drei Kartenabstände; Edge-to-edge ab API 35. | manuell: R-VISUAL |
+| LAYOUT-02 | MUSS | Screens folgen dem Gerüst §4.3 und der Abstandsskala §4.1: Karte ↔ Karte immer `ListGap`, `SectionGap` nur zwischen Blöcken verschiedenen Typs, Kopf → Inhalt `HeaderGap`. Insets nur über `Scaffold`-`innerPadding` oder `safeDrawingPadding()`, keine festen Leistenhöhen. | Nachgebaute Kopf-Blöcke, drei Kartenabstände; Edge-to-edge ab API 35. | manuell: R-VISUAL |
 | LAYOUT-03 | MUSS | **Kein Wort bricht um, kein Text wird gekürzt** – auf 360–412 dp bei fontScale 1,0–2,0, quer und Tablet; keine Zeile beginnt im Wort oder mit Satzzeichen (`badBreakAt`); keine runde Form schneidet Glyphen an. Mittel in der Reihenfolge von §4.5 „Platz für Text“. Verboten: Ellipse auf Inhalt (Ausnahme `MarqueeText`), feste Höhe für Text, `weight(fill = false)` neben Chips, Orientierungssperre. | Halbe Wörter und gekürzte Hinweise sind unlesbar ([DECISIONS 2026-10-03](DECISIONS.md)); WCAG 1.4.4, 1.4.10. | auto: `ScreenshotTest` (`WORTBRUCH`, `ABGESCHNITTEN`, `CHIP_UMBRUCH`, `ZUGESCHNITTEN`), `weight-nofill`, `platform-override` |
 | LAYOUT-04 | MUSS | **Bedienelemente:** sichtbare Größe nur aus `Sizes`, gesetzt nur in `src/ui/components/`; M3-Steuerelemente nur dort, M3-Größenkonstanten nur in `src/ui/theme/`. An M3-Elementen nur `heightIn(min)`, eigene feste Größe nur `minimumInteractiveComponentSize().size(x)`, kein `scale`/`graphicsLayer` auf Bedienbarem, gleiche Höhe nie über `IntrinsicSize.Min`. **Ein Größentoken je Leiste** (§4.5). | `height` nahm die 48-dp-Reservierung, `scale` den Hit-Test ([DECISIONS 2026-10-22](DECISIONS.md)). | auto: `m3-size-const`, `control-direct`, `control-scale`, `touch-order`, `layout-literal`, `ScreenshotTest` (`TIPPFLAECHE`) |
 | LAYOUT-05 | MUSS | **Bedienelemente bleiben ganz.** Kein Bedienelement wird beschnitten oder aus dem Bild geschoben: Abschneiden darf nur eine Scroll-Fläche in ihrer Richtung – senkrecht die Seite, waagerecht einzig die Chip-Reihen (`ChoiceChipRow`, `FilterChipRow`); Beschriftung und Icon bleiben im sichtbaren Behälter, bei fontScale 2,0 wächst er mit. | Kleinere Tokens und feste Höhen machen genau das wahrscheinlich; LAYOUT-03 prüft nur Text. | auto: `ScreenshotTest` (`BESCHNITTEN`, `AUSSERHALB`) |
@@ -225,13 +216,12 @@ Switch und RadioButton stehen in M3-Größe. `AppTextButton` trägt `shapes.larg
 
 ### <a id="anatomie"></a>4.5 Anatomie der Bausteine (Layout-Grammatik)
 
-Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, Position und Größenverhältnisse werden nachgeschlagen, nicht erfunden (PROZ-07). Die Anatomie lebt an **einer** Stelle im Code – Kartenköpfe (auch Expander und Einstellungskarten) nur über `CardHeader`, Abschnittsköpfe über `SectionHeader`/`GroupLabel` und deren gemeinsame `TitleRow`, Blätter über `AppBottomSheet` –, und das Gate `ANATOMIE` im `ScreenshotTest` misst sie an jedem Bild nach (Test-Tags `CARD_HEADER_TAG`, `TITLE_ROW_TAG`, `TITLE_ROW_TITLE_TAG`, `TITLE_ROW_ACTIONS_TAG`, `TITLE_ROW_INDICATOR_TAG`, `CONTROL_ROW_TAG`). Statisch wacht `anatomy-overlay`: Ein Overlay (`align(Alignment.TopEnd)`) gibt es außerhalb von `CardHeader` nicht mehr.
+Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, Position und Größenverhältnisse werden nachgeschlagen, nicht erfunden (PROZ-07). Die Anatomie lebt an **einer** Stelle im Code – Kartenköpfe (auch Expander und Einstellungskarten) nur über `CardHeader`, Abschnittsköpfe über `SectionHeader`/`GroupLabel` und deren gemeinsame `TitleRow`, Blätter über `AppBottomSheet` –, und das Gate `ANATOMIE` im `ScreenshotTest` misst sie an jedem Bild nach (Test-Tags `CARD_HEADER_TAG`, `TITLE_ROW_TAG`, `TITLE_ROW_TITLE_TAG`, `TITLE_ROW_ACTIONS_TAG`, `TITLE_ROW_INDICATOR_TAG`, `CONTROL_ROW_TAG`). Statisch wacht `anatomy-overlay`: Ein Overlay (`align(Alignment.TopEnd)`) gibt es außerhalb von `CardHeader` nicht mehr. Feature-Anatomien, die nur an einer Stelle vorkommen: Antwortreihe am Ende → [spec/session.md](spec/session.md#antwortreihe), Kurvenkarte des Editors → [spec/muster-editor.md](spec/muster-editor.md#kurvenkarte), Rhythmuskurve und Leiste der Detailseite → [spec/detail.md](spec/detail.md#rhythmuskurve).
 
-#### Allgemeine Positionsregeln
+#### <a id="anat-regeln"></a>Allgemeine Positionsregeln
 
 | Regel | Was gilt | Prüfung |
 |---|---|---|
-| **Abstandsskala** | `GapHairline` 2: Auswahlzeile ↔ Auswahlzeile einer `selectableGroup` mit Fläche (`selectedRow`; Startpunkt-Blatt, Ablauf-Liste – die Flächen tragen ihr Polster selbst) · `GapTiny` 4: Titel → Metazeile, Icon ↔ Text in einer Zeile · `GapSmall` 8: Titel → Aktionen/Zeichen, Abschnittstitel → Teaser bzw. Intro, Chips nebeneinander, Label → Steuerung/Hinweis, Steuerzeile (Stepper, Schalter, Segmente) → Steuerzeile (jede genau `MinTouchTarget` hoch), Feld → Chip-Reihe, Werte → Kurve, Rand über der Tippfläche eines tippbaren Kopfs · `ListGap` 12: Karte ↔ Karte, Listen, Button-Reihen (Start ↔ Reset), Rand einer Leiste bis zu ihrer ersten Tippfläche · `HeaderGap` 12: Kopf → erster Inhalt (der Kopf selbst trägt unten nichts) · `SectionGap` 16: nur zwischen Blöcken verschiedenen Typs, Gruppenlabel ↔ Block darüber · `SectionHeaderTop` 24: über einem `SectionHeader` · `CardPadding` 16: Karten-Innenabstand · `ScreenPadding` 16: Screen-Rand, Rand der Chip-Reihen und Blätter. Keine Zwischenwerte, keine Summen „8 + 4“ am Aufrufort. | `layout-literal`; R-VISUAL |
 | **Bündigkeit** | Glyphen stehen bündig mit der Textkante, nie die Tippfläche: Icon-Buttons über `flushEnd`/`flushStart` (Überstand `TouchOverhang` 12), Knopf-Kreise über `CircleOverhang` 4, Text-Buttons reichen ihr Polster über `flushStart(inCard)` in den Rand. In Karten höchstens `CardPadding` Überstand, damit die Tippfläche nicht über den Kartenrand ragt (die Karte clippt). Kein `offset`: Nachbarn rücken mit. | `ANATOMIE` (Glyph bündig ± 1 dp), `TIPPFLAECHE`, `BESCHNITTEN` |
 | **Vertikale Mitte auf der ersten Textzeile** | Aktionen, Zeichen (Atemkreis, Chevron, Caret) und Status stehen mittig zur **ersten** Titelzeile (`rememberFirstLineHeight(style)`, gemessen – ab Android 14 wächst große Schrift nichtlinear), nicht mittig zum ganzen Block; bricht der Titel um oder rutschen Chips darunter, bleiben sie oben. | `ANATOMIE` (Glyph-Mitte ± 4 dp) |
 | **Größenverhältnisse** | Icon 24 (`IconDefault`) in Tippfläche 48 (`MinTouchTarget`); Kreis-Knopf 40 (`IconButtonSize`) in 48; Icon neben Text 18 (`IconInButton`); Zeichen auf Karten 16 (`IconSmall`). Titel `titleMedium` zu Metazeile/Kurztext `bodySmall`, Abschnittskopf `titleLarge` zu Gruppenlabel `titleSmall`; Chip-Höhen 40 (Anlass, eine Antwort) / 32 (Filter, mehrere). Nachbarn in einer Leiste teilen **ein** Größentoken und sind gleich hoch; hervorgehoben wird durch Füllung oder Farbe (LAYOUT-04). | `m3-size-const`, `control-direct`, `TIPPFLAECHE`; Tokenvergleich im Code |
@@ -239,7 +229,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 | **Nichts springt** | Wo ein Zustand wechselt (Reset erscheint, „· angepasst“, Vorschau läuft, X im Suchfeld, Startpunkt-Name), hält eine Reserve den Platz des breitesten Inhalts (`widestOf`, `rememberWidestTextWidth`, `leadingReserve`/`endReserve`, Platzhalter mit gleicher Breite); Höhe und Lage der Nachbarn ändern sich nicht. | `ScreenshotTest` (`chipLayout`, `KOMPAKT_FEHLT`); R-VISUAL |
 | **Overlay nur über der Titelzeile** | Eine Aktion liegt nie frei über Fließtext oder in einer Ecke „irgendwo“: Sie steht auf der Titelzeile (`CardHeader`) oder im Kopf (`SectionHeader`, `GroupLabel`, `ScreenHeader`, `PushHeader`), ihre 48-dp-Tippfläche ragt nach unten in den Abstand bzw. über die Metazeile, der Baustein wird dadurch nicht höher. | `anatomy-overlay`, `ANATOMIE` |
 
-#### Karte mit Aktionen (`ExerciseCard`, `PatternCard` → `SavedPatternCard`, `DailyPatternCard`, `WelcomeCard`, `NavCard`; Kopf von `ExpanderSection`/`ExpanderCard` und `SettingsCard`)
+#### <a id="anat-karte"></a>Karte mit Aktionen (`ExerciseCard`, `PatternCard` → `SavedPatternCard`, `DailyPatternCard`, `WelcomeCard`, `NavCard`; Kopf von `ExpanderSection`/`ExpanderCard` und `SettingsCard`)
 
 ```
 ┌ Card(onClick?) · Rand accentBorder(Bedeutung) · Polster CardPadding ──────────────────┐
@@ -256,7 +246,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 - **Zeichen** (`indicator`, nicht klickbar: Atemkreis „tut mir gut“ `IconSmall`, `ForwardChevron`, „öffnet im Browser“) stehen in einer Box von Titelzeilenhöhe am Zeilenende.
 - **Prüfung:** `ANATOMIE` – (1) Glyph über keinem Text, Tippfläche nicht über dem Titel, (2) mit Aktionen: mehrzeiliger Text reicht bis zur Inhaltskante, (3) Glyph-Mitte in der ersten Titelzeile ± 4 dp, (4) Glyph bündig ± 1 dp; `TIPPFLAECHE` 48 dp; `anatomy-overlay`.
 
-#### Abschnittskopf (`SectionHeader`, `CollapsibleSection`, `GroupLabel`)
+#### <a id="anat-kopf"></a>Abschnittskopf (`SectionHeader`, `CollapsibleSection`, `GroupLabel`)
 
 ```
  SectionHeaderTop 24 (bzw. GapSmall über der Tippfläche, wenn tippbar; top = 0: keiner, als erstes Element einer Fläche mit eigenem Rand oder wo darüber schon genug steht)
@@ -273,7 +263,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 - Tippbare Köpfe (`expanded`, `onClick`): ganze Titelspalte samt Teaser ≥ 48 dp, Chevron statt Caret bei `onClick`.
 - **Prüfung:** `ANATOMIE` (3, 4, tippbare Zeile ≥ 48), `semantics-heading`, `head-color`.
 
-#### Zeile mit Steuerelement (`ToggleRow`, `Stepper`, `CompactStepper`, Einstellungs-Zeilen `TrailingRow`)
+#### <a id="anat-steuerzeile"></a>Zeile mit Steuerelement (`ToggleRow`, `Stepper`, `CompactStepper`, Einstellungs-Zeilen `TrailingRow`)
 
 ```
  Label bodyMedium (weight 1f) ···················· SectionGap ···· [Switch 52]  ≥ 48 dp hoch, Mitte
@@ -285,7 +275,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 - Glyph bzw. Kreis bündig: Icon-Buttons `flushEnd(inCard = true)`, Stepper-Kreis um `CircleOverhang` eingerückt. Feste Endspalten halten in jedem Zustand ihre Breite ([spec/einstellungen.md](spec/einstellungen.md)).
 - **Prüfung:** `ANATOMIE` (Steuerzeile ≥ 48 dp), `switch-unlabeled`, `TIPPFLAECHE`.
 
-#### Chip-Reihen (`ChoiceChipRow` Anlässe, `FilterChipRow` Filter)
+#### <a id="anat-chips"></a>Chip-Reihen (`ChoiceChipRow` Anlässe, `FilterChipRow` Filter)
 
 ```
  [Stress 40][Kurzatmig][Einschlafen]      ← Anlass: ChoiceChip 40 dp, shapes.small, Rand, eine Antwort
@@ -297,176 +287,99 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 - Ausnahme `FilterChipFlow` (Wochentage der Erinnerung in einer Karte): dieselben `TonalChip`s brechen zwischen ganzen Chips um statt seitlich zu scrollen – alle sieben bleiben sichtbar, keine Kartenkante schneidet einen an.
 - **Prüfung:** `ScreenshotTest` (`chipLayout`, `chipRows`, `filterRow`, `CHIP_UMBRUCH`), `no-check-icon`.
 
-#### Antwortreihe (`FinishedPanel` mit `FeelingAsk`: Befinden am Ende)
-
-```
- ✓ Geschafft  labelMedium TERTIARY
- GapSmall
- Spür kurz nach, wie es dir geht.   ← Titel headlineSmall, zentriert
- ListGap 12
- [ ruhiger | wie vorher | unruhiger ]  ← SegmentedChoiceRow: drei gleich breite Segmente, ButtonHeight 40, Tippfläche 48, ohne Häkchen
- GapSmall                              (nur beim ersten Mal:)
- Nur auf diesem Gerät gespeichert. …   ← bodySmall TERTIARY, zentriert
- GapSmall · Bilanz · Links · SessionPadding · [Nochmal][Ende]
-```
-
-- Keine neue Optik: Die Reihe ist eine `SegmentedChoiceRow` (Einzelwahl aus drei, Fläche `SegmentSelected` + SemiBold, bei Platzmangel gemeinsam bis 85 % kleiner, dann Radioliste); keine vorgewählt, eine Wahl ersetzt die vorige, nie abwählen, nie Pflicht. Breite wie die Knopfreihe darunter (volle Breite im `SessionPadding`). Bei aktivierenden Übungen „wacher · wie vorher · müder“.
-- Erscheint nur, wenn ein Logbuch-Eintrag entstand (`feelingOptions` nicht leer) und die Einstellung es will; der Hinweis des ersten Mals bleibt für diesen Ende-Screen stehen. Passt der Ende-Screen nicht in die Höhe (Schrift 2,0), scrollt er; mittig bleibt er, solange alles passt.
-- **Prüfung:** `ScreenshotTest` (`09_session_ende_befinden*`, `10_meditation_ende_befinden`: `WORTBRUCH`, `TIPPFLAECHE`, `BESCHNITTEN`), `no-check-icon`; manuell R-A11Y (Gruppe „Befinden“, Auswahl angesagt).
-
-#### Kurvenkarte des Editors (`CurveCard`, `BreathCurveEditor`, `CurvePreviewControls`)
-
-```
- Box · 16 s je Atemzug · 3,8/min          [intensiv]   ← Werte-Zeile, eine Textzeile, nicht klickbar
- GapSmall
- ┌ CurveCard surface · ohne Polster ────────────────────┐
- │  voll ────────────────○──────────                     │  Höhe aus BreathCurveHeights (min CurveSpanMin … CurveSpan)
- │      ╱       ╲ · · · ╲                                │
- │  leer ─●──────────────────●─── 0  5  10 s             │
- │ (▶) ← Play bündig links an der Zeitachse   Ton (🔊) → │  PreviewRow genau MinTouchTarget hoch
- └──────────────────────────────────────────────────────┘
-```
-
-- Werte über der Kurve (nicht klickbar, Reserven gegen Springen), Kurve, am unteren Kartenrand Play bündig links am Beginn der Zeitachse (`flushStart`, `CardPadding`) und Ton bündig rechts (`flushEnd`, `GapSmall` wie das Ende der letzten Zahl); Mindesthöhe aus `BreathCurveHeights` ([spec/muster-editor.md](spec/muster-editor.md)).
-- **Prüfung:** `DeviceFitTest` (`KOMPAKT_FEHLT`), `ScreenshotTest` (`14_muster_editor_*`).
-
-#### Rhythmuskurve der Detailseite (`RhythmCurve`)
-
-```
- Familie · [Studienlage] [⚠ Chip]
- GapSmall · Kurzbeschreibung bodyMedium
- GapSmall
-  ╱‾‾‾‾‾‾‾‾‾╲            ← RhythmCurveHeight 56, volle Breite, Strich 2: Ein secondary, Halten gestrichelt, Aus BreathExhale
- ●            ╲_____       ← Punkt 8 läuft endlos im Takt der Übung, in der Farbe seiner Phase (wie die Linie, Übergang RhythmDotColor); fehlt bei Animator-Skala 0 und unter einem Vollbild-Overlay
- GapTiny · Einatmen 4 s · Halten voll 7 s · Ausatmen 8 s   ← HintText, für TalkBack unsichtbar
- GapSmall · [ca. 4 min] [ruhig] · ⚠-Zeile · Expander
-```
-
-- Eine Zeile des Kopfblocks, gleich nach der Kurzbeschreibung und vor Dauer und Charakter – dieselbe Reihenfolge wie die Metazeile der Karte (Takt · Dauer); Abstände `GapSmall` wie zwischen den anderen Zeilen des Kopfblocks, Kurve → Zeile `GapTiny` wie Rhythmusbild → Takt der Atemlehre. Keine Füllung, keine Griffe, keine Zeitleiste ([spec/detail.md](spec/detail.md)).
-- **Prüfung:** `ScreenshotTest` (`08_detail_*`: `WORTBRUCH`, `ABGESCHNITTEN`); manuell R-A11Y (ein Knoten mit den Phasen in Worten).
-
-#### Knopfleiste unten (`PinnedActionBar`: `StartSplitButton`, Detailseite mit „Anpassen ›“ darüber; Editor: `CompactStepper`, `SlidingReset`, `StartPlayButton`)
+#### <a id="anat-leiste"></a>Knopfleiste unten (`PinnedActionBar`: `StartSplitButton`; Editor: `CompactStepper`, `SlidingReset`, `StartPlayButton`)
 
 ```
  ┌ PinnedActionBar surface · Elevation 3 · Rand ScreenPadding × ListGap ─────────────────┐
- │ Anpassen · 4 Runden · angepasst   titleLarge, Status labelMedium  ›   ← nur Detailseite: │
- │ (Status passt nicht dahinter → darunter)   SectionHeader(onClick, top = 0), Zeile ≥ 48 dp │
  │ [ Starten · ca. 5 min ····· füllt den Rest ·····] ListGap [↻ 40]   (Reset nur bei Abweichung)│
  │ (−) 5 min (+) ·································· [↻ 40] [▶ 40]   ← Editor: ein Token, 40 dp │
  └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Feste Breiten für Stepper und Reset, Start füllt den Rest; Start und Reset gleich hoch über dieselbe Mindesthöhe (`ButtonHeight`), nie `IntrinsicSize.Min` – wird „Starten“ zweizeilig, wächst der Reset um dieselben Zeilen (`SlidingReset(lines)`). Die Zeilen entscheidet `StartSplitButton` in einer Komposition aus der Restbreite (Reset fest `ResetWidth`, Button-Polster), nicht per Rückmeldung aus der Messphase: Beide stehen vom ersten Frame an gleich hoch; solange der Reset hinausgleitet, zählt seine Breite noch mit; Session-Steuerung 76/56 dp fest. Bei Platzmangel `InlineOrBelow`: Steuerung rechtsbündig darunter, entschieden mit Reserven.
-- Detailseite: Über dem Start steht genau eine Zeile „Anpassen ›“ – ein `SectionHeader` mit `onClick` und Status statt Teaser („· 10 min“, „· 4 Runden“, „· angepasst“; klein über `smallStatus`, gesprochen über `statusDescription` ausgeschrieben), möglichst einzeilig, damit quer und bei großer Schrift Inhalt bleibt – passt der Status nicht dahinter, steht er darunter; dieselbe Kopf-Art wie „Klang & Stimme“; sie öffnet das Blatt „Anpassen“ (MUSTER-11). Ihre Tippfläche beginnt direkt am Leistenrand (`top = 0`: oben wie unten am Start steht nur `ListGap`, kein zweiter `GapSmall`) und schließt ohne Lücke an die des Starts an, keine weitere Zeile in der Leiste ([spec/detail.md](spec/detail.md)).
-- In der Tiefe schwebt über der Leiste mittig der Griff der Tab-Leiste (Anatomie „Tab-Leiste“): Seine Tippfläche endet auf der Oberkante, die von „Anpassen ›“ beginnt `ListGap` darunter – kein zweiter Pfeil, nichts überlappt. Wischen nach oben auf der Leiste öffnet die Tab-Leiste; Tipps bleiben Tipps.
+- Feste Breiten für Stepper und Reset, Start füllt den Rest; Start und Reset gleich hoch über dieselbe Mindesthöhe (`ButtonHeight`), nie `IntrinsicSize.Min` – wird „Starten“ zweizeilig, wächst der Reset um dieselben Zeilen (`SlidingReset(lines)`). Die Zeilen entscheidet `StartSplitButton` in einer Komposition aus der Restbreite (Reset fest `ResetWidth`), nicht per Rückmeldung aus der Messphase: Beide stehen vom ersten Frame an gleich hoch; solange der Reset hinausgleitet, zählt seine Breite mit. Bei Platzmangel `InlineOrBelow`: Steuerung rechtsbündig darunter, entschieden mit Reserven.
+- Über dem Start höchstens eine Zeile, auf der Detailseite „Anpassen ›“ (`SectionHeader` mit `onClick`, `top = 0`); in der Tiefe schwebt über der Leiste der Griff der Tab-Leiste (unten), nichts überlappt. Aufbau: [spec/detail.md](spec/detail.md#anatomie-leiste).
 - **Prüfung:** `ScreenshotTest` (`TIPPFLAECHE`, `ANATOMIE`, `08_detail_quer`, `08_detail_tiefe*` mit `GRIFF`; Leiste einzeilig bis 1,3 im `DeviceFitTest`).
 
-#### Bottom Sheet (`AppBottomSheet`: `SoundSheet`, `AdjustSheet`, `TemplateSheet`, `DailyPatternSheet`)
+#### <a id="anat-sheet"></a>Bottom Sheet (`AppBottomSheet`: `SoundSheet`, `AdjustSheet`, `TemplateSheet`, `DailyPatternSheet`)
 
 ```
  ModalBottomSheet · surface · ganz geöffnet · ScreenPadding 16 seitlich · ScreenBottom 24 unten
-                         ▬▬                      ← Griff M3 (32 × 4 mittig in 48 dp, M3-Maß), stumm für TalkBack
+                         ▬▬                      ← Griff M3 (32 × 4 mittig in 48 dp), stumm für TalkBack
  Titel titleLarge onSurface                      ← SectionHeader(top = 0), TalkBack beginnt hier
  GapSmall · Intro bodySmall SECONDARY            ← optional, Teaser des Titels, ≤ 95 Zeichen
- HeaderGap 12
- Gong                                            ← SubLabel bodyMedium: Gruppe
- GapSmall · [ Aus | Start & Ende | alle 15 min ]
- Runden ································ (−) 6 (+)   ← Label bodyMedium, Kreis bündig
- GapSmall · ⌄ Phasen anpassen                    ← Aufklapper onSurface, Caret SECONDARY
- GapSmall · Einatmen ··················· (−) 5 s (+) ← Einheit beim Wert; jede Steuerzeile 48 dp
- GapSmall · Halten ····················· (−) 8 s (+)
+ HeaderGap 12 · SubLabel bodyMedium              ← Gruppe
+ GapSmall · Steuerzeile (Segmente, Stepper) 48   ← je GapSmall; ⌄ Aufklapper onSurface
  [ Karte ]                                       ← nur Objekte, die man öffnet oder startet
 ```
 
 - **Komponente:** `AppBottomSheet(title, onDismiss, intro, content)` – Fläche `surface`, eigener stummer Griff (M3 `BottomSheetDefaults.DragHandle`; der Titel folgt ohne weiteren Abstand), scrollende Spalte, Titel als `SectionHeader` mit `top = 0`, Intro als dessen Teaser, Kopf → Inhalt `HeaderGap`. Kein Blatt ruft `ModalBottomSheet` oder `rememberModalBottomSheetState` selbst auf; den Zustand hält das Gerüst.
-- **Erst schließen, dann handeln:** Führt ein Element des Blatts woandershin oder öffnet etwas Großes (Karte → Detailseite, „Selbst gestalten“ → Editor, „Stimme laden ›“, eine Wahl, nach der der Fokus wandert), ruft es `closeThen { … }` aus `AppBottomSheetScope`: Das Blatt gleitet hinaus (`hide()`), meldet `onDismiss`, und die Aktion läuft erst, wenn die Komposition das Blatt abgebaut hat (ein bis zwei Frames nach der Animation), ein Doppeltipp zählt einmal. So verschwindet das Blatt nicht ohne Animation, und die neue Seite baut ihren ersten Frame nie im selben Frame wie den Abbau des Blatt-Fensters. Wischen, Tipp daneben und Zurück schließen wie bisher; Steuerungen, die sofort gelten (Stepper, Schalter, ◉, ↻), lassen das Blatt offen.
-- **Steuerungen ohne Karte:** `Stepper`, `ToggleRow`, `SegmentedChoiceRow` und Auswahlzeilen stehen direkt auf dem Blatt – das Blatt ist schon die Fläche, eine Karte darin wäre ein Kasten im Kasten. Karten nur für Objekte, die man öffnet oder startet (`PatternCard`, `ExerciseCard`, `NavCard`).
-- **Eine Textkante:** Titel, Intro, `SubLabel` und Zeilen-Labels beginnen bei `ScreenPadding`; Flächen (Auswahl über `selectedRow`) dürfen in den Rand ragen, Text nicht (`bleed` um ihr Polster).
-- **Gliederung nur über `SubLabel` und Abstand:** Label → Steuerung, Steuerung → nächste Gruppe und Steuerzeile (Stepper, Schalter, Segmente) → Steuerzeile `GapSmall` (der 48-dp-Rand der Steuerung zählt sichtbar mit, wie in „Klang & Stimme“); Auswahlzeilen einer `selectableGroup` mit Fläche (`selectedRow`, `bleed`, wie „Startpunkt“) untereinander `GapHairline` wie die Ablauf-Liste des Editors – ihre Fläche mit eigenem Polster trennt sie schon; jede Stepper-Zeile genau `MinTouchTarget` hoch (`vertical = 0.dp`), kein eigenes Polster je Zeile; Karte ↔ Karte `ListGap`; keine Trenner zwischen Steuerzeilen, keine zweite Kopf-Ebene in `titleLarge`. Zeilen-Labels `bodyMedium` `onSurface`; die Einheit steht beim Wert („5 s“), nicht in Klammern am Label.
+- **Erst schließen, dann handeln:** Was woandershin führt oder etwas Großes öffnet (Karte → Detailseite, „Selbst gestalten“ → Editor, „Stimme laden ›“, eine Wahl, nach der der Fokus wandert), ruft `closeThen { … }` aus `AppBottomSheetScope`: Das Blatt gleitet sichtbar hinaus, die Aktion läuft erst nach seinem Abbau (Ablauf in der KDoc). Wischen, Tipp daneben und Zurück schließen; Steuerungen, die sofort gelten (Stepper, Schalter, ◉, ↻), lassen das Blatt offen.
+- **Steuerungen ohne Karte, eine Textkante:** `Stepper`, `ToggleRow`, `SegmentedChoiceRow` und Auswahlzeilen stehen direkt auf dem Blatt (das Blatt ist schon die Fläche); Karten nur für Objekte, die man öffnet oder startet (`PatternCard`, `ExerciseCard`, `NavCard`). Titel, Intro, `SubLabel` und Zeilen-Labels beginnen bei `ScreenPadding`; Flächen (`selectedRow`) dürfen in den Rand ragen, Text nicht (`bleed`).
+- **Gliederung nur über `SubLabel` und Abstand:** Label → Steuerung, Steuerung → nächste Gruppe und Steuerzeile → Steuerzeile `GapSmall` (der 48-dp-Rand zählt sichtbar mit); Auswahlzeilen mit Fläche (`selectedRow`) untereinander `GapHairline`; jede Stepper-Zeile genau `MinTouchTarget` hoch, ohne eigenes Polster; Karte ↔ Karte `ListGap`; keine Trenner zwischen Steuerzeilen, keine zweite Kopf-Ebene in `titleLarge`. Zeilen-Labels `bodyMedium` `onSurface`; die Einheit steht beim Wert („5 s“), nicht in Klammern am Label.
 - **Farbe:** pink nur Auswahl und Aktion (FARBE-04: Switch an, Start); Verweise woandershin in `secondary` („Stimme laden ›“); Aufklapper (`DisclosureToggle`) in `onSurface`, Caret gedimmt, mittig auf der ersten Textzeile.
 - **Intro** nur, wenn die Wahl eine Folge hat, die man nicht sieht (Startpunkt ersetzt den Ablauf, das Tagesmuster speichert man über ◉); ganze Sätze, höchstens 95 Zeichen, immer als Teaser des Titels.
 - **Prüfung:** `sheet-direct` (auch `rememberModalBottomSheetState` nur im Gerüst), `ScreenshotTest` (`*_offen`: `WORTBRUCH`, `TIPPFLAECHE`, `ANATOMIE` der Steuerzeilen), R-A11Y (Fokus beim Öffnen auf dem Titel, Zurück schließt), R-VISUAL (Textkante, keine Karte um Steuerungen).
 
-#### Suchpille, Tab-Leiste, Overlay-Kopf
+#### <a id="anat-pille"></a>Suchpille, Tab-Leiste, Overlay-Kopf
 
 | Baustein | Anatomie | Prüfung |
 |---|---|---|
 | **Suchpille** (`SearchField`) | Pille `CircleShape`, Höhe ≥ 48, Fläche `surfaceContainerHigh`, ohne Rand; Lupe `IconDefault` links mit `CardPadding`, `ListGap` zum Text `bodyMedium`; X als `AppIconButton` nur mit Eingabe, Kreis `CardPadding` vor dem Ende (Tippfläche ragt um `CircleOverhang` darüber), Platzhalter hält seine Breite. | `ANATOMIE` (Steuerzeile ≥ 48), `TIPPFLAECHE` |
-| **Tab-Leiste** (`AppNavigationBar`, `HideableTabBar`, `TabBarToggle`) | M3 `NavigationBar` mindestens 80 hoch, Beschriftung `labelLarge` (bis 85 %, dann nur Icons, Name am Icon), Trennlinie `BorderThin` darüber, Auswahl tonal (Pille `secondaryContainer`, Icon und Beschriftung `onSecondaryContainer`). In der Tiefe: Griff `TabBarGripWidth` × `TabBarGripHeight` (32 × 4, `CircleShape`, `onSurface` `SECONDARY`) mittig über der Oberkante der untersten Leiste (Startleiste, sonst untere Leisten), `GapSmall` darüber; Tippfläche 48 × 48 **ganz über der Kante**, sie überdeckt nichts in der Leiste; Seiten halten unten `TabBarGripClearance` frei. Wischen nach oben auf der Startleiste oder am Griff öffnet, ohne Startleiste auch im Band `TabBarGripClearance` über den unteren Leisten (volle Breite, vor dem Scrollen des Inhalts); nach unten auf der offenen Leiste oder am Griff schließt (`TabBarSwipeDistance`, nach dem Touch-Slop, nie in den Systemgesten). | `TabNavigationTest` (Wischen, Tipp), `ScreenshotTest` (`TabFrame`, `08_detail_tiefe*`: `ANATOMIE` „Griff über …“) |
+| **Tab-Leiste** (`AppNavigationBar`, `HideableTabBar`, `TabBarToggle`) | M3 `NavigationBar` mindestens 80 hoch, Beschriftung `labelLarge` (bis 85 %, dann nur Icons, Name am Icon), Trennlinie `BorderThin` darüber, Auswahl tonal (Pille `secondaryContainer`, Icon und Beschriftung `onSecondaryContainer`). In der Tiefe: Griff `TabBarGripWidth` × `TabBarGripHeight` (`CircleShape`, `onSurface` `SECONDARY`) mittig über der Oberkante der untersten Leiste, `GapSmall` darüber; Tippfläche 48 × 48 **ganz über der Kante**, sie überdeckt nichts in der Leiste; Seiten halten unten `TabBarGripClearance` frei. Wischen öffnet und schließt: [spec/navigation.md](spec/navigation.md). | `TabNavigationTest` (Wischen, Tipp), `ScreenshotTest` (`TabFrame`, `08_detail_tiefe*`: `ANATOMIE` „Griff über …“) |
 | **Overlay-Kopf** (`OverlayChrome`) | Rand `SessionPadding`; links Minimieren, rechts Stille-Schalter und Ton, alle als Kreise `OverlayIconButton` 40 in Tippfläche 48, ein Token; Titel `titleSmall` dazwischen; blendet in der Ruhe-Ansicht aus, Platz bleibt. | `ScreenshotTest` (`09_*`, `10_*`), `pane-title` |
 
 ## <a id="komponenten"></a>5 Komponenten
 
-### 5.1 Katalog (`src/ui/components/`, `src/ui/navigation/`, `src/ui/session/`, `src/ui/meditation/`, `src/ui/detail/`)
+### 5.1 Katalog
 
-Je Zeile Nutzen, Nicht-für und A11y-Pflicht; wie etwas im Detail gebaut ist, steht in der KDoc und in [docs/spec/](spec/). Jede öffentliche `fun` in `ui/components/` kommt hier vor (`catalog-sync`).
+Auswahl für den Bau: welche Komponente wofür, was sie nicht ist (→ Alternative) und ihr A11y-Kern. Bauweise, Parameter und Maße stehen in der KDoc, Feature-Einzelheiten in [docs/spec/](spec/), Geometrie in §4.5. Jede öffentliche `fun` in `ui/components/` kommt hier vor (`catalog-sync`).
 
-| Komponente | Nutzen für | Nicht für | A11y-Pflicht |
+| Komponente (Datei) | Wofür | Nicht für → | A11y-Kern |
 |---|---|---|---|
-| `CardHeader` (`CardHeader.kt`) | Titelzeile jeder Karte mit Chips, Zeichen oder bis zu zwei Aktionen – die Anatomie „Karte mit Aktionen“ (§4.5) an einer Stelle; auch Kopf der Expander (Caret als Zeichen) und der Einstellungskarten (`heading`); `marks` setzt Sanskrit kursiv. Test-Tags `CARD_HEADER_TAG`, `TITLE_ROW_*`, `CONTROL_ROW_TAG` für das Gate `ANATOMIE` | Abschnittsköpfe (→ `SectionHeader`); Nachbau mit `align(TopEnd)` | Titel über `TitleWithChips` (Name wörtlich); Aktionen tragen ihren Namen am Icon |
-| `AppIconButton` (`Controls.kt`) | jede Icon-only-Aktion: Kreis `IconButtonSize`, Icon `IconDefault`, Tippfläche 48; `colors` wie M3 (Stepper gefüllt) | Aktionen mit Text (→ `AppTextButton`); Zustand (→ `AppIconToggle`) | cd am `Icon` (ICON-02), Rolle Button |
-| `AppIconToggle` (`Controls.kt`) | Icon-only-Umschalter mit Zustand (◉ „In Eigene speichern“, `PersonalMarkToggle`); Zustand zeigt das Icon (gefüllt/leer) | Ton (→ `SoundSwitch`); Einstellungen (→ `ToggleRow`) | cd am `Icon`, `Role.Checkbox`, `stateDescription`, `liveRegion = Polite` nur für Wechsel von außen; `announce = false`, wenn ein anderer Knopf den Wechsel schon ansagt (A11Y-04) |
-| `AppTextButton` (`Controls.kt`) | Text-Aktion ohne Fläche (Laden, Wählen, Dialog), Mindesthöhe `ButtonHeight`, `shapes.large` | Primäraktion (→ `StartSplitButton`); gleichrangige Aktionen (→ `AppOutlinedButton`) | Text = Name |
-| `AppBottomSheet` (`AppBottomSheet.kt`) | Gerüst jedes Bottom Sheets (MUSTER-11): `title`, optionales `intro` als Teaser, Inhalt in `AppBottomSheetScope`; Aufbau, Griff und `closeThen` (erst schließen, dann handeln) nach §4.5 „Bottom Sheet“ | Dialoge mit Bestätigen, lange Listen, Inhalte; Karten um Steuerungen | TalkBack beginnt beim Titel (`traversalIndex`), Griff `hideFromAccessibility`, Schließen über Hintergrund und Zurück |
-| `AppOutlinedButton` | gleichrangige Aktionen nebeneinander (Exportieren · Importieren in `AdaptiveButtonRow`); Rand `outline` 1 dp, Beschriftung `primary`, mit `color`/`borderColor`/`dashed` für Bedeutung (Editor „+ Ein / + Halten / + Aus“), `compact` mit Polster `ListGap` | Auswahl (→ `SegmentedChoiceRow`); Session (→ `SessionSecondaryButton`) | Text = Name; kurze Beschriftung mit vollem Namen über den Parameter `contentDescription` |
-| `BackButton` | Zurück-Pfeil im `PushHeader` (AutoMirrored, über `AppIconButton`, Hülle `flushStart()`) | Overlays (dort Minimieren); im Scroll-Inhalt | cd `action_back` |
-| `BreathingCircle` / `breathingDiscDiameter` | Atem-Pacer (`fraction` 0…1 → Skala 0,42…1,0) und sein Durchmesser für Nachbarn | dekorative Kreise | Aufrufer setzt Name, `onClickLabel`, Zustand, Fokus (A11Y-07) |
-| `Chip` / `EvidenceChip` / `CautionChip` / `InfoChip` / `CharacterChip` (`Chips.kt`) | nicht klickbare Info-Pillen, `shapes.extraSmall`, Text `labelSmall` einzeilig (verkleinert bis `CHIP_MIN_SCALE`): Studienlage (gefüllt, nur Detailseite), „nur gesund & ausgeruht“ (Umriss `EvidenceCaution`), „zum Nachlesen“ (Programme, Umriss neutral), Charakter („intensiv“ gefüllt `WarnAmber`; „ruhig“/„sanft aktivierend“ neutral); Reihenfolge Studienlage → Vorsicht → zum Nachlesen; immer in `TitleWithChips` oder der Familienzeile | Auswahl (→ `SegmentedChoiceRow`) | Text Pflicht; `EvidenceChip` liest TalkBack als „Studienlage: …“ (`spokenText`) |
-| `LinkChip` / `ExerciseChips` (`LinkChip.kt`) | antippbarer Verweis auf eine Übung (Atemlehre, Pranayama); M3 `SuggestionChip`, sichtbar `ChipHeight`, Tippfläche 48, Beschriftung einzeilig bis 85 %, sonst zweizeilig zwischen den Wörtern; `ExerciseChips(ids, exercises, onOpenExercise)` für mehrere | Info ohne Aktion (→ `Chip`); Aktion ohne Ziel-Inhalt (→ `AppTextButton`) | Text = Name, Rolle Button |
-| `ChoiceChip` / `ChoiceChipRow` / `TonalChip` / `FilterChipRow` / `FilterChipFlow` (`ChoiceChip.kt`) | Anlass-Chips (40 dp, Rand, eine Antwort, höchstens zwei Zeilen) und Filter-Chips (32 dp, tonal, mehrere, eine Zeile; abgekürzte Beschriftung mit vollem Namen über `contentDescription`, „Mo“ → „Montag“); Reihen scrollen bei Platzmangel seitlich mit Verlauf; Test-Tags `CHOICE_CHIPS_TAG`, `FILTER_CHIPS_TAG`. Anatomie §4.5, Details [spec/suche.md](spec/suche.md), [spec/atmen-tab.md](spec/atmen-tab.md) | Einzelwahl aus 2–4 Optionen (→ `SegmentedChoiceRow`); Verweise (→ `LinkChip`) | `Role.Checkbox` über `toggleable`; Reihe `selectableGroup` mit Namen und Traversal-Gruppe, Fokusfolge = Datenfolge |
-| `BreathMarkIcon` / `PersonalMarkIndicator` / `PersonalMarkToggle` (`PersonalMark.kt`) | das eine Zeichen „zu mir“, der Atemkreis ◉ (ICON-03): `BreathMarkIcon(filled)` als Icon jedes solchen Schalters – Ring in `onSurface` · `SECONDARY`, gesetzt gefüllt in `secondary` –; persönliche Markierung „tut mir gut“ als Schalter im `PushHeader` der Detailseite (eingebaute Übungen) und Zeichen `IconSmall` auf `ExerciseCard` (nur gesetzt sichtbar); „In Eigene speichern“ am Tagesmuster und im Muster-Editor; beides gesammelt im Tab „Eigene“ | Herz, Stern, Lesezeichen; Sortieren oder eigene Gruppe; das Tab-Symbol „Eigene“ (Person) | cd „Tut mir gut“ bzw. „In Eigene speichern“; Schalter mit `stateDescription` „Markiert“/„Nicht markiert“ bzw. „In Eigene gespeichert“/„Nicht gespeichert“; gesetzt lesbar ≥ 4,5:1 (MUSTER-01) |
-| `DisclosureToggle` | Aufklapper in Karten und Blättern („Stimmen zeigen“, „Phasen anpassen“): Text `onSurface`, Caret `IconInButton` gedimmt, mittig auf der ersten Textzeile, Glyph bündig an der Textkante; tippbar über die volle Breite; `enabled = false`, solange der Inhalt offen bleiben muss; `note` („· angepasst“) als Status nach der Anatomie „Titel · Status“ (`TitleWithStatus`), `noteVisible = false` hält seinen Platz | Inhalt mit Teaser (→ `ExpanderSection`); Aktion oder Verweis (→ `AppTextButton`, `ForwardLinkText`), nie `primary` | `stateDescription` „Ausgeklappt“/„Eingeklappt“ inkl. „angepasst“ |
-| `ExpanderSection` / `ExpanderCard` (`ExpanderSection.kt`) | aufklappbarer Abschnitt mit Titel `titleMedium` `onSurface` über `CardHeader` (Caret mittig auf der ersten Titelzeile), Teaser (immer ganz, volle Breite) und Detail; ohne Detail schlichter Abschnitt ohne Caret; `ExpanderCard(title, appetizer, initiallyExpanded, header, content)` als Karte mit optionalem `header` (Rhythmusbild) | Einstellungen (→ `DisclosureToggle`); Listen gleichartiger Abschnitte (→ `CollapsibleSection`); nie ein `SectionHeader` direkt über einer einzelnen `ExpanderSection` | `heading()`, `Role.Button`, `stateDescription`; ohne Detail `mergeDescendants` |
-| `NavCard` | Karte, die woandershin führt (Kapitel in „Lernen“ mit `titleColor = headingColor(index)`, „Über Atemkraft“, Quellcode, Datenschutz): `CardHeader` mit `ForwardChevron` bzw. „öffnet im Browser“ (`external`) als Zeichen, `HintText` darunter; `Card(onClick)`, ganze Karte Tippfläche | Verweise im Fließtext (→ `ForwardLinkText`) | Titel `heading()`, `Role.Button` per `semantics`; extern „Link öffnen“ |
-| `ExerciseCard` / `PatternCard` (`ExerciseCards.kt`) | Übungskarte (Titel mit seltenen Chips, Zeichen „tut mir gut“, Metazeile Takt · Dauer, Kurzbeschreibung, Rand Familienfarbe) und Karte eines generierten Musters (Titel mit `CharacterChip`, Musterzeile, Rand `secondary`, `actionCount` Aktionen auf der Titelzeile, beim Tagesmuster ↻ und ◉). Anatomie §4.5 | Verweis-Karten (→ `NavCard`); mehr als zwei Aktionen | Aktionen mit eigener Tippfläche 48 und Namen; Karte `Card(onClick)` |
-| `AdaptiveButtonRow` | Button-Reihe: gleich breit → nach Inhalt → Primär oben + Rest → untereinander; `primaryFirst = false` ohne Rangfolge; `leading`/`leadingStacked`/`aboveInline` für eine kurze Beschriftung davor | Aktionspaare mit Split-Button (→ `StartSplitButton`) | Lesereihenfolge bleibt; Beschriftung einzeilig |
-| `InlineOrBelow` | zwei Teile einer Zeile nebeneinander, sonst `end` rechtsbündig darunter; `leadingReserve`/`endReserve` halten die Entscheidung für den breitesten Inhalt fest | Button-Reihen (→ `AdaptiveButtonRow`) | Reserven ohne Semantik und Fokus |
-| `widestOf` / `rememberWidestTextWidth` / `rememberWidestAnnotatedWidth` (`ReserveMeasure.kt`) | Platz für den breitesten möglichen Inhalt (LAYOUT-03, „nichts springt“): unsichtbar messen statt `alpha(0f)` von Hand | – | Messinhalt ohne Semantik |
-| `rememberFirstLineHeight` (`TextBlocks.kt`) | Höhe der ersten Textzeile einer Rolle, gemessen – für Aktionen und Zeichen mittig auf der ersten Zeile (§4.5) | `lineHeight` in dp rechnen (ab Android 14 falsch) | – |
-| `DotSeparatedFlow` | Teile mit Trennpunkt, gierig je Zeile, zentriert; der Punkt nur zwischen Teilen einer Zeile (Session-Kopf, Bilanz) | fertige Texte (→ `splitAtDots`, TEXT-10) | – |
-| `RhythmCurve` (`RhythmCurve.kt`) | ein Atemzug einer Übung (`Exercise.breathRhythm()`) oben auf der Detailseite: dünne Linie in der Farbsprache der Editor-Kurve, Punkt endlos im echten Takt in der Farbe seiner Phase (dieselbe Zuordnung wie die Linie, weicher Übergang `RhythmDotColor`; fehlt bei Animator-Skala 0 und ohne `running`, d. h. unter einem Vollbild-Overlay), darunter die Phasenzeile; Anatomie §4.5 | Bearbeiten (→ `BreathCurveEditor`); Übungen ohne Takt, offene Phasen, Phasen unter 1 s (dann keine Kurve) | ein Knoten „Atemkurve: Einatmen 4 Sekunden, …“, Zeile für TalkBack unsichtbar, keine Live-Region |
-| `PhaseMark` / `HoldDash` (`PhaseMark.kt`) | Marke einer Atemphase in Phasenfarbe (Halten gestrichelt); Farbe der freien Folge über `phaseColor` | große Kurve (→ `BreathCurveEditor`) | dekorativ, Wert im Text daneben |
-| `SlidingReset` | Zurücksetzen, das nur bei Abweichung hereingleitet (Split-Button, Editor-Leiste `compact`); `onFocusHandoff` gibt den Fokus an den Nachbarn; `lines` = Zeilen von „Starten“ daneben (gleich hoch); als Tonal-Button fest `ResetWidth` breit; mit `visibleState` liest der Aufrufer, ob er noch gleitet | – | cd „Zurücksetzen“ am Icon |
-| `selectedRow` (`SelectedRow.kt`) | Auswahl einer Listenzeile ohne Häkchen: gewählt mit Fläche und dünnem Rand (Vorlagen, Ablauf, vāyu-Liste) | Einzelwahl in Reihen (→ `SegmentedChoiceRow`) | `selectable`/`toggleable` dazu |
-| `MiniNowPlayingBar` | minimierte laufende Session über der NavigationBar; Titel über `WholeWordText`, Status einzeilig | andere Meldungen | ≥ 48 dp, ein Fokus-Stopp, `Role.Button` per `semantics` |
-| `OverlayChrome` | Rahmen jedes Vollbild-Overlays: Minimieren, Stille-Schalter, Ton; `chromeVisible` für die Ruhe-Ansicht ([spec/session.md](spec/session.md)) | Push-Screens | `title` als `paneTitle`; Schalter `Role.Switch` mit `stateDescription`, ohne Live-Region |
-| `SoundSwitch` / `IconSwitch` (`SoundSwitch.kt`) | Icon-only-Schalter: Lautsprecher (Overlays, Vorschau des Editors) bzw. beliebiges Icon mit Zustand (`ic_meditation` „Danach in die Stille“); aus in `TERTIARY`, Kreis `IconButtonSize` bzw. `OverlayIconButton` | Zustände mit Fläche oder Text (→ `AppIconToggle`, `ToggleRow`) | Name am `Icon`, `Role.Switch`, `stateDescription` „An“/„Aus“ |
-| `ReferenceItem` | eine Quelle (Zitat, DOI/PMID) | – | Kennung ≥ 4,5:1 |
-| `ScreenHeader` / `SettingsAction` / `TabListScaffold` / `ScreenSubtitle` (`ScreenHeader.kt`) | fester Kopf der Tabs (dieselbe Zeile wie `PushHeader`, rechts höchstens eine Aktion: das Zahnrad `SettingsAction`); Gerüst der Tabs mit Liste und des Logbuchs; Einleitung einer Push-Seite (`bodyMedium` `SECONDARY`) | Push-Screens (→ `PushHeader`); Untertitel im Tab-Kopf; Meditations-Tab (eigenes Gerüst) | Titel `heading()` und `paneTitle` (A11Y-07); Aktion cd am `Icon` |
-| `SearchField` | einzeiliges Suchfeld als Pille mit einem `TextFieldState` des Aufrufers (Anatomie §4.5, [spec/suche.md](spec/suche.md)) | gespeicherte Eingaben; mehrzeiliger Text; ein zweiter Textzustand | X cd „Eingabe löschen“; Platzhalter als Name des Felds |
-| `PushHeader` / `PushScaffold` (`PushHeader.kt`) | fester Kopf jeder Push-Seite (`BackButton`, Titel oder `titleContent`, rechts höchstens eine `action`, Icon bündig) und das Gerüst mit Scroll-Spalte, `SectionGap` oben, optional `bottomBar`; `contentModifier` für Sprungziele | Tab-Screens (→ `ScreenHeader`); Seiten mit Liste (→ `TabListScaffold`); Muster-Editor (eigenes Gerüst) | Titel `heading()`; `paneTitle` an der `HeaderBar`; Pfeil cd `action_back` |
-| `SectionHeader` / `CollapsibleSection` / `GroupLabel` / `headingColor` (`SectionHeader.kt`) | Abschnittskopf `titleLarge` `onSurface` mit optionalem Teaser, Status (`statusDescription`, `smallStatus`), `expanded` (Caret, MUSTER-03), `onClick` (Chevron, öffnet etwas; mit `leadingIcon` ein Zeichen in `secondary` vor dem Titel, nur beim Einstieg „Muster des Tages“) und genau einer `trailingAction`; `top` über festem Kopf, beim tippbaren Kopf höchstens `GapSmall` vor der Tippfläche (`top = 0` als erstes Element einer Fläche mit Rand); `CollapsibleSection` setzt Kopf → Inhalt `HeaderGap` zentral, zieht über dem Kopf `spacingAbove` der Liste ab (fest wie aufklappbar sichtbar `SectionHeaderTop` bis zum Titel; reicht der Rest nicht für `GapSmall` vor der Tippfläche, wird dieser kürzer) und animiert nur den Inhalt; `GroupLabel` das kleine farbige Label eine Ebene darunter; `headingColor(index)` der Kopf-Ring für `NavCard`. Anatomie §4.5 | Kartentitel (→ `CardHeader`); Aktionen für eine Karte; Meditations-Tab (LAYOUT-08) | `heading()`; aufklappbar `Role.Button` und `stateDescription`; mit `onClick` eine Schaltfläche aus Titel, Status (`statusDescription`) und Teaser (Punkte als Kommas) |
-| `SubLabel` / `Labeled` (`SubLabel.kt`) | Unter-Überschrift in Karten und Abschnitten; `Labeled(label) { … }` setzt sie über einen Block | Abschnittsköpfe | – |
-| `SegmentedChoiceRow` / `choiceGroupHeading` | Einzelwahl aus 2–4 kurzen Optionen, mehr als Raster mit `columns`; Segmente `ButtonHeight`, **nie ein Häkchen**, Auswahl `SegmentSelected` + SemiBold; Beschriftungen gemeinsam bis 85 % verkleinert, dann Radioliste | > 4 Optionen in einer Reihe | `groupLabel` als Name des Gruppen-Knotens, sichtbare Überschrift mit `choiceGroupHeading()`; Radioliste `selectableGroup()`, `Role.RadioButton` |
-| `SessionAdjustControls` / `SessionAdjustState` (Zustand in `ui/detail/`) | Dauer und Intervalle vor dem Start direkt auf dem Blatt „Anpassen“ (`AdjustSheet`), ohne Karte und Trenner, Einheit beim Wert („5 s“), das die Zeile „Anpassen ›“ über dem Start öffnet ([spec/detail.md](spec/detail.md)); Logik ohne Darstellung (Vorgaben aus `AdjustDefaults.of`, `modified`, `reset()`, `applyStored`, saveable je Übung) | Stufen-Übungen ohne „Phasen anpassen“ (`phasesAdjustable`) | „· angepasst“ im Toggle-Zustand |
-| `Stepper` / `CompactStepper` (`Stepper.kt`) | ganzzahliger Wert in festem Bereich mit Label `bodyMedium` (rechte Spalte, Kreis bündig; mit `horizontal = 0.dp` in einer Karte oder einem Blatt mit Polster ragt der Rand von „+“ hinein; `widestValues` hält die Breite des größten Werts, gemeinsam für Stepper untereinander) bzw. ohne sichtbares Label für knappe Zeilen (`valueText`, `flushEnd`); `valueText`/`spokenValue` für Werte, die keine Zahl zeigen (Uhrzeit der Erinnerung „08:15“, gesprochen „8:15 Uhr“) | Freitext | Knöpfe „Label, Erhöhen“, am Anschlag Fokus auf den Gegenknopf; Wert als Live-Region mit Einheit (`valueUnit`, `spokenSuffix`); `announce` steuert sie |
-| `BreathCurveEditor` / `BreathCurveHeights` / `CurvePreviewControls` (`ui/patterns/curve/`) | Hauptbedienung des Muster-Editors: freie Phasenfolge als Kurve mit Griffen, Vorschau-Punkt, Höhenspanne ([spec/muster-editor.md](spec/muster-editor.md)) | Phasen eingebauter Übungen; Anzeige in der Sitzung | ein Knoten mit `contentDescription` der Folge; Ziehen nie Pflicht |
-| `TimeDial` / `DurationPickerState` (`ui/meditation/`) | Zeitring wie ein Küchenwecker (1–60 min, ∞, Feinwahl) und seine Logik ohne Darstellung ([spec/meditation.md](spec/meditation.md)) | Werte über 60 min; Dauer in Karten (→ `Stepper`) | Schieberegler mit `setProgress`, `stateDescription`; ∞ als `Role.Switch` |
-| `WholeWordText` / `badBreakAt` / `breaksInsideWord` (`WholeWordText.kt`) | Titel, Namen, Beschriftungen, die nie im Wort brechen: verkleinert schrittweise (`minScale`, `sharedScale`, `singleLine`, `onDoesNotFit`); die Umbruch-Regel teilt sich der `ScreenshotTest` | Fließtext (→ umformulieren) | wie `Text` |
-| `MarqueeText` | einzeiliger Text als Laufschrift, wenn er nicht passt (Seitentitel, Name im Editor); `MARQUEE_TEXT_TAG` | Listen, Karten, Abschnittsköpfe (dort umbrechen) | TalkBack liest den ganzen Text |
-| `sanskritText` (`SanskritText.kt`) | Sanskrit kursiv (TEXT-14) aus „*laṅghana*“; zentral in `WholeWordText`, `BodyText`, `Bullet`, Teasern, `ForwardLinkText`; Nutzernamen ohne (`marks = false`) | eigene Auszeichnungszeichen; Kursiv als Betonung | TalkBack und Wortbruch-Prüfung sehen den Text ohne Sternchen |
-| `VayuFigure` / `VayusContent` (`ui/atemlehre/VayuFigure.kt`) | Abschnitt „Die fünf *vāyus*“ der Atemlehre: Bild als `Canvas`, Liste als Einzelwahl ([spec/lernen.md](spec/lernen.md)) | Anatomie, Wirkung; Bilder anderer Lehren ohne Quelle | Bild ein Knoten (`Role.Image`), zugänglicher Weg ist die Liste (`selectableGroup`, `Role.RadioButton`) |
-| `SessionRunningLayout` | Gerüst laufender Sessions: Kopf, Kreis im freien Platz, Steuerung; `centerExtra` fest reserviert; `chromeVisible = false` blendet über `HideableSlot` aus | andere Screens | der Kreis springt nie |
-| `CalmHost` / `rememberAccessibilityActive` (`CalmHost.kt`) | Ruhe-Ansicht beider Overlays (Tipp auf freie Fläche, automatisch nach 5 s, `HideSystemBars`); ob ein Bedienungshilfe-Dienst läuft | eigene Tipp-Logik je Overlay | nie ausblenden, solange TalkBack oder Switch Access läuft; in Pause und am Ende alles sichtbar |
-| `HideableSlot` / `inertWhen` (`HideableSlot.kt`) | sanft ausblenden, Platz bleibt, ausgeblendet nicht antippbar und nicht im TalkBack-Baum; `Modifier.inertWhen(hidden)` sperrt Semantik und Fokus (auch die App unter dem Session-Overlay) | dauerhaft unsichtbare Elemente | nie bei aktiver Bedienungshilfe ausblenden |
-| `FillViewportColumn` (`FillViewportColumn.kt`) / `HideSystemBars` (`SystemBars.kt`) | Spalte, die den sichtbaren Bereich füllt und erst darüber hinaus scrollt (Meditations-Tab, LAYOUT-08; Muster-Editor mit `bottomReserve` für den Griff, die Reserve weicht zuerst); Status- und Navigationsleiste in der Ruhe-Ansicht ausblenden | Listen (→ `LazyColumn`) | – |
-| `AppNavigationBar` / `AppTabBar` / `HideableTabBar` / `TabBarToggle` (`ui/navigation/`) | Haupt-Tabs unten, auch im `ScreenshotHarness`; ein- und ausklappbare Leiste mit Griff und Wischen (`TabBarState.detectSwipe`; [spec/navigation.md](spec/navigation.md)) | Push-Ziele | eine Beschriftungsgröße (`labelLarge`) für alle Tabs, gleiches Gewicht in jedem Zustand (TYPO-01), verkleinert bis 85 %, dann nur Icons, der Name als `contentDescription` am Icon (ICON-02); Auswahl tonal (PRIN-02) |
-| `TitleWithChips` | Titel mit nachgestellten Chips (Karten); Chips rutschen bei Platzmangel unter den Titel; `titleModifier` für den Titeltext, `marks` für Sanskrit (sonst wörtlich) | Abschnittsköpfe (→ `SectionHeader`) | Titel-Rolle und Farbe vom Aufrufer; keine Chips → `null` |
-| `StartSplitButton` / `StartPlayButton` | **jeder** Start einer konfigurierbaren Session (MUSTER-01; Bauweise §4.5 „Knopfleiste unten“, Start und Dauer bei Platzmangel in zwei Zeilen ohne Punkt) bzw. runder Start-Knopf in knappen Leisten (Editor: gefüllter Kreis `primary` in `IconButtonSize`) | andere Aktionspaare; Vorschau (→ `CurvePreviewControls`) | Reset Icon-only, cd `adjust_reset`, Fokus → Start, wenn Reset verschwindet; `StartPlayButton` mit vollem Wortlaut |
-| `ToggleRow` (`Controls.kt`) | Ein/Aus-Einstellung: Label, Switch in derselben Zeile, Hinweis darunter endet vor dem Switch (Anatomie §4.5) | Auswahl aus mehreren (→ `SegmentedChoiceRow`) | ganze Zeile `toggleable(Role.Switch)`, Name = Label (A11Y-03) |
-| `SessionControls.kt`: `GlowText`, `SessionControlBar`, `SessionPrimaryButton`, `SessionSecondaryButton`, `FinishedPanel`, `rememberTapFlash`; `PauseFlash`; `CircleTapTarget` | Text, Buttons und Tap-Rückmeldung **nur** in Vollbild-Sessions ([spec/session.md](spec/session.md)) | normale Screens, stehender Status | `FinishedPanel`: `paneTitle` „Geschafft“, Fokus auf „Nochmal“, Antwortreihe als `SegmentedChoiceRow` mit Gruppenname „Befinden“, scrollt bei großer Schrift statt abzuschneiden; `PauseFlash` dekorativ (`maxSize` Pflicht); `CircleTapTarget` mit Namen, `Role.Button`, `onClickLabel` |
-| `SafetyDialog` / `rememberSafetyGate` | Sicherheitsbestätigung vor intensiven Übungen (Hinweisliste scrollt, `Bullet`); das Gate je Übung (`SafetySettings.acknowledgedIds`, MUSTER-06) | Infos ohne Risiko | nicht außen schließbar; Warn-Icon dekorativ |
-| `BodyText` / `HintText` / `SecondaryText` / `WarnText` / `CardTitle` / `Bullet` (`TextBlocks.kt`) | Textrollen außerhalb der Köpfe, Farbe aus `LocalContentColor`: Fließtext `bodySmall` `BODY` (Kurzbeschreibung `bodyMedium`); Hinweis `SECONDARY` über `WholeWordText`; Sekundärtext mit normalem Umbruch (Kurz- und Musterzeile, Teaser, Trefferzahl); Warnzeile „⚠ …“ in `WarnAmber`; Kartentitel `titleMedium` ohne Aktionen (Glossar); Aufzählungspunkt | Köpfe (→ `SectionHeader`); Einleitung (→ `ScreenSubtitle`) | `CardTitle` ist `heading()` (`semantics-heading`); Bullet-Glyph `hideFromAccessibility()` |
-| `ConfirmIconButton` / `rememberArmedConfirm` (`ConfirmAction.kt`) | zerstörende Aktion zweistufig im selben Element, Ablauf und Zeiten nach MUSTER-05: Papierkorb `SECONDARY` → `ic_delete_forever` in `error` | Abbruch eines Downloads; sofort umkehrbare Aktionen | cd mit Namen, bestätigt „‚X‘ wirklich löschen?“; `liveRegion = Polite` am Knopf; in Listen `key(id)` |
-| `PinnedActionBar` | gepinnte Start-Leiste unter dem Scroll-Inhalt (`surface`, `PinnedBarElevation`, Rand `ScreenPadding` × `ListGap`); meldet ihre Oberkante dem `TabBarState` (dort sitzt in der Tiefe der Griff), Wischen nach oben öffnet dort die Tab-Leiste; auf der Detailseite steht darin über dem Start die Zeile „Anpassen ›“ (Anatomie §4.5) | Aktionen mitten im Inhalt; mehr als eine Zeile über dem Start | Inhalt `StartSplitButton`, darüber höchstens ein `SectionHeader` mit `onClick` |
-| `ForwardChevron` / `ForwardLinkText` / `ExpandCaret` / `expandedStateText` (`ExpandCaret.kt`) | Chevron „führt weiter“ (`IconInButton`, AutoMirrored) hinter einem Verweis; Verweistext mit Chevron an der Endkante in einem `AppTextButton`; Caret aufklappbarer Köpfe; Zustandstext „Ausgeklappt“/„Eingeklappt“ | externe Links (Symbol `ic_open_in_new`) | dekorativ, den Namen trägt die Zeile |
-| `accentBorder` / `dashedBorder` (`CardBorder.kt`) | Kartenrand `BorderThin` mit `ALPHA_BORDER` in der Akzentfarbe; gestrichelter Rand (Halten, „Phase hinzufügen“) | eigene `border(…)`-Aufrufe | dekorativ |
-| `flushEnd` / `flushStart` (`FlushEdge.kt`) | bündige Kante für Bedienelemente mit unsichtbarem Rand (§4.5 Bündigkeit): meldet sich um `TouchOverhang` schmaler, in Karten höchstens `CardPadding`; intern `bleed`: Fläche ragt in den Rand, Text bleibt an der Kante (Chip-Reihen, Vorlagen im Startpunkt) | `offset` | Tippfläche bleibt 48 dp |
-| `color` / `title` (auf `BreathingFamily`), `label` (auf `EvidenceLevel`) (`FamilyPresentation.kt`) | Familienfarbe und -name, Etikett der Studienlage – einmal für Karten, Köpfe, Chips | eigene `when`-Zuordnungen | – |
-| `sessionSummaryParts` (`SummaryPart`) / `spokenDuration` / `durationClockText` (`SessionSummaryText.kt`, `domain/`) | Bilanz einer Sitzung aus echten Werten; Dauer sichtbar „6:05 min“, gesprochen „6 Minuten 5 Sekunden“ | eigene Formatierung | jeder Teil trägt seine gesprochene Form (`SummaryPart.spoken`), `FinishedPanel` sagt sie an |
-| `feelingText` / `FeelingAsk` (`FeelingText.kt`) | Wort eines Befindens („ruhiger“, „wie vorher“, „wacher“ …) für Antwortreihe und Logbuch; `FeelingAsk` = Frage des Ende-Screens (`onAnswer`, einmal `intro`) | Farbe, Icon, Zahl oder Summe zum Befinden (SEC-LEGAL-04) | Logbuch: gesprochen „danach ruhiger“ |
+| `ScreenHeader` / `SettingsAction` / `TabListScaffold` / `ScreenSubtitle` (`ScreenHeader.kt`) | fester Kopf und Gerüst der Tabs und des Logbuchs, rechts höchstens das Zahnrad; Einleitung einer Push-Seite (`bodyMedium` `SECONDARY`) | Push-Seiten → `PushHeader`; Untertitel im Tab-Kopf; Meditations-Tab (eigenes Gerüst) | Titel `heading()` und `paneTitle` (A11Y-07) |
+| `PushHeader` / `PushScaffold` (`PushHeader.kt`) | fester Kopf jeder Push-Seite (`BackButton`, Titel oder `titleContent`, höchstens eine `action`) und ihr Gerüst mit Scroll-Spalte und optional `bottomBar` (§4.3) | Tabs → `ScreenHeader`; Seiten mit Liste → `TabListScaffold`; Muster-Editor | Titel `heading()`, `paneTitle` an der `HeaderBar` |
+| `BackButton` | Zurück-Pfeil im `PushHeader` (AutoMirrored, `flushStart()`) | Overlays (Minimieren); Scroll-Inhalt | cd `action_back` |
+| `SectionHeader` / `CollapsibleSection` / `GroupLabel` / `headingColor` (`SectionHeader.kt`) | Abschnittskopf `titleLarge` mit Teaser, Status, `expanded` (Caret, MUSTER-03), `onClick` (Chevron) und genau einer `trailingAction`; `CollapsibleSection` setzt Kopf → Inhalt zentral; `GroupLabel` farbiges Label darunter; `headingColor` Kopf-Ring der `NavCard` (§4.5) | Kartentitel → `CardHeader`; Aktionen für eine Karte; Meditations-Tab (LAYOUT-08) | `heading()`; aufklappbar `Role.Button` + `stateDescription`; mit `onClick` eine Schaltfläche aus Titel, Status (`statusDescription`) und Teaser |
+| `SubLabel` / `Labeled` (`SubLabel.kt`) | Unter-Überschrift in Karten, Abschnitten und Blättern; `Labeled` setzt sie über einen Block | Abschnittsköpfe → `SectionHeader` | – |
+| `AppBottomSheet` | Gerüst jedes Blatts (MUSTER-11, §4.5 „Bottom Sheet“): `title`, `intro`, Inhalt in `AppBottomSheetScope` mit `closeThen` | Dialoge mit Bestätigen, lange Listen, Inhalte; Karten um Steuerungen | TalkBack beginnt beim Titel, Griff stumm, Schließen über Hintergrund und Zurück |
+| `CardHeader` | Titelzeile jeder Karte mit Chips, Zeichen oder bis zu zwei Aktionen (§4.5 „Karte mit Aktionen“), auch Kopf von Expander und Einstellungskarte; Test-Tags für `ANATOMIE` | Abschnittsköpfe → `SectionHeader`; Nachbau mit `align(TopEnd)` | Titel über `TitleWithChips`; Aktionen mit Namen am Icon |
+| `TitleWithChips` | Titel mit nachgestellten Chips, die bei Platzmangel darunter rutschen | Abschnittsköpfe → `SectionHeader` | Rolle und Farbe vom Aufrufer |
+| `ExerciseCard` / `PatternCard` (`ExerciseCards.kt`) | Karte einer Übung (Rand Familienfarbe, Metazeile Takt · Dauer) bzw. eines generierten Musters (Rand `secondary`, bis zu zwei Aktionen) (§4.5) | Verweise → `NavCard`; mehr als zwei Aktionen | `Card(onClick)`; Aktionen mit Tippfläche 48 und Namen |
+| `NavCard` | Karte, die woandershin führt (Kapitel in „Lernen“, Über, Quellcode, Datenschutz; `external`) | Verweise im Fließtext → `ForwardLinkText` | Titel `heading()`, `Role.Button`; extern „Link öffnen“ |
+| `ExpanderSection` / `ExpanderCard` (`ExpanderSection.kt`) | aufklappbarer Abschnitt: Titel über `CardHeader`, Teaser immer ganz, Detail; als Karte mit optionalem `header` | Einstellungen → `DisclosureToggle`; Listen gleichartiger Abschnitte → `CollapsibleSection`; nie ein `SectionHeader` direkt darüber | `heading()`, `Role.Button`, `stateDescription`; ohne Detail `mergeDescendants` |
+| `DisclosureToggle` | Aufklapper in Karten und Blättern („Phasen anpassen“), Text `onSurface`, über die volle Breite tippbar, `note` als Status („· angepasst“) | Inhalt mit Teaser → `ExpanderSection`; Aktion oder Verweis; nie `primary` | `stateDescription` inkl. „angepasst“ |
+| `AppIconButton` (`Controls.kt`) | jede Icon-only-Aktion: Kreis `IconButtonSize`, Icon `IconDefault`, Tippfläche 48 | Aktion mit Text → `AppTextButton`; Zustand → `AppIconToggle` | cd am `Icon` (ICON-02) |
+| `AppIconToggle` (`Controls.kt`) | Icon-only-Umschalter mit Zustand (◉ „In Eigene speichern“), gefüllt oder leer | Ton → `SoundSwitch`; Einstellung → `ToggleRow` | `Role.Checkbox`, `stateDescription`, `liveRegion` nur für Wechsel von außen; `announce = false`, wenn ein anderer Knopf ansagt (A11Y-04) |
+| `AppTextButton` / `AppOutlinedButton` (`Controls.kt`) | Text-Aktion ohne Fläche (`shapes.large`) / gleichrangige Aktionen nebeneinander, Rand `outline`, optional `dashed` oder `compact` | Primäraktion → `StartSplitButton`; Auswahl → `SegmentedChoiceRow`; Session → `SessionSecondaryButton` | Text = Name; kurze Beschriftung mit vollem Namen über `contentDescription` |
+| `ToggleRow` (`Controls.kt`) | Ein/Aus-Einstellung: Label, Switch, Hinweis endet vor dem Switch (§4.5) | Auswahl aus mehreren → `SegmentedChoiceRow` | ganze Zeile `toggleable(Role.Switch)`, Name = Label (A11Y-03) |
+| `SoundSwitch` / `IconSwitch` (`SoundSwitch.kt`) | Icon-only-Schalter: Lautsprecher bzw. beliebiges Icon („Danach in die Stille“); aus in `TERTIARY` | Zustand mit Fläche oder Text → `AppIconToggle`, `ToggleRow` | Name am `Icon`, `Role.Switch`, `stateDescription` „An“/„Aus“ |
+| `Stepper` / `CompactStepper` (`Stepper.kt`) | ganzzahliger Wert in festem Bereich mit Label (Kreis bündig, `widestValues` gegen Springen) bzw. ohne sichtbares Label; `valueText`/`spokenValue` für Werte ohne Zahl (Uhrzeit) | Freitext | Knöpfe „Label, Erhöhen“, am Anschlag Fokus auf den Gegenknopf; Wert als Live-Region mit Einheit |
+| `SegmentedChoiceRow` / `choiceGroupHeading` | Einzelwahl aus 2–4 kurzen Optionen (mehr als Raster), **nie ein Häkchen**, gewählt `SegmentSelected` + SemiBold; zu eng → bis 85 %, dann Radioliste | mehr als 4 Optionen in einer Reihe | `groupLabel` als Gruppenname, `choiceGroupHeading()`; Radioliste `selectableGroup()`, `Role.RadioButton` |
+| `Chip` / `EvidenceChip` / `CautionChip` / `InfoChip` / `CharacterChip` (`Chips.kt`) | nicht klickbare Info-Pillen in `TitleWithChips` oder der Familienzeile: Studienlage (nur Detailseite), „nur gesund & ausgeruht“, „zum Nachlesen“, Charakter; einzeilig bis `CHIP_MIN_SCALE` | Auswahl → `SegmentedChoiceRow` | Text Pflicht; `EvidenceChip` spricht „Studienlage: …“ |
+| `LinkChip` / `ExerciseChips` (`LinkChip.kt`) | antippbarer Verweis auf eine Übung, sichtbar `ChipHeight`, Tippfläche 48 | Info → `Chip`; Aktion ohne Ziel → `AppTextButton` | Text = Name, Rolle Button |
+| `ChoiceChip` / `ChoiceChipRow` / `TonalChip` / `FilterChipRow` / `FilterChipFlow` (`ChoiceChip.kt`) | Anlass-Chips (40 dp, Rand, eine Antwort) und Filter-Chips (32 dp, tonal, mehrere) in Reihen (§4.5 „Chip-Reihen“); `FilterChipFlow` bricht zwischen Chips um | Einzelwahl aus 2–4 → `SegmentedChoiceRow`; Verweise → `LinkChip` | `Role.Checkbox` über `toggleable`; Reihe `selectableGroup` mit Namen, Fokusfolge = Datenfolge |
+| `BreathMarkIcon` / `PersonalMarkIndicator` / `PersonalMarkToggle` (`PersonalMark.kt`) | das eine Zeichen „zu mir“, der Atemkreis ◉ (ICON-03): „Tut mir gut“ (Detailseite, `ExerciseCard`) und „In Eigene speichern“ | Herz, Stern, Lesezeichen; Sortieren; Tab-Symbol „Eigene“ | cd und `stateDescription` je Bedeutung; gesetzt ≥ 4,5:1 |
+| `SearchField` | einzeiliges Suchfeld als Pille mit einem `TextFieldState` des Aufrufers (§4.5, [spec/suche.md](spec/suche.md)) | gespeicherte Eingaben; mehrzeiliger Text | X cd „Eingabe löschen“; Platzhalter als Name |
+| `AdaptiveButtonRow` / `InlineOrBelow` | Button-Reihe, die vom gleich breiten Nebeneinander bis zum Untereinander ausweicht / zwei Teile nebeneinander, sonst `end` rechtsbündig darunter, entschieden über Reserven | Split-Button → `StartSplitButton`; Button-Reihen → `AdaptiveButtonRow` | Lesereihenfolge bleibt; Reserven ohne Semantik |
+| `StartSplitButton` / `StartPlayButton` / `SlidingReset` | **jeder** Start einer konfigurierbaren Session (MUSTER-01, §4.5 „Knopfleiste unten“) bzw. runder Start in knappen Leisten; Reset, der nur bei Abweichung hereingleitet | andere Aktionspaare; Vorschau → `CurvePreviewControls` | Reset Icon-only, cd `adjust_reset`, Fokus → Start, wenn er verschwindet (`onFocusHandoff`) |
+| `PinnedActionBar` | gepinnte Start-Leiste unter dem Scroll-Inhalt (§4.5); meldet ihre Oberkante dem `TabBarState` (Griff, Wischen) | Aktionen im Inhalt; mehr als eine Zeile über dem Start | Inhalt `StartSplitButton`, darüber höchstens ein `SectionHeader` mit `onClick` |
+| `ConfirmIconButton` / `rememberArmedConfirm` (`ConfirmAction.kt`) | zerstörende Aktion zweistufig im selben Element (MUSTER-05) | Abbruch eines Downloads; sofort umkehrbare Aktionen | Name mit Gegenstand, Bestätigung „‚X‘ wirklich löschen?“, `liveRegion` am Knopf; in Listen `key(id)` |
+| `SafetyDialog` / `rememberSafetyGate` | Sicherheitsbestätigung vor intensiven Übungen und das Gate je Übung (`SafetySettings.acknowledgedIds`, MUSTER-06) | Infos ohne Risiko | nicht außen schließbar; Warn-Icon dekorativ |
+| `WholeWordText` / `badBreakAt` / `breaksInsideWord` (`WholeWordText.kt`) | Titel, Namen, Beschriftungen, die nie im Wort brechen: verkleinert schrittweise; die Umbruch-Regel teilt sich der `ScreenshotTest` | Fließtext → umformulieren | wie `Text` |
+| `MarqueeText` | einzeiliger Text als Laufschrift, wenn er nicht passt (Seitentitel, Name im Editor) | Listen, Karten, Abschnittsköpfe (dort umbrechen) | TalkBack liest den ganzen Text |
+| `BodyText` / `HintText` / `SecondaryText` / `WarnText` / `CardTitle` / `Bullet` (`TextBlocks.kt`) | Textrollen außerhalb der Köpfe nach §3 und §2.2: Fließtext, Hinweis, Sekundärtext, Warnzeile „⚠ …“ in `WarnAmber`, Kartentitel ohne Aktionen, Aufzählungspunkt | Köpfe → `SectionHeader`; Einleitung → `ScreenSubtitle` | `CardTitle` ist `heading()`; Bullet-Glyph stumm |
+| `ForwardChevron` / `ForwardLinkText` (`ExpandCaret.kt`) | Chevron „führt weiter“ hinter einem Verweis; Verweistext mit Chevron in einem `AppTextButton` | externe Links (`ic_open_in_new`) | dekorativ, den Namen trägt die Zeile |
+| `BreathingCircle` / `breathingDiscDiameter` | Atem-Pacer (`fraction` 0…1, Verhältnis klein : groß 0,42) und sein Durchmesser für Nachbarn | dekorative Kreise | Aufrufer setzt Name, `onClickLabel`, Zustand, Fokus (A11Y-07) |
+| `OverlayChrome` / `SessionRunningLayout` / `CalmHost` | Rahmen jedes Vollbild-Overlays (Minimieren, Stille, Ton) / Gerüst laufender Sessions mit fest reserviertem `centerExtra` / Ruhe-Ansicht beider Overlays ([spec/session.md](spec/session.md)) | Push-Screens; eigene Tipp-Logik je Overlay | `title` als `paneTitle`; nie ausblenden, solange eine Bedienungshilfe läuft |
+| `SessionControls.kt`: `GlowText`, `SessionControlBar`, `SessionPrimaryButton`, `SessionSecondaryButton`, `FinishedPanel`, `rememberTapFlash`; `PauseFlash`; `CircleTapTarget` | Text, Buttons und Tap-Rückmeldung **nur** in Vollbild-Sessions; Ende-Screen mit Antwortreihe ([spec/session.md](spec/session.md#antwortreihe)) | normale Screens, stehender Status | `FinishedPanel`: `paneTitle` „Geschafft“, Fokus auf „Nochmal“; `PauseFlash` dekorativ; `CircleTapTarget` mit Namen und `onClickLabel` |
+| `MiniNowPlayingBar` | minimierte laufende Session über der Tab-Leiste | andere Meldungen | ≥ 48 dp, ein Fokus-Stopp, `Role.Button` |
+| `RhythmCurve` | ein Atemzug einer Übung oben auf der Detailseite, Punkt im echten Takt ([spec/detail.md](spec/detail.md#rhythmuskurve)) | Bearbeiten → `BreathCurveEditor`; Übungen ohne Takt | ein Knoten mit den Phasen in Worten, keine Live-Region |
+| `SessionAdjustControls` | Dauer und Intervalle vor dem Start auf dem Blatt „Anpassen“, Zustand `SessionAdjustState` in `ui/detail/` ([spec/detail.md](spec/detail.md)) | Stufen-Übungen ohne „Phasen anpassen“ | „· angepasst“ im Toggle-Zustand |
+| `AppNavigationBar` / `AppTabBar` / `HideableTabBar` / `TabBarToggle` (`ui/navigation/`) | Tab-Leiste, in der Tiefe einklappbar mit Griff und Wischen (§4.5, [spec/navigation.md](spec/navigation.md)) | Push-Ziele | `labelLarge` in jedem Zustand gleich, bis 85 %, dann Icons mit Namen; Auswahl tonal |
 
-Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/session/`), `MiniMeditationBar`, `MeditationOverlay` (`ui/meditation/`).
+**Helfer ohne eigene Optik** (Bauweise in der KDoc): Messen und Reserven `widestOf`, `rememberWidestTextWidth`, `rememberWidestAnnotatedWidth`, `rememberFirstLineHeight` (§4.5) · Kanten und Ränder `flushEnd`/`flushStart` (§4.5 „Bündigkeit“), `accentBorder`, `dashedBorder` (`CardBorder.kt`), `selectedRow` (Auswahl ohne Häkchen) · Sichtbarkeit `HideableSlot`, `inertWhen`, `FillViewportColumn` (LAYOUT-08), `HideSystemBars`, `rememberAccessibilityActive` (`ConfirmAction.kt`) · Text `DotSeparatedFlow`, `sanskritText` (TEXT-14), `ReferenceItem`, `PhaseMark`/`HoldDash`, `ExpandCaret`/`expandedStateText` · Daten in Worten `color`/`title` (`BreathingFamily`), `label` (`EvidenceLevel`) in `FamilyPresentation.kt`, `sessionSummaryParts` (`SummaryPart`), `spokenDuration`, `durationClockText`, `feelingText`/`FeelingAsk` (SEC-LEGAL-04).
+
+**Feature-Bausteine außerhalb von `ui/components/`:** `BreathCurveEditor`/`BreathCurveHeights`/`CurvePreviewControls` → [spec/muster-editor.md](spec/muster-editor.md) · `TimeDial`/`DurationPickerState` → [spec/meditation.md](spec/meditation.md) · `VayuFigure`/`VayusContent` → [spec/lernen.md](spec/lernen.md) · Wrapper ohne eigene Regeln `MiniSessionBar`, `SessionOverlay`, `MiniMeditationBar`, `MeditationOverlay`.
 
 ### 5.2 Regeln
 
@@ -514,7 +427,7 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/sess
 
 ## <a id="bewegung"></a>8 Bewegung
 
-**Tokens** (`src/ui/theme/Motion.kt`): `TapFlashHold` 220 ms, `TapFlashFadeStep` × `TapFlashFadeSteps` 34 ms × 16, `TapFlashStatic` 500 ms (bei Animator-Skala 0), `NavPush` 300 ms Slide + Fade (einmal in `pushComposable<T>()`), `NavTab` 180 ms Fade, `CalmFade` 500 ms (Ruhe-Ansicht), `ControlFade` 300 ms (Session-Knöpfe nach der Vorbereitung), `VayuFlow` 2400 / `VayuFlowSelected` 1100 ms (Strömungslinien), `VayuPulse` 2600 ms (`EaseInOutSine`), `RhythmDotColor` 300 ms (Farbübergang des Rhythmus-Punkts an einer Phasengrenze, je zur Hälfte davor und danach), `SearchStatusSettle` 600 ms (Trefferzahl der Suche), `Disclosure` (Default-Spring für Größe: `animateContentSize`, `expand…`/`shrink…`) mit `Reveal` (Default-Spring für `fadeIn`/`fadeOut`), `AmbientShimmer` `tween(8000, EaseInOutSine)` reverse (Schein des Atemkreises, Glow-α ≤ 0,16).
+**Tokens:** Dauern und Animations-Specs nur aus `Motion.*` ([Motion.kt](../app/src/main/java/app/atemkraft/ui/theme/Motion.kt), Wert und Zweck je Token in der KDoc); Übergänge der Navigation: [spec/navigation.md](spec/navigation.md).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -525,11 +438,11 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/sess
 
 ## <a id="audio"></a>9 Audio und Haptik
 
-**Ist-Werte** (`src/cue/`): Synthese 44,1 kHz PCM16 mono zur Laufzeit. Wechselton 528/396/440 Hz (Ein/Aus/Halten), 180 ms, Attack 12, Release 60 ms. Gong Teiltöne 330/331,6/894/1698 Hz, „Lang“ 11,5 s + 1,5 s Stille, „Kurz“ 6 + 1,5 s. Durchgehend 196 ↔ 294 Hz, Tonhöhe nach dem Füllstand des Kreises, Ein- und Ausblende 60 ms. Lautstärke Ton/Gong 0,9/1,4/1,85, Dauerton 1,2/2,0/3,2. Sprache System-TTS de-DE (Rate 0,85, Pitch 0,9) oder Piper (Speed 0,9). Haptik-Raste: Primitive `TICK` 0,6 bzw. `CLICK` 1,0, sonst `EFFECT_TICK`/`EFFECT_HEAVY_CLICK`, sonst One-Shot 30/60 ms; gedrosselt (Tick frühestens 40 ms nach einem Tick, 80 ms nach einem Klick). Ein/Aus 110 ms, Halten 70 ms. Session-Vibration als `USAGE_ALARM` (ab API 33 über `VibrationAttributes`), Rasten als `USAGE_TOUCH`. Fokus `GAIN_TRANSIENT_MAY_DUCK`, `USAGE_MEDIA`. Defaults: Töne, Haptik an, Zäsur MEDIUM, Lautstärke MEDIUM, Gong lang.
+**Ist-Werte** (Frequenzen, Hüllkurven, Lautstärken, Sprache, Haptik, Defaults): [spec/session.md, Klang und Haptik](spec/session.md#klang); Code in `src/cue/`.
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
-| AUDIO-01 | MUSS | Töne werden offline synthetisiert; neue Audio-Assets nur mit freier Lizenz (in den Credits). Kein Text in App, Store, README oder Release-Notes nennt eine Frequenz oder verspricht etwas mit ihr (keine „Heil“-Frequenzen); die Wechseltöne (§9) sind nur Klang. Jeder Ton hat Attack ≥ 8 ms, Release ≥ 60 ms, Spitze ≤ 0,95 FS. | Offline, F-Droid, evidenz-ehrlich, keine Klicks. | manuell: R-CODE, R-AUDIO |
+| AUDIO-01 | MUSS | Töne werden offline synthetisiert; neue Audio-Assets nur mit freier Lizenz (in den Credits). Kein Text in App, Store, README oder Release-Notes nennt eine Frequenz oder verspricht etwas mit ihr (keine „Heil“-Frequenzen); die Wechseltöne ([Ist-Werte](spec/session.md#klang)) sind nur Klang. Jeder Ton hat Attack ≥ 8 ms, Release ≥ 60 ms, Spitze ≤ 0,95 FS. | Offline, F-Droid, evidenz-ehrlich, keine Klicks. | manuell: R-CODE, R-AUDIO |
 | AUDIO-02 | MUSS | Ausgabe über `USAGE_MEDIA`. Audio-Fokus nur, wenn etwas hörbar ist, in der Pause abgegeben, Fokusverlust per Listener behandelt. Der Gong klingt vollständig aus; Fokus/Service enden erst nach `gongTotalMs()` plus Reserve. | Fremde Musik bleibt sonst geduckt; abgeschnittener Gong. | manuell: R-AUDIO |
 | AUDIO-03 | MUSS | Sprache schweigt bei Medienlautstärke 0, bricht vor dem End-Gong ab, überlappt nicht (`QUEUE_ADD`). | Ruhe. | manuell: R-AUDIO |
 | AUDIO-04 | MUSS | Audio und Haptik hängen an den app-weiten Abläufen (`MeditationController`, `BreathSessionController`) bzw. am Service, nie an der Composition; Player kommen aus dem `AppContainer`, nie aus `remember { … }`. Beide Sitzungsarten laufen mit dem Foreground-Service `PlaybackService` (`mediaPlayback`, Partial-Wakelock). | Sperrbildschirm; Android 17 stummt Hintergrund-Audio ohne FGS. | auto: `player-in-composable`; manuell: R-AUDIO |
@@ -573,13 +486,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 
 **Buttons** im Infinitiv, 1–2 Wörter („Starten“, „Speichern“; Ausnahmen „Verstanden, starten“ und „Nochmal“/„Ende“ am Ende-Screen). **Status** klein, unaufdringlich („· angepasst“, „lädt … 42 %“). **Datenschutz-Hinweis** in der App nach [SECURITY.md, Prinzipien](SECURITY.md#prinzipien).
 
-**Studienlage** (TEXT-07, `EvidenceLevel`): genau eine Stufe je eingebauter Übung.
-
-| Stufe | Wann |
-|---|---|
-| „gut belegt“ | Meta-Analyse oder mehrere unabhängige RCTs zur Anwendung |
-| „in Studien geprüft“ | ein RCT oder mehrere kleine Studien, dünn oder nur für eine Gruppe |
-| „kaum untersucht“ | Mechanismus plausibel |
+**Studienlage** (TEXT-07, `EvidenceLevel`), genau eine Stufe je eingebauter Übung: „gut belegt“ = Meta-Analyse oder mehrere unabhängige RCTs zur Anwendung · „in Studien geprüft“ = ein RCT oder mehrere kleine Studien, dünn oder nur für eine Gruppe · „kaum untersucht“ = Mechanismus plausibel.
 
 | Verwenden | Nicht verwenden |
 |---|---|
@@ -614,7 +521,7 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | CODE-01 | MUSS | **Schichten:** Jede Schicht importiert nur, was die Tabelle „Schichten“ unten erlaubt; `domain/` ist reines Kotlin (keine JVM-APIs, KMP-fähig; offene Fälle in [IOS_PLAN.md](IOS_PLAN.md) §4); Controller ohne UI liegen in `playback/`. Ausnahmen stehen nur in der Tabelle und in `check_style.py`. | Testbarkeit, iOS-Plan, Aufteilung nach Features. | auto: `layer-import-*`, `ui-feature-import`, `domain-platform` |
-| CODE-02 | MUSS | Screens (`XScreen`, `XOverlay`) bekommen Werte und `on…`-Lambdas, nie Repository, ViewModel, Controller oder `CoroutineScope`; höchstens 8 Parameter (ohne `modifier`), sonst `XUiState` und `XActions`. Zustand halten nur die vier State-Holder-Arten der Tabelle „Schichten“ unten. | Testbar, vorschaubar; kein ViewModel je Push-Ziel ([DECISIONS 2026-10-24](DECISIONS.md)). | auto: `ui-state-holder`, `screen-params`, ktlint `compose:vm-injection-check`; manuell: R-CODE |
+| CODE-02 | MUSS | Screens (`XScreen`, `XOverlay`) bekommen Werte und `on…`-Lambdas, nie Repository, ViewModel, Controller oder `CoroutineScope`; höchstens 8 Parameter (ohne `modifier`), sonst `XUiState` und `XActions`. Zustand halten nur die vier State-Holder-Arten unter der Tabelle „Schichten“ unten. | Testbar, vorschaubar; kein ViewModel je Push-Ziel ([DECISIONS 2026-10-24](DECISIONS.md)). | auto: `ui-state-holder`, `screen-params`, ktlint `compose:vm-injection-check`; manuell: R-CODE |
 | CODE-03 | MUSS | Flows mit `collectAsStateWithLifecycle`; Eingaben und offene Dialoge mit `rememberSaveable`; Timer und Audio im `viewModelScope` oder app-weiten Controller; `CancellationException` nie schlucken. | Lifecycle, Rotation, strukturierte Nebenläufigkeit. | auto: `lintDebug`; manuell: R-CODE |
 | CODE-04 | MUSS | Öffentliche Composables in `ui/components/`: `modifier: Modifier = Modifier` als erster optionaler Parameter, am Root angewendet; Reihenfolge Pflicht, `modifier`, optional, Content-Lambda; KDoc; privates `@Preview` in `AtemkraftTheme`. | Wiederverwendbar, sichtbar. | auto: ktlint `compose:modifier-*`, `param-order-check`, `preview-public-check` |
 | CODE-05 | MUSS | Navigation nur über `@Serializable`-Routen in `ui/navigation/Routes.kt`; unauflösbare Route → `popBackStack()`. Persistierte Enums über `name`, nie `ordinal`. Logik hängt nie an Anzeigetexten. | Kein leerer Screen, keine stille Datenverschiebung. | auto: `ordinal-persist`; manuell: R-CODE |
@@ -623,7 +530,7 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | CODE-09 | MUSS | **Ablauf fehlertolerant:** Ein unbehandelter Fehler im Ablauf einer Sitzung (Atemübung, Meditation) beendet sie wie Stopp bzw. Abbruch, gibt den `PlaybackService` frei und geht an `UncaughtErrors`; keine Sitzung bleibt laufend stehen. Abbrechen ist kein Fehler (CODE-03). | Eine hängende Sitzung hielte Service, Wakelock und Benachrichtigung ohne Ende. | auto: `PlaybackFlowTest` (Fehler im Ablauf) |
 | PERF-01 | SOLL | **Leistung.** Kein I/O und kein `runBlocking` auf dem Main-Thread (Room, DataStore, Dateien, Netz nur über `suspend`/`Flow` abseits von Main). Endlos-Animationen lesen die Zeit nur im Draw und laufen nur sichtbar (`RhythmCurve` ruht unter dem Vollbild). Keine Arbeit pro Frame in der Komposition: Werte je Frame liest erst Layout oder Draw, Teures steht in `remember(key)`. | Ruckelfreies Bild auf 120 Hz, Akku in langen Sitzungen; Referenz: [Messwerte](recherche/2026-10-30-iso25010.md#messwerte). | auto: `perf-main`; manuell: R-PERF |
 
-**Schichten (CODE-01) und State-Holder (CODE-02):** Die Checks `layer-import-*`, `ui-feature-import` und `domain-platform` setzen die Tabelle um; ihre Ausnahmen stehen dort und hier.
+**Schichten (CODE-01):** Die Checks `layer-import-*`, `ui-feature-import` und `domain-platform` setzen die Tabelle um; ihre Ausnahmen stehen dort und hier.
 
 | Schicht | importiert aus `app.atemkraft` nur | Ausnahme |
 |---|---|---|
@@ -635,12 +542,7 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | `ui/<feature>/` | aus `ui/` nur `theme`, `components`, `navigation` und sich selbst | `own/` → `ui/log/LogHistory` |
 | `data/`, `playback/`, `ui/` | aus dem Wurzelpaket nur `BuildConfig` und `R` | – |
 
-| State-Holder | wofür |
-|---|---|
-| `XViewModel` | nur ab App-Start Gesammeltes |
-| `XDestination` | Push-Ziele mit eigener Logik |
-| `GraphState` / `PlaybackState` | im Wurzelpaket |
-| `rememberX`-Holder | Zustand mit Activity-Bezug |
+**State-Holder (CODE-02):** `XViewModel` nur für ab App-Start Gesammeltes · `XDestination` für Push-Ziele mit eigener Logik · `GraphState` / `PlaybackState` im Wurzelpaket · `rememberX`-Holder für Zustand mit Activity-Bezug.
 
 ## <a id="automatische-pruefung"></a>13 Automatische Prüfung
 

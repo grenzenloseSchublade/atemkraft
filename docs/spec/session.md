@@ -37,12 +37,29 @@ Beide Sitzungsarten gleich: „✓ Geschafft“ (`paneTitle` „Geschafft“), d
 
 ## Befinden am Ende
 
-Regel [SEC-LEGAL-04](../SECURITY.md#recht): Selbstauskunft ohne Auswertung. Unter der Einladung drei gleich breite, stille Wahlflächen („ruhiger · wie vorher · unruhiger“, nach Übungen der Familie „Aktivieren“ und sanft aktivierenden Mustern „wacher · wie vorher · müder“, `Feeling.scaleFor`), Anatomie „Antwortreihe“ in [§4.5](../STYLEGUIDE.md#anatomie). Ein Tipp, keine vorgewählt, eine zweite Wahl ersetzt die erste; „Nochmal“, „Ende“, Zurück und die Links gehen jederzeit, ohne Nachfrage. Keine Abfrage vor dem Start.
+Regel [SEC-LEGAL-04](../SECURITY.md#recht): Selbstauskunft ohne Auswertung. Unter der Einladung drei gleich breite, stille Wahlflächen („ruhiger · wie vorher · unruhiger“, nach Übungen der Familie „Aktivieren“ und sanft aktivierenden Mustern „wacher · wie vorher · müder“, `Feeling.scaleFor`), Anatomie „Antwortreihe“ [unten](#antwortreihe). Ein Tipp, keine vorgewählt, eine zweite Wahl ersetzt die erste; „Nochmal“, „Ende“, Zurück und die Links gehen jederzeit, ohne Nachfrage. Keine Abfrage vor dem Start.
 
 - Nur wenn ein Logbuch-Eintrag entstand: Die Atemübung zeigt den Ende-Screen nur am natürlichen Ende (Eintrag immer), die Meditation auch nach „Beenden“ ab einer Minute (Eintrag ebenfalls). Der Ablauf merkt sich die Id des Eintrags (`BreathSessionController.answerFeeling`, `MeditationController.answerFeeling`) und setzt die Antwort nachträglich (`LogbookDao.setFeeling`); die Wahl erscheint sofort.
 - Einstellung „Befinden am Ende fragen“ (Einstellungen › Daten, DataStore `feeling_prompt`): Fehlt sie, erscheint die Reihe beim ersten regulären Ende einmal mit dem Satz „Nur auf diesem Gerät gespeichert. Abschalten kannst du die Frage in den Einstellungen.“; das Erscheinen setzt den Schalter auf an (`SettingsRepository.feelingOffered`). Aus: keine Reihe.
 - Nach „Danach in die Stille“ fragt erst der Ende-Screen der Meditation; der Eintrag der Atemübung bleibt unbeantwortet.
 - Im Logbuch steht das Wort gedämpft unter der Uhrzeit (`TERTIARY`, gesprochen „danach ruhiger“), ohne Farbe, Icon oder Summe; „Logbuch leeren“ löscht es mit.
+
+### <a id="antwortreihe"></a>Anatomie der Antwortreihe (`FinishedPanel` mit `FeelingAsk`)
+
+```
+ ✓ Geschafft  labelMedium TERTIARY
+ GapSmall
+ Spür kurz nach, wie es dir geht.   ← Titel headlineSmall, zentriert
+ ListGap 12
+ [ ruhiger | wie vorher | unruhiger ]  ← SegmentedChoiceRow: drei gleich breite Segmente, ButtonHeight 40, Tippfläche 48, ohne Häkchen
+ GapSmall                              (nur beim ersten Mal:)
+ Nur auf diesem Gerät gespeichert. …   ← bodySmall TERTIARY, zentriert
+ GapSmall · Bilanz · Links · SessionPadding · [Nochmal][Ende]
+```
+
+- Keine neue Optik: Die Reihe ist eine `SegmentedChoiceRow` (Einzelwahl aus drei, Fläche `SegmentSelected` + SemiBold, bei Platzmangel gemeinsam bis 85 % kleiner, dann Radioliste); keine vorgewählt, eine Wahl ersetzt die vorige, nie abwählen, nie Pflicht. Breite wie die Knopfreihe darunter (volle Breite im `SessionPadding`). Bei aktivierenden Übungen „wacher · wie vorher · müder“.
+- Erscheint nur, wenn ein Logbuch-Eintrag entstand (`feelingOptions` nicht leer) und die Einstellung es will; der Hinweis des ersten Mals bleibt für diesen Ende-Screen stehen. Passt der Ende-Screen nicht in die Höhe (Schrift 2,0), scrollt er; mittig bleibt er, solange alles passt.
+- **Prüfung:** `ScreenshotTest` (`09_session_ende_befinden*`, `10_meditation_ende_befinden`: `WORTBRUCH`, `TIPPFLAECHE`, `BESCHNITTEN`), `no-check-icon`; manuell R-A11Y (Gruppe „Befinden“, Auswahl angesagt).
 
 ## Logbuch und Ersetzen
 
@@ -51,6 +68,10 @@ Was von selbst zu Ende läuft, kommt immer ins Logbuch; früher Beendetes („Be
 ## Takt
 
 `SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01). Der Kreis wächst von 0,42 seiner vollen Größe bis zur vollen (`MIN_SCALE` = 0,42 × `MAX_SCALE`, `MAX_SCALE` 0,97 des Außenradius in `BreathingCircle.kt`). Der Füllstand gleitet je Phase von `RuntimePhase.circle.from` nach `.to` (`CircleFractions`, stetig über die Grenzen, MOTION-03); im Countdown steht der Kreis am Start der ersten Phase, die Tonhöhe des Dauertons folgt demselben Füllstand. Nach Weiter setzt der Dauerton an der Tonhöhe fort, bei der die Pause begann (`PhaseAudio.elapsedMs`), nicht am Anfang der Phase.
+
+## <a id="klang"></a>Klang und Haptik (Ist-Werte, `src/cue/`)
+
+Regeln AUDIO-01 … -05 in [STYLEGUIDE §9](../STYLEGUIDE.md#audio). Synthese 44,1 kHz PCM16 mono zur Laufzeit. Wechselton 528/396/440 Hz (Ein/Aus/Halten), 180 ms, Attack 12, Release 60 ms. Gong Teiltöne 330/331,6/894/1698 Hz, „Lang“ 11,5 s + 1,5 s Stille, „Kurz“ 6 + 1,5 s. Durchgehend 196 ↔ 294 Hz, Tonhöhe nach dem Füllstand des Kreises, Ein- und Ausblende 60 ms. Lautstärke Ton/Gong 0,9/1,4/1,85, Dauerton 1,2/2,0/3,2. Sprache System-TTS de-DE (Rate 0,85, Pitch 0,9) oder Piper (Speed 0,9). Haptik-Raste: Primitive `TICK` 0,6 bzw. `CLICK` 1,0, sonst `EFFECT_TICK`/`EFFECT_HEAVY_CLICK`, sonst One-Shot 30/60 ms; gedrosselt (Tick frühestens 40 ms nach einem Tick, 80 ms nach einem Klick). Ein/Aus 110 ms, Halten 70 ms. Session-Vibration als `USAGE_ALARM` (ab API 33 über `VibrationAttributes`), Rasten als `USAGE_TOUCH`. Fokus `GAIN_TRANSIENT_MAY_DUCK`, `USAGE_MEDIA`. Defaults: Töne, Haptik an, Zäsur MEDIUM, Lautstärke MEDIUM, Gong lang.
 
 ## Audio-Fokus
 
