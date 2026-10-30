@@ -9,10 +9,14 @@ import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.RuntimePhase
+import app.atemkraft.domain.SessionKind
+import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SessionProgress
 import app.atemkraft.domain.buildTimeline
+import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
 import app.atemkraft.playback.SessionUiState
@@ -20,14 +24,19 @@ import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.home.HomeActions
 import app.atemkraft.ui.home.HomeCatalog
 import app.atemkraft.ui.home.HomeScreen
+import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.meditation.MeditationActions
 import app.atemkraft.ui.meditation.MeditationOverlay
+import app.atemkraft.ui.own.OwnActions
+import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.session.SessionActions
 import app.atemkraft.ui.session.SessionOverlay
+import java.time.ZoneId
 
 /*
- * Szenen, die mehrere Screenshot-Tests teilen ([ScreenshotTest], [StoreScreenshotTest]): Tab
- * „Atmen“ mit den eingebauten Daten und die Vollbild-Sitzungen in einem festen Zustand.
+ * Szenen, die mehrere Screenshot-Tests teilen ([ScreenshotTest], [StoreScreenshotTest],
+ * [TabMatrixTest]): die Tabs mit den eingebauten Daten und die Vollbild-Sitzungen in einem festen
+ * Zustand.
  */
 
 /**
@@ -50,6 +59,60 @@ internal fun BreatheTab(welcome: Boolean = false) {
         dailySaved = false,
         actions = HomeActions(onRegenerateDaily = {}, onDailySavedChange = {}, onSelect = {}, onOpenSettings = {}),
         welcome = if (welcome) BuiltInExercises.all.first { it.id == "resonanz" } else null,
+    )
+}
+
+/**
+ * Tab „Eigene“ mit Verlauf ([logEntries]), „Tut mir gut“ mit den zwei längsten Übungsnamen,
+ * „Zuletzt: …“ mit dem längsten und den gespeicherten Mustern (eines mit langem Namen).
+ */
+@Composable
+internal fun OwnTab() {
+    val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
+    OwnPatternsScreen(
+        savedPatterns = ScreenshotHarness.saved,
+        actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
+        favorites = favorites,
+        logEntries = logEntries(),
+        lastExercise = favorites.first(),
+        today = ScreenshotHarness.DAY,
+    )
+}
+
+/** Tab „Lernen“ mit seinen Kapiteln. */
+@Composable
+internal fun LearnTab() = LearnScreen(onOpenSettings = {}, onOpenAtemlehre = {}, onOpenPranayama = {}, onOpenPrograms = {}, onOpenGlossary = {})
+
+/**
+ * Beispieleinträge für Logbuch und „Eigene“: relativ zum festen DAY, damit jede Gruppe vorkommt
+ * (Heute, Gestern, Diese Woche, zwei Monate).
+ */
+internal fun logEntries(): List<SessionLogEntry> {
+    fun at(daysAgo: Long, hour: Int, minute: Int): Long = ScreenshotHarness.DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val daysAgo = listOf(0L, 1L, 3L, 5L, 12L, 40L)
+    // Runden und Dauer wie vom BreathSessionController geloggt.
+    return BuiltInExercises.all.take(6).mapIndexed { i, e ->
+        SessionLogEntry(
+            id = i + 1L,
+            exerciseId = e.id,
+            exerciseName = e.name,
+            family = e.family,
+            startedAtEpochMs = at(daysAgo[i], 7, 30),
+            durationMs = if (e.rounds > 1) e.estimatedTotalSeconds() * 1_000L else (5 + i) * 60_000L + 5_000L,
+            roundsCompleted = e.rounds,
+            // Befinden an einigen Einträgen, das längste Wort dabei; die übrigen unbeantwortet.
+            feeling = listOf(Feeling.CALMER, null, Feeling.SAME, Feeling.MORE_TIRED, null, Feeling.RESTLESS)[i],
+        )
+    } + SessionLogEntry(
+        id = 99,
+        exerciseId = "meditation",
+        exerciseName = "Meditation",
+        family = null,
+        startedAtEpochMs = at(1, 21, 15),
+        durationMs = 20 * 60_000L,
+        roundsCompleted = 0,
+        kind = SessionKind.MEDITATION,
+        feeling = Feeling.SAME,
     )
 }
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Einziger Einstieg für alle Prüfungen, lokal und im CI (docs/STYLEGUIDE.md §13.1).
 #
-#   scripts/check.sh          # Stil-Checks, Sicherheits-Checks, ktlint, Unit-Tests, Android Lint,
-#                             # Release-Build (unsigniert) samt verify-apk
+#   scripts/check.sh          # Stil-Checks, Sicherheits-Checks, ktlint, Unit-Tests samt Vergleich
+#                             # der Referenzbilder, Android Lint, Release-Build (unsigniert) samt verify-apk
 #   scripts/check.sh --fast   # ohne Android Lint und Release-Build
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,7 +23,9 @@ scripts/check-style.sh
 # lintVitalRelease und das Paketieren. Ob die neuronale Stimme über JNI zur Laufzeit geht, prüft
 # er nicht (das bleibt die Gerätesprobe der Release-Checkliste). Er bleibt immer unsigniert,
 # auch wenn lokal ein Release-Keystore liegt, und lässt eine signierte APK liegen (siehe unten).
-TASKS=(ktlintCheck testDebugUnitTest)
+# verifyRoborazziDebug ist testDebugUnitTest mit Vergleich der Referenzbilder unter
+# app/src/test/screenshots/ (A-12); gewollte Änderungen nimmt `scripts/build.sh recordRoborazziDebug` neu auf.
+TASKS=(ktlintCheck verifyRoborazziDebug)
 $FAST || TASKS+=(lintDebug assembleRelease -PunsignedRelease=true)
 
 # Das Paketieren räumt das Ausgabeverzeichnis des Release-Builds; dort liegende signierte APKs

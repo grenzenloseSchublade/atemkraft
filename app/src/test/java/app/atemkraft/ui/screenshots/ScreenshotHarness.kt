@@ -65,9 +65,12 @@ import app.atemkraft.ui.patterns.rememberPatternEditorState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.RoborazziTaskType
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
+import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import kotlinx.coroutines.awaitCancellation
 import org.junit.After
 import org.junit.Assert.fail
@@ -102,6 +105,9 @@ internal typealias Tab = TopTab
  * Endlos-Animationen stehen still (FrozenInfiniteAnimations).
  *
  * Bilder erzeugen: `scripts/build.sh recordRoborazziDebug` → `app/build/outputs/roborazzi/`.
+ * Referenzbilder ([snap] mit `reference`) liegen dagegen im Repo unter `app/src/test/screenshots/`
+ * und werden bei jedem Testlauf aus `scripts/check.sh` verglichen (`verifyRoborazziDebug`, A-12);
+ * alle anderen Bilder nimmt Roborazzi nur beim Aufnehmen auf und vergleicht sie nie.
  */
 abstract class ScreenshotHarness(protected val device: Device, protected val fontScale: Float) {
 
@@ -125,6 +131,22 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
+
+        /** Ordner der Referenzbilder im Repo, relativ zum Arbeitsordner des Tests (app/). */
+        private const val REFERENCE_DIR = "src/test/screenshots"
+
+        /**
+         * Referenzbilder in halber Auflösung: Ein verschobenes Element oder eine andere Farbe fällt
+         * genauso auf, das Repo wächst bei jeder Neuaufnahme aber nur um ein Viertel.
+         */
+        // Lazy: Der Runner liest die Parameter außerhalb der Robolectric-Umgebung, dort ließe sich
+        // RoborazziOptions nicht anlegen.
+        private val referenceOptions by lazy { RoborazziOptions(recordOptions = RoborazziOptions.RecordOptions(resizeScale = 0.5)) }
+
+        /** Alle anderen Bilder nur beim Aufnehmen schreiben, nie vergleichen (keine Referenz im Repo). */
+        private val gateOptions by lazy {
+            RoborazziOptions(taskType = if (roborazziSystemPropertyTaskType().isRecording()) RoborazziTaskType.Record else RoborazziTaskType.None)
+        }
 
         // Feste Werte statt „heute“, damit die Bilder reproduzierbar sind.
         internal val DAY = LocalDate.of(2026, 10, 3)
@@ -206,6 +228,8 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
      * dafür Gerätegröße haben ([deviceWindow]).
      * [export] bekommt das Bild des Testknotens unabhängig vom Roborazzi-Modus (Store-Bilder,
      * [StoreScreenshotTest]).
+     * Mit [reference] ist das Bild ein Referenzbild im Repo: `verifyRoborazziDebug` schlägt fehl,
+     * wenn es fehlt oder sich ein Pixel ändert; `recordRoborazziDebug` nimmt es neu auf.
      */
     @OptIn(ExperimentalRoborazziApi::class)
     protected fun snap(
@@ -220,6 +244,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         prepare: () -> Unit = {},
         measure: () -> List<String> = { emptyList() },
         export: ((ImageBitmap) -> Unit)? = null,
+        reference: Boolean = false,
         content: @Composable () -> Unit,
     ) {
         currentWidthDp = widthDp
@@ -228,11 +253,13 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         prepare()
         val scale = (fontScale * 100).toInt()
         val dir = "${roborazziSystemPropertyOutputDirectory()}/${device.name}/fs$scale"
+        val image = "${if (reference) REFERENCE_DIR else roborazziSystemPropertyOutputDirectory()}/${device.name}/fs$scale/$name.png"
+        val options = if (reference) referenceOptions else gateOptions
         if (screen) {
             compose.waitForIdle()
-            captureScreenRoboImage("$dir/$name.png")
+            captureScreenRoboImage(image, options)
         } else {
-            compose.onNodeWithTag(SHOT).captureRoboImage("$dir/$name.png")
+            compose.onNodeWithTag(SHOT).captureRoboImage(image, options)
         }
         export?.invoke(compose.onNodeWithTag(SHOT).captureToImage())
         // Befunde neben dem Bild ablegen (überschreibt den letzten Lauf); Übersicht per

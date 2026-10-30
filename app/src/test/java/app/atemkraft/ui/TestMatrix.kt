@@ -33,6 +33,27 @@ object TestMatrix {
      */
     val DEVICE_CONFIGS: List<Pair<Device, Float>> = listOf(COMPACT to 1.3f, A54 to A54_FONT_SCALE, A54 to 1.3f)
 
+    /** Das A54 quer gehalten (Breite und Höhe getauscht, Statusleiste vernachlässigt). */
+    val A54_LANDSCAPE = Device("a54quer", A54.heightDp, A54.widthDp)
+
+    /** 10-Zoll-Tablet in Standard-Anzeigegröße (z. B. Galaxy Tab A9+, Pixel Tablet). */
+    val TABLET = Device("tablet", 800, 1280)
+
+    /** Dasselbe Tablet quer. */
+    val TABLET_LANDSCAPE = Device("tabletquer", TABLET.heightDp, TABLET.widthDp)
+
+    /**
+     * Matrix der Referenzbilder ([app.atemkraft.ui.screenshots.TabMatrixTest], A-12, S-07): die vier
+     * Tabs und die laufenden Sitzungen auf dem A54 hoch und quer bei seiner Schrift 1,1 und auf dem
+     * Tablet hoch und quer bei 1,0.
+     */
+    val TAB_CONFIGS: List<Pair<Device, Float>> = listOf(
+        A54 to A54_FONT_SCALE,
+        A54_LANDSCAPE to A54_FONT_SCALE,
+        TABLET to 1.0f,
+        TABLET_LANDSCAPE to 1.0f,
+    )
+
     /** Fenster des A54 für Interaktionstests, in xxhdpi wie das Gerät. */
     const val A54_QUALIFIERS = "w384dp-h832dp-xxhdpi"
 }

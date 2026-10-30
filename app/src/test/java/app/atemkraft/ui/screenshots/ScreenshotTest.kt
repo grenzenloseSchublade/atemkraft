@@ -41,8 +41,6 @@ import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
-import app.atemkraft.domain.SessionKind
-import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -88,7 +86,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.DayOfWeek
-import java.time.ZoneId
 import kotlin.math.roundToInt
 
 /**
@@ -161,18 +158,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("01_atmen_suche_bereich", prepare = {
             compose.onNode(hasSetTextAction()).performTextInput("aktivieren")
         }, measure = sameChips) { BreatheTab() }
-        snap("13_eigene", tab = Tab.EIGENE) {
-            // „Tut mir gut“ mit den zwei längsten Übungsnamen; „Zuletzt: …“ mit dem längsten.
-            val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
-            OwnPatternsScreen(
-                savedPatterns = saved,
-                actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
-                favorites = favorites,
-                logEntries = logEntries(),
-                lastExercise = favorites.first(),
-                today = DAY,
-            )
-        }
+        snap("13_eigene", tab = Tab.EIGENE) { OwnTab() }
         // Zu „Eigene Kreationen“ gescrollt: Kopf mit Caret und „+“, Kreationen-Karten mit Stift und Mülleimer
         // auf der Titelzeile (Gate ANATOMIE, STYLEGUIDE §4.5); in Gerätehöhe liegt der Abschnitt sonst außerhalb.
         snap("13_eigene_kreationen", tab = Tab.EIGENE, prepare = {
@@ -292,39 +278,6 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     private fun Logbook() {
         // Atemübungen antippbar wie in der App, die Meditation nicht.
         LogbookScreen(entries = logEntries(), onBack = {}, today = DAY, canOpen = { id -> BuiltInExercises.all.any { it.id == id } })
-    }
-
-    /**
-     * Beispieleinträge für Logbuch und „Eigene“: relativ zum festen DAY, damit jede Gruppe vorkommt
-     * (Heute, Gestern, Diese Woche, zwei Monate).
-     */
-    private fun logEntries(): List<SessionLogEntry> {
-        fun at(daysAgo: Long, hour: Int, minute: Int): Long = DAY.minusDays(daysAgo).atTime(hour, minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val daysAgo = listOf(0L, 1L, 3L, 5L, 12L, 40L)
-        // Runden und Dauer wie vom BreathSessionController geloggt.
-        return BuiltInExercises.all.take(6).mapIndexed { i, e ->
-            SessionLogEntry(
-                id = i + 1L,
-                exerciseId = e.id,
-                exerciseName = e.name,
-                family = e.family,
-                startedAtEpochMs = at(daysAgo[i], 7, 30),
-                durationMs = if (e.rounds > 1) e.estimatedTotalSeconds() * 1_000L else (5 + i) * 60_000L + 5_000L,
-                roundsCompleted = e.rounds,
-                // Befinden an einigen Einträgen, das längste Wort dabei; die übrigen unbeantwortet.
-                feeling = listOf(Feeling.CALMER, null, Feeling.SAME, Feeling.MORE_TIRED, null, Feeling.RESTLESS)[i],
-            )
-        } + SessionLogEntry(
-            id = 99,
-            exerciseId = "meditation",
-            exerciseName = "Meditation",
-            family = null,
-            startedAtEpochMs = at(1, 21, 15),
-            durationMs = 20 * 60_000L,
-            roundsCompleted = 0,
-            kind = SessionKind.MEDITATION,
-            feeling = Feeling.SAME,
-        )
     }
 
     @Composable

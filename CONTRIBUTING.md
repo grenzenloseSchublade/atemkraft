@@ -51,7 +51,7 @@ scripts/check.sh --fast   # dasselbe ohne Android Lint und Release-Build, für z
 scripts/build.sh ktlintFormat   # Formatierung automatisch korrigieren
 ```
 
-`scripts/check.sh` ist der einzige Prüf-Einstieg, lokal und im CI; was genau läuft, steht im [Styleguide §13](docs/STYLEGUIDE.md#automatische-pruefung). Dazu gehören Screenshot-Gates, die alle Screens rendern und fehlschlagen, wenn ein Wort umbricht, ein Text abgeschnitten wird, eine Tippfläche kleiner als 48 dp ist oder ein Baustein von seiner Anatomie abweicht (Styleguide §4.5). Bilder erzeugst du mit `scripts/build.sh recordRoborazziDebug` (unter `app/build/outputs/roborazzi/`).
+`scripts/check.sh` ist der einzige Prüf-Einstieg, lokal und im CI; was genau läuft, steht im [Styleguide §13](docs/STYLEGUIDE.md#automatische-pruefung). Dazu gehören Screenshot-Gates, die alle Screens rendern und fehlschlagen, wenn ein Wort umbricht, ein Text abgeschnitten wird, eine Tippfläche kleiner als 48 dp ist oder ein Baustein von seiner Anatomie abweicht (Styleguide §4.5). Bilder erzeugst du mit `scripts/build.sh recordRoborazziDebug` (unter `app/build/outputs/roborazzi/`). Die Referenzbilder der Tab-Matrix liegen unter `app/src/test/screenshots/` und werden bei jedem `check.sh` pixelgenau verglichen; ändert sich die Optik gewollt, nimm sie mit `rm -rf app/src/test/screenshots && scripts/build.sh recordRoborazziDebug` neu auf und committe sie mit.
 
 Altlasten der Stil-Checks sind in `config/style-baseline.txt` eingefroren, jede Zeile mit dem Backlog-Punkt, der sie behebt. Die Baseline darf nur sinken, nie wachsen; eine bewusste Ausnahme ist ein Marker `// Abweichung <ID>: <Grund>` an der Zeile.
 

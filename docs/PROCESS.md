@@ -17,7 +17,8 @@ Regeln für Commit, Push, Release und die Arbeitsweise von Maintainer und Agente
 1. `scripts/check.sh` grün (oder `--fast` und CI abwarten).
 2. `scripts/check-style.sh --ci-range origin/main..HEAD` ohne Fehler (Betreffs, `guide-sync` über den ganzen Bereich).
 3. Baselines nur gesunken; neue Ausnahmen als Marker `// Abweichung <ID>: <Grund>`.
-4. Bestätigung des Eigentümers für den Push.
+4. Ändert der Push die Optik gewollt, liegen die neu aufgenommenen Referenzbilder im selben Commit (`rm -rf app/src/test/screenshots && scripts/build.sh recordRoborazziDebug`, STYLEGUIDE §13.1); sonst schlägt `verifyRoborazziDebug` in `check.sh` fehl. Schlägt es ohne gewollte Änderung fehl, ist die Abweichung ein Befund, kein Anlass zum Neuaufnehmen.
+5. Bestätigung des Eigentümers für den Push.
 
 ## Checkliste eines Releases
 

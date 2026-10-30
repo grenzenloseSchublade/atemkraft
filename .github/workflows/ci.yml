@@ -37,6 +37,8 @@ jobs:
           name: pruef-befunde
           path: |
             app/build/outputs/roborazzi/**/*.tsv
+            app/build/outputs/roborazzi/*_compare.png
+            app/build/outputs/roborazzi/*_actual.png
             app/build/reports/tests/testDebugUnitTest/**
             app/build/reports/lint-results-*.html
           if-no-files-found: ignore

@@ -222,6 +222,23 @@ tasks.withType<Test>().configureEach {
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+// Referenzbilder der Screenshot-Tests (A-12, STYLEGUIDE §13.1): eingecheckt unter
+// src/test/screenshots/, pixelgenau verglichen von verifyRoborazziDebug (scripts/check.sh), neu
+// aufgenommen von recordRoborazziDebug. Als Eingabe registriert, damit eine neue Referenz den
+// Vergleich neu auslöst; der Test liest den Ordner relativ zu seinem Arbeitsordner (app/).
+// Beim Aufnehmen läuft der Test immer neu: Die Bilder im Repo sind keine Task-Ausgabe, ein Treffer
+// aus dem Build-Cache schriebe sie nicht.
+val recordScreenshots = gradle.startParameter.taskNames.any { it.substringAfterLast(':').startsWith("recordRoborazzi") }
+tasks.withType<Test>().configureEach {
+    inputs.files(fileTree("src/test/screenshots"))
+        .withPropertyName("referenzbilder")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    if (recordScreenshots) {
+        outputs.upToDateWhen { false }
+        outputs.cacheIf { false }
+    }
+}
+
 // Store-Bilder (fastlane/metadata/android/*/images, docs/STORE.md) nur auf Wunsch:
 //   scripts/build.sh testDebugUnitTest --tests '*StoreScreenshotTest' -PstoreScreenshots
 // Ohne den Schalter schließt jeder Testlauf (auch scripts/check.sh) die Klasse aus und schreibt
