@@ -201,6 +201,27 @@
          und Bilanz; ohne Sitzungen der Satz. -->
     <string name="own_history">Verlauf</string>
     <string name="own_last_practiced">Zuletzt: %1$s</string>
+    <!-- Hinweis unter „Zuletzt: <Name>“: wann und wie lange, „gestern Abend · 10 min“ (Dauer auf
+         ganze Minuten gerundet, mindestens 1). Wann: heute/gestern + Tageszeit, sonst in den letzten
+         7 Tagen der Wochentag als ein Wort („am Donnerstagnachmittag“), davor das Datum („am 15.10.“).
+         Geschütztes Leerzeichen vor „·“: Der Punkt bricht nie an den Zeilenanfang (TEXT-10).
+         TalkBack: Dauer ausgeschrieben, „gestern Abend, 10 Minuten“ (A11Y-06). -->
+    <string name="own_last_hint">%1$s\u00A0· %2$d\u00A0min</string>
+    <string name="cd_own_last_hint">%1$s, %2$s</string>
+    <string name="own_last_today">heute %1$s</string>
+    <string name="own_last_yesterday">gestern %1$s</string>
+    <!-- %1$s Wochentag, %2$s Tageszeit klein angehängt: „am Montagabend“. -->
+    <string name="own_last_weekday">am %1$s%2$s</string>
+    <string name="own_last_date">am %1$s</string>
+    <!-- Tageszeiten in der Reihenfolge von DayPart: Morgen 5–10, Mittag 11–13, Nachmittag 14–17,
+         Abend 18–22, Nacht 23–4 Uhr. -->
+    <string-array name="own_day_parts">
+        <item>Morgen</item>
+        <item>Mittag</item>
+        <item>Nachmittag</item>
+        <item>Abend</item>
+        <item>Nacht</item>
+    </string-array>
     <string name="cd_open_logbook">Logbuch öffnen</string>
     <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 

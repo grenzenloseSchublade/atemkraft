@@ -38,14 +38,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
+import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.components.AppLocale
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.DotSeparatedFlow
 import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.SubLabel
@@ -162,16 +165,28 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
 /**
  * Verlauf im Tab „Eigene“ unter dem Kopf „Verlauf“ (Nutzer 2026-10-23; seit 2026-10-24 ohne
  * Karte, Vorschlag B – der Kopf ist ein `SectionHeader` mit Chevron und führt zur Logbuch-Seite):
- * die Wochenpunkte wie auf der Logbuch-Seite und eine Zeile „3 Tage in Folge · 45 min in den
- * letzten 7 Tagen“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der sieben gezeigten
- * Tage, [recentMinutes]; fehlt beides, die Zahl der Sitzungen). Ohne Sitzungen steht statt Punkten und Zeile nur der
- * Satz (MUSTER-04). Ohne [showStreak] (Einstellung „Serie zeigen“ aus) fehlt die Serie, die
- * Minuten bleiben.
+ * die Wochenpunkte wie auf der Logbuch-Seite über die volle Breite und eine dezente Zeile „3 Tage
+ * in Folge · 45 min in den letzten 7 Tagen“ (Serie erst ab zwei Tagen wie in [LogStatsCard];
+ * Minuten der sieben gezeigten Tage, [recentMinutes]; fehlt beides, die Zahl der Sitzungen) –
+ * eine Zählung ohne Ziel, große Zahl oder Urteil (TEXT-16). Ohne Sitzungen steht statt Punkten und
+ * Zeile nur der Satz (MUSTER-04). Ohne [showStreak] (Einstellung „Serie zeigen“ aus) fehlt die
+ * Serie, die Minuten bleiben.
  *
- * TalkBack hört den Kopf und die Zeile; die Punkte je Tag stehen auf der Logbuch-Seite.
+ * Darunter, mit [lastExercise] (der zuletzt geübten Übung, die es noch gibt), die Karte „Zuletzt:
+ * <Name>“ ([NavCard], Nutzer 2026-10-30) mit „gestern Abend · 10 min“ als Hinweis; ein Tipp öffnet
+ * ihre Detailseite ([onOpenExercise]) – „das von gestern Abend nochmal“.
+ *
+ * TalkBack hört den Kopf, die Zeile und die Karte als einen Satz; die Punkte je Tag stehen auf der
+ * Logbuch-Seite.
  */
 @Composable
-internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now(), showStreak: Boolean = true) {
+internal fun LogHistory(
+    entries: List<SessionLogEntry>,
+    today: LocalDate = LocalDate.now(),
+    showStreak: Boolean = true,
+    lastExercise: Exercise? = null,
+    onOpenExercise: (exerciseId: String) -> Unit = {},
+) {
     val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
     val minutesPerDay = rememberMinutesPerDay(entries)
     val weekMinutes = remember(entries, today) { recentMinutes(entries, today, ZoneId.systemDefault()) }
@@ -192,13 +207,73 @@ internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = Local
                 separator = { SecondaryText(DOT_SEPARATOR) },
             )
         }
+        if (lastExercise != null) {
+            // Neueste Sitzung dieser Übung: Sie liefert „gestern Abend · 10 min“.
+            val entry = remember(entries, lastExercise.id) {
+                entries.filter { it.exerciseId == lastExercise.id }.maxByOrNull { it.startedAtEpochMs }
+            }
+            Spacer(Modifier.height(Dimens.ListGap))
+            LastPracticeCard(exercise = lastExercise, entry = entry, today = today, onClick = { onOpenExercise(lastExercise.id) })
+        }
     }
 }
 
 /**
- * Ruhige 7-Tage-Übersicht: pro Tag ein Punkt, dessen Intensität mit den geübten Minuten
+ * Karte „Zuletzt: <Name>“ ([NavCard]): Hinweis „gestern Abend · 10 min“ – wann ([lastPracticeWhen])
+ * und wie lange, auf ganze Minuten gerundet ([minutesRounded]); TalkBack hört die Dauer
+ * ausgeschrieben („gestern Abend, 10 Minuten“, A11Y-06). Ohne [entry] nur der Titel.
+ */
+@Composable
+private fun LastPracticeCard(exercise: Exercise, entry: SessionLogEntry?, today: LocalDate, onClick: () -> Unit) {
+    val title = stringResource(R.string.own_last_practiced, exercise.name)
+    if (entry == null) {
+        NavCard(title = title, onClick = onClick)
+        return
+    }
+    val whenText = lastPracticeWhen(entry.startedAtEpochMs, today)
+    val minutes = minutesRounded((entry.durationMs / 1_000L).toInt())
+    NavCard(
+        title = title,
+        onClick = onClick,
+        hint = stringResource(R.string.own_last_hint, whenText, minutes),
+        hintDescription = stringResource(
+            R.string.cd_own_last_hint,
+            whenText,
+            pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes),
+        ),
+    )
+}
+
+/**
+ * Wann, in Laiensprache: „heute Morgen“, „gestern Abend“, in den letzten 7 Tagen „am
+ * Donnerstagnachmittag“ (Wochentag und Tageszeit als ein Wort), davor „am 15.10.“. Tage wie die
+ * Gruppen im Logbuch ([periodOf]), Tageszeit nach [dayPartOf].
+ */
+@Composable
+private fun lastPracticeWhen(startedAtEpochMs: Long, today: LocalDate): String {
+    val start = Instant.ofEpochMilli(startedAtEpochMs).atZone(ZoneId.systemDefault())
+    val day = start.toLocalDate()
+    val part = stringArrayResource(R.array.own_day_parts)[dayPartOf(start.hour).ordinal]
+    return when (periodOf(day, today)) {
+        LogPeriod.Today -> stringResource(R.string.own_last_today, part)
+
+        LogPeriod.Yesterday -> stringResource(R.string.own_last_yesterday, part)
+
+        LogPeriod.LastSevenDays -> stringResource(
+            R.string.own_last_weekday,
+            day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale),
+            part.lowercase(AppLocale),
+        )
+
+        is LogPeriod.Month -> stringResource(R.string.own_last_date, day.format(DAY_MONTH_FORMAT))
+    }
+}
+
+/**
+ * Ruhige 7-Tage-Übersicht: pro Tag ein Punkt (`WeekDot`), dessen Intensität mit den geübten Minuten
  * wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine Wertung). Bewusst ohne Zahlen und
- * ohne Druck; ein Tag ohne Übung ist ein leerer Ring, heute trägt den Ring in Cyan. Beschriftung zweibuchstabig („Mo“ … „So“),
+ * ohne Druck; ein Tag ohne Übung ist ein leerer Ring, heute trägt den Ring in Cyan. Die sieben Tage
+ * teilen sich die volle Breite in gleiche Spalten, Punkt und Kürzel mittig darin. Beschriftung zweibuchstabig („Mo“ … „So“),
  * weil einzelne Buchstaben doppeldeutig sind (M/D/S). Details stehen für TalkBack bereit, außer
  * mit `spoken = false` ([LogHistory]).
  */
@@ -206,9 +281,8 @@ internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = Local
 private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Boolean = true) {
     val labels = stringArrayResource(R.array.log_weekday_short)
     Row(
-        // spoken = false: Die Zeile ist Teil eines Buttons, der sie in Worten zusammenfasst.
+        // spoken = false: Die Zeile darunter fasst die Tage in Worten zusammen – sieben Stopps wären Rauschen.
         modifier = Modifier.fillMaxWidth().then(if (spoken) Modifier else Modifier.semantics { hideFromAccessibility() }),
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         for (offset in RECENT_DAYS - 1 downTo 0) {
             val day = today.minusDays(offset.toLong())
@@ -238,7 +312,7 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
             val dayDescription = if (isToday) stringResource(R.string.cd_log_day_today, dayText) else dayText
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.semantics { contentDescription = dayDescription },
+                modifier = Modifier.weight(1f).semantics { contentDescription = dayDescription },
             ) {
                 Box(
                     modifier = Modifier

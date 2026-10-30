@@ -64,17 +64,29 @@ internal fun BreatheTab(welcome: Boolean = false) {
 
 /**
  * Tab „Eigene“ mit Verlauf ([logEntries]), „Tut mir gut“ mit den zwei längsten Übungsnamen,
- * „Zuletzt: …“ mit dem längsten und den gespeicherten Mustern (eines mit langem Namen).
+ * „Zuletzt: …“ mit dem längsten und den gespeicherten Mustern (eines mit langem Namen). Die Karte
+ * „Zuletzt“ im längsten Fall: DAY ist ein Samstag, die Sitzung zwei Tage davor um 15:10 heißt
+ * „am Donnerstagnachmittag · 10 min“.
  */
 @Composable
 internal fun OwnTab() {
     val favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2)
+    val last = favorites.first()
+    val lastEntry = SessionLogEntry(
+        id = 100,
+        exerciseId = last.id,
+        exerciseName = last.name,
+        family = last.family,
+        startedAtEpochMs = ScreenshotHarness.DAY.minusDays(2).atTime(15, 10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+        durationMs = 9 * 60_000L + 40_000L,
+        roundsCompleted = last.rounds,
+    )
     OwnPatternsScreen(
         savedPatterns = ScreenshotHarness.saved,
         actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
         favorites = favorites,
-        logEntries = logEntries(),
-        lastExercise = favorites.first(),
+        logEntries = logEntries() + lastEntry,
+        lastExercise = last,
         today = ScreenshotHarness.DAY,
     )
 }

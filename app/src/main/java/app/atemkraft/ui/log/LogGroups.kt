@@ -62,13 +62,33 @@ fun groupLogEntries(entries: List<SessionLogEntry>, today: LocalDate, zone: Zone
         .sortedByDescending { it.startedAtEpochMs }
         .groupBy { entry -> entry.day(zone) }
         .map { (day, list) -> LogDay(day, list) }
-        .groupBy { (day, _) ->
-            when {
-                !day.isBefore(today) -> LogPeriod.Today
-                day == today.minusDays(1) -> LogPeriod.Yesterday
-                isRecentDay(day, today) -> LogPeriod.LastSevenDays
-                else -> LogPeriod.Month(YearMonth.from(day))
-            }
-        }
+        .groupBy { (day, _) -> periodOf(day, today) }
         .map { (period, days) -> LogGroup(period, days) }
+}
+
+/**
+ * Zeitraum, zu dem [day] bis [today] gehört – für die Gruppen des Logbuchs und für „gestern
+ * Abend“ unter „Zuletzt“ im Tab „Eigene“ dieselbe Einteilung. Ein Tag nach [today] (Uhr
+ * verstellt) zählt zu Heute.
+ */
+fun periodOf(day: LocalDate, today: LocalDate): LogPeriod = when {
+    !day.isBefore(today) -> LogPeriod.Today
+    day == today.minusDays(1) -> LogPeriod.Yesterday
+    isRecentDay(day, today) -> LogPeriod.LastSevenDays
+    else -> LogPeriod.Month(YearMonth.from(day))
+}
+
+/**
+ * Tageszeit in Laiensprache („gestern Abend“), nach der Stunde des Sitzungsbeginns: Morgen 5–10,
+ * Mittag 11–13, Nachmittag 14–17, Abend 18–22, Nacht 23–4 Uhr. Reihenfolge = `own_day_parts`.
+ */
+enum class DayPart { MORNING, MIDDAY, AFTERNOON, EVENING, NIGHT }
+
+/** Tageszeit ([DayPart]) zur Stunde [hour] (0–23). */
+fun dayPartOf(hour: Int): DayPart = when (hour) {
+    in 5..10 -> DayPart.MORNING
+    in 11..13 -> DayPart.MIDDAY
+    in 14..17 -> DayPart.AFTERNOON
+    in 18..22 -> DayPart.EVENING
+    else -> DayPart.NIGHT
 }

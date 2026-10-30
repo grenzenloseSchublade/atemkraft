@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -32,7 +33,8 @@ import app.atemkraft.ui.theme.Sizes
  * Polster `CardPadding`. Anatomie: STYLEGUIDE §4.5 „Karte mit Aktionen“.
  *
  * [external]: Das Ziel öffnet der Browser – statt des Chevrons das Symbol „öffnet im Browser“,
- * TalkBack sagt „Link öffnen“ an.
+ * TalkBack sagt „Link öffnen“ an. [hintDescription]: der Hinweis für TalkBack ausgeschrieben, wenn
+ * er Kürzel trägt („gestern Abend · 10 min“ → „gestern Abend, 10 Minuten“, A11Y-06).
  */
 @Composable
 fun NavCard(
@@ -42,6 +44,7 @@ fun NavCard(
     hint: String? = null,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     external: Boolean = false,
+    hintDescription: String? = null,
 ) {
     val open = onClick
     val linkLabel = if (external) stringResource(R.string.about_open_link) else null
@@ -80,7 +83,9 @@ fun NavCard(
                     ForwardChevron(tint = tint)
                 }
             })
-            if (hint != null) HintText(hint)
+            if (hint != null) {
+                HintText(hint, modifier = if (hintDescription != null) Modifier.semantics { contentDescription = hintDescription } else Modifier)
+            }
         }
     }
 }

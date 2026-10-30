@@ -62,8 +62,11 @@ object Sizes {
     /** Strichstärke des Inline-Fortschrittskreises ([ProgressInline]) (2). */
     val ProgressStroke = 2.dp
 
-    /** Tagespunkt der 7-Tage-Übersicht im Logbuch (18). */
-    val WeekDot = 18.dp
+    /**
+     * Tagespunkt der 7-Tage-Übersicht (24): im Tab „Eigene“ unter „Verlauf“ und auf der
+     * Logbuch-Seite dieselbe Größe – eine Komponente, ein Maß (Nutzer 2026-10-30: größer, lebendiger).
+     */
+    val WeekDot = 24.dp
 
     /** Familienpunkt vor jedem Logbuch-Eintrag (10), mittig zur ersten Namenszeile. */
     val FamilyDot = 10.dp
