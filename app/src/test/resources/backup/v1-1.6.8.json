@@ -1,0 +1,42 @@
+{
+    "format": "atemkraft-muster",
+    "version": 1,
+    "exportedAtEpochMs": 1761100000000,
+    "patterns": [
+        {
+            "name": "Muster 3,5·1,5·6",
+            "inhale": 3.5,
+            "holdFull": 1.5,
+            "exhale": 6.0,
+            "holdEmpty": null,
+            "activating": false,
+            "createdAtEpochMs": 1758000000000,
+            "overrides": null
+        },
+        {
+            "name": "Muster 4·2·6",
+            "inhale": 4.0,
+            "holdFull": 2.0,
+            "exhale": 6.0,
+            "holdEmpty": null,
+            "activating": false,
+            "createdAtEpochMs": 1759000000000,
+            "overrides": {
+                "duration": 7,
+                "inhale": 5,
+                "hold": null,
+                "exhale": null
+            }
+        },
+        {
+            "name": "Muster 5·1·3",
+            "inhale": 5.0,
+            "holdFull": 1.0,
+            "exhale": 3.0,
+            "holdEmpty": null,
+            "activating": true,
+            "createdAtEpochMs": 1760000000000,
+            "overrides": null
+        }
+    ]
+}

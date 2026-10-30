@@ -1,0 +1,105 @@
+{
+    "format": "atemkraft-muster",
+    "version": 2,
+    "exportedAtEpochMs": 1761500000000,
+    "patterns": [
+        {
+            "name": "Muster 4·2·6",
+            "inhale": 4.0,
+            "holdFull": 2.0,
+            "exhale": 6.0,
+            "holdEmpty": null,
+            "activating": false,
+            "createdAtEpochMs": 1759000000000,
+            "overrides": {
+                "duration": 7,
+                "inhale": null,
+                "hold": null,
+                "exhale": null
+            },
+            "origin": "daily",
+            "minutes": null,
+            "phases": null
+        },
+        {
+            "name": "Stufen",
+            "inhale": 6.0,
+            "holdFull": 2.0,
+            "exhale": 6.0,
+            "holdEmpty": 2.0,
+            "activating": false,
+            "createdAtEpochMs": 1761000000000,
+            "overrides": null,
+            "origin": "custom",
+            "minutes": 7,
+            "phases": "in:2,hold:2,in:2,hold:2,in:2,out:6"
+        }
+    ],
+    "logbook": [
+        {
+            "exerciseId": "resonanz",
+            "exerciseName": "Resonanz-Atmung",
+            "family": "DOWNREGULATE",
+            "kind": "BREATHING",
+            "startedAtEpochMs": 1761300000000,
+            "durationMs": 300000,
+            "roundsCompleted": 30,
+            "feeling": "CALMER"
+        },
+        {
+            "exerciseId": "muster-2",
+            "exerciseName": "Stufen",
+            "family": "BALANCE",
+            "kind": "BREATHING",
+            "startedAtEpochMs": 1761350000000,
+            "durationMs": 420000,
+            "roundsCompleted": 26,
+            "feeling": null
+        },
+        {
+            "exerciseId": "meditation",
+            "exerciseName": "Meditation",
+            "family": null,
+            "kind": "MEDITATION",
+            "startedAtEpochMs": 1761400000000,
+            "durationMs": 600000,
+            "roundsCompleted": 0,
+            "feeling": "SAME"
+        }
+    ],
+    "marked": [
+        "resonanz"
+    ],
+    "settings": {
+        "soundMode": "CUES",
+        "transition": "MEDIUM",
+        "volume": "QUIET",
+        "haptics": true,
+        "gongLong": false,
+        "showSafetyWarning": true,
+        "showNextPhase": true,
+        "showProgress": true,
+        "showSeconds": false,
+        "autoCalm": true,
+        "silenceAfter": false,
+        "meditationAutoCalm": true,
+        "meditationShowProgress": true,
+        "meditationShowTime": true,
+        "meditationMode": "TIMED",
+        "meditationMinutes": 10,
+        "meditationStartEndGong": true,
+        "meditationInterval": false,
+        "meditationSpeech": false,
+        "gongIntervalMinutes": 5,
+        "showStreak": false,
+        "askFeeling": true,
+        "adjustments": {
+            "resonanz": {
+                "duration": 7,
+                "inhale": null,
+                "hold": null,
+                "exhale": null
+            }
+        }
+    }
+}

@@ -4,7 +4,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.atemkraft.data.local.SavedPatternEntity
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Feeling
+import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
@@ -16,6 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -190,4 +193,62 @@ class PatternBackupTest {
         assertEquals(1, v2.invalid)
         assertNull(v2.logbook.single().feeling)
     }
+
+    /**
+     * Golden-Fixtures (A-18): Dateien, wie frühere Versionen sie geschrieben haben, in
+     * `app/src/test/resources/backup/` – v1.6.8 (Version 1, nur Tagesmuster), 2.8.0 (d0a4061,
+     * Version 1 mit Herkunft, Dauer und Folge) und 2.9.0 (1e082f3, Version 2 „alles“). Feldreihenfolge,
+     * Einrückung und `null`-Felder wie `PatternBackup.encode` damals. Dazu dieselbe Datei mit UTF-8-BOM,
+     * wie ihn manche Editoren voranstellen. Jeder Formatwechsel bekommt hier eine Datei (PROCESS.md).
+     */
+    @Test
+    fun `alte Sicherungsdateien bleiben lesbar, auch mit BOM`() = runBlocking {
+        // 1.6.8: drei Tagesmuster ohne Herkunft, eins von vor 1.6.3 mit halben Sekunden.
+        val v168 = PatternBackup.decode(fixture("v1-1.6.8.json").decodeToString())!!
+        assertEquals(0, v168.invalid)
+        val oldRepo = SavedPatternsRepository(FakeSavedPatternDao())
+        val written = mutableMapOf<String, PatternBackupOverrides>()
+        assertEquals(ImportResult(added = 3, duplicates = 0), oldRepo.import(v168.entries) { id, o -> written[id] = o })
+        val old = oldRepo.patterns.first().sortedBy { it.id }
+        assertEquals(List(3) { PatternOrigin.SAVED_DAILY }, old.map { it.origin })
+        assertEquals(listOf(3.5, 4.0, 5.0), old.map { it.spec.inhale })
+        assertEquals(mapOf("muster-2" to PatternBackupOverrides(duration = 7, inhale = 5)), written)
+
+        // 2.8.0: Tagesmuster, eigenes Muster aus vier Feldern und eins mit freier Folge.
+        val v280 = PatternBackup.decode(fixture("v1-2.8.0.json").decodeToString())!!
+        assertEquals(0, v280.invalid)
+        val newRepo = SavedPatternsRepository(FakeSavedPatternDao())
+        assertEquals(ImportResult(added = 3, duplicates = 0), newRepo.import(v280.entries) { _, _ -> })
+        val byName = newRepo.patterns.first().associateBy { it.exercise.name }
+        assertEquals(PatternOrigin.SAVED_DAILY, byName.getValue("Muster 4·2·6").origin)
+        assertEquals(PatternOrigin.CUSTOM to 5, byName.getValue("Ruhig 4·6").let { it.origin to it.minutes })
+        assertEquals(FreePattern.parse("in:4,hold:2,out:6,out:2"), byName.getValue("Abendwelle").pattern)
+        assertEquals(7, byName.getValue("Abendwelle").minutes)
+
+        // 2.9.0: dieselben Datenklassen wie heute – die Datei ist Byte für Byte, was encode schreibt.
+        val bytes = fixture("v2-2.9.0.json")
+        assertEquals(bytes.decodeToString(), PatternBackup.encode(Json.decodeFromString(PatternBackupFile.serializer(), bytes.decodeToString())))
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            val settings = SettingsRepository(PreferenceDataStoreFactory.create(scope = scope) { File(folder.root, "golden.preferences_pb") })
+            val service = PatternTransferService(SavedPatternsRepository(FakeSavedPatternDao()), settings, LogbookRepository(FakeLogbookDao()))
+            val plain = service.read { ByteArrayInputStream(bytes) } as PatternTransferService.ReadOutcome.Preview
+            val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+            val withBom = service.read { ByteArrayInputStream(bom + bytes) } as PatternTransferService.ReadOutcome.Preview
+            assertEquals(plain.decoded, withBom.decoded)
+            with(plain.decoded) {
+                assertEquals(0, invalid)
+                assertEquals(listOf(Feeling.CALMER, null, Feeling.SAME), logbook.map { it.feeling })
+                assertEquals(setOf("resonanz"), marked)
+            }
+            assertEquals(PatternTransferService.ApplyResult(added = 5, duplicates = 0, settingsApplied = true), service.apply(plain.decoded, withSettings = true))
+            assertEquals(ToneVolume.QUIET, settings.cueSettings.first().volume)
+            assertEquals(7, settings.exerciseIntervals("resonanz").first()?.duration)
+            assertFalse(settings.showStreak.first())
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    private fun fixture(name: String): ByteArray = checkNotNull(javaClass.getResourceAsStream("/backup/$name")) { name }.use { it.readBytes() }
 }

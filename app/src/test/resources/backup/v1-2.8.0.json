@@ -1,0 +1,51 @@
+{
+    "format": "atemkraft-muster",
+    "version": 1,
+    "exportedAtEpochMs": 1761400000000,
+    "patterns": [
+        {
+            "name": "Muster 4·2·6",
+            "inhale": 4.0,
+            "holdFull": 2.0,
+            "exhale": 6.0,
+            "holdEmpty": null,
+            "activating": false,
+            "createdAtEpochMs": 1759000000000,
+            "overrides": {
+                "duration": 7,
+                "inhale": null,
+                "hold": null,
+                "exhale": null
+            },
+            "origin": "daily",
+            "minutes": null,
+            "phases": null
+        },
+        {
+            "name": "Ruhig 4·6",
+            "inhale": 4.0,
+            "holdFull": null,
+            "exhale": 6.0,
+            "holdEmpty": null,
+            "activating": false,
+            "createdAtEpochMs": 1760500000000,
+            "overrides": null,
+            "origin": "custom",
+            "minutes": 5,
+            "phases": null
+        },
+        {
+            "name": "Abendwelle",
+            "inhale": 4.0,
+            "holdFull": 2.0,
+            "exhale": 8.0,
+            "holdEmpty": null,
+            "activating": false,
+            "createdAtEpochMs": 1761000000000,
+            "overrides": null,
+            "origin": "custom",
+            "minutes": 7,
+            "phases": "in:4,hold:2,out:6,out:2"
+        }
+    ]
+}

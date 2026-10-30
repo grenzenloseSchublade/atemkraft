@@ -185,6 +185,9 @@ object PatternBackup {
     /** Erlaubte Zeichen einer Übungs-Id (eingebaute, „muster-12“, „meditation“). */
     private val EXERCISE_ID = Regex("[A-Za-z0-9_-]{1,64}")
 
+    /** Byte-Order-Mark, wie ihn ein Editor vor eine UTF-8-Datei setzen kann. */
+    private const val BYTE_ORDER_MARK = "\uFEFF"
+
     /** Höchstlänge eines Musternamens (Import und Editor). */
     const val MAX_NAME = 80
 
@@ -200,11 +203,13 @@ object PatternBackup {
      * Liest eine Sicherung (Version 1: nur Muster, Version 2: alles); null, wenn sie keine
      * Atemkraft-Sicherung ist. Die Byte-Grenze setzt schon der Aufrufer beim Lesen ([MAX_BYTES]);
      * hier nur noch als Zeichen-Obergrenze. [builtInIds] sind die Ids eingebauter Übungen: Nur sie
-     * dürfen markiert sein oder eine Anpassung in den Einstellungen tragen.
+     * dürfen markiert sein oder eine Anpassung in den Einstellungen tragen. Ein UTF-8-BOM am Anfang
+     * (manche Editoren setzen ihn beim Speichern) zählt nicht zum JSON.
      */
     fun decode(text: String, builtInIds: Set<String> = emptySet()): DecodedBackup? {
         if (text.length > MAX_BYTES) return null
-        val file = runCatching { json.decodeFromString(PatternBackupFile.serializer(), text) }.getOrNull()
+        val body = text.removePrefix(BYTE_ORDER_MARK)
+        val file = runCatching { json.decodeFromString(PatternBackupFile.serializer(), body) }.getOrNull()
             ?: return null
         if (file.format != FORMAT || file.version !in 1..VERSION) return null
         val candidates = file.patterns.take(MAX_PATTERNS)
