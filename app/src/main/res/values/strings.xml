@@ -151,7 +151,7 @@
     <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Charakter von heute („ruhig“); Ziffern erst im Blatt. -->
     <string name="home_daily_teaser">Heute %1$s\u00A0· oder selbst gestalten</string>
     <string name="cd_daily_open">Muster des Tages öffnen</string>
-    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster zum Ausprobieren – gefällt es dir, speicherst du es.</string>
+    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster zum Ausprobieren – gefällt es dir, speicherst du es in „Eigene“.</string>
     <string name="home_create_title">Selbst gestalten</string>
     <!-- Kopf über den Treffern bei Anlass, Suche oder Bereich (statt „Übungen“). -->
     <string name="home_results">Passende Übungen</string>
