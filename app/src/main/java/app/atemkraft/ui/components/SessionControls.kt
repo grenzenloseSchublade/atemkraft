@@ -70,8 +70,8 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
-import app.atemkraft.ui.theme.SessionButtonPink
 import app.atemkraft.ui.theme.SessionTextGlow
+import app.atemkraft.ui.theme.TonalDeep
 import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
@@ -144,7 +144,8 @@ fun SessionSecondaryButton(
 /**
  * Steuerung der laufenden Sitzung (Atem-Session UND Meditation), Icon-only (PRIN-03): links
  * „Von vorne“ (tonal, Kreispfeil), Mitte Pause/Weiter (größer, gefüllt im Session-Cyan),
- * rechts „Beenden“ (tonal, Stopp in Session-Pink). Feste Größen ([Dimens.SessionMainButton] ff.). [playing] zeigt Pause, sonst Play mit dem
+ * rechts „Beenden“ (tonal, Stopp in `error`). Die Seitenknöpfe stehen auf [TonalDeep]: Auf der
+ * hellen `secondaryContainer` hielten Cyan und `error` keine 3:1. Feste Größen ([Dimens.SessionMainButton] ff.). [playing] zeigt Pause, sonst Play mit dem
  * Namen „Weiter“ – für pausiert wie für den offenen Hold (MUSTER-07); was [onMain] dann tut,
  * entscheidet der Aufrufer. In der Vorbereitung ([preparing]) bleibt nur „Beenden“: die anderen
  * sind unsichtbar statt ausgegraut und behalten ihren Platz, damit beim Start nichts springt.
@@ -158,7 +159,7 @@ fun SessionControlBar(
     modifier: Modifier = Modifier,
     preparing: Boolean = false,
 ) {
-    val tonal = MaterialTheme.colorScheme.secondaryContainer
+    val tonal = TonalDeep
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(Dimens.SessionControlGap, Alignment.CenterHorizontally),
@@ -185,7 +186,7 @@ fun SessionControlBar(
             Icon(
                 painter = painterResource(R.drawable.ic_stop),
                 contentDescription = stringResource(R.string.action_stop),
-                tint = SessionButtonPink,
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(Dimens.SessionSideIcon),
             )
         }

@@ -45,6 +45,7 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.TonalDeep
 import app.atemkraft.ui.theme.WarnAmber
 
 /**
@@ -92,7 +93,7 @@ private fun PhaseRow(state: PatternEditorState, index: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .selectedRow(selected, shape, borderColor = SegmentSelected, fill = colors.secondaryContainer)
+            .selectedRow(selected, shape, borderColor = SegmentSelected, fill = TonalDeep)
             .heightIn(min = Dimens.MinTouchTarget)
             .selectable(selected = selected, onClick = { state.select(index) })
             .padding(horizontal = Dimens.GapSmall),

@@ -80,7 +80,8 @@ class AppNavItem(
  * geschrumpfte Schrift) – wer die Systemschrift vergrößert, bekommt nie Text in Normalgröße
  * (WCAG 1.4.4).
  *
- * Auswahl: tonale Pille (`secondaryContainer`) mit Icon und Beschriftung in `primary` – keine
+ * Auswahl: tonale Pille (`secondaryContainer`) mit Icon und Beschriftung in `onSecondaryContainer`
+ * (6,32; `primary` hielte auf der helleren Pille nur 2,47, S-18) – keine
  * gefüllte Neon-Fläche, die gehört dem Start-Button (PRIN-02). Das Gewicht bleibt bei Auswahl gleich
  * (TYPO-01): Ein breiteres SemiBold verlangte im Moment des Wechsels eine kleinere gemeinsame
  * Größe, alle vier Beschriftungen sprangen.
@@ -89,8 +90,8 @@ class AppNavItem(
 fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
     val colors = NavigationBarItemDefaults.colors(
-        selectedIconColor = scheme.primary,
-        selectedTextColor = scheme.primary,
+        selectedIconColor = scheme.onSecondaryContainer,
+        selectedTextColor = scheme.onSecondaryContainer,
         indicatorColor = scheme.secondaryContainer,
         unselectedIconColor = scheme.onSurface.copy(alpha = TERTIARY),
         unselectedTextColor = scheme.onSurface.copy(alpha = TERTIARY),

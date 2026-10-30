@@ -29,7 +29,21 @@ val DarkOnSurface = Color(0xFFF0E6FF)
 val SurfaceContainerLowest = Color(0xFF120C26)
 val SurfaceContainerLow = Color(0xFF1B1236)
 val SurfaceContainerHigh = Color(0xFF281B48)
-val SecondaryContainer = Color(0xFF3A2C60)
+
+/**
+ * Tonale Fläche (`secondaryContainer`): Tonal-Buttons (Stepper, Reset) und Auswahl-Pille der
+ * Tab-Leiste. So hell, dass sie sich auch auf der Karte abhebt (1,91, vorher 1,18 – S-18); darauf
+ * steht nur `onSecondaryContainer` (6,32), farbige Beschriftungen bekommen [TonalDeep].
+ */
+val SecondaryContainer = Color(0xFF5A4890)
+
+/**
+ * Dunkle tonale Fläche, auf der farbige Glyphen und Beschriftungen lesbar bleiben (der frühere
+ * Wert von [SecondaryContainer]): gewählte Zeile der Vorlagen und des Ablaufs im Muster-Editor
+ * (Sekunden in Phasenfarbe ≥ 4,5:1) und die Seitenknöpfe der `SessionControlBar` („Von vorne“ in
+ * [SessionButtonCyan], „Beenden“ in `error`, 4,52).
+ */
+val TonalDeep = Color(0xFF3A2C60)
 
 /**
  * Fläche des gewählten Segments (`SegmentedChoiceRow`): dasselbe Indigo, so hell, dass die
@@ -89,10 +103,10 @@ val SessionTextYellow = Color(0xFFEBDCB0)
 val SessionNoteAmber = Color(0xFFF0E4C0)
 val SessionTextGlow = Color(0xFF160B22)
 
-// Session-Buttons: entsättigtes, „cremiges" Cyan (kein Vollneon) – präsent, aber dezent,
-// damit der Atemkreis der Blickfang bleibt. Pink für „Beenden" im selben gedeckten Ton.
+// Session-Buttons: entsättigtes, „cremiges“ Cyan (kein Vollneon) – präsent, aber dezent,
+// damit der Atemkreis der Blickfang bleibt. „Beenden“ steht in `error`: Ein eigenes Pink lag
+// ΔE76 < 25 neben `primary` und `error` (S-18).
 val SessionButtonCyan = Color(0xFF6FB6BA)
-val SessionButtonPink = Color(0xFFFF8FB0)
 
 // Textstufen (§2.2): Primär 1,0 · BODY · SECONDARY · TERTIARY – keine weiteren Deckkräfte für Text.
 

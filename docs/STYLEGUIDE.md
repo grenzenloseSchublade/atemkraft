@@ -52,7 +52,8 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | `DarkBackground` / `DarkSurface` | #160F2E / #211640 | background / surface, surfaceContainer | Screen-Grund (`window_background`) / Leisten (Elevation 3 dp → #321C48) | – | – |
 | `DarkSurfaceVariant` | #2E2150 | surfaceVariant, surfaceContainerHighest | **Card-Fläche**, Mini-Bar | 1,27 | – |
 | `SurfaceContainerHigh` / `Lowest` / `Low` | #281B48 / #120C26 / #1B1236 | surfaceContainerHigh/Lowest/Low | Dialog, Suchfeld-Pille (`SearchField`), ungewählte Filter-Chips (`TonalChip`) / nur implizit von M3 gelesen / ruhige Leer-Karte „Eigene Kreationen“ | – | – |
-| `SecondaryContainer` | #3A2C60 | secondaryContainer | Tonal-Buttons, Auswahl-Pille der Tab-Leiste (Icon und Beschriftung darauf `primary`, 4,00) | 1,50 | 1,18 |
+| `SecondaryContainer` | #5A4890 | secondaryContainer | Tonal-Buttons (Stepper, Reset), Auswahl-Pille der Tab-Leiste; darauf nur `onSecondaryContainer` (6,32), farbige Beschriftung nie (`primary` 2,47) | 2,42 | 1,91 |
+| `TonalDeep` | #3A2C60 | – | dunkle tonale Fläche für farbige Glyphen: gewählte Zeile der Vorlagen und des Ablaufs im Muster-Editor (Sekunden in Phasenfarbe ≥ 4,5:1), Seitenknöpfe der `SessionControlBar` („Von vorne“ Cyan 5,31, „Beenden“ `error` 4,52) | 1,50 | 1,18 |
 | `SegmentSelected` | #715AAF | – | Fläche des gewählten Segments (`SegmentedChoiceRow`, 3,02 gegen das ungewählte, Beschriftung 4,62 darauf), des gewählten Anlass-Chips (`ChoiceChip`) und Filter-Chips (`TonalChip`, 2,82 gegen `surfaceContainerHigh`, Beschriftung von `SECONDARY` auf voll) | 3,31 | 2,61 |
 | `OutlineVariantIndigo` | #453763 | outlineVariant | Haarlinie unter dem Kopf, Feinstriche des Zeitrings; dekorativ | 1,73 | 1,37 |
 | `DividerSubtle` | #F0E6FF α 0,08 | – | **einziger** Trenner in Karten und Expandern (KOMP-03); dekorativ | – | – |
@@ -73,9 +74,9 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | `SynthCircleCenter` / `Edge` | #CB3C9A / #4A2080 (`ALPHA_CIRCLE_EDGE` 0,72) | – | Atemkreis-Verlauf | 4,07 / 1,44 | – |
 | `SessionTextYellow` / `SessionNoteAmber` | #EBDCB0 / #F0E4C0 | – | Phase und Sekunden im Kreis / Anleitungszeile unter dem Kreis (α `SECONDARY`) | 13,48 / 7,50 (Phase auf Zentrum 3,31, großer Text) | – |
 | `SessionTextGlow` | #160B22 | – | Textschatten, Label auf Cyan-Button | – | – |
-| `SessionButtonCyan` / `Pink` | #6FB6BA / #FF8FB0 | – | Session-Buttons, „Beenden“ | 7,95 / 8,59 | – |
+| `SessionButtonCyan` | #6FB6BA | – | Session-Buttons (Pause/Weiter gefüllt, „Von vorne“); „Beenden“ steht in `error` | 7,95 | – |
 
-ΔE76 der Pinktöne: primary ↔ `EvidenceCaution` 19,9, primary ↔ `SessionButtonPink` 23,0, `EvidenceCaution` ↔ `SessionButtonPink` 18,1 (S-18).
+ΔE76 der Pinktöne: primary ↔ `EvidenceCaution` 19,9; das dritte Pink (`SessionButtonPink`, 23,0 bzw. 18,1 daneben) ist entfallen, „Beenden“ nutzt `error` (S-18).
 
 ### 2.2 Alpha-Tokens
 

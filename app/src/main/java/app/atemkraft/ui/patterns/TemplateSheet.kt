@@ -45,13 +45,14 @@ import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
+import app.atemkraft.ui.theme.TonalDeep
 import kotlinx.coroutines.launch
 
 /**
  * Vorlagen als Bottom Sheet (Nachtrag 6; wann ein Bottom Sheet passt: MUSTER-11, wie „Klang &
  * Stimme“ in der Meditation, `SoundSheet`): „Startpunkt“ und je Vorlage eine Zeile mit Name und
  * Mini-Kurve ([MiniCurve]), die passende markiert (`selectable`, Rolle RadioButton, Fläche
- * `secondaryContainer`, Rand `SegmentSelected` wie in der Ablauf-Liste); unter dem Titel ein Satz,
+ * `TonalDeep`, Rand `SegmentSelected` wie in der Ablauf-Liste); unter dem Titel ein Satz,
  * was die Wahl tut (Nutzer 2026-10-24). Eine Wahl setzt die Folge (letzte Phase gewählt) und
  * schließt das Sheet; danach meldet es [onPick].
  */
@@ -106,7 +107,7 @@ private fun TemplateRow(template: FreeTemplate, selected: Boolean, onClick: () -
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .selectedRow(selected, shape, borderColor = SegmentSelected, fill = colors.secondaryContainer)
+            .selectedRow(selected, shape, borderColor = SegmentSelected, fill = TonalDeep)
             .heightIn(min = Dimens.MinTouchTarget)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
