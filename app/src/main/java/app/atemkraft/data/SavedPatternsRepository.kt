@@ -85,17 +85,12 @@ class SavedPatternsRepository(
     /** Letzter DB-Stand für [byExerciseId]; leer, bis die DB zum ersten Mal antwortet. */
     private val current: StateFlow<List<SavedPattern>> = patterns.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    /** Anzeigename, unter dem dieses Tagesmuster gespeichert wird/wurde. */
-    fun savedName(daily: DailyPattern): String = daily.exercise.name.replace("Tagesmuster", "Muster")
-
     /**
-     * Ist [daily] in [patterns] als Tagesmuster gespeichert? Vergleicht Name und Herkunft: Ein
-     * eigenes Muster mit gleichen Zahlen (und gleichem Namen) zählt nicht.
+     * Ist [daily] in [patterns] als Tagesmuster gespeichert? Entscheidend sind Herkunft und Zahlen
+     * ([sameNumbers]), nicht der Anzeigename (CODE-05): Ein eigenes Muster mit gleichen Zahlen
+     * zählt nicht, ein gespeichertes Tagesmuster unter anderem Namen (Import) schon.
      */
-    fun isDailySaved(daily: DailyPattern, patterns: List<SavedPattern>): Boolean {
-        val name = savedName(daily)
-        return patterns.any { it.origin == PatternOrigin.SAVED_DAILY && it.exercise.name == name }
-    }
+    fun isDailySaved(daily: DailyPattern, patterns: List<SavedPattern>): Boolean = patterns.any { it.origin == PatternOrigin.SAVED_DAILY && it.spec.sameNumbers(daily.spec) }
 
     /**
      * Schreibvorgänge nacheinander abarbeiten: Das Speicherzeichen zeigt den Zustand erst, wenn
@@ -105,15 +100,15 @@ class SavedPatternsRepository(
     private val writeLock = Mutex()
 
     /**
-     * Speichert das Tagesmuster; ein gespeichertes Tagesmuster gleichen Namens wird nicht doppelt
-     * angelegt (eigene Muster zählen nicht). Geprüft wird in der DB, nicht in [current]: Das hinkt
-     * direkt nach dem vorigen Speichern noch hinterher.
+     * Speichert das Tagesmuster unter „Muster 4·2·6“ ([PatternTexts.savedDailyName]); ein
+     * gespeichertes Tagesmuster mit gleichen Zahlen wird nicht doppelt angelegt (eigene Muster
+     * zählen nicht). Geprüft wird in der DB, nicht in [current]: Das hinkt direkt nach dem vorigen
+     * Speichern noch hinterher.
      */
     suspend fun save(daily: DailyPattern) {
         writeLock.withLock {
-            val name = savedName(daily)
-            if (dao.snapshot().any { it.isDaily() && it.name == name }) return
-            insert(entityOf(daily.spec, name, SavedPatternEntity.ORIGIN_DAILY, minutes = null))
+            if (dao.snapshot().any { it.isSavedDaily(daily) }) return
+            insert(entityOf(daily.spec, PatternTexts.savedDailyName(daily.spec), SavedPatternEntity.ORIGIN_DAILY, minutes = null))
         }
     }
 
@@ -190,14 +185,13 @@ class SavedPatternsRepository(
     }
 
     /**
-     * Nimmt das Tagesmuster wieder heraus (Speicherzeichen abgewählt). Gesucht wird per Name und
-     * Herkunft in der DB, nicht in [current]: Das hinkt direkt nach dem Speichern noch hinterher.
-     * Ein eigenes Muster mit gleichem Namen bleibt stehen.
+     * Nimmt das Tagesmuster wieder heraus (Speicherzeichen abgewählt). Gesucht wird per Herkunft
+     * und Zahlen in der DB, nicht in [current]: Das hinkt direkt nach dem Speichern noch hinterher.
+     * Ein eigenes Muster mit gleichen Zahlen bleibt stehen.
      */
     suspend fun unsave(daily: DailyPattern) {
         writeLock.withLock {
-            val name = savedName(daily)
-            dao.snapshot().filter { it.isDaily() && it.name == name }.forEach { dao.delete(it.id) }
+            dao.snapshot().filter { it.isSavedDaily(daily) }.forEach { dao.delete(it.id) }
         }
     }
 
@@ -293,7 +287,13 @@ class SavedPatternsRepository(
 
     private suspend fun insert(entity: SavedPatternEntity): SavedPatternEntity = entity.copy(id = dao.insert(entity))
 
-    private fun SavedPatternEntity.isDaily(): Boolean = patternOrigin() == PatternOrigin.SAVED_DAILY
+    /**
+     * Ist diese Zeile das gespeicherte [daily]? Herkunft „daily“ und dieselben Zahlen: Ein
+     * gespeichertes Tagesmuster ändert seine vier Felder nie (Bearbeiten macht es zum eigenen
+     * Muster, [SavedPatternDao.updateCustom]), die Zahlen sind also sein fester Schlüssel – auch
+     * für Zeilen und Sicherungsdateien aus älteren Versionen, ohne neue Spalte.
+     */
+    private fun SavedPatternEntity.isSavedDaily(daily: DailyPattern): Boolean = patternOrigin() == PatternOrigin.SAVED_DAILY && toSpec().sameNumbers(daily.spec)
 
     /**
      * Zeile → Muster fürs UI. Eine lesbare Folge ([freePattern]) baut die Übung; fehlt sie oder
@@ -321,6 +321,13 @@ class SavedPatternsRepository(
     }
 
     companion object {
+        /**
+         * Gleiche Sekunden in allen vier Feldern – dasselbe, was früher der Name „Muster 4·2·6“
+         * verglich ([PatternTexts.numbersOf]); [PatternSpec.activating] folgt beim Tagesmuster aus
+         * den Zahlen und zählt nicht mit.
+         */
+        private fun PatternSpec.sameNumbers(other: PatternSpec): Boolean = inhale == other.inhale && holdFull == other.holdFull && exhale == other.exhale && holdEmpty == other.holdEmpty
+
         /** Vorschlagsname einer freien Folge, z. B. „Eigenes Muster 3·1·6“ ([FreePattern.numbers]). */
         fun suggestedName(pattern: FreePattern): String = "Eigenes Muster ${pattern.numbers()}"
 

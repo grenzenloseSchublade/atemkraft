@@ -9,6 +9,7 @@ import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.ToneVolume
+import app.atemkraft.domain.toFreePattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,6 +19,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -61,6 +63,23 @@ class PatternBackupTest {
         assertEquals(viloma, targetRepo.patterns.first().single { it.exercise.name == "Stufen" }.pattern)
         // Erneuter Import derselben Datei: alles Dubletten.
         assertEquals(ImportResult(added = 0, duplicates = 2), targetRepo.import(decoded.entries) { _, _ -> })
+
+        // Das gespeicherte Tagesmuster erkennt die App an Herkunft und Zahlen, nie am Namen (CODE-05):
+        // auch umbenannt aus einer alten Datei ohne Herkunft; ein eigenes Muster mit gleichen Zahlen nicht.
+        val daily = RandomPatternGenerator.forEpochDay(LocalDate.of(2026, 10, 5).toEpochDay())
+        val renamed = with(daily.spec) {
+            val holds = listOfNotNull(holdFull?.let { "\"holdFull\":$it" }, holdEmpty?.let { "\"holdEmpty\":$it" }).joinToString("") { "$it," }
+            """{"name":"Lieblingsmuster","inhale":$inhale,$holds"exhale":$exhale,"activating":$activating,"createdAtEpochMs":5}"""
+        }
+        val dailyRepo = SavedPatternsRepository(FakeSavedPatternDao())
+        dailyRepo.saveCustom(daily.spec.toFreePattern(), minutes = 5, name = "Gleiche Zahlen")
+        assertFalse(dailyRepo.isDailySaved(daily, dailyRepo.patterns.first()))
+        dailyRepo.import(PatternBackup.decode(backup(renamed))!!.entries) { _, _ -> }
+        assertTrue(dailyRepo.isDailySaved(daily, dailyRepo.patterns.first()))
+        dailyRepo.save(daily)
+        assertEquals(2, dailyRepo.patterns.first().size)
+        dailyRepo.unsave(daily)
+        assertEquals(listOf("Gleiche Zahlen"), dailyRepo.patterns.first().map { it.exercise.name })
 
         // Fremde, unbekannte oder zu große Dateien werden ganz abgewiesen.
         assertNull(PatternBackup.decode("""{"format":"anderes","version":1,"exportedAtEpochMs":0,"patterns":[]}"""))

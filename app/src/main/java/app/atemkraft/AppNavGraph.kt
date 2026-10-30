@@ -135,7 +135,7 @@ internal fun NavGraphBuilder.appGraph(
         LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { exercises.currentDaily() }
         val dailyPattern by exercises.daily.collectAsStateWithLifecycle()
         // „Gespeichert" direkt aus der DB ableiten: deckt Speichern, App-Neustart am
-        // selben Tag und Namensgleichheit mit einem früher gespeicherten Tagesmuster ab;
+        // selben Tag und ein früher gespeichertes Tagesmuster mit gleichen Zahlen ab;
         // ein eigenes Muster mit gleichen Zahlen zählt nicht (Herkunft).
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
         val catalog = remember {

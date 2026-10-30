@@ -147,7 +147,7 @@ object RandomPatternGenerator {
         activating: Boolean,
     ): DailyPattern {
         val spec = PatternSpec(inhale.toDouble(), holdFull?.toDouble(), exhale.toDouble(), holdEmpty?.toDouble(), activating)
-        return DailyPattern(GeneratedExercises.exerciseFrom(spec, ExerciseIds.DAILY, "Tagesmuster ${PatternTexts.numbersOf(spec)}"), spec)
+        return DailyPattern(GeneratedExercises.exerciseFrom(spec, ExerciseIds.DAILY, PatternTexts.dailyName(spec)), spec)
     }
 
     // ---- Helfer ----

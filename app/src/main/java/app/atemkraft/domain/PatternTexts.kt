@@ -12,6 +12,16 @@ object PatternTexts {
     fun numbersOf(spec: PatternSpec): String = listOfNotNull(spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty)
         .joinToString("·") { it.fmt() }
 
+    /** Name des heutigen Musters des Tages, z. B. „Tagesmuster 4·2·6“ (DailyPatternGoldenTest). */
+    fun dailyName(spec: PatternSpec): String = "Tagesmuster ${numbersOf(spec)}"
+
+    /**
+     * Name, unter dem ein Muster des Tages in „Eigene Kreationen“ landet, z. B. „Muster 4·2·6“.
+     * Nur Anzeige: Welches gespeicherte Muster das heutige ist, entscheiden Herkunft und Zahlen
+     * (SavedPatternsRepository), nie dieser Name (CODE-05).
+     */
+    fun savedDailyName(spec: PatternSpec): String = "Muster ${numbersOf(spec)}"
+
     /**
      * Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s". Zwischen Zahl und „s"
      * steht ein geschütztes Leerzeichen ([NBSP]): Bei großer Schrift bricht die Zeile sonst
