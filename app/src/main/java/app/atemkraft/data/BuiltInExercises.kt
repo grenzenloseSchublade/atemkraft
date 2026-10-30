@@ -74,12 +74,11 @@ object BuiltInExercises {
             "deutlichsten.",
         effectDetail = "In der Stanford-Studie (Balban 2023, 108 Personen, 30 davon mit dieser Übung, 5\u00A0min/Tag über " +
             "28 Tage) hob sie die Stimmung deutlicher als Achtsamkeit und senkte die Atemfrequenz am " +
-            "stärksten. Box-Atmung und schnelles Atmen lagen auch über Achtsamkeit, aber nicht deutlich. " +
-            "Der zweite kurze Einatem bläht im flachen Atem teils kollabierte Lungenbläschen wieder auf; " +
-            "der lange Ausatem fördert die CO₂-Abgabe und senkt über den Vagus die Herzfrequenz. Es ist " +
-            "eine einzelne, autoren-nahe Studie ohne Replikation und ohne vorab veröffentlichten Plan, zu " +
-            "klein für einen Vergleich der Techniken: ein vorsichtiges Zwischenergebnis. Dieselbe " +
-            "Mechanik einzeln im Stressmoment heißt „Physiological Sigh“.",
+            "stärksten. Box-Atmung und kontrollierte Hyperventilation lagen auch über Achtsamkeit, aber " +
+            "nicht deutlich. Der zweite kurze Einatem bläht im flachen Atem teils kollabierte Lungenbläschen " +
+            "wieder auf; der lange Ausatem fördert die CO₂-Abgabe und senkt über den Vagus die " +
+            "Herzfrequenz. Es ist eine einzelne, autoren-nahe Studie ohne unabhängige Replikation und ohne vorab veröffentlichten Plan, zu klein " +
+            "für einen Vergleich der Techniken: ein vorsichtiges Zwischenergebnis, kein Endurteil.",
         instructionHint = "1 voller Einatem durch die Nase → kurzer zweiter Einatem ganz oben " +
             "drauf → langsam vollständig durch den Mund aus. Ca. 5\u00A0min am Stück, langer Ausatem.",
         references = listOf(Refs.balban2023),
