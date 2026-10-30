@@ -1,8 +1,8 @@
 # Baseline-Profil für den App-Code (docs/STORE.md „Baseline-Profil“). AGP übersetzt diese Regeln
 # beim Release-Build nach assets/dexopt/baseline.prof (R8 schreibt die Namen um); androidx.profileinstaller
 # (transitiv über Compose) meldet das Profil beim ersten Start an ART. Ohne diese Regeln liefen Start,
-# Atmen-Tab und Muster-Editor die ersten Male im Interpreter (A54, 2026-10-30: Editor aus dem Blatt
-# „Muster des Tages“ p99 77–200 ms, auch beim 2./3. Öffnen).
+# Atmen-Tab und Muster-Editor die ersten Male im Interpreter (Referenz A54, Release v2.10.0: Editor aus
+# dem Blatt „Muster des Tages“ p99 97–150 ms, docs/recherche/2026-10-30-iso25010.md#messwerte).
 #
 # Von Hand statt per Macrobenchmark: kein neues Modul, kein Gerät im Build, bitgleich nachbaubar
 # (SEC-BUILD-06). Ganze Pakete der heißen Wege, keine einzelnen Methoden – die Wege ändern sich mit
