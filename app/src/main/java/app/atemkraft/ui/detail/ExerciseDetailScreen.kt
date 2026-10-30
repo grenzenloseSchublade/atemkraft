@@ -122,6 +122,8 @@ fun ExerciseDetailScreen(
     editDescription: String? = null,
     // Dauer für diesen Einstieg (Willkommenskarte), nicht gespeichert; null = Voreinstellung.
     initialMinutes: Int? = null,
+    // Eine Session oder Meditation liegt im Vollbild darüber: Der Rhythmus-Punkt steht still.
+    covered: Boolean = false,
 ) {
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
@@ -252,7 +254,7 @@ fun ExerciseDetailScreen(
         // der Karte (Takt · Dauer); eine weitere Zeile des Kopfblocks, daher GapSmall (§4.5).
         rhythm?.let {
             Spacer(Modifier.height(Dimens.GapSmall))
-            RhythmCurve(it, line = rhythmLine)
+            RhythmCurve(it, line = rhythmLine, running = !covered)
         }
 
         Spacer(Modifier.height(Dimens.GapSmall))
@@ -421,9 +423,11 @@ private fun StartBar(
 /**
  * „Anpassen ›“: Abschnittskopf mit `onClick` wie „Klang & Stimme“ in der Meditation (MUSTER-11) –
  * dieselbe Kopf-Art wie jeder Kopf, der ein Blatt öffnet, darum `titleLarge` auch in der Leiste.
- * Einzeilig (Eigentümer 2026-10-30): Die aktuelle Dauer bzw. Runden stehen als Status hinter dem
- * Titel („Anpassen · 10 min“, nach einer Anpassung „· 4 Runden · angepasst“), nicht als Teaser
- * darunter; passt der Status nicht dahinter, rutscht er laut [SectionHeader] darunter. TalkBack
+ * Möglichst einzeilig (Eigentümer 2026-10-30): Die aktuelle Dauer bzw. Runden stehen als leiser
+ * Status (`smallStatus`, `labelMedium` wie „Ablauf · 4 von 12 Phasen“) hinter dem Titel
+ * („Anpassen · 10 min“, nach einer Anpassung „· 4 Runden · angepasst“), nicht als Teaser darunter.
+ * Klein passt er hoch bei 360 dp und Schrift 1,0 auch angepasst dahinter; bei großer Schrift rutscht
+ * er laut [SectionHeader] darunter, dann nicht höher als der frühere Teaser. TalkBack
  * liest die Zeile als eine Schaltfläche („Anpassen, 10 Minuten, angepasst“) mit „Anpassen
  * öffnen“. Keine Live-Region: Den Wert sagt der Stepper im Blatt an, das Zurücksetzen der Start-Knopf.
  */
@@ -441,6 +445,7 @@ private fun AdjustRow(exercise: Exercise, adjust: SessionAdjustState, onClick: (
             if (adjust.modified) stringResource(R.string.adjust_status_modified, value, modified) else value,
         ),
         statusDescription = if (adjust.modified) stringResource(R.string.cd_adjust_status_modified, spokenValue, modified) else spokenValue,
+        smallStatus = true,
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_adjust_open),
     )

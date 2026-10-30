@@ -89,8 +89,9 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * mit [ForwardChevron] statt Caret, ohne Zustand. TalkBack liest sie als eine Schaltfläche aus
  * Titel, Status ([statusDescription]) und Teaser, die Trennpunkte als Kommas („Klang & Stimme, Gong
  * Start & Ende, ohne Stimme, Schaltfläche“); [onClickLabel] benennt, was der Tipp tut („Logbuch
- * öffnen“). Mit [status] statt Teaser bleibt sie einzeilig („Anpassen · 10 min ›“ in der
- * Start-Leiste der Detailseite).
+ * öffnen“). Mit [status] statt Teaser braucht sie nur eine Zeile, solange er hinter den Titel passt
+ * („Anpassen · 10 min ›“ in der Start-Leiste der Detailseite, mit [smallStatus]); sonst steht er
+ * darunter (siehe unten).
  *
  * [leadingIcon] steht als Zeichen vor dem Titel, mittig auf seiner ersten Zeile, `IconDefault` in
  * `secondary` (dekorativ): Es macht einen Kopf, der etwas öffnet, als Einstieg kenntlich

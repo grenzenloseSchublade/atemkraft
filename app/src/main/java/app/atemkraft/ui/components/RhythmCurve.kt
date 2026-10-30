@@ -62,8 +62,10 @@ private const val HALF = 0.5f
  * Vorschaupunkt des Editors ([Sizes.CurveDot] 14 zu 4); als Perle auf der eigenen Linie liest er
  * sich ohne Weiß. Ein neuer Rhythmus (Phasen angepasst) startet ihn neu. Der Takt kommt aus den
  * Daten, nicht aus einer Animationsdauer (MOTION-01); bei abgeschalteten System-Animationen
- * ([rememberAnimationsEnabled]) fehlt der Punkt ganz. In Tests mit Endlos-Animationen-Sperre
- * steht er am Anfang.
+ * ([rememberAnimationsEnabled]) fehlt der Punkt ganz. Ohne [running] (die Seite liegt unter einer
+ * Session oder Meditation im Vollbild) fehlt er ebenfalls und seine Bildschleife steht – ein
+ * verdeckter Punkt hielte sonst während der ganzen Meditation die volle Bildrate; danach beginnt
+ * er neu. In Tests mit Endlos-Animationen-Sperre steht er am Anfang.
  *
  * [line] ersetzt die Zeile (Muster des Tages: dieselbe Musterzeile wie auf seiner Karte); ohne
  * sie entsteht sie aus den Phasen, gleiche Phasen hintereinander zusammengefasst („3 × Einatmen
@@ -75,7 +77,7 @@ private const val HALF = 0.5f
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: String? = null) {
+fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: String? = null, running: Boolean = true) {
     val colors = MaterialTheme.colorScheme
     val inhale = colors.secondary
     val color = { step: BreathStep -> stepColor(step, inhale) }
@@ -95,8 +97,8 @@ fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: Strin
         if (rhythm.firstPartOnly) stringResource(R.string.cd_rhythm_first_part, spoken) else stringResource(R.string.cd_breath_curve, spoken)
     }
 
-    val animate = rememberAnimationsEnabled()
-    var time by remember(rhythm) { mutableLongStateOf(0L) }
+    val animate = rememberAnimationsEnabled() && running
+    var time by remember(rhythm, animate) { mutableLongStateOf(0L) }
     if (animate) {
         LaunchedEffect(rhythm) {
             // Endlos: über die Endlos-Variante, damit Tests mit Sperre nicht ewig auf Leerlauf warten.

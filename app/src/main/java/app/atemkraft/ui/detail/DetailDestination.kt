@@ -39,7 +39,8 @@ import kotlinx.coroutines.launch
  *   bearbeiten. [onOpenEditor] bekommt die Route des Editors; der Aufrufer navigiert.
  *
  * [onStart] startet die Übung; der Aufrufer schließt die Seite dabei. [initialMinutes]: Dauer für
- * diesen Einstieg (`DetailRoute.minutes`), nicht als Anpassung gespeichert.
+ * diesen Einstieg (`DetailRoute.minutes`), nicht als Anpassung gespeichert. [covered]: Ein
+ * Vollbild-Overlay (Session, Meditation) liegt über der Seite; ihr Rhythmus-Punkt steht dann still.
  */
 @Composable
 internal fun DetailDestination(
@@ -56,6 +57,7 @@ internal fun DetailDestination(
     onOpenEditor: (PatternEditorRoute) -> Unit,
     onBack: () -> Unit,
     onMissing: () -> Unit,
+    covered: Boolean = false,
 ) {
     val id = exerciseId
     val missing by rememberUpdatedState(onMissing)
@@ -116,5 +118,6 @@ internal fun DetailDestination(
         ),
         marked = id in markedIds,
         initialMinutes = initialMinutes,
+        covered = covered,
     )
 }

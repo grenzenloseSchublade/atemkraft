@@ -243,6 +243,8 @@ internal fun NavGraphBuilder.appGraph(
             onBack = back,
             // Unauflösbare Route (z. B. gelöschtes Muster): zurück, nur solange diese Seite oben liegt.
             onMissing = { navController.popIfTop(entry) },
+            // Die Seite bleibt unter dem Overlay komponiert (MainActivity, inertWhen).
+            covered = playback.overlayOpen,
         )
     }
     pushComposable<PatternEditorRoute> { entry ->

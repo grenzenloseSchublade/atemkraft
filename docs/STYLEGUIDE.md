@@ -329,7 +329,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
  GapSmall · Kurzbeschreibung bodyMedium
  GapSmall
   ╱‾‾‾‾‾‾‾‾‾╲            ← RhythmCurveHeight 56, volle Breite, Strich 2: Ein secondary, Halten gestrichelt, Aus BreathExhale
- ●            ╲_____       ← Punkt 8 läuft endlos im Takt der Übung, in der Farbe seiner Phase (wie die Linie, Übergang RhythmDotColor); fehlt bei Animator-Skala 0
+ ●            ╲_____       ← Punkt 8 läuft endlos im Takt der Übung, in der Farbe seiner Phase (wie die Linie, Übergang RhythmDotColor); fehlt bei Animator-Skala 0 und unter einem Vollbild-Overlay
  GapTiny · Einatmen 4 s · Halten voll 7 s · Ausatmen 8 s   ← HintText, für TalkBack unsichtbar
  GapSmall · [ca. 4 min] [ruhig] · ⚠-Zeile · Expander
 ```
@@ -341,7 +341,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 
 ```
  ┌ PinnedActionBar surface · Elevation 3 · Rand ScreenPadding × ListGap ─────────────────┐
- │ Anpassen · 4 Runden · angepasst   titleLarge, Status SECONDARY    ›   ← nur Detailseite: │
+ │ Anpassen · 4 Runden · angepasst   titleLarge, Status labelMedium  ›   ← nur Detailseite: │
  │ (Status passt nicht dahinter → darunter)        SectionHeader(onClick), Zeile ≥ 48 dp │
  │ [ Starten · ca. 5 min ····· füllt den Rest ·····] GapSmall [↻ 40]   (Reset nur bei Abweichung)│
  │ (−) 5 min (+) ·································· [↻ 40] [▶ 40]   ← Editor: ein Token, 40 dp │
@@ -349,7 +349,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 ```
 
 - Feste Breiten für Stepper und Reset, Start füllt den Rest; Start und Reset gleich hoch über dieselbe Mindesthöhe (`ButtonHeight`), nie `IntrinsicSize.Min`; Session-Steuerung 76/56 dp fest. Bei Platzmangel `InlineOrBelow`: Steuerung rechtsbündig darunter, entschieden mit Reserven.
-- Detailseite: Über dem Start steht genau eine Zeile „Anpassen ›“ – ein `SectionHeader` mit `onClick` und Status statt Teaser („· 10 min“, „· 4 Runden“, „· angepasst“; gesprochen über `statusDescription` ausgeschrieben), einzeilig, damit quer und bei großer Schrift Inhalt bleibt; dieselbe Kopf-Art wie „Klang & Stimme“; sie öffnet das Blatt „Anpassen“ (MUSTER-11). Ihre Tippfläche schließt ohne Lücke an die des Starts an, keine weitere Zeile in der Leiste ([spec/detail.md](spec/detail.md)).
+- Detailseite: Über dem Start steht genau eine Zeile „Anpassen ›“ – ein `SectionHeader` mit `onClick` und Status statt Teaser („· 10 min“, „· 4 Runden“, „· angepasst“; klein über `smallStatus`, gesprochen über `statusDescription` ausgeschrieben), möglichst einzeilig, damit quer und bei großer Schrift Inhalt bleibt – passt der Status nicht dahinter, steht er darunter; dieselbe Kopf-Art wie „Klang & Stimme“; sie öffnet das Blatt „Anpassen“ (MUSTER-11). Ihre Tippfläche schließt ohne Lücke an die des Starts an, keine weitere Zeile in der Leiste ([spec/detail.md](spec/detail.md)).
 - **Prüfung:** `ScreenshotTest` (`TIPPFLAECHE`, `ANATOMIE`, `08_detail_quer`; Leiste einzeilig bis 1,3 im `DeviceFitTest`).
 
 #### Suchpille, Tab-Leiste, Bottom Sheet, Overlay-Kopf
@@ -389,7 +389,7 @@ Je Zeile Nutzen, Nicht-für und A11y-Pflicht; wie etwas im Detail gebaut ist, st
 | `widestOf` / `rememberWidestTextWidth` / `rememberWidestAnnotatedWidth` (`ReserveMeasure.kt`) | Platz für den breitesten möglichen Inhalt (LAYOUT-03, „nichts springt“): unsichtbar messen statt `alpha(0f)` von Hand | – | Messinhalt ohne Semantik |
 | `rememberFirstLineHeight` (`TextBlocks.kt`) | Höhe der ersten Textzeile einer Rolle, gemessen – für Aktionen und Zeichen mittig auf der ersten Zeile (§4.5) | `lineHeight` in dp rechnen (ab Android 14 falsch) | – |
 | `DotSeparatedFlow` | Teile mit Trennpunkt, gierig je Zeile, zentriert; der Punkt nur zwischen Teilen einer Zeile (Session-Kopf, Bilanz) | fertige Texte (→ `splitAtDots`, TEXT-10) | – |
-| `RhythmCurve` (`RhythmCurve.kt`) | ein Atemzug einer Übung (`Exercise.breathRhythm()`) oben auf der Detailseite: dünne Linie in der Farbsprache der Editor-Kurve, Punkt endlos im echten Takt in der Farbe seiner Phase (dieselbe Zuordnung wie die Linie, weicher Übergang `RhythmDotColor`; fehlt bei Animator-Skala 0), darunter die Phasenzeile; Anatomie §4.5 | Bearbeiten (→ `BreathCurveEditor`); Übungen ohne Takt, offene Phasen, Phasen unter 1 s (dann keine Kurve) | ein Knoten „Atemkurve: Einatmen 4 Sekunden, …“, Zeile für TalkBack unsichtbar, keine Live-Region |
+| `RhythmCurve` (`RhythmCurve.kt`) | ein Atemzug einer Übung (`Exercise.breathRhythm()`) oben auf der Detailseite: dünne Linie in der Farbsprache der Editor-Kurve, Punkt endlos im echten Takt in der Farbe seiner Phase (dieselbe Zuordnung wie die Linie, weicher Übergang `RhythmDotColor`; fehlt bei Animator-Skala 0 und ohne `running`, d. h. unter einem Vollbild-Overlay), darunter die Phasenzeile; Anatomie §4.5 | Bearbeiten (→ `BreathCurveEditor`); Übungen ohne Takt, offene Phasen, Phasen unter 1 s (dann keine Kurve) | ein Knoten „Atemkurve: Einatmen 4 Sekunden, …“, Zeile für TalkBack unsichtbar, keine Live-Region |
 | `PhaseMark` / `HoldDash` (`PhaseMark.kt`) | Marke einer Atemphase in Phasenfarbe (Halten gestrichelt); Farbe der freien Folge über `phaseColor` | große Kurve (→ `BreathCurveEditor`) | dekorativ, Wert im Text daneben |
 | `SlidingReset` | Zurücksetzen, das nur bei Abweichung hereingleitet (Split-Button, Editor-Leiste `compact`); `onFocusHandoff` gibt den Fokus an den Nachbarn | – | cd „Zurücksetzen“ am Icon |
 | `selectedRow` (`SelectedRow.kt`) | Auswahl einer Listenzeile ohne Häkchen: gewählt mit Fläche und dünnem Rand (Vorlagen, Ablauf, vāyu-Liste) | Einzelwahl in Reihen (→ `SegmentedChoiceRow`) | `selectable`/`toggleable` dazu |
