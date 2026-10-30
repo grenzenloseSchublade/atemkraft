@@ -27,7 +27,7 @@ Lesereihenfolge wie die Seite: Zurück → Name → Startpunkt → Speichern (�
 
 ## Startpunkt (Bottom Sheet, MUSTER-11)
 
-Der Startpunkt im Kopf öffnet die Vorlagen als `ModalBottomSheet` (`TemplateSheet`, ganz geöffnet, eigener Griff; die Vorschau hält an): „Startpunkt“, als Teaser „Womit fängst du an? Die Wahl ersetzt den Ablauf, danach formst du ihn an der Kurve.“, je Vorlage 4·6, Box, 4-7-8, Seufzer, Viloma I, Wechsel eine Zeile mit Name und `MiniCurve` (Farbsprache der Kurve), die passende markiert (`selectedRow`, Rolle RadioButton); eine Wahl setzt die Folge, wählt ihre letzte Phase, schließt das Sheet und gibt dem Startpunkt den Tastatur-Fokus mit einer Ansage („Startpunkt wählen, derzeit Viloma I“). Ein neues Muster startet mit 4·6.
+Der Startpunkt im Kopf öffnet die Vorlagen als Bottom Sheet (`TemplateSheet` über `AppBottomSheet`, ganz geöffnet, eigener Griff; die Vorschau hält an): „Startpunkt“, als Intro „Womit fängst du an? Die Wahl ersetzt den Ablauf, danach formst du ihn an der Kurve.“, je Vorlage 4·6, Box, 4-7-8, Seufzer, Viloma I, Wechsel eine Zeile mit Name und `MiniCurve` (Farbsprache der Kurve), die passende markiert (`selectedRow`, Rolle RadioButton); der Name steht an der Textkante des Titels, die Auswahlfläche ragt um `GapSmall` in den Rand (wie die Ablauf-Liste); eine Wahl setzt die Folge, wählt ihre letzte Phase, schließt das Sheet und gibt dem Startpunkt den Tastatur-Fokus mit einer Ansage („Startpunkt wählen, derzeit Viloma I“). Ein neues Muster startet mit 4·6.
 
 ## Name, Speichern, Starten, Einstiege
 

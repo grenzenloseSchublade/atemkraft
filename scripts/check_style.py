@@ -718,6 +718,9 @@ CHECKS: list[Check] = [
     # Layout-Grammatik (§4.5): Overlays nur in der Titelzeile einer Karte (CardHeader).
     Check("anatomy-overlay", "KOMP-02", [SRC + "ui/*.kt"], [r"\.align\(\s*Alignment\.(TopEnd|TopStart|BottomEnd|BottomStart)\s*\)"],
           exclude=[SRC + "ui/components/CardHeader.kt"]),
+    # Bottom Sheet (MUSTER-11): Gerüst nur über AppBottomSheet, damit die Anatomie an einer Stelle lebt.
+    Check("sheet-direct", "MUSTER-11", [SRC + "ui/*.kt"], [r"(?<![\w.])ModalBottomSheet\("],
+          exclude=[SRC + "ui/components/AppBottomSheet.kt"], skip_imports=True),
     Check("catalog-sync", "KOMP-01", [SRC + "ui/components/*.kt"], custom=catalog_sync, fixture=catalog_fixture),
     # Doku-Lint (§0): Regelzellen bleiben kurz; Spezifikation und Historie wandern aus.
     Check("rule-length", "§0", ["docs/STYLEGUIDE.md", "docs/SECURITY.md", "docs/PROCESS.md"],

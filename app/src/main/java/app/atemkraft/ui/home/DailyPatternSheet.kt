@@ -1,38 +1,23 @@
 package app.atemkraft.ui.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.hideFromAccessibility
-import androidx.compose.ui.semantics.isTraversalGroup
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.traversalIndex
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.PatternTexts
+import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
-import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.BreathMarkIcon
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PatternCard
@@ -69,9 +54,8 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
  * eine andere Vorlage wählt man im Editor über „Startpunkt“. Beides an einem Ort:
  * Wer mit dem Tagesmuster spielt, findet hier den nächsten Schritt, sein eigenes zu bauen.
  *
- * Gerüst wie [app.atemkraft.ui.meditation.SoundSheet] (Anatomie „Bottom Sheet“, §4.5): ganz
- * geöffnet, eigener stummer Griff, Titel als Abschnittskopf mit `top = 0`, TalkBack beginnt beim
- * Titel. Keine gefüllte Neon-Fläche; schließen per Wischen, Tipp daneben oder Zurück ([onDismiss]).
+ * Gerüst: [AppBottomSheet], der Satz unter dem Titel ist dessen Intro (Teaser des Titels). Keine
+ * gefüllte Neon-Fläche; schließen per Wischen, Tipp daneben oder Zurück ([onDismiss]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,36 +68,21 @@ internal fun DailyPatternSheet(
     onNewPattern: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, dragHandle = null) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            // Stumm für TalkBack wie im SoundSheet (A11Y-05, -06).
-            BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() })
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics {
-                    isTraversalGroup = true
-                    traversalIndex = -1f
-                }
-                .verticalScroll(rememberScrollState())
-                .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
-        ) {
-            SectionHeader(title = stringResource(R.string.home_daily_pattern), top = 0.dp)
-            Spacer(Modifier.height(Dimens.HeaderGap))
-            BodyText(stringResource(R.string.home_daily_sheet_intro))
-            Spacer(Modifier.height(Dimens.ListGap))
-            DailyPatternCard(daily = daily, saved = saved, onClick = onOpen, onSavedChange = onSavedChange, onRegenerate = onRegenerate)
-            Spacer(Modifier.height(Dimens.ListGap))
-            // Selbst gestalten als ganze Karte: Die Kernfunktion ist so groß antippbar wie das
-            // Tagesmuster darüber, nicht nur ein Textverweis (Nutzer 2026-10-30).
-            NavCard(
-                title = stringResource(R.string.home_create_title),
-                hint = stringResource(R.string.home_create_intro),
-                onClick = onNewPattern,
-            )
-        }
+    AppBottomSheet(
+        title = stringResource(R.string.home_daily_pattern),
+        onDismiss = onDismiss,
+        intro = stringResource(R.string.home_daily_sheet_intro),
+    ) {
+        DailyPatternCard(daily = daily, saved = saved, onClick = onOpen, onSavedChange = onSavedChange, onRegenerate = onRegenerate)
+        Spacer(Modifier.height(Dimens.ListGap))
+        // Selbst gestalten als ganze Karte: Die Kernfunktion ist so groß antippbar wie das
+        // Tagesmuster darüber, nicht nur ein Textverweis (Nutzer 2026-10-30). Karten sind hier
+        // richtig: Beides öffnet etwas (Anatomie „Bottom Sheet“, §4.5).
+        NavCard(
+            title = stringResource(R.string.home_create_title),
+            hint = stringResource(R.string.home_create_intro),
+            onClick = onNewPattern,
+        )
     }
 }
 

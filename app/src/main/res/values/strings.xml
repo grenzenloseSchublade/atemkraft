@@ -151,7 +151,7 @@
     <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Charakter von heute („ruhig“); Ziffern erst im Blatt. -->
     <string name="home_daily_teaser">Heute %1$s\u00A0· oder selbst gestalten</string>
     <string name="cd_daily_open">Muster des Tages öffnen</string>
-    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster aus Ein, Halten und Aus – zum Ausprobieren. Gefällt es dir, speicherst du es in „Eigene“.</string>
+    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster zum Ausprobieren – gefällt es dir, speicherst du es.</string>
     <string name="home_create_title">Selbst gestalten</string>
     <!-- Kopf über den Treffern bei Anlass, Suche oder Bereich (statt „Übungen“). -->
     <string name="home_results">Passende Übungen</string>
@@ -361,14 +361,18 @@
 
     <!-- Anpassung -->
     <string name="adjust_rounds">Runden</string>
-    <string name="adjust_minutes">Dauer (min)</string>
+    <string name="adjust_minutes">Dauer</string>
     <string name="adjust_decrease">Verringern</string>
     <string name="adjust_increase">Erhöhen</string>
     <string name="adjust_intervals">Phasen anpassen</string>
-    <string name="adjust_inhale">Einatmen (s)</string>
-    <string name="adjust_hold">Halten (s)</string>
-    <string name="adjust_exhale">Ausatmen (s)</string>
-    <!-- TalkBack-Wert des Steppers: „Einatmen: 4 Sekunden“ – das sichtbare Label behält „(s)“. -->
+    <string name="adjust_inhale">Einatmen</string>
+    <string name="adjust_hold">Halten</string>
+    <string name="adjust_exhale">Ausatmen</string>
+    <!-- Wert im Stepper des Blatts „Anpassen“ samt Einheit: Die Einheit steht beim Wert, nicht in
+         Klammern am Label („Einatmen (s)“ begann bei großer Schrift eine Zeile mit „(s)“). -->
+    <string name="adjust_value_seconds">%1$d s</string>
+    <string name="adjust_value_minutes">%1$d min</string>
+    <!-- TalkBack-Wert des Steppers: „Einatmen: 4 Sekunden“ – Einheit ausgeschrieben statt „4 s“. -->
     <string name="cd_stepper_value">%1$s: %2$s</string>
     <string name="cd_stepper_value_suffix">%1$s, %2$s</string>
     <string name="cd_stepper_button">%1$s, %2$s</string>

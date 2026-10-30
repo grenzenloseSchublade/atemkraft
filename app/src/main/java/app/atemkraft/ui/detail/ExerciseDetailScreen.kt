@@ -69,7 +69,7 @@ import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.RhythmCurve
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.SessionAdjustCard
+import app.atemkraft.ui.components.SessionAdjustControls
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.WholeWordText
@@ -355,7 +355,7 @@ fun ExerciseDetailScreen(
     // gelten sofort und werden gespeichert wie zuvor in der Karte am Ende des Inhalts.
     if (exercise.guided && adjustOpen) {
         AdjustSheet(onDismiss = { adjustOpen = false }) {
-            SessionAdjustCard(
+            SessionAdjustControls(
                 durationLabel = if (roundBased) {
                     stringResource(R.string.adjust_rounds)
                 } else {
@@ -393,6 +393,7 @@ fun ExerciseDetailScreen(
                 // Runden sagt TalkBack als „Runden: 4“, Minuten ausgeschrieben.
                 durationSpokenLabel = if (roundBased) stringResource(R.string.adjust_rounds) else stringResource(R.string.cd_adjust_duration),
                 durationUnit = if (roundBased) null else R.plurals.cd_duration_minutes,
+                durationValue = if (roundBased) null else R.string.adjust_value_minutes,
             )
         }
     }

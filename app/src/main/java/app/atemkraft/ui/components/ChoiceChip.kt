@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -343,19 +342,6 @@ fun <T> FilterChipFlow(
     ) {
         items.forEach { chip(it) }
     }
-}
-
-/**
- * Meldet sich um [start] + [end] schmaler, als es misst, und ragt damit über das Polster des
- * Behälters hinaus (wie [flushEnd], nur wächst hier der Inhalt in den Rand; RTL gespiegelt). Der
- * Behälter schneidet an seiner Kante ab – die Karte an ihrem Rand, die Liste am Bildschirmrand.
- */
-private fun Modifier.bleed(start: Dp = 0.dp, end: Dp = 0.dp): Modifier = layout { measurable, constraints ->
-    val startPx = start.roundToPx()
-    val px = startPx + end.roundToPx()
-    val wide = if (constraints.hasBoundedWidth) constraints.copy(maxWidth = constraints.maxWidth + px) else constraints
-    val placeable = measurable.measure(wide)
-    layout((placeable.width - px).coerceAtLeast(0), placeable.height) { placeable.placeRelative(-startPx, 0) }
 }
 
 /**

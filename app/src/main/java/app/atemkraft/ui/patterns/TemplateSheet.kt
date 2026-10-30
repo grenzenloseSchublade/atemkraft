@@ -2,21 +2,16 @@ package app.atemkraft.ui.patterns
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,19 +22,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.hideFromAccessibility
-import androidx.compose.ui.semantics.isTraversalGroup
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.traversalIndex
-import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
-import app.atemkraft.ui.components.CollapsibleSection
+import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.HoldDash
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.components.bleed
 import app.atemkraft.ui.components.selectedRow
 import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
@@ -53,45 +44,28 @@ import kotlinx.coroutines.launch
  * Stimme“ in der Meditation, `SoundSheet`): „Startpunkt“ und je Vorlage eine Zeile mit Name und
  * Mini-Kurve ([MiniCurve]), die passende markiert (`selectable`, Rolle RadioButton, Fläche
  * `TonalDeep`, Rand `SegmentSelected` wie in der Ablauf-Liste); unter dem Titel ein Satz,
- * was die Wahl tut (Nutzer 2026-10-24). Eine Wahl setzt die Folge (letzte Phase gewählt) und
- * schließt das Sheet; danach meldet es [onPick].
+ * was die Wahl tut (Nutzer 2026-10-24), als Intro des Titels. Eine Wahl setzt die Folge (letzte
+ * Phase gewählt) und schließt das Sheet; danach meldet es [onPick]. Gerüst: [AppBottomSheet].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    // Eigener, dekorativer Griff statt des M3-Griffs: Dessen Knoten ist nur 32 dp breit (A11Y-05);
-    // schließen lässt sich das Sheet per Zurück, Tipp daneben oder nach unten Ziehen.
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, dragHandle = null) {
-        // Griff stumm für TalkBack: ohne Aktion nur ein leerer Stopp (A11Y-06).
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() }) }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                // Vor dem Griff gelesen: TalkBack beginnt beim Titel (MUSTER-11).
-                .semantics {
-                    isTraversalGroup = true
-                    traversalIndex = -1f
-                }
-                .verticalScroll(rememberScrollState())
-                .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
-        ) {
-            CollapsibleSection(
-                title = stringResource(R.string.pattern_editor_start),
-                teaser = stringResource(R.string.pattern_editor_start_hint),
-                headerTop = 0.dp,
-            ) {
-                Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline)) {
-                    FreePatternTemplates.all.forEach { template ->
-                        TemplateRow(template, selected = template == state.template) {
-                            state.applyTemplate(template)
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                onDismiss()
-                                // Erst nach dem Schließen: Der Fokus geht zurück auf den Startpunkt im Kopf.
-                                onPick()
-                            }
-                        }
+    AppBottomSheet(
+        title = stringResource(R.string.pattern_editor_start),
+        onDismiss = onDismiss,
+        intro = stringResource(R.string.pattern_editor_start_hint),
+        sheetState = sheetState,
+    ) {
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline)) {
+            FreePatternTemplates.all.forEach { template ->
+                TemplateRow(template, selected = template == state.template) {
+                    state.applyTemplate(template)
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        onDismiss()
+                        // Erst nach dem Schließen: Der Fokus geht zurück auf den Startpunkt im Kopf.
+                        onPick()
                     }
                 }
             }
@@ -99,18 +73,23 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
     }
 }
 
-/** Eine Vorlage im [TemplateSheet]: Name links, Mini-Kurve rechts; die passende markiert. */
+/**
+ * Eine Vorlage im [TemplateSheet]: Name links, Mini-Kurve rechts; die passende markiert. Der Name
+ * steht an der Textkante des Blatts wie der Titel (Anatomie „Bottom Sheet“, §4.5); die Fläche der
+ * Auswahl ragt um ihr Polster ([Dimens.GapSmall], wie die Ablauf-Liste des Editors) in den Rand.
+ */
 @Composable
 private fun TemplateRow(template: FreeTemplate, selected: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val shape = MaterialTheme.shapes.small
     Row(
         modifier = Modifier
+            .bleed(start = Dimens.GapSmall, end = Dimens.GapSmall)
             .fillMaxWidth()
             .selectedRow(selected, shape, borderColor = SegmentSelected, fill = TonalDeep)
             .heightIn(min = Dimens.MinTouchTarget)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
+            .padding(horizontal = Dimens.GapSmall, vertical = Dimens.GapSmall),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {

@@ -3,6 +3,7 @@ package app.atemkraft.ui.components
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 
@@ -37,4 +38,19 @@ private fun Modifier.flush(overhang: Dp, inCard: Boolean, atStart: Boolean): Mod
         // placeRelative spiegelt im RTL: der Überstand liegt dann rechts bzw. links.
         placeable.placeRelative(if (atStart) -px else 0, 0)
     }
+}
+
+/**
+ * Meldet sich um [start] + [end] schmaler, als es misst, und ragt damit über das Polster des
+ * Behälters hinaus (wie [flushEnd], nur wächst hier der Inhalt in den Rand; RTL gespiegelt). Der
+ * Behälter schneidet an seiner Kante ab – die Karte an ihrem Rand, die Liste am Bildschirmrand.
+ * Chip-Reihen (`ChoiceChipRow`) und Auswahlzeilen im Blatt (Vorlagen im Startpunkt): Die Fläche
+ * reicht in den Rand, der Text bleibt an der Textkante.
+ */
+internal fun Modifier.bleed(start: Dp = 0.dp, end: Dp = 0.dp): Modifier = layout { measurable, constraints ->
+    val startPx = start.roundToPx()
+    val px = startPx + end.roundToPx()
+    val wide = if (constraints.hasBoundedWidth) constraints.copy(maxWidth = constraints.maxWidth + px) else constraints
+    val placeable = measurable.measure(wide)
+    layout((placeable.width - px).coerceAtLeast(0), placeable.height) { placeable.placeRelative(-startPx, 0) }
 }

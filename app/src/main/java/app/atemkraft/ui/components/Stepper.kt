@@ -47,15 +47,20 @@ import app.atemkraft.ui.theme.Sizes
  *
  * Label links, Knöpfe als rechte Spalte, der sichtbare Kreis bündig an der Inhaltskante.
  * [horizontal]/[vertical] steuern die Innenabstände; mit `horizontal = 0.dp` (Karte mit eigenem
- * Polster, Einstellungen) ragt der unsichtbare Rand von „+“ in deren Polster.
+ * Polster, Einstellungen, Blatt „Anpassen“) ragt der unsichtbare Rand von „+“ in deren Polster,
+ * das Label steht an der Textkante des Behälters.
  *
- * TalkBack hört Name und Einheit ausgeschrieben (A11Y-06): [spokenLabel] ist das Label ohne
- * sichtbare Einheit („Einatmen“ statt „Einatmen (s)“), [valueUnit] ein Plural für den Wert
- * („4 Sekunden“); ohne ihn die blanke Zahl. [spokenSuffix] hängt an die Ansage des Werts einen
+ * TalkBack hört Name und Einheit ausgeschrieben (A11Y-06): [spokenLabel] ist der gesprochene Name
+ * („Einatmen“), [valueUnit] ein Plural für den Wert („4 Sekunden“, sichtbar „4 s“); ohne ihn die
+ * blanke Zahl. [spokenSuffix] hängt an die Ansage des Werts einen
  * Zustand an, den die Änderung mit sich bringt („…: 11 Sekunden, intensiv“) – so bleibt es eine
  * Ansage je Tipp. [announce] = false nimmt die Live-Region weg, solange ein anderer Knoten die
  * Änderung schon ansagt (Muster-Editor: Phase entfernt). [valueText] zeigt den Wert anders als die
- * Zahl (Uhrzeit „08:15“ für den Schritt 33), [spokenValue] sagt ihn dann in Worten („8:15 Uhr“).
+ * Zahl (Uhrzeit „08:15“ für den Schritt 33, mit Einheit „5 s“), [spokenValue] sagt ihn dann in
+ * Worten („8:15 Uhr“). [widestValues] sind die breitesten möglichen Werte („30 s“): Die Wertspalte
+ * hält ihre Breite, damit die Knöpfe beim Steppen nicht springen (§4.5 „Nichts springt“); dieselbe
+ * Liste in mehreren Steppern untereinander hält deren Knöpfe in einer Flucht. Das Label
+ * steht in `bodyMedium` wie jede Zeile mit Steuerelement (`ToggleRow`, `SubLabel`, Anatomie §4.5).
  */
 @Composable
 fun Stepper(
@@ -72,6 +77,7 @@ fun Stepper(
     announce: Boolean = true,
     valueText: String = value.toString(),
     spokenValue: String? = null,
+    widestValues: List<String> = emptyList(),
 ) {
     // Der Knopf-Kreis ist kleiner als seine 48-dp-Tippfläche: Den unsichtbaren Rand rechts
     // vom Innenabstand abziehen, damit der sichtbare Kreis an der Inhaltskante steht.
@@ -92,7 +98,20 @@ fun Stepper(
         val valueDescription = stepperValueDescription(spokenLabel, spoken, spokenSuffix)
         // Ohne eigenes Polster (in einer Karte mit Innenabstand) ragt der Rand des „+“-Knopfs über.
         val edge = if (horizontal < inset) Modifier.flushEnd(inset - horizontal) else Modifier
-        StepButtons(spokenLabel, valueDescription, value, range, onChange, announce, edge, valueText)
+        val valueStyle = MaterialTheme.typography.titleMedium
+        val reserve = if (widestValues.isEmpty()) 0.dp else rememberWidestTextWidth(widestValues + valueText, valueStyle)
+        StepButtons(
+            spokenLabel,
+            valueDescription,
+            value,
+            range,
+            onChange,
+            announce,
+            edge,
+            valueText,
+            valueStyle,
+            valueMinWidth = maxOf(Sizes.StepperValueMinWidth, reserve),
+        )
     }
 }
 
@@ -137,7 +156,7 @@ private fun stepperValueDescription(label: String, value: String, suffix: String
 private fun StepperLabel(label: String, modifier: Modifier = Modifier) {
     Text(
         text = label,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier,
     )
@@ -159,6 +178,7 @@ private fun StepButtons(
     modifier: Modifier = Modifier,
     valueText: String = value.toString(),
     valueStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    valueMinWidth: Dp = Sizes.StepperValueMinWidth,
 ) {
     val decreaseLabel = stringResource(R.string.adjust_decrease)
     val increaseLabel = stringResource(R.string.adjust_increase)
@@ -187,7 +207,7 @@ private fun StepButtons(
             // Mindestbreite statt fester Breite: bei großer System-Schrift / dreistelligen
             // Werten (oder mit Einheit, „30 s“) wächst die Box, statt den Wert abzuschneiden.
             modifier = Modifier
-                .widthIn(min = Sizes.StepperValueMinWidth)
+                .widthIn(min = valueMinWidth)
                 .semantics {
                     contentDescription = valueDescription
                     if (announce) liveRegion = LiveRegionMode.Polite
