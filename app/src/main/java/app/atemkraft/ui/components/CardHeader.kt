@@ -2,12 +2,10 @@ package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,11 +16,8 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.text
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.eyebrow
 
 // Test-Tags der Layout-Grammatik (STYLEGUIDE §4.5): Das Gate ANATOMIE im ScreenshotTest liest
 // über sie, wo Titel, Aktionen und Zeichen eines Bausteins liegen, und prüft ihre Maße.
@@ -55,12 +50,6 @@ const val CONTROL_ROW_TAG = "anatomie-steuerzeile"
  * frei, der Inhalt darunter läuft in voller Breite unter den Knöpfen durch – die Karte wird durch
  * Aktionen nicht höher ([centeredOverflow] ohne Grenze: Die Tippfläche ragt in den Inhalt).
  *
- * Mit [eyebrow] (Tagesmuster, Nutzer 2026-10-24) trägt die Karte eine **Kopfzeile**: eine Zeile
- * `MinTouchTarget` hoch mit der Eyebrow in Großbuchstaben (`typography.eyebrow`, `secondary`;
- * TalkBack hört den Originaltext) und den Aktionen rechts; der Titel steht darunter in voller
- * Breite. Der Aufrufer polstert dann oben `CardPadding − CircleOverhang`, damit der sichtbare
- * Kreis `CardPadding` vom Kartenrand steht.
- *
  * Der Aufrufer setzt Karte, Rand und `CardPadding` (KOMP-03) und hängt den Inhalt als Geschwister
  * darunter an; `[CardHeader]` ist die erste Zeile dieser Spalte. Mit [heading] ist der Titel für
  * TalkBack eine Überschrift (Einstellungen, A11Y-01) – nicht in klickbaren Karten, deren Knoten
@@ -75,7 +64,6 @@ fun CardHeader(
     title: String,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    eyebrow: String? = null,
     chips: (@Composable RowScope.() -> Unit)? = null,
     indicator: (@Composable () -> Unit)? = null,
     actionCount: Int = 0,
@@ -86,29 +74,6 @@ fun CardHeader(
     require(actionCount in 0..2) { "höchstens zwei Aktionen in einer Kartenzeile (KOMP-02)" }
     val titleStyle = MaterialTheme.typography.titleMedium
     val titleSemantics = if (heading) Modifier.semantics { heading() } else Modifier
-    if (eyebrow != null) {
-        Column(modifier = modifier.fillMaxWidth().testTag(CARD_HEADER_TAG)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                Box(
-                    modifier = Modifier.weight(1f).height(Dimens.MinTouchTarget),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Text(
-                        text = eyebrow.uppercase(),
-                        style = MaterialTheme.typography.eyebrow,
-                        color = MaterialTheme.colorScheme.secondary,
-                        // Großbuchstaben nur im Bild: TalkBack liest den Text, wie er geschrieben ist.
-                        modifier = Modifier.testTag(TITLE_ROW_TITLE_TAG).semantics { text = AnnotatedString(eyebrow) },
-                    )
-                }
-                if (actions != null) {
-                    Box(Modifier.flushEnd(inCard = true).testTag(TITLE_ROW_ACTIONS_TAG)) { actions() }
-                }
-            }
-            TitleWithChips(title = title, style = titleStyle, color = titleColor, titleModifier = titleSemantics, marks = marks, chips = chips)
-        }
-        return
-    }
     val titleLine = rememberFirstLineHeight(titleStyle)
     Row(
         modifier = modifier.fillMaxWidth().testTag(CARD_HEADER_TAG),

@@ -5,7 +5,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.LineBreak
-import androidx.compose.ui.unit.em
 
 // Typo-Skala = Material-3-Defaults (Größe, Zeilenhöhe, Laufweite unverändert, kein eigener
 // Skalierfaktor – Nutzerentscheidung 2026-10-19). Überschrieben werden nur Gewicht und Umbruch
@@ -35,12 +34,3 @@ val AtemkraftTypography = base.copy(
     // Kleine Titel (Gruppenlabel, Stepper-Label, Overlay-Titel, Mini-Leiste, Kennzahlen, Zeitring-Ziffern).
     titleSmall = base.titleSmall.asHeading(),
 )
-
-/**
- * Eyebrow über einem Kartentitel („MUSTER DES TAGES“ in der Tagesmuster-Karte, Nutzer 2026-10-24):
- * `labelSmall` mit weiterer Laufweite (0,08 em) für Großbuchstaben – die setzt der Aufrufer per
- * `uppercase()`, TalkBack bekommt den Originaltext. Keine eigene M3-Rolle, nur eine Spielart von
- * `labelSmall` (TYPO-01: Laufweite nur hier im Theme).
- */
-val Typography.eyebrow: TextStyle
-    get() = labelSmall.copy(letterSpacing = 0.08.em)

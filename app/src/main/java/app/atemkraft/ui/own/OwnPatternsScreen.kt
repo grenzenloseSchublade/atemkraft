@@ -70,12 +70,12 @@ data class OwnActions(
 
 /**
  * Tab „Eigene“, der persönliche Bereich (Nutzer 2026-10-23; Aufbau 2026-10-24, Vorschlag B): drei
- * gleiche Köpfe. Oben „Verlauf“ als tippbarer Kopf mit Chevron – die ganze Kopfzeile führt zur
- * Logbuch-Seite ([onOpenLogbook]) –, darunter ohne Karte die Wochenpunkte und die Bilanz
- * ([LogHistory]; ohne Sitzungen nur der Satz). Dann „Tut mir gut“ (die Übungen mit der
- * persönlichen Markierung, [favorites]) und „Eigene Kreationen“ (gespeicherte Tagesmuster und
- * selbst zusammengestellte Muster, neueste zuerst wie aus der Datenbank) mit „+“ rechts im Kopf
- * (öffnet den Muster-Editor). Ohne eigene Kreationen bleibt der Kopf mit „+“ stehen, darunter eine
+ * gleiche Köpfe. Oben „Eigene Kreationen“ (gespeicherte Tagesmuster und selbst zusammengestellte
+ * Muster, neueste zuerst wie aus der Datenbank) mit „+“ rechts im Kopf (öffnet den Muster-Editor) –
+ * „Eigene“ heißt eigene Muster, das Gestalten steht vorn (Nutzer 2026-10-30). Dann „Verlauf“ als
+ * tippbarer Kopf mit Chevron – die ganze Kopfzeile führt zur Logbuch-Seite ([onOpenLogbook]) –,
+ * darunter ohne Karte die Wochenpunkte und die Bilanz ([LogHistory]; ohne Sitzungen nur der Satz),
+ * zuletzt „Tut mir gut“ (die Übungen mit der persönlichen Markierung, [favorites]). Ohne eigene Kreationen bleibt der Kopf mit „+“ stehen, darunter eine
  * ruhige Karte mit dem Satz des Leerzustands und dem Verweis „Muster gestalten ›“ ([EmptyCreationsCard];
  * MUSTER-04, kein großer Knopf).
  *
@@ -122,6 +122,39 @@ fun OwnPatternsScreen(
             )
         },
     ) {
+        // „Eigene“ heißt eigene Muster: die Kreationen zuerst, mit „+“ im Kopf (Nutzer 2026-10-30).
+        item(key = "my-patterns") {
+            OwnSection(
+                title = stringResource(R.string.own_creations),
+                expanded = patternsExpanded.takeIf { collapsible },
+                onExpandedChange = { patternsExpanded = it },
+                status = patternsStatus.takeIf { collapsible },
+                statusDescription = patternsDescription,
+                // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf (AppIconButton) in
+                // onSurface wie jede Kopf-Aktion; im Leerzustand kommt der Verweis in der Karte dazu.
+                trailingAction = {
+                    AppIconButton(onClick = actions.onNewPattern) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = MaterialTheme.colorScheme.onSurface)
+                    }
+                },
+            ) {
+                if (savedPatterns.isEmpty()) {
+                    EmptyCreationsCard(onNewPattern = actions.onNewPattern)
+                }
+                savedPatterns.forEach { pattern ->
+                    // Je Muster ein eigener Zustand des zweistufigen Löschens, auch wenn die Liste sich ändert.
+                    key(pattern.id) {
+                        SavedPatternCard(
+                            pattern = pattern,
+                            onClick = { actions.onSelect(pattern.exercise.id) },
+                            onEdit = { actions.onEditPattern(pattern.id) },
+                            onDelete = { actions.onDeletePattern(pattern.id) },
+                        )
+                    }
+                }
+            }
+        }
+
         item(key = "history") {
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Die ganze Kopfzeile ist der Button zur Logbuch-Seite (Chevron, MUSTER-08).
@@ -156,38 +189,6 @@ fun OwnPatternsScreen(
                 ) {
                     favorites.forEach { exercise ->
                         ExerciseCard(exercise = exercise, marked = true, onClick = { actions.onSelect(exercise.id) })
-                    }
-                }
-            }
-        }
-
-        item(key = "my-patterns") {
-            OwnSection(
-                title = stringResource(R.string.own_creations),
-                expanded = patternsExpanded.takeIf { collapsible },
-                onExpandedChange = { patternsExpanded = it },
-                status = patternsStatus.takeIf { collapsible },
-                statusDescription = patternsDescription,
-                // „Neues Muster“ gehört zum Abschnitt: Icon-only im Kopf (AppIconButton) in
-                // onSurface wie jede Kopf-Aktion; im Leerzustand kommt der Verweis in der Karte dazu.
-                trailingAction = {
-                    AppIconButton(onClick = actions.onNewPattern) {
-                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.own_new_pattern), tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
-            ) {
-                if (savedPatterns.isEmpty()) {
-                    EmptyCreationsCard(onNewPattern = actions.onNewPattern)
-                }
-                savedPatterns.forEach { pattern ->
-                    // Je Muster ein eigener Zustand des zweistufigen Löschens, auch wenn die Liste sich ändert.
-                    key(pattern.id) {
-                        SavedPatternCard(
-                            pattern = pattern,
-                            onClick = { actions.onSelect(pattern.exercise.id) },
-                            onEdit = { actions.onEditPattern(pattern.id) },
-                            onDelete = { actions.onDeletePattern(pattern.id) },
-                        )
                     }
                 }
             }

@@ -26,7 +26,6 @@ import app.atemkraft.domain.inStages
 import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.Sizes
 
 /**
  * Übungskarte in Listen. Die Studienlage steht nur auf der Detailseite: Auf der Liste trüge fast
@@ -114,9 +113,8 @@ private fun phaseName(type: PhaseType): String = stringResource(
  * Die [actionCount] Icon-Knöpfe in [action] stehen auf der Titelzeile ([CardHeader]): Glyph mittig
  * auf der ersten Titelzeile und bündig an der Inhaltskante, nur die Titelzeile hält ihre Breite
  * frei, die Musterzeile läuft darunter durch, die Karte wird nicht höher (Nutzer 2026-10-24;
- * Kreationen-Karte: Stift und Mülleimer, nie mehr als zwei, KOMP-02). Mit [eyebrow] (Muster des
- * Tages) trägt sie stattdessen die Kopfzeile in der Karte, das Polster oben um `CircleOverhang`
- * kleiner, damit der sichtbare Kreis `CardPadding` vom Rand steht. Anatomie: STYLEGUIDE §4.5.
+ * Kreationen-Karte: Stift und Mülleimer; Tagesmuster: ↻ und ◉; nie mehr als zwei, KOMP-02).
+ * Anatomie: STYLEGUIDE §4.5.
  */
 @Composable
 fun PatternCard(
@@ -124,7 +122,6 @@ fun PatternCard(
     patternLine: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    eyebrow: String? = null,
     actionCount: Int = 1,
     action: @Composable () -> Unit,
 ) {
@@ -134,16 +131,10 @@ fun PatternCard(
         border = accentBorder(MaterialTheme.colorScheme.secondary),
     ) {
         Column(
-            modifier = Modifier.padding(
-                start = Dimens.CardPadding,
-                top = if (eyebrow != null) Dimens.CardPadding - Sizes.CircleOverhang else Dimens.CardPadding,
-                end = Dimens.CardPadding,
-                bottom = Dimens.CardPadding,
-            ),
+            modifier = Modifier.padding(Dimens.CardPadding),
         ) {
             CardHeader(
                 title = exercise.name,
-                eyebrow = eyebrow,
                 // Ein eigenes intensives Muster sieht schon in der Liste so aus wie auf der Detailseite.
                 chips = { CharacterChip(intense = exercise.caution, activating = exercise.activating) },
                 actionCount = actionCount,

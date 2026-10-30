@@ -127,7 +127,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         private const val COMPACT_EDITOR_MAX_FONT_SCALE = 1.3f
 
         /** Bottom Sheets (Vorlagen, Klang & Stimme): eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
-        private val SHEET_TESTS = listOf("patternEditorTemplates", "meditationSoundSheet")
+        private val SHEET_TESTS = listOf("patternEditorTemplates", "meditationSoundSheet", "dailyPatternSheet")
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
@@ -431,7 +431,10 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     /** Titelzeilen, Aktionen und Steuerzeilen des aktuellen Bildes prüfen ([AnatomyFindings]). */
     private fun anatomyFindings(screen: String): List<String> {
         val nodes = compose.onAllNodes(SemanticsMatcher("alle") { true }, useUnmergedTree = true).fetchSemanticsNodes()
-        return AnatomyFindings.findings(nodes, compose.density.density, screen)
+        // Je Fenster getrennt: Ein Blatt liegt über dem Tab, seine Knöpfe stehen nicht „über“ dem
+        // Text darunter, und `boundsInRoot` zweier Fenster sind nicht vergleichbar.
+        return nodes.groupBy { node -> generateSequence(node) { it.parent }.last().id }.values
+            .flatMap { window -> AnatomyFindings.findings(window, compose.density.density, screen) }
             .map { "${device.name}\tfs${(fontScale * 100).toInt()}\t$it" }
     }
 

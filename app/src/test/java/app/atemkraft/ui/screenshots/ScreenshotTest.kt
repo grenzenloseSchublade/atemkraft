@@ -336,6 +336,16 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         }
     }
 
+    /** Blatt „Muster des Tages“ mit Tagesmuster und „Selbst gestalten“ (Nutzer 2026-10-30): eigenes Fenster, Aufnahme des ganzen Bildschirms. */
+    @Test
+    fun dailyPatternSheet() {
+        snap("01_atmen_tagesmuster_offen", tab = Tab.ATMEN, screen = true, prepare = {
+            compose.onNodeWithContentDescription(app.getString(R.string.home_daily_pattern), substring = true).performClick()
+            compose.waitForIdle()
+            compose.onNodeWithText(app.getString(R.string.home_create_title)).assertExists()
+        }) { BreatheTab() }
+    }
+
     /**
      * „Klang & Stimme“ als offenes Blatt über dem Tab (MUSTER-11): ∞ mit Gong alle 15 min, die
      * längste Wahl. Eigenes Fenster wie das Startpunkt-Sheet, also Aufnahme des ganzen Bildschirms.

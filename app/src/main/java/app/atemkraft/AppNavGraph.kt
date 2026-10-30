@@ -162,6 +162,7 @@ internal fun NavGraphBuilder.appGraph(
                 onSelect = openDetail,
                 onOpenSettings = { navController.navigate(SettingsRoute()) },
                 onDismissWelcome = { scope.launch { settings.dismissWelcome() } },
+                onNewPattern = { navController.navigate(PatternEditorRoute()) },
                 // Die Karte verspricht „ein paar Minuten“: Die Resonanz-Atmung öffnet mit 3 statt 10 min.
                 onOpenWelcome = { id -> navController.navigate(DetailRoute(id, minutes = WELCOME_MINUTES)) },
             ),

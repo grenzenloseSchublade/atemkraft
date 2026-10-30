@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,10 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -33,19 +28,14 @@ import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseFilter
 import app.atemkraft.domain.ExerciseFilters
-import app.atemkraft.domain.PatternTexts
 import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
 import app.atemkraft.domain.area
-import app.atemkraft.ui.components.AppIconButton
-import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.BreathMarkIcon
 import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.GroupLabel
-import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
@@ -54,7 +44,6 @@ import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Was der Atmen-Tab zeigt und gleich bleibt, solange die App läuft: die angeleiteten Übungen nach
@@ -80,6 +69,8 @@ data class HomeActions(
     val onDismissWelcome: () -> Unit = {},
     /** Verweis der Willkommenskarte; öffnet die Übung mit kurzer Dauer statt der Voreinstellung. */
     val onOpenWelcome: (String) -> Unit = onSelect,
+    /** „Muster gestalten ›“ im Blatt „Muster des Tages“: öffnet den Muster-Editor. */
+    val onNewPattern: () -> Unit = {},
 )
 
 /**
@@ -87,24 +78,23 @@ data class HomeActions(
  * ([WelcomeCard], abweisbar), das Suchfeld „Wie fühlst du dich?“ mit den sechs Anlässen als Chips
  * ([FeelingBlock]), der Kopf „Übungen“ mit der Filterreihe und darunter die Übungen nach Familien
  * mit ihren kleinen farbigen Gruppenlabels ([GroupLabel]); zwischen Anlässen und „Übungen“ die
- * Tagesmuster-Karte.
+ * Kopfzeile „Muster des Tages ›“ ([DailyPatternEntry]).
  * Programme (Infoseiten ohne Start) stehen im Tab „Lernen“.
  *
- * Aufbau (Nutzer 2026-10-24, Vorschlag B): ein Abschnittskopf „Übungen“ statt der Köpfe „Muster
- * des Tages“ und „Alle Übungen“; das Tagesmuster – bewusst spielerisch, ohne eigenes
- * Wirkversprechen – trägt seine Kopfzeile („MUSTER DES TAGES“, ↻, ◉ „In Eigene speichern“) selbst
- * ([DailyPatternCard]). Seit 2026-10-28 steht es als Appetithappen über dem Kopf „Übungen“,
- * losgelöst von Familien und Filterreihe – es wechselt täglich und gehört zu keiner Gruppe;
- * Erstnutzer sehen darüber die Willkommenskarte. Den Weg in den Muster-Editor gibt es im Tab „Eigene“ („+“) und über den Stift auf der
- * Detailseite des Tagesmusters; der Atmen-Tab trägt keinen eigenen Link mehr.
+ * Muster des Tages (Nutzer 2026-10-30): Das Tagesmuster – bewusst spielerisch, ohne eigenes
+ * Wirkversprechen – steht als Kopfzeile mit Chevron über „Übungen“, losgelöst von Familien und
+ * Filterreihe, und bleibt in jedem Zustand stehen. Sie öffnet das [DailyPatternSheet] mit der
+ * Karte des Tagesmusters (↻, ◉ „In Eigene speichern“) und „Selbst gestalten“ mit dem Weg in den
+ * Muster-Editor ([HomeActions.onNewPattern]). So liegt das Gestalten eigener Muster einen Tipp
+ * neben der Startseite, ohne Platz in der Liste zu kosten.
  *
  * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
- * nichts, dann steht alles da wie immer (Suchfeld und Chips, Tagesmuster, „Übungen“ mit
- * Filterreihe, vier Familien).
+ * nichts, dann steht alles da wie immer (Suchfeld und Chips, „Muster des Tages ›“, „Übungen“ mit
+ * Filterreihe, vier Familien). Die Kopfzeile „Muster des Tages ›“ steht in allen Zuständen.
  * - **Anlass:** Ein Tipp auf einen Chip markiert ihn; unter dem Block stehen sein Begründungssatz
  *   (bei der intensiven Situation mit ⚠-Zeile), seine Übungen, „Mehr: <Bereich> ›“
- *   ([AreaLink]) und „Alle Übungen ›“ ([AllExercisesLink], wie ein zweiter Chip-Tipp); Muster des
- *   Tages und Familien treten zurück. Ein zweiter Tipp auf denselben Chip
+ *   ([AreaLink]) und „Alle Übungen ›“ ([AllExercisesLink], wie ein zweiter Chip-Tipp); die
+ *   Familien treten zurück. Ein zweiter Tipp auf denselben Chip
  *   oder System-Zurück zeigt wieder alles.
  * - **Bereich:** „Mehr: …“ zeigt an derselben Stelle das Gruppenlabel der Familie und alle Übungen
  *   des Bereichs ([AreaHeader]); kein Chip ist markiert, die Eingabe leer. ✕ am Label oder Zurück
@@ -115,8 +105,7 @@ data class HomeActions(
  *
  * Im Grundzustand steht über den Familien der Kopf „Übungen“ mit der Filterreihe
  * ([ExerciseFilterRow], MUSTER-12, Nutzer 2026-10-23): Filter quer zu den Familien, UND-verknüpft;
- * die Liste bleibt nach Familien gruppiert, Familien ohne Treffer fallen samt Label weg. Die
- * Tagesmuster-Karte steht über dem Kopf und bleibt mit Filter stehen. Die Wahl lebt nur
+ * die Liste bleibt nach Familien gruppiert, Familien ohne Treffer fallen samt Label weg. Die Wahl lebt nur
  * in `rememberSaveable` und bleibt, während ein Anlass, eine Suche oder ein Bereich gewählt ist –
  * die Reihe ist dann ausgeblendet.
  *
@@ -145,6 +134,7 @@ fun HomeScreen(
     var chosen by rememberSaveable { mutableStateOf<Situation?>(null) }
     var chosenArea by rememberSaveable { mutableStateOf<BreathingFamily?>(null) }
     var filters by rememberSaveable { mutableStateOf(emptySet<ExerciseFilter>()) }
+    var dailySheetOpen by rememberSaveable { mutableStateOf(false) }
     val results = remember(queryText, catalog.situations, catalog.areas) { SituationSearch.search(queryText, catalog.situations, catalog.areas) }
     val focusManager = LocalFocusManager.current
     val queryFocus = remember { MutableInteractionSource() }
@@ -219,6 +209,11 @@ fun HomeScreen(
                 )
             }
         }
+        // „Muster des Tages ›“ steht in jedem Zustand an derselben Stelle und öffnet das Blatt mit
+        // Tagesmuster und „Selbst gestalten“ (Nutzer 2026-10-30).
+        item(key = "daily") {
+            DailyPatternEntry(daily = daily, onClick = { dailySheetOpen = true })
+        }
         if (results != null && chosen == null && chosenArea == null) {
             item(key = "search-status") {
                 SearchStatus(situations = results.situations.size, areas = results.areas.size, onShowAll = showAll)
@@ -262,17 +257,6 @@ fun HomeScreen(
                 }
             }
         } else {
-            // Das Tagesmuster steht als Appetithappen über „Übungen“, losgelöst von Familien und
-            // Filterreihe: Es wechselt täglich und gehört zu keiner Gruppe (Nutzer 2026-10-28).
-            item(key = "daily") {
-                DailyPatternCard(
-                    daily = daily,
-                    saved = dailySaved,
-                    onClick = { actions.onSelect(daily.exercise.id) },
-                    onSavedChange = actions.onDailySavedChange,
-                    onRegenerate = actions.onRegenerateDaily,
-                )
-            }
             // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten).
             val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
             // Kopf „Übungen“, Filterreihe und Trefferstatus bzw. das erste Gruppenlabel in einem
@@ -305,6 +289,23 @@ fun HomeScreen(
             }
         }
     }
+    if (dailySheetOpen) {
+        DailyPatternSheet(
+            daily = daily,
+            saved = dailySaved,
+            onOpen = {
+                dailySheetOpen = false
+                actions.onSelect(daily.exercise.id)
+            },
+            onSavedChange = actions.onDailySavedChange,
+            onRegenerate = actions.onRegenerateDaily,
+            onNewPattern = {
+                dailySheetOpen = false
+                actions.onNewPattern()
+            },
+            onDismiss = { dailySheetOpen = false },
+        )
+    }
 }
 
 /**
@@ -312,48 +313,3 @@ fun HomeScreen(
  * GapSmall unsichtbare Tippfläche, sichtbar bleibt so SectionGap.
  */
 private val GROUP_LABEL_BELOW_CHIPS = Dimens.SectionGap - Dimens.GapSmall
-
-/**
- * Karte für das generierte „Muster des Tages“: [PatternCard] mit Kopfzeile in der Karte (Nutzer
- * 2026-10-24, Vorschlag B) – links die Eyebrow „MUSTER DES TAGES“, rechts ↻ „Neu generieren“
- * ([onRegenerate], betrifft das Tagesmuster als Ganzes: „gib mir ein anderes“) und der Atemkreis ◉
- * „In Eigene speichern“ (Speichern ↔ wieder entfernen), beide als Icon-Knöpfe in `onSurface` ·
- * `SECONDARY`, der Atemkreis gespeichert gefüllt in `secondary`. Kein eigener Abschnittskopf mehr über der Karte.
- */
-@Composable
-private fun DailyPatternCard(
-    daily: DailyPattern,
-    saved: Boolean,
-    onClick: () -> Unit,
-    onSavedChange: (Boolean) -> Unit,
-    onRegenerate: () -> Unit,
-) {
-    PatternCard(
-        exercise = daily.exercise,
-        patternLine = PatternTexts.cardLineFor(daily.spec),
-        onClick = onClick,
-        eyebrow = stringResource(R.string.home_daily_pattern),
-        actionCount = 2,
-    ) {
-        Row {
-            AppIconButton(onClick = onRegenerate) {
-                Icon(
-                    Icons.Filled.Refresh,
-                    contentDescription = stringResource(R.string.cd_pattern_regenerate),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
-            }
-            // Gespeicherte Muster erscheinen im Tab „Eigene“ unter „Eigene Kreationen“ – der
-            // Atmen-Tab bleibt schlank. Dasselbe Zeichen wie „Tut mir gut“: ◉ heißt „zu mir“
-            // (Auswertung 2026-10-24, 3.2); gefüllt im Akzent = gespeichert (KOMP-02), erneutes
-            // Tippen nimmt das Muster wieder heraus.
-            AppIconToggle(
-                checked = saved,
-                onCheckedChange = onSavedChange,
-                stateDescription = stringResource(if (saved) R.string.state_saved else R.string.state_not_saved),
-            ) {
-                BreathMarkIcon(filled = saved, contentDescription = stringResource(R.string.cd_pattern_save))
-            }
-        }
-    }
-}

@@ -131,6 +131,12 @@
 
     <!-- Tagesmuster-Karte: Eyebrow in der Kopfzeile der Karte (in Großbuchstaben gesetzt), Charakter, Aktionen. -->
     <string name="home_daily_pattern">Muster des Tages</string>
+    <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Zahlen von heute („4-2-6“), %2$s Charakter („ruhig“). -->
+    <string name="home_daily_teaser">Heute %1$s, %2$s\u00A0· oder selbst gestalten</string>
+    <string name="cd_daily_open">Muster des Tages öffnen</string>
+    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster aus Ein, Halten und Aus – zum Ausprobieren. Gefällt es dir, speicherst du es in „Eigene“.</string>
+    <string name="home_create_title">Selbst gestalten</string>
+    <string name="home_create_intro">Leg fest, wie lange du ein- und ausatmest und hältst. Was du speicherst, findest du in „Eigene“.</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="cd_pattern_regenerate">Muster neu generieren</string>
     <string name="cd_pattern_save">In Eigene speichern</string>
