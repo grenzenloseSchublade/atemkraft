@@ -365,7 +365,7 @@ object BuiltInExercises {
             "Belastungsreiz (Hormese): nur, wenn du dich gesund und ausgeruht fühlst, nie im oder am " +
             "Wasser.",
         instructionHint = "30 tiefe Atemzüge (tief ein, locker durch den Mund aus, nicht ganz leeren) → ausatmen und halten, so lange " +
-            "angenehm → tief einatmen, 15\u00A0s halten\u00A0· 3 Runden\u00A0· nur im Sitzen/Liegen.",
+            "angenehm → tief einatmen, 15\u00A0s halten, loslassen\u00A0· 3 Runden\u00A0· nur im Sitzen/Liegen.",
         cautions = listOf(
             "Nur im Sitzen oder Liegen – nie im/am Wasser, beim Duschen, Fahren, Stehen: Ohnmachtsgefahr.",
             "Leichtes Kribbeln kommt vor. Wird es stark oder kommt Schwindel dazu, sofort aufhören " +
@@ -396,6 +396,9 @@ object BuiltInExercises {
                     ),
                     Phase(PhaseType.INHALE, secs(2.0), note = "tief"),
                     Phase(PhaseType.HOLD_FULL, secs(15.0), note = "voll"),
+                    // Nach dem Erholungsatem wird ausgeatmet, bevor die nächste Runde mit Einatmen
+                    // beginnt – sonst stünde der Kreis dort voll (MOTION-03, S-11).
+                    Phase(PhaseType.EXHALE, secs(2.0), note = "loslassen"),
                 ),
             ),
         ),
