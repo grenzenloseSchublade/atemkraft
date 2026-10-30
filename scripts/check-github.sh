@@ -40,10 +40,13 @@ fi
 API="repos/${REPO}"
 
 # Lesender Aufruf; bricht bei fehlendem Zugriff mit Exit 2 ab statt eine Abweichung zu melden.
+# stderr getrennt: Warnungen von gh dürfen nicht in den geprüften Wert geraten.
+ERR="$(mktemp)"
+trap 'rm -f "${ERR}"' EXIT
 get() {
   local out
-  if ! out="$(gh api --method GET "$@" 2>&1)"; then
-    echo "check-github: gh api $* nicht lesbar: ${out}" >&2
+  if ! out="$(gh api --method GET "$@" 2>"${ERR}")"; then
+    echo "check-github: gh api $* nicht lesbar: $(cat "${ERR}")" >&2
     exit 2
   fi
   printf '%s' "${out}"
@@ -72,11 +75,15 @@ IFS=$'\t' read -r scanning push <<<"${sa}"
 expect "${scanning}" enabled "Secret Scanning (SEC-REPO-02)"
 expect "${push}" enabled "Push Protection (SEC-REPO-02)"
 
-# 204 = an, 404 = aus; beides ist eine gültige Antwort, deshalb ohne get().
-if gh api --method GET "${API}/vulnerability-alerts" >/dev/null 2>&1; then
+# 204 = an, 404 = aus; beides ist eine gültige Antwort, deshalb ohne get(). Jeder andere Fehler
+# (Netz, Rechte, Rate-Limit) heißt „nicht prüfbar“ (Exit 2), nicht „fehlt“.
+if gh api --method GET "${API}/vulnerability-alerts" >/dev/null 2>"${ERR}"; then
   report ok "Dependabot-Alerts (SEC-SUP-03)"
-else
+elif grep -q "HTTP 404" "${ERR}"; then
   report fehlt "Dependabot-Alerts (SEC-SUP-03)"
+else
+  echo "check-github: gh api ${API}/vulnerability-alerts nicht lesbar: $(cat "${ERR}")" >&2
+  exit 2
 fi
 
 # main: alle Regeln, die auf den Branch wirken (auch aus Org-Rulesets), nur aktive.
