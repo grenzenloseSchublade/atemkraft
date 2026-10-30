@@ -32,7 +32,9 @@ import org.robolectric.annotation.Config
 /**
  * MUSTER-06 an beiden Startpfaden mit Sicherheitsdialog: Eine intensive freie Folge im
  * Muster-Editor und eine intensive eingebaute Übung (Wim Hof) auf der Detailseite starten erst
- * nach dem Dialog, nach der Bestätigung direkt.
+ * nach dem Dialog. Die Bestätigung wirkt wie in der App (`acknowledgeSafety` merkt sich nur die
+ * Übung): Mit „Sicherheitshinweis immer zeigen“ (Standard an) kommt der Dialog jedes Mal, erst
+ * ausgeschaltet startet die bestätigte Übung direkt.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
@@ -56,7 +58,7 @@ class PatternEditorSafetyTest {
                         onStart = { exercise, _ -> started += exercise },
                         onOpenLore = {},
                         onBack = {},
-                        onConfirmedSafety = { id -> safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(id)) },
+                        onConfirmedSafety = { id -> safety = safety.copy(acknowledgedIds = safety.acknowledgedIds + id) },
                     ),
                     safety = safety,
                     soundOutput = { SilentPreviewSound },
@@ -73,13 +75,20 @@ class PatternEditorSafetyTest {
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).performClick()
         assertTrue(started.single().caution)
 
-        // Einmal bestätigt, startet es direkt.
+        // Mit „Sicherheitshinweis immer zeigen“ (Standard an) kommt der Dialog wieder.
         play.performClick()
+        assertEquals(1, started.size)
+        compose.onNodeWithText(app.getString(R.string.safety_confirm)).performClick()
         assertEquals(2, started.size)
+
+        // Erst ausgeschaltet startet das bestätigte Muster direkt.
+        compose.runOnIdle { safety = safety.copy(showWarning = false) }
+        play.performClick()
+        assertEquals(3, started.size)
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
     }
 
-    /** MUSTER-06 auf der Detailseite: Wim Hof startet erst nach dem Dialog, danach direkt. */
+    /** MUSTER-06 auf der Detailseite: Wim Hof startet erst nach dem Dialog, ohne „immer zeigen“ danach direkt. */
     @Test
     fun `Wim Hof auf der Detailseite startet erst nach dem Sicherheitsdialog`() {
         val app = RuntimeEnvironment.getApplication()
@@ -95,7 +104,7 @@ class PatternEditorSafetyTest {
                     actions = DetailActions(
                         onIntervalsChange = { _, _, _, _ -> },
                         onIntervalsReset = {},
-                        onConfirmedSafety = { safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(wimHof.id)) },
+                        onConfirmedSafety = { safety = safety.copy(acknowledgedIds = safety.acknowledgedIds + wimHof.id) },
                         onStart = { starts++ },
                         onBack = {},
                     ),
@@ -109,9 +118,16 @@ class PatternEditorSafetyTest {
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).performClick()
         assertEquals(1, starts)
 
-        // Einmal bestätigt, startet es direkt.
+        // Mit „Sicherheitshinweis immer zeigen“ (Standard an) kommt der Dialog wieder.
         start.performClick()
+        assertEquals(1, starts)
+        compose.onNodeWithText(app.getString(R.string.safety_confirm)).performClick()
         assertEquals(2, starts)
+
+        // Erst ausgeschaltet startet die bestätigte Übung direkt.
+        compose.runOnIdle { safety = safety.copy(showWarning = false) }
+        start.performClick()
+        assertEquals(3, starts)
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
     }
 

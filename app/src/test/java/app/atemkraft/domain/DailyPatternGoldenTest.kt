@@ -30,19 +30,20 @@ class DailyPatternGoldenTest {
 
     /**
      * Safety: Jedes Tagesmuster hält die Erzeugungsregeln ein und ist nie intensiv – weder als
-     * Übung ([Exercise.caution], Sicherheitsdialog) noch nach den Schwellen der freien Folge, mit
-     * denen „Selbst gestalten“ es im Editor öffnet ([GeneratedExercises.freePatternOf]). Die
-     * Hashes oben frieren nur ein, was erzeugt wird; das hier sichert zu, dass es harmlos ist.
+     * Übung ([Exercise.caution], Sicherheitsdialog) noch als die freie Folge, mit der „Selbst
+     * gestalten“ es im Editor öffnet ([toFreePattern], Ausgangspunkt von
+     * `PatternEditorState.fromDaily`, samt Rundung und Klemmung). Die Hashes oben frieren nur ein,
+     * was erzeugt wird; das hier sichert zu, dass es harmlos ist.
      */
     @Test
     fun `jedes Tagesmuster haelt die Erzeugungsregeln ein und ist nie intensiv`() {
         val days = (0L until 365L).map { RandomPatternGenerator.forEpochDay(LocalDate.of(2026, 1, 1).plusDays(it).toEpochDay()) }
         val problems = ((0L until 5000L).map { RandomPatternGenerator.forSeed(it) } + days).mapNotNull { daily ->
-            val free = GeneratedExercises.freePatternOf(daily.exercise)
+            val free = daily.spec.toFreePattern()
             when {
                 !daily.spec.withinCreationRules() -> "${canonical(daily.spec)}: außerhalb der Erzeugungsregeln"
                 daily.exercise.caution -> "${canonical(daily.spec)}: caution gesetzt"
-                free == null -> "${canonical(daily.spec)}: nicht als freie Folge zu öffnen"
+                !free.isValid() -> "${canonical(daily.spec)}: keine gültige freie Folge"
                 free.isIntense -> "${canonical(daily.spec)}: intensiv (${free.intensityReasons()})"
                 else -> null
             }
