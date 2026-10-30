@@ -297,24 +297,17 @@ class VoiceModelManager(context: Context) {
                     "Unerwartete Download-Größe ($announced statt ${spec.sizeBytes} Bytes)",
                 )
             }
-            try {
-                conn.inputStream.use { input ->
-                    target.outputStream().use { out ->
-                        copyVerified(
-                            input,
-                            out,
-                            spec.sizeBytes,
-                            spec.sha256,
-                            checkActive = { ctx.ensureActive() },
-                            onBytes = { read ->
-                                onProgress((read.toFloat() / spec.sizeBytes).coerceIn(0f, 0.99f))
-                            },
-                        )
-                    }
-                }
-            } catch (e: Throwable) {
-                target.delete() // nie eine ungeprüfte oder abweichende Datei liegen lassen
-                throw e
+            conn.inputStream.use { input ->
+                copyVerified(
+                    input,
+                    target,
+                    spec.sizeBytes,
+                    spec.sha256,
+                    checkActive = { ctx.ensureActive() },
+                    onBytes = { read ->
+                        onProgress((read.toFloat() / spec.sizeBytes).coerceIn(0f, 0.99f))
+                    },
+                )
             }
         } finally {
             conn.disconnect()
@@ -328,17 +321,34 @@ class VoiceModelManager(context: Context) {
 }
 
 /**
- * Kopiert [input] nach [out] und prüft dabei gestreamt gegen die gepinnten Werte: bricht ab,
- * sobald mehr als [expectedSize] Bytes ankommen; am Ende müssen Größe und SHA-256 exakt passen.
- * Bei Abweichung fliegt eine [VoiceIntegrityException] – das Löschen der Datei macht der Aufrufer.
+ * Kopiert [input] nach [target] und prüft dabei gestreamt gegen die gepinnten Werte (SEC-NET-03):
+ * bricht ab, sobald mehr als [expectedSize] Bytes ankommen; am Ende müssen Größe und SHA-256 exakt
+ * passen. Bei Abweichung fliegt eine [VoiceIntegrityException]; bei jedem Fehler (auch Abbruch)
+ * ist [target] danach gelöscht – nie bleibt eine ungeprüfte oder abweichende Datei liegen.
  */
 internal fun copyVerified(
     input: InputStream,
-    out: OutputStream,
+    target: File,
     expectedSize: Long,
     expectedSha256: String,
     checkActive: () -> Unit = {},
     onBytes: (Long) -> Unit = {},
+) {
+    try {
+        target.outputStream().use { out -> copyVerified(input, out, expectedSize, expectedSha256, checkActive, onBytes) }
+    } catch (e: Throwable) {
+        target.delete()
+        throw e
+    }
+}
+
+private fun copyVerified(
+    input: InputStream,
+    out: OutputStream,
+    expectedSize: Long,
+    expectedSha256: String,
+    checkActive: () -> Unit,
+    onBytes: (Long) -> Unit,
 ) {
     val digest = MessageDigest.getInstance("SHA-256")
     val buf = ByteArray(64 * 1024)
@@ -374,10 +384,11 @@ internal const val MAX_ARCHIVE_ENTRIES = 1_000
 internal const val MAX_ARCHIVE_BYTES = 300L * 1024 * 1024
 
 /**
- * Entpackt ein `.tar.bz2` nach [targetDir]. Schutz: kein Pfad außerhalb von [targetDir]
- * (Zip-Slip), keine Symlinks, Hardlinks oder Gerätedateien, höchstens [maxEntries] Einträge und
- * [maxBytes] entpackte Bytes (gezählt wird, was wirklich geschrieben wird, nicht die Angabe im
- * Tar-Kopf) – sonst wird das Archiv abgelehnt; das Aufräumen macht der Aufrufer.
+ * Entpackt ein `.tar.bz2` in den eigenen Staging-Ordner [targetDir] (SEC-NET-04). Schutz: kein
+ * Pfad außerhalb von [targetDir] (Zip-Slip), keine Symlinks, Hardlinks oder Gerätedateien,
+ * höchstens [maxEntries] Einträge und [maxBytes] entpackte Bytes (gezählt wird, was wirklich
+ * geschrieben wird, nicht die Angabe im Tar-Kopf) – sonst wird das Archiv abgelehnt. Bei jedem
+ * Fehler (auch Abbruch) ist [targetDir] danach samt Inhalt gelöscht, ohne Links zu folgen.
  */
 internal fun extractTarBz2Safely(
     archive: File,
@@ -386,6 +397,15 @@ internal fun extractTarBz2Safely(
     maxEntries: Int = MAX_ARCHIVE_ENTRIES,
     maxBytes: Long = MAX_ARCHIVE_BYTES,
 ) {
+    try {
+        extractInto(archive, targetDir, checkActive, maxEntries, maxBytes)
+    } catch (e: Throwable) {
+        if (targetDir.exists()) deleteTreeWithoutFollowingLinks(targetDir.toPath())
+        throw e
+    }
+}
+
+private fun extractInto(archive: File, targetDir: File, checkActive: () -> Unit, maxEntries: Int, maxBytes: Long) {
     targetDir.mkdirs()
     val canonicalTarget = targetDir.canonicalFile
     var entries = 0
