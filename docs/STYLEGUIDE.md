@@ -37,6 +37,14 @@ Zwölf Sätze, die jeder Beitrag einhält; sie stehen wortgleich in [CLAUDE.md](
 11. **Jede Regel hat eine ID und eine Prüfung;** Altlasten nur in der Baseline mit S-ID, Ausnahmen nur mit Marker. (§0, §13.2)
 12. **Wenige, aussagekräftige Tests** für Daten, Sicherheit und die Gates – kein Test je Befund. (CODE-07)
 
+Leitplanke 1 hat keine eigene Fachregel weiter unten; sie gilt als:
+
+| ID | Stufe | Regel | Warum | Prüfung |
+|---|---|---|---|---|
+| PRIN-01 | MUSS | **Nur dunkel:** ein `darkColorScheme`, kein helles, `DayNight`- oder dynamisches Schema, kein Ordner `values-night*`; `enableEdgeToEdge` nur mit ausdrücklich dunklen Leisten. | Ein Farbsystem, auf dem die Kontrasttabelle (§2.1) beruht. | auto: `dark-only`, `dark-only-dirs` |
+| PRIN-02 | MUSS | **Eine Neon-Fläche je Screen:** höchstens eine gefüllte Fläche in `primary`, `secondary`, `tertiary` oder `Neon*` (die Hauptaktion); alles andere tonal, umrandet oder als Text. Gefüllte Neon-Container setzen nur die Komponenten in `ui/components/`. | Eine Fläche führt den Blick, zwei konkurrieren. | auto: `neon-fill`; manuell: R-VISUAL |
+| PRIN-03 | MUSS | **Nichts schwebt:** kein FAB, Toast oder Snackbar; Bestätigung und Fehler stehen im auslösenden Element (MUSTER-01, -04). Aktionen ohne Text tragen ihren Namen als `contentDescription` am Icon (ICON-02). | Schwebendes verdeckt Inhalt und ist weg, bevor TalkBack es liest. | auto: `no-fab-toast`, `cd-style` |
+
 ## <a id="farbe"></a>2 Farbe
 
 ### 2.1 Tokens ([Color.kt](../app/src/main/java/app/atemkraft/ui/theme/Color.kt), [Theme.kt](../app/src/main/java/app/atemkraft/ui/theme/Theme.kt))
@@ -548,7 +556,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | TEXT-07 | MUSS | Evidenz ehrlich: Schwache Evidenz steht schon im Teaser. **Jede eingebaute Übung trägt genau eine Studienlage** (`EvidenceLevel`, nur auf der Detailseite): „gut belegt“ (Meta-Analyse oder mehrere unabhängige RCTs zur Anwendung), „in Studien geprüft“ (ein RCT oder mehrere kleine Studien, dünn oder nur für eine Gruppe), „kaum untersucht“ (Mechanismus plausibel). Hochstufen nur mit neuer Quelle in `Refs.kt`; Teaser, Detail und Stufe widersprechen sich nicht. Generierte Muster haben keine Studienlage. Kein Filter und kein Karten-Chip nach Studienlage. | Kernversprechen der App; ein Etikett nur für die beste Übung ließ die übrigen offen. | manuell: R-TEXT |
 | TEXT-08 | MUSS | Jeder sicherheitsrelevante Satz aus dem Detail steht auch in `cautions`, als Bedingung → Handlung („Nur im Sitzen oder Liegen – nie im Wasser.“). Keine Therapie-Anweisungen. | Sichtbar ohne Aufklappen. | manuell: R-TEXT |
 | TEXT-09 | – | entfällt → SEC-LEGAL-01 ([SECURITY.md](SECURITY.md#recht)): keine Heil-, Therapie- oder Präventionsversprechen in App, README, Store, Release-Notes, PRIVACY; Wortliste `config/health-claims.txt`, Ausnahmen `config/health-claims.allow`, keine Baseline. | Eine Regel, eine ID. | auto: `ContentRulesTest health-claims` |
-| TEXT-10 | MUSS | Zeichen: nur „…“ und ‚…‘, Apostroph ’, nie ASCII-`"` oder `”`; Gedankenstrich –, Minus −, Auslassung …; Dezimalkomma; Einheit mit geschütztem Leerzeichen (`4 s`, `93 %`, `n = 40`) – auch in README, Store, Release-Notes und PRIVACY; „ca.“ statt „~“; Trennpunkt „ · “ nur über `DOT_SEPARATOR`/`splitAtDots()`: keine Zeile beginnt oder endet mit „·“. | Deutsche Typografie; Zeichen gehen im Build sonst verloren. | auto: `typo-chars`, `ContentRulesTest typography` (`quotes`, `decimal-comma`, `dot-separator`, `number-unit`), `ScreenshotTest` (`badBreakAt`) |
+| TEXT-10 | MUSS | Zeichen: nur „…“ und ‚…‘, Apostroph ’, nie ASCII-`"` oder `”`; Gedankenstrich –, Minus −, Auslassung …; Dezimalkomma; Einheit mit geschütztem Leerzeichen (`4 s`, `93 %`, `n = 40`) – auch in README, Store, Release-Notes und PRIVACY; „ca.“ statt „~“; Trennpunkt „ · “ nur über `DOT_SEPARATOR`/`splitAtDots()`: keine Zeile beginnt oder endet mit „·“. | Deutsche Typografie; Zeichen gehen im Build sonst verloren. | auto: `typo-chars-strings`, `-src`, `-content`, `ContentRulesTest typography` (`quotes`, `decimal-comma`, `dot-separator`, `number-unit`), `ScreenshotTest` (`badBreakAt`) |
 | TEXT-11 | MUSS | Store-Texte (`fastlane/metadata/android/de-DE/`): `title` ≤ 30, `short_description` ≤ 80, `full_description` ≤ 4000, `changelogs/<versionCode>.txt` ≤ 500 Zeichen; sie folgen TEXT-04, -07, §11.1 und SEC-LEGAL-01/-02 (Disclaimer wörtlich). Changelog: Nutzen in Laiensprache, eine Zeile pro Änderung, keine IDs, keine Superlative. | Store-Grenzen und -Policy. | auto: `ContentRulesTest store-lengths`, `health-claims`; manuell: R-STORE |
 | TEXT-12 | MUSS | Jede genannte Studie steht in [Refs.kt](../app/src/main/java/app/atemkraft/data/Refs.kt): `Nachname I. et al. (Jahr): Originaltitel. Journal Band(Heft):Seiten. <deutsche Einordnung>.`, Kennung `doi:10.… · PMID n`. Im Text „(Name Jahr)“. Jede Referenz wird genutzt. | Nachprüfbarkeit. | manuell: R-TEXT |
 | TEXT-13 | MUSS | Yoga-Lehre steht getrennt von der Studienlage: Abschnitt „Aus der Yoga-Lehre“ auf der Detailseite (Übungen yogischen Ursprungs, generierte Muster) und die Seiten „Atemlehre“ und „Pranayama“; immer zuschreibend („gilt in der Yoga-Lehre als …“), nie als Wirkung; Verse deutsch zitiert; Teaser nach TEXT-06, Studien nach TEXT-12. Aufbau: [spec/lernen.md](spec/lernen.md). | Tradition darf erklären, aber nicht wie Evidenz aussehen. | auto: `ContentRulesTest teaser` (`lore-teaser`), `health-claims`; manuell: R-TEXT |
@@ -604,7 +612,7 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 
 ## <a id="automatische-pruefung"></a>13 Automatische Prüfung
 
-Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über eine Baseline mit S-ID eingefroren. Die Sicherheitsschritte und ihren Ist-Stand führt allein [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung); hier steht nur ihre Stelle im Ablauf.
+Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über eine Baseline mit S-ID eingefroren. Die `sec-*`-Checks stehen mit allen anderen in der erzeugten Tabelle §13.3; die Sicherheitsprüfungen außerhalb von `check_style.py` (`verify-apk`, `release-verify`, `check-github`) führt [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung).
 
 ### 13.1 Ablauf
 
@@ -639,9 +647,9 @@ Erzeugt aus `scripts/check-style.sh --list` (`check-table` meldet Abweichungen; 
 | `layout-literal` | LAYOUT-01 | src/*.kt ohne src/ui/theme/* | MUSS |
 | `weight-nofill` | LAYOUT-03 | src/ui/*.kt | MUSS |
 | `m3-size-const` | LAYOUT-04 | src/*.kt ohne src/ui/theme/* | MUSS |
-| `control-scale` | LAYOUT-06 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/theme/* | MUSS |
-| `touch-order` | LAYOUT-06 | src/ui/*.kt | MUSS |
-| `control-direct` | KOMP-04 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/components/* | MUSS |
+| `control-scale` | LAYOUT-04 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/theme/* | MUSS |
+| `touch-order` | LAYOUT-04 | src/ui/*.kt | MUSS |
+| `control-direct` | LAYOUT-04 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/components/* | MUSS |
 | `platform-override` | LAYOUT-03 | src/*.kt, app/src/main/AndroidManifest.xml | MUSS |
 | `dark-only` | PRIN-01 | src/*.kt, res/*.xml | MUSS |
 | `dark-only-dirs` | PRIN-01 | `res/values-night*/` | MUSS |
