@@ -725,9 +725,10 @@ CHECKS: list[Check] = [
     Check("sheet-direct", "MUSTER-11", [SRC + "ui/*.kt"], [r"(?<![\w.])ModalBottomSheet\(", r"(?<![\w.])rememberModalBottomSheetState\("],
           exclude=[SRC + "ui/components/AppBottomSheet.kt"], skip_imports=True),
     Check("catalog-sync", "KOMP-01", [SRC + "ui/components/*.kt"], custom=catalog_sync, fixture=catalog_fixture),
-    # Doku-Lint (§0): Regelzellen bleiben kurz; Spezifikation und Historie wandern aus.
+    # Doku-Lint (§0): Regelzellen (dritte Spalte jeder Zeile mit ID) höchstens 400 Zeichen; Spezifikation und
+    # Historie wandern aus. Ein maskiertes `\|` gehört zur Zelle und beendet den Treffer nicht.
     Check("rule-length", "§0", ["docs/STYLEGUIDE.md", "docs/SECURITY.md", "docs/PROCESS.md"],
-          [r"^\| [A-Z][A-Z0-9]*(?:-[A-Z]+)?-\d+ \| [^|]+ \| [^|]{601,} \|"], skip_comments=False),
+          [r"^\| [A-Z][A-Z0-9]*(?:-[A-Z]+)?-\d+ \| [^|]+ \| (?:[^|\\]|\\.){401,} \|"], skip_comments=False),
     Check("check-table", "§13.3", [], custom=check_table, fixture=check_table_fixture, scope="`docs/STYLEGUIDE.md`"),
     Check("version-sync", "PROZ-05", [], custom=version_sync, fixture=version_fixture,
           scope="`app/build.gradle.kts`, Stand-Zeilen, `docs/release-notes/`, `fastlane/…/changelogs/`"),

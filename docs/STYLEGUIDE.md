@@ -7,7 +7,7 @@ Normativer Design-, Text- und Code-Leitfaden für Maintainer und Claude: Jede Re
 ## <a id="geltung"></a>0 Geltung
 
 - **Pfade:** `src/` = `app/src/main/java/app/atemkraft/`, `res/` = `app/src/main/res/`.
-- **Regelformat:** `ID | Stufe | Regel | Warum | Prüfung`. Eine Regelzelle sagt in höchstens 400 Zeichen, *was gilt* (Doku-Lint `rule-length` ab 600 Zeichen); die Spalte Warum gibt den Grund in einem Halbsatz. Spezifikation gehört nach `docs/spec/` oder in die KDoc, Historie und Nutzerentscheidungen nach [DECISIONS.md](DECISIONS.md), Offenes in den [Backlog](#backlog).
+- **Regelformat:** `ID | Stufe | Regel | Warum | Prüfung`. Eine Regelzelle sagt in höchstens 400 Zeichen, *was gilt* (Doku-Lint `rule-length` prüft die dritte Spalte jeder Zeile mit ID, auch im Backlog); die Spalte Warum gibt den Grund in einem Halbsatz (Richtwert 120 Zeichen, ungeprüft). Spezifikation gehört nach `docs/spec/` oder in die KDoc, Historie und Nutzerentscheidungen nach [DECISIONS.md](DECISIONS.md), Offenes in den [Backlog](#backlog).
 - **IDs** sind stabil und werden nie neu vergeben; eine gestrichene oder verschobene Regel bleibt als „entfällt → Ziel“ stehen.
 - **Prüfung:** `auto: <check>` verweist auf §13.3, `manuell: R-…` auf eine Checkliste in §13.4.
 - **Qualitätsmerkmale:** Welche Regel welchem Merkmal nach ISO/IEC 25010:2023 dient, wie es geprüft wird und wo es dünn ist, zeigt [PROCESS.md, Qualitätsmerkmale](PROCESS.md#iso25010); vor jedem Release läuft der Kurzcheck (PROZ-09).
@@ -826,7 +826,7 @@ Kleinere Punkte ohne ID (Gong-Import auf wählbare Werte, `withinCreationRules` 
 | ID | Regel | Befund (Ort) | Aufwand |
 |---|---|---|---|
 | S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) wird genutzt: „Mehr zum Dauerton“ in den Einstellungen und `settings_sound_hint` nennen RESPeRATE. Entscheidung offen: als Quelle des Prinzips behalten oder samt Satz streichen | S |
-| S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review 2026-10-24): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (`ExerciseDetailScreen`, `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
+| S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (S-55, dazu `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
 | S-62 | MUSTER-09 | nur auf Zuruf: Embeddings für die Befindens-Suche (erst bei Hunderten freier Inhalte sinnvoll) | L |
 | S-42 | §4.5 | Rest: `LogEntryCard` ist eine Listenzeile (Familienpunkt vorn, `titleSmall`, Dauer-Spalte) ohne passende Slots in `CardHeader`; erst mit einem Zeilen-Baustein überführen | S |
 
