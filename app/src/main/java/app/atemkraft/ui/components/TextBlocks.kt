@@ -8,13 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -134,8 +133,7 @@ private const val BULLET_GLYPH = "•"
  * Für TalkBack unsichtbar. Nicht `clearAndSetSemantics`, damit das Text-Layout für die Umbruch-
  * und Zuschnittprüfung im Screenshot-Test sichtbar bleibt.
  */
-@OptIn(ExperimentalComposeUiApi::class)
-private val DecorativeGlyph = Modifier.semantics { invisibleToUser() }
+private val DecorativeGlyph = Modifier.semantics { hideFromAccessibility() }
 
 /**
  * Höhe der ersten Textzeile in [style], gemessen mit der aktuellen Schrift – für Marken, Punkte

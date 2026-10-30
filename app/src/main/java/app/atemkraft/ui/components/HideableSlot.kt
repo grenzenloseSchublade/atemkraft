@@ -10,10 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusEventModifierNode
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.graphicsLayer
@@ -67,10 +65,9 @@ fun HideableSlot(
  * nicht – das regelt der Aufrufer: [HideableSlot] blendet aus, MainActivity legt das
  * Session-Overlay über die App (A11Y-07, MUSTER-07).
  */
-@OptIn(ExperimentalComposeUiApi::class)
 fun Modifier.inertWhen(hidden: Boolean): Modifier = this
     .then(if (hidden) Modifier.clearAndSetSemantics {} else Modifier) // Abweichung A11Y-02: ausgeblendet ist bewusst ohne Semantik und Fokus (Ruhe-Ansicht)
-    .focusProperties { if (hidden) enter = { FocusRequester.Cancel } }
+    .focusProperties { if (hidden) onEnter = { cancelFocusChange() } }
     .then(ReleaseFocusElement(hidden))
     .focusGroup()
 

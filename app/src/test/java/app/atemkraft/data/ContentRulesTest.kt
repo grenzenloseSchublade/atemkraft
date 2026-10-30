@@ -436,7 +436,7 @@ class ContentRulesTest {
         val metadata = repoFile("fastlane/metadata/android")
         val texts = metadata.walkTopDown().filter { it.isFile && it.extension == "txt" }.toList()
         val tooLong = texts.mapNotNull { f ->
-            val limit = if (f.parentFile.name == "changelogs") 500 else limits[f.name] ?: return@mapNotNull null
+            val limit = if (f.parentFile?.name == "changelogs") 500 else limits[f.name] ?: return@mapNotNull null
             val text = f.readText().trimEnd()
             val length = text.codePointCount(0, text.length)
             if (length > limit) "${f.relativeTo(metadata).path}: $length von höchstens $limit Zeichen" else null

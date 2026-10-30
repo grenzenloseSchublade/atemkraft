@@ -18,13 +18,12 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRowScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
@@ -172,8 +171,7 @@ private fun Modifier.withoutIconReserve(): Modifier = layout { measurable, const
  * TalkBack liest denselben Text als Namen der Gruppe direkt darunter. Nicht `clearAndSetSemantics`,
  * damit das Text-Layout für die Umbruch- und Zuschnittprüfung im Screenshot-Test sichtbar bleibt.
  */
-@OptIn(ExperimentalComposeUiApi::class)
-fun Modifier.choiceGroupHeading(): Modifier = semantics { invisibleToUser() }
+fun Modifier.choiceGroupHeading(): Modifier = semantics { hideFromAccessibility() }
 
 /** Darstellung je nach Platz, vom vollständigsten zum sparsamsten. */
 private enum class ChoiceMode { SEGMENTS, SEGMENTS_SMALLER, RADIO_LIST }

@@ -61,7 +61,7 @@ class PatternTransferService(
         val logAdded = logbook.merge(decoded.logbook)
         settings.addMarkedExercises(decoded.marked)
         val settingsApplied = withSettings && decoded.settings != null
-        if (settingsApplied) decoded.settings?.let { settings.importSettings(it) }
+        if (settingsApplied) settings.importSettings(decoded.settings)
         return ApplyResult(
             added = patterns.added + logAdded,
             duplicates = patterns.duplicates + decoded.logbook.size - logAdded,

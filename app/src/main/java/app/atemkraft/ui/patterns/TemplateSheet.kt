@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
@@ -65,7 +65,7 @@ internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDism
     // schließen lässt sich das Sheet per Zurück, Tipp daneben oder nach unten Ziehen.
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, dragHandle = null) {
         // Griff stumm für TalkBack: ohne Aktion nur ein leerer Stopp (A11Y-06).
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { BottomSheetDefaults.DragHandle(Modifier.semantics { invisibleToUser() }) }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() }) }
         Column(
             modifier = Modifier
                 .fillMaxWidth()

@@ -26,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -38,7 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -111,7 +110,6 @@ internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> U
  * bekommt die Restbreite. Antippen des ganzen Titels benennt um ([onRename]); TalkBack: „Name: …,
  * umbenennen“ als Überschrift, der Stift ist dekorativ.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
     val name = state.savedName
@@ -130,7 +128,7 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
     ) {
         // Für TalkBack unsichtbar (der Titel sagt „Name: …, umbenennen“); nicht clearAndSetSemantics,
         // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
-        Column(Modifier.weight(1f).semantics { invisibleToUser() }) {
+        Column(Modifier.weight(1f).semantics { hideFromAccessibility() }) {
             NameWithPencil(name)
             Text(
                 text = stringResource(R.string.pattern_editor_title),

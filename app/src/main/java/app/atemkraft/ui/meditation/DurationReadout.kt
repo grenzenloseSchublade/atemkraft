@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
@@ -35,7 +34,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -230,8 +229,7 @@ internal fun DurationReadout(
  * Nicht `clearAndSetSemantics`, damit die Text-Layouts für die Umbruch- und Zuschnittprüfung im
  * Screenshot-Test sichtbar bleiben.
  */
-@OptIn(ExperimentalComposeUiApi::class)
-private val SpokenByToggle = Modifier.semantics { invisibleToUser() }
+private val SpokenByToggle = Modifier.semantics { hideFromAccessibility() }
 
 /**
  * Halbe Maße der [DurationReadout] in px: [textHalfWidth]/[textHalfHeight] für Zahl + Einheit,

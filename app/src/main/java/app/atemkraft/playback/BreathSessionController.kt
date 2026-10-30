@@ -427,7 +427,7 @@ class BreathSessionController(
         _state.update {
             it.copy(
                 status = SessionStatus.FINISHED,
-                feelingOptions = if (entry != null && exercise != null) Feeling.scaleFor(exercise.family, exercise.activating) else emptyList(),
+                feelingOptions = if (entry != null) Feeling.scaleFor(exercise.family, exercise.activating) else emptyList(),
                 phaseType = null,
                 remainingMs = 0L,
                 elapsedMs = 0L,

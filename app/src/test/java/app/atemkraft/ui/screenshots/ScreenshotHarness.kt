@@ -27,7 +27,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.text.TextLayoutResult
@@ -144,6 +144,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         private val referenceOptions by lazy { RoborazziOptions(recordOptions = RoborazziOptions.RecordOptions(resizeScale = 0.5)) }
 
         /** Alle anderen Bilder nur beim Aufnehmen schreiben, nie vergleichen (keine Referenz im Repo). */
+        @OptIn(ExperimentalRoborazziApi::class)
         private val gateOptions by lazy {
             RoborazziOptions(taskType = if (roborazziSystemPropertyTaskType().isRecording()) RoborazziTaskType.Record else RoborazziTaskType.None)
         }

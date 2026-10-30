@@ -22,7 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
@@ -88,7 +88,7 @@ internal fun DailyPatternSheet(
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, dragHandle = null) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             // Stumm für TalkBack wie im SoundSheet (A11Y-05, -06).
-            BottomSheetDefaults.DragHandle(Modifier.semantics { invisibleToUser() })
+            BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() })
         }
         Column(
             modifier = Modifier
