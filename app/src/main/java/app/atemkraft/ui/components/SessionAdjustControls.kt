@@ -86,10 +86,12 @@ fun SessionAdjustControls(
                 text = stringResource(R.string.adjust_intervals),
                 expanded = intervalsExpanded,
                 onToggle = onToggleIntervals,
-                // „· angepasst“ als Status des Aufklappers (Anatomie „Titel · Status“), sein Platz
-                // bleibt reserviert: Erscheint er beim Zuklappen, springt nichts (S-17).
-                note = stringResource(R.string.adjust_modified).asDotSuffix(),
-                noteVisible = !intervalsExpanded && intervalsModified,
+                // „· angepasst“ als Status des Aufklappers (Anatomie „Titel · Status“), nur zugeklappt
+                // und nach einer Änderung. Ohne Platzhalter: Zugeklappt ändert sich der Zustand nicht
+                // (die Phasen-Stepper sind zu, der Reset liegt hinter dem Blatt), aufgeklappt steht er
+                // nie. Eine Reserve hielte nur Platz, bei Schrift 2,0 eine leere Zeile unter dem
+                // Aufklapper; der einzige Wechsel ist das Zuklappen selbst, da ändert sich das Blatt ohnehin.
+                note = stringResource(R.string.adjust_modified).asDotSuffix().takeIf { !intervalsExpanded && intervalsModified },
             )
             // Nur der Inhalt animiert seine Höhe (wie CollapsibleSection), der Aufklapper darüber
             // bleibt stehen; das Blatt wächst und schrumpft weich statt zu springen (S-34).
