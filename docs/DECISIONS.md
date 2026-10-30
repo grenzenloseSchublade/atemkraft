@@ -6,6 +6,7 @@ Datierte Entscheidungen des Eigentümers und Befunde, die eine Regel geprägt ha
 
 | Datum | Entscheidung | Grund | IDs |
 |---|---|---|---|
+| 2026-10-30 | **Dauerton bleibt bei 528/396 Hz; Anruf schweigt nur den Ton:** Die Frequenzen (aus dem Solfeggio-Umfeld) bleiben, kein Text nennt sie oder verspricht etwas mit ihnen. Bei Verlust des Audio-Fokus (Anruf, andere App) schweigen Ton, Dauerton, Gong und Stimme; Ablauf und Vibration laufen weiter. | Eigentümer: Frequenzen lassen. Ohne Wirkungsbehauptung ist der Ton nur ein Klang. Den Ablauf bei Fokusverlust nicht zu ändern hält die Session vorhersagbar; automatisches Pausieren wäre die Alternative. | AUDIO-01, -02, -04, S-19 |
 | 2026-10-28 | **Tagesmuster als Appetithappen oben:** Die Tagesmuster-Karte steht im Atmen-Tab zwischen den Anlass-Chips und dem Kopf „Übungen“, losgelöst von Familien und Filterreihe; sie bleibt mit Filter stehen und tritt nur bei Anlass, Suche oder Bereich zurück. Löst „Tagesmuster hinter ‚Beruhigen‘“ vom 2026-10-24 ab. | Eigentümer: „soll als Appetithappen prominent sein und losgelöst von den Kategorien. Es ändert sich ja immer.“ Hinter zehn Karten fand es niemand. Die Sorge der Auswertung (Erstnutzer sehen ein Muster ohne Zweck zuerst) trägt die Willkommenskarte darüber. | MUSTER-12, [spec/atmen-tab.md](spec/atmen-tab.md) |
 | 2026-10-25 | **Kein weiterer Lesetext im Tab „Lernen“:** Die Kapitel „Geschichte des Atmens“ und „Körper“ samt ihren Begriffen und Studien sind vor der Veröffentlichung wieder entfernt; „Lernen“ bleibt bei vier Kapiteln. Neue Arbeit geht in das Üben selbst und in das, was Atemkraft von anderen Apps unterscheidet. | Eigentümer: „Wir konzentrieren uns auf die App und deren Einzigartigkeit, nicht auf mehr Text.“ Die Kapitel kamen dazu, ohne dass sich an der App sichtbar etwas verbesserte. | TEXT-13 |
 | 2026-10-24 | **Sicherung „alles“ in einer Datei:** Der Muster-Export wird zur Sicherung mit Kreationen, Logbuch samt Befinden, „Tut mir gut“ und Einstellungen ohne Gerätespezifisches (Format `atemkraft-muster` Version 2, alte Dateien weiter lesbar). Import mit Vorschau; zusammenführen statt ersetzen (Kreationen und Logbuch ohne Dubletten, Markierungen dazu), Einstellungen nur mit dem Schalter „Einstellungen ersetzen“. Nicht in der Datei: Stimme, Erinnerung, bestätigte Sicherheitshinweise. | Auswertung B: Heute geht das Logbuch bei einer Deinstallation verloren; ohne Cloud ist die Datei der einzige sichere Weg. Zusammenführen kann nichts verlieren, Ersetzen schon; Einstellungen ungefragt zu überschreiben überraschte. Die Erinnerung braucht auf dem neuen Gerät die Erlaubnis für Benachrichtigungen, ein Sicherheitshinweis soll dort wieder erscheinen. | SEC-STORE-02, SEC-PRIV-04, [spec/einstellungen.md](spec/einstellungen.md) |
@@ -53,6 +54,21 @@ Datierte Entscheidungen des Eigentümers und Befunde, die eine Regel geprägt ha
 
 | ID | Erledigt | Was |
 |---|---|---|
+| A-12, S-07 | 2026-10-30 | 24 Referenzbilder (Tabs, laufende Atemübung und Meditation; A54 hoch/quer, Tablet hoch/quer) in `app/src/test/screenshots/`, `check.sh` ruft `verifyRoborazziDebug`; neu aufnehmen: `rm -rf app/src/test/screenshots && scripts/build.sh recordRoborazziDebug`. |
+| A-13 | 2026-10-30 | `scripts/check-github.sh` (nur lesend) und `scripts/verify-release-body.sh` im `release-verify`: Version, versionCode = Elter + 1, Notes und Changelog, Heilversprechen, SHA-256 und Fingerprint im Body. |
+| S-03 | 2026-10-30 | Phasenwort auf der Kreismitte bleibt bei 3,31 (großer Text, ≥ 3 erfüllt); Eigentümer: lassen. |
+| S-11 | 2026-10-30 | Wim Hof: nach „Halten voll“ 2 s Ausatmen „loslassen“, Runde 2 und 3 beginnen mit leerem Kreis. |
+| S-12 | 2026-10-30 | Audio-Fokus nur, wenn etwas klingt, mit Listener (bei Verlust schweigt der Ton, Ablauf und Haptik laufen weiter); eine Reserve 500 ms; Gong-Vorhören mit Fokus (`GongPreview`). |
+| S-15 | 2026-10-30 | Wochenpunkte ≥ 3:1 (`ALPHA_HEAT_LOW` 0,70, `MID` 0,85), Tag ohne Übung als Ring; „Heute“ stand schon in der Beschreibung. |
+| S-16 | 2026-10-30 | Stimmen-Zeile: Untertitel als eine Live-Region ohne Prozent; Fokus springt beim Laden, Abbrechen und Löschen auf den Nachfolger. |
+| S-17, S-34 | 2026-10-30 | „· angepasst“ über `TitleWithStatus` mit Reserve; `SessionAdjustCard` mit `animateContentSize(Motion.Disclosure)`; drei Fehlertexte mit nächstem Schritt. |
+| S-21 | 2026-10-30 | Neun Detailtexte auf ≤ 700 Zeichen gekürzt (Doppeltes zu Teaser und Anleitung gestrichen, Sicherheit und Belege bleiben). |
+| S-22 | 2026-10-30 | „Halten voll“/„Halten leer“ als Phasennamen, „Halten“ für Stepper und Stufenpause; Tagesmuster-Texte bleiben bytegleich, nur die Musterzeile der Karte unterscheidet. |
+| S-24 | 2026-10-30 | Gespeichertes Tagesmuster an Herkunft „daily“ und gleichen Zahlen erkannt statt am Namen; ohne Migration (Room 6). |
+| S-27 | 2026-10-30 | Bilanz am Ende gesprochen als „6 Minuten 24 Sekunden“ (`SummaryPart`). |
+| S-28 | 2026-10-30 | `localeFilters` und `localeConfig` nur `de`; `AppLocale` im Logbuch. |
+| S-29 | 2026-10-30 | Rest-Literale als Tokens (`ContentMaxWidth`, `SessionCircle*`, `PauseFlashSize`, `FamilyDot`, `ALPHA_CIRCLE_EDGE`, `Motion.AmbientShimmer`/`Disclosure`/`Reveal`); Baseline leer. |
+| S-30 | 2026-10-30 | Logbuch nimmt `colorScheme.secondary`; KDoc Dauerton Quinte G3→D4, Gong 400 ms. Launcher-Grund bleibt #1A0B2E (Abweichung FARBE-01, das Symbol bleibt). |
 | S-02 | 2026-10-03 | Rest-Ordner `values-night/` gelöscht; `dark-only-dirs` prüft das. |
 | S-11 (Großteil) | 2026-10-24 | Kreis und Dauerton stetig über die Phasengrenzen: `CircleFractions` setzt je Phase Start und Ende (Vorbereitung am Start der ersten Phase; Einatmen vor dem Nachatmen und Ausatmen vor „ganz“ enden vor dem Anschlag; Pause gleitet zur Mitte). Rest im Backlog (Wim Hof, Daten). |
 | S-36 | 2026-10-24 | Dauerton blendet in 60 ms statt 15 ms ein und aus (`GAIN_FADE_SECONDS`), Ausklang vor dem Thread-Ende 180 ms. |

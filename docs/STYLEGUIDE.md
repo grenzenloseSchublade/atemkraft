@@ -692,8 +692,6 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 
 | ID | Aufgabe | Aufwand |
 |---|---|---|
-| A-13 | Rest der Sicherheitsschritte nach SECURITY: `scripts/check-github.sh` (`gh api`: PVR, Secret Scanning, Push Protection, Rulesets) und die Release-Body-Prüfung in `release-verify` (SHA-256, Fingerprint, Heilversprechen, Changelog, `versionCode` = Vorgänger + 1) | M |
-| A-12 | Referenzbilder im Repo und `verifyRoborazziDebug` im CI, damit rein optische Änderungen auffallen; Tablet und Querformat der Tabs in die Matrix | S |
 | A-14 | Check `icon-size` (ICON-01, LAYOUT-04): `Icon(` ohne Größen-Token außerhalb von `AppIconButton`; regulär nicht ohne Fehlalarm, erst mit Parser | S |
 | A-10 | später: Compose-UI-Semantiktests (`isHeading`, `hasClickAction`, `enableAccessibilityChecks()`) | L |
 
@@ -701,27 +699,11 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 
 | ID | Regel | Befund (Ort) | Aufwand |
 |---|---|---|---|
-| S-03 | FARBE-03 | Phase auf Kreiszentrum 3,31 (großer Text, ≥ 3); Option Zentrum #A82F80 (Phase 4,55) | S |
-| S-07 | LAYOUT-03 | Ungeprüft: Tablet und Querformat der Tabs (A-12). Bei fontScale 2,0 auf 360 dp stehen im Logbuch Dauer und Runden mit Einzug unter dem Namen – unschön, nicht falsch | S |
-| S-11 | MOTION-03 | Rest: Wim Hof beginnt Runde 2 und 3 mit Einatmen direkt nach Halten voll – der Kreis steht dann 1,5 s voll, weil der Ablauf dazwischen kein Ausatmen hat (Daten, nicht Anzeige) | S |
-| S-12 | AUDIO-02 | Fokus trotz Stumm; kein Fokus-Listener; Reserve 300 vs. 500 ms; Cue-Thread blockiert 480 ms; Gong-Vorhören ohne Fokus | M |
-| S-15 | FARBE-03, -05 | WeekRow-Punkte α 0,12 / 0,4 nur 1,40 / 1,85; Heute-Ring nicht in der Semantik; Familie nur über Randfarbe/Log-Punkt | S |
-| S-16 | A11Y-04, -07 | Download-Status nicht angesagt; Fokusverlust beim Löschen | M |
-| S-17 | MUSTER-01 | „· angepasst“ als loses Geschwister in der Titelzeile der `SessionAdjustCard` | S |
 | S-18 | FARBE-04, -06 | drei Pinktöne ΔE < 25 (Entscheidung: `SessionButtonPink` aus `error` oder `EvidenceCaution` Richtung Koralle); `SecondaryContainer` 1,18 auf Card (Option #5A4890) | S |
-| S-19 | AUDIO-01, -04 | 528/396 Hz sind Solfeggio-Frequenzen; Dauerton-Glide startet nach Fortsetzen bei f0 | M |
-| S-21 | TEXT-06 | Detail > 700 Zeichen (SOLL): Resonanz 722, Cyclic Sighing 778, 4-7-8 707, Zwerchfell 752, Wim Hof 876, Buteyko 787 | M |
-| S-22 | TEXT-02 | `phase_hold_full` = `phase_hold_empty` (Notizen „voll“/„leer“ unterscheiden, auch im Tagesmuster) | S |
-| S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) ungenutzt | S |
-| S-24 | CODE-05 | Logik hängt an „Tagesmuster“ (Namensvergleich in `SavedPatternsRepository`, gespeicherte Daten, braucht Migration) | S |
+| S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) wird genutzt: „Mehr zum Dauerton“ in den Einstellungen und `settings_sound_hint` nennen RESPeRATE. Entscheidung offen: als Quelle des Prinzips behalten oder samt Satz streichen | S |
 | S-25 | KOMP-01 | About-Titel `headlineLarge` in `primary` | S |
-| S-27 | A11Y-06 | Bilanz am Sitzungsende noch „6:24 min“ gesprochen | S |
-| S-28 | TEXT-03 | Keine `localeFilters`/`localeConfig`; `Locale.GERMAN` in `LogbookScreen` statt `AppLocale` (Baseline `locale`, `locale-config`) | S |
-| S-29 | LAYOUT-01, FARBE-02, MOTION-04 | Rest-Literale (Baseline `layout-literal`, `alpha-literal`, `motion-literal`): `PauseFlashSize` 150, `ContentMaxWidth` 600, `DotSmall`/`DotLarge` 10/18, Kreis-Anteile 0,9/0,62, `MIN_SIDE` 96 in `SessionRunningLayout`, Shimmer `tween(8000)`, Kreis-Alpha 0,72; `Disclosure`/`Reveal`/`AmbientShimmer` als Motion-Tokens | L |
-| S-30 | FARBE-01, -06 | `NeonCyan` direkt in `LogbookScreen` (Baseline `color-source`); KDoc-Drift (Dauerton „Quarte“ statt Quinte, „150 ms“); Launcher #1A0B2E nicht aus der Palette | S |
 | S-32 | CODE-04, -06 | Komponenten ohne `modifier`; 0 Previews bei mehreren Komponenten; 67 Kommentarzeilen mit ASCII-Schlusszeichen | M |
 | S-33 | ICON-02, TYPO-01 | cd 5× per `semantics` am Button; Gewichtswechsel in der NavigationBar | S |
-| S-34 | MUSTER-03, -04 | `SessionAdjustCard` springt ohne `animateContentSize`; Fehlertexte ohne nächsten Schritt | S |
 | S-37 | LAYOUT-04, TYPO-02 | `NavigationBar` folgt der Schrift nicht (Höhe 80, Indikator 64 × 32 fest in M3 1.3.1); Label 9,9 sp am A54 eher zu klein. Entscheidung offen: eigene Leiste oder größere Label-Rolle | M |
 | S-38 | LAYOUT-03 | „Atmen → Ton“ fällt auf dem A54 (1,1) trotz kleinerer Segmente auf die Radioliste zurück | S |
 | S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review 2026-10-24): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (`ExerciseDetailScreen`, `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
