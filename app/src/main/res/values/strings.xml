@@ -131,8 +131,8 @@
 
     <!-- Titel der Kopfzeile „Muster des Tages ›“ im Atmen-Tab und ihres Blatts. -->
     <string name="home_daily_pattern">Muster des Tages</string>
-    <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Zahlen von heute („4-2-6“), %2$s Charakter („ruhig“). -->
-    <string name="home_daily_teaser">Heute %1$s, %2$s\u00A0· oder selbst gestalten</string>
+    <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Charakter von heute („ruhig“); Ziffern erst im Blatt. -->
+    <string name="home_daily_teaser">Heute %1$s\u00A0· oder selbst gestalten</string>
     <string name="cd_daily_open">Muster des Tages öffnen</string>
     <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster aus Ein, Halten und Aus – zum Ausprobieren. Gefällt es dir, speicherst du es in „Eigene“.</string>
     <string name="home_create_title">Selbst gestalten</string>

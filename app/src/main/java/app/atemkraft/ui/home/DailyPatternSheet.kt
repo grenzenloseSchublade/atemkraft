@@ -20,6 +20,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.isTraversalGroup
@@ -41,8 +42,10 @@ import app.atemkraft.ui.theme.SECONDARY
 
 /**
  * Kopfzeile „Muster des Tages“ im Atmen-Tab (Nutzer 2026-10-30): ein Abschnittskopf mit Chevron
- * wie „Klang & Stimme“ in der Meditation (`SectionHeader` mit `onClick`, MUSTER-11). Der Teaser
- * nennt die Zahlen von heute und den Weg zum Selbstgestalten; die ganze Zeile öffnet das
+ * wie „Klang & Stimme“ in der Meditation (`SectionHeader` mit `onClick`, MUSTER-11), davor die
+ * Atemkurve in `secondary` als Zeichen des Einstiegs. Der Teaser nennt den Charakter von heute und
+ * den Weg zum Selbstgestalten, ohne Ziffern (die Zahlen stehen im Blatt; „Atem ist keine Zahl“);
+ * die ganze Zeile öffnet das
  * [DailyPatternSheet]. Sie steht in jedem Zustand des Tabs – auch bei Anlass, Suche, Bereich und
  * Filter –, damit sie beim Wechsel nicht springt.
  */
@@ -51,9 +54,10 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
     val character = stringResource(if (daily.exercise.activating) R.string.daily_pattern_gentle_up else R.string.detail_calm)
     SectionHeader(
         title = stringResource(R.string.home_daily_pattern),
-        teaser = stringResource(R.string.home_daily_teaser, PatternTexts.numbersOf(daily.spec), character),
+        teaser = stringResource(R.string.home_daily_teaser, character),
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_daily_open),
+        leadingIcon = painterResource(R.drawable.ic_breath_curve),
     )
 }
 

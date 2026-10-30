@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Eigenes Symbol „Atemkurve“ (ICON-01): Ein – Halten – Aus – Pause als ein Strich, wie die Kurve
+     des Muster-Editors. Steht vor „Muster des Tages ›“ im Atmen-Tab (Nutzer 2026-10-30). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M2,18 L4,18 C6.5,18 7,6 9.5,6 L13,6 C15.5,6 16.5,18 19,18 L22,18"
+        android:strokeWidth="2"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

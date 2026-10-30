@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -42,7 +43,6 @@ import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.DividerSubtle
 
 /**
  * Was der Atmen-Tab zeigt und gleich bleibt, solange die App läuft: die angeleiteten Übungen nach
@@ -217,7 +217,8 @@ fun HomeScreen(
                 DailyPatternEntry(daily = daily, onClick = { dailySheetOpen = true })
                 // Die tippbare Zeile polstert unten GapSmall selbst; sichtbar bleibt SectionGap.
                 Spacer(Modifier.height(Dimens.GapSmall))
-                HorizontalDivider(color = DividerSubtle)
+                // Trenner zwischen zwei Bereichen der Seite, kein Karten-Trenner: DividerSubtle war hier kaum zu sehen.
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) // Abweichung KOMP-03: Bereichs-Trenner in der Haarlinie des Seitenkopfs
             }
         }
         if (filtering) {

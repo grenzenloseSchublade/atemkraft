@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.testTag
@@ -44,6 +46,7 @@ import app.atemkraft.ui.theme.FamilyVagal
 import app.atemkraft.ui.theme.HeadingRing
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Farbe des Kapiteltitels an Stelle [index] im Tab „Lernen“ (FARBE-07): reihum durch
@@ -87,6 +90,11 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * Titel und Teaser, die Trennpunkte als Kommas („Klang & Stimme, Gong Start & Ende, ohne Stimme,
  * Schaltfläche“); [onClickLabel] benennt, was der Tipp tut („Logbuch öffnen“).
  *
+ * [leadingIcon] steht als Zeichen vor dem Titel, mittig auf seiner ersten Zeile, `IconDefault` in
+ * `secondary` (dekorativ): Es macht einen Kopf, der etwas öffnet, als Einstieg kenntlich
+ * („Muster des Tages ›“ mit der Atemkurve, Nutzer 2026-10-30), damit er nicht wie eine zweite
+ * Überschrift neben „Übungen“ wirkt.
+ *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Eigene Kreationen · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
  * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Ablauf ·
@@ -106,6 +114,7 @@ fun SectionHeader(
     top: Dp = Dimens.SectionHeaderTop,
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
+    leadingIcon: Painter? = null,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val titleStyle = MaterialTheme.typography.titleLarge
@@ -156,6 +165,16 @@ fun SectionHeader(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
             ) {
+                if (leadingIcon != null) {
+                    Box(Modifier.heightIn(min = titleLine), contentAlignment = Alignment.Center) {
+                        Icon(
+                            leadingIcon,
+                            contentDescription = null, // dekorativ: Der Titel daneben trägt den Namen.
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(Sizes.IconDefault),
+                        )
+                    }
+                }
                 // LAYOUT-03: Das Suffix steht direkt hinter dem Titel und rutscht in die nächste
                 // Zeile, statt ihn zu kürzen, wenn der Platz nicht reicht – dann ohne führenden
                 // Punkt, denn keine Zeile beginnt mit einem Satzzeichen ([TitleWithStatus]).
