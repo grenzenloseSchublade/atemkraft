@@ -23,7 +23,7 @@ Die nicht angeleiteten Übungen (`guided = false`, Chip „zum Nachlesen“) als
 
 ## Begriffe (`GlossaryScreen`)
 
-Zwei Gruppen (Körper & Studien, Yoga-Lehre) als `CollapsibleSection`s (erster Kopf mit `headerTop = 0`), Einträge als Karten mit `CardTitle` und `BodyText`. Jeder Fachbegriff aus Übungen, Situationen und Lehre steht hier (TEXT-05; `ContentRulesTest glossary-terms`).
+Zwei Gruppen (Körper & Studien, Yoga-Lehre) als `CollapsibleSection`s (erster Kopf mit `headerTop = 0`), Einträge als Karten mit `CardTitle` und `BodyText`. Jeder Fachbegriff aus Übungen, Situationen und Lehre steht hier (TEXT-05; manuell R-TEXT).
 
 ## „Aus der Yoga-Lehre“ auf der Detailseite
 
@@ -38,4 +38,4 @@ Eigener Abschnitt nur für Übungen yogischen Ursprungs und generierte Muster (`
 
 ## Prüfung
 
-`ScreenshotTest` (`15_lernen`, `12_atemlehre_offen` samt vāyus, `16_pranayama_offen`, `17_programme`, `06_glossar`), `ContentRulesTest` (`lore-teaser`, `cross-references`, `glossary-terms`), manuell R-TEXT (Auszeichnung vollständig, zuschreibend), R-A11Y.
+`ScreenshotTest` (`15_lernen`, `12_atemlehre_offen` samt vāyus, `16_pranayama_offen`, `17_programme`, `06_glossar`), `ContentRulesTest` (`lore-teaser`, `cross-references`), manuell R-TEXT (Auszeichnung vollständig, zuschreibend, jeder Fachbegriff im Glossar), R-A11Y.
