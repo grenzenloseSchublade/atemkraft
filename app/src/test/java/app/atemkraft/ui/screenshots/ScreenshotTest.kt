@@ -31,6 +31,7 @@ import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.IntervalOverrides
 import app.atemkraft.data.ReminderSettings
 import app.atemkraft.data.Situations
+import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseFilters
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FreePattern
@@ -111,6 +112,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     }
 
     private val worstCase get() = fontScale == TestMatrix.MAX_FONT_SCALE
+
+    /** 4-7-8 mit gespeicherter Anpassung ([DetailPage]): Runden, alle drei Phasen, Reset am Start. */
+    private val fourSevenEight get() = BuiltInExercises.all.first { it.id == "4-7-8" }
 
     private val app get() = RuntimeEnvironment.getApplication()
 
@@ -385,7 +389,7 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Jede eingebaute Übung, das Muster des Tages und zwei eigene Muster (langer Name; intensiv mit
      * Stufen): „Aus der Yoga-Lehre“ aufgeklappt, wo es ihn gibt; 4-7-8 mit gespeicherter Anpassung
-     * und aufgeklappten Phasen.
+     * („Anpassen ›“ mit „· angepasst“, Reset am Start).
      */
     @Test
     fun details() {
@@ -396,29 +400,30 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             "eigenes_muster_intensiv" to GeneratedExercises.exerciseFrom(intense, "muster-5", "Stufen mit langem Halten", minutes = 5),
         )
         pages.forEach { (name, exercise) ->
-            val builtIn = exercise in BuiltInExercises.all
-            val adjusted = exercise.id == "4-7-8"
             snap("08_detail_$name", prepare = {
                 if (exercise.lore != null) compose.onNodeWithText(app.getString(R.string.detail_lore)).performClick()
-                if (adjusted) compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
-            }) {
-                ExerciseDetailScreen(
-                    exercise = exercise,
-                    requireSafetyConfirm = false,
-                    savedIntervals = if (adjusted) IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9) else null,
-                    actions = DetailActions(
-                        onIntervalsChange = { _, _, _, _ -> },
-                        onIntervalsReset = {},
-                        onConfirmedSafety = {},
-                        onStart = {},
-                        onBack = {},
-                        onOpenLore = {},
-                        onMarkedChange = if (builtIn) ({ _: Boolean -> }) else null,
-                        onEditPattern = if (builtIn) null else ({}),
-                    ),
-                )
-            }
+            }) { DetailPage(exercise) }
         }
+    }
+
+    /**
+     * Blatt „Anpassen“ offen über der Detailseite (MUSTER-11): 4-7-8 mit gespeicherter Anpassung und
+     * aufgeklappten Phasen, die längste Fassung. Die Zeile in der Start-Leiste ist eine Schaltfläche
+     * mit „Anpassen öffnen“. Eigenes Fenster in Gerätegröße, Aufnahme des ganzen Bildschirms.
+     */
+    @Test
+    fun detailAdjustSheet() {
+        snap("08_detail_anpassen_offen", heightDp = device.heightDp, screen = true, prepare = {
+            compose.onNodeWithContentDescription(app.getString(R.string.adjust_title), substring = true)
+                .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+                .assert(SemanticsMatcher("onClickLabel") { it.config.getOrNull(SemanticsActions.OnClick)?.label == app.getString(R.string.cd_adjust_open) })
+                .performClick()
+            compose.waitForIdle()
+            compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
+            compose.waitForIdle()
+            // Das Blatt ist offen und zeigt die Phasen.
+            compose.onNodeWithText(app.getString(R.string.adjust_exhale)).assertExists()
+        }) { DetailPage(fourSevenEight) }
     }
 
     /**
@@ -489,7 +494,11 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         }
     }
 
-    /** Querformat: Steuerung rechts neben dem Kreis, Breite und Höhe getauscht (Statusleiste vernachlässigt). */
+    /**
+     * Querformat: Steuerung rechts neben dem Kreis, Breite und Höhe getauscht (Statusleiste
+     * vernachlässigt); die Detailseite mit festem Kopf und fester Start-Leiste samt „Anpassen ›“ –
+     * 360 dp hoch, also enger als das A54 quer (384 dp).
+     */
     @Test
     @Config(qualifiers = "w920dp-h8000dp-xhdpi")
     fun landscape() {
@@ -500,5 +509,30 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         snap("10_meditation_quer", heightDp = device.widthDp, widthDp = device.heightDp) {
             MeditationShot(MeditationUiState(status = MeditationStatus.RUNNING, remainingMs = 7 * 60_000L + 12_000L, elapsedMs = 2 * 60_000L + 48_000L))
         }
+        snap("08_detail_quer", heightDp = device.widthDp, widthDp = device.heightDp) { DetailPage(fourSevenEight) }
+    }
+
+    /**
+     * Detailseite wie in der App; 4-7-8 mit gespeicherter Anpassung (Dauer, alle drei Phasen).
+     * Eingebaute Übungen tragen die Markierung, Muster den Stift.
+     */
+    @Composable
+    private fun DetailPage(exercise: Exercise) {
+        val builtIn = exercise in BuiltInExercises.all
+        ExerciseDetailScreen(
+            exercise = exercise,
+            requireSafetyConfirm = false,
+            savedIntervals = if (exercise.id == "4-7-8") IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9) else null,
+            actions = DetailActions(
+                onIntervalsChange = { _, _, _, _ -> },
+                onIntervalsReset = {},
+                onConfirmedSafety = {},
+                onStart = {},
+                onBack = {},
+                onOpenLore = {},
+                onMarkedChange = if (builtIn) ({ _: Boolean -> }) else null,
+                onEditPattern = if (builtIn) null else ({}),
+            ),
+        )
     }
 }

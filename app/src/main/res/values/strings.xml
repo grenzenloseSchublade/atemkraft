@@ -358,6 +358,13 @@
     <string name="cd_adjust_duration">Dauer</string>
     <string name="adjust_reset">Zurücksetzen</string>
     <string name="adjust_modified">angepasst</string>
+    <!-- Zeile „Anpassen ›“ in der Start-Leiste der Detailseite und Titel ihres Blatts. -->
+    <string name="adjust_title">Anpassen</string>
+    <string name="cd_adjust_open">Anpassen öffnen</string>
+    <!-- Teaser der Zeile „Anpassen ›“: Minuten bzw. Runden (detail_meta_rounds), nach einer
+         Anpassung mit „ · angepasst“ (%2$s = adjust_modified); der Punkt hängt am Wert davor. -->
+    <string name="adjust_teaser_minutes">%1$d min</string>
+    <string name="adjust_teaser_modified">%1$s · %2$s</string>
 
     <!-- Logbuch-Statistik -->
     <plurals name="log_streak">

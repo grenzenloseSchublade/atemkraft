@@ -20,7 +20,8 @@ import app.atemkraft.ui.theme.Dimens
  * Gepinnte Start-Leiste unter dem scrollenden Inhalt (Detailseite, Meditations-Tab, Muster-Editor):
  * Fläche `surface` mit tonaler Erhöhung [Dimens.PinnedBarElevation], Rand `ScreenPadding` seitlich und
  * `ListGap` oben und unten – überall gleich hoch. Das knappe Polster ist Absicht: Im
- * Meditations-Tab ginge jedes dp dem Zeitring ab (LAYOUT-08). Inhalt ist der `StartSplitButton`.
+ * Meditations-Tab ginge jedes dp dem Zeitring ab (LAYOUT-08). Inhalt ist der `StartSplitButton`,
+ * auf der Detailseite darüber genau eine Zeile „Anpassen ›“ (`SectionHeader` mit `onClick`).
  *
  * In der Tiefe meldet sie ihre Oberkante beim [TabBarState] an ([LocalTabBarState]): Dort sitzt
  * dann der Knopf, der die Tab-Leiste auf- und zuklappt ([TabBarToggle]).

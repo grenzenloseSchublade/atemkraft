@@ -64,6 +64,7 @@ import app.atemkraft.ui.components.PhaseAdjust
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
+import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SessionAdjustCard
 import app.atemkraft.ui.components.StartSplitButton
 import app.atemkraft.ui.components.WarnText
@@ -101,7 +102,8 @@ data class DetailActions(
 /**
  * Detail-/Infoseite einer Übung. Progressive Disclosure: oben das Wesentliche (Name fest im Kopf,
  * Familie mit Chips, 1-Zeiler, Meta, ggf. Sicherheits-Appetizer), darunter aus-/einklappbare
- * Abschnitte; der Starten-Button ist unten **gepinnt** und ohne Scrollen erreichbar.
+ * Abschnitte; der Starten-Button ist unten **gepinnt** und ohne Scrollen erreichbar, darüber die
+ * Zeile „Anpassen ›“, die Dauer und Phasen im Blatt [AdjustSheet] öffnet (`docs/spec/detail.md`).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -128,6 +130,8 @@ fun ExerciseDetailScreen(
     val adjust = rememberSessionAdjustState(exercise, initialMinutes)
     val defaults = adjust.defaults
     var intervalsExpanded by rememberSaveable(exercise.id) { mutableStateOf(false) }
+    // Offen überlebt das Blatt „Anpassen“ Drehen; die Seite darunter bleibt, wie sie ist (MUSTER-11).
+    var adjustOpen by rememberSaveable(exercise.id) { mutableStateOf(false) }
 
     fun persistAdjustments() {
         val overrides = adjust.overrides
@@ -189,9 +193,18 @@ fun ExerciseDetailScreen(
             else -> null
         },
         scrollState = scrollState,
-        // Gepinnter Start (immer sichtbar) – nur bei getakteten Übungen.
+        // Gepinnter Start (immer sichtbar) samt „Anpassen ›“ darüber – nur bei getakteten Übungen.
         bottomBar = if (exercise.guided) {
-            { StartBar(exercise, adjust, estimatedSeconds, onStart = { launch() }, onIntervalsReset = actions.onIntervalsReset) }
+            {
+                StartBar(
+                    exercise = exercise,
+                    adjust = adjust,
+                    estimatedSeconds = estimatedSeconds,
+                    onOpenAdjust = { adjustOpen = true },
+                    onStart = { launch() },
+                    onIntervalsReset = actions.onIntervalsReset,
+                )
+            }
         } else {
             null
         },
@@ -310,8 +323,18 @@ fun ExerciseDetailScreen(
             }
         }
 
-        if (exercise.guided) {
+        // Getaktete Übungen passt man im Blatt „Anpassen“ an (Zeile über dem Start); nur Programme
+        // ohne Ablauf sagen am Ende, warum es hier keinen Start gibt.
+        if (!exercise.guided) {
             Spacer(Modifier.height(Dimens.SectionGap))
+            HintText(stringResource(R.string.detail_info_only))
+        }
+    }
+
+    // Ein Ort für die Anpassung: das Blatt über der Seite, geöffnet aus der Start-Leiste. Werte
+    // gelten sofort und werden gespeichert wie zuvor in der Karte am Ende des Inhalts.
+    if (exercise.guided && adjustOpen) {
+        AdjustSheet(onDismiss = { adjustOpen = false }) {
             SessionAdjustCard(
                 durationLabel = if (roundBased) {
                     stringResource(R.string.adjust_rounds)
@@ -351,52 +374,88 @@ fun ExerciseDetailScreen(
                 durationSpokenLabel = if (roundBased) stringResource(R.string.adjust_rounds) else stringResource(R.string.cd_adjust_duration),
                 durationUnit = if (roundBased) null else R.plurals.cd_duration_minutes,
             )
-        } else {
-            Spacer(Modifier.height(Dimens.SectionGap))
-            HintText(stringResource(R.string.detail_info_only))
         }
     }
 }
 
 /**
- * Gepinnter Start unter dem Inhalt: [StartSplitButton] mit der Gesamtdauer am Start („Starten ·
- * ca. 10 min“), das Zurücksetzen erscheint nur nach einer Anpassung.
+ * Gepinnter Start unter dem Inhalt: oben die Zeile „Anpassen ›“ ([AdjustRow], öffnet das
+ * [AdjustSheet]), darunter der [StartSplitButton] mit der Gesamtdauer am Start („Starten ·
+ * ca. 10 min“); das Zurücksetzen erscheint nur nach einer Anpassung.
  */
 @Composable
 private fun StartBar(
     exercise: Exercise,
     adjust: SessionAdjustState,
     estimatedSeconds: Int,
+    onOpenAdjust: () -> Unit,
     onStart: () -> Unit,
     onIntervalsReset: () -> Unit,
 ) {
     PinnedActionBar {
-        val start = stringResource(R.string.action_start)
-        val startLabel = when {
-            estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
-
-            exercise.hasOpenPhases -> stringResource(
-                R.string.action_start_duration,
-                start,
-                stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
-            )
-
-            else -> stringResource(
-                R.string.action_start_duration,
-                start,
-                stringResource(R.string.duration_approx, minutesRounded(estimatedSeconds)),
-            )
+        Column {
+            AdjustRow(exercise, adjust, onOpenAdjust)
+            StartButton(exercise, adjust, estimatedSeconds, onStart, onIntervalsReset)
         }
-        StartSplitButton(
-            label = startLabel,
-            resetVisible = adjust.modified,
-            onStart = onStart,
-            onReset = {
-                adjust.reset()
-                onIntervalsReset()
-            },
+    }
+}
+
+/**
+ * „Anpassen ›“: Abschnittskopf mit `onClick` wie „Klang & Stimme“ in der Meditation (MUSTER-11) –
+ * dieselbe Kopf-Art wie jeder Kopf, der ein Blatt öffnet, darum `titleLarge` auch in der Leiste.
+ * Der Teaser zeigt die aktuelle Dauer bzw. Runden, nach einer Anpassung „· angepasst“; TalkBack
+ * liest die Zeile als eine Schaltfläche („Anpassen, 4 Runden, angepasst“) mit „Anpassen öffnen“.
+ * Keine Live-Region: Den Wert sagt der Stepper im Blatt an, das Zurücksetzen der Start-Knopf.
+ */
+@Composable
+private fun AdjustRow(exercise: Exercise, adjust: SessionAdjustState, onClick: () -> Unit) {
+    val value = if (exercise.isRoundBased) {
+        pluralStringResource(R.plurals.detail_meta_rounds, adjust.duration, adjust.duration)
+    } else {
+        stringResource(R.string.adjust_teaser_minutes, adjust.duration)
+    }
+    SectionHeader(
+        title = stringResource(R.string.adjust_title),
+        teaser = if (adjust.modified) stringResource(R.string.adjust_teaser_modified, value, stringResource(R.string.adjust_modified)) else value,
+        onClick = onClick,
+        onClickLabel = stringResource(R.string.cd_adjust_open),
+    )
+}
+
+/** Start mit Gesamtdauer und Reset ([StartSplitButton]). */
+@Composable
+private fun StartButton(
+    exercise: Exercise,
+    adjust: SessionAdjustState,
+    estimatedSeconds: Int,
+    onStart: () -> Unit,
+    onIntervalsReset: () -> Unit,
+) {
+    val start = stringResource(R.string.action_start)
+    val startLabel = when {
+        estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
+
+        exercise.hasOpenPhases -> stringResource(
+            R.string.action_start_duration,
+            start,
+            stringResource(R.string.duration_approx_from, (estimatedSeconds / 60).coerceAtLeast(1)),
+        )
+
+        else -> stringResource(
+            R.string.action_start_duration,
+            start,
+            stringResource(R.string.duration_approx, minutesRounded(estimatedSeconds)),
         )
     }
+    StartSplitButton(
+        label = startLabel,
+        resetVisible = adjust.modified,
+        onStart = onStart,
+        onReset = {
+            adjust.reset()
+            onIntervalsReset()
+        },
+    )
 }
 
 /** Stift im Kopf generierter Muster: öffnet den Muster-Editor, Name in [description] (ICON-02). */

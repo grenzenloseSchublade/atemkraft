@@ -126,8 +126,8 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         /** Bis zu dieser Schriftgröße prüft der Muster-Editor hart, dass Kurve und Werkzeugleiste ohne Scrollen dastehen. */
         private const val COMPACT_EDITOR_MAX_FONT_SCALE = 1.3f
 
-        /** Bottom Sheets (Vorlagen, Klang & Stimme): eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
-        private val SHEET_TESTS = listOf("patternEditorTemplates", "meditationSoundSheet", "dailyPatternSheet")
+        /** Bottom Sheets (Vorlagen, Klang & Stimme, Muster des Tages, Anpassen): eigenes Fenster, also Fenster in Gerätegröße wie die Dialoge ([setUp]). */
+        private val SHEET_TESTS = listOf("patternEditorTemplates", "meditationSoundSheet", "dailyPatternSheet", "detailAdjustSheet")
 
         /** Bis zu dieser Schriftgröße scrollt der Meditations-Tab nicht; bei 2,0 darf er (Notlösung). */
         private const val NO_SCROLL_MAX_FONT_SCALE = 1.3f
