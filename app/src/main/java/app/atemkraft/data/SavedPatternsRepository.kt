@@ -228,8 +228,9 @@ class SavedPatternsRepository(
     )
 
     /**
-     * Legt die Einträge an, die es noch nicht gibt (gleiche Herkunft und Werte = Dublette, auch
-     * innerhalb der Datei; bei freien Folgen zählen Zeitpunkt und Folge). Anpassungen landen
+     * Legt die Einträge an, die es noch nicht gibt (Dublette, auch innerhalb der Datei: bei
+     * Tagesmustern gleiche Zahlen wie bei [save], sonst gleicher Zeitpunkt und gleiche Werte, bei
+     * freien Folgen Zeitpunkt und Folge). Anpassungen landen
      * unter der neuen Id des Musters. Fehlt die Herkunft (Dateien bis 1.6.8), ist es ein
      * Tagesmuster; ein unbekannter Wert wird „custom“. Ein Eintrag mit Folge wird ein eigenes
      * Muster, die vier Felder schreibt die App aus der Folge neu ([columnSpec]) – die Werte der
@@ -239,13 +240,30 @@ class SavedPatternsRepository(
         entries: List<PatternBackupEntry>,
         writeOverrides: suspend (exerciseId: String, overrides: PatternBackupOverrides) -> Unit,
     ): ImportResult {
-        val known = dao.snapshot().map { PatternBackup.identity(it) }.toMutableSet()
+        val rows = dao.snapshot()
+        val known = rows.map { PatternBackup.identity(it) }.toMutableSet()
+        val dailies = rows.filter { it.patternOrigin() == PatternOrigin.SAVED_DAILY }.map { it.toSpec() }.toMutableList()
         var added = 0
         for (entry in entries) {
             val free = FreePattern.parse(entry.phases)
-            if (!known.add(PatternBackup.identity(entry, free))) continue
-            val spec = free?.columnSpec() ?: PatternSpec(entry.inhale, entry.holdFull, entry.exhale, entry.holdEmpty, entry.activating)
+            // 0 s Halten heißt „kein Halten“ wie überall sonst ([columnSpec]): sonst zeigte die Karte
+            // „Halten voll 0 s“, und das Tagesmuster gälte nicht als gespeichert.
+            val spec = free?.columnSpec() ?: PatternSpec(
+                entry.inhale,
+                entry.holdFull?.takeIf { it > 0 },
+                entry.exhale,
+                entry.holdEmpty?.takeIf { it > 0 },
+                entry.activating,
+            )
             val origin = if (free != null) PatternOrigin.CUSTOM else SavedPatternEntity.originOf(entry.origin ?: SavedPatternEntity.ORIGIN_DAILY)
+            // Ein Tagesmuster ist an Herkunft und Zahlen erkennbar wie bei [save]; der Zeitpunkt
+            // zählt nicht – dasselbe Muster von einem anderen Gerät ist keine zweite Zeile.
+            val duplicate = if (origin == PatternOrigin.SAVED_DAILY) {
+                dailies.any { it.sameNumbers(spec) }.also { if (!it) dailies += spec }
+            } else {
+                !known.add(PatternBackup.identity(entry.createdAtEpochMs, spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty, spec.activating, free?.toCompact()))
+            }
+            if (duplicate) continue
             val entity = writeLock.withLock {
                 insert(
                     SavedPatternEntity(

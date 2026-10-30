@@ -272,9 +272,10 @@ object PatternBackup {
     )
 
     /**
-     * Schlüssel für Dubletten: gleiche Herkunft (Zeitpunkt) und gleiche Werte. Mit freier Folge
+     * Schlüssel für Dubletten eigener Muster: gleicher Zeitpunkt und gleiche Werte. Mit freier Folge
      * ([phases], Normalform von [FreePattern.toCompact]) zählen nur Zeitpunkt und Folge – die vier
-     * Felder sind dann bloß deren Zusammenfassung.
+     * Felder sind dann bloß deren Zusammenfassung. Gespeicherte Tagesmuster erkennt der Import an
+     * Herkunft und Zahlen ([SavedPatternsRepository.import]).
      */
     fun identity(
         createdAtEpochMs: Long,
@@ -293,11 +294,6 @@ object PatternBackup {
     /** Schlüssel einer gespeicherten Zeile; eine unlesbare Folge zählt nicht (dann die vier Felder). */
     fun identity(row: SavedPatternEntity): String = with(row) {
         identity(createdAtEpochMs, inhale, holdFull, exhale, holdEmpty, activating, freePattern()?.toCompact())
-    }
-
-    /** Schlüssel eines Datei-Eintrags mit seiner gelesenen Folge [free] (`null` = vier Felder). */
-    fun identity(entry: PatternBackupEntry, free: FreePattern? = FreePattern.parse(entry.phases)): String = with(entry) {
-        identity(createdAtEpochMs, inhale, holdFull, exhale, holdEmpty, activating, free?.toCompact())
     }
 
     /**

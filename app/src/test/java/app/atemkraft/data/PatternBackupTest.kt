@@ -67,15 +67,22 @@ class PatternBackupTest {
         // Das gespeicherte Tagesmuster erkennt die App an Herkunft und Zahlen, nie am Namen (CODE-05):
         // auch umbenannt aus einer alten Datei ohne Herkunft; ein eigenes Muster mit gleichen Zahlen nicht.
         val daily = RandomPatternGenerator.forEpochDay(LocalDate.of(2026, 10, 5).toEpochDay())
-        val renamed = with(daily.spec) {
-            val holds = listOfNotNull(holdFull?.let { "\"holdFull\":$it" }, holdEmpty?.let { "\"holdEmpty\":$it" }).joinToString("") { "$it," }
-            """{"name":"Lieblingsmuster","inhale":$inhale,$holds"exhale":$exhale,"activating":$activating,"createdAtEpochMs":5}"""
+        assertTrue(daily.spec.holdFull == null || daily.spec.holdEmpty == null)
+        // [zeros]: fehlendes Halten als 0 s, wie es eine fremde Datei schreiben kann.
+        fun dailyEntry(name: String, created: Int, zeros: Boolean) = with(daily.spec) {
+            val full = holdFull ?: 0.0.takeIf { zeros }
+            val empty = holdEmpty ?: 0.0.takeIf { zeros && !activating }
+            val holds = listOfNotNull(full?.let { "\"holdFull\":$it" }, empty?.let { "\"holdEmpty\":$it" }).joinToString("") { "$it," }
+            """{"name":"$name","inhale":$inhale,$holds"exhale":$exhale,"activating":$activating,"createdAtEpochMs":$created}"""
         }
         val dailyRepo = SavedPatternsRepository(FakeSavedPatternDao())
         dailyRepo.saveCustom(daily.spec.toFreePattern(), minutes = 5, name = "Gleiche Zahlen")
         assertFalse(dailyRepo.isDailySaved(daily, dailyRepo.patterns.first()))
-        dailyRepo.import(PatternBackup.decode(backup(renamed))!!.entries) { _, _ -> }
+        dailyRepo.import(PatternBackup.decode(backup(dailyEntry("Lieblingsmuster", created = 5, zeros = true)))!!.entries) { _, _ -> }
         assertTrue(dailyRepo.isDailySaved(daily, dailyRepo.patterns.first()))
+        // Dasselbe Tagesmuster von einem anderen Gerät (anderer Zeitpunkt) ist keine zweite Zeile.
+        val other = PatternBackup.decode(backup(dailyEntry("Muster", created = 6, zeros = false)))!!.entries
+        assertEquals(ImportResult(added = 0, duplicates = 1), dailyRepo.import(other) { _, _ -> })
         dailyRepo.save(daily)
         assertEquals(2, dailyRepo.patterns.first().size)
         dailyRepo.unsave(daily)
