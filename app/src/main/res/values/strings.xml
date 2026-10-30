@@ -376,10 +376,14 @@
     <!-- Zeile „Anpassen ›“ in der Start-Leiste der Detailseite und Titel ihres Blatts. -->
     <string name="adjust_title">Anpassen</string>
     <string name="cd_adjust_open">Anpassen öffnen</string>
-    <!-- Teaser der Zeile „Anpassen ›“: Minuten bzw. Runden (detail_meta_rounds), nach einer
-         Anpassung mit „ · angepasst“ (%2$s = adjust_modified); der Punkt hängt am Wert davor. -->
-    <string name="adjust_teaser_minutes">%1$d min</string>
-    <string name="adjust_teaser_modified">%1$s · %2$s</string>
+    <!-- Status hinter „Anpassen“ in der Start-Leiste („Anpassen · 10 min“): Minuten bzw. Runden
+         (detail_meta_rounds), nach einer Anpassung mit „ · angepasst“ (%2$s = adjust_modified);
+         der Punkt hängt am Wert davor. TalkBack: Minuten ausgeschrieben (cd_duration_minutes),
+         Teile mit Komma (cd_adjust_status_modified). -->
+    <string name="adjust_status">· %1$s</string>
+    <string name="adjust_status_minutes">%1$d min</string>
+    <string name="adjust_status_modified">%1$s · %2$s</string>
+    <string name="cd_adjust_status_modified">%1$s, %2$s</string>
 
     <!-- Logbuch-Statistik -->
     <plurals name="log_streak">

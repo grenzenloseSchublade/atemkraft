@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.IntSize
 /**
  * Laufen System-Animationen (Animator-Skala > 0)? Einmal je Komposition gelesen. Sind sie aus,
  * steht alles still, was sich von selbst bewegt (MOTION-02): Laufschrift, Vorschau der Atemkurve,
- * vāyu-Bild, Tap-Flash.
+ * vāyu-Bild, Tap-Flash; der Punkt der Rhythmuskurve fehlt dann ganz.
  */
 @Composable
 fun rememberAnimationsEnabled(): Boolean = remember { ValueAnimator.areAnimatorsEnabled() }
@@ -69,6 +69,13 @@ object Motion {
 
     /** vāyu-Bild: ein Pulsieren der gewählten Fläche, hin und zurück. */
     val VayuPulse = 2600
+
+    /**
+     * Punkt der Rhythmuskurve (`RhythmCurve`): Übergang seiner Farbe an einer Phasengrenze, je zur
+     * Hälfte davor und danach. Kürzer als die kürzeste gezeigte Phase (1 s), also nie ein Mischton
+     * über eine ganze Phase.
+     */
+    val RhythmDotColor = 300L
 
     /**
      * Auf- und Zuklappen: Höhe bzw. Breite von Expandern, Abschnitten und der Tab-Leiste

@@ -409,12 +409,15 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Blatt „Anpassen“ offen über der Detailseite (MUSTER-11): 4-7-8 mit gespeicherter Anpassung und
      * aufgeklappten Phasen, die längste Fassung. Die Zeile in der Start-Leiste ist eine Schaltfläche
-     * mit „Anpassen öffnen“. Eigenes Fenster in Gerätegröße, Aufnahme des ganzen Bildschirms.
+     * mit „Anpassen öffnen“, ihr Status in Worten („Anpassen, 6 Runden, angepasst“).
+     * Eigenes Fenster in Gerätegröße, Aufnahme des ganzen Bildschirms.
      */
     @Test
     fun detailAdjustSheet() {
+        val rounds = app.resources.getQuantityString(R.plurals.detail_meta_rounds, 6, 6)
+        val row = listOf(app.getString(R.string.adjust_title), rounds, app.getString(R.string.adjust_modified)).joinToString(", ")
         snap("08_detail_anpassen_offen", heightDp = device.heightDp, screen = true, prepare = {
-            compose.onNodeWithContentDescription(app.getString(R.string.adjust_title), substring = true)
+            compose.onNodeWithContentDescription(row)
                 .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
                 .assert(SemanticsMatcher("onClickLabel") { it.config.getOrNull(SemanticsActions.OnClick)?.label == app.getString(R.string.cd_adjust_open) })
                 .performClick()

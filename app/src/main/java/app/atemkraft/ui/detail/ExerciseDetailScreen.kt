@@ -421,20 +421,26 @@ private fun StartBar(
 /**
  * „Anpassen ›“: Abschnittskopf mit `onClick` wie „Klang & Stimme“ in der Meditation (MUSTER-11) –
  * dieselbe Kopf-Art wie jeder Kopf, der ein Blatt öffnet, darum `titleLarge` auch in der Leiste.
- * Der Teaser zeigt die aktuelle Dauer bzw. Runden, nach einer Anpassung „· angepasst“; TalkBack
- * liest die Zeile als eine Schaltfläche („Anpassen, 4 Runden, angepasst“) mit „Anpassen öffnen“.
- * Keine Live-Region: Den Wert sagt der Stepper im Blatt an, das Zurücksetzen der Start-Knopf.
+ * Einzeilig (Eigentümer 2026-10-30): Die aktuelle Dauer bzw. Runden stehen als Status hinter dem
+ * Titel („Anpassen · 10 min“, nach einer Anpassung „· 4 Runden · angepasst“), nicht als Teaser
+ * darunter; passt der Status nicht dahinter, rutscht er laut [SectionHeader] darunter. TalkBack
+ * liest die Zeile als eine Schaltfläche („Anpassen, 10 Minuten, angepasst“) mit „Anpassen
+ * öffnen“. Keine Live-Region: Den Wert sagt der Stepper im Blatt an, das Zurücksetzen der Start-Knopf.
  */
 @Composable
 private fun AdjustRow(exercise: Exercise, adjust: SessionAdjustState, onClick: () -> Unit) {
-    val value = if (exercise.isRoundBased) {
-        pluralStringResource(R.plurals.detail_meta_rounds, adjust.duration, adjust.duration)
-    } else {
-        stringResource(R.string.adjust_teaser_minutes, adjust.duration)
-    }
+    val rounds = pluralStringResource(R.plurals.detail_meta_rounds, adjust.duration, adjust.duration)
+    // Gezeigt kurz („10 min“), gesprochen ausgeschrieben („10 Minuten“, A11Y-06).
+    val value = if (exercise.isRoundBased) rounds else stringResource(R.string.adjust_status_minutes, adjust.duration)
+    val spokenValue = if (exercise.isRoundBased) rounds else pluralStringResource(R.plurals.cd_duration_minutes, adjust.duration, adjust.duration)
+    val modified = stringResource(R.string.adjust_modified)
     SectionHeader(
         title = stringResource(R.string.adjust_title),
-        teaser = if (adjust.modified) stringResource(R.string.adjust_teaser_modified, value, stringResource(R.string.adjust_modified)) else value,
+        status = stringResource(
+            R.string.adjust_status,
+            if (adjust.modified) stringResource(R.string.adjust_status_modified, value, modified) else value,
+        ),
+        statusDescription = if (adjust.modified) stringResource(R.string.cd_adjust_status_modified, spokenValue, modified) else spokenValue,
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_adjust_open),
     )

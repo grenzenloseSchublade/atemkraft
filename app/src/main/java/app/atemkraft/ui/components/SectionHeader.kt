@@ -87,8 +87,10 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * Mit [onClick] öffnet der Kopf etwas (Bottom Sheet, MUSTER-11: „Klang & Stimme“ im
  * Meditations-Tab; Logbuch-Seite: „Verlauf“ im Tab „Eigene“): dieselbe Zeile wie aufklappbar, aber
  * mit [ForwardChevron] statt Caret, ohne Zustand. TalkBack liest sie als eine Schaltfläche aus
- * Titel und Teaser, die Trennpunkte als Kommas („Klang & Stimme, Gong Start & Ende, ohne Stimme,
- * Schaltfläche“); [onClickLabel] benennt, was der Tipp tut („Logbuch öffnen“).
+ * Titel, Status ([statusDescription]) und Teaser, die Trennpunkte als Kommas („Klang & Stimme, Gong
+ * Start & Ende, ohne Stimme, Schaltfläche“); [onClickLabel] benennt, was der Tipp tut („Logbuch
+ * öffnen“). Mit [status] statt Teaser bleibt sie einzeilig („Anpassen · 10 min ›“ in der
+ * Start-Leiste der Detailseite).
  *
  * [leadingIcon] steht als Zeichen vor dem Titel, mittig auf seiner ersten Zeile, `IconDefault` in
  * `secondary` (dekorativ): Es macht einen Kopf, der etwas öffnet, als Einstieg kenntlich
@@ -125,7 +127,9 @@ fun SectionHeader(
     // Zeile wie aufklappbar: Tippfläche ohne den Leerraum darüber, innen oben und unten GapSmall.
     val tappable = expanded != null || onClick != null
     val toggle = if (onClick != null) {
-        val spoken = listOfNotNull(title, teaser?.splitAtDots()?.joinToString(", ")).joinToString(", ")
+        // Status in Worten (statusDescription), sonst wie gezeigt ohne Punkte; danach der Teaser.
+        val spokenStatus = statusDescription ?: status?.withoutLeadingDot()?.splitAtDots()?.joinToString(", ")
+        val spoken = listOfNotNull(title, spokenStatus, teaser?.splitAtDots()?.joinToString(", ")).joinToString(", ")
         Modifier
             .padding(top = Dimens.GapSmall)
             .heightIn(min = Dimens.MinTouchTarget)
@@ -182,7 +186,8 @@ fun SectionHeader(
                     title = title,
                     color = color,
                     status = status,
-                    statusDescription = statusDescription,
+                    // Mit onClick spricht die Zeile den Status schon in ihrer Beschreibung, sonst doppelt.
+                    statusDescription = statusDescription.takeIf { onClick == null },
                     statusStyle = if (smallStatus) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f).testTag(TITLE_ROW_TITLE_TAG),
                     isHeading = onClick == null,
