@@ -168,6 +168,7 @@ private fun ActiveContent(
     } else {
         phaseDisplayLabel(state.phaseType, state.phaseLabel)
     }
+    // Abweichung PERF-01: Der Zustand kommt als ein Wert je 33-ms-Takt (SessionOverlay → SessionScreen), der ganze Baum setzt ohnehin neu zusammen; den Kreis erst im Draw lesen hilft erst, wenn der Zustand als State bis hierher durchgereicht wird (Lücke im Qualitätsbericht, Leistungseffizienz).
     val fraction = circleFraction(state)
     val secondsText = when {
         preparing -> state.countdown.toString()
