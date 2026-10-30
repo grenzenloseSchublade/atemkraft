@@ -6,16 +6,20 @@ import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.minutesSecondsOf
 
+/** Ein Teil der Bilanz: sichtbar [text] („6:24 min“), für TalkBack [spoken] („6 Minuten 24 Sekunden“). */
+data class SummaryPart(val text: String, val spoken: String = text)
+
 /**
  * Teile der kurzen Bilanz für den Ende-Bildschirm ([FinishedPanel]), z. B. „8 Runden“, „6:24 min“,
  * „60 Atemzüge“ oder nur „10:00 min“. Nur übergebene, echte Werte; null lässt den Teil weg.
- * Zusammengesetzt werden sie mit [DotSeparatedFlow].
+ * Zusammengesetzt werden sie mit [DotSeparatedFlow]; die Dauer trägt ihre ausgeschriebene Form
+ * ([spokenDuration]), damit TalkBack nicht „sechs Doppelpunkt vierundzwanzig“ liest (A11Y-06).
  */
 @Composable
-fun sessionSummaryParts(durationMs: Long, rounds: Int? = null, breaths: Int? = null): List<String> = listOfNotNull(
-    rounds?.let { pluralStringResource(R.plurals.session_summary_rounds, it, it) },
-    durationClockText(durationMs),
-    breaths?.let { pluralStringResource(R.plurals.session_summary_breaths, it, it) },
+fun sessionSummaryParts(durationMs: Long, rounds: Int? = null, breaths: Int? = null): List<SummaryPart> = listOfNotNull(
+    rounds?.let { SummaryPart(pluralStringResource(R.plurals.session_summary_rounds, it, it)) },
+    SummaryPart(durationClockText(durationMs), spokenDuration(durationMs)),
+    breaths?.let { SummaryPart(pluralStringResource(R.plurals.session_summary_breaths, it, it)) },
 )
 
 /**

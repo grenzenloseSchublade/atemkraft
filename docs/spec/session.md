@@ -33,7 +33,7 @@ Beide Sitzungsarten laufen app-weit weiter (`MeditationController`, `BreathSessi
 
 ## Ende
 
-Beide Sitzungsarten gleich: „✓ Geschafft“ (`paneTitle` „Geschafft“), die Einladung „Spür kurz nach, wie es dir geht.“, darunter die Antwortreihe zum Befinden (siehe unten), Bilanz nur aus echten Werten (`sessionSummaryText`; Meditation: Dauer), „Nochmal“/„Ende“ (`FinishedPanel`, bei Tastatur Fokus auf „Nochmal“), darunter „Im Logbuch ansehen ›“ (`AppTextButton` + `ForwardLinkText`, beendet wie „Ende“ und öffnet das Logbuch) und ohne Stille-Wunsch „In die Stille ›“.
+Beide Sitzungsarten gleich: „✓ Geschafft“ (`paneTitle` „Geschafft“), die Einladung „Spür kurz nach, wie es dir geht.“, darunter die Antwortreihe zum Befinden (siehe unten), Bilanz nur aus echten Werten (`sessionSummaryParts`; Meditation: Dauer; TalkBack hört die Dauer ausgeschrieben, „6 Minuten 24 Sekunden“), „Nochmal“/„Ende“ (`FinishedPanel`, bei Tastatur Fokus auf „Nochmal“), darunter „Im Logbuch ansehen ›“ (`AppTextButton` + `ForwardLinkText`, beendet wie „Ende“ und öffnet das Logbuch) und ohne Stille-Wunsch „In die Stille ›“.
 
 ## Befinden am Ende
 

@@ -245,7 +245,7 @@ fun FinishedPanel(
     onAgain: () -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
-    summary: List<String> = emptyList(),
+    summary: List<SummaryPart> = emptyList(),
     onOpenLogbook: (() -> Unit)? = null,
     onIntoSilence: (() -> Unit)? = null,
     feelingOptions: List<Feeling> = emptyList(),
@@ -286,7 +286,7 @@ private fun ColumnScope.FinishedContent(
     onAgain: () -> Unit,
     onExit: () -> Unit,
     againFocus: FocusRequester,
-    summary: List<String>,
+    summary: List<SummaryPart>,
     onOpenLogbook: (() -> Unit)?,
     onIntoSilence: (() -> Unit)?,
     feelingOptions: List<Feeling>,
@@ -310,11 +310,12 @@ private fun ColumnScope.FinishedContent(
         Spacer(Modifier.height(Dimens.GapSmall))
         val summaryStyle = MaterialTheme.typography.bodySmall
         val summaryColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
-        // Eine Ansage für TalkBack statt einzelner Teile, mit Pause statt vorgelesenem Trennpunkt.
-        val spoken = summary.joinToString(", ")
+        // Eine Ansage für TalkBack statt einzelner Teile, mit Pause statt vorgelesenem Trennpunkt
+        // und der Dauer ausgeschrieben („6 Minuten 24 Sekunden“, A11Y-06).
+        val spoken = summary.joinToString(", ") { it.spoken }
         DotSeparatedFlow(
             parts = summary.map { part ->
-                { WholeWordText(text = part, style = summaryStyle, color = summaryColor, textAlign = TextAlign.Center) }
+                { WholeWordText(text = part.text, style = summaryStyle, color = summaryColor, textAlign = TextAlign.Center) }
             },
             separator = { Text(text = DOT_SEPARATOR, style = summaryStyle, color = summaryColor) },
             modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
