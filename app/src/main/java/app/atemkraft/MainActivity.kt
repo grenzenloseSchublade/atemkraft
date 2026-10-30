@@ -24,9 +24,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
@@ -100,14 +103,16 @@ private fun AtemkraftApp(
     // Tipp darauf führt zu seiner Startseite zurück (tapTab).
     val selectedTab = remember(navBackStackEntry) { navController.tabOnStack() }
 
-    // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; Griff oder Wischen klappen sie
-    // auf, das gilt bis zur Rückkehr auf einen Tab.
+    // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; Griff oder Wischen (Startleiste,
+    // Band über den unteren Leisten, Griff) klappen sie auf, das gilt bis zur Rückkehr auf einen Tab.
     val tabBar = rememberTabBarState()
     LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab) }
     // Was in den Systemgesten am unteren Rand aufsetzt (Home), bleibt dem System.
     val gestureBottom = WindowInsets.systemGestures.getBottom(LocalDensity.current)
     val windowHeight = LocalWindowInfo.current.containerSize.height
     SideEffect { tabBar.gestureZoneTop = (windowHeight - gestureBottom).toFloat() }
+    // Oberkante des Inhalts (px im Fenster) für das Wischband über den unteren Leisten.
+    var contentTop by remember { mutableFloatStateOf(0f) }
 
     // Shortcut: Resonanz-Atmung und „Zuletzt geübt“ als Detailseite im Stapel von „Atmen“, die
     // Meditation als Tab. „Zuletzt“ liest die App jetzt selbst aus dem Logbuch – der Shortcut trägt
@@ -155,6 +160,10 @@ private fun AtemkraftApp(
                     modifier = Modifier
                         .padding(innerPadding)
                         .fillMaxWidth()
+                        // Wischen nach oben im unteren Bereich einer Seite ohne Startleiste öffnet die
+                        // Tab-Leiste, über die ganze Breite und vor dem Scrollen des Inhalts.
+                        .onGloballyPositioned { contentTop = it.positionInRoot().y }
+                        .pointerInput(tabBar) { with(tabBar) { detectBottomSwipe { contentTop } } }
                         .wrapContentWidth(Alignment.CenterHorizontally)
                         .widthIn(max = Dimens.ContentMaxWidth),
                     enterTransition = { fadeIn(tween(Motion.NavTab)) },

@@ -2,8 +2,6 @@ package app.atemkraft.ui.navigation
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
-import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -14,15 +12,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
+import kotlin.math.abs
 
 /**
  * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Wer von einem Tab in die
  * Tiefe geht, sieht sie eingeklappt ([collapsed]). Der Griff auf der Oberkante der untersten Leiste
  * ([TabBarToggle]) klappt sie auf und wieder zu ([toggle]), ebenso Wischen ([detectSwipe],
- * Nutzer 2026-10-30): nach oben auf der Startleiste oder am Griff öffnet ([show]), nach unten auf
- * der offenen Tab-Leiste oder am Griff schließt ([hide]). Diese Wahl gilt auf allen weiteren Seiten
+ * Nutzer 2026-10-30): nach oben auf der Startleiste, im unteren Bereich einer Seite ohne Startleiste
+ * ([detectBottomSwipe]) oder am Griff öffnet ([show]), nach unten auf der offenen Tab-Leiste oder am
+ * Griff schließt ([hide]). Diese Wahl gilt auf allen weiteren Seiten
  * der Tiefe, vor und zurück, bis der Nutzer wieder auf einem Tab steht ([enter]). Auf den vier Tabs
  * selbst steht die Leiste immer (das entscheidet der Aufrufer), Wischen ändert dort nichts
  * ([inDepth]).
@@ -111,46 +114,81 @@ class TabBarState {
      * Wischen an den Leisten der Tiefe (Nutzer 2026-10-30: „mit von unten nach oben wischen im unteren
      * Bereich soll die Tab-Leiste geöffnet werden“): nach oben öffnet die Leiste ([opens]), nach unten
      * schließt sie ([closes]) – je nachdem, wo gewischt wird: Startleiste nur auf, offene Tab-Leiste nur
-     * zu, Griff beides. Zentral in `PinnedActionBar`, [HideableTabBar] und [TabBarToggle]
+     * zu, Griff beides; ohne Startleiste das Band über den unteren Leisten ([detectBottomSwipe]). Zentral
+     * in `PinnedActionBar`, [HideableTabBar], [TabBarToggle] und im App-Rahmen
      * (`with(state) { detectSwipe(…) }` in `pointerInput`); keine Seite tut etwas dafür.
      *
      * Gewertet wird erst nach dem Touch-Slop und nur in der Richtung, die gerade etwas bewirkt: Bis dahin
-     * bleibt ein Tipp auf Start oder „Anpassen ›“ ein Tipp; erst ein Wischen verbraucht die Bewegung
-     * (der Knopf darunter bricht dann ab). Die Leiste klappt, sobald der Finger [Sizes.TabBarSwipeDistance]
-     * vom Aufsetzen entfernt ist, einmal je Geste. Nur in der Tiefe ([inDepth]); was in den
-     * Systemgesten am unteren Rand aufsetzt ([gestureZoneTop]), bleibt dem System.
+     * bleibt ein Tipp auf Start oder „Anpassen ›“ ein Tipp; geht der Finger zuerst in die andere Richtung
+     * oder zur Seite, bleibt die Geste ganz dem Inhalt. Erst ein Wischen verbraucht die Bewegung (der
+     * Knopf darunter bricht dann ab). Die Leiste klappt, sobald der Finger [Sizes.TabBarSwipeDistance]
+     * vom Aufsetzen entfernt ist, einmal je Geste. Nur in der Tiefe ([inDepth]); was in den Systemgesten
+     * am unteren Rand aufsetzt ([gestureZoneTop]) oder über [from] (px im Fenster), bleibt anderen.
+     * [pass] `Initial` wertet vor dem Inhalt darunter (ein Scrollen bricht dann ab).
      * [windowTop] ist die Oberkante der wischbaren Fläche in px im Fenster.
      */
-    suspend fun PointerInputScope.detectSwipe(opens: Boolean, closes: Boolean, windowTop: () -> Float) {
+    suspend fun PointerInputScope.detectSwipe(
+        opens: Boolean,
+        closes: Boolean,
+        pass: PointerEventPass = PointerEventPass.Main,
+        from: () -> Float = { Float.NEGATIVE_INFINITY },
+        windowTop: () -> Float,
+    ) {
         val distance = Sizes.TabBarSwipeDistance.toPx()
         awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            if (!inDepth || windowTop() + down.position.y >= gestureZoneTop) return@awaitEachGesture
+            val down = awaitFirstDown(requireUnconsumed = false, pass = pass)
+            val y = windowTop() + down.position.y
+            // So herum gelesen, dass eine noch unbekannte Kante (NaN) nichts freigibt.
+            if (!inDepth || !(y >= from()) || y >= gestureZoneTop) return@awaitEachGesture
             val up = opens && collapsed
             val downward = closes && !collapsed
             if (!up && !downward) return@awaitEachGesture
-            val slop = awaitVerticalTouchSlopOrCancellation(down.id) { change, overSlop ->
-                // Nur die Richtung, die etwas bewirkt, wird zum Wischen; die andere bleibt den Knöpfen.
-                if ((up && overSlop < 0f) || (downward && overSlop > 0f)) change.consume()
-            } ?: return@awaitEachGesture
+            val slop = viewConfiguration.touchSlop
+            var change: PointerInputChange
+            while (true) {
+                change = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                if (!change.pressed || change.isConsumed) return@awaitEachGesture
+                val dx = change.position.x - down.position.x
+                val dy = change.position.y - down.position.y
+                if (abs(dx) > slop && abs(dx) > abs(dy)) return@awaitEachGesture
+                if (abs(dy) <= slop) continue
+                // Nur die Richtung, die etwas bewirkt, wird zum Wischen; die andere bleibt Knöpfen und Inhalt.
+                if ((up && dy > 0f) || (downward && dy < 0f)) return@awaitEachGesture
+                break
+            }
             var done = false
-            fun follow(y: Float) {
-                val dy = y - down.position.y
-                if (done) return
-                if (up && dy <= -distance) {
+            while (change.pressed) {
+                change.consume()
+                val dy = change.position.y - down.position.y
+                if (!done && up && dy <= -distance) {
                     done = true
                     show()
-                } else if (downward && dy >= distance) {
+                } else if (!done && downward && dy >= distance) {
                     done = true
                     hide()
                 }
-            }
-            follow(slop.position.y)
-            verticalDrag(slop.id) { change ->
-                change.consume()
-                follow(change.position.y)
+                change = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
             }
         }
+    }
+
+    /**
+     * Wischen nach oben im unteren Bereich einer Seite ohne Startleiste (im App-Rahmen auf dem Inhalt):
+     * Die eingeklappte Leiste ist dort nur der Platz der Systemnavigation, und der gehört dem System.
+     * Darum zählt ein Band [Dimens.TabBarGripClearance] hoch über den unteren Leisten, über die ganze
+     * Breite – am Ende jeder Seite der Tiefe liegt dort nichts. Gewertet vor dem Inhalt
+     * ([PointerEventPass.Initial]), sonst nähme ein scrollender Inhalt die Geste; Tipps, Wischen nach
+     * unten und zur Seite bleiben ihm. Mit Startleiste wischt man auf ihr ([anchoredToPinnedBar]).
+     */
+    suspend fun PointerInputScope.detectBottomSwipe(windowTop: () -> Float) {
+        val band = Dimens.TabBarGripClearance.toPx()
+        detectSwipe(
+            opens = true,
+            closes = false,
+            pass = PointerEventPass.Initial,
+            from = { if (anchoredToPinnedBar) Float.NaN else bottomBarTop - band },
+            windowTop = windowTop,
+        )
     }
 }
 
