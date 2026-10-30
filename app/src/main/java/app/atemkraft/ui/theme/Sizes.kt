@@ -139,7 +139,10 @@ object Sizes {
     /** Punkt der Vorschau, der über die Kurve wandert (14). */
     val CurveDot = 14.dp
 
-    /** Mini-Kurve je Vorlage im Startpunkt-Sheet des Muster-Editors: Breite (64) und Höhe (24 = [IconDefault]). */
+    /**
+     * Mini-Kurve (`MiniCurve`) je Vorlage im Startpunkt-Sheet des Muster-Editors und vor „Muster des
+     * Tages ›“ im Atmen-Tab: Breite (64) und Höhe (24 = [IconDefault]).
+     */
     val MiniCurveWidth = 64.dp
     val MiniCurveHeight = IconDefault
 
@@ -152,7 +155,7 @@ object Sizes {
      */
     val RhythmCurveHeight = 56.dp
 
-    /** Strich der Rhythmuskurve (2), halb so stark wie die Kurve des Editors ([CurveStroke]). */
+    /** Strich der Rhythmuskurve und der Mini-Kurven (2), halb so stark wie die Kurve des Editors ([CurveStroke]). */
     val RhythmCurveStroke = 2.dp
 
     /** Punkt, der im Takt der Übung über die Rhythmuskurve läuft (8), kleiner als [CurveDot]. */

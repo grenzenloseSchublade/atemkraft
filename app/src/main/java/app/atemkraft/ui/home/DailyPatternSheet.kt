@@ -8,18 +8,21 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.PatternTexts
+import app.atemkraft.domain.breathRhythm
+import app.atemkraft.domain.toFreePattern
 import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.AppBottomSheetScope
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.BreathMarkIcon
+import app.atemkraft.ui.components.MiniCurve
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.SectionHeader
@@ -29,7 +32,9 @@ import app.atemkraft.ui.theme.SECONDARY
 /**
  * Kopfzeile „Muster des Tages“ im Atmen-Tab (Nutzer 2026-10-30): ein Abschnittskopf mit Chevron
  * wie „Klang & Stimme“ in der Meditation (`SectionHeader` mit `onClick`, MUSTER-11), davor die
- * Atemkurve in `secondary` als Zeichen des Einstiegs. Der Teaser nennt den Charakter von heute und
+ * Kurve des heutigen Musters ([MiniCurve], statisch, ohne Zahlen) als Zeichen des Einstiegs: Man
+ * sieht, dass sich das Muster täglich ändert. Sie ist dekorativ (der Teaser nennt den Charakter,
+ * TalkBack sagt nichts Neues). Der Teaser nennt den Charakter von heute und
  * den Weg zum Selbstgestalten, ohne Ziffern (die Zahlen stehen im Blatt; „Atem ist keine Zahl“);
  * die ganze Zeile öffnet das
  * [DailyPatternSheet]. Sie steht in jedem Zustand des Tabs – auch bei Anlass, Suche, Bereich und
@@ -43,7 +48,7 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
         teaser = stringResource(R.string.home_daily_teaser, character),
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_daily_open),
-        leadingIcon = painterResource(R.drawable.ic_breath_curve),
+        leading = { MiniCurve(remember(daily.spec) { daily.spec.toFreePattern().breathRhythm() }) },
         // Darüber stehen schon ListGap der Liste und die unsichtbare Tippfläche unter den
         // Anlass-Chips (40 in 48): mit dem inneren GapSmall sichtbar SectionHeaderTop vom Chip bis
         // zum Titel. Ein zweiter GapSmall vor der Tippfläche machte daraus 32.
