@@ -66,7 +66,7 @@ import app.atemkraft.domain.VoiceSpec
 import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.BodyText
-import app.atemkraft.ui.components.CardTitle
+import app.atemkraft.ui.components.CardHeader
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.DisclosureToggle
 import app.atemkraft.ui.components.FilterChipFlow
@@ -666,7 +666,8 @@ private fun MeditationCard(
 }
 
 /**
- * Eine Karte der Einstellungen: Titel als Kartentitel in `onSurface` (FARBE-07: Köpfe weiß),
+ * Eine Karte der Einstellungen: Titel über [CardHeader] (Anatomie §4.5, Überschrift für TalkBack) in
+ * `onSurface` (FARBE-07: Köpfe weiß),
  * direkt darunter optional [intro] (ein Satz, wofür die Karte gilt – nur, wo er etwas hinzufügt,
  * wie der Hinweis einer [NavCard]), nach [titleGap] der Inhalt; Polster `CardPadding`. [titleGap]
  * ist `GapTiny`, wo der Inhalt mit einer Zeile beginnt, die sich selbst polstert (Schalter), sonst
@@ -681,7 +682,7 @@ private fun SettingsCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
-            CardTitle(title)
+            CardHeader(title = title, heading = true)
             if (intro != null) HintText(intro)
             Spacer(Modifier.height(titleGap))
             content()

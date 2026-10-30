@@ -4,7 +4,7 @@ Regeln: [STYLEGUIDE TEXT-15](../STYLEGUIDE.md#text) (Texte nach einem Muster), L
 
 ## Texte nach einem Muster (TEXT-15)
 
-- **Karte:** Titel (`CardTitle`, `onSurface`), direkt darunter höchstens ein Satz, wofür die Karte gilt (`SettingsCard(intro)`), nur wo er etwas sagt, das die Zeilen nicht sagen („Gilt für Atemübungen und Meditation.“).
+- **Karte:** Titel (`CardHeader` mit `heading`, `onSurface`), direkt darunter höchstens ein Satz, wofür die Karte gilt (`SettingsCard(intro)`), nur wo er etwas sagt, das die Zeilen nicht sagen („Gilt für Atemübungen und Meditation.“).
 - **Schalter** (`ToggleRow`): Name sagt, was geschaltet wird, als Substantiv oder kurze Wendung („Vibration“, „Nächste Phase“, „Sicherheitshinweis immer zeigen“); darunter höchstens ein erklärender Satz zur Wirkung – was sich ändert, wann es nützt, bei Bedarf „Aus: …“ –, kein Hinweis, wenn der Name alles sagt (Fortschrittsring der Meditation).
 - **Auswahlreihe** (`SegmentedChoiceRow`): Unterüberschrift (`SubLabel`) darüber, darunter ein `HintText` zur gewählten Option (Ton) oder zur Wahl allgemein; er wiederholt nicht die Segmentbeschriftungen.
 - **Aktionen** (Export/Import): Unterüberschrift darüber, Satz darunter.

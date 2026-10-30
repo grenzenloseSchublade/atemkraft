@@ -16,8 +16,9 @@ import app.atemkraft.ui.theme.Dimens
  * nicht mehr neben den Titel, rutscht er in die nächste Zeile. Eine `Row` mit
  * `weight(fill = false)` misst die Chips zuerst und lässt dem Titel nur den Rest – bei 384 dp
  * und fontScale 1,1 brach so „Resonanz-Atmung“ mitten im Wort um. Der Titel ist ein Name (Übung
- * oder eigenes Muster) und steht wörtlich, ohne Sanskrit-Auszeichnung (TEXT-14). [titleModifier]
- * gilt für den Titeltext selbst ([CardHeader] markiert ihn für das Gate ANATOMIE).
+ * oder eigenes Muster) und steht wörtlich, ohne Sanskrit-Auszeichnung (TEXT-14); [marks] schaltet
+ * sie ein, wo der Titel Inhaltstext ist (Expander der Lehre-Seiten). [titleModifier] gilt für den
+ * Titeltext selbst ([CardHeader] markiert ihn für das Gate ANATOMIE).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -27,6 +28,7 @@ fun TitleWithChips(
     color: Color,
     modifier: Modifier = Modifier,
     titleModifier: Modifier = Modifier,
+    marks: Boolean = false,
     chips: (@Composable RowScope.() -> Unit)? = null,
 ) {
     FlowRow(
@@ -39,7 +41,7 @@ fun TitleWithChips(
             style = style,
             color = color,
             modifier = Modifier.align(Alignment.CenterVertically).then(titleModifier),
-            marks = false,
+            marks = marks,
         )
         // null statt leerer Row: ein leeres Item bekäme sonst Abstand bzw. eine Leerzeile.
         if (chips == null) return@FlowRow

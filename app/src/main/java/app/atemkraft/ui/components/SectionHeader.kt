@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -142,10 +143,9 @@ fun SectionHeader(
     } else {
         Modifier.padding(vertical = Dimens.GapSmall)
     }
-    Row(
-        modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG),
-        verticalAlignment = Alignment.Top,
-    ) {
+    // Mitte der Tippfläche einer Kopf-Aktion auf der Mitte der ersten Titelzeile (wie der Caret).
+    val above = if (!tappable) top else Dimens.GapSmall * 2
+    TitleRow(actionCenter = above + titleLine / 2, modifier = modifier, trailingAction = trailingAction) {
         // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
         // So steckt eine Kopf-Aktion daneben nicht in einem zweiten Button.
         Column(modifier = Modifier.weight(1f).then(toggle).then(inner)) {
@@ -182,12 +182,6 @@ fun SectionHeader(
                 SecondaryText(teaser, modifier = Modifier.padding(top = Dimens.GapSmall))
             }
         }
-        // Glyph an der Inhaltskante wie der Caret aufklappbarer Köpfe (LAYOUT-07).
-        if (trailingAction != null) {
-            // Mitte der Tippfläche auf der Mitte der ersten Titelzeile (wie der Caret).
-            val above = if (!tappable) top else Dimens.GapSmall * 2
-            Box(Modifier.centeredOverflow(above + titleLine / 2, MAX_OVERHANG).flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
-        }
     }
 }
 
@@ -214,7 +208,7 @@ fun GroupLabel(
 ) {
     val style = MaterialTheme.typography.titleSmall
     val line = rememberFirstLineHeight(style)
-    Row(modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG), verticalAlignment = Alignment.Top) {
+    TitleRow(actionCenter = top + line / 2, modifier = modifier, trailingAction = trailingAction) {
         WholeWordText(
             text = title,
             style = style,
@@ -225,8 +219,29 @@ fun GroupLabel(
                 .testTag(TITLE_ROW_TITLE_TAG)
                 .semantics { heading() },
         )
+    }
+}
+
+/**
+ * Gemeinsame Zeile von [SectionHeader] und [GroupLabel] – die Anatomie „Abschnittskopf“ (§4.5) an
+ * einer Stelle: [title] links (der Aufrufer gibt ihm `weight(1f)` und markiert den Titeltext mit
+ * [TITLE_ROW_TITLE_TAG]), oben ausgerichtet; [trailingAction] rechts als genau eine Aktion, ihre
+ * Mitte auf [actionCenter] unter der Oberkante (Mitte der ersten Titelzeile), der Glyph bündig an
+ * der Inhaltskante ([flushEnd], LAYOUT-07). Die 48-dp-Tippfläche ragt höchstens [MAX_OVERHANG] in
+ * den Abstand darunter, sonst wird die Zeile höher. Das Gate ANATOMIE findet die Zeile über
+ * [TITLE_ROW_TAG].
+ */
+@Composable
+internal fun TitleRow(
+    actionCenter: Dp,
+    modifier: Modifier = Modifier,
+    trailingAction: (@Composable () -> Unit)? = null,
+    title: @Composable RowScope.() -> Unit,
+) {
+    Row(modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG), verticalAlignment = Alignment.Top) {
+        title()
         if (trailingAction != null) {
-            Box(Modifier.centeredOverflow(top + line / 2, MAX_OVERHANG).flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
+            Box(Modifier.centeredOverflow(actionCenter, MAX_OVERHANG).flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
         }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -61,7 +62,13 @@ const val CONTROL_ROW_TAG = "anatomie-steuerzeile"
  * Kreis `CardPadding` vom Kartenrand steht.
  *
  * Der Aufrufer setzt Karte, Rand und `CardPadding` (KOMP-03) und hängt den Inhalt als Geschwister
- * darunter an; `[CardHeader]` ist die erste Zeile dieser Spalte.
+ * darunter an; `[CardHeader]` ist die erste Zeile dieser Spalte. Mit [heading] ist der Titel für
+ * TalkBack eine Überschrift (Einstellungen, A11Y-01) – nicht in klickbaren Karten, deren Knoten
+ * den Titel schon als Namen trägt. [marks] setzt Sanskrit kursiv (`sanskritText`) für Titel aus
+ * Inhaltstexten; Namen von Übungen und Mustern stehen wörtlich (Standard).
+ *
+ * Ohne Karte gilt dieselbe Zeile für den Kopf eines Expanders ([ExpanderSection], [ExpanderCard]):
+ * Titel und Caret als [indicator], der Teaser läuft darunter in voller Breite.
  */
 @Composable
 fun CardHeader(
@@ -72,10 +79,13 @@ fun CardHeader(
     chips: (@Composable RowScope.() -> Unit)? = null,
     indicator: (@Composable () -> Unit)? = null,
     actionCount: Int = 0,
+    heading: Boolean = false,
+    marks: Boolean = false,
     actions: (@Composable () -> Unit)? = null,
 ) {
     require(actionCount in 0..2) { "höchstens zwei Aktionen in einer Kartenzeile (KOMP-02)" }
     val titleStyle = MaterialTheme.typography.titleMedium
+    val titleSemantics = if (heading) Modifier.semantics { heading() } else Modifier
     if (eyebrow != null) {
         Column(modifier = modifier.fillMaxWidth().testTag(CARD_HEADER_TAG)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
@@ -95,7 +105,7 @@ fun CardHeader(
                     Box(Modifier.flushEnd(inCard = true).testTag(TITLE_ROW_ACTIONS_TAG)) { actions() }
                 }
             }
-            TitleWithChips(title = title, style = titleStyle, color = titleColor, chips = chips)
+            TitleWithChips(title = title, style = titleStyle, color = titleColor, titleModifier = titleSemantics, marks = marks, chips = chips)
         }
         return
     }
@@ -110,7 +120,8 @@ fun CardHeader(
             style = titleStyle,
             color = titleColor,
             modifier = Modifier.weight(1f),
-            titleModifier = Modifier.testTag(TITLE_ROW_TITLE_TAG),
+            titleModifier = Modifier.testTag(TITLE_ROW_TITLE_TAG).then(titleSemantics),
+            marks = marks,
             chips = chips,
         )
         if (indicator != null) {

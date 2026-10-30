@@ -25,7 +25,9 @@ import kotlin.math.abs
  * - Glyph nicht bündig mit der Inhaltskante (± 1 dp),
  * - Glyph liegt über Text, oder die Tippfläche einer Aktion liegt über dem Titel (der Titel hält
  *   die Breite der Aktionen frei),
- * - Fließtext einer Karte endet vor der Inhaltskante (er muss unter den Aktionen durchlaufen),
+ * - Fließtext einer Karte mit Aktionen endet vor der Inhaltskante (er muss unter den Aktionen
+ *   durchlaufen; ohne Aktionen – Zeichen, Expander, Einstellungen – gibt es nichts zu unterlaufen,
+ *   und Zeilen im Inhalt dürfen dort eigene Endspalten haben),
  * - Steuerzeile oder tippbare Kopfzeile niedriger als 48 dp.
  */
 internal object AnatomyFindings {
@@ -100,8 +102,8 @@ internal object AnatomyFindings {
                     if (c.rect().overlaps(titleText.rect())) out += "ANATOMIE\t$where\tTippfläche „${nameOf(c)}“ über dem Titel"
                 }
             }
-            // Karte: Mehrzeiliger Text unter der Titelzeile reicht bis zur Inhaltskante.
-            if (inCard) {
+            // Karte mit Aktionen: Mehrzeiliger Text unter der Titelzeile reicht bis zur Inhaltskante.
+            if (inCard && below.any { it.tag() == TITLE_ROW_ACTIONS_TAG }) {
                 allTexts
                     .filter { it !in below && it.positionInRoot.y >= rowRect.bottom - density && it.positionInRoot.y < nextTop && it.rect().overlaps(window) }
                     .forEach { t ->

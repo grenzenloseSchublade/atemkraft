@@ -3,7 +3,6 @@ package app.atemkraft.ui.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -100,8 +98,10 @@ fun ExpanderCard(
 }
 
 /**
- * Gemeinsamer Bau von [ExpanderSection] und [ExpanderCard]: tippbare Zeile mit [rowTop] und
- * [rowBottom] Polster, aufgeklappt [content] und darunter [contentBottom].
+ * Gemeinsamer Bau von [ExpanderSection] und [ExpanderCard]: tippbarer Kopf mit [rowTop] und
+ * [rowBottom] Polster, aufgeklappt [content] und darunter [contentBottom]. Der Kopf folgt der
+ * Anatomie „Karte mit Aktionen“ (§4.5) über [CardHeader]: Titel und Caret als Zeichen mittig auf
+ * der ersten Titelzeile, der Teaser läuft darunter in voller Breite bis zur Inhaltskante.
  */
 @Composable
 private fun Expander(
@@ -119,7 +119,7 @@ private fun Expander(
     val state = expandedStateText(expanded)
 
     Column(modifier = modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 // Eigene Klickfläche: Mindesthöhe unabhängig vom (kompakten) Padding.
@@ -138,28 +138,27 @@ private fun Expander(
                     if (expandable) stateDescription = state
                 }
                 .padding(top = rowTop, bottom = rowBottom),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                WholeWordText(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = sanskritText(appetizer),
-                    // Eine Rolle für beide Zustände (kein Reflow beim Aufklappen); Betonung nur
-                    // über die Deckkraft: zugeklappt Sekundärtext wie jeder Teaser, aufgeklappt
-                    // (und ohne Inhalt) Fließtext. Farbe der Fläche: onBackground auf dem Screen,
-                    // onSurface in der Karte.
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current
-                        .copy(alpha = if (expanded || !expandable) BODY else SECONDARY),
-                )
-            }
-            if (expandable) {
-                ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
-            }
+            CardHeader(
+                title = title,
+                marks = true,
+                indicator = if (expandable) {
+                    { ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)) }
+                } else {
+                    null
+                },
+            )
+            Text(
+                text = sanskritText(appetizer),
+                // Eine Rolle für beide Zustände (kein Reflow beim Aufklappen); Betonung nur
+                // über die Deckkraft: zugeklappt Sekundärtext wie jeder Teaser, aufgeklappt
+                // (und ohne Inhalt) Fließtext. Farbe der Fläche: onBackground auf dem Screen,
+                // onSurface in der Karte.
+                style = MaterialTheme.typography.bodySmall,
+                color = LocalContentColor.current
+                    .copy(alpha = if (expanded || !expandable) BODY else SECONDARY),
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         if (expanded && content != null) {
             content()
