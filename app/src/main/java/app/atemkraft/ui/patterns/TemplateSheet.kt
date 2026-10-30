@@ -1,39 +1,32 @@
 package app.atemkraft.ui.patterns
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import app.atemkraft.R
-import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
-import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
+import app.atemkraft.domain.breathRhythm
 import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.AppBottomSheetScope
-import app.atemkraft.ui.components.HoldDash
+import app.atemkraft.ui.components.MiniCurve
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.bleed
 import app.atemkraft.ui.components.selectedRow
-import app.atemkraft.ui.patterns.curve.phaseColor
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
-import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TonalDeep
 
 /**
@@ -86,38 +79,6 @@ private fun TemplateRow(template: FreeTemplate, selected: Boolean, onClick: () -
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {
         WholeWordText(text = template.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
-        MiniCurve(template.pattern, inhale = colors.secondary)
-    }
-}
-
-/**
- * Kleine Atemkurve einer Vorlage (dekorativ, [Sizes.MiniCurveWidth] × [Sizes.MiniCurveHeight]):
- * dieselbe Farbsprache wie die große Kurve (Ein [inhale], Aus [BreathExhale], Halten gestrichelt in
- * der Farbe seiner Höhe), Zeit über die ganze Breite.
- */
-@Composable
-private fun MiniCurve(pattern: FreePattern, inhale: Color) {
-    Canvas(Modifier.size(width = Sizes.MiniCurveWidth, height = Sizes.MiniCurveHeight)) {
-        val stroke = Dimens.GapHairline.toPx()
-        val levels = pattern.levels()
-        val perSecond = size.width / pattern.totalSeconds.coerceAtLeast(1)
-        val top = stroke
-        val bottom = size.height - stroke
-        fun y(level: Float) = bottom - (bottom - top) * level
-        var t = 0
-        pattern.phases.forEachIndexed { i, phase ->
-            val from = Offset(t * perSecond, y(levels[i].from))
-            t += phase.seconds
-            val to = Offset(t * perSecond, y(levels[i].to))
-            val hold = phase.type == FreePhaseType.HOLD
-            drawLine(
-                color = phaseColor(pattern, i, inhale),
-                start = from,
-                end = to,
-                strokeWidth = stroke,
-                cap = StrokeCap.Round,
-                pathEffect = if (hold) HoldDash.pathEffect(this) else null,
-            )
-        }
+        MiniCurve(remember(template) { template.pattern.breathRhythm() })
     }
 }

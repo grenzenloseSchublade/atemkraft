@@ -51,6 +51,7 @@ import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
 import app.atemkraft.domain.FreePhaseType
+import app.atemkraft.ui.components.breathSideColor
 import app.atemkraft.ui.theme.ALPHA_CURVE_FILL
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.BreathExhale
@@ -291,11 +292,12 @@ fun BreathCurveEditor(
 private data class CurveDrag(val index: Int, val axis: Int)
 
 /**
- * Farbe der Phase [index] von [pattern] – die eine Stelle für Kurve, Ablauf-Zeilen, Mini-Kurve der
- * Vorlagen, Werkzeugleiste und Phase in den Werten über der Kurve: obere Seite ([FreePattern.isUpperSide]:
- * Einatmen, Halten ab halb voll) [inhale] (`secondary`), untere [BreathExhale] (FARBE-04).
+ * Farbe der Phase [index] von [pattern] für Kurve, Ablauf-Zeilen, Werkzeugleiste und Phase in den
+ * Werten über der Kurve: obere Seite ([FreePattern.isUpperSide]: Einatmen, Halten ab halb voll)
+ * [inhale] (`secondary`), untere [BreathExhale] – nach der einen Farbregel [breathSideColor]
+ * (FARBE-04), die auch Rhythmuskurve und Mini-Kurven nehmen.
  */
-internal fun phaseColor(pattern: FreePattern, index: Int, inhale: Color): Color = if (pattern.isUpperSide(index)) inhale else BreathExhale
+internal fun phaseColor(pattern: FreePattern, index: Int, inhale: Color): Color = breathSideColor(pattern.isUpperSide(index), inhale)
 
 private fun DrawScope.drawCurve(
     pattern: FreePattern,

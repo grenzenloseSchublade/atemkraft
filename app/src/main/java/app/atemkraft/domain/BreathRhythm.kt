@@ -92,6 +92,28 @@ fun Exercise.breathRhythm(): BreathRhythm? {
     return BreathRhythm(steps, firstPartOnly)
 }
 
+/**
+ * Ein Durchlauf der freien Folge als Atemzug für die kleinen Kurven (Mini-Kurve der Vorlagen und des
+ * Musters des Tages): Füllstände aus [FreePattern.levels], Halten ab halb voll als „Halten voll“,
+ * sonst „Halten leer“ – so gilt dieselbe Seite wie in der Kurve des Editors
+ * ([FreePattern.isUpperSide] = [BreathStep.upper]).
+ */
+fun FreePattern.breathRhythm(): BreathRhythm {
+    val levels = levels()
+    return BreathRhythm(
+        phases.mapIndexed { i, phase ->
+            val type = when (phase.type) {
+                FreePhaseType.IN -> PhaseType.INHALE
+                FreePhaseType.OUT -> PhaseType.EXHALE
+                FreePhaseType.HOLD -> if (FreePattern.isUpperLevel(levels[i].from)) PhaseType.HOLD_FULL else PhaseType.HOLD_EMPTY
+            }
+            BreathStep(type, null, phase.seconds * MILLIS_PER_SECOND, levels[i])
+        },
+    )
+}
+
+private const val MILLIS_PER_SECOND = 1000L
+
 /** Kürzeste Phase, die die Kurve zeigt (1 s). */
 private const val MIN_STEP_MILLIS = 1000L
 

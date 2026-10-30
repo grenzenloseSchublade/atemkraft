@@ -16,8 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -51,12 +51,13 @@ private const val HALF = 0.5f
  * Linie über die volle Breite, darunter die Phasen als Zeile („Einatmen 4 s · Halten voll 7 s ·
  * Ausatmen 8 s“). x = Zeit, y = Lungenfüllung (leer unten, voll oben). Farbsprache der Atemkurve
  * des Muster-Editors (FARBE-04): Einatmen `secondary`, Ausatmen [BreathExhale], Halten gestrichelt
- * ([HoldDash]) in der Farbe seiner Höhe (ab halb voll `secondary`), alles aus [stepColor]. Keine
- * Füllung, keine Griffe, keine Zeitleiste – die Werte trägt die Zeile.
+ * ([HoldDash]) in der Farbe seiner Höhe (ab halb voll `secondary`), alles aus [breathSideColor],
+ * gezeichnet über [drawLevelSegments] wie die [MiniCurve]. Keine Füllung, keine Griffe, keine
+ * Zeitleiste – die Werte trägt die Zeile.
  *
  * Ein kleiner Punkt ([Sizes.RhythmCurveDot]) läuft im echten Takt der Übung endlos über die Kurve,
  * ohne Ton (Eigentümer 2026-10-30, Ausnahme in MOTION-02): Er zeigt den Takt, den man mitatmen
- * kann. Er trägt die Farbe der Phase, auf der er gerade läuft – dieselbe [stepColor] wie die
+ * kann. Er trägt die Farbe der Phase, auf der er gerade läuft – dieselbe [breathSideColor] wie die
  * Linie –, an jeder Grenze über [Motion.RhythmDotColor] weich übergeblendet ([dotColorAt]); kein
  * Pulsieren, keine Fläche. 8 dp bleiben: Zum 2-dp-Strich steht er 4 : 1, deutlicher als der
  * Vorschaupunkt des Editors ([Sizes.CurveDot] 14 zu 4); als Perle auf der eigenen Linie liest er
@@ -80,7 +81,7 @@ private const val HALF = 0.5f
 fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: String? = null, running: Boolean = true) {
     val colors = MaterialTheme.colorScheme
     val inhale = colors.secondary
-    val color = { step: BreathStep -> stepColor(step, inhale) }
+    val color = { step: BreathStep -> breathSideColor(step.upper, inhale) }
     val groups = remember(rhythm) { rhythm.groups() }
     val parts = groups.map { (step, count) ->
         // Name samt Zahl als ein Stück: Die Zeile bricht nur am Trennpunkt um („Halten voll 7 s“ bleibt zusammen).
@@ -119,32 +120,16 @@ fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: Strin
         ) {
             val stroke = Sizes.RhythmCurveStroke.toPx()
             val inset = maxOf(Sizes.RhythmCurveDot.toPx(), stroke) / 2f
-            val left = inset
-            val width = size.width - 2 * inset
-            val top = inset
-            val bottom = size.height - inset
-            val cycle = rhythm.cycleMillis.coerceAtLeast(1L).toFloat()
-            fun x(millis: Long) = left + width * millis / cycle
-            fun y(level: Float) = bottom - (bottom - top) * level
-            var t = 0L
-            rhythm.steps.forEach { step ->
-                val from = Offset(x(t), y(step.level.from))
-                t += step.millis
-                val to = Offset(x(t), y(step.level.to))
-                drawLine(
-                    color = color(step),
-                    start = from,
-                    end = to,
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                    pathEffect = if (step.hold) HoldDash.pathEffect(this) else null,
-                )
-            }
+            val area = Rect(inset, inset, size.width - inset, size.height - inset)
+            drawLevelSegments(rhythm, inhale, stroke, area)
             if (animate && rhythm.steps.isNotEmpty()) {
-                val now = time.mod(rhythm.cycleMillis.coerceAtLeast(1L))
+                val cycle = rhythm.cycleMillis.coerceAtLeast(1L)
+                val now = time.mod(cycle)
                 // Im ersten Atemzug kommt der Punkt nirgendwoher: kein Übergang aus der letzten Phase.
                 val dot = dotColorAt(rhythm, now, blendIn = time >= rhythm.cycleMillis, color = color)
-                drawCircle(dot, radius = Sizes.RhythmCurveDot.toPx() / 2f, center = Offset(x(now), y(rhythm.levelAt(now))))
+                // Dieselbe Abbildung wie drawLevelSegments: x = Zeit, y = Füllstand.
+                val center = Offset(area.left + area.width * now / cycle, area.bottom - area.height * rhythm.levelAt(now))
+                drawCircle(dot, radius = Sizes.RhythmCurveDot.toPx() / 2f, center = center)
             }
         }
         Spacer(Modifier.height(Dimens.GapTiny))
@@ -152,12 +137,6 @@ fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: Strin
         HintText(shownLine, modifier = Modifier.semantics { invisibleToUser() })
     }
 }
-
-/**
- * Farbe eines Abschnitts – eine Regel für Linie und Punkt: obere Seite ([BreathStep.upper]:
- * Einatmen, Nachatmen, Halten ab halb voll) [inhale], sonst [BreathExhale].
- */
-private fun stepColor(step: BreathStep, inhale: Color): Color = if (step.upper) inhale else BreathExhale
 
 /**
  * Farbe des Punkts bei [now] (ms im Atemzug): die Farbe des Abschnitts, auf dem er läuft
