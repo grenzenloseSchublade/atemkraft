@@ -33,7 +33,7 @@ Gepinnt in der `PinnedActionBar`, nur bei getakteten Übungen: oben die Zeile �
 | A54 (384 dp) | 1,1 | 105 dp | 128 dp |
 | A54 (384 dp) | 2,0 | 70 dp | 110 dp |
 
-Bei 2,0 fast doppelt so viel wie vorher, gut zwei Textzeilen statt einer. Abgeschnitten wird nichts, der Inhalt scrollt. Die Szene prüft im Test nur 360 dp bei 2,0; die übrigen Werte sind einmalig mit erweiterter Matrix gemessen (2026-10-30), noch mit dem Status in `titleLarge`. Der kleine Status ändert quer nichts: Bei 360 dp und 2,0 bleiben es 86 dp (nachgemessen); bei 1,0 passte er schon groß dahinter.
+Bei 2,0 fast doppelt so viel wie vorher, gut zwei Textzeilen statt einer. Abgeschnitten wird nichts, der Inhalt scrollt. Die Szene prüft im Test nur 360 dp bei 2,0; die übrigen Werte sind einmalig mit erweiterter Matrix gemessen (2026-10-30), noch mit dem Status in `titleLarge`. Der kleine Status ändert quer nichts: Bei 360 dp und 2,0 waren es mit ihm noch 86 dp, ohne doppelten Rand sind es 94 dp (nachgemessen 2026-10-30); bei 1,0 passte er schon groß dahinter.
 
 Hoch (360 × 640 im App-Rahmen ohne Tab-Leiste, gleiche Messung, einmalig 2026-10-30): „Status groß“ ist die erste einzeilige Fassung mit dem Status in `titleLarge`, „Status klein“ die heutige mit `smallStatus`. 4-7-8 angepasst ist der längste Status („· 6 Runden · angepasst“), Resonanz unangepasst der kurze („· 10 min“):
 

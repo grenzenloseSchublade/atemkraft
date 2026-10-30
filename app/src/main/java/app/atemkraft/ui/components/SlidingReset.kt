@@ -1,6 +1,7 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -39,11 +41,31 @@ import app.atemkraft.ui.theme.Sizes
  * Tonal-Button mit derselben Mindesthöhe und demselben senkrechten Polster wie „Starten“ und
  * einem Icon-Feld so hoch wie dessen Textzeilen ([lines], [StartSplitButton]) – damit wachsen beide
  * bei großer Schrift gleich mit, auch wenn „Starten“ zweizeilig wird, ohne `IntrinsicSize.Min` (das
- * mäße die 48-dp-Tippfläche mit).
+ * mäße die 48-dp-Tippfläche mit). Der Tonal-Button ist fest [ResetWidth] breit, damit der Start
+ * daneben seine Restbreite vorab kennt.
  */
 @Composable
 fun SlidingReset(
     visible: Boolean,
+    onReset: () -> Unit,
+    onFocusHandoff: () -> Unit,
+    modifier: Modifier = Modifier,
+    slideFrom: Alignment.Horizontal = Alignment.Start,
+    compact: Boolean = false,
+    lines: Int = 1,
+) {
+    val state = remember { MutableTransitionState(visible) }
+    state.targetState = visible
+    SlidingReset(state, onReset, onFocusHandoff, modifier, slideFrom, compact, lines)
+}
+
+/**
+ * [SlidingReset] mit dem Zustand des Hereingleitens beim Aufrufer: [StartSplitButton] liest daran,
+ * ob der Reset noch Platz nimmt (auch während er hinausgleitet).
+ */
+@Composable
+internal fun SlidingReset(
+    visibleState: MutableTransitionState<Boolean>,
     onReset: () -> Unit,
     onFocusHandoff: () -> Unit,
     modifier: Modifier = Modifier,
@@ -58,7 +80,7 @@ fun SlidingReset(
     }
     val tracked = Modifier.onFocusChanged { focused = it.hasFocus }
     AnimatedVisibility(
-        visible = visible,
+        visibleState = visibleState,
         modifier = modifier,
         enter = expandHorizontally(Motion.Disclosure, expandFrom = slideFrom) + fadeIn(Motion.Reveal),
         exit = shrinkHorizontally(Motion.Disclosure, shrinkTowards = slideFrom) + fadeOut(Motion.Reveal),
@@ -70,7 +92,7 @@ fun SlidingReset(
         } else {
             FilledTonalButton(
                 onClick = onClick,
-                modifier = Modifier.heightIn(min = Sizes.ButtonHeight).then(tracked),
+                modifier = Modifier.width(ResetWidth).heightIn(min = Sizes.ButtonHeight).then(tracked),
                 contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
             ) {
                 // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt; die
@@ -86,3 +108,9 @@ fun SlidingReset(
         }
     }
 }
+
+/**
+ * Breite des Reset als Tonal-Button: Icon mit Polster ([Dimens.CardPadding] je Seite um
+ * [Sizes.IconInButton]), mindestens die M3-Mindestbreite ([Sizes.ButtonMinWidth]).
+ */
+internal val ResetWidth = maxOf(Sizes.ButtonMinWidth, Dimens.CardPadding * 2 + Sizes.IconInButton)

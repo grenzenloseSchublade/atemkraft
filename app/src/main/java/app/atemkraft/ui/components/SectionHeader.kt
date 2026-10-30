@@ -68,7 +68,8 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * Bildschirm ohne Scrollen auskommen muss). Über einem tippbaren Kopf ([expanded], [onClick]) steht
  * `GapSmall` vor der Tippfläche, innen polstert sie den Titel mit `GapSmall`; `top` kürzt nur den
  * Rand davor (höchstens `GapSmall`): `top = 0.dp` als erstes Element einer Fläche, die selbst einen
- * Rand hat („Anpassen ›“ in der Startleiste) – sonst stünden beide Ränder übereinander.
+ * Rand hat („Anpassen ›“ in der Startleiste) oder wo darüber schon genug Abstand steht
+ * („Muster des Tages ›“ unter den Anlass-Chips) – sonst stünden beide Ränder übereinander.
  * **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
  * ist überall `HeaderGap` – in Listen über `spacedBy(ListGap)`, in Spalten über
  * [CollapsibleSection]. So steht der erste Inhalt unter jedem Kopf gleich weit.
@@ -292,11 +293,13 @@ private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
  *
  * Abstände: Kopf → Inhalt ist sichtbar immer `HeaderGap` (beim aufklappbaren Kopf abzüglich des
  * GapSmall, mit dem er seine Tippfläche unten polstert). [contentSpacing] trennt nur die
- * Inhaltsteile untereinander. Höhenausgleich oben: Der aufklappbare Kopf polstert sich selbst nur
- * 2 × `GapSmall` (Tippfläche ohne Leerraum darüber); bis `SectionHeaderTop` fehlt der Rest,
- * abzüglich [spacingAbove], den die umgebende Liste schon setzt (`spacedBy`). So steht er so weit
- * vom Abschnitt darüber wie ein fester Kopf. [headerTop] ist der Abstand über einem festen Kopf
- * (0 für den ersten Kopf einer Push-Seite, der schon `SectionGap` unter dem Seitenkopf steht).
+ * Inhaltsteile untereinander. Über dem Titel steht sichtbar [headerTop] (Standard
+ * `SectionHeaderTop`; 0 für den ersten Kopf einer Push-Seite, der schon `SectionGap` unter dem
+ * Seitenkopf steht), abzüglich [spacingAbove], den die umgebende Liste schon setzt (`spacedBy`) –
+ * beim festen wie beim aufklappbaren Kopf. Der aufklappbare polstert seinen Titel innen mit
+ * `GapSmall` und hat davor höchstens `GapSmall` Rand; reicht der Rest dafür nicht (in einer Liste
+ * mit `ListGap` bleiben 12), wird der Rand vor der Tippfläche kürzer, sonst füllt ein Abstand
+ * davor auf. So steht er so weit vom Abschnitt darüber wie ein fester Kopf.
  * [headerModifier] gilt für die Kopfzeile selbst (Tippfläche), z. B. ein `FocusRequester`, wenn
  * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07). [trailingAction] reicht an den Kopf
  * durch (Aktion neben dem Caret, z. B. „+“ bei „Eigene Kreationen“).
@@ -320,7 +323,12 @@ fun CollapsibleSection(
     trailingAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val topFill = if (expanded == null) 0.dp else (Dimens.SectionHeaderTop - Dimens.GapSmall * 2 - spacingAbove).coerceAtLeast(0.dp)
+    // Sichtbar über dem Titel: headerTop, abzüglich dessen, was die Liste schon setzt.
+    val above = (headerTop - spacingAbove).coerceAtLeast(0.dp)
+    // Aufklappbar: innen GapSmall über dem Titel, davor der Rand (SectionHeader nimmt höchstens
+    // GapSmall); was darüber hinausgeht, füllt topFill auf.
+    val titleTop = if (expanded == null) above else (above - Dimens.GapSmall).coerceAtLeast(0.dp)
+    val topFill = if (expanded == null) 0.dp else (titleTop - Dimens.GapSmall).coerceAtLeast(0.dp)
     val headerGap = if (expanded == null) Dimens.HeaderGap else (Dimens.HeaderGap - Dimens.GapSmall).coerceAtLeast(0.dp)
     Column(modifier = modifier) {
         SectionHeader(
@@ -332,7 +340,7 @@ fun CollapsibleSection(
             status = status,
             statusDescription = statusDescription,
             smallStatus = smallStatus,
-            top = headerTop,
+            top = titleTop,
             trailingAction = trailingAction,
         )
         // Volle Breite, damit beim Aufklappen nur die Höhe gleitet, nicht auch die Breite.

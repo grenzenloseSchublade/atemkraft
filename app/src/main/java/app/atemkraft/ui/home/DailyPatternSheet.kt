@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.PatternTexts
@@ -43,6 +44,10 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_daily_open),
         leadingIcon = painterResource(R.drawable.ic_breath_curve),
+        // Darüber stehen schon ListGap der Liste und die unsichtbare Tippfläche unter den
+        // Anlass-Chips (40 in 48): mit dem inneren GapSmall sichtbar SectionHeaderTop vom Chip bis
+        // zum Titel. Ein zweiter GapSmall vor der Tippfläche machte daraus 32.
+        top = 0.dp,
     )
 }
 

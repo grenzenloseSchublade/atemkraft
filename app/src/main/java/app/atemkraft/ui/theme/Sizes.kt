@@ -15,6 +15,12 @@ object Sizes {
     /** Sichtbare Mindesthöhe von Button, TextButton, SegmentedButton, Session- und Start-Buttons (M3 40). */
     val ButtonHeight = 40.dp
 
+    /**
+     * Mindestbreite eines M3-Buttons (`ButtonDefaults.MinWidth` 58): Breite des Reset neben
+     * „Starten“, dessen Icon mit Polster (2 × 16 + 18 = 50) darunter bleibt.
+     */
+    val ButtonMinWidth = 58.dp
+
     /** Sichtbare Mindesthöhe der Auswahl-Chips (M3 32). */
     val ChipHeight = 32.dp
 
