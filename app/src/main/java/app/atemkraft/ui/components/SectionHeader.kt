@@ -106,7 +106,7 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Eigene Kreationen · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für
  * TalkBack. Mit [smallStatus] ist er ein leiser Zustands-Suffix in `labelMedium` („Ablauf ·
- * 4 von 12 Phasen“, MUSTER-02). Passt er nicht mehr hinter den Titel, steht er darunter, ohne den
+ * 4 von 12 Phasen“, MUSTER-01). Passt er nicht mehr hinter den Titel, steht er darunter, ohne den
  * führenden Punkt.
  */
 @Composable

@@ -55,7 +55,7 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Speicherzeichen im Kopf (MUSTER-02): leer → gefüllt in `secondary`, Zustand per `stateDescription`
+ * Speicherzeichen im Kopf (MUSTER-01): leer → gefüllt in `secondary`, Zustand per `stateDescription`
  * und Live-Region (nur für den eigenen Tipp, nicht wenn eine Wertänderung es leert). Bei einem
  * Muster, das es vor dem Öffnen schon gab, schärft der erste Tipp auf das gefüllte Speicherzeichen nur
  * (Papierkorb mit Kreuz in `error`, „‚Name‘ wirklich löschen?“), erst der zweite entfernt es

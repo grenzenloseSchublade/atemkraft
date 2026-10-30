@@ -1,4 +1,4 @@
-# Heil-, Therapie- und Präventionsversprechen (TEXT-09, SEC-LEGAL-01).
+# Heil-, Therapie- und Präventionsversprechen (SEC-LEGAL-01).
 # Eine Zeile pro Muster: regulärer Ausdruck, ohne Groß-/Kleinschreibung, an Wortgrenzen.
 # Leerzeilen und Zeilen mit # werden ignoriert. Ausnahmen (Disclaimer, belegte
 # Verneinungen) stehen zeilengenau in health-claims.allow.

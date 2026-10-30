@@ -22,7 +22,7 @@ import java.io.File
 
 /**
  * Ehrliche Texte (STYLEGUIDE §11): Teaser (TEXT-06, -13, MUSTER-03), Heilversprechen samt
- * Store-Disclaimer (TEXT-09, -11, SEC-LEGAL-01/-02) und Typografie (TEXT-10), geprüft über alle
+ * Store-Disclaimer (TEXT-11, SEC-LEGAL-01/-02) und Typografie (TEXT-10), geprüft über alle
  * Fachinhalte: eingebaute Übungen samt Yoga-Lehre, Muster des Tages (Seeds 0–6), eigene und
  * gespeicherte Muster (alle Vorschläge des Muster-Editors), Atemlehre, Pranayama, Glossar,
  * Situationen samt Suchbegriffen, Quellen und `strings.xml`; dazu die öffentlichen Texte (README,
@@ -411,7 +411,7 @@ class ContentRulesTest {
         assertNone("cross-references", broken.distinct())
     }
 
-    // ---- TEXT-09: Heilversprechen -------------------------------------------------------
+    // ---- SEC-LEGAL-01: Heilversprechen -------------------------------------------------------
 
     private val healthClaims: List<Regex> by lazy {
         repoFile("config/health-claims.txt").readLines()
@@ -452,7 +452,7 @@ class ContentRulesTest {
     }
 
     /**
-     * TEXT-09 ohne Baseline: App-Texte und öffentliche Texte in einem Fall; nur bewusste
+     * SEC-LEGAL-01 ohne Baseline: App-Texte und öffentliche Texte in einem Fall; nur bewusste
      * Verneinungen und Disclaimer stehen zeilengenau in health-claims.allow. Dazu SEC-LEGAL-02:
      * Die Store-Beschreibung enthält den Disclaimer wörtlich.
      */

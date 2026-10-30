@@ -60,7 +60,7 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 // Zentrale Bedienelemente: Die SICHTBARE Größe kommt aus Sizes (Material-3-Maße, LAYOUT-04),
-// die Tippfläche bleibt ≥ 48 dp (A11Y-05). Bauregeln (LAYOUT-06):
+// die Tippfläche bleibt ≥ 48 dp (A11Y-05). Bauregeln (ebenfalls LAYOUT-04):
 // 1. Höhe an M3-Elementen nur als Mindestwert (heightIn) – M3-Surfaces reichen sie per
 //    propagateMinConstraints durch, der Inhalt wächst bei großer Schrift mit; nie height()/size().
 // 2. Eigene feste Größe nur als minimumInteractiveComponentSize().size(x), in dieser Reihenfolge:
@@ -103,7 +103,7 @@ fun AppIconButton(
  * Icon-only-Umschalter mit Zustand (z. B. Muster speichern): Optik und Tippfläche wie
  * [AppIconButton], aber `toggleable` mit `Role.Checkbox` und [stateDescription], damit TalkBack
  * Name, Rolle und Zustand liest (A11Y-01). Die Live-Region sagt einen Wechsel von außen an, ohne
- * dass der Fokus springt (A11Y-04, MUSTER-02) – statt eines ausgegrauten „✓ Gespeichert“. Beim
+ * dass der Fokus springt (A11Y-04, MUSTER-01) – statt eines ausgegrauten „✓ Gespeichert“. Beim
  * eigenen Tipp schweigt sie: Den neuen Zustand sagt der fokussierte Knopf dann selbst an, mit
  * Live-Region käme er doppelt (wie [IconSwitch], genau eine Ansage je Wechsel). Den Zustand
  * zeigt der Aufrufer im Icon (gefüllt/leer); das Icon trägt die `contentDescription` (ICON-02).

@@ -96,7 +96,7 @@ fun ChoiceChip(
     val border by animateColorAsState(if (selected) SegmentSelected else MaterialTheme.colorScheme.outline, label = "chipBorder")
     Box(
         modifier = modifier
-            // Reihenfolge wie AppIconButton (LAYOUT-06): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
+            // Reihenfolge wie AppIconButton (LAYOUT-04): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
             .minimumInteractiveComponentSize()
             .heightIn(min = Sizes.ButtonHeight)
             .clip(shape)
@@ -149,7 +149,7 @@ fun TonalChip(
     )
     Box(
         modifier = modifier
-            // Reihenfolge wie AppIconButton (LAYOUT-06): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
+            // Reihenfolge wie AppIconButton (LAYOUT-04): erst die 48-dp-Tippfläche, dann die sichtbare Pille.
             .minimumInteractiveComponentSize()
             .heightIn(min = Sizes.ChipHeight)
             .clip(CircleShape)

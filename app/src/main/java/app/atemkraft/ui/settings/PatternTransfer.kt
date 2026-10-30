@@ -29,7 +29,7 @@ import java.time.LocalDate
 
 /**
  * Sicherung „alles“ für die Einstellungen: Export und Import mit Vorschau. Erfolg erscheint als
- * neues Label des auslösenden Buttons (MUSTER-02), Hinweise und Fehler als Zeile in der Karte
+ * neues Label des auslösenden Buttons (MUSTER-01), Hinweise und Fehler als Zeile in der Karte
  * (MUSTER-04). [preview] ist eine gelesene Datei, die noch auf „Übernehmen“ oder „Abbrechen“ wartet
  * ([confirm], [cancel]); [withSettings] sagt, ob dabei auch die Einstellungen ersetzt werden
  * ([toggleSettings], Standard nein).

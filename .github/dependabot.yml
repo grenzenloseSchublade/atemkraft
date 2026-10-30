@@ -1,7 +1,7 @@
 # Abhängigkeits-Updates (docs/SECURITY.md, Lieferkette): monatlich, gruppiert, damit
 # wenige, gut prüfbare PRs entstehen. Jeder PR läuft durch scripts/check.sh.
 #
-# - Präfix „build“ ohne Scope ergibt „build: Bump …“; „build(deps):“ lehnt CODE-08 ab.
+# - Präfix „build“ ohne Scope ergibt „build: Bump …“; „build(deps):“ lehnt PROZ-01 ab.
 # - Vier Gruppen statt einer: Ein Sammel-PR mit mehreren Major-Sprüngen wird nie grün.
 #   Was in keine Gruppe fällt (z. B. commons-compress), kommt als einzelner PR.
 # - Major-Sprünge von AGP und Gradle zieht der Maintainer von Hand, mit Bildvergleich.
