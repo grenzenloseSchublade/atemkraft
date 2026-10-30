@@ -23,7 +23,7 @@ import app.atemkraft.ui.theme.Sizes
 
 /**
  * Einheitlicher Ein-/Ausklapp-Umschalter: animierter Caret + Label. Ersetzt die früher pro
- * Screen handgebauten „▾/▴"-TextButtons und liefert konsistente TalkBack-Semantik. Rechts
+ * Screen handgebauten „▾/▴“-TextButtons und liefert konsistente TalkBack-Semantik. Rechts
  * vom Text steht [Dimens.GapTiny] Rand. Tippbar ist die ganze Zeile, nicht nur der Text – sonst
  * trifft ein Tipp rechts daneben nichts (Nutzer 2026-10-20); Caret und Text bleiben links,
  * das Tipp-Echo hat die mittlere Rundung statt der Pille. [enabled] = false, solange der

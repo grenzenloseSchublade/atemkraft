@@ -7,7 +7,7 @@ package app.atemkraft.domain
  * @param duration Dauer bzw. Beendigungsart, siehe [PhaseDuration].
  * @param label Optionaler eigener Text fürs Hauptwort; ist er null, wird das Standard-Label
  *   aus [PhaseType] verwendet (in der UI lokalisiert aufgelöst).
- * @param note Optionale Zusatzinfo (z. B. „durch den Mund", „links", „summend"), die in der
+ * @param note Optionale Zusatzinfo (z. B. „durch den Mund“, „links“, „summend“), die in der
  *   Session klein unter dem Hauptwort steht – nur wenn gesetzt.
  * @param side Optionale Seite für Nasenwechsel-Techniken.
  * @param level Füllstand der Lunge von Anfang bis Ende der Phase, nur für Atmen in Stufen

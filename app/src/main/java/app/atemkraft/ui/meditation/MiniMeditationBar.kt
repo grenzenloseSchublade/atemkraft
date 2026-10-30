@@ -9,7 +9,7 @@ import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.ui.components.MiniNowPlayingBar
 
-/** „Now-Playing"-Leiste der Meditation (Titel + Zeit/Status); tippen öffnet das Vollbild-Overlay. */
+/** „Now-Playing“-Leiste der Meditation (Titel + Zeit/Status); tippen öffnet das Vollbild-Overlay. */
 @Composable
 fun MiniMeditationBar(state: MeditationUiState, onClick: () -> Unit) {
     val title = stringResource(R.string.meditation_title)

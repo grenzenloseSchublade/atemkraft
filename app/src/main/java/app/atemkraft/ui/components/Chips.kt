@@ -2,7 +2,9 @@ package app.atemkraft.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,8 +17,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.domain.EvidenceLevel
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.CHIP_FILL
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.EvidenceBest
@@ -31,24 +35,24 @@ const val CHIP_TEXT_TAG = "chip-text"
 
 /** Studienlage-Chip – überall mit derselben semantischen Farbe je Stufe; TalkBack: „Studienlage: …“. */
 @Composable
-fun EvidenceChip(level: EvidenceLevel) {
+fun EvidenceChip(level: EvidenceLevel, modifier: Modifier = Modifier) {
     val color = when (level) {
         EvidenceLevel.WELL_SUPPORTED -> EvidenceBest
         EvidenceLevel.STUDIED -> EvidenceStudied
         EvidenceLevel.LITTLE_STUDIED -> EvidenceLittle
     }
     val text = level.label()
-    Chip(text = text, color = color, spokenText = stringResource(R.string.cd_evidence, text))
+    Chip(text = text, color = color, modifier = modifier, spokenText = stringResource(R.string.cd_evidence, text))
 }
 
 /**
  * Vorsichts-Chip „nur gesund & ausgeruht“ (unabhängig von der Studienlage). Umriss statt Fläche:
- * So hält der Text auch auf der Card 4,5:1, ohne dass `EvidenceCaution` heller und damit dem
- * Pink von „Beenden“ noch ähnlicher werden müsste (FARBE-03, -04).
+ * So hält der Text auch auf der Card 4,5:1, ohne dass `EvidenceCaution` heller und damit
+ * `primary` noch ähnlicher werden müsste (FARBE-03, -04).
  */
 @Composable
-fun CautionChip() {
-    Chip(text = stringResource(R.string.tag_caution), color = EvidenceCaution, outlined = true)
+fun CautionChip(modifier: Modifier = Modifier) {
+    Chip(text = stringResource(R.string.tag_caution), color = EvidenceCaution, modifier = modifier, outlined = true)
 }
 
 /**
@@ -58,8 +62,8 @@ fun CautionChip() {
  * darf deshalb nicht wie das graue „kaum untersucht“ aussehen.
  */
 @Composable
-fun InfoChip() {
-    NeutralChip(stringResource(R.string.tag_info))
+fun InfoChip(modifier: Modifier = Modifier) {
+    NeutralChip(stringResource(R.string.tag_info), modifier)
 }
 
 /**
@@ -69,18 +73,18 @@ fun InfoChip() {
  * „ruhig“ aus wie „gut belegt“, in Gelb „sanft aktivierend“ wie eine Warnung.
  */
 @Composable
-fun CharacterChip(intense: Boolean, activating: Boolean) {
+fun CharacterChip(intense: Boolean, activating: Boolean, modifier: Modifier = Modifier) {
     when {
-        intense -> Chip(text = stringResource(R.string.detail_intense), color = WarnAmber)
-        activating -> NeutralChip(stringResource(R.string.daily_pattern_gentle_up))
-        else -> NeutralChip(stringResource(R.string.detail_calm))
+        intense -> Chip(text = stringResource(R.string.detail_intense), color = WarnAmber, modifier = modifier)
+        activating -> NeutralChip(stringResource(R.string.daily_pattern_gentle_up), modifier)
+        else -> NeutralChip(stringResource(R.string.detail_calm), modifier)
     }
 }
 
 /** Neutrale Pille: nur Umriss, Text und Rand in `onSurface` · `SECONDARY`. */
 @Composable
-private fun NeutralChip(text: String) {
-    Chip(text = text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), outlined = true)
+private fun NeutralChip(text: String, modifier: Modifier = Modifier) {
+    Chip(text = text, color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), modifier = modifier, outlined = true)
 }
 
 /**
@@ -123,3 +127,15 @@ fun Chip(
 
 /** Ein Chip-Text verkleinert höchstens bis hierher (LAYOUT-03, wie `LinkChip`). */
 internal const val CHIP_MIN_SCALE = 0.85f
+
+@Preview
+@Composable
+private fun ChipsPreview() {
+    AtemkraftTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
+            EvidenceChip(EvidenceLevel.WELL_SUPPORTED)
+            CautionChip()
+            CharacterChip(intense = true, activating = false)
+        }
+    }
+}

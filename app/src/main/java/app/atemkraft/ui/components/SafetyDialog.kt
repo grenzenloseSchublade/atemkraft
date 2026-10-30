@@ -33,9 +33,11 @@ fun SafetyDialog(
     cautions: List<String>,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = modifier,
         icon = { Icon(Icons.Filled.Warning, contentDescription = null) }, // dekorativ: der Titel sagt es
         title = { Text(stringResource(R.string.safety_title)) },
         text = {

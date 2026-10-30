@@ -8,7 +8,7 @@ package app.atemkraft.domain
  *
  * @param family Familie für Sortierung/Farbe im Startscreen.
  * @param shortDescription Knappe Beschreibung der Technik (1–3 Sätze).
- * @param effect Teaser im „Wirkung"-Abschnitt: ein abgeschlossener Satz mit Punkt,
+ * @param effect Teaser im „Wirkung“-Abschnitt: ein abgeschlossener Satz mit Punkt,
  *   der in ~2 Zeilen (≈95 Zeichen) passt – nichts darf abgeschnitten wirken. Bleibt
  *   auch aufgeklappt sichtbar.
  * @param effectDetail Ausführliche Vertiefung desselben Sachverhalts (Mechanismus,

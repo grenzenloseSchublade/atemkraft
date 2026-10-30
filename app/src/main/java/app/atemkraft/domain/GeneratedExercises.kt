@@ -58,7 +58,7 @@ object GeneratedExercises {
         val character = if (spec.activating) "sanft aktivierend" else "ruhig"
         // Atemort: ruhige Muster EMPFEHLEN konstant die Bauchatmung (fachlicher Standard);
         // bewusst NICHT randomisiert – und als Einladung formuliert, nicht als Muss.
-        // Punkt nach der Phasenzeile: Sonst liest sich „Ausatmen 5 s Wenn du magst …" als ein Satz.
+        // Punkt nach der Phasenzeile: Sonst liest sich „Ausatmen 5 s Wenn du magst …“ als ein Satz.
         val fullHint = if (spec.activating) hint else "$hint. ${PatternTexts.BELLY_GUIDANCE}"
         val texts = when (origin) {
             PatternOrigin.TODAY -> PatternTexts.todayTexts(hint, character, spec.activating)

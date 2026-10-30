@@ -222,10 +222,10 @@ class ToneCuePlayer {
 
         const val NANOS_PER_MS = 1_000_000L
 
-        /** Ton-Fenster „voller Ausklang": Grundton tau 1,6 s → bei 11,5 s ≈ -62 dB (weit unter hörbar). */
+        /** Ton-Fenster „voller Ausklang“: Grundton tau 1,6 s → bei 11,5 s ≈ -62 dB (weit unter hörbar). */
         const val GONG_TONE_LONG_MS = 11500
 
-        /** Ton-Fenster „kurz": Grundton tau 0,85 s → bei 6,0 s ≈ -61 dB (weit unter hörbar). */
+        /** Ton-Fenster „kurz“: Grundton tau 0,85 s → bei 6,0 s ≈ -61 dB (weit unter hörbar). */
         const val GONG_TONE_SHORT_MS = 6000
 
         /** Großzügige echte Stille NACH dem verklungenen Ton – garantiert kein Abschneiden. */

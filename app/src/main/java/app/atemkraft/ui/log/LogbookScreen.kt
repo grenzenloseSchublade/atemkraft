@@ -409,7 +409,7 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.semantics { contentDescription = spoken },
                     )
-                    // „Runden" nur für Atemübungen; Meditationen zeigen nur die Dauer.
+                    // „Runden“ nur für Atemübungen; Meditationen zeigen nur die Dauer.
                     if (entry.kind == SessionKind.BREATHING) {
                         SecondaryText(pluralStringResource(R.plurals.log_rounds, entry.roundsCompleted, entry.roundsCompleted))
                     }

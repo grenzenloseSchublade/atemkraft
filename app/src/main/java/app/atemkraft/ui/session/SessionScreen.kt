@@ -206,7 +206,7 @@ private fun ActiveContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 SessionTitle(state)
-                // Anleitung auf Abruf: dezente „ⓘ Anleitung"-Zeile unter dem Titel, die den
+                // Anleitung auf Abruf: dezente „ⓘ Anleitung“-Zeile unter dem Titel, die den
                 // Pattern-Hint ein-/ausklappt – jederzeit, nicht nur im Countdown.
                 state.patternHint?.let { hint ->
                     var hintVisible by rememberSaveable { mutableStateOf(false) }

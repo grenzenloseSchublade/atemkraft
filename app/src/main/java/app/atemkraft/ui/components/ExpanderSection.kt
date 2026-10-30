@@ -19,11 +19,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import app.atemkraft.R
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
@@ -164,5 +168,16 @@ private fun Expander(
             content()
             Spacer(Modifier.height(contentBottom))
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ExpanderCardPreview() {
+    AtemkraftTheme {
+        ExpanderCard(
+            title = stringResource(R.string.about_licenses_title),
+            appetizer = stringResource(R.string.about_licenses_teaser),
+        ) { BodyText(stringResource(R.string.volume_hint)) }
     }
 }

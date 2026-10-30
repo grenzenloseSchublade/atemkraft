@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import java.time.LocalDate
 
 /**
- * Friert das „Muster des Tages" ein: Die Hashes stammen aus dem Generator von Version 1.6.8
+ * Friert das „Muster des Tages“ ein: Die Hashes stammen aus dem Generator von Version 1.6.8
  * (vor dem Konfigurator). Ändert sich einer, hat sich das Tagesmuster für die Nutzer verschoben –
  * das darf nur mit Absicht passieren und braucht dann neue Hashes samt Begründung im Commit.
  * Damit ist auch der Determinismus innerhalb einer Version abgedeckt.
@@ -33,7 +33,7 @@ class DailyPatternGoldenTest {
             .digest(text.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
 
-        /** Feste Textform eines Specs; Double.toString ist auf der JVM stabil („5.0", „null"). */
+        /** Feste Textform eines Specs; Double.toString ist auf der JVM stabil („5.0“, „null“). */
         fun canonical(spec: PatternSpec): String = "${spec.inhale}|${spec.holdFull}|${spec.exhale}|${spec.holdEmpty}|${spec.activating}"
 
         fun specsHash(patterns: List<DailyPattern>): String = sha256(patterns.joinToString("\n") { canonical(it.spec) })

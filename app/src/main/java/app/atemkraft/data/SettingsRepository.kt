@@ -365,7 +365,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     }
 
     /** Länge des Intervall-Gongs (Minuten): in Einstellungen wählbar; Standard [GONG_INTERVAL_DEFAULT_MINUTES].
-     *  Alt-Werte unter [GONG_INTERVAL_MIN_MINUTES] (frühere „kein Intervall = 0"-Semantik) fallen auf den Standard zurück. */
+     *  Alt-Werte unter [GONG_INTERVAL_MIN_MINUTES] (frühere „kein Intervall = 0“-Semantik) fallen auf den Standard zurück. */
     private fun gongIntervalOf(prefs: Preferences): Int = prefs[Keys.MED_GONG_INTERVAL]
         ?.takeIf { it >= GONG_INTERVAL_MIN_MINUTES }
         ?.coerceAtMost(GONG_INTERVAL_MAX_MINUTES)

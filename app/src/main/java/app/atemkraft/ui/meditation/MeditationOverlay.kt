@@ -187,7 +187,7 @@ private fun RunningContent(
         modifier = Modifier.fillMaxSize().padding(Dimens.SessionPadding),
         chromeVisible = controlsVisible,
         top = {
-            // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte" Zeit.
+            // Titel oben (wie die Atem-Session ihren Übungsnamen zeigt) – nicht nur „nackte“ Zeit.
             Text(
                 text = stringResource(R.string.meditation_title),
                 style = MaterialTheme.typography.titleSmall,

@@ -15,7 +15,7 @@ data class RuntimePhase(
     val side: BreathSide,
     /** 0-basierter Index der Runde, zu der diese Phase gehört. */
     val roundIndex: Int,
-    /** Gesamtzahl der Runden (für Anzeige „Runde x von y"). */
+    /** Gesamtzahl der Runden (für Anzeige „Runde x von y“). */
     val roundCount: Int,
     /** Füllstand für Atmen in Stufen, siehe [Phase.level]; null = nach Phasentyp. */
     val level: BreathLevel? = null,

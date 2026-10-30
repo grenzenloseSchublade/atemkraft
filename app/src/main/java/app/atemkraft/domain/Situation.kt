@@ -1,6 +1,6 @@
 package app.atemkraft.domain
 
-/** Lebenslagen aus der F3-Situations-Matrix („welche Atmung wann"). */
+/** Lebenslagen aus der F3-Situations-Matrix („welche Atmung wann“). */
 enum class Situation {
     ACUTE_STRESS,
     SLEEP,

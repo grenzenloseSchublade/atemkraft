@@ -5,7 +5,7 @@ enum class MeditationMode {
     /** Feste Dauer, Countdown bis 0. */
     TIMED,
 
-    /** Offene Sitzung, Stoppuhr zählt hoch, endet per „Beenden". */
+    /** Offene Sitzung, Stoppuhr zählt hoch, endet per „Beenden“. */
     FREE,
 }
 

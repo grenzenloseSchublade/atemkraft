@@ -16,7 +16,7 @@ data class PatternSpec(
 /**
  * Liegt das Muster in den Leitplanken des Generators (siehe [RandomPatternGenerator])? Eine
  * Quelle für Generator-Test und Import: Von außen kommende Muster außerhalb dieser Grenzen
- * werden nicht übernommen, weil ihre Beschreibung („Halten ≤ 4 s" …) sonst falsch wäre und sie
+ * werden nicht übernommen, weil ihre Beschreibung („Halten ≤ 4 s“ …) sonst falsch wäre und sie
  * ohne Sicherheitsabfrage starten.
  *
  * Bewusst weiter als der heutige Generator: 0,5-s-Werte und aktivierende Muster mit gleich
@@ -43,7 +43,7 @@ data class DailyPattern(val exercise: Exercise, val spec: PatternSpec) {
 }
 
 /**
- * Erzeugt das „Muster des Tages": ein zufälliges, aber physiologisch plausibles Atemmuster,
+ * Erzeugt das „Muster des Tages“: ein zufälliges, aber physiologisch plausibles Atemmuster,
  * **deterministisch aus dem Datum** (gleicher Tag ⇒ gleiches Muster). Bewusst als spielerische
  * Abwechslung positioniert – ohne Wirkversprechen (die Studienlage favorisiert für regelmäßiges
  * Üben EIN konstantes langsames Muster, siehe effectDetail-Text).
@@ -73,7 +73,7 @@ object RandomPatternGenerator {
      */
     fun forEpochDay(epochDay: Long): DailyPattern = forSeed(epochDay)
 
-    /** Muster aus beliebigem Seed – für „Neu generieren". */
+    /** Muster aus beliebigem Seed – für „Neu generieren“. */
     fun forSeed(seed: Long): DailyPattern {
         val random = Random(seed)
         return when (random.nextInt(100)) {

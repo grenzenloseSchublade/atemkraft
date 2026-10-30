@@ -24,7 +24,7 @@ private val AtemkraftColors = darkColorScheme(
     surface = DarkSurface,
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
-    // M3-Semantik: „variant" = leiser – gedämpftes Lavendel statt Voll-Weiß.
+    // M3-Semantik: „variant“ = leiser – gedämpftes Lavendel statt Voll-Weiß.
     onSurfaceVariant = DarkOnSurfaceVariant,
     // M3-Container-Leiter aus der Indigo-Palette: Card() & Co. rendern sonst im neutralen
     // Baseline-Grau statt im Marken-Indigo.

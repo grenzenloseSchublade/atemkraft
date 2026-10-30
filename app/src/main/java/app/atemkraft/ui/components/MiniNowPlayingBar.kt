@@ -25,7 +25,7 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Geteilte „Now-Playing"-Leiste über der NavigationBar (Titel + Status + ˄), tippen öffnet die
+ * Geteilte „Now-Playing“-Leiste über der NavigationBar (Titel + Status + ˄), tippen öffnet die
  * jeweilige Vollbild-Ansicht. App-weit genutzt von Atem-Session ([app.atemkraft.ui.session.MiniSessionBar])
  * und Meditation ([app.atemkraft.ui.meditation.MiniMeditationBar]).
  *

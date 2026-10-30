@@ -61,20 +61,22 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Feeling
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionButtonCyan
 import app.atemkraft.ui.theme.SessionTextGlow
-import app.atemkraft.ui.theme.TonalDeep
 import app.atemkraft.ui.theme.SessionTextYellow
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.TonalDeep
 import app.atemkraft.ui.theme.rememberAnimationsEnabled
 import kotlinx.coroutines.delay
 
@@ -229,7 +231,7 @@ private fun SessionRoundButton(
 }
 
 /**
- * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft"-Eyebrow, [title], mit [feelingAsk] darunter
+ * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft“-Eyebrow, [title], mit [feelingAsk] darunter
  * die Antwortreihe zum Befinden aus [feelingOptions] (gewählt: [feeling]; überspringbar, nur wenn ein
  * Logbuch-Eintrag entstand, SEC-LEGAL-04), optional eine kurze Bilanz aus den
  * Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), darunter mit
@@ -440,4 +442,10 @@ fun rememberTapFlash(): TapFlashState {
         }
     }
     return state
+}
+
+@Preview
+@Composable
+private fun SessionControlBarPreview() {
+    AtemkraftTheme { SessionControlBar(playing = true, onMain = {}, onRestart = {}, onStop = {}) }
 }

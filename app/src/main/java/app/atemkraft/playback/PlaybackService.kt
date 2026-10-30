@@ -66,7 +66,7 @@ class PlaybackService : Service() {
     /**
      * Partial-Wakelock: hält NUR die CPU wach (Bildschirm darf aus), solange eine Sitzung aktiv
      * läuft. Ohne ihn pausiert der delay()-Timer-Loop in tiefem Doze und Gongs bzw. Phasen-Töne
-     * kämen erheblich zu spät – gerade beim Kern-Use-Case „stille Sitzung, Bildschirm aus".
+     * kämen erheblich zu spät – gerade beim Kern-Use-Case „stille Sitzung, Bildschirm aus“.
      * Bei Pause wird er freigegeben (Timer steht ohnehin), bei Resume neu gehalten.
      */
     private var wakeLock: PowerManager.WakeLock? = null
@@ -107,7 +107,7 @@ class PlaybackService : Service() {
         running = true
         createChannel()
         // Benachrichtigung bei jeder sichtbaren Änderung aktualisieren – aber NICHT, wenn nichts
-        // mehr läuft (IDLE/FINISHED), sonst würde beim Beenden noch „0:00" nachgepostet und bliebe
+        // mehr läuft (IDLE/FINISHED), sonst würde beim Beenden noch „0:00“ nachgepostet und bliebe
         // hängen. Das eigentliche Beenden steuern die Controller (über die Halter); onDestroy räumt
         // die Benachrichtigung sicher weg.
         scope.launch {

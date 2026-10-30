@@ -56,7 +56,7 @@ class PiperSpeechGuide(
     /** Erhöht bei jedem (Neu-)Aufbau/Teardown: veraltete Build-Ergebnisse werden verworfen. */
     @Volatile private var initEpoch = 0
 
-    /** „Generation" der Wiedergabe: stop() erhöht ihn und bricht ältere Ausgaben ab. */
+    /** „Generation“ der Wiedergabe: stop() erhöht ihn und bricht ältere Ausgaben ab. */
     @Volatile private var epoch = 0
 
     @Volatile private var currentTrack: AudioTrack? = null

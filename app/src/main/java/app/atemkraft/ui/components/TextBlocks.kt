@@ -1,6 +1,7 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +12,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
@@ -18,7 +20,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import app.atemkraft.R
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
@@ -147,3 +152,16 @@ fun rememberFirstLineHeight(style: TextStyle): Dp {
 
 /** Ein Zeichen für die Messung einer Zeile ([rememberFirstLineHeight]). */
 private const val ONE_LINE = "A"
+
+@Preview
+@Composable
+private fun TextBlocksPreview() {
+    AtemkraftTheme {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny)) {
+            CardTitle(stringResource(R.string.about_licenses_title))
+            BodyText(stringResource(R.string.about_licenses_teaser))
+            HintText(stringResource(R.string.volume_hint))
+            Bullet(stringResource(R.string.tag_caution))
+        }
+    }
+}

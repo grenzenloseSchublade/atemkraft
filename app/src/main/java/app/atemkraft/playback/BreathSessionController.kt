@@ -76,7 +76,7 @@ data class SessionUiState(
     val roundCount: Int = 1,
     /** Verbleibende Sekunden im Start-Countdown (nur bei [SessionStatus.PREPARING]). */
     val countdown: Int = 0,
-    /** Typ der kommenden Phase (für die dezente „Als Nächstes"-Anzeige); null am Ende. */
+    /** Typ der kommenden Phase (für die dezente „Als Nächstes“-Anzeige); null am Ende. */
     val nextPhaseType: PhaseType? = null,
     /** Eigenes Label der kommenden Phase (Pause zwischen Stufen: „Halten“), sonst null. */
     val nextPhaseLabel: String? = null,
@@ -180,10 +180,10 @@ class BreathSessionController(
     /** Beim Fortsetzen aus der Pause: Restzeit der aktuellen Phase (sonst null). */
     private var resumeRemainingMs: Long? = null
 
-    /** Signal zum Beenden einer offenen Phase (Nutzer tippt „weiter"). */
+    /** Signal zum Beenden einer offenen Phase (Nutzer tippt „weiter“). */
     private var continueSignal: CompletableDeferred<Unit>? = null
 
-    // Für Neustart („Von vorne"): zuletzt gewählte Übung (unangepasst) + Anpassung.
+    // Für Neustart („Von vorne“): zuletzt gewählte Übung (unangepasst) + Anpassung.
     private var baseExercise: Exercise? = null
     private var currentConfig: SessionConfig = SessionConfig()
 
@@ -350,7 +350,7 @@ class BreathSessionController(
         finish()
     }
 
-    /** Typ der nächsten Phase im Ablauf (für die „Als Nächstes"-Anzeige). */
+    /** Typ der nächsten Phase im Ablauf (für die „Als Nächstes“-Anzeige). */
     private fun nextPhaseType(): PhaseType? = timeline.getOrNull(index + 1)?.type
 
     private suspend fun runFixedPhase(phase: RuntimePhase, deadline: Long, totalMs: Long) {

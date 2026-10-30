@@ -8,7 +8,7 @@ package app.atemkraft.domain
  */
 object PatternTexts {
 
-    /** Muster-Kurzform, z. B. „4·2·6" – auch für Namen gespeicherter Muster. */
+    /** Muster-Kurzform, z. B. „4·2·6“ – auch für Namen gespeicherter Muster. */
     fun numbersOf(spec: PatternSpec): String = listOfNotNull(spec.inhale, spec.holdFull, spec.exhale, spec.holdEmpty)
         .joinToString("·") { it.fmt() }
 
@@ -23,9 +23,9 @@ object PatternTexts {
     fun savedDailyName(spec: PatternSpec): String = "Muster ${numbersOf(spec)}"
 
     /**
-     * Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s". Zwischen Zahl und „s"
+     * Muster in Worten, z. B. „Einatmen 4 s · Halten 2 s · Ausatmen 6 s“. Zwischen Zahl und „s“
      * steht ein geschütztes Leerzeichen ([NBSP]): Bei großer Schrift bricht die Zeile sonst
-     * zwischen „1" und „s" um (TEXT-10). Teile werden mit [DOT_SEPARATOR] verbunden.
+     * zwischen „1“ und „s“ um (TEXT-10). Teile werden mit [DOT_SEPARATOR] verbunden.
      */
     fun hintFor(spec: PatternSpec): String = inWords(spec, PhaseNames.HOLD, PhaseNames.HOLD)
 
@@ -212,7 +212,7 @@ object PatternTexts {
         }
     }
 
-    /** „4" bzw. „4,5" (deutsches Komma, ohne unnötige Null, [formatDecimal]). */
+    /** „4“ bzw. „4,5“ (deutsches Komma, ohne unnötige Null, [formatDecimal]). */
     private fun Double.fmt(): String = formatDecimal()
 
     /**

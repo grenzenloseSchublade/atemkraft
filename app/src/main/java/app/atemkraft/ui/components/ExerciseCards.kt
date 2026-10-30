@@ -10,7 +10,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
+import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PhaseDuration
@@ -22,6 +24,7 @@ import app.atemkraft.domain.formatDecimal
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.inStages
 import app.atemkraft.domain.minutesRounded
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Sizes
 
@@ -152,4 +155,18 @@ fun PatternCard(
             SecondaryText(patternLine + DOT_SEPARATOR + stringResource(R.string.duration_approx, exercise.defaultMinutes()))
         }
     }
+}
+
+@Preview
+@Composable
+private fun ExerciseCardPreview() {
+    val exercise = Exercise(
+        id = "vorschau",
+        name = stringResource(R.string.welcome_title),
+        family = BreathingFamily.DOWNREGULATE,
+        shortDescription = stringResource(R.string.welcome_body),
+        effect = stringResource(R.string.welcome_body),
+        caution = true,
+    )
+    AtemkraftTheme { ExerciseCard(exercise = exercise, onClick = {}, marked = true) }
 }

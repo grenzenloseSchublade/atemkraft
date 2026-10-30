@@ -121,7 +121,7 @@ private fun AtemkraftApp(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Laufende Session/Meditation liegen bei Bedarf als Vollbild-Overlay über dem Scaffold;
-        // minimiert erscheinen sie als „Now-Playing"-Mini-Leiste über der Tab-Leiste.
+        // minimiert erscheinen sie als „Now-Playing“-Mini-Leiste über der Tab-Leiste.
         Scaffold(
             modifier = Modifier.inertWhen(playback.overlayOpen),
             bottomBar = {

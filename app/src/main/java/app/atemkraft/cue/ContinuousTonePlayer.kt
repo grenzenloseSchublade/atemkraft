@@ -70,7 +70,7 @@ class ContinuousTonePlayer {
             }
 
             TransitionEmphasis.STRONG -> {
-                // Nahe Stille + länger → klar hörbares „kurz weg, blüht wieder auf".
+                // Nahe Stille + länger → klar hörbares „kurz weg, blüht wieder auf“.
                 articLow = 0.02f
                 articDownSamples = (0.07f * SAMPLE_RATE).toInt()
                 articUpSamples = (0.48f * SAMPLE_RATE).toInt()
@@ -260,7 +260,7 @@ class ContinuousTonePlayer {
          */
         const val GAIN_FADE_SECONDS = 0.06f
 
-        /** Pegel-Faktor je Stufe; „Laut" trägt deutlich, Spitze 0,25 × 3,2 = 0,8 FS (kein Clipping). */
+        /** Pegel-Faktor je Stufe; „Laut“ trägt deutlich, Spitze 0,25 × 3,2 = 0,8 FS (kein Clipping). */
         fun volumeScaleFor(volume: ToneVolume): Float = when (volume) {
             ToneVolume.QUIET -> 1.2f
             ToneVolume.MEDIUM -> 2.0f

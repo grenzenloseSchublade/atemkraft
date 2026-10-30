@@ -79,10 +79,10 @@ val FamilyFunctional = Color(0xFF34D399)
 // Semantische Tokens (zentral, statt mehrfach hardcodierter Hex in den Screens).
 // Studienlage (EvidenceLevel): drei ruhige, klar unterscheidbare Töne, Chip-Text ≥ 4,5:1 und
 // ΔE76 ≥ 25 zu allen Farben des Atmen-Tabs (ThemeContrastTest).
-val EvidenceBest = NeonCyan // „gut belegt" – Cyan
-val EvidenceStudied = Color(0xFF78B0CC) // „in Studien geprüft" – gedämpftes Stahlblau
-val EvidenceLittle = Color(0xFFC8B8B4) // „kaum untersucht" – neutrales, warmes Grau
-val EvidenceCaution = Color(0xFFFF6B8B) // „nur gesund & ausgeruht" / Vorsicht – Neon-Pink/Rot
+val EvidenceBest = NeonCyan // „gut belegt“ – Cyan
+val EvidenceStudied = Color(0xFF78B0CC) // „in Studien geprüft“ – gedämpftes Stahlblau
+val EvidenceLittle = Color(0xFFC8B8B4) // „kaum untersucht“ – neutrales, warmes Grau
+val EvidenceCaution = Color(0xFFFF6B8B) // „nur gesund & ausgeruht“ / Vorsicht – Neon-Pink/Rot
 val WarnAmber = NeonYellow // Hinweis/Warnung – Synthwave-Gelb
 
 // Session-Atemkreis (synthwave): Magenta-Verlauf + Cyan-Ring, damit die helle Schrift
@@ -96,7 +96,7 @@ const val ALPHA_CIRCLE_EDGE = 0.72f
 val SynthTrack = NeonCyan
 
 // Session-Schrift: warmes, entsättigtes Pastellgold/Creme mit weichem Schimmer – ruhig statt grell,
-// passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen". Zusatzinfo dezenter.
+// passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen“. Zusatzinfo dezenter.
 val SessionTextYellow = Color(0xFFEBDCB0)
 
 // Anleitungszeile unter dem Kreis, mit α SECONDARY auf background (früher im Kreis, daher so hell).

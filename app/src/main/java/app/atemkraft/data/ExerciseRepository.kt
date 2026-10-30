@@ -12,7 +12,7 @@ import java.time.LocalDate
 
 /**
  * Liefert die verfügbaren Übungen: eingebaute aus [BuiltInExercises] (im Code), gespeicherte über
- * [SavedPatternsRepository]. Zusätzlich das generierte „Muster des Tages"
+ * [SavedPatternsRepository]. Zusätzlich das generierte „Muster des Tages“
  * ([RandomPatternGenerator]) als beobachtbarer Zustand [daily]; [today] liefert das Datum, gegen
  * das der Tageswechsel geprüft wird (Tests setzen eine feste Uhr).
  */
@@ -30,7 +30,7 @@ class ExerciseRepository(
     }
 
     /**
-     * Das „Muster des Tages" – deterministisch aus dem Datum, bis „Neu generieren"
+     * Das „Muster des Tages“ – deterministisch aus dem Datum, bis „Neu generieren“
      * ([regenerateDaily]) ein frisches setzt. Den Tageswechsel prüft [currentDaily]; der Wert
      * selbst wechselt nicht von allein um Mitternacht.
      */
@@ -49,7 +49,7 @@ class ExerciseRepository(
 
     /**
      * Ein frisches Muster erzeugen (ersetzt das Tagesmuster bis zum nächsten App-Start bzw.
-     * Tageswechsel) – „Neu generieren"-Knopf auf der Karte.
+     * Tageswechsel) – „Neu generieren“-Knopf auf der Karte.
      */
     @Synchronized
     fun regenerateDaily() {

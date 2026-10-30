@@ -155,7 +155,7 @@ class MeditationController(
         scope.launch { logbook.setFeeling(id, feeling) }
     }
 
-    /** Dieselbe Sitzung noch einmal starten (vom „Nochmal" auf dem Abschluss-Screen). */
+    /** Dieselbe Sitzung noch einmal starten (vom „Nochmal“ auf dem Abschluss-Screen). */
     fun restart() = start(currentConfig)
 
     /**
@@ -216,7 +216,7 @@ class MeditationController(
 
     fun pause() {
         // Läuft bereits der Abschluss (Timer natürlich ausgelaufen), Pause ignorieren – sonst
-        // würde der finish()-Job mitten in Gong/Logbuch abgebrochen („0:00 · Pausiert"-Hänger,
+        // würde der finish()-Job mitten in Gong/Logbuch abgebrochen („0:00 · Pausiert“-Hänger,
         // bei Resume Doppel-Gong/-Eintrag).
         if (finishing) return
         if (_state.value.status != MeditationStatus.RUNNING) return
@@ -241,7 +241,7 @@ class MeditationController(
     }
 
     /**
-     * „Beenden" (Overlay, Benachrichtigung) nach der Regel in [SessionTiming.MIN_LOG_MS], für Timer
+     * „Beenden“ (Overlay, Benachrichtigung) nach der Regel in [SessionTiming.MIN_LOG_MS], für Timer
      * und offene Sitzung gleich: RUNNING/PAUSED ab einer Minute aktiver Zeit → regulärer Abschluss
      * (End-Gong, Logbuch, Ende-Screen); darunter, im Countdown oder vom Ende-Screen → Abbruch bzw.
      * Rückkehr in die Auswahl. Ein bereits FINISHED-Zustand wird nur verworfen (kein erneutes
@@ -334,7 +334,7 @@ class MeditationController(
             }
             // Nur der TIMED-Modus endet von selbst; FREE endet über finishNow().
             // finishing SOFORT setzen (nicht erst in finish()): sperrt pause() gegen den Race
-            // „Pause-Tipp im Moment des natürlichen Endes".
+            // „Pause-Tipp im Moment des natürlichen Endes“.
             if (cfg.mode == MeditationMode.TIMED) {
                 finishing = true
                 finish()

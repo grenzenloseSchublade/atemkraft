@@ -28,7 +28,7 @@ data class PhaseAdjust(
 
 /**
  * Einstell-Karte einer Übung: Dauer-/Runden-Stepper, dahinter aufklappbar die Intervall-Stepper.
- * Eingeklappt markiert „· angepasst" abweichende Intervalle; der Hinweis verschwindet von
+ * Eingeklappt markiert „· angepasst“ abweichende Intervalle; der Hinweis verschwindet von
  * selbst, sobald die Werte – auch manuell zurückgesteppt – wieder den Defaults entsprechen.
  * Das Zurücksetzen selbst sitzt beim Start-Button (Split-Button im Detail-Screen).
  * Fehlen alle drei Phasen (Stufen-Übungen, Phasen unter 1 s, `AdjustDefaults.of`), bleibt nur

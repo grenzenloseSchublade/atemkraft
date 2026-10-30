@@ -7,7 +7,7 @@ import app.atemkraft.playback.SessionStatus
 import app.atemkraft.playback.SessionUiState
 import app.atemkraft.ui.components.MiniNowPlayingBar
 
-/** „Now-Playing"-Leiste für die Atem-Session; tippen öffnet die Vollbild-Session. */
+/** „Now-Playing“-Leiste für die Atem-Session; tippen öffnet die Vollbild-Session. */
 @Composable
 fun MiniSessionBar(
     state: SessionUiState,

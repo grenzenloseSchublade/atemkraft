@@ -52,9 +52,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
 import app.atemkraft.ui.components.WholeWordText
+import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
@@ -225,3 +227,15 @@ private val TOUCH_BELOW_EDGE = Dimens.ListGap
 
 /** Pfeil des [TabBarToggle] nach unten gedreht (Grad). */
 private const val HALF_TURN = 180f
+
+@Preview
+@Composable
+private fun AppNavigationBarPreview() {
+    AtemkraftTheme {
+        AppNavigationBar(
+            items = TopTab.entries.map { tab ->
+                AppNavItem(label = stringResource(tab.label), selected = tab == TopTab.START, onClick = {}, icon = tab.icon)
+            },
+        )
+    }
+}
