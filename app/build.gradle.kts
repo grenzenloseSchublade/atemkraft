@@ -206,8 +206,9 @@ ktlint {
 }
 
 // Regeltests lesen Baselines und Wortlisten aus config/ und prüfen die öffentlichen Texte
-// (README, PRIVACY, Release-Notes, Store): als Test-Eingabe registrieren, sonst hält Gradle die
-// Tests nach einer reinen Text- oder Baseline-Änderung für aktuell und überspringt sie.
+// (README, PRIVACY, Release-Notes, Store), ThemeContrastTest die Kontrasttabellen im STYLEGUIDE:
+// als Test-Eingabe registrieren, sonst hält Gradle die Tests nach einer reinen Text- oder
+// Baseline-Änderung für aktuell und überspringt sie.
 tasks.withType<Test>().configureEach {
     inputs.dir(rootProject.file("config"))
         .withPropertyName("regelConfig")
@@ -215,6 +216,7 @@ tasks.withType<Test>().configureEach {
     inputs.files(
         rootProject.file("README.md"),
         rootProject.file("docs/PRIVACY.md"),
+        rootProject.file("docs/STYLEGUIDE.md"),
         rootProject.fileTree("docs/release-notes"),
         rootProject.fileTree("fastlane/metadata"),
     )
