@@ -2,24 +2,20 @@
 
 Normativer Design-, Text- und Code-Leitfaden für Maintainer und Claude: Jede Regel nennt ihre Prüfung. Stand: 2026-10-30, v2.10.0 und `main`. Sicherheit, Datenschutz, Build und Release regelt [SECURITY.md](SECURITY.md); Commit, Push, Release und Arbeitsweise [PROCESS.md](PROCESS.md); die Kurzfassung für Agenten steht in [CLAUDE.md](../CLAUDE.md). Wie ein Feature genau gebaut ist, steht in [docs/spec/](spec/); warum etwas so entschieden wurde, in [DECISIONS.md](DECISIONS.md).
 
-**Inhalt:** [0 Geltung](#geltung) · [1 Leitplanken](#leitplanken) · [2 Farbe](#farbe) · [3 Typografie](#typografie) · [4 Layout](#layout) (4.5 [Anatomie der Bausteine](#anatomie)) · [5 Komponenten](#komponenten) · [6 Muster](#muster) · [7 Icons](#icons) · [8 Bewegung](#bewegung) · [9 Audio und Haptik](#audio) · [10 Barrierefreiheit](#a11y) · [11 Text und Ton](#text) · [12 Code](#code) · [13 Automatische Prüfung](#automatische-pruefung) · [14 Backlog](#backlog) · [Quellen](#quellen)
+**Inhalt:** [0 Geltung](#geltung) · [1 Leitplanken](#leitplanken) · [2 Farbe](#farbe) · [3 Typografie](#typografie) · [4 Layout](#layout) (4.5 [Anatomie der Bausteine](#anatomie)) · [5 Komponenten](#komponenten) · [6 Muster](#muster) · [7 Icons](#icons) · [8 Bewegung](#bewegung) · [9 Audio und Haptik](#audio) · [10 Barrierefreiheit](#a11y) · [11 Text und Ton](#text) · [12 Code](#code) · [13 Automatische Prüfung](#automatische-pruefung) · [Quellen](#quellen) · außerhalb: [BACKLOG.md](BACKLOG.md) (Offenes), [CHECKS.md](CHECKS.md) (Prüfwerkzeuge)
 
 ## <a id="geltung"></a>0 Geltung
 
 - **Pfade:** `src/` = `app/src/main/java/app/atemkraft/`, `res/` = `app/src/main/res/`.
-- **Regelformat:** `ID | Stufe | Regel | Warum | Prüfung`. Eine Regelzelle sagt in höchstens 400 Zeichen, *was gilt* (Doku-Lint `rule-length` prüft die dritte Spalte jeder Zeile mit ID, auch im Backlog); die Spalte Warum gibt den Grund in einem Halbsatz (Richtwert 120 Zeichen, ungeprüft). Spezifikation gehört nach `docs/spec/` oder in die KDoc, Historie und Nutzerentscheidungen nach [DECISIONS.md](DECISIONS.md), Offenes in den [Backlog](#backlog).
-- **IDs** sind stabil und werden nie neu vergeben; eine gestrichene oder verschobene Regel bleibt als „entfällt → Ziel“ stehen.
-- **Prüfung:** `auto: <check>` verweist auf §13.3, `manuell: R-…` auf eine Checkliste in §13.4.
+- **Regelformat:** `ID | Stufe | Regel | Warum | Prüfung`. Eine Regelzelle sagt in höchstens 400 Zeichen, *was gilt* (Doku-Lint `rule-length` prüft die dritte Spalte jeder Zeile mit ID, auch die S-Zeilen in BACKLOG.md); die Spalte Warum gibt den Grund in einem Halbsatz (Richtwert 120 Zeichen, ungeprüft). Spezifikation gehört nach `docs/spec/` oder in die KDoc, Historie und Nutzerentscheidungen nach [DECISIONS.md](DECISIONS.md), Offenes nach [BACKLOG.md](BACKLOG.md).
+- **IDs** sind stabil und werden nie neu vergeben. Gestrichen bzw. verschoben, aber gesperrt: META-01 → PROZ-02, LAYOUT-06 und KOMP-04 → LAYOUT-04, MUSTER-02 → MUSTER-01, TEXT-09 → SEC-LEGAL-01, CODE-08 → PROZ-01. Eine künftig gestrichene Regel kommt in diese Zeile.
+- **Prüfung:** `auto: <check>` verweist auf die Check-Tabelle ([CHECKS.md](CHECKS.md#checks), §13.3), `manuell: R-…` auf eine Checkliste in §13.4.
 - **Qualitätsmerkmale:** Welche Regel welchem Merkmal nach ISO/IEC 25010:2023 dient, wie es geprüft wird und wo es dünn ist, zeigt [PROCESS.md, Qualitätsmerkmale](PROCESS.md#iso25010); vor jedem Release läuft der Kurzcheck (PROZ-09).
 
 | Stufe | Bei Verstoß |
 |---|---|
 | **MUSS** / **DARF NICHT** | CI rot. Altlasten sind per Baseline mit S-ID eingefroren (§13.2). Marker `// Abweichung <ID>: <Grund>` nur, wo die Regel eine Ausnahme nennt. |
 | **SOLL** | Abweichung nur mit Marker `// Abweichung <ID>: <Grund>` in derselben Zeile; ohne Marker warnt die Automatik. |
-
-| ID | Stufe | Regel | Warum | Prüfung |
-|---|---|---|---|---|
-| META-01 | – | entfällt → PROZ-02 ([PROCESS.md](PROCESS.md)): Guide-Pflicht je Push, Baseline sinkt im selben Commit. | Prozessregel, keine Designregel. | auto: `guide-sync`, `baseline-stale` |
 
 ## <a id="leitplanken"></a>1 Leitplanken
 
@@ -224,7 +220,6 @@ Switch und RadioButton stehen in M3-Größe. `AppTextButton` trägt `shapes.larg
 | LAYOUT-03 | MUSS | **Kein Wort bricht um, kein Text wird gekürzt** – auf 360–412 dp bei fontScale 1,0–2,0, quer und Tablet; keine Zeile beginnt im Wort oder mit Satzzeichen (`badBreakAt`); keine runde Form schneidet Glyphen an. Mittel in der Reihenfolge von §4.5 „Platz für Text“. Verboten: Ellipse auf Inhalt (Ausnahme `MarqueeText`), feste Höhe für Text, `weight(fill = false)` neben Chips, Orientierungssperre. | Halbe Wörter und gekürzte Hinweise sind unlesbar ([DECISIONS 2026-10-03](DECISIONS.md)); WCAG 1.4.4, 1.4.10. | auto: `ScreenshotTest` (`WORTBRUCH`, `ABGESCHNITTEN`, `CHIP_UMBRUCH`, `ZUGESCHNITTEN`), `weight-nofill`, `platform-override` |
 | LAYOUT-04 | MUSS | **Bedienelemente:** sichtbare Größe nur aus `Sizes`, gesetzt nur in `src/ui/components/`; M3-Steuerelemente nur dort, M3-Größenkonstanten nur in `src/ui/theme/`. An M3-Elementen nur `heightIn(min)`, eigene feste Größe nur `minimumInteractiveComponentSize().size(x)`, kein `scale`/`graphicsLayer` auf Bedienbarem, gleiche Höhe nie über `IntrinsicSize.Min`. **Ein Größentoken je Leiste** (§4.5). | `height` nahm die 48-dp-Reservierung, `scale` den Hit-Test ([DECISIONS 2026-10-22](DECISIONS.md)). | auto: `m3-size-const`, `control-direct`, `control-scale`, `touch-order`, `layout-literal`, `ScreenshotTest` (`TIPPFLAECHE`) |
 | LAYOUT-05 | MUSS | **Bedienelemente bleiben ganz.** Kein Bedienelement wird beschnitten oder aus dem Bild geschoben: Abschneiden darf nur eine Scroll-Fläche in ihrer Richtung – senkrecht die Seite, waagerecht einzig die Chip-Reihen (`ChoiceChipRow`, `FilterChipRow`); Beschriftung und Icon bleiben im sichtbaren Behälter, bei fontScale 2,0 wächst er mit. | Kleinere Tokens und feste Höhen machen genau das wahrscheinlich; LAYOUT-03 prüft nur Text. | auto: `ScreenshotTest` (`BESCHNITTEN`, `AUSSERHALB`) |
-| LAYOUT-06 | – | entfällt → LAYOUT-04 (Bauregeln für Bedienelemente). | Ein Gegenstand, eine Regel. | auto: `control-scale`, `touch-order` |
 | LAYOUT-07 | SOLL | **Steuerung beim Label, Glyph bündig:** Die Steuerung einer Zeile steht als rechte Spalte, ihre *sichtbare* Kante an der Inhaltskante, gebaut nach §4.5 „Bündigkeit“ und „Zeile mit Steuerelement“ (kein `offset`, kein clippender Behälter, Hinweis endet vor dem Schalter). Feste Endspalten (`TrailingRow`) halten in jedem Zustand ihre Breite ([spec/einstellungen.md](spec/einstellungen.md)). | Weit abgesetzte Steuerung liest sich als fremde Zeile ([DECISIONS 2026-10-05](DECISIONS.md)). | auto: `ScreenshotTest` (`ANATOMIE`); manuell: R-VISUAL |
 | LAYOUT-08 | MUSS | **Meditations-Tab ohne Scrollen.** Kopf, Zeitring, „Klang & Stimme“ und Start passen bis fontScale 1,3 auf jedem Gerät der Matrix in die Höhe über Tab-Leiste und Systemleisten, in jedem Zustand; der Zeitring nimmt den Rest (`FillViewportColumn`, Mindestkante `DurationPickerMin`/`timeDialMinSide`). Nur bei fontScale 2,0 darf die Seite als Notlösung scrollen – abgeschnitten wird nie. | Eine ruhige Seite, alles auf einen Blick; ohne Leisten im Test wurde der Platz um rund 150 dp überschätzt. | auto: `ScreenshotTest` (`SCROLLT` an `03_meditation_fein`), `DeviceFitTest` (`03_meditation`, `RING`) |
 
@@ -480,14 +475,12 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/sess
 | KOMP-01 | MUSS | Gibt es eine Komponente in §5.1, wird sie genutzt; kein Inline-Nachbau. Wird ein Muster zum zweiten Mal gebraucht, wandert es nach `src/ui/components/`; jede öffentliche `fun` dort steht im Katalog. | Konsistenz; Nachbauten laufen auseinander ([DECISIONS 2026-10-03](DECISIONS.md)). | auto: `catalog-sync`; manuell: R-CODE |
 | KOMP-02 | MUSS | Klickbare Karten sind `Card(onClick)`, nie `Card(Modifier.clickable)`. Aktionen einer Karte stehen nur auf ihrer Titelzeile (`CardHeader`, §4.5): höchstens zwei, zerstörende außen, bestimmen nie die Kartenhöhe; ein `AppIconToggle` zeigt seinen Zustand gefüllt in `secondary`. | Ripple und Rolle stimmen; keine verschachtelten Ziele; eine Bausprache statt dreier Ausnahmen. | auto: `card-style`, `anatomy-overlay`, `ScreenshotTest` (`ANATOMIE`) |
 | KOMP-03 | MUSS | Karte: Default-Farbe, `shapes.medium`, `CardPadding`, Titel `titleMedium`, Text `bodySmall` `SECONDARY`; Rand (`accentBorder`) nur bei navigierenden Inhaltskarten. Trenner in Karten und Expandern nur `HorizontalDivider(color = DividerSubtle)`. Ausnahmen mit Marker `// Abweichung KOMP-03:`: Marken-Trenner über der Tab-Leiste, Bereichs-Trenner unter „Muster des Tages ›“. | Eine Trennlinie für alle Karten ([DECISIONS 2026-10-03](DECISIONS.md)). | auto: `card-style`; manuell: R-VISUAL |
-| KOMP-04 | – | entfällt → LAYOUT-04 (M3-Steuerelemente nur in `components/`). | Ein Gegenstand, eine Regel. | auto: `control-direct` |
 
 ## <a id="muster"></a>6 Muster
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
 | MUSTER-01 | MUSS | **Split-Button und Rückmeldung im Element:** Start (`primary`) in voller Restbreite, Reset (tonal, Icon-only) gleitet nur ein, wenn ein Wert vom Default abweicht (`StartSplitButton`); kein Bestätigungsdialog. Bestätigung ist ein Zustandswechsel des auslösenden Elements (◉ leer → gefüllt, `stateDescription`, `liveRegion = Polite`); Abweichung als Suffix „· angepasst“, nie als Badge oder loser Text. | Eine Fläche statt zwei; Reset nur, wenn er etwas bewirkt; TalkBack erfährt den Erfolg. | manuell: R-VISUAL, R-A11Y; auto nur „kein Toast, keine Snackbar“: `no-fab-toast` |
-| MUSTER-02 | – | entfällt → MUSTER-01 (Rückmeldung und Reset im Element). | doppelt | auto: `no-fab-toast` |
 | MUSTER-03 | MUSS | **Ausklappen und Übersicht.** `ExpanderSection`: Teaser immer ganz, Detail darunter, Höhe animiert. Lange Listen gleichartiger Abschnitte werden zur Übersicht aus `SectionHeader` mit `expanded` und Teaser, Standard zu, Zustand per `rememberSaveable` (Beispiel Tab „Eigene“: [spec/eigene-tab.md](spec/eigene-tab.md)). Ein Suchfeld nur als Zusatz und nur nach MUSTER-09. | Kontext bleibt sichtbar; Sprünge irritieren. | manuell: R-VISUAL; auto nur der Teaser-Text: `ContentRulesTest teaser` |
 | MUSTER-04 | SOLL | **Leer und Fehler.** Leer: „Noch keine …“ plus sanfte Einladung, ohne Illustration oder Extra-Button (Ausnahmen: Suche ohne Treffer „Nichts gefunden“ mit „Alle zeigen“; Leer-Karte „Eigene Kreationen“ mit dem Textverweis „Muster gestalten ›“). Fehler inline im Element: was passiert ist und was du tun kannst; kein `e.message` in der UI. | Nutzer wissen, was zu tun ist; Exception-Texte sind technisch. | auto: `exception-message-ui`; manuell: R-TEXT |
 | MUSTER-05 | MUSS | **Zerstörende Aktion** (Logbuch, gespeicherte Muster, Stimmen): zweistufig im selben Element über `ConfirmIconButton` bzw. `rememberArmedConfirm` – erster Tipp morpht in den Bestätigungszustand (`error`, cd „‚X‘ wirklich löschen?“, `liveRegion`), zweiter löscht; Rückfall nach 4 s, nicht bei Fokus oder aktiver Bedienungshilfe. Kein Dialog, keine Snackbar. | Schutz vor Fehltipp ohne Dialog (SEC-PRIV-04). | manuell: R-A11Y |
@@ -568,7 +561,6 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | TEXT-06 | MUSS | **Teaser** (`effect`, erste `caution`): ein geschlossener Satz mit finitem Verb, endet auf „.“, ≤ 95 Zeichen. **Detail** (`effectDetail`) beginnt nicht mit dem Teaser, vertieft denselben Punkt, SOLL ≤ 700 Zeichen. Keine Baseline. | Nichts darf abgeschnitten wirken. | auto: `ContentRulesTest teaser`; manuell: R-TEXT (finites Verb, Detaillänge) |
 | TEXT-07 | MUSS | Evidenz ehrlich: Schwache Evidenz steht schon im Teaser. **Jede eingebaute Übung trägt genau eine Studienlage** (`EvidenceLevel`, Stufen in §11.1), sichtbar nur auf der Detailseite; hochstufen nur mit neuer Quelle in `Refs.kt`; Teaser, Detail und Stufe widersprechen sich nicht. Generierte Muster haben keine Studienlage. Kein Filter und kein Karten-Chip nach Studienlage. | Kernversprechen der App; ein Etikett nur für die beste Übung ließ die übrigen offen. | manuell: R-TEXT |
 | TEXT-08 | MUSS | Jeder sicherheitsrelevante Satz aus dem Detail steht auch in `cautions`, als Bedingung → Handlung („Nur im Sitzen oder Liegen – nie im Wasser.“). Keine Therapie-Anweisungen. | Sichtbar ohne Aufklappen. | manuell: R-TEXT |
-| TEXT-09 | – | entfällt → SEC-LEGAL-01 ([SECURITY.md](SECURITY.md#recht)): keine Heil-, Therapie- oder Präventionsversprechen in App, README, Store, Release-Notes, PRIVACY; Wortliste `config/health-claims.txt`, Ausnahmen `config/health-claims.allow`, keine Baseline. | Eine Regel, eine ID. | auto: `ContentRulesTest health-claims` |
 | TEXT-10 | MUSS | Zeichen: nur „…“ und ‚…‘, Apostroph ’, nie ASCII-`"` oder `”`; Gedankenstrich –, Minus −, Auslassung …; Dezimalkomma; Einheit mit geschütztem Leerzeichen (`4 s`, `93 %`, `n = 40`) – auch in README, Store, Release-Notes und PRIVACY; „ca.“ statt „~“; Trennpunkt „ · “ nur über `DOT_SEPARATOR`/`splitAtDots()`: keine Zeile beginnt oder endet mit „·“. | Deutsche Typografie; Zeichen gehen im Build sonst verloren. | auto: `typo-chars-strings`, `-src`, `-content`, `ContentRulesTest typography` (`quotes`, `decimal-comma`, `dot-separator`, `number-unit`), `ScreenshotTest` (`badBreakAt`) |
 | TEXT-11 | MUSS | Store-Texte (`fastlane/metadata/android/de-DE/`): `title` ≤ 30, `short_description` ≤ 80, `full_description` ≤ 4000, `changelogs/<versionCode>.txt` ≤ 500 Zeichen; sie folgen TEXT-04, -07, §11.1 und SEC-LEGAL-01/-02 (Disclaimer wörtlich). Changelog: Nutzen in Laiensprache, eine Zeile pro Änderung, keine IDs, keine Superlative. | Store-Grenzen und -Policy. | auto: `ContentRulesTest store-lengths`, `health-claims`; manuell: R-STORE |
 | TEXT-12 | MUSS | Jede genannte Studie steht in [Refs.kt](../app/src/main/java/app/atemkraft/data/Refs.kt): `Nachname I. et al. (Jahr): Originaltitel. Journal Band(Heft):Seiten. <deutsche Einordnung>.`, Kennung `doi:10.… · PMID n`. Im Text „(Name Jahr)“. Jede Referenz wird genutzt. | Nachprüfbarkeit. | manuell: R-TEXT |
@@ -628,7 +620,6 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 | CODE-05 | MUSS | Navigation nur über `@Serializable`-Routen in `ui/navigation/Routes.kt`; unauflösbare Route → `popBackStack()`. Persistierte Enums über `name`, nie `ordinal`. Logik hängt nie an Anzeigetexten. | Kein leerer Screen, keine stille Datenverschiebung. | auto: `ordinal-persist`; manuell: R-CODE |
 | CODE-06 | MUSS | ktlint (`intellij_idea`, ohne Zeilenlimit, keine Wildcards, keine voll qualifizierten Namen). Kommentare und KDoc deutsch, erklären das Warum; `TODO` nennt eine Backlog-ID (`// TODO(S-12)`). | Diff-Ruhe, Nachverfolgbarkeit. | auto: `ktlintCheck`, `todo-unlinked` |
 | CODE-07 | SOLL | Tests nur für den Kern: Daten überleben Migration und Export/Import, Muster des Tages unverändert, Sicherheitsgrenzen der freien Folge, Gates (Wortbruch, Abschneiden, Tippfläche, Anatomie), ehrliche Texte, Navigations-Grundregel. Neue Tests nur, wo ein Fehler Daten, Sicherheit oder diese Gates trifft; Namen als deutscher Satz in Backticks. | Wenige Tests, die etwas bedeuten, statt einer langsamen Suite ([DECISIONS 2026-10-22](DECISIONS.md)). | auto: `testDebugUnitTest` (nur, dass sie grün sind); manuell: R-CODE (neuer Test nur für Daten, Sicherheit, Gates) |
-| CODE-08 | – | entfällt → PROZ-01 ([PROCESS.md](PROCESS.md)): Commit-Betreff `fix:`/`docs:`/`build:`/`vX.Y.Z:`. | Prozessregel. | auto: `commit-msg` |
 | CODE-09 | MUSS | **Ablauf fehlertolerant:** Ein unbehandelter Fehler im Ablauf einer Sitzung (Atemübung, Meditation) beendet sie wie Stopp bzw. Abbruch, gibt den `PlaybackService` frei und geht an `UncaughtErrors`; keine Sitzung bleibt laufend stehen. Abbrechen ist kein Fehler (CODE-03). | Eine hängende Sitzung hielte Service, Wakelock und Benachrichtigung ohne Ende. | auto: `PlaybackFlowTest` (Fehler im Ablauf) |
 | PERF-01 | SOLL | **Leistung.** Kein I/O und kein `runBlocking` auf dem Main-Thread (Room, DataStore, Dateien, Netz nur über `suspend`/`Flow` abseits von Main). Endlos-Animationen lesen die Zeit nur im Draw und laufen nur sichtbar (`RhythmCurve` ruht unter dem Vollbild). Keine Arbeit pro Frame in der Komposition: Werte je Frame liest erst Layout oder Draw, Teures steht in `remember(key)`. | Ruckelfreies Bild auf 120 Hz, Akku in langen Sitzungen; Referenz: [Messwerte](recherche/2026-10-30-iso25010.md#messwerte). | auto: `perf-main`; manuell: R-PERF |
 
@@ -653,20 +644,19 @@ Logging, Speicherung, Netzwerk und Abhängigkeiten regelt [SECURITY.md](SECURITY
 
 ## <a id="automatische-pruefung"></a>13 Automatische Prüfung
 
-Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über eine Baseline mit S-ID eingefroren. Die `sec-*`-Checks stehen mit allen anderen in der erzeugten Tabelle §13.3; die Sicherheitsprüfungen außerhalb von `check_style.py` (`verify-apk`, `release-verify`, `check-github`) führt [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung).
+Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über eine Baseline mit S-ID eingefroren. Wie jedes Werkzeug im Einzelnen arbeitet (Optionen, Gerätematrix, Referenzbilder, CI), steht in [CHECKS.md](CHECKS.md#werkzeuge); die Sicherheitsprüfungen außerhalb von `check_style.py` (`verify-apk`, `release-verify`, `check-github`) in [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung).
 
 ### 13.1 Ablauf
 
-| Werkzeug | Datei | Aufgabe |
-|---|---|---|
-| `scripts/check.sh` | – | **einziger Einstieg**, lokal und im CI: Stil- und Sicherheits-Checks (`--self-test`, dann Prüfung) → `scripts/build.sh ktlintCheck verifyRoborazziDebug lintDebug assembleRelease -PunsignedRelease=true` (`verifyRoborazziDebug` = `testDebugUnitTest` mit Vergleich der Referenzbilder) → `scripts/verify-apk.sh --allow-unsigned` auf die Prüf-APKs. Der Release-Build bleibt unsigniert; signierte `app-*-release.apk` legt das Skript beiseite und stellt sie wieder hin. `--fast` ohne `lintDebug`, Release-Build und `verify-apk`. Nie `./gradlew` direkt. Git-Hooks in `.githooks/` (`git config core.hooksPath .githooks`): `commit-msg` → `check-style.sh --commit-msg`, `pre-push` → `check-style.sh --ci-range` über die neuen Commits. |
-| `scripts/check-style.sh` | `scripts/check_style.py`, `config/style-baseline.txt`, `config/style-fixtures/<check>.{pos,neg}` | Checks aus §13.3 in Python 3: zeilenweise oder (ml) über die ganze Datei; Sonder-Checks als Funktionen. Ignoriert Kommentarzeilen (außer `todo-unlinked`) und Zeilen mit Marker `// Abweichung <ID>:` / `// dekorativ:`. `--self-test` prüft jeden Check gegen seine Fixtures (Sonder-Checks über ihre Fixture-Funktion oder einen Dateibaum aus `=== pfad`-Abschnitten in einem leeren Repo); ein Check ohne Fixture ist ein Fehler, `--list` druckt die Check-Tabelle (§13.3), `--update-check-table` schreibt sie in diesen Guide, `--update-baseline` schreibt den Ist-Stand mit den vorhandenen S-IDs, `--ci-range A..B` prüft `commit-msg` je Commit und `guide-sync` über den ganzen Bereich. Die `sec-*`-Checks laufen im selben Skript ohne Baseline und ohne Marker-Ausnahme. |
-| `scripts/bump-version.sh` | `app/build.gradle.kts`, `docs/release-notes/`, `fastlane/…/changelogs/`, Stand-Zeilen | Versionsbump an einer Stelle (PROZ-05); `version-sync` prüft, dass alles übereinstimmt. |
-| ktlint 1.8.0 + compose-rules 0.6.8 | `.editorconfig`, Plugin `org.jlleitschuh.gradle.ktlint` 14.2.0, `.git-blame-ignore-revs` | Format, Compose-Regeln; in `*Screen.kt` ist `modifier-missing-check` aus. Ohne Baseline: Jeder Fund ist ein Fehler. |
-| Android Lint | `lint {}`: `abortOnError`, `warningsAsErrors` (aus: `GradleDependency`, `AndroidGradlePluginVersion`, `NewerVersionAvailable`, `OldTargetApi`, `ChromeOsAbiSupport`); `app/lint.xml` | Manifest, Ressourcen, Compose-Lint. |
-| JUnit-Regeltests | `ContentRulesTest`; `config/health-claims.{txt,allow}` | Ehrliche Texte (§13.3), ohne Baseline. `config/` ist Eingabe der Test-Tasks. |
-| Screenshot-Gates | `ScreenshotTest`, `DeviceFitTest` und `TabMatrixTest` (Robolectric + Roborazzi) auf `ScreenshotHarness` (Aufnahme, `TabFrame`, Gates aus `ControlFindings`, `TextClipFindings`, `AnatomyFindings`); `ui/TestMatrix.kt`; SDK 35 | **Breiten-Matrix** (`ScreenshotTest`): 360 dp bei fontScale 1,0 und 2,0; **Gerätehöhen-Matrix** (`DeviceFitTest`): 360 × 640 bei 1,3, A54 bei 1,1 und 1,3 (Editor ohne Tab-Leiste, Meditations-Tab mit); **Tab-Matrix** (`TabMatrixTest`, `TestMatrix.TAB_CONFIGS`): A54 hoch und quer bei 1,1, Tablet 800 × 1280 hoch und quer bei 1,0 – die vier Tab-Startseiten, laufende Atemübung und Meditation. Tabs mit den Leisten der App (`TabFrame`). Läuft in `testDebugUnitTest` und **schlägt bei jedem Befund fehl**: Text (`WORTBRUCH`, `GETRENNT`, `ABGESCHNITTEN`, `CHIP_UMBRUCH`, `ZUGESCHNITTEN`), Bedienelemente (`TIPPFLAECHE`, `OHNE_KLICK`, `BESCHNITTEN`, `AUSSERHALB`), Layout-Grammatik (`ANATOMIE`, §4.5), `SCROLLT` (LAYOUT-08), `KOMPAKT_FEHLT` (MUSTER-10). Die Szenen stehen in den Tests selbst. Bilder: `scripts/build.sh recordRoborazziDebug` → `app/build/outputs/roborazzi/<gerät>/fs<n>/`, je Bild eine `.tsv` mit Befunden und Maßen. **Referenzbilder** (A-12): die 24 Bilder der Tab-Matrix liegen in halber Auflösung im Repo unter `app/src/test/screenshots/<gerät>/fs<n>/` (rund 1,7 MB); `check.sh` vergleicht sie pixelgenau, jede optische Abweichung und jedes fehlende Bild ist ein Fehler (Vergleichsbilder `*_compare.png` unter `app/build/outputs/roborazzi/`, im CI als Artefakt). Nur Grundzustände in Gerätegröße, weil die hohen Listenbilder rund 30 MB wären und sich mit jedem Inhaltstext änderten. **Gewollte Änderung:** `rm -rf app/src/test/screenshots && scripts/build.sh recordRoborazziDebug` nimmt alle Referenzbilder neu auf (das Löschen räumt umbenannte Szenen ab); die neuen Bilder gehören in denselben Commit wie die UI-Änderung. |
-| CI | `.github/workflows/ci.yml`, `.github/dependabot.yml` | Push auf `main` und PR, `permissions: contents: read`, Actions per SHA, `persist-credentials: false`. Job `check`: `check.sh` (bei Fehler `.tsv`, Testbericht und Lint-Bericht als Artefakt). Job `conventions`: `check-style.sh --ci-range` über alle Commits des Pushes/PRs. Dependabot monatlich, Betreff „build: …“; Gradle gruppiert, Major-Sprünge von AGP und Gradle von Hand. |
+| Werkzeug | Aufgabe |
+|---|---|
+| `scripts/check.sh` | **Einziger Einstieg**, lokal und im CI: `check-style.sh --self-test` und Prüfung → `scripts/build.sh ktlintCheck verifyRoborazziDebug lintDebug assembleRelease -PunsignedRelease=true` → `verify-apk` auf die Prüf-APKs; `--fast` ohne Lint, Release-Build und `verify-apk`. Nie `./gradlew` direkt. Hooks in `.githooks/`: `commit-msg`, `pre-push` (`--ci-range`). |
+| `scripts/check-style.sh` | Stil-, Doku- und `sec-*`-Checks aus `scripts/check_style.py`, jeder mit Fixtures in `config/style-fixtures/`. Kommentarzeilen (außer bei `todo-unlinked`) und Zeilen mit Marker `// Abweichung <ID>:` bzw. `// dekorativ:` zählen nicht, außer bei `sec-*`. `--self-test`, `--list`, `--update-check-table`, `--update-baseline`, `--ci-range A..B`. |
+| `scripts/bump-version.sh` | Versionsbump an einer Stelle (PROZ-05); `version-sync` prüft. |
+| ktlint, Android Lint | Format und Compose-Regeln (`.editorconfig`), Lint als Gate (`warningsAsErrors`); beide ohne Baseline. |
+| JUnit-Tests | `ContentRulesTest` (ehrliche Texte, ohne Baseline), Daten-, Ablauf- und Navigationstests, `ThemeContrastTest` (§2.1, §2.2). |
+| Screenshot-Gates | `ScreenshotTest` (360 dp bei Schrift 1,0 und 2,0), `DeviceFitTest` (Gerätehöhen), `TabMatrixTest` (A54 und Tablet, Referenzbilder pixelgenau). Jeder Befund ist ein Fehler: Text `WORTBRUCH`, `GETRENNT`, `ABGESCHNITTEN`, `CHIP_UMBRUCH`, `ZUGESCHNITTEN`; Bedienelemente `TIPPFLAECHE`, `OHNE_KLICK`, `BESCHNITTEN`, `AUSSERHALB`; `ANATOMIE` (§4.5), `SCROLLT` (LAYOUT-08), `KOMPAKT_FEHLT` (MUSTER-10). Gewollte Änderung: Referenzbilder neu aufnehmen (PROCESS, Checkliste eines Pushes). |
+| CI | `.github/workflows/ci.yml`: Job `check` (`check.sh`), Job `conventions` (`--ci-range` über alle Commits); Dependabot monatlich. |
 
 ### 13.2 Baseline
 
@@ -674,106 +664,7 @@ Grundsatz: wenige, wartungsarme Werkzeuge; Altlasten über eine Baseline mit S-I
 
 ### 13.3 Checks
 
-Erzeugt aus `scripts/check-style.sh --list` (`check-table` meldet Abweichungen; `--update-check-table` schreibt neu). Die Muster stehen im Code und in den Fixtures `config/style-fixtures/`; ein Check ohne Ist-Treffer beweist über sein Positiv-Fixture, dass er funktioniert.
-
-<!-- check-table:start -->
-| Check | Regel | Scope | Stufe |
-|---|---|---|---|
-| `color-source` | FARBE-01 | src/*.kt ohne src/ui/theme/* | MUSS |
-| `color-source-res` | FARBE-01 | res/*.xml ohne res/values*/colors.xml, res/drawable*/ic_launcher_*, res/mipmap*/*, res/drawable*/ic_*.xml | MUSS |
-| `color-source-icons` | FARBE-01 | res/drawable*/ic_*.xml ohne res/drawable*/ic_launcher_* | MUSS |
-| `alpha-literal` | FARBE-02 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/theme/* | MUSS |
-| `theme-tokens` | FARBE-06 | `ui/theme/` | MUSS |
-| `type-literal` | TYPO-01 | src/*.kt ohne src/ui/theme/* | MUSS |
-| `layout-literal` | LAYOUT-01 | src/*.kt ohne src/ui/theme/* | MUSS |
-| `weight-nofill` | LAYOUT-03 | src/ui/*.kt | MUSS |
-| `m3-size-const` | LAYOUT-04 | src/*.kt ohne src/ui/theme/* | MUSS |
-| `control-scale` | LAYOUT-04 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/theme/* | MUSS |
-| `touch-order` | LAYOUT-04 | src/ui/*.kt | MUSS |
-| `control-direct` | LAYOUT-04 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/components/* | MUSS |
-| `platform-override` | LAYOUT-03 | src/*.kt, app/src/main/AndroidManifest.xml | MUSS |
-| `dark-only` | PRIN-01 | src/*.kt, res/*.xml | MUSS |
-| `dark-only-dirs` | PRIN-01 | `res/values-night*/` | MUSS |
-| `neon-fill` | PRIN-02 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/components/* | MUSS |
-| `no-fab-toast` | PRIN-03 | src/*.kt | MUSS |
-| `card-style` | KOMP-02 | src/ui/*.kt, src/MainActivity.kt | MUSS |
-| `exception-message-ui` | MUSTER-04 | src/ui/*.kt, src/cue/tts/*.kt | SOLL |
-| `icon-source` | ICON-01 | *.kts, gradle/*.toml, src/*.kt | MUSS |
-| `cd-style` | ICON-02 | src/*.kt | MUSS |
-| `motion-literal` | MOTION-04 | src/ui/*.kt, src/MainActivity.kt ohne src/ui/theme/* | SOLL |
-| `motion-literal-delay` | MOTION-04 | src/ui/components/*.kt | SOLL |
-| `player-in-composable` | AUDIO-04 | src/ui/*.kt | MUSS |
-| `semantics-required` | A11Y-01 | src/ui/*.kt | MUSS |
-| `semantics-heading` | A11Y-01 | `ui/components/` (SectionHeader, PushHeader, TextBlocks) | MUSS |
-| `pane-title` | A11Y-07 | `ui/components/` (PushHeader, ScreenHeader, OverlayChrome) | MUSS |
-| `a11y-ratchet` | A11Y-02 | src/ui/*.kt | MUSS |
-| `switch-unlabeled` | A11Y-03 | src/ui/*.kt | MUSS |
-| `ui-literal` | TEXT-01 | src/ui/*.kt | MUSS |
-| `head-color` | FARBE-07 | src/ui/*.kt ohne src/ui/components/SectionHeader.kt, src/ui/components/TextBlocks.kt, src/ui/components/CardHeader.kt, src/ui/components/ExpanderSection.kt, src/ui/components/NavCard.kt, src/ui/home/*.kt | MUSS |
-| `no-check-icon` | A11Y-03 | src/ui/*.kt | MUSS |
-| `anatomy-overlay` | KOMP-02 | src/ui/*.kt ohne src/ui/components/CardHeader.kt | MUSS |
-| `sheet-direct` | MUSTER-11 | src/ui/*.kt ohne src/ui/components/AppBottomSheet.kt | MUSS |
-| `catalog-sync` | KOMP-01 | src/ui/components/*.kt | MUSS |
-| `rule-length` | §0 | docs/STYLEGUIDE.md, docs/SECURITY.md, docs/PROCESS.md | MUSS |
-| `check-table` | §13.3 | `docs/STYLEGUIDE.md` | MUSS |
-| `version-sync` | PROZ-05 | `app/build.gradle.kts`, Stand-Zeilen, `docs/release-notes/`, `fastlane/…/changelogs/` | MUSS |
-| `locale` | TEXT-03 | src/ui/*.kt | MUSS |
-| `locale-config` | TEXT-03 |  | MUSS |
-| `typo-chars-strings` | TEXT-10 | res/values*/strings.xml | MUSS |
-| `typo-chars-src` | TEXT-10 | src/*.kt | MUSS |
-| `typo-chars-content` | TEXT-10 | src/data/*.kt, src/domain/*.kt | MUSS |
-| `layer-import-domain` | CODE-01 | src/domain/*.kt | MUSS |
-| `domain-platform` | CODE-01 | src/domain/*.kt | MUSS |
-| `layer-import-data` | CODE-01 | src/data/*.kt | MUSS |
-| `layer-import-cue` | CODE-01 | src/cue/*.kt | MUSS |
-| `layer-import-components` | CODE-01 | src/ui/components/*.kt | MUSS |
-| `layer-import-playback` | CODE-01 | src/playback/*.kt | MUSS |
-| `layer-import-root` | CODE-01 | src/data/*.kt, src/playback/*.kt, src/ui/*.kt | MUSS |
-| `ui-state-holder` | CODE-02 | src/ui/*.kt ohne src/ui/*Destination.kt, src/ui/*ViewModel.kt, src/ui/settings/PatternTransfer.kt | MUSS |
-| `screen-params` | CODE-02 | src/ui/*.kt | MUSS |
-| `ui-feature-import` | CODE-01 | src/ui/*.kt | MUSS |
-| `ordinal-persist` | CODE-05 | src/data/*.kt | MUSS |
-| `todo-unlinked` | CODE-06 | src/*.kt | MUSS |
-| `perf-main` | PERF-01 | java/*.kt | SOLL |
-| `sec-deny-deps` | SEC-PRIV-01 | gradle/libs.versions.toml, *.gradle.kts | MUSS, ohne Baseline |
-| `sec-net-endpoints` | SEC-PRIV-02 | java/*.kt, java/*.java ohne src/domain/VoiceCatalog.kt, src/ui/about/AboutScreen.kt | MUSS, ohne Baseline |
-| `sec-net-client` | SEC-NET-02 | java/*.kt, java/*.java ohne src/cue/tts/VoiceModelManager.kt | MUSS, ohne Baseline |
-| `sec-device-leaks` | SEC-PRIV-03 | java/*.kt, java/*.java | MUSS, ohne Baseline |
-| `sec-privacy-link` | SEC-PRIV-05 | `docs/PRIVACY.md`, `ui/about/AboutScreen.kt` | MUSS, ohne Baseline |
-| `sec-wakelock` | SEC-PERM-02 | java/*.kt, java/*.java | MUSS, ohne Baseline |
-| `sec-tls` | SEC-NET-01 | app/src/main/*.kt, app/src/main/*.java, app/src/main/*.xml ohne app/src/main/assets/licenses/* | MUSS, ohne Baseline |
-| `sec-tls-config` | SEC-NET-01 | `res/xml/network_security_config.xml`, Manifest | MUSS, ohne Baseline |
-| `sec-download` | SEC-NET-02 | `java/` | MUSS, ohne Baseline |
-| `sec-components` | SEC-PLAT-01 | java/*.kt, java/*.java, app/src/main/AndroidManifest.xml | MUSS, ohne Baseline |
-| `sec-intents` | SEC-PLAT-02 | java/*.kt, java/*.java, app/src/main/AndroidManifest.xml | MUSS, ohne Baseline |
-| `sec-no-dyncode` | SEC-PLAT-03 | java/*.kt, java/*.java, res/*.xml | MUSS, ohne Baseline |
-| `sec-storage` | SEC-STORE-01 | java/*.kt, java/*.java | MUSS, ohne Baseline |
-| `sec-backup` | SEC-STORE-02 | Manifest, `res/xml/backup_rules.xml`, `data_extraction_rules.xml` | MUSS, ohne Baseline |
-| `sec-room` | SEC-STORE-03 | `java/`, `app/schemas/` | MUSS, ohne Baseline |
-| `sec-repos` | SEC-SUP-01 | `settings.gradle.kts`, `gradle/verification-metadata.xml` | MUSS, ohne Baseline |
-| `sec-pinned-inputs` | SEC-SUP-02 | Wrapper, Binärdateien, `.sha256`, `verification-metadata.xml`, SECURITY.md | MUSS, ohne Baseline |
-| `sec-gradle-flags` | SEC-BUILD-03 | `app/build.gradle.kts` | MUSS, ohne Baseline |
-| `sec-secrets` | SEC-BUILD-02 | alle Dateien | MUSS, ohne Baseline |
-| `sec-gitignore` | SEC-REPO-01 | `.gitignore` | MUSS, ohne Baseline |
-| `sec-actions` | SEC-REPO-03 | `.github/workflows/`, `dependabot.yml` | MUSS, ohne Baseline |
-| `baseline-stale` / `baseline-ids` | PROZ-02, §13.2 | `config/style-baseline.txt` | MUSS |
-| `guide-sync` (CI) | PROZ-02 | Push-Bereich | MUSS |
-| `commit-msg` (CI, Hook) | PROZ-01 | Push-Bereich, `.githooks/commit-msg` | MUSS |
-<!-- check-table:end -->
-
-Weitere Prüfungen außerhalb von `check_style.py`:
-
-| Prüfung | Was | Regel |
-|---|---|---|
-| `ContentRulesTest` | `teaser` (Fälle `teaser`, `first-caution`, `lore-teaser`: ganzer Satz ≤ 95 Zeichen, Detail beginnt nicht mit dem Teaser, Lehre zuschreibend), `health-claims` (App-Inhalte, `strings.xml`, README, PRIVACY, Release-Notes, `fastlane/**` je Zeile; Disclaimer wörtlich), `store-lengths`, `typography` (`decimal-comma`, `quotes`, `dot-separator`, `number-unit` in Inhalten, `strings.xml`, Quellen und öffentlichen Texten, `phase-names`), `cross-references`, `glossary-terms`, `intense-caution` (eingebaut und nach den Phasen intensiv ⇒ `caution`, Hinweise nennen Wasser); alle ohne Baseline | TEXT-05, -06, -10, -11, -13, MUSTER-03, -06, SEC-LEGAL-01/-02 |
-| `ScreenshotTest`, `DeviceFitTest` | Gates aus §13.1; dazu `chipLayout`/`chipRows`/`filterRow` (MUSTER-09, -12), `RING` (LAYOUT-08), `editorFit` (MUSTER-10) | LAYOUT-03, -04, -05, -07, -08, A11Y-02, -05, §4.5 |
-| `TabNavigationTest` | Re-Tap auf den markierten Tab führt zur Tab-Startseite; markiert bleibt der Tab des Stapels; Leiste fest nur auf den Startseiten | MUSTER-08 |
-| `DatabaseMigrationTest`, `PatternBackupTest`, `DailyPatternGoldenTest`, `FreePatternTest`, `PatternEditorSafetyTest`, `PlaybackFlowTest` | Room-Migrationen (auch Schema 5 mit Daten); Export/Import-Rundlauf und alte Exportdateien als Golden-Fixtures (auch mit BOM); Muster des Tages unverändert (Hashes), in den Erzeugungsregeln und nie intensiv, auch als freie Folge, mit der „Selbst gestalten“ den Editor öffnet (`toFreePattern`); Grenzen der freien Folge; Sicherheitsdialog je Übung wie in der App (Editor und Detailseite, mit und ohne „immer zeigen“); Abläufe beider Sitzungsarten (offene Meditation, Wim Hof mit offenem Halten, abgezogener Kopfhörer, Fehler im Ablauf), „Letzte 7 Tage“ an einem Montag | SEC-STORE-01 … -03, PROZ-08, MUSTER-06, -07, -10, CODE-09, TEXT-16 |
-| `VoiceArchiveSafetyTest` | Stimmen-Archiv: falscher Hash, Übergröße, `../`, Symlink, zu viele Einträge, zu viel Inhalt – abgelehnt, Staging-Ordner gelöscht, nichts daneben | SEC-NET-03, -04 |
-| `ThemeContrastTest` | Kontrastwerte der Tabellen §2.1 und §2.2 aus den Tokens nachgerechnet: Text ≥ 4,5, großer Text und Grafik ≥ 3, Abweichung zur Tabelle ≤ 0,05 | FARBE-03 |
-| `ExerciseFilterTest` | jeder Filter trifft mindestens 3 und nicht alle Übungen, „Bis 3 min“ wie am Startknopf, UND, leere Familien fallen weg | MUSTER-12 |
-| ktlint / Lint / Tests | `ktlintCheck` (+ compose-rules), `lintDebug`, `testDebugUnitTest` | TEXT-01, CODE-02 … -04, -06, -07 |
-| `verify-apk`, `release-verify` (mit `verify-release-body`), `check-github`, `sec-*` | [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung) | SEC-* |
+Jede Regel nennt ihre Checks in der Spalte Prüfung. Die aus dem Code erzeugte Tabelle Check → Regel → Scope → Stufe steht in [CHECKS.md](CHECKS.md#checks) (`check-style.sh --list`; `check-table` hält sie aktuell), die Prüfungen außerhalb von `check_style.py` (Tests, Gates, Lint) [darunter](CHECKS.md#weitere).
 
 ### 13.4 Manuelle Checklisten
 
@@ -787,48 +678,6 @@ Weitere Prüfungen außerhalb von `check_style.py`:
 | R-PERF | vor Release; Änderung an Start, Listen, Editor, Sitzung oder Abhängigkeiten | Release-Build am A54, Werte mit Datum und Version zur letzten Messung legen ([Qualitätsbericht](recherche/2026-10-30-iso25010.md#messwerte)) · Kaltstart: `adb shell am start -S -W app.atemkraft/.MainActivity`, `TotalTime` als Median aus 3 · Bildraten: `adb shell dumpsys gfxinfo app.atemkraft reset`, dann im Atmen-Tab scrollen bzw. „Muster des Tages“ → „Selbst gestalten“ → Editor öffnen, danach `dumpsys gfxinfo app.atemkraft` (Frames, Ruckler-Anteil, p50/p90/p99) · Speicher: `adb shell dumpsys meminfo app.atemkraft` nach dem Start mit und ohne installierte Stimme (PSS, Native Heap) |
 | R-STORE | Store-Update | Screenshots aus Release-Build, dunkel, Demo-Statusleiste, ohne echte Logbuchdaten · Feature-Grafik 1024 × 500 ohne Alpha, Icon 512 × 512 aus der Palette · Texte nach TEXT-11 ([STORE.md](STORE.md)) |
 | Vor Release | jedes Release (Design-Teil des Qualitätszyklus PROZ-09) | R-A11Y, R-VISUAL (Mensch), R-AUDIO und R-PERF auf echtem Gerät, bei Store-Update R-STORE · Changelog nach TEXT-11 · Backlog und Baseline aktuell. Einstieg und Reihenfolge: [PROCESS.md, Checkliste eines Releases](PROCESS.md#release) |
-
-## <a id="backlog"></a>14 Backlog
-
-Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefunde werden nicht öffentlich geführt ([SECURITY.md](SECURITY.md#melden)). Reihenfolge = Priorität. Aufwand **S** < 1 h · **M** ≤ 1 Tag · **L** > 1 Tag. IDs werden nie neu vergeben; die nächste freie ist S-63 bzw. A-23.
-
-### Qualität (Maßnahmen aus dem [Qualitätsbericht 2026-10-30](recherche/2026-10-30-iso25010.md), [ISO-Zuordnung](PROCESS.md#iso25010))
-
-| ID | Regel | Befund und Maßnahme | Aufwand |
-|---|---|---|---|
-| S-43 | SEC-REPO-02 | **Nur der Eigentümer:** Rulesets anlegen – `main` ohne Force-Push und Löschen, Tags `refs/tags/v*` ohne Update und Löschen; danach `scripts/check-github.sh` grün (heute 4× „fehlt“). | S |
-| S-44 | A11Y-01 … -07, FARBE-05 | **Nur der Eigentümer (Gerät):** R-A11Y am A54 (TalkBack, Switch Access, D-Pad, Accessibility Scanner, Kontrast) mit Protokoll `docs/recherche/<datum>-a11y.md` (Screen × Prüfpunkt × ok/Befund); die Release-Checkliste verweist darauf. | M |
-| S-49 | PERF-01 | Rest der Referenzmessung (R-PERF): `meminfo` ohne installierte Stimme (Anteil des Sprachmodells), `gfxinfo` in der laufenden Sitzung, Blatt „Muster des Tages“ → Editor nach `closeThen` nachmessen. | S |
-| S-51 | MUSTER-06, TEXT-08 | Abschnitt „Gesundheitliche Sicherheit“: Gefahr (Ohnmacht, Wasser, Hypokapnie, Pressen, Schwangerschaft) → Maßnahme → Prüfung; Herleitung der Intensitäts-Schwellen (Halten voll > 10 s, leer > 8 s, > 20 Atemzüge/min) in DECISIONS. | M |
-| S-52 | SEC-BUILD-04 | SSH-Signatur mindestens für Release-Tags; `git tag -v` in `verify-release-body`. | S |
-| S-53 | SEC-SUP-02 | Dependency Verification auf Gradle-Plugins ausweiten, langfristig auf alle Gruppen. | M |
-| S-54 | LAYOUT-03, -05 | Querformat bei Schrift 2,0: Mindesthöhe des Inhalts (z. B. ≥ 120 dp, Detailseite heute 94 dp) im `ScreenshotTest` prüfen; Kopf und Leiste mitscrollen lassen oder einklappen. | M |
-| S-55 | CODE-02 | Lange Composables aufteilen (`SettingsScreen` nach Karten, `ExerciseDetailScreen` in Abschnitte), dazu Check `composable-length` (> 120 Zeilen) mit Baseline; überschneidet sich mit S-41. | M |
-| S-56 | – (Kompatibilität) | minSdk 26–32 absichern: kritische Robolectric-Tests mit `@Config(sdk = [26, 35])`, einmal ein Smoke-Test im Emulator – oder minSdk bewusst anheben. | M |
-| S-57 | PROZ-04, SEC-BUILD-04 | **Push und Tag nur nach Bestätigung:** Tag v2.10.0 mit grünem `release-verify`, F-Droid-Probebau im fdroidserver-Container. | S/M |
-| S-58 | LAYOUT-03, -05 | Splitscreen (320 × 640) und Tablet bei Schrift 2,0 in die `TestMatrix` (nur Gates); R-VISUAL bekommt einen Splitscreen-Schritt. | S |
-| S-59 | KOMP-01 | Kurvenzeichnung zusammenführen (`drawLevelSegments`), Farbregel nur an einer Stelle. | S |
-| S-60 | – (Interaktion) | Laut-Denken-Test mit 3–5 Personen: erste Übung, eigenes Muster, Logbuch finden. | M |
-| S-61 | MUSTER-05 | Zweistufiges Löschen (`rememberArmedConfirm`) im Compose-Test mit Uhr +4 s und mit Bedienungshilfe. | S |
-
-Kleinere Punkte ohne ID (Gong-Import auf wählbare Werte, `withinCreationRules` im `DailyPatternGoldenTest`, Fall für den `corruptionHandler` u. a.) führt der Bericht unter „Niedrig, bei Gelegenheit“.
-
-### Automatisierung
-
-| ID | Aufgabe | Aufwand |
-|---|---|---|
-| A-10 | vorgezogen (Qualitätsbericht): Compose-Semantiktests – `enableAccessibilityChecks()` im `ScreenshotHarness`, Live-Regionen je Szene zählen (A11Y-04), Glyphen als eigene Fokus-Stopps melden (A11Y-06) | M |
-| A-22 | monatlicher OSV-Abgleich der nativen Komponenten (sherpa-onnx, onnxruntime, espeak-ng) aus einer kleinen SBOM-Liste (SEC-SUP-03) | M |
-| A-14 | Check `icon-size` (ICON-01, LAYOUT-04): `Icon(` ohne Größen-Token außerhalb von `AppIconButton`; regulär nicht ohne Fehlalarm, erst mit Parser | S |
-
-### Design und Code
-
-| ID | Regel | Befund (Ort) | Aufwand |
-|---|---|---|---|
-| S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) wird genutzt: „Mehr zum Dauerton“ in den Einstellungen und `settings_sound_hint` nennen RESPeRATE. Entscheidung offen: als Quelle des Prinzips behalten oder samt Satz streichen | S |
-| S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (S-55, dazu `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
-| S-62 | MUSTER-09 | nur auf Zuruf: Embeddings für die Befindens-Suche (erst bei Hunderten freier Inhalte sinnvoll) | L |
-| S-42 | §4.5 | Rest: `LogEntryCard` ist eine Listenzeile (Familienpunkt vorn, `titleSmall`, Dauer-Spalte) ohne passende Slots in `CardHeader`; erst mit einem Zeilen-Baustein überführen | S |
 
 ## <a id="quellen"></a>Quellen
 

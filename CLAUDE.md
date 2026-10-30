@@ -46,4 +46,5 @@ Eigentümer.
 ## Orte
 src/domain (reines Kotlin) · src/data (Inhalte, Room, DataStore) · src/cue (Ton, Haptik, Stimme) · src/playback (Abläufe,
 Service) · src/ui/{theme,components,navigation,<feature>} · config/ (Baselines, Allowlists, Fixtures) · docs/spec/ (Details
-je Feature) · docs/DECISIONS.md (Warum etwas so ist) · STYLEGUIDE §14 (Backlog).
+je Feature) · docs/DECISIONS.md (Warum etwas so ist) · docs/BACKLOG.md (Offenes) ·
+docs/CHECKS.md (Prüfwerkzeuge, Check-Tabelle).

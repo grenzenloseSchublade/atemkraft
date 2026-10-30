@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Statische Stil-Checks aus docs/STYLEGUIDE.md §13.3, Sicherheits-Checks (``sec-*``) aus
-docs/SECURITY.md (Automatische Prüfung) und Doku-Lints (``rule-length``, ``check-table``,
-``catalog-sync``, ``version-sync``).
+"""Statische Stil-Checks zu docs/STYLEGUIDE.md (erzeugte Tabelle in docs/CHECKS.md),
+Sicherheits-Checks (``sec-*``) aus docs/SECURITY.md (Automatische Prüfung) und Doku-Lints
+(``rule-length``, ``check-table``, ``catalog-sync``, ``version-sync``).
 
 Jeder Check zählt Treffer pro Datei. Bekannte Altlasten stehen in
 config/style-baseline.txt (``check<TAB>datei<TAB>anzahl<TAB>S-ID``):
@@ -16,8 +16,8 @@ Aufrufe:
   scripts/check-style.sh                     # prüfen
   scripts/check-style.sh --self-test         # jeder Check gegen config/style-fixtures/<check>.{pos,neg} (Pflicht)
   scripts/check-style.sh --update-baseline   # Baseline auf den Ist-Stand setzen (nur zum Senken!)
-  scripts/check-style.sh --list              # Check-Tabelle für STYLEGUIDE §13.3 (Markdown)
-  scripts/check-style.sh --update-check-table  # Tabelle in docs/STYLEGUIDE.md neu schreiben
+  scripts/check-style.sh --list              # Check-Tabelle (Markdown) wie in docs/CHECKS.md
+  scripts/check-style.sh --update-check-table  # Tabelle in docs/CHECKS.md neu schreiben
   scripts/check-style.sh --ci-range A..B     # commit-msg je Commit, guide-sync über den Bereich (CI conventions)
 """
 from __future__ import annotations
@@ -40,6 +40,8 @@ MANIFEST = "app/src/main/AndroidManifest.xml"
 JAVA = "app/src/main/java/"
 BASELINE = ROOT / "config/style-baseline.txt"
 STYLEGUIDE = ROOT / "docs/STYLEGUIDE.md"
+# Die erzeugte Check-Tabelle steht außerhalb des Guides, damit der Regeltext kurz bleibt (STYLEGUIDE §13.3).
+CHECKS_DOC = ROOT / "docs/CHECKS.md"
 CHECK_TABLE_START = "<!-- check-table:start -->"
 CHECK_TABLE_END = "<!-- check-table:end -->"
 BACKLOG_ID = re.compile(r"^(S|A)-\d+$")
@@ -303,7 +305,7 @@ def ui_literal(check: Check) -> dict[str, list[int]]:
 
 
 # ---------------------------------------------------------------------------
-# Doku- und Katalog-Checks (STYLEGUIDE §0, §5.1, §13.3; PROCESS PROZ-05)
+# Doku- und Katalog-Checks (STYLEGUIDE §0, §5.1, §13.3 → docs/CHECKS.md; PROCESS PROZ-05)
 # ---------------------------------------------------------------------------
 
 PUBLIC_FUN = re.compile(r"^(?:@\w+(?:\([^)]*\))?\s+)*fun\s+(?:[\w<>, ]+\.)?(\w+)\s*[(<]", re.M)
@@ -390,7 +392,7 @@ def version_fixture(text: str) -> int:
 
 
 def check_table_rows() -> list[str]:
-    """Zeilen der Check-Tabelle (§13.3) aus CHECKS: Check | Regel | Scope | Stufe."""
+    """Zeilen der Check-Tabelle (docs/CHECKS.md) aus CHECKS: Check | Regel | Scope | Stufe."""
     rows = ["| Check | Regel | Scope | Stufe |", "|---|---|---|---|"]
     for c in CHECKS:
         level = c.level if c.baseline else "MUSS, ohne Baseline"
@@ -405,33 +407,32 @@ def check_table_text() -> str:
     return "\n".join(check_table_rows())
 
 
-def table_in_guide(guide: str) -> str | None:
-    start, end = guide.find(CHECK_TABLE_START), guide.find(CHECK_TABLE_END)
+def table_in_doc(doc: str) -> str | None:
+    start, end = doc.find(CHECK_TABLE_START), doc.find(CHECK_TABLE_END)
     if start < 0 or end < 0:
         return None
-    return guide[start + len(CHECK_TABLE_START):end].strip()
+    return doc[start + len(CHECK_TABLE_START):end].strip()
 
 
 def check_table(_: Check) -> dict[str, list[int]]:
-    """§13.3: Die Tabelle im Guide entspricht `--list`."""
-    guide = STYLEGUIDE.read_text(encoding="utf-8")
-    current = table_in_guide(guide)
-    return {} if current == check_table_text() else {"docs/STYLEGUIDE.md": [0]}
+    """§13.3: Die Tabelle in docs/CHECKS.md entspricht `--list`."""
+    current = table_in_doc(CHECKS_DOC.read_text(encoding="utf-8"))
+    return {} if current == check_table_text() else {"docs/CHECKS.md": [0]}
 
 
 def check_table_fixture(text: str) -> int:
     """Fixture: `{TABLE}` steht für die aktuelle Tabelle, so bleibt das Negativ-Fixture bei jeder Check-Änderung gültig."""
-    return 0 if table_in_guide(text.replace("{TABLE}", check_table_text())) == check_table_text() else 1
+    return 0 if table_in_doc(text.replace("{TABLE}", check_table_text())) == check_table_text() else 1
 
 
 def update_check_table() -> int:
-    guide = STYLEGUIDE.read_text(encoding="utf-8")
-    start, end = guide.find(CHECK_TABLE_START), guide.find(CHECK_TABLE_END)
+    doc = CHECKS_DOC.read_text(encoding="utf-8")
+    start, end = doc.find(CHECK_TABLE_START), doc.find(CHECK_TABLE_END)
     if start < 0 or end < 0:
-        print("FEHLER  Marker check-table:start/end fehlen in docs/STYLEGUIDE.md")
+        print("FEHLER  Marker check-table:start/end fehlen in docs/CHECKS.md")
         return 1
-    new = guide[: start + len(CHECK_TABLE_START)] + "\n" + check_table_text() + "\n" + guide[end:]
-    STYLEGUIDE.write_text(new, encoding="utf-8")
+    new = doc[: start + len(CHECK_TABLE_START)] + "\n" + check_table_text() + "\n" + doc[end:]
+    CHECKS_DOC.write_text(new, encoding="utf-8")
     print(f"Check-Tabelle geschrieben: {len(CHECKS)} Checks")
     return 0
 
@@ -727,9 +728,9 @@ CHECKS: list[Check] = [
     Check("catalog-sync", "KOMP-01", [SRC + "ui/components/*.kt"], custom=catalog_sync, fixture=catalog_fixture),
     # Doku-Lint (§0): Regelzellen (dritte Spalte jeder Zeile mit ID) höchstens 400 Zeichen; Spezifikation und
     # Historie wandern aus. Ein maskiertes `\|` gehört zur Zelle und beendet den Treffer nicht.
-    Check("rule-length", "§0", ["docs/STYLEGUIDE.md", "docs/SECURITY.md", "docs/PROCESS.md"],
+    Check("rule-length", "§0", ["docs/STYLEGUIDE.md", "docs/SECURITY.md", "docs/PROCESS.md", "docs/BACKLOG.md"],
           [r"^\| [A-Z][A-Z0-9]*(?:-[A-Z]+)?-\d+ \| [^|]+ \| (?:[^|\\]|\\.){401,} \|"], skip_comments=False),
-    Check("check-table", "§13.3", [], custom=check_table, fixture=check_table_fixture, scope="`docs/STYLEGUIDE.md`"),
+    Check("check-table", "§13.3", [], custom=check_table, fixture=check_table_fixture, scope="`docs/CHECKS.md`"),
     Check("version-sync", "PROZ-05", [], custom=version_sync, fixture=version_fixture,
           scope="`app/build.gradle.kts`, Stand-Zeilen, `docs/release-notes/`, `fastlane/…/changelogs/`"),
     Check("locale", "TEXT-03", [SRC + "ui/*.kt"], [r"Locale\.(getDefault|GERMAN|GERMANY)\b|SimpleDateFormat"], skip_imports=True),
