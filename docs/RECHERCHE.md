@@ -21,6 +21,7 @@ Der Nutzer mag es bunt, die App soll aber „der Masse gefallen“. Deshalb sind
 | 2026-10-24 | Stimmigkeit der Tabs Atmen und Eigene | zu viele Bausprachen; „Vorschlag B“: Suchfeld als Pille, weiße Köpfe, kleine Filter-Chips, drei gleiche Abschnitte in Eigene; Karten und Merkzeichen bleiben | umgesetzt in v2.7.0 |
 | 2026-10-24 | Theoretische Inhalte und Yoga-Geschichte | Bestandsaufnahme des Tabs „Lernen“, 25 Kandidaten mit Quellen, Top 8, Gliederung für ein Kapitel „Geschichte des Atmens“ | [Bericht](recherche/2026-10-24-inhalte-geschichte.md); als Lesekapitel verworfen, kommt bebildert zurück (Abschnitt 3.4) |
 | 2026-10-24 | UX-Vergleich mit 13 Apps (Breathwrk, Prana Breath, AtemFlow, Calm, Headspace, Insight Timer u. a.) | Gesamtnote 3,9/5; Inhalte 5, Wiederkommen und Store-Wirkung 3; 20 Empfehlungen, Einzigartiges geprüft, Minimalvorschlag für Befinden und Animation | [Bericht](recherche/2026-10-24-ux-vergleich.md); Entscheidungen getroffen (Abschnitt 3.1), umgesetzt in 2.8.0 und 2.9.0 |
+| 2026-10-30 | Qualität nach ISO/IEC 25010:2023 (neun Merkmale, Gegenprüfung) | Gesamt 3,7/5; Security und Safety 4,0, Leistung 3,0 (nicht gemessen); 28 Maßnahmen, zwei mit Schwere hoch (Rulesets, R-A11Y-Protokoll) | [Bericht](recherche/2026-10-30-iso25010.md); Maßnahmen offen |
 
 Dazu kleinere, direkt umgesetzte Rückmeldungen vom Gerät (v2.7.1): Suchtext bleibt beim Schließen der Tastatur stehen, „Muster gestalten ›“ im Leerzustand von Eigene, Stift auf den Karten der Kreationen, Vorschau-Knöpfe im Editor links und rechts in der Kurvenkarte.
 
