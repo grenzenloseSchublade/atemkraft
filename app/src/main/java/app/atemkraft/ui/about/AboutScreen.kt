@@ -71,12 +71,13 @@ private const val LICENSES_URL = "https://github.com/grenzenloseSchublade/atemkr
 @Composable
 fun AboutScreen(onBack: () -> Unit, licensesExpanded: Boolean = false, lastError: String? = null) {
     // Titel fest im Kopf wie auf allen Unterseiten (Nutzer 2026-10-21). Nur „Über“: Der
-    // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander.
+    // Markenkopf darunter ergänzt „Atemkraft“, sonst stünde der Name zweimal übereinander. Weiß wie
+    // jeder Kopf (FARBE-07): `primary` bleibt Aktion und Auswahl vorbehalten (S-25).
     PushScaffold(onBack = onBack, title = stringResource(R.string.about_title)) {
         Text(
             text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onBackground,
         )
         // Autor gleich bei der Version: gerade bei manuell geteilten APKs sieht man hier die Herkunft.
         Text(

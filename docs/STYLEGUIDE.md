@@ -109,7 +109,7 @@ Quelle [Type.kt](../app/src/main/java/app/atemkraft/ui/theme/Type.kt): M3 `Typog
 | Rolle | sp (M3) | Gewicht | Zweck (normativ) |
 |---|---|---|---|
 | `headlineLarge` | 32/40 | Bold | derzeit ungenutzt |
-| `headlineMedium` | 28/36 | Bold | Markenkopf „Über“ |
+| `headlineMedium` | 28/36 | Bold | Markenkopf „Atemkraft“ auf der Seite „Über“, `onBackground` wie jeder Kopf |
 | `headlineSmall` | 24/32 | SemiBold | Titel der festen Kopfzeile aller Seiten (`ScreenHeader`, `PushHeader`), Abschluss-Titel, Phasenname im Kreis |
 | `titleLarge` | 22/28 | SemiBold | `SectionHeader` (Titel und Anzahl-Suffix), `onSurface` |
 | `titleMedium` | 16/24 | SemiBold | Karten- und Expander-Titel (`CardHeader`, `CardTitle`), Stepper-Wert |

@@ -24,7 +24,7 @@ private fun TextStyle.asHeading() = copy(
 val AtemkraftTypography = base.copy(
     // Derzeit ungenutzt; kräftig und ohne Trennung wie alle Überschriften, falls es später kommt.
     headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.Bold).asHeading(),
-    // Screen-Titel der Tabs (ScreenHeader) und Markenkopf „Über“: kräftig.
+    // Markenkopf „Atemkraft“ auf der Seite „Über“: kräftig.
     headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.Bold).asHeading(),
     // Titel der Push-Screens, Phasenname im Kreis, Abschluss-Titel der Sitzung.
     headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.SemiBold).asHeading(),
