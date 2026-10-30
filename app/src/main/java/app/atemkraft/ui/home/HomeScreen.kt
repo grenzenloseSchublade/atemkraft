@@ -306,16 +306,11 @@ fun HomeScreen(
         DailyPatternSheet(
             daily = daily,
             saved = dailySaved,
-            onOpen = {
-                dailySheetOpen = false
-                actions.onSelect(daily.exercise.id)
-            },
+            // Das Blatt schließt sich selbst, bevor es diese meldet (AppBottomSheetScope.closeThen).
+            onOpen = { actions.onSelect(daily.exercise.id) },
             onSavedChange = actions.onDailySavedChange,
             onRegenerate = actions.onRegenerateDaily,
-            onNewPattern = {
-                dailySheetOpen = false
-                actions.onDesignFrom(daily.spec)
-            },
+            onNewPattern = { actions.onDesignFrom(daily.spec) },
             onDismiss = { dailySheetOpen = false },
         )
     }

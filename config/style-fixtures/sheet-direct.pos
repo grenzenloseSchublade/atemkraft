@@ -1,1 +1,2 @@
 ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, dragHandle = null) {
+val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

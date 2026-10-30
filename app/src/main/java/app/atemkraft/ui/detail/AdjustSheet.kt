@@ -1,7 +1,6 @@
 package app.atemkraft.ui.detail
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
@@ -14,7 +13,6 @@ import app.atemkraft.ui.components.AppBottomSheet
  * gibt es nicht; das Zurücksetzen bleibt am Start-Knopf darunter. Schließen per Wischen nach unten,
  * Tipp daneben oder Zurück ([onDismiss]). Gerüst: [AppBottomSheet].
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AdjustSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     AppBottomSheet(title = stringResource(R.string.adjust_title), onDismiss = onDismiss, content = content)

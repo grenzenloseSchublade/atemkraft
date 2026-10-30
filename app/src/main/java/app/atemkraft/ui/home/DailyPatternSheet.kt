@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import app.atemkraft.R
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.PatternTexts
 import app.atemkraft.ui.components.AppBottomSheet
+import app.atemkraft.ui.components.AppBottomSheetScope
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.BreathMarkIcon
@@ -60,9 +60,10 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
  * Wer mit dem Tagesmuster spielt, findet hier den nächsten Schritt, sein eigenes zu bauen.
  *
  * Gerüst: [AppBottomSheet], der Satz unter dem Titel ist dessen Intro (Teaser des Titels). Keine
- * gefüllte Neon-Fläche; schließen per Wischen, Tipp daneben oder Zurück ([onDismiss]).
+ * gefüllte Neon-Fläche; schließen per Wischen, Tipp daneben oder Zurück ([onDismiss]). Beide Karten
+ * führen woandershin: Das Blatt schließt erst ([AppBottomSheetScope.closeThen], danach [onDismiss]),
+ * dann folgen [onOpen] bzw. [onNewPattern] – der Editor baut sich nicht während der Schließanimation.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DailyPatternSheet(
     daily: DailyPattern,
@@ -78,7 +79,7 @@ internal fun DailyPatternSheet(
         onDismiss = onDismiss,
         intro = stringResource(R.string.home_daily_sheet_intro),
     ) {
-        DailyPatternCard(daily = daily, saved = saved, onClick = onOpen, onSavedChange = onSavedChange, onRegenerate = onRegenerate)
+        DailyPatternCard(daily = daily, saved = saved, onClick = { closeThen(onOpen) }, onSavedChange = onSavedChange, onRegenerate = onRegenerate)
         Spacer(Modifier.height(Dimens.ListGap))
         // Selbst gestalten als ganze Karte: Die Kernfunktion ist so groß antippbar wie das
         // Tagesmuster darüber, nicht nur ein Textverweis (Nutzer 2026-10-30). Karten sind hier
@@ -86,7 +87,7 @@ internal fun DailyPatternSheet(
         NavCard(
             title = stringResource(R.string.home_create_title),
             hint = stringResource(R.string.home_create_intro),
-            onClick = onNewPattern,
+            onClick = { closeThen(onNewPattern) },
         )
     }
 }

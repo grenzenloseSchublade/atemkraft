@@ -2,7 +2,6 @@ package app.atemkraft.ui.meditation
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,6 +9,7 @@ import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.domain.GONG_INTERVAL_CHOICES
 import app.atemkraft.ui.components.AppBottomSheet
+import app.atemkraft.ui.components.AppBottomSheetScope
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.SegmentedChoiceRow
@@ -25,14 +25,14 @@ import app.atemkraft.ui.theme.Dimens
  * darunter der Gong-Abstand ([onGongInterval]; seit 2026-10-24 hier statt in den Einstellungen,
  * wo man ihn neben „alle 5 min“ suchte, ohne ihn ändern zu können) – und der Schalter
  * „Sprachanleitung“. Kann das Gerät kein Deutsch sprechen, führt „Stimme laden ›“ zum
- * Stimmen-Katalog der Einstellungen ([onOpenVoices]) statt in eine Sackgasse. Jede Änderung gilt
+ * Stimmen-Katalog der Einstellungen ([onOpenVoices], erst nach dem Schließen des Blatts:
+ * [AppBottomSheetScope.closeThen]) statt in eine Sackgasse. Jede Änderung gilt
  * sofort, ein Bestätigen gibt es nicht; schließen per Wischen nach unten, Tipp daneben oder Zurück
  * ([onDismiss]). Der Zeitring darunter bleibt, wie er ist.
  *
  * Gerüst: [AppBottomSheet]. Vorbild für den Inhalt eines Einstell-Blatts (§4.5): Gruppen mit
  * [SubLabel], Steuerungen direkt auf dem Blatt, ohne Karte und Trenner, alle an einer Textkante.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SoundSheet(
     gong: GongChoice,
@@ -85,7 +85,7 @@ internal fun SoundSheet(
         )
         // Ohne deutsche Sprachausgabe: der Weg zu den Stimmen der App, bündig unter dem Hinweis.
         if (!speechAvailable) {
-            AppTextButton(onClick = onOpenVoices, modifier = Modifier.flushStart()) {
+            AppTextButton(onClick = { closeThen(onOpenVoices) }, modifier = Modifier.flushStart()) {
                 ForwardLinkText(text = stringResource(R.string.meditation_voice_get), color = MaterialTheme.colorScheme.secondary)
             }
         }

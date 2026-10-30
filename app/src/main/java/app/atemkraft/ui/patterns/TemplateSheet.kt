@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -28,6 +25,7 @@ import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.FreeTemplate
 import app.atemkraft.ui.components.AppBottomSheet
+import app.atemkraft.ui.components.AppBottomSheetScope
 import app.atemkraft.ui.components.HoldDash
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.bleed
@@ -37,7 +35,6 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SegmentSelected
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TonalDeep
-import kotlinx.coroutines.launch
 
 /**
  * Vorlagen als Bottom Sheet (Nachtrag 6; wann ein Bottom Sheet passt: MUSTER-11, wie „Klang &
@@ -45,28 +42,23 @@ import kotlinx.coroutines.launch
  * Mini-Kurve ([MiniCurve]), die passende markiert (`selectable`, Rolle RadioButton, Fläche
  * `TonalDeep`, Rand `SegmentSelected` wie in der Ablauf-Liste); unter dem Titel ein Satz,
  * was die Wahl tut (Nutzer 2026-10-24), als Intro des Titels. Eine Wahl setzt die Folge (letzte
- * Phase gewählt) und schließt das Sheet; danach meldet es [onPick]. Gerüst: [AppBottomSheet].
+ * Phase gewählt) und schließt das Sheet ([AppBottomSheetScope.closeThen]); danach meldet es
+ * [onPick]. Gerüst: [AppBottomSheet].
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TemplateSheet(state: PatternEditorState, onPick: () -> Unit, onDismiss: () -> Unit) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
     AppBottomSheet(
         title = stringResource(R.string.pattern_editor_start),
         onDismiss = onDismiss,
         intro = stringResource(R.string.pattern_editor_start_hint),
-        sheetState = sheetState,
     ) {
+        val sheet = this
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Dimens.GapHairline)) {
             FreePatternTemplates.all.forEach { template ->
                 TemplateRow(template, selected = template == state.template) {
                     state.applyTemplate(template)
-                    scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        onDismiss()
-                        // Erst nach dem Schließen: Der Fokus geht zurück auf den Startpunkt im Kopf.
-                        onPick()
-                    }
+                    // Erst nach dem Schließen: Der Fokus geht zurück auf den Startpunkt im Kopf.
+                    sheet.closeThen(onPick)
                 }
             }
         }

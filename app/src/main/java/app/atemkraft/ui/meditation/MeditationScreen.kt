@@ -153,10 +153,8 @@ private fun SelectionContent(
                 },
                 onGongInterval = onGongInterval,
                 onSpeech = { speech = it },
-                onOpenVoices = {
-                    soundSheetOpen = false
-                    onOpenVoices()
-                },
+                // Das Blatt schließt sich selbst, bevor es dies meldet (AppBottomSheetScope.closeThen).
+                onOpenVoices = onOpenVoices,
                 onDismiss = { soundSheetOpen = false },
             )
         }
