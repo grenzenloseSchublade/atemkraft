@@ -670,7 +670,7 @@ Weitere Prüfungen außerhalb von `check_style.py`:
 | `DatabaseMigrationTest`, `PatternBackupTest`, `DailyPatternGoldenTest`, `FreePatternTest`, `PatternEditorSafetyTest`, `PlaybackFlowTest` | Room-Migrationen; Export/Import-Rundlauf; Muster des Tages unverändert (Hashes); Grenzen der freien Folge; Sicherheitsdialog je Übung; Abläufe beider Sitzungsarten | SEC-STORE-01 … -03, MUSTER-06, -07, -10 |
 | `ExerciseFilterTest` | jeder Filter trifft mindestens 3 und nicht alle Übungen, „Bis 3 min“ wie am Startknopf, UND, leere Familien fallen weg | MUSTER-12 |
 | ktlint / Lint / Tests | `ktlintCheck` (+ compose-rules), `lintDebug`, `testDebugUnitTest` | TEXT-01, CODE-02 … -04, -06, -07 |
-| `verify-apk`, `release-verify`, `sec-*` | [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung) | SEC-* |
+| `verify-apk`, `release-verify` (mit `verify-release-body`), `check-github`, `sec-*` | [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung) | SEC-* |
 
 ### 13.4 Manuelle Checklisten
 

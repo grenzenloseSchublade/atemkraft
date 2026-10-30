@@ -2,7 +2,9 @@
 # baut den Tag unsigniert mit JDK 17, prüft die Prüf-APKs gegen die Allowlists und vergleicht sie
 # mit den signierten Release-Assets (apksigcopier compare: Signatur des Assets auf den Nachbau
 # übertragen, dann muss er verifizieren – also bis auf die Signatur bitgleich sein). Genau das
-# macht F-Droid mit `Binaries:` vor jeder Veröffentlichung.
+# macht F-Droid mit `Binaries:` vor jeder Veröffentlichung. Dazu prüft verify-release-body
+# Version, Notes und Changelog des Tags und, sobald es das Release gibt, seinen Body (SHA-256 je
+# APK, Fingerprint, keine Heilversprechen).
 #
 # Beim Push des Tags gibt es meist noch kein Release (Checkliste: Tag in Schritt 3, Release in
 # Schritt 8); dann baut der Lauf nur und meldet die Prüfsummen. Der Vergleich läuft, sobald das
@@ -38,11 +40,15 @@ jobs:
         with:
           ref: refs/tags/${{ env.TAG }}
           persist-credentials: false
+          # Tag und Elter-Commit: versionCode = Vorgänger + 1 (verify-release-body).
+          fetch-depth: 2
       - uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
+      - name: Version, Notes und Changelog des Tags
+        run: scripts/verify-release-body.sh --tag "${TAG}"
       # Ohne Gradle-Build-Cache: Der Nachbau soll wirklich aus dem Quellstand entstehen.
       - name: Tag unsigniert bauen
         run: scripts/build.sh assembleRelease -PunsignedRelease=true --no-build-cache
@@ -68,6 +74,13 @@ jobs:
             echo "found=false" >> "${GITHUB_OUTPUT}"
             echo "::notice::Noch kein Release mit APK für ${TAG}; der Vergleich läuft beim Veröffentlichen des Releases."
           fi
+      - name: Release-Body prüfen
+        if: steps.asset.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json body --jq .body > release-body.md
+          scripts/verify-release-body.sh --tag "${TAG}" --body release-body.md asset/*.apk
       - name: apksigcopier installieren
         if: steps.asset.outputs.found == 'true'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends apksigcopier
