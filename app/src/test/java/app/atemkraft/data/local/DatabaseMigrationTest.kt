@@ -91,6 +91,49 @@ class DatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun `Editor-Muster mit Folge und Logbuch aus Version 5 ueberstehen die Migration`() = runBlocking {
+        // So schrieb v2.8.0 (Commit d0a4061) ein eigenes Muster: Herkunft „custom“, Dauer, Folge in
+        // der Textform von FreePattern.toCompact und die vier Felder als Zusammenfassung.
+        helper.createDatabase(DB_NAME, 5).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO saved_patterns
+                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
+                VALUES
+                    ('Abendwelle', 4.0, 2.0, 8.0, NULL, 0, 1761000000000, 'custom', 7, 'in:4,hold:2,out:6,out:2'),
+                    ('Muster 4·2·6', 4.0, 2.0, 6.0, NULL, 0, 1759000000000, 'daily', NULL, NULL)
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO log_entries
+                    (exerciseId, exerciseName, family, startedAtEpochMs, durationMs, roundsCompleted, kind)
+                VALUES ('muster-1', 'Abendwelle', 'DOWNREGULATE', 1761000600000, 420000, 30, 'BREATHING')
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, LATEST, true, *AtemkraftDatabase.MIGRATIONS).close()
+
+        withApp { room ->
+            val rows = room.savedPatternDao().snapshot()
+            assertEquals(listOf("Muster 4·2·6", "Abendwelle"), rows.map { it.name })
+            val custom = rows.single { it.name == "Abendwelle" }
+            assertEquals(PatternOrigin.CUSTOM, custom.patternOrigin())
+            assertEquals(7, custom.minutes)
+            assertEquals(1761000000000L, custom.createdAtEpochMs)
+            // Die Folge bleibt maßgeblich und lesbar, nicht nur die Zusammenfassung in den vier Feldern.
+            assertEquals("in:4,hold:2,out:6,out:2", custom.freePattern()?.toCompact())
+            assertEquals(PatternOrigin.SAVED_DAILY, rows.single { it.name == "Muster 4·2·6" }.patternOrigin())
+
+            val entry = room.logbookDao().all().first().single()
+            assertEquals("muster-1", entry.exerciseId)
+            assertEquals(420000L, entry.durationMs)
+            assertEquals(30, entry.roundsCompleted)
+            assertNull(entry.feeling)
+        }
+    }
+
     /** Öffnet die migrierte Datei wie [AtemkraftDatabase.build], nur mit Abfragen im Testthread. */
     private suspend fun withApp(block: suspend (AtemkraftDatabase) -> Unit) {
         val room = Room.databaseBuilder(ApplicationProvider.getApplicationContext<Application>(), AtemkraftDatabase::class.java, DB_NAME)
