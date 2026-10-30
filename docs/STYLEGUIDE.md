@@ -567,7 +567,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | Programm (nur Kapitel „Programme & Gewohnheiten“), Chip „zum Nachlesen“ an seinen Karten | Chip „Programm“ |
 | Bereich (die vier Familien in UI und Store: „Mehr: …“, „17 Atemübungen in vier Bereichen“) | Gruppe, Familie (nur Code) |
 | Eigenes Muster (selbst zusammengestellt), Eigene Kreationen (Liste im Tab „Eigene“), Tab „Eigene“, Verlauf (Kopf mit Wochenpunkten, führt zum Logbuch) | Custom, Vorlage, Konfigurator, Meine Muster (nur in Code und Doku) |
-| Letzte 7 Tage (heute und die sechs davor, wie die Wochenpunkte: Gruppe im Logbuch, „45 min in den letzten 7 Tagen“) | diese Woche (zählte mal rollend, mal ab Montag) |
+| Letzte 7 Tage (heute und die sechs davor, wie die Wochenpunkte: „45 min in den letzten 7 Tagen“; als Gruppe im Logbuch die übrigen dieser Tage nach „Heute“ und „Gestern“) | diese Woche (zählte mal rollend, mal ab Montag) |
 | Atemkurve (Bild eines Atemzugs im Editor), Griff, Startpunkt (Ausgangsfolgen im Editor), Ablauf (Liste der Phasen), Phase hinzufügen, intensiv | Graph, Diagramm, Feinjustieren, Zufallsmuster, Sequenz |
 | Halten voll / Halten leer (Session, Karten, Muster-Editor; zwischen zwei Stufen und am Stepper für beide nur „Halten“) | Halten oben/unten |
 | Laden, wird geladen | Download |
