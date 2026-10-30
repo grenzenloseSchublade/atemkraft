@@ -16,6 +16,7 @@ import app.atemkraft.R
 import app.atemkraft.domain.asDotSuffix
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
+import app.atemkraft.ui.theme.Motion
 
 /** Ein anpassbarer Intervall-Wert in der Einstell-Karte; als Parameter null = Phase fehlt. */
 data class PhaseAdjust(
@@ -84,7 +85,7 @@ fun SessionAdjustCard(
                 )
                 // Nur der Inhalt animiert seine Höhe (wie CollapsibleSection), der Aufklapper
                 // darüber bleibt stehen; die Karte wächst und schrumpft weich statt zu springen (S-34).
-                Column(modifier = Modifier.fillMaxWidth().animateContentSize()) {
+                Column(modifier = Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
                     if (intervalsExpanded) {
                         inhale?.let {
                             Stepper(
