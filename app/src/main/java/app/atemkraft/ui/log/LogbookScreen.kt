@@ -176,8 +176,8 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
  * <Name>“ ([NavCard], Nutzer 2026-10-30) mit „gestern Abend · 10 min“ als Hinweis; ein Tipp öffnet
  * ihre Detailseite ([onOpenExercise]) – „das von gestern Abend nochmal“.
  *
- * TalkBack hört den Kopf, die Zeile und die Karte als einen Satz; die Punkte je Tag stehen auf der
- * Logbuch-Seite.
+ * TalkBack hört den Kopf, die Zeile und die Karte (diese als einen Satz: Titel, wann, Dauer
+ * ausgeschrieben); die Punkte sind hier stumm, die je Tag stehen auf der Logbuch-Seite.
  */
 @Composable
 internal fun LogHistory(
@@ -248,24 +248,37 @@ private fun LastPracticeCard(exercise: Exercise, entry: SessionLogEntry?, today:
  * Wann, in Laiensprache: „heute Morgen“, „gestern Abend“, in den letzten 7 Tagen „am
  * Donnerstagnachmittag“ (Wochentag und Tageszeit als ein Wort), davor „am 15.10.“. Tage wie die
  * Gruppen im Logbuch ([periodOf]), Tageszeit nach [dayPartOf].
+ *
+ * Die Nacht gehört zum Abend davor: Eine Sitzung Samstag 01:30 ist am Samstag „gestern Nacht“ (die
+ * Nacht Fr→Sa) und in der Woche „in der Freitagnacht“ – „die Nacht“ ist weiblich, „am …nacht“
+ * wäre falsch. Das Datum bleibt der Kalendertag des Beginns.
  */
 @Composable
 private fun lastPracticeWhen(startedAtEpochMs: Long, today: LocalDate): String {
     val start = Instant.ofEpochMilli(startedAtEpochMs).atZone(ZoneId.systemDefault())
-    val day = start.toLocalDate()
-    val part = stringArrayResource(R.array.own_day_parts)[dayPartOf(start.hour).ordinal]
+    val dayPart = dayPartOf(start.hour)
+    // 0–4 Uhr: die Nacht des Vortags.
+    val day = if (dayPart == DayPart.NIGHT && start.hour < NIGHT_END_HOUR) {
+        start.toLocalDate().minusDays(1)
+    } else {
+        start.toLocalDate()
+    }
+    val part = stringArrayResource(R.array.own_day_parts)[dayPart.ordinal]
     return when (periodOf(day, today)) {
         LogPeriod.Today -> stringResource(R.string.own_last_today, part)
 
         LogPeriod.Yesterday -> stringResource(R.string.own_last_yesterday, part)
 
-        LogPeriod.LastSevenDays -> stringResource(
-            R.string.own_last_weekday,
-            day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale),
-            part.lowercase(AppLocale),
-        )
+        LogPeriod.LastSevenDays -> {
+            val weekday = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale)
+            if (dayPart == DayPart.NIGHT) {
+                stringResource(R.string.own_last_weekday_night, weekday)
+            } else {
+                stringResource(R.string.own_last_weekday, weekday, part.lowercase(AppLocale))
+            }
+        }
 
-        is LogPeriod.Month -> stringResource(R.string.own_last_date, day.format(DAY_MONTH_FORMAT))
+        is LogPeriod.Month -> stringResource(R.string.own_last_date, start.toLocalDate().format(DAY_MONTH_FORMAT))
     }
 }
 

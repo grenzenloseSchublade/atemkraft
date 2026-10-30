@@ -212,6 +212,9 @@
     <string name="own_last_yesterday">gestern %1$s</string>
     <!-- %1$s Wochentag, %2$s Tageszeit klein angehängt: „am Montagabend“. -->
     <string name="own_last_weekday">am %1$s%2$s</string>
+    <!-- Nacht (weiblich): „in der Donnerstagnacht“, nie „am Donnerstagnacht“. Die Stunden 0–4 zählen
+         zur Nacht des Vortags (Do 01:30 → „in der Mittwochnacht“). -->
+    <string name="own_last_weekday_night">in der %1$snacht</string>
     <string name="own_last_date">am %1$s</string>
     <!-- Tageszeiten in der Reihenfolge von DayPart: Morgen 5–10, Mittag 11–13, Nachmittag 14–17,
          Abend 18–22, Nacht 23–4 Uhr. -->

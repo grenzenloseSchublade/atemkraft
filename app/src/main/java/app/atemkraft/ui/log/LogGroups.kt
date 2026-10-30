@@ -84,9 +84,12 @@ fun periodOf(day: LocalDate, today: LocalDate): LogPeriod = when {
  */
 enum class DayPart { MORNING, MIDDAY, AFTERNOON, EVENING, NIGHT }
 
+/** Erste Stunde des Morgens: Die Stunden davor (0–4) sind die Nacht des Vortags. */
+const val NIGHT_END_HOUR = 5
+
 /** Tageszeit ([DayPart]) zur Stunde [hour] (0–23). */
 fun dayPartOf(hour: Int): DayPart = when (hour) {
-    in 5..10 -> DayPart.MORNING
+    in NIGHT_END_HOUR..10 -> DayPart.MORNING
     in 11..13 -> DayPart.MIDDAY
     in 14..17 -> DayPart.AFTERNOON
     in 18..22 -> DayPart.EVENING
