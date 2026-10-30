@@ -41,7 +41,7 @@ val SecondaryContainer = Color(0xFF5A4890)
  * Dunkle tonale Fläche, auf der farbige Glyphen und Beschriftungen lesbar bleiben (der frühere
  * Wert von [SecondaryContainer]): gewählte Zeile der Vorlagen und des Ablaufs im Muster-Editor
  * (Sekunden in Phasenfarbe ≥ 4,5:1) und die Seitenknöpfe der `SessionControlBar` („Von vorne“ in
- * [SessionButtonCyan], „Beenden“ in `error`, 4,52).
+ * [SessionButtonCyan] 5,31, „Beenden“ in `error` 4,52).
  */
 val TonalDeep = Color(0xFF3A2C60)
 
