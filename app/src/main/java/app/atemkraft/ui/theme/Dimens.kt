@@ -97,6 +97,12 @@ object Dimens {
     val BorderChip = 1.5.dp
 
     /**
+     * Bereichs-Trenner unter „Muster des Tages ›“ im Atmen-Tab: kräftiger als eine Haarlinie, damit
+     * Einstieg und Liste auf dem Gerät klar getrennt sind (Nutzer 2026-10-30).
+     */
+    val BorderSection = 2.dp
+
+    /**
      * Tonale Erhöhung der gepinnten Start-Leiste (`PinnedActionBar`, M3-Stufe 2): hebt sie über
      * den scrollenden Inhalt, ohne Schatten.
      */

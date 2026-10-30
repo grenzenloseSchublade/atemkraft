@@ -30,6 +30,7 @@ import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseFilter
 import app.atemkraft.domain.ExerciseFilters
+import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
@@ -68,8 +69,8 @@ data class HomeActions(
     val onDismissWelcome: () -> Unit = {},
     /** Verweis der Willkommenskarte; öffnet die Übung mit kurzer Dauer statt der Voreinstellung. */
     val onOpenWelcome: (String) -> Unit = onSelect,
-    /** „Muster gestalten ›“ im Blatt „Muster des Tages“: öffnet den Muster-Editor. */
-    val onNewPattern: () -> Unit = {},
+    /** „Selbst gestalten ›“ im Blatt „Muster des Tages“: öffnet den Muster-Editor mit [PatternSpec] als Ausgangspunkt. */
+    val onDesignFrom: (PatternSpec) -> Unit = {},
 )
 
 /**
@@ -84,7 +85,7 @@ data class HomeActions(
  * Wirkversprechen – steht als Kopfzeile mit Chevron über „Übungen“, losgelöst von Familien und
  * Filterreihe, und bleibt in jedem Zustand stehen. Sie öffnet das [DailyPatternSheet] mit der
  * Karte des Tagesmusters (↻, ◉ „In Eigene speichern“) und „Selbst gestalten“ mit dem Weg in den
- * Muster-Editor ([HomeActions.onNewPattern]). So liegt das Gestalten eigener Muster einen Tipp
+ * Muster-Editor ([HomeActions.onDesignFrom], mit dem Tagesmuster als Ausgangspunkt). So liegt das Gestalten eigener Muster einen Tipp
  * neben der Startseite, ohne Platz in der Liste zu kosten.
  *
  * Ein Zustand (MUSTER-09): Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder
@@ -218,7 +219,7 @@ fun HomeScreen(
                 // Die tippbare Zeile polstert unten GapSmall selbst; sichtbar bleibt SectionGap.
                 Spacer(Modifier.height(Dimens.GapSmall))
                 // Trenner zwischen zwei Bereichen der Seite, kein Karten-Trenner: DividerSubtle war hier kaum zu sehen.
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) // Abweichung KOMP-03: Bereichs-Trenner in der Haarlinie des Seitenkopfs
+                HorizontalDivider(thickness = Dimens.BorderSection, color = MaterialTheme.colorScheme.outlineVariant) // Abweichung KOMP-03: Bereichs-Trenner in der Haarlinie des Seitenkopfs
             }
         }
         if (filtering) {
@@ -313,7 +314,7 @@ fun HomeScreen(
             onRegenerate = actions.onRegenerateDaily,
             onNewPattern = {
                 dailySheetOpen = false
-                actions.onNewPattern()
+                actions.onDesignFrom(daily.spec)
             },
             onDismiss = { dailySheetOpen = false },
         )

@@ -150,6 +150,7 @@ Ränder und Karten-Innenabstand wie M3 (16 dp). Touch-Ziele hängen nie an diese
 | `FocusRing` | 2 | Fokusring um Atemkreis und Meditationsring (`CircleTapTarget`; Raster-Ausnahme) |
 | `BorderThin` | 1 | Kartenrand (`accentBorder`, `ALPHA_BORDER`), Rand von `AppOutlinedButton`, umrandeten Info-Chips und ∞-Knopf |
 | `BorderChip` | 1,5 | Rand der `LinkChip` in `outline` |
+| `BorderSection` | 2 | Bereichs-Trenner unter „Muster des Tages ›“ (`outlineVariant`) |
 | `SessionRingStroke` | 3 | Spur und Fortschrittsbogen um den Atemkreis (Raster-Ausnahme) |
 | `SessionMainButton` / `SessionSideButton` | 76 / 56 | Kreise der `SessionControlBar`: Pause/Weiter / „Von vorne“, „Beenden“; fest, selbst Tippfläche |
 | `SessionMainIcon` / `SessionSideIcon` | 32 / 28 | Icons in diesen Kreisen |

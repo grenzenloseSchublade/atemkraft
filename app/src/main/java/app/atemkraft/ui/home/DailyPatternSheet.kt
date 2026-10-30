@@ -64,7 +64,9 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
 /**
  * Blatt „Muster des Tages“ (Nutzer 2026-10-30): oben das generierte Muster als Karte mit ↻ „Neu
  * generieren“ und ◉ „In Eigene speichern“ (Tipp auf die Karte öffnet die Detailseite), darunter
- * die Karte „Selbst gestalten ›“ ([NavCard]), die den Muster-Editor öffnet. Beides an einem Ort:
+ * die Karte „Selbst gestalten ›“ ([NavCard]), die den Muster-Editor mit dem Muster von heute als
+ * Ausgangspunkt öffnet ([onNewPattern]) – so knüpft das Gestalten an das an, was man gerade sieht;
+ * eine andere Vorlage wählt man im Editor über „Startpunkt“. Beides an einem Ort:
  * Wer mit dem Tagesmuster spielt, findet hier den nächsten Schritt, sein eigenes zu bauen.
  *
  * Gerüst wie [app.atemkraft.ui.meditation.SoundSheet] (Anatomie „Bottom Sheet“, §4.5): ganz

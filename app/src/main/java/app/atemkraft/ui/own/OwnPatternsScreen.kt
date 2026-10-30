@@ -70,12 +70,13 @@ data class OwnActions(
 
 /**
  * Tab „Eigene“, der persönliche Bereich (Nutzer 2026-10-23; Aufbau 2026-10-24, Vorschlag B): drei
- * gleiche Köpfe. Oben „Eigene Kreationen“ (gespeicherte Tagesmuster und selbst zusammengestellte
- * Muster, neueste zuerst wie aus der Datenbank) mit „+“ rechts im Kopf (öffnet den Muster-Editor) –
- * „Eigene“ heißt eigene Muster, das Gestalten steht vorn (Nutzer 2026-10-30). Dann „Verlauf“ als
- * tippbarer Kopf mit Chevron – die ganze Kopfzeile führt zur Logbuch-Seite ([onOpenLogbook]) –,
- * darunter ohne Karte die Wochenpunkte und die Bilanz ([LogHistory]; ohne Sitzungen nur der Satz),
- * zuletzt „Tut mir gut“ (die Übungen mit der persönlichen Markierung, [favorites]). Ohne eigene Kreationen bleibt der Kopf mit „+“ stehen, darunter eine
+ * gleiche Köpfe. Oben „Verlauf“ als tippbarer Kopf mit Chevron – die ganze Kopfzeile führt zur
+ * Logbuch-Seite ([onOpenLogbook]) –, darunter ohne Karte die Wochenpunkte und die Bilanz
+ * ([LogHistory]; ohne Sitzungen nur der Satz). Dann „Eigene Kreationen“ (gespeicherte Tagesmuster
+ * und selbst zusammengestellte Muster, neueste zuerst wie aus der Datenbank) mit „+“ rechts im Kopf
+ * (öffnet den Muster-Editor) – vor „Tut mir gut“, damit das Gestalten vorn steht, ohne den Verlauf
+ * zu verdrängen (Nutzer 2026-10-30) –, zuletzt „Tut mir gut“ (die Übungen mit der persönlichen
+ * Markierung, [favorites]). Ohne eigene Kreationen bleibt der Kopf mit „+“ stehen, darunter eine
  * ruhige Karte mit dem Satz des Leerzustands und dem Verweis „Muster gestalten ›“ ([EmptyCreationsCard];
  * MUSTER-04, kein großer Knopf).
  *
@@ -122,7 +123,31 @@ fun OwnPatternsScreen(
             )
         },
     ) {
-        // „Eigene“ heißt eigene Muster: die Kreationen zuerst, mit „+“ im Kopf (Nutzer 2026-10-30).
+        item(key = "history") {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Die ganze Kopfzeile ist der Button zur Logbuch-Seite (Chevron, MUSTER-08).
+                SectionHeader(
+                    title = stringResource(R.string.own_history),
+                    onClick = actions.onOpenLogbook,
+                    onClickLabel = stringResource(R.string.cd_open_logbook),
+                )
+                // Kopf → Inhalt HeaderGap; den GapSmall darunter polstert die tippbare Zeile selbst.
+                Spacer(Modifier.height(Dimens.HeaderGap - Dimens.GapSmall))
+                LogHistory(entries = logEntries, today = today, showStreak = showStreak)
+                if (lastExercise != null) {
+                    // Bündig: Das Polster des Text-Buttons ragt in den Rand.
+                    AppTextButton(onClick = { actions.onSelect(lastExercise.id) }, modifier = Modifier.flushStart()) {
+                        ForwardLinkText(
+                            text = stringResource(R.string.own_last_practiced, lastExercise.name),
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
+                }
+            }
+        }
+
+        // Verlauf bleibt oben; die Kreationen mit „+“ stehen gleich darunter, vor „Tut mir gut“
+        // (Nutzer 2026-10-30).
         item(key = "my-patterns") {
             OwnSection(
                 title = stringResource(R.string.own_creations),
@@ -149,29 +174,6 @@ fun OwnPatternsScreen(
                             onClick = { actions.onSelect(pattern.exercise.id) },
                             onEdit = { actions.onEditPattern(pattern.id) },
                             onDelete = { actions.onDeletePattern(pattern.id) },
-                        )
-                    }
-                }
-            }
-        }
-
-        item(key = "history") {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Die ganze Kopfzeile ist der Button zur Logbuch-Seite (Chevron, MUSTER-08).
-                SectionHeader(
-                    title = stringResource(R.string.own_history),
-                    onClick = actions.onOpenLogbook,
-                    onClickLabel = stringResource(R.string.cd_open_logbook),
-                )
-                // Kopf → Inhalt HeaderGap; den GapSmall darunter polstert die tippbare Zeile selbst.
-                Spacer(Modifier.height(Dimens.HeaderGap - Dimens.GapSmall))
-                LogHistory(entries = logEntries, today = today, showStreak = showStreak)
-                if (lastExercise != null) {
-                    // Bündig: Das Polster des Text-Buttons ragt in den Rand.
-                    AppTextButton(onClick = { actions.onSelect(lastExercise.id) }, modifier = Modifier.flushStart()) {
-                        ForwardLinkText(
-                            text = stringResource(R.string.own_last_practiced, lastExercise.name),
-                            color = MaterialTheme.colorScheme.secondary,
                         )
                     }
                 }
