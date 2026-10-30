@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="window_background">#160F2E</color>
-    <color name="ic_launcher_background">#1A0B2E</color>
+    <!-- Grund des App-Symbols und der Shortcut-Symbole: derselbe Ton wie der Fenstergrund
+         (DarkBackground), keine eigene Farbe neben der Palette (FARBE-01). -->
+    <color name="ic_launcher_background">@color/window_background</color>
 </resources>

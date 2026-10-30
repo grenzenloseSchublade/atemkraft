@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -48,6 +47,7 @@ import app.atemkraft.ui.navigation.tabOnStack
 import app.atemkraft.ui.navigation.tapTab
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.theme.AtemkraftTheme
+import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.flow.first
 
@@ -147,7 +147,7 @@ private fun AtemkraftApp(
                         .padding(innerPadding)
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.CenterHorizontally)
-                        .widthIn(max = 600.dp),
+                        .widthIn(max = Dimens.ContentMaxWidth),
                     enterTransition = { fadeIn(tween(Motion.NavTab)) },
                     exitTransition = { fadeOut(tween(Motion.NavTab)) },
                     popEnterTransition = { fadeIn(tween(Motion.NavTab)) },

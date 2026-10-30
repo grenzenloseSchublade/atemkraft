@@ -48,6 +48,15 @@ object Sizes {
     /** Tagespunkt der 7-Tage-Übersicht im Logbuch (18). */
     val WeekDot = 18.dp
 
+    /** Familienpunkt vor jedem Logbuch-Eintrag (10), mittig zur ersten Namenszeile. */
+    val FamilyDot = 10.dp
+
+    /**
+     * Pause-/Play-Symbol, das beim Antippen des Atemkreises kurz aufblinkt (`PauseFlash`, 150);
+     * nie größer als der Kreis selbst.
+     */
+    val PauseFlashSize = 150.dp
+
     /**
      * Überstand der 48-dp-Tippfläche über ein [IconDefault]-Icon auf jeder Seite (12): Um ihn
      * melden `Modifier.flushStart()`/`flushEnd()` einen Icon-Button schmaler, damit sein Glyph an

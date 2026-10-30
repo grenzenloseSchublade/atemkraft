@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Die App ist einsprachig Deutsch (TEXT-03): In der Spracheinstellung je App (Android 13+)
+     steht nur Deutsch; dazu passend liefert der Build nur deutsche Ressourcen (localeFilters). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="de" />
+</locale-config>

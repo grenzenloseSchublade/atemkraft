@@ -1,8 +1,16 @@
 package app.atemkraft.ui.theme
 
 import android.animation.ValueAnimator
+import androidx.compose.animation.core.DurationBasedAnimationSpec
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.IntSize
 
 /**
  * Laufen System-Animationen (Animator-Skala > 0)? Einmal je Komposition gelesen. Sind sie aus,
@@ -13,8 +21,8 @@ import androidx.compose.runtime.remember
 fun rememberAnimationsEnabled(): Boolean = remember { ValueAnimator.areAnimatorsEnabled() }
 
 /**
- * Zentrale Bewegungs-Tokens (MOTION-04): Dauern in ms. Tap-Flash und Navigation; weitere
- * Dauern (Schimmer) ziehen nach, wenn ihre Stelle angefasst wird.
+ * Zentrale Bewegungs-Tokens (MOTION-04): Dauern in ms und die wenigen Animations-Specs, die mehr
+ * als eine Stelle teilen (Aufklappen, Aufdecken, Schimmer).
  */
 object Motion {
     /** Push-Ziele (Detail, Einstellungen, …): Hinein-/Hinausgleiten samt Blende. */
@@ -61,4 +69,21 @@ object Motion {
 
     /** vāyu-Bild: ein Pulsieren der gewählten Fläche, hin und zurück. */
     val VayuPulse = 2600
+
+    /**
+     * Auf- und Zuklappen: Höhe bzw. Breite von Expandern, Abschnitten und der Tab-Leiste
+     * (`animateContentSize`) und von aufgedeckten Teilen (`expand…`/`shrink…`). Die Default-Spring
+     * von Compose (weich, ohne Bounce), hier nur benannt, damit alle Stellen denselben Wert tragen.
+     */
+    val Disclosure: FiniteAnimationSpec<IntSize> = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)
+
+    /** Ein- und Ausblenden eines aufgedeckten Teils (`fadeIn`/`fadeOut` zu [Disclosure]): Default-Spring von Compose. */
+    val Reveal: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow)
+
+    /**
+     * Schimmer des Scheins hinter dem Atemkreis (`BreathingCircle`): 8 s hin, 8 s zurück, sanft
+     * an den Enden – Yoga-Tempo, kein Puls-Gefühl. Bewusst langsamer als neue UI-Bewegung
+     * (MOTION-04); bei Animator-Skala 0 steht er still (MOTION-02).
+     */
+    val AmbientShimmer: DurationBasedAnimationSpec<Float> = tween(durationMillis = 8000, easing = EaseInOutSine)
 }

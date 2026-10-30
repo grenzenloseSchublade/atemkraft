@@ -50,6 +50,7 @@ import app.atemkraft.domain.MEDITATION_MAX_MINUTES
 import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -181,8 +182,8 @@ internal fun DurationReadout(
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         AnimatedVisibility(
             visible = fineAdjust,
-            enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-            exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
+            enter = fadeIn(Motion.Reveal) + expandHorizontally(Motion.Disclosure, expandFrom = Alignment.End),
+            exit = fadeOut(Motion.Reveal) + shrinkHorizontally(Motion.Disclosure, shrinkTowards = Alignment.End),
         ) {
             AppIconButton(
                 onClick = { state.stepWithTick(-1, onTick) },
@@ -210,8 +211,8 @@ internal fun DurationReadout(
         }
         AnimatedVisibility(
             visible = fineAdjust,
-            enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
-            exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start),
+            enter = fadeIn(Motion.Reveal) + expandHorizontally(Motion.Disclosure, expandFrom = Alignment.Start),
+            exit = fadeOut(Motion.Reveal) + shrinkHorizontally(Motion.Disclosure, shrinkTowards = Alignment.Start),
         ) {
             AppIconButton(
                 onClick = { state.stepWithTick(1, onTick) },

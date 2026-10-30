@@ -1,11 +1,9 @@
 package app.atemkraft.ui.components
 
-import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +20,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.util.lerp
+import app.atemkraft.ui.theme.ALPHA_CIRCLE_EDGE
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SynthCircleCenter
 import app.atemkraft.ui.theme.SynthCircleEdge
 
@@ -57,7 +57,7 @@ fun BreathingCircle(
         initialValue = 0.7f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8000, easing = EaseInOutSine),
+            animation = Motion.AmbientShimmer,
             repeatMode = RepeatMode.Reverse,
         ),
         label = "glowStrength",
@@ -101,7 +101,7 @@ fun BreathingCircle(
             // Gefüllter, synthwave-lila Kreis, der mit dem Atem wächst/schrumpft.
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(SynthCircleCenter.copy(alpha = 1f), SynthCircleEdge.copy(alpha = 0.72f)),
+                    colors = listOf(SynthCircleCenter.copy(alpha = 1f), SynthCircleEdge.copy(alpha = ALPHA_CIRCLE_EDGE)),
                     center = center,
                     radius = radius.coerceAtLeast(1f),
                 ),

@@ -73,6 +73,7 @@ import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.rememberWidestTextWidth
 import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.SessionNoteAmber
 import app.atemkraft.ui.theme.Sizes
@@ -242,8 +243,8 @@ private fun ActiveContent(
                     }
                     AnimatedVisibility(
                         visible = hintVisible,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically(),
+                        enter = fadeIn(Motion.Reveal) + expandVertically(Motion.Disclosure),
+                        exit = fadeOut(Motion.Reveal) + shrinkVertically(Motion.Disclosure),
                     ) {
                         SecondaryText(hint, modifier = Modifier.padding(top = Dimens.GapHairline), textAlign = TextAlign.Center)
                     }

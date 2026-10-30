@@ -65,7 +65,7 @@ fun SessionRunningLayout(
             // Abstand zwischen Kopf, Kreis und Steuerung (bzw. den Spalten im Querformat).
             val gap = Dimens.SectionGap.roundToPx()
             val free = h - reservedTop - bottomH - centerExtra.roundToPx() - 2 * gap
-            val side = minOf(w * 0.9f, h * 0.62f, free.toFloat()).coerceAtLeast(MIN_SIDE.toPx())
+            val side = minOf(w * Dimens.SessionCircleWidthShare, h * Dimens.SessionCircleHeightShare, free.toFloat()).coerceAtLeast(Dimens.SessionCircleMin.toPx())
             val centerP = subcompose("center") { center(side.toDp()) }.map { it.measure(loose) }
             val centerH = centerP.maxOfOrNull { it.height } ?: 0
 
@@ -102,7 +102,7 @@ private fun SubcomposeMeasureScope.sidewaysLayout(
     val topP = subcompose("top") { HideableSlot(chromeVisible, absorbTaps = true, content = top) }.map { it.measure(right) }
     val bottomP = subcompose("bottom") { HideableSlot(chromeVisible, absorbTaps = true, content = bottom) }.map { it.measure(right) }
     val free = h - centerExtra.roundToPx() - 2 * gap
-    val side = minOf(leftW * 0.9f, free.toFloat()).coerceAtLeast(MIN_SIDE.toPx())
+    val side = minOf(leftW * Dimens.SessionCircleWidthShare, free.toFloat()).coerceAtLeast(Dimens.SessionCircleMin.toPx())
     val centerP = subcompose("center") { center(side.toDp()) }.map { it.measure(loose.copy(maxWidth = leftW)) }
     val centerH = centerP.maxOfOrNull { it.height } ?: 0
     return layout(w, h) {
@@ -113,6 +113,3 @@ private fun SubcomposeMeasureScope.sidewaysLayout(
         topP.forEach { it.placeRelative(rightX + (rightW - it.width) / 2, 0, zIndex = 1f) }
     }
 }
-
-/** Kleinste Kantenlänge des Kreises; darunter wäre er nicht mehr lesbar. */
-private val MIN_SIDE = 96.dp

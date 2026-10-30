@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.Sizes
 
 /**
@@ -57,8 +58,8 @@ fun SlidingReset(
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        enter = expandHorizontally(expandFrom = slideFrom) + fadeIn(),
-        exit = shrinkHorizontally(shrinkTowards = slideFrom) + fadeOut(),
+        enter = expandHorizontally(Motion.Disclosure, expandFrom = slideFrom) + fadeIn(Motion.Reveal),
+        exit = shrinkHorizontally(Motion.Disclosure, shrinkTowards = slideFrom) + fadeOut(Motion.Reveal),
     ) {
         if (compact) {
             AppIconButton(onClick = onClick, modifier = tracked, colors = IconButtonDefaults.filledTonalIconButtonColors()) {

@@ -69,6 +69,24 @@ object Dimens {
      */
     val DurationPickerMin = 200.dp
 
+    /**
+     * Höchstbreite der Inhalte auf Tablets und Foldables (600, `MainActivity`): Sie stehen mittig,
+     * die Ränder zeigen den Fenstergrund – Zeilen bleiben lesbar lang.
+     */
+    val ContentMaxWidth = 600.dp
+
+    /**
+     * Kleinste Kantenlänge des Kreises in der laufenden Session (`SessionRunningLayout`, 96);
+     * darunter wäre er nicht mehr lesbar.
+     */
+    val SessionCircleMin = 96.dp
+
+    /** Höchstanteil des Session-Kreises an der Breite seiner Spalte (0,9): etwas Luft zu den Rändern. */
+    val SessionCircleWidthShare = 0.9f
+
+    /** Höchstanteil des Session-Kreises an der Höhe im Hochformat (0,62): Kopf und Steuerung behalten ihren Platz. */
+    val SessionCircleHeightShare = 0.62f
+
     /** Rand navigierender Inhaltskarten (KOMP-03, `accentBorder`). */
     val BorderThin = 1.dp
 

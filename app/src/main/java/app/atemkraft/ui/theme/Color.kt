@@ -76,6 +76,9 @@ val WarnAmber = NeonYellow // Hinweis/Warnung – Synthwave-Gelb
 // Satteres Magenta → Violett: lebendiger Verlauf. Schrift ist creme & groß → genug Kontrastreserve.
 val SynthCircleCenter = Color(0xFFCB3C9A)
 val SynthCircleEdge = Color(0xFF4A2080)
+
+/** Deckkraft von [SynthCircleEdge] am Rand des Atemkreis-Verlaufs: Der Rand läuft weich in den Grund aus. */
+const val ALPHA_CIRCLE_EDGE = 0.72f
 val SynthTrack = NeonCyan
 
 // Session-Schrift: warmes, entsättigtes Pastellgold/Creme mit weichem Schimmer – ruhig statt grell,
@@ -117,11 +120,12 @@ const val ALPHA_BORDER = 0.35f
  */
 val DividerSubtle = DarkOnSurface.copy(alpha = 0.08f)
 
-// Stufen der Logbuch-Wochenzeile (Zustandsgrafik, FARBE-05): kein Eintrag (onSurface) und
-// wenig / mittel geübt (primary); viel geübt = voller Ton.
-const val ALPHA_HEAT_NONE = 0.12f
-const val ALPHA_HEAT_LOW = 0.40f
-const val ALPHA_HEAT_MID = 0.70f
+// Stufen der Logbuch-Wochenzeile (Zustandsgrafik, FARBE-03/-05): wenig / mittel geübt (primary);
+// viel geübt = voller Ton. Auch die leiseste Stufe hält ≥ 3:1 auf Karte und Grund (3,01 / 3,50);
+// ein Tag ohne Eintrag ist ein leerer Ring in TERTIARY, kein schwacher Punkt – so trennt die Form
+// „nichts“ von „wenig“, nicht nur der Farbton.
+const val ALPHA_HEAT_LOW = 0.70f
+const val ALPHA_HEAT_MID = 0.85f
 
 /** Zarte Füllung unter der Atemkurve des Muster-Editors (`secondary`, dekorativ). */
 const val ALPHA_CURVE_FILL = 0.08f

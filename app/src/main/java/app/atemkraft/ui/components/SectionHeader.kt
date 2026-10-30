@@ -41,6 +41,7 @@ import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.FamilyVagal
 import app.atemkraft.ui.theme.HeadingRing
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
@@ -289,7 +290,7 @@ fun CollapsibleSection(
             trailingAction = trailingAction,
         )
         // Volle Breite, damit beim Aufklappen nur die Höhe gleitet, nicht auch die Breite.
-        Column(modifier = Modifier.fillMaxWidth().animateContentSize()) {
+        Column(modifier = Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
             if (expanded != false) {
                 Column(
                     modifier = Modifier.padding(top = headerGap),

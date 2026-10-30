@@ -14,8 +14,8 @@ import kotlin.math.sin
 
 /**
  * Durchgehender, beruhigender Sinuston, dessen Tonhöhe der Atemphase folgt:
- * Einatmen gleitet hoch (G3→C4), Ausatmen runter, Halten konstant (oben bzw. unten).
- * Reine Quarte (4:3), leise; exponentieller Glide (perzeptiv gleichmäßig) und weiche
+ * Einatmen gleitet hoch (G3→D4), Ausatmen runter, Halten konstant (oben bzw. unten).
+ * Reine Quinte (3:2), leise; exponentieller Glide (perzeptiv gleichmäßig) und weiche
  * Amplituden-Hüllkurve gegen Knackser. Ein durchgehender Oszillator → keine Brüche.
  *
  * Quelle des Schemas: RESPeRATE/Paced-Breathing + Psychoakustik-Recherche.

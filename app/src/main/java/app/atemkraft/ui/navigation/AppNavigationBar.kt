@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
@@ -139,7 +140,7 @@ private const val NAV_LABEL_MIN_SCALE = 0.85f
 
 /**
  * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt
- * nur der Platz der Systemnavigation [systemInsets]. Die Höhe gleitet dabei (Default-Spring,
+ * nur der Platz der Systemnavigation [systemInsets]. Die Höhe gleitet dabei ([Motion.Disclosure],
  * MOTION-04), sodass eine Startleiste darüber sanft hinab- bzw. hinaufrutscht, statt um die ganze
  * Leiste zu springen.
  */
@@ -150,7 +151,7 @@ fun HideableTabBar(
     systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
     bar: @Composable () -> Unit,
 ) {
-    Box(modifier.animateContentSize()) {
+    Box(modifier.animateContentSize(Motion.Disclosure)) {
         if (visible) {
             Column {
                 HorizontalDivider(thickness = Dimens.BorderThin, color = MaterialTheme.colorScheme.primary.copy(alpha = TAB_DIVIDER_ALPHA)) // Abweichung KOMP-03: Marken-Trenner über der Tab-Leiste, kein Karten-Trenner

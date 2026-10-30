@@ -41,6 +41,7 @@ import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.AppLocale
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.DotSeparatedFlow
@@ -59,10 +60,8 @@ import app.atemkraft.ui.components.spokenDuration
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
-import app.atemkraft.ui.theme.ALPHA_HEAT_NONE
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
-import app.atemkraft.ui.theme.NeonCyan
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.SynthTrack
@@ -72,17 +71,13 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 
-private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-/** Familienpunkt vor jedem Eintrag. */
-private val FAMILY_DOT = 10.dp
+private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", AppLocale)
 
 /** Listen-Schlüssel des Satzes unter dem Verlauf. */
 private const val CLEAR_HINT_KEY = "clear-hint"
 
-private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.")
+private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.", AppLocale)
 
 /**
  * Logbuch als Push-Seite (aus der Karte „Verlauf“ im Tab „Eigene“ und vom Ende einer
@@ -203,7 +198,7 @@ internal fun LogHistory(entries: List<SessionLogEntry>, today: LocalDate = Local
 /**
  * Ruhige 7-Tage-Übersicht: pro Tag ein Punkt, dessen Intensität mit den geübten Minuten
  * wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine Wertung). Bewusst ohne Zahlen und
- * ohne Druck; heute bekommt nur einen sanften Ring. Beschriftung zweibuchstabig („Mo“ … „So“),
+ * ohne Druck; ein Tag ohne Übung ist ein leerer Ring, heute trägt den Ring in Cyan. Beschriftung zweibuchstabig („Mo“ … „So“),
  * weil einzelne Buchstaben doppeldeutig sind (M/D/S). Details stehen für TalkBack bereit, außer
  * mit `spoken = false` ([LogHistory]).
  */
@@ -219,15 +214,22 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
         for (offset in 6 downTo 0) {
             val day = today.minusDays(offset.toLong())
             val minutes = minutesPerDay[day.toEpochDay()] ?: 0L
-            // Sequenzielle Rampe (eine Hue): leer → leise → präsent → voll.
+            // Sequenzielle Rampe (eine Hue): leise → präsent → voll, jede Stufe ≥ 3:1 zum Grund.
+            // Ohne Eintrag kein Punkt, sondern ein leerer Ring: Die Form trennt „nichts“ von „wenig“.
             val fill = when {
-                minutes <= 0L -> MaterialTheme.colorScheme.onSurface.copy(alpha = ALPHA_HEAT_NONE)
+                minutes <= 0L -> null
                 minutes < 10L -> MaterialTheme.colorScheme.primary.copy(alpha = ALPHA_HEAT_LOW)
                 minutes < 25L -> MaterialTheme.colorScheme.primary.copy(alpha = ALPHA_HEAT_MID)
                 else -> MaterialTheme.colorScheme.primary
             }
             val isToday = offset == 0
-            val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.GERMAN)
+            // Heute trägt den Cyan-Ring (auch um einen leeren Tag); sonst hat nur ein leerer Tag einen Ring.
+            val ring = when {
+                isToday -> SynthTrack.copy(alpha = TERTIARY)
+                fill == null -> MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY)
+                else -> null
+            }
+            val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale)
             val dayText = if (minutes > 0) {
                 pluralStringResource(R.plurals.cd_log_day_minutes, minutes.toInt(), dayName, minutes.toInt())
             } else {
@@ -243,14 +245,8 @@ private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Bo
                     modifier = Modifier
                         .size(Sizes.WeekDot)
                         .clip(CircleShape)
-                        .background(fill)
-                        .then(
-                            if (isToday) {
-                                Modifier.border(Dimens.BorderThin, SynthTrack.copy(alpha = TERTIARY), CircleShape)
-                            } else {
-                                Modifier
-                            },
-                        ),
+                        .then(if (fill != null) Modifier.background(fill) else Modifier)
+                        .then(if (ring != null) Modifier.border(Dimens.BorderThin, ring, CircleShape) else Modifier),
                 )
                 Spacer(Modifier.height(Dimens.GapTiny))
                 Text(
@@ -285,7 +281,7 @@ private fun LogGroupSection(
 
         is LogPeriod.Month -> stringResource(
             R.string.log_group_month,
-            period.month.month.getDisplayName(TextStyle.FULL, Locale.GERMAN),
+            period.month.month.getDisplayName(TextStyle.FULL, AppLocale),
             period.month.year,
         )
     }
@@ -341,7 +337,7 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
     // Der Punkt gehört zum Namen: oben ausgerichtet und mittig zur ersten Namenszeile, nicht zur
     // Höhe des ganzen Eintrags – sonst schwebt er bei umgebrochener Dauer zwischen den Zeilen.
     val nameStyle = MaterialTheme.typography.titleSmall
-    val dotTop = (rememberFirstLineHeight(nameStyle) - FAMILY_DOT) / 2
+    val dotTop = (rememberFirstLineHeight(nameStyle) - Sizes.FamilyDot) / 2
     // Ein Eintrag ist ein Fokus-Stopp (A11Y-06): Name, Uhrzeit, Dauer und Runden in einer Ansage.
     // Antippbar, wenn es die Übung noch gibt (nicht Meditation, Tagesmuster eines anderen Tages,
     // gelöschte Muster); Name samt Uhrzeit, Dauer und Runden ist die Tippfläche.
@@ -361,10 +357,10 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
         Box(
             modifier = Modifier
                 .padding(top = dotTop.coerceAtLeast(0.dp))
-                .size(FAMILY_DOT)
+                .size(Sizes.FamilyDot)
                 .clip(CircleShape)
-                // Meditation hat keine Familie – eigener, ruhiger Cyan-Ton.
-                .background(entry.family?.color() ?: NeonCyan)
+                // Meditation hat keine Familie – Cyan wie der Zeitring der Meditation (secondary).
+                .background(entry.family?.color() ?: MaterialTheme.colorScheme.secondary)
                 .then(if (familyName != null) Modifier.semantics { contentDescription = familyName } else Modifier),
         )
         // FlowRow: Passt die Dauer nicht mehr neben den Namen (große Schrift), rutscht sie

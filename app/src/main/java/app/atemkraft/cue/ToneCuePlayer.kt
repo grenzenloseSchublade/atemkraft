@@ -251,7 +251,7 @@ internal fun gongTotalMsFor(long: Boolean): Int = (if (long) ToneCuePlayer.GONG_
 internal fun synthesizeGong(long: Boolean, volumeScale: Float): ShortArray {
     // Grundton-Abklingzeit + Fenster je nach gewähltem Profil. Fenster ist so bemessen, dass der
     // Ton NATÜRLICH exponentiell bis ~-60 dB (praktisch Stille) ausschwingt – nicht abgeschnitten,
-    // nicht künstlich gefadet (nur 150 ms Anti-Klick am Ende). t(-60dB) = tau·ln(1000).
+    // nicht künstlich gefadet (nur 400 ms Anti-Klick-Ausblende am Ende, s. releaseSamples). t(-60dB) = tau·ln(1000).
     val fundTau = if (long) 1.6 else 0.85
     val toneMs = if (long) ToneCuePlayer.GONG_TONE_LONG_MS else ToneCuePlayer.GONG_TONE_SHORT_MS
     val toneCount = ToneCuePlayer.SAMPLE_RATE * toneMs / 1000

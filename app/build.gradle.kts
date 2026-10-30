@@ -89,6 +89,13 @@ android {
         }
     }
 
+    // Einsprachig Deutsch (TEXT-03): Nur deutsche Ressourcen ins APK, auch aus Bibliotheken
+    // (sonst kämen Dutzende fremde values-xx mit); res/xml/locales_config.xml meldet dem System
+    // (Android 13+, Spracheinstellung je App) dieselbe eine Sprache.
+    androidResources {
+        localeFilters += "de"
+    }
+
     signingConfigs {
         // Fester Debug-Keystore im Projekt -> stabile Signatur über alle (Container-)Builds.
         getByName("debug") {

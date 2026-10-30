@@ -10,9 +10,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import app.atemkraft.ui.theme.SessionButtonCyan
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Großes Pause-/Play-Symbol, das beim Antippen des Kreises kurz aufblinkt (alpha von außen
@@ -24,7 +24,7 @@ fun PauseFlash(alpha: Float, isPause: Boolean, maxSize: Dp, modifier: Modifier =
     if (alpha <= 0.01f) return
     // Nie größer als der Kreis: Sonst wüchse beim Antippen kurz die Box um den Kreis, und der
     // Kreis spränge (kleiner Kreis im Querformat oder bei großer Schrift).
-    Canvas(modifier = modifier.size(min(FLASH_SIZE, maxSize))) {
+    Canvas(modifier = modifier.size(min(Sizes.PauseFlashSize, maxSize))) {
         val w = size.width
         val h = size.height
 
@@ -59,6 +59,3 @@ fun PauseFlash(alpha: Float, isPause: Boolean, maxSize: Dp, modifier: Modifier =
         drawSymbol(SessionButtonCyan.copy(alpha = alpha))
     }
 }
-
-/** Kantenlänge des Symbols, solange der Kreis groß genug ist. */
-private val FLASH_SIZE = 150.dp

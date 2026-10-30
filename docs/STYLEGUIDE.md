@@ -46,7 +46,7 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | Token | Hex | M3-Rolle | Bedeutung | vs BG | vs Card |
 |---|---|---|---|---|---|
 | `NeonMagenta` | #F25CA2 | primary | Marke, Aktion, Auswahl | 5,98 | 4,71 |
-| `NeonCyan` | #34E0E8 | secondary | Verweise und Links im Inhalt (FARBE-04), Einatmen, eigene Muster (Rand, gespeichert, Eyebrow „MUSTER DES TAGES“), Meditation (Zeitring), Fortschritt | 11,36 | 8,95 |
+| `NeonCyan` | #34E0E8 | secondary | Verweise und Links im Inhalt (FARBE-04), Einatmen, eigene Muster (Rand, gespeichert, Eyebrow „MUSTER DES TAGES“), Meditation (Zeitring, Logbuch-Punkt), Fortschritt | 11,36 | 8,95 |
 | `NeonYellow` | #FAD84A | tertiary | nur über `WarnAmber`; ΔE76 30,5 zu `FamilySympathetic` | 13,12 | 10,34 |
 | `OnNeon` / `OnCyan` | #1E0A16 / #042A2C | onPrimary, onTertiary, onError / onSecondary | Inhalt auf Neon | 6,15 auf primary, 6,96 auf error | – |
 | `DarkBackground` / `DarkSurface` | #160F2E / #211640 | background / surface, surfaceContainer | Screen-Grund (`window_background`) / Leisten (Elevation 3 dp → #321C48) | – | – |
@@ -70,7 +70,7 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | `HeadingRing` | #F25CA2 → #FF9E7A → #A78BFA → #F59E0B → #34D399 | – | Kopf-Ring (FARBE-07): nur die Titel der vier Kapitelkarten in „Lernen“ (`NavCard`) über `headingColor(index)`, **ohne Bedeutung** | 5,98 / 9,13 / 6,76 / 8,56 / 9,57 | 4,71 / 7,19 / 5,32 / 6,75 / 7,54 |
 | `VayuPrana` / `Apana` / `Samana` / `Udana` / `Vyana` | = NeonCyan / BreathExhale / NeonYellow / FamilyBalance / FamilyFunctional | – | die fünf *vāyus* im Bild der Atemlehre (`VayuFigure`) und seiner Liste, **nur dort**, jede Fläche mit Namen (FARBE-05); Gelb und Grün sind hier weder Warnung noch Familie ([spec/lernen.md](spec/lernen.md)) | 11,36 / 9,13 / 13,12 / 6,76 / 9,57 | 8,95 / 7,19 / 10,34 / 5,32 / 7,54 |
 | `VayuFigureFill` / `VayuFigureOutline` | #241A47 / #8C7BC4 | – | Grundfläche (dekorativ) und Umriss der Piktogramm-Figur; Umriss ≥ 3:1 auf `surface` | – / – | – |
-| `SynthCircleCenter` / `Edge` | #CB3C9A / #4A2080 (α 0,72) | – | Atemkreis-Verlauf | 4,07 / 1,44 | – |
+| `SynthCircleCenter` / `Edge` | #CB3C9A / #4A2080 (`ALPHA_CIRCLE_EDGE` 0,72) | – | Atemkreis-Verlauf | 4,07 / 1,44 | – |
 | `SessionTextYellow` / `SessionNoteAmber` | #EBDCB0 / #F0E4C0 | – | Phase und Sekunden im Kreis / Anleitungszeile unter dem Kreis (α `SECONDARY`) | 13,48 / 7,50 (Phase auf Zentrum 3,31, großer Text) | – |
 | `SessionTextGlow` | #160B22 | – | Textschatten, Label auf Cyan-Button | – | – |
 | `SessionButtonCyan` / `Pink` | #6FB6BA / #FF8FB0 | – | Session-Buttons, „Beenden“ | 7,95 / 8,59 | – |
@@ -86,14 +86,14 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | Sekundär | `SECONDARY` | 0,7 | 7,92 / 6,68 | Untertitel, Beschreibung, Status, jeder zugeklappte Teaser, neutrale Chips (Umriss), Caret und Kopf-Aktionen, ungewählte Filter-Chips |
 | Tertiär | `TERTIARY` | 0,55 | 5,27 / 4,69 (Leiste 4,78) | DOI/PMID, Zeitstempel, Wochentage, Session-Hilfszeilen, „✓ Fertig“, unselektierte Tabs, Ton aus, Zeitleiste und Linien „voll“/„leer“ der Atemkurve |
 | Disabled | M3-intern | 0,38 | – | nur inaktive Bedienelemente |
-| Flächen | `ALPHA_BORDER` · `CHIP_FILL` · `ALPHA_HEAT_NONE` / `_LOW` / `_MID` · `ALPHA_CURVE_FILL` · `ALPHA_TRACK` / `ALPHA_DISABLED_BORDER` | 0,35 · 0,16 · 0,12 / 0,40 / 0,70 · 0,08 · 0,10 / 0,4 | – | Kartenrand (`accentBorder`) · Fläche gefüllter Chips · Stufen der Logbuch-Wochenzeile (Zustandsgrafik) · Füllung unter der Atemkurve (dekorativ) · Kreis-Track, inaktiver Rand |
+| Flächen | `ALPHA_BORDER` · `CHIP_FILL` · `ALPHA_HEAT_LOW` / `_MID` · `ALPHA_CURVE_FILL` · `ALPHA_CIRCLE_EDGE` · `ALPHA_TRACK` / `ALPHA_DISABLED_BORDER` | 0,35 · 0,16 · 0,70 / 0,85 · 0,08 · 0,72 · 0,10 / 0,4 | `primary` 0,70: 3,01 / 3,50 | Kartenrand (`accentBorder`) · Fläche gefüllter Chips · Stufen der Logbuch-Wochenzeile (Zustandsgrafik; Tag ohne Übung = leerer Ring in `TERTIARY`, 4,70 auf Card) · Füllung unter der Atemkurve (dekorativ) · Rand des Atemkreis-Verlaufs · Kreis-Track, inaktiver Rand |
 | vāyu-Bild | `VayuAlpha(selected, idle, dimmed)`: `VayuFieldAlpha` · `VayuWholeAlpha` · `VayuAuraAlpha` · `VayuLineAlpha` · `VayuLabelAlpha`; `VAYU_PULSE_LOW` / `_HIGH` | 0,95/0,55/0,10 · 0,32/0,10/0,04 · 0,90/0,35/0,08 · 1/0,55/0 · 1/1/0,30; 0,55 / 0,95 | Beschriftung voll 6,76 auf `surface` | Zustände im vāyu-Bild: gewählt / nichts gewählt / ein anderer gewählt; Pulsieren der gewählten Fläche ([spec/lernen.md](spec/lernen.md)) |
 
 ### 2.3 Regeln
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
-| FARBE-01 | MUSS | Farben nur aus `MaterialTheme.colorScheme` oder aus `Color.kt` (Family\*, Evidence\*, Session\*, Synth\*, `BreathExhale`, `HeadingRing`, `Vayu*`). Kein `Color(0x…)` außerhalb `src/ui/theme/`. Hex in `res/` nur für `window_background`, Launcher und `#FF000000`/`#FFFFFFFF` in einfarbigen `drawable/ic_*.xml`. | Eine Quelle der Wahrheit. | auto: `color-source` |
+| FARBE-01 | MUSS | Farben nur aus `MaterialTheme.colorScheme` oder aus `Color.kt` (Family\*, Evidence\*, Session\*, Synth\*, `BreathExhale`, `HeadingRing`, `Vayu*`). Kein `Color(0x…)` außerhalb `src/ui/theme/`. Hex in `res/` nur für `window_background` (der Launcher-Grund verweist darauf) und `#FF000000`/`#FFFFFFFF` in einfarbigen `drawable/ic_*.xml`. | Eine Quelle der Wahrheit. | auto: `color-source` |
 | FARBE-02 | MUSS | Alpha nur über die Tokens aus §2.2, auch nicht bedingt (`if (…) 0.8f else 0.6f`). | Freie Literale verwischen die Hierarchie. | auto: `alpha-literal` |
 | FARBE-03 | MUSS | Kontrast nach Alpha-Mischen gegen den realen Grund: Text < 24 sp (< 18,66 sp Bold) ≥ 4,5:1; großer Text, Icons, Zustandsgrafik ≥ 3:1. Kritischer Punkt zählt (Kreiszentrum, gemischte Chip-Fläche, Leiste #321C48). Ausnahme: rein dekorative Linien/Flächen mit Marker `// dekorativ: <Grund>`. | WCAG 1.4.3 / 1.4.11. | manuell: R-A11Y |
 | FARBE-04 | MUSS | Semantische Farben tragen nur ihre Bedeutung (Spalte Bedeutung in §2.1): Studienlage, `EvidenceCaution`/`error`, `WarnAmber`, `Family*`, `primary` (Marke/Aktion/Auswahl), `secondary` (Links im Inhalt, Einatmen, eigenes Muster), `BreathExhale` (Ausatmen). Einzige Ausnahme: der Bereichs-Verweis „Mehr: Beruhigen ›“ steht in der Familienfarbe. Semantische Farben auf einem Screen: ΔE76 ≥ 25; Kopf-Ring und `Vayu*` zählen nicht dazu. | Doppelt belegte Farben sagen nichts mehr. | manuell: R-VISUAL (ΔE) |
@@ -155,6 +155,8 @@ Ränder und Karten-Innenabstand wie M3 (16 dp). Touch-Ziele hängen nie an diese
 | `SessionControlGap` | 40 | Abstand der Knöpfe in der `SessionControlBar` |
 | `OverlayIconButton` | 40 | Kreis der Kopfleisten-Knöpfe im Session-Overlay |
 | `DurationPickerMin` | 200 | Mindestkante des Zeitrings; bei großer Schrift `timeDialMinSide` ([spec/meditation.md](spec/meditation.md)) |
+| `ContentMaxWidth` | 600 | Höchstbreite der Inhalte auf Tablets und Foldables, mittig (`MainActivity`) |
+| `SessionCircleMin` · `SessionCircleWidthShare` · `SessionCircleHeightShare` | 96 · 0,9 · 0,62 | Session-Kreis (`SessionRunningLayout`): kleinste Kante · Höchstanteil an der Spaltenbreite · an der Höhe im Hochformat |
 
 ### 4.2 Größen ([Sizes.kt](../app/src/main/java/app/atemkraft/ui/theme/Sizes.kt))
 
@@ -172,7 +174,8 @@ Ränder und Karten-Innenabstand wie M3 (16 dp). Touch-Ziele hängen nie an diese
 | `SegmentIconReserve` | 26 | Platz, den M3-`SegmentedButton` (1.3) für das Häkchen reserviert; `SegmentedChoiceRow` gibt ihn der Beschriftung zurück (an M3 1.3 gebunden) |
 | `IconSmall` | 16 | Info-Icon „Anleitung“, Atemkreis „tut mir gut“ auf Karten, Stift im Editor-Kopf, „öffnet im Browser“ |
 | `ProgressInline` / `ProgressStroke` | 20 / 2 | Lade-Kreis in der Stimmenliste |
-| `WeekDot` | 18 | Tagespunkt der 7-Tage-Übersicht |
+| `WeekDot` · `FamilyDot` | 18 · 10 | Tagespunkt der 7-Tage-Übersicht · Familienpunkt vor jedem Logbuch-Eintrag |
+| `PauseFlashSize` | 150 | Pause-/Play-Symbol, das beim Antippen des Atemkreises aufblinkt (`PauseFlash`); nie größer als der Kreis |
 | `TouchOverhang` | 12 | (48 − `IconDefault`) / 2: Überstand der Tippfläche über das Icon; um ihn melden `flushStart`/`flushEnd` einen Icon-Button schmaler |
 | `CircleOverhang` | 4 | (48 − `IconButtonSize`) / 2: Überstand der Tippfläche über den Knopf-Kreis (Stepper, Kopfzeile in der Karte) |
 | `StepperValueMinWidth` | 48 | Wertfeld des Steppers (kein Touch-Ziel) |
@@ -449,7 +452,7 @@ Feature-Wrapper ohne eigene Regeln: `MiniSessionBar`, `SessionOverlay` (`ui/sess
 
 ## <a id="bewegung"></a>8 Bewegung
 
-**Tokens** (`src/ui/theme/Motion.kt`): `TapFlashHold` 220 ms, `TapFlashFadeStep` × `TapFlashFadeSteps` 34 ms × 16, `TapFlashStatic` 500 ms (bei Animator-Skala 0), `NavPush` 300 ms Slide + Fade (einmal in `pushComposable<T>()`), `NavTab` 180 ms Fade, `CalmFade` 500 ms (Ruhe-Ansicht), `ControlFade` 300 ms (Session-Knöpfe nach der Vorbereitung), `VayuFlow` 2400 / `VayuFlowSelected` 1100 ms (Strömungslinien), `VayuPulse` 2600 ms (`EaseInOutSine`), `SearchStatusSettle` 600 ms (Trefferzahl der Suche). Noch inline (Backlog S-29): `Disclosure`/`Reveal` Default-Spring, `AmbientShimmer` `tween(8000, EaseInOutSine)` reverse mit Glow-α ≤ 0,16.
+**Tokens** (`src/ui/theme/Motion.kt`): `TapFlashHold` 220 ms, `TapFlashFadeStep` × `TapFlashFadeSteps` 34 ms × 16, `TapFlashStatic` 500 ms (bei Animator-Skala 0), `NavPush` 300 ms Slide + Fade (einmal in `pushComposable<T>()`), `NavTab` 180 ms Fade, `CalmFade` 500 ms (Ruhe-Ansicht), `ControlFade` 300 ms (Session-Knöpfe nach der Vorbereitung), `VayuFlow` 2400 / `VayuFlowSelected` 1100 ms (Strömungslinien), `VayuPulse` 2600 ms (`EaseInOutSine`), `SearchStatusSettle` 600 ms (Trefferzahl der Suche), `Disclosure` (Default-Spring für Größe: `animateContentSize`, `expand…`/`shrink…`) mit `Reveal` (Default-Spring für `fadeIn`/`fadeOut`), `AmbientShimmer` `tween(8000, EaseInOutSine)` reverse (Schein des Atemkreises, Glow-α ≤ 0,16).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -490,7 +493,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 |---|---|---|---|---|
 | TEXT-01 | MUSS | UI-Chrome inkl. Hilfstechnik-Texten steht in `res/values/strings.xml`; Fachinhalte (Übungen, Situationen samt Suchbegriffen, Refs, Cues, Glossar) als Kotlin-Daten in `src/data/`. Mengen über `<plurals>`; keine fest eingetragenen Zählungen oder Inhaltsnamen in UI-Strings. | Prüfbar; bricht nicht bei Inhaltsänderung. | auto: `ui-literal`, `lintDebug PluralsCandidate`; manuell: R-TEXT |
 | TEXT-02 | MUSS | Ein Begriff pro Sache nach der Begriffsliste (§11.1), in UI und Store. Phasen-Labels eindeutig („Halten (voll)“ ≠ „Halten (leer)“). | Anzeige, TalkBack und Ansage unterscheiden sonst nicht. | manuell: R-TEXT |
-| TEXT-03 | MUSS | Einsprachig Deutsch: nur `res/values/`; Datum und Zahlen über `java.time` + `DateTimeFormatter` mit fester Locale `de`; kein `SimpleDateFormat`, kein `Locale.getDefault()` in `ui/`. Offen (S-28): `localeFilters += "de"` und `locales_config.xml`. | Sonst Mischsprache und gemischte Formate. | auto: `locale`, `locale-config` |
+| TEXT-03 | MUSS | Einsprachig Deutsch: nur `res/values/`; Datum und Zahlen über `java.time` + `DateTimeFormatter` mit `AppLocale` (`de`, `ui/components/`); kein `SimpleDateFormat`, kein `Locale.getDefault()`/`Locale.GERMAN` in `ui/`. Build mit `localeFilters += "de"`, Manifest mit `locales_config.xml`. | Sonst Mischsprache und gemischte Formate. | auto: `locale`, `locale-config` |
 | TEXT-04 | MUSS | Anrede „du“, klein. Übungen laden ein statt anzuweisen („Wenn du magst …“). Sicherheit klar und knapp („Bei Schwindel sofort aufhören.“). | Nutzerpräferenz; Sicherheit braucht Klarheit. | manuell: R-TEXT |
 | TEXT-05 | MUSS | Laiensprache in Situationen, Suchbegriffen, Labels und Tags: kein „Schub“, „Crash“, „vagal“, „Sympathikus“, „Hormese“, „CO₂-Toleranz“. Fachbegriffe nur im Detail; jeder steht im Glossar. | Verständlich, kein Krankheitsjargon. | auto: `ContentRulesTest glossary-terms`; manuell: R-TEXT |
 | TEXT-06 | MUSS | **Teaser** (`effect`, erste `caution`): ein geschlossener Satz mit finitem Verb, endet auf „.“, ≤ 95 Zeichen. **Detail** (`effectDetail`) beginnt nicht mit dem Teaser, vertieft denselben Punkt, SOLL ≤ 700 Zeichen. Keine Baseline. | Nichts darf abgeschnitten wirken. | auto: `ContentRulesTest teaser`; manuell: R-TEXT (finites Verb, Detaillänge) |

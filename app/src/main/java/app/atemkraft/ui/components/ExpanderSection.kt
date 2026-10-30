@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 
 /**
@@ -117,7 +118,7 @@ private fun Expander(
     var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
     val state = expandedStateText(expanded)
 
-    Column(modifier = modifier.fillMaxWidth().animateContentSize()) {
+    Column(modifier = modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
