@@ -1,6 +1,6 @@
 # Recherche- und Entwicklungsplan
 
-Stand: 2026-10-24, App-Version 2.7.1. Dieses Dokument sammelt, was seit dem großen Review am 2026-10-23 untersucht wurde, was daraus geworden ist, und welche Recherchen und Arbeiten als Nächstes anstehen. Die ausführlichen Berichte liegen unter [`docs/recherche/`](recherche/); die Regeln für Texte und Technik stehen im [Styleguide](STYLEGUIDE.md), die für Sicherheit und Recht in [SECURITY.md](SECURITY.md), der Weg in die Stores in [STORE.md](STORE.md).
+Stand: 2026-10-30, App-Version 2.9.0 (lokal; öffentlich zuletzt 2.6.0). Dieses Dokument sammelt, was seit dem großen Review am 2026-10-23 untersucht wurde, was daraus geworden ist, und welche Recherchen und Arbeiten als Nächstes anstehen. Die ausführlichen Berichte liegen unter [`docs/recherche/`](recherche/); die Regeln für Texte und Technik stehen im [Styleguide](STYLEGUIDE.md), die für Sicherheit und Recht in [SECURITY.md](SECURITY.md), der Weg in die Stores in [STORE.md](STORE.md).
 
 ## 1. Leitlinie
 
@@ -19,8 +19,8 @@ Der Nutzer mag es bunt, die App soll aber „der Masse gefallen“. Deshalb sind
 | 2026-10-23 | Großer Review in sechs Dimensionen (Korrektheit, Oberfläche und Barrierefreiheit, Sicherheit und Lizenzen, Inhalte, Architektur, UX) | 165 Befunde | umgesetzt in v2.6.0, alle Pakete; Berichte nicht archiviert, weil in Code und Styleguide eingeflossen |
 | 2026-10-23 | Store-Recherche: Google Play, F-Droid, IzzyOnDroid, Entwicklerverifizierung | Ablauf, Formulare, Signatur-Strategie, Blocker | [Bericht](recherche/2026-10-23-store.md), Anleitung in [STORE.md](STORE.md); IzzyOnDroid zurückgestellt (Regel gegen KI-generierten Code) |
 | 2026-10-24 | Stimmigkeit der Tabs Atmen und Eigene | zu viele Bausprachen; „Vorschlag B“: Suchfeld als Pille, weiße Köpfe, kleine Filter-Chips, drei gleiche Abschnitte in Eigene; Karten und Merkzeichen bleiben | umgesetzt in v2.7.0 |
-| 2026-10-24 | Theoretische Inhalte und Yoga-Geschichte | Bestandsaufnahme des Tabs „Lernen“, 25 Kandidaten mit Quellen, Top 8, Gliederung für ein Kapitel „Geschichte des Atmens“ | [Bericht](recherche/2026-10-24-inhalte-geschichte.md); Umsetzung geplant (Abschnitt 4) |
-| 2026-10-24 | UX-Vergleich mit 13 Apps (Breathwrk, Prana Breath, AtemFlow, Calm, Headspace, Insight Timer u. a.) | Gesamtnote 3,9/5; Inhalte 5, Wiederkommen und Store-Wirkung 3; 20 Empfehlungen, Einzigartiges geprüft, Minimalvorschlag für Befinden und Animation | [Bericht](recherche/2026-10-24-ux-vergleich.md); Entscheidungen offen (Abschnitt 3.1) |
+| 2026-10-24 | Theoretische Inhalte und Yoga-Geschichte | Bestandsaufnahme des Tabs „Lernen“, 25 Kandidaten mit Quellen, Top 8, Gliederung für ein Kapitel „Geschichte des Atmens“ | [Bericht](recherche/2026-10-24-inhalte-geschichte.md); als Lesekapitel verworfen, kommt bebildert zurück (Abschnitt 3.4) |
+| 2026-10-24 | UX-Vergleich mit 13 Apps (Breathwrk, Prana Breath, AtemFlow, Calm, Headspace, Insight Timer u. a.) | Gesamtnote 3,9/5; Inhalte 5, Wiederkommen und Store-Wirkung 3; 20 Empfehlungen, Einzigartiges geprüft, Minimalvorschlag für Befinden und Animation | [Bericht](recherche/2026-10-24-ux-vergleich.md); Entscheidungen getroffen (Abschnitt 3.1), umgesetzt in 2.8.0 und 2.9.0 |
 
 Dazu kleinere, direkt umgesetzte Rückmeldungen vom Gerät (v2.7.1): Suchtext bleibt beim Schließen der Tastatur stehen, „Muster gestalten ›“ im Leerzustand von Eigene, Stift auf den Karten der Kreationen, Vorschau-Knöpfe im Editor links und rechts in der Kurvenkarte.
 
@@ -62,11 +62,29 @@ Zu klären:
 - **Barrierefreiheit:** ohne Systemanimationen eine stehende Darstellung; TalkBack liest den Text, nicht die Animation.
 - **Aufwand:** je Übung Daten (Richtung, Phase), eine Animations-Komponente, zwei Textabschnitte je Übung.
 
-### 3.4 Kapitel „Geschichte des Atmens“ und Kapitel „Körper“ (verworfen)
+### 3.4 Theorie neu: bebildert und mit den Übungen verknüpft
 
-Geschrieben und eingebaut, vor der Veröffentlichung wieder entfernt (Eigentümer 2026-10-25): Die App konzentriert sich auf das Üben und ihre Eigenheit, nicht auf mehr Lesetext. Der Entwurf bleibt in docs/recherche/ als Archiv.
+Die Erweiterung der theoretischen Grundlage bleibt ein Ziel (Eigentümer 2026-10-30: „nicht vergessen“). Die Kapitel „Geschichte des Atmens“ und „Körper“ aus 2.9.0 wurden vor der Veröffentlichung entfernt, weil die Umsetzung als reiner Lesetext nicht trug, nicht weil die Inhalte falsch waren. Der Entwurf bleibt in docs/recherche/ als Archiv.
 
-Grundlage ist der [Inhalte-Bericht](recherche/2026-10-24-inhalte-geschichte.md). Reihenfolge nach dessen Top 8:
+**Grundsätze für den zweiten Anlauf**
+- Jedes Thema ist ein **Bild oder eine Animation** mit höchstens zwei, drei Sätzen, nie eine neue Leseseite.
+- Jedes Thema hängt an einer **Stelle, an der man übt**: Detailseite einer Übung („Was passiert“, 3.3), Anlass, Session-Ende oder Atemlehre. Wer übt, findet die Theorie dort, wo sie etwas erklärt.
+- Zuerst zeichnen, rendern und ansehen, dann dem Eigentümer als Entwurf zeigen, erst danach einbauen. Körper-Sicht und Yoga-Lehre bleiben getrennt (3.3).
+
+**Themen und ihr Ort** (Top 8 des [Inhalte-Berichts](recherche/2026-10-24-inhalte-geschichte.md))
+
+| Thema | Bild | Ort |
+|---|---|---|
+| Atemmechanik, CO₂ als Atemantrieb | Animation „Ein Atemzug“ (Zwerchfell, Lunge); kleiner CO₂-Pegel, der beim Halten steigt | Zwerchfellatmung, *Dirgha*, Buteyko, Übungen mit Halten |
+| Atem im Labor, Resonanz bei 6 pro Minute | Herzschlag-Abstände, die mit dem Atem schwingen; Zeitleiste 1924 → 1970 → 2002 | Resonanz-Atmung |
+| *Haṭha*-Yoga und die Haṭhayogapradīpikā | eine Zeile im Zeitstrahl, Quelle am Detail | *Pranayama*-Übungen (*Nāḍī Śodhana*, *Ujjāyī*, *Bhastrikā*) |
+| Patañjali, *Prāṇāyāma* als viertes Glied | acht Glieder als Kreis, das vierte hervorgehoben | Atemlehre |
+| Moderner Yoga (Krishnamacharya, Iyengar, Sivananda) | Lehrlinie als kleiner Stammbaum | Atemlehre, *Viloma* |
+| Panik und Hyperventilation | „lang aus statt tief ein“ als Kurve | Anlässe „Stress“ und „Kurzatmig“, mit Sicherheitszeile |
+| Grenzen einer App, wann Fachleute | ein Satz, kein Kapitel | Willkommenskarte und Sicherheitshinweise |
+| „Wie alt ist Yoga?“, Respekt vor der Herkunft | Zeitstrahl, der ehrlich datiert | Tab „Lernen“ als Grafik |
+
+Was aus dem ersten Anlauf gilt weiter:
 
 1. Haṭha-Yoga: Woher die Haṭhayogapradīpikā kommt (Sammeltext um 1450; *haṭha* heißt „Kraft“).
 2. Patañjali ehrlich datiert (etwa 325 bis 425 n. Chr.), Pranayama als viertes Glied.
@@ -77,7 +95,7 @@ Grundlage ist der [Inhalte-Bericht](recherche/2026-10-24-inhalte-geschichte.md).
 7. Grenzen einer App, wann Fachleute.
 8. „Wie alt ist Yoga?“ und Respekt vor der Herkunft als Schlusskarte.
 
-Aufbau: fünfte Kapitelkarte im Tab „Lernen“, Daten wie `Pranayama.topics` (Teaser ≤ 95 Zeichen, zwei bis drei Absätze, Lehrquelle), vier Abschnitte Indien, Andere Wege, Der Westen, Heute; Literatur (Bücher) getrennt von Studien (`Refs`). Vor dem Einbau: TEXT-14 um Pāli, Tibetisch und Chinesisch erweitern, etwa zehn neue Quellen mit DOI anlegen, „Atemtherapie“ gegen die Sperrwortliste testen. Bewusst weggelassen: „5000 Jahre“, Chakren als Fakt, Heilversprechen der alten Texte, Lehrer-Legenden, Evidenz-Etiketten auf Geschichtskarten.
+Vor dem Einbau: TEXT-14 um Pāli, Tibetisch und Chinesisch erweitern, etwa zehn neue Quellen mit DOI anlegen, „Atemtherapie“ gegen die Sperrwortliste testen. Bewusst weggelassen: „5000 Jahre“, Chakren als Fakt, Heilversprechen der alten Texte, Lehrer-Legenden, Evidenz-Etiketten auf Geschichtskarten.
 
 ### 3.5 Reihen mit Start
 
@@ -91,6 +109,7 @@ Nach [STORE.md](STORE.md): Play-Konto anlegen (Prüfungen dauern Tage), eigenen 
 
 - Baseline Profile brauchen ein Gerät oder einen Emulator (siehe STORE.md).
 - Kapitelkarten im Tab „Lernen“ sind noch bunt; prüfen, ob sie den weißen Köpfen folgen sollen.
+- App-Icon: Der UX-Vergleich nannte die drei Ringe austauschbar; der Eigentümer mag das Symbol. Nur Gesprächsthema, keine Änderung.
 - Kurzbeschreibungen der 17 Übungen auf den Karten kürzen (Inhaltsentscheidung).
 - Später: Embedding-Suche als Studienprojekt, iOS-Weg über Kotlin Multiplatform (siehe [IOS_PLAN.md](IOS_PLAN.md)).
 
@@ -101,9 +120,9 @@ Die Auswertung aller Berichte mit Reihenfolge je Release und den offenen Entsche
 
 | Phase | Inhalt | Voraussetzung |
 |---|---|---|
-| 1 | v2.7.1 am Gerät prüfen; UX-Vergleich lesen und Entscheidungen treffen | läuft |
-| 2 | Befinden (3.2) und „Was passiert“ (3.3) als Canvas zeichnen, entscheiden, umsetzen | Phase 1 |
-| 3 | ~~Kapitel „Geschichte des Atmens“ und „Körper“~~ – verworfen 2026-10-25, kein weiterer Lesetext | – |
+| 1 | UX-Vergleich entscheiden, Befinden (3.2) umsetzen | erledigt in 2.8.0 und 2.9.0 |
+| 2 | 2.9.0 am Gerät prüfen, Altlasten abbauen, veröffentlichen | läuft |
+| 3 | 3.0: „Was passiert“ (3.3) mit der Animation „Ein Atemzug“ und Theorie neu (3.4) – zeichnen, Entwurf zeigen, umsetzen; Sprachansage der Phasen | Phase 2 |
 | 4 | Store: Konto, Test, Veröffentlichung | Nutzer-Entscheidungen aus 3.6 |
 | 5 | Reihen mit Start (3.5) | nach 2 |
 

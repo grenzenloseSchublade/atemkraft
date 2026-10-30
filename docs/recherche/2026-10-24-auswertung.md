@@ -103,8 +103,8 @@ Onboarding-Wizard, Lungentest, Konto, Paywall; Streak-Druck, Levels; Emoji-Check
 |---|---|---|
 | **2.8.0** | Guardrails-Paket; dann die kleinen Dinge aus A, B, C, E, F: Willkommenslink 3 min, „Alle Übungen ›“, „Zuletzt geübt ›“, App-Shortcuts, Serie ausblendbar, Programme-Chip, Session-Härten, Store-Screenshots mit Bildunterschrift, Entscheidungen 1, 2, 4 aus Abschnitt 3 | alles klein, hebt Wiederkommen und Store-Wirkung je einen Punkt; danach Push, Tag, GitHub-Release, Beginn des Store-Wegs |
 | **2.9.0** | Befinden (D 1–3) mit SECURITY/PRIVACY; lokale Erinnerung; Export als eine Datei | die drei Funktionen, die „Datenschutz als Argument“ sichtbar machen |
-| **2.10.0** | Kapitel „Geschichte des Atmens“ und „Körper“ (Texte zuerst, Freigabe, dann Einbau), Karte „Grenzen einer App“ | Text-Arbeit, kann parallel zu 2.9 vorbereitet werden |
-| **3.0.0** | Animation „Ein Atemzug“ auf der Atemlehre-Seite; später Detail und Session; Sprachansage der Phasen | die beiden größeren Bauteile, nach allem Kleinen |
+| ~~2.10.0~~ | ~~Kapitel „Geschichte des Atmens“ und „Körper“ als Lesetext~~ – in 2.9.0 gebaut und wieder entfernt (2026-10-25); die Inhalte gehen bebildert in 3.0 auf ([RECHERCHE.md](../RECHERCHE.md) 3.4) | Lesetext trug nicht |
+| **3.0.0** | Animation „Ein Atemzug“ auf der Atemlehre-Seite, dann Detail und Session; Theorie neu als Bilder an den Übungen (RECHERCHE 3.4); Sprachansage der Phasen | die größeren Bauteile, nach allem Kleinen |
 | parallel | Play-Konto, Signaturschlüssel, geschlossener Test, F-Droid-Antrag | dauert Wochen, hängt nicht am Code |
 | später | Reihen mit Start, Tab-Leisten-Labels, Icon, Kurzbeschreibungen, Englisch | nach Rückmeldungen aus dem Test |
 

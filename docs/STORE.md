@@ -8,7 +8,7 @@ Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Li
 
 | Kanal | Status | Wer baut und signiert | Dauer bis online | Hauptaufwand |
 |---|---|---|---|---|
-| GitHub-Releases | aktiv bis v1.6.8, seitdem pausiert | wir | sofort | Push, Tag, Release |
+| GitHub-Releases | aktiv; zuletzt v2.6.0 (2026-10-24), 1.7.0–2.5.0 blieben lokal | wir | sofort | Push, Tag, Release |
 | Google Play | geplant | wir (AAB), Google verteilt | etwa 4–6 Wochen | Konto, 14 Tage geschlossener Test mit 12 Testern, Formulare, Grafiken |
 | F-Droid (Hauptrepo) | geplant | F-Droid baut aus dem Tag nach, veröffentlicht unsere signierte APK | Wochen bis Monate | Rezept in fdroiddata; Repo vorbereitet (JitPack statt `app/libs`, Tag-Nachbau im CI) |
 | IzzyOnDroid | **zurückgestellt** | wir (GitHub-APK) | Tage | Ausschlussregel für KI-generierten Code; Größe: nur die arm64-APK liegt knapp unter 30 MB (29 MB), die Universal-APK darüber (47 MB) |
@@ -163,10 +163,11 @@ RepoType: git
 Repo: https://github.com/grenzenloseSchublade/atemkraft.git
 Binaries: https://github.com/grenzenloseSchublade/atemkraft/releases/download/v%v/atemkraft-v%v.apk
 
+# Vor dem Einreichen auf das dann neueste öffentliche Tag setzen (Stand: Kandidat 2.9.0).
 Builds:
-  - versionName: 2.7.1
-    versionCode: 40
-    commit: v2.7.1
+  - versionName: 2.9.0
+    versionCode: 42
+    commit: v2.9.0
     subdir: app
     gradle:
       - yes
@@ -177,8 +178,8 @@ AllowedAPKSigningKeys: 75022defe65aa24e223f3e79880f09f423456757002ff0b33ba2ae29b
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 2.7.1
-CurrentVersionCode: 40
+CurrentVersion: 2.9.0
+CurrentVersionCode: 42
 ```
 
 Ob *NonFreeNet* für einen optionalen Download von GitHub nötig ist, entscheidet der Prüfer; die TTS-App SherpaTTS trägt es für ihren Download von Hugging Face.
