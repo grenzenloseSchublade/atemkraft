@@ -302,7 +302,7 @@
     <string name="about_title">Über</string>
     <string name="about_version">Version %1$s\u00A0· von grenzenloseSchublade</string>
     <!-- Stiller Hinweis, wenn ein Hintergrundvorgang fehlschlug (UncaughtErrors, A-05); %1$s = Fehlerart. -->
-    <string name="about_last_error">Ein Vorgang im Hintergrund ist fehlgeschlagen (%1$s). Die App läuft weiter; eine Änderung wurde womöglich nicht gespeichert.</string>
+    <string name="about_last_error">Ein Vorgang im Hintergrund ist fehlgeschlagen (%1$s). Die App läuft weiter; eine Änderung wurde womöglich nicht gespeichert. Sieh nach, ob deine letzte Änderung da ist, und mach sie sonst noch einmal.</string>
     <!-- Die Zahl kommt aus dem Übungskatalog (BuiltInExercises.all), nie fest im Text. -->
     <plurals name="about_body">
         <item quantity="one">%1$d Atemtechnik mit Quellen und Einordnung der Studienlage, Logbuch und konfigurierbaren Tönen. Läuft offline – ohne Konto, ohne Werbung, ohne Tracking. Nur Stimmen lädst du auf Wunsch aus dem Netz.</item>
@@ -554,7 +554,7 @@
         <item quantity="one">✓ %1$d neu\u00A0· %2$d vorhanden</item>
         <item quantity="other">✓ %1$d neu\u00A0· %2$d vorhanden</item>
     </plurals>
-    <string name="data_import_nothing">In der Datei war nichts, das sich übernehmen lässt.</string>
+    <string name="data_import_nothing">In der Datei war nichts, das sich übernehmen lässt. Bitte eine andere Sicherung wählen.</string>
     <plurals name="data_import_invalid_entries">
         <item quantity="one">%1$d Eintrag lag außerhalb der Grenzen und wurde übersprungen.</item>
         <item quantity="other">%1$d Einträge lagen außerhalb der Grenzen und wurden übersprungen.</item>
@@ -568,7 +568,7 @@
         <item quantity="other">Nur die ersten %1$d Logbuch-Einträge wurden gelesen.</item>
     </plurals>
     <string name="data_import_not_backup">Das ist keine Atemkraft-Sicherung. Bitte eine exportierte .json-Datei wählen.</string>
-    <string name="data_import_too_large">Die Datei ist zu groß für eine Atemkraft-Sicherung.</string>
+    <string name="data_import_too_large">Die Datei ist zu groß für eine Atemkraft-Sicherung. Bitte eine in Atemkraft exportierte .json-Datei wählen.</string>
     <string name="data_io_error">Die Datei ließ sich nicht lesen oder schreiben. Bitte einen anderen Speicherort wählen.</string>
     <string name="cd_voice_preview">Stimme %1$s anhören</string>
     <string name="cd_gong_preview">Gong anhören</string>

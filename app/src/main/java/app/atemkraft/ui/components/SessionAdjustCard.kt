@@ -1,6 +1,7 @@
 package app.atemkraft.ui.components
 
 import androidx.annotation.PluralsRes
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,43 +77,50 @@ fun SessionAdjustCard(
                     // Das Caret-Glyph (knapp ein Drittel Innenrand im Icon) steht so etwa an
                     // der Stepper-Label-Kante (CardPadding).
                     modifier = Modifier.padding(start = Dimens.GapSmall),
-                    note = if (!intervalsExpanded && intervalsModified) stringResource(R.string.adjust_modified).asDotSuffix() else null,
+                    // „· angepasst“ als Status des Aufklappers (Anatomie „Titel · Status“), sein Platz
+                    // bleibt reserviert: Erscheint er beim Zuklappen, springt nichts (S-17).
+                    note = stringResource(R.string.adjust_modified).asDotSuffix(),
+                    noteVisible = !intervalsExpanded && intervalsModified,
                 )
-                if (intervalsExpanded) {
-                    inhale?.let {
-                        Stepper(
-                            label = stringResource(R.string.adjust_inhale),
-                            value = it.value,
-                            range = it.range,
-                            onChange = it.onChange,
-                            vertical = Dimens.GapTiny,
-                            spokenLabel = stringResource(R.string.phase_inhale),
-                            valueUnit = R.plurals.cd_duration_seconds,
-                        )
+                // Nur der Inhalt animiert seine Höhe (wie CollapsibleSection), der Aufklapper
+                // darüber bleibt stehen; die Karte wächst und schrumpft weich statt zu springen (S-34).
+                Column(modifier = Modifier.fillMaxWidth().animateContentSize()) {
+                    if (intervalsExpanded) {
+                        inhale?.let {
+                            Stepper(
+                                label = stringResource(R.string.adjust_inhale),
+                                value = it.value,
+                                range = it.range,
+                                onChange = it.onChange,
+                                vertical = Dimens.GapTiny,
+                                spokenLabel = stringResource(R.string.phase_inhale),
+                                valueUnit = R.plurals.cd_duration_seconds,
+                            )
+                        }
+                        hold?.let {
+                            Stepper(
+                                label = stringResource(R.string.adjust_hold),
+                                value = it.value,
+                                range = it.range,
+                                onChange = it.onChange,
+                                vertical = Dimens.GapTiny,
+                                spokenLabel = stringResource(R.string.phase_hold_full),
+                                valueUnit = R.plurals.cd_duration_seconds,
+                            )
+                        }
+                        exhale?.let {
+                            Stepper(
+                                label = stringResource(R.string.adjust_exhale),
+                                value = it.value,
+                                range = it.range,
+                                onChange = it.onChange,
+                                vertical = Dimens.GapTiny,
+                                spokenLabel = stringResource(R.string.phase_exhale),
+                                valueUnit = R.plurals.cd_duration_seconds,
+                            )
+                        }
+                        Spacer(Modifier.height(Dimens.GapHairline))
                     }
-                    hold?.let {
-                        Stepper(
-                            label = stringResource(R.string.adjust_hold),
-                            value = it.value,
-                            range = it.range,
-                            onChange = it.onChange,
-                            vertical = Dimens.GapTiny,
-                            spokenLabel = stringResource(R.string.phase_hold_full),
-                            valueUnit = R.plurals.cd_duration_seconds,
-                        )
-                    }
-                    exhale?.let {
-                        Stepper(
-                            label = stringResource(R.string.adjust_exhale),
-                            value = it.value,
-                            range = it.range,
-                            onChange = it.onChange,
-                            vertical = Dimens.GapTiny,
-                            spokenLabel = stringResource(R.string.phase_exhale),
-                            valueUnit = R.plurals.cd_duration_seconds,
-                        )
-                    }
-                    Spacer(Modifier.height(Dimens.GapHairline))
                 }
             }
         }

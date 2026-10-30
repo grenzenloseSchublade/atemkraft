@@ -303,17 +303,19 @@ fun CollapsibleSection(
 }
 
 /**
- * Titel eines [SectionHeader] mit optionalem [status] dahinter. Passt der Status in einer Zeile
- * hinter den einzeiligen Titel, steht er dort auf dessen Grundlinie; sonst steht er unter dem
- * Titel und verliert seinen führenden Punkt („· angepasst“ → „angepasst“, [withoutLeadingDot]),
- * damit keine Zeile mit einem Satzzeichen beginnt (LAYOUT-03); passt er auch dort nicht in eine
- * Zeile, steht jeder Teil zwischen den Punkten in einer eigenen Zeile, ohne Punkt
- * ([splitAtDots]). Gemessen wird vorab ([rememberWidestTextWidth]), so entsteht nur die gezeigte
- * Variante (ein Knoten für TalkBack). Ohne [isHeading] ist der Titel keine Überschrift (Kopf als
- * Schaltfläche, `onClick`).
+ * Titel mit optionalem [status] dahinter – die Anatomie „Titel · Status“ des [SectionHeader], auch
+ * für den Zustands-Suffix des [DisclosureToggle] („Phasen anpassen · angepasst“). Passt der Status
+ * in einer Zeile hinter den einzeiligen Titel, steht er dort auf dessen Grundlinie; sonst steht er
+ * unter dem Titel und verliert seinen führenden Punkt („· angepasst“ → „angepasst“,
+ * [withoutLeadingDot]), damit keine Zeile mit einem Satzzeichen beginnt (LAYOUT-03); passt er auch
+ * dort nicht in eine Zeile, steht jeder Teil zwischen den Punkten in einer eigenen Zeile, ohne
+ * Punkt ([splitAtDots]). Gemessen wird vorab ([rememberWidestTextWidth]), so entsteht nur die
+ * gezeigte Variante (ein Knoten für TalkBack). Ohne [isHeading] ist der Titel keine Überschrift
+ * (Kopf als Schaltfläche, `onClick`). Mit [statusVisible] = false hält der Status nur seinen Platz
+ * ([MeasureOnly]): Erscheint er später, springt nichts (§4.5 „Nichts springt“).
  */
 @Composable
-private fun TitleWithStatus(
+internal fun TitleWithStatus(
     title: String,
     color: Color,
     status: String?,
@@ -321,8 +323,9 @@ private fun TitleWithStatus(
     statusStyle: TextStyle,
     modifier: Modifier = Modifier,
     isHeading: Boolean = true,
+    titleStyle: TextStyle = MaterialTheme.typography.titleLarge,
+    statusVisible: Boolean = true,
 ) {
-    val titleStyle = MaterialTheme.typography.titleLarge
     val heading = if (isHeading) Modifier.semantics { heading() } else Modifier
     if (status == null) {
         WholeWordText(text = title, style = titleStyle, color = color, modifier = modifier.then(heading))
@@ -342,7 +345,9 @@ private fun TitleWithStatus(
         val gap = Dimens.GapTiny.roundToPx()
         if (titleWidth.roundToPx() + gap + statusWidth.roundToPx() <= constraints.maxWidth) {
             val statusPlaceable = subcompose(StatusSlot.INLINE) {
-                Text(text = status, style = statusStyle, color = statusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
+                ShownOrReserved(statusVisible) {
+                    Text(text = status, style = statusStyle, color = statusColor, maxLines = 1, softWrap = false, modifier = statusSemantics)
+                }
             }.first().measure(loose)
             // Auf gemeinsamer Grundlinie wie früher in der FlowRow (alignByBaseline).
             val baseline = maxOf(titlePlaceable[FirstBaseline], statusPlaceable[FirstBaseline])
@@ -351,20 +356,22 @@ private fun TitleWithStatus(
             val height = maxOf(titleTop + titlePlaceable.height, statusTop + statusPlaceable.height)
             layout(constraints.constrainWidth(titlePlaceable.width + gap + statusPlaceable.width), height) {
                 titlePlaceable.place(0, titleTop)
-                statusPlaceable.place(titlePlaceable.width + gap, statusTop)
+                if (statusVisible) statusPlaceable.place(titlePlaceable.width + gap, statusTop)
             }
         } else {
             // Passt er auch darunter nicht in eine Zeile, steht jeder Teil („24 s“, „2,5
             // Atemzüge/min“) in einer eigenen Zeile – sonst endete eine Zeile auf „·“.
             val shown = if (belowWidth.roundToPx() > constraints.maxWidth) below.splitAtDots().joinToString("\n") else below
             val statusPlaceable = subcompose(StatusSlot.BELOW) {
-                WholeWordText(text = shown, style = statusStyle, color = statusColor, modifier = statusSemantics)
+                ShownOrReserved(statusVisible) {
+                    WholeWordText(text = shown, style = statusStyle, color = statusColor, modifier = statusSemantics)
+                }
             }.first().measure(loose)
             // Breite in den Grenzen melden: Unter der Mindestbreite (weight) zentrierte das Layout
             // den Block sonst, und Titel und Status rückten von der Kante ab.
             layout(constraints.constrainWidth(maxOf(titlePlaceable.width, statusPlaceable.width)), titlePlaceable.height + statusPlaceable.height) {
                 titlePlaceable.place(0, 0)
-                statusPlaceable.place(0, titlePlaceable.height)
+                if (statusVisible) statusPlaceable.place(0, titlePlaceable.height)
             }
         }
     }
@@ -372,6 +379,12 @@ private fun TitleWithStatus(
 
 /** Slots von [TitleWithStatus]: nur die gezeigte Status-Variante wird komponiert. */
 private enum class StatusSlot { TITLE, INLINE, BELOW }
+
+/** Zeigt [content] oder misst es nur als Reserve ([MeasureOnly]: ohne Semantik, nie platziert). */
+@Composable
+private fun ShownOrReserved(shown: Boolean, content: @Composable () -> Unit) {
+    if (shown) content() else MeasureOnly(content)
+}
 
 @Preview
 @Composable

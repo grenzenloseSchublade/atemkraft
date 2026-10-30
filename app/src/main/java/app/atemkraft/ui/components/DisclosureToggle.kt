@@ -16,9 +16,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
+import app.atemkraft.domain.withoutLeadingDot
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
-import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
@@ -29,7 +29,10 @@ import app.atemkraft.ui.theme.Sizes
  * das Tipp-Echo hat die mittlere Rundung statt der Pille. [enabled] = false, solange der
  * Inhalt offen bleiben muss (Stimmen-Katalog während eines Downloads); Zustand und Name bleiben
  * für TalkBack lesbar. [note] steht leise direkt hinter dem Text („· angepasst“) und gehört zum
- * Namen des Knopfs – neben einem Knopf über die volle Breite hätte es keinen Platz.
+ * Namen des Knopfs – neben einem Knopf über die volle Breite hätte es keinen Platz. Text und
+ * [note] folgen der Anatomie „Titel · Status“ ([TitleWithStatus], STYLEGUIDE §4.5): passt der
+ * Zusatz nicht dahinter, steht er ganz darunter, ohne Punkt. [noteVisible] = false hält nur seinen
+ * Platz, damit die Zeile beim Erscheinen nicht springt; TalkBack hört ihn ohne Trennpunkt.
  */
 @Composable
 fun DisclosureToggle(
@@ -39,6 +42,7 @@ fun DisclosureToggle(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     note: String? = null,
+    noteVisible: Boolean = true,
 ) {
     val state = expandedStateText(expanded)
     TextButton(
@@ -54,16 +58,22 @@ fun DisclosureToggle(
     ) {
         ExpandCaret(expanded = expanded, tint = LocalContentColor.current, size = Sizes.IconInButton)
         Spacer(Modifier.width(Dimens.GapTiny))
-        Text(text, style = MaterialTheme.typography.labelMedium)
-        if (note != null) {
-            Spacer(Modifier.width(Dimens.GapTiny))
-            Text(
-                text = note,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+        if (note == null) {
+            Text(text, style = MaterialTheme.typography.labelMedium)
+            // TextButton zentriert seinen Inhalt; der Rest der Zeile schiebt ihn an den Anfang.
+            Spacer(Modifier.weight(1f))
+        } else {
+            TitleWithStatus(
+                title = text,
+                color = LocalContentColor.current,
+                status = note,
+                statusDescription = note.withoutLeadingDot(),
+                statusStyle = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                isHeading = false,
+                titleStyle = MaterialTheme.typography.labelMedium,
+                statusVisible = noteVisible,
             )
         }
-        // TextButton zentriert seinen Inhalt; der Rest der Zeile schiebt ihn an den Anfang.
-        Spacer(Modifier.weight(1f))
     }
 }
