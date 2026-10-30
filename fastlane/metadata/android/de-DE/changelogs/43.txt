@@ -1,0 +1,6 @@
+- Muster des Tages als Blatt, dort auch „Selbst gestalten“
+- Befinden danach: ein Tipp, nur als Wort im Logbuch, nie ausgewertet
+- Lokale Erinnerung ohne Netz
+- Sicherung von Mustern, Logbuch und Einstellungen in einer Datei
+- Ruhigere Tabs, Schnellstart, „Zuletzt geübt“
+- Ton schweigt bei Anrufen, „Halten voll/leer“, bessere Bedienung mit TalkBack

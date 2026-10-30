@@ -1,6 +1,6 @@
 # Veröffentlichung in Google Play und F-Droid
 
-Stand: 2026-10-24, App-Version 2.9.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
+Stand: 2026-10-30, App-Version 2.10.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
 
 Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Links im Text, abgerufen am 2026-10-23). Store-Regeln ändern sich; vor jedem Schritt die verlinkte Seite noch einmal lesen. Keine Rechtsberatung.
 
@@ -163,11 +163,11 @@ RepoType: git
 Repo: https://github.com/grenzenloseSchublade/atemkraft.git
 Binaries: https://github.com/grenzenloseSchublade/atemkraft/releases/download/v%v/atemkraft-v%v.apk
 
-# Vor dem Einreichen auf das dann neueste öffentliche Tag setzen (Stand: Kandidat 2.9.0).
+# Vor dem Einreichen auf das dann neueste öffentliche Tag setzen (Stand: Kandidat 2.10.0).
 Builds:
-  - versionName: 2.9.0
-    versionCode: 42
-    commit: v2.9.0
+  - versionName: 2.10.0
+    versionCode: 43
+    commit: v2.10.0
     subdir: app
     gradle:
       - yes
@@ -178,8 +178,8 @@ AllowedAPKSigningKeys: 75022defe65aa24e223f3e79880f09f423456757002ff0b33ba2ae29b
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 2.9.0
-CurrentVersionCode: 42
+CurrentVersion: 2.10.0
+CurrentVersionCode: 43
 ```
 
 Ob *NonFreeNet* für einen optionalen Download von GitHub nötig ist, entscheidet der Prüfer; die TTS-App SherpaTTS trägt es für ihren Download von Hugging Face.
