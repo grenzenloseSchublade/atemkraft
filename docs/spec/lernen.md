@@ -29,6 +29,13 @@ Zwei Gruppen (Körper & Studien, Yoga-Lehre) als `CollapsibleSection`s (erster K
 
 Eigener Abschnitt nur für Übungen yogischen Ursprungs und generierte Muster (`Exercise.lore`): Teaser ganz (ohne liveRegion), Detail, Quelle, Verweise „… in der Atemlehre ›“ in `secondary`, nie in der Familienfarbe. Generierte Muster werden nach den Summen eingeordnet (Aus > Ein *laṅghana*, < *bṛṃhaṇa*, = *samāna*).
 
+## Schreibweisen (TEXT-14)
+
+- Fachwörter der Lehre klein, kursiv, IAST, in den Daten zwischen Sternchen: *prāṇa*, *vāyu*, *laṅghana*; `sanskritText` setzt sie kursiv.
+- Aufrecht als Eigenname: Übungen und Techniken (Nadi Shodhana, Ujjayi, Viloma, Kapalabhati), Personen, Schulen, Texttitel. Geht es um die Wortbedeutung, steht der Name als Wort (klein, kursiv).
+- Eingedeutscht und normal gesetzt: Yoga, Ayurveda.
+- Namen, die Nutzer selbst vergeben, stehen wörtlich (`marks = false`).
+
 ## Prüfung
 
 `ScreenshotTest` (`15_lernen`, `12_atemlehre_offen` samt vāyus, `16_pranayama_offen`, `17_programme`, `06_glossar`), `ContentRulesTest` (`lore-teaser`, `cross-references`, `glossary-terms`), manuell R-TEXT (Auszeichnung vollständig, zuschreibend), R-A11Y.
