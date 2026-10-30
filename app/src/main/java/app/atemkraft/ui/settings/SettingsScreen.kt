@@ -43,7 +43,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -293,7 +292,7 @@ private fun ReminderCard(reminder: ReminderSettings, actions: SettingsActions) {
                             actions.setReminderDays(reminder.days - day)
                         }
                     },
-                    modifier = Modifier.semantics { contentDescription = long[index] },
+                    contentDescription = long[index],
                 )
             }
         }

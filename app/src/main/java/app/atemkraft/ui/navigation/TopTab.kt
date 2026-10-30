@@ -3,7 +3,6 @@ package app.atemkraft.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -44,7 +43,8 @@ fun AppTabBar(selected: TopTab, onTap: (TopTab) -> Unit, modifier: Modifier = Mo
                 label = stringResource(tab.label),
                 selected = tab == selected,
                 onClick = { onTap(tab) },
-            ) { Icon(tab.icon(), contentDescription = null) } // dekorativ: das Label benennt den Tab
+                icon = tab.icon,
+            )
         },
         modifier = modifier,
     )

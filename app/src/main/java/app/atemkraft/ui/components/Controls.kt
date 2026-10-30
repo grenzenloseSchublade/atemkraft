@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -181,7 +182,8 @@ fun AppTextButton(
  * (Muster-Editor: „+ Ein“ in `secondary`, „+ Aus“ in `BreathExhale`, FARBE-04). [dashed] zeichnet
  * den Rand gestrichelt (Halten); der Button füllt dann die Breite, die der Aufrufer vorgibt.
  * [compact] verkleinert das seitliche Polster (`ListGap` statt 24 dp) für knappe Reihen
- * (Werkzeugleiste des Muster-Editors); Höhe und Tippfläche bleiben.
+ * (Werkzeugleiste des Muster-Editors); Höhe und Tippfläche bleiben. [contentDescription] gibt
+ * einer kurzen Beschriftung den vollen Namen („+ Ein“ → „Einatmen hinzufügen“, ICON-02).
  */
 @Composable
 fun AppOutlinedButton(
@@ -192,6 +194,7 @@ fun AppOutlinedButton(
     borderColor: Color = MaterialTheme.colorScheme.outline,
     dashed: Boolean = false,
     compact: Boolean = false,
+    contentDescription: String? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
@@ -199,7 +202,9 @@ fun AppOutlinedButton(
     val edge = if (enabled) borderColor else MaterialTheme.colorScheme.onSurface.copy(alpha = OUTLINE_DISABLED)
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = Sizes.ButtonHeight),
+        modifier = modifier
+            .heightIn(min = Sizes.ButtonHeight)
+            .then(if (contentDescription != null) Modifier.semantics { this.contentDescription = contentDescription } else Modifier),
         shape = shape,
         enabled = enabled,
         // Rand und Beschriftung ausdrücklich: M3 1.4 nimmt sonst outlineVariant und onSurfaceVariant,

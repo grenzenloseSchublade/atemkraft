@@ -132,7 +132,8 @@ fun ChoiceChip(
  * (MOTION-04).
  *
  * TalkBack: Kontrollkästchen (`toggleable`, `Role.Checkbox`) mit Zustand, wie die Anlässe; die
- * Reihe ([FilterChipRow]) trägt den Gruppennamen.
+ * Reihe ([FilterChipRow]) trägt den Gruppennamen. [contentDescription] ersetzt eine abgekürzte
+ * Beschriftung durch den vollen Namen („Mo“ → „Montag“, ICON-02).
  */
 @Composable
 fun TonalChip(
@@ -140,6 +141,7 @@ fun TonalChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
 ) {
     val fill by animateColorAsState(if (selected) SegmentSelected else MaterialTheme.colorScheme.surfaceContainerHigh, label = "filterFill")
     val text by animateColorAsState(
@@ -154,6 +156,7 @@ fun TonalChip(
             .clip(CircleShape)
             .background(fill)
             .toggleable(value = selected, role = Role.Checkbox, interactionSource = null, indication = ripple()) { onClick() }
+            .then(if (contentDescription != null) Modifier.semantics { this.contentDescription = contentDescription } else Modifier)
             // Polster wie der ChoiceChip; in der Pille bleibt der Text so vor der Rundung (LAYOUT-03).
             .padding(horizontal = Dimens.ChipPadding),
         contentAlignment = Alignment.Center,

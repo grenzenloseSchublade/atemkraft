@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.onSizeChanged
@@ -51,8 +52,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import app.atemkraft.R
 import app.atemkraft.ui.components.WholeWordText
@@ -64,21 +63,22 @@ import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.TabBarContainer
 import kotlin.math.roundToInt
 
-/** Ein Tab der unteren Navigationsleiste. */
+/** Ein Tab der unteren Navigationsleiste; [icon] liefert sein Symbol, das Icon setzt die Leiste. */
 class AppNavItem(
     val label: String,
     val selected: Boolean,
     val onClick: () -> Unit,
-    val icon: @Composable () -> Unit,
+    val icon: @Composable () -> Painter,
 )
 
 /**
- * Untere Navigationsleiste der Haupt-Tabs. Beschriftungen brechen nie im Wort (LAYOUT-03) und
- * teilen sich eine Größe. Reicht die Tab-Breite bei großer Schrift nicht, wird die Beschriftung
- * höchstens bis [NAV_LABEL_MIN_SCALE] verkleinert; passt sie auch dann nicht, zeigt die Leiste nur
- * die Icons und trägt den Namen als `contentDescription` des Tabs (Nutzer: lieber Icon-only als
- * geschrumpfte Schrift) – wer die Systemschrift vergrößert, bekommt nie Text in Normalgröße
- * (WCAG 1.4.4).
+ * Untere Navigationsleiste der Haupt-Tabs. Beschriftungen in `labelLarge` – eine Stufe über der
+ * M3-Rolle `labelMedium`, die am A54 mit 9,9 sp zu klein las (S-37) –, brechen nie im Wort
+ * (LAYOUT-03) und teilen sich eine Größe. Reicht die Tab-Breite bei großer Schrift nicht, wird die
+ * Beschriftung höchstens bis [NAV_LABEL_MIN_SCALE] verkleinert; passt sie auch dann nicht, zeigt
+ * die Leiste nur die Icons, und das Icon trägt den Namen als `contentDescription` (ICON-02; Nutzer:
+ * lieber Icon-only als geschrumpfte Schrift) – wer die Systemschrift vergrößert, bekommt nie Text
+ * in Normalgröße (WCAG 1.4.4).
  *
  * Auswahl: tonale Pille (`secondaryContainer`) mit Icon und Beschriftung in `onSecondaryContainer`
  * (6,32; `primary` hielte auf der helleren Pille nur 2,47, S-18) – keine
@@ -108,15 +108,17 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
             NavigationBarItem(
                 selected = item.selected,
                 onClick = item.onClick,
-                icon = item.icon,
-                // Ohne Beschriftung benennt die Beschreibung den Tab (das Icon ist dekorativ).
-                modifier = if (iconOnly) Modifier.semantics { contentDescription = item.label } else Modifier,
+                icon = {
+                    // Mit Beschriftung ist das Icon dekorativ (sie benennt den Tab), ohne trägt es den Namen.
+                    Icon(item.icon(), contentDescription = if (iconOnly) item.label else null)
+                },
                 label = if (iconOnly) {
                     null
                 } else {
                     {
                         WholeWordText(
                             text = item.label,
+                            style = MaterialTheme.typography.labelLarge,
                             minScale = NAV_LABEL_MIN_SCALE,
                             sharedScale = labelScale,
                             onSharedScaleTooBig = { labelScale = minOf(labelScale, it) },

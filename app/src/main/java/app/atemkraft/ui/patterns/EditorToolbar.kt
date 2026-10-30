@@ -303,12 +303,13 @@ private fun AddButton(
     val description = stringResource(spoken)
     AppOutlinedButton(
         onClick = onClick,
-        modifier = modifier.semantics { contentDescription = description },
+        modifier = modifier,
         enabled = enabled,
         color = color,
         borderColor = color,
         dashed = dashed,
         compact = true,
+        contentDescription = description,
     ) {
         Text(stringResource(label), maxLines = 1, softWrap = false)
     }

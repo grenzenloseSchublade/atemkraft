@@ -17,7 +17,7 @@ Zentral im App-Rahmen (`MainActivity`, `TabBarState`, keine Seite tut dafür etw
 
 ## Tab-Leiste selbst (`AppNavigationBar`, `AppTabBar`)
 
-M3 `NavigationBar` (Höhe 80, Indikator 64 × 32 fest in M3 1.3.1, S-37), Trennlinie darüber (`BorderThin`, `primary` mit `TAB_DIVIDER_ALPHA`; Abweichung KOMP-03, Marken-Trenner). Auswahl tonal (`secondaryContainer`, Icon und Beschriftung `primary`, PRIN-02). Eine Beschriftungsgröße für alle Tabs, gleiches Gewicht in jedem Zustand (TYPO-01); verkleinert höchstens auf 85 % der Rolle (`NAV_LABEL_MIN_SCALE`), passt es dann nicht, nur Icons mit dem Namen als `contentDescription`. Auch im `ScreenshotHarness` (`TabFrame`).
+M3 `NavigationBar` (Höhe mindestens 80, wächst in M3 1.4 mit der Beschriftung; Indikator 64 × 32), Trennlinie darüber (`BorderThin`, `primary` mit `TAB_DIVIDER_ALPHA`; Abweichung KOMP-03, Marken-Trenner). Auswahl tonal (`secondaryContainer`, Icon und Beschriftung `onSecondaryContainer`, PRIN-02). Beschriftung `labelLarge`, eine Stufe über der M3-Rolle (`labelMedium` las am A54 zu klein, S-37); eine Größe für alle Tabs, gleiches Gewicht in jedem Zustand (TYPO-01); verkleinert höchstens auf 85 % der Rolle (`NAV_LABEL_MIN_SCALE`), passt es dann nicht, nur Icons, der Name als `contentDescription` am Icon (ICON-02). Gemessen: volle Größe bis Schrift 1,1, bei 1,3 90–95 %, ab 1,5 auf 360 dp nur Icons. Auch im `ScreenshotHarness` (`TabFrame`).
 
 ## App-Shortcuts (Long-Press auf das App-Symbol)
 
