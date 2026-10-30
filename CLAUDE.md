@@ -38,8 +38,8 @@ die Kurzfassung; bei Widerspruch gilt der Guide, bei Widerspruch zum Eigentümer
 - Betreff: `fix: …`, `docs: …`, `build: …`, Release `vX.Y.Z: …`. Nie `feat:`. Deutsch, echte Umlaute, Warum im Text.
 - Ändert ein Push ui/theme-Tokens oder öffentliche Komponenten, ändert er auch docs/STYLEGUIDE.md (PROZ-02).
 - Vor Push: `scripts/check-style.sh --ci-range origin/main..HEAD`. Hooks: `git config core.hooksPath .githooks`.
-- **Push, Tag, Release und Store-Upload nur nach ausdrücklicher Bestätigung des Eigentümers.** Veröffentlicht wird
-  wieder (seit 2026-10-24, v2.6.0 ist öffentlich); alte Releases nie ohne Zusage löschen.
+- **Push, Tag, Release und Store-Upload nur nach ausdrücklicher Bestätigung des Eigentümers;** alte Releases nie ohne
+  Zusage löschen (PROZ-04).
 - Versionsbump (eigener Commit `vX.Y.Z:`): `scripts/bump-version.sh X.Y.Z`, dann Notes und Changelog füllen;
   `version-sync` prüft. Release-Ablauf: SECURITY.md → Release-Checkliste.
 
