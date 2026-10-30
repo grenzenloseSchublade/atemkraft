@@ -353,14 +353,13 @@ private fun DrawScope.drawCurve(
         drawLine(color, from, to, width, StrokeCap.Round, if (hold) dashed else null)
     }
     // „4 s“ je Phase, nur wo frei (siehe [curveLabelSpots]); die Ablauf-Liste trägt alle Werte.
-    val texts = pattern.phases.map { layout.measurer.measure("${it.seconds}${layout.secondsSuffix}", layout.phaseStyle) }
+    val texts = pattern.phases.map { layout.measurer.measure(layout.phaseLabel(it.seconds), layout.phaseStyle) }
     val spots = curveLabelSpots(pattern, selected, layout, size.width, texts.map { Size(it.size.width.toFloat(), it.size.height.toFloat()) })
     spots.forEachIndexed { i, spot ->
         if (spot != null) drawText(texts[i], phaseColor(pattern, i, inhale), spot.topLeft)
     }
 
     // Zeitleiste: feine Striche, längere an den Zahlen; „s“ nur an der letzten Zahl.
-    val labels = layout.labelSeconds()
     var second = 0
     while (second <= layout.axis + AXIS_EPSILON) {
         val x = layout.xAt(second.toFloat())
@@ -368,8 +367,7 @@ private fun DrawScope.drawCurve(
         drawLine(textColor, Offset(x, layout.ticksTop), Offset(x, layout.ticksTop + if (major) layout.gapSmall else layout.gapTiny), thin)
         second += layout.minorStep
     }
-    labels.forEach { s ->
-        val text = if (s == labels.last()) "$s${layout.secondsSuffix}" else s.toString()
+    layout.tickLabels().forEach { (s, text) ->
         val result = layout.measurer.measure(text, layout.smallStyle)
         val topLeft = Offset(layout.xAt(s.toFloat()) - result.size.width / 2f, layout.tickLabelTop)
         val hidden = hideNumbersIn?.overlaps(Rect(topLeft, Size(result.size.width.toFloat(), result.size.height.toFloat()))) == true

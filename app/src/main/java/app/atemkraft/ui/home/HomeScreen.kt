@@ -116,6 +116,8 @@ data class HomeActions(
  * Eingabe bleibt); ohne Fokus leert es Wahl und Suche (Nutzer 2026-10-24).
  *
  * [welcome]: die Übung der Willkommenskarte; null = Karte weggeklickt (oder Übung fehlt).
+ * [whileDailySheetOpen] ist komponiert, solange das Blatt offen ist, und zeigt nichts: Dort lädt der
+ * NavGraph den Muster-Editor vor (`PatternEditorPreload`), den „Selbst gestalten“ öffnet.
  */
 @Composable
 fun HomeScreen(
@@ -125,6 +127,7 @@ fun HomeScreen(
     actions: HomeActions,
     markedIds: Set<String> = emptySet(),
     welcome: Exercise? = null,
+    whileDailySheetOpen: @Composable () -> Unit = {},
 ) {
     // Die Eingabe lebt allein in diesem Zustand (rememberTextFieldState = rememberSaveable, SEC-PRIV-03/04);
     // das Feld hält keinen zweiten Wert daneben (Nutzer 2026-10-24).
@@ -313,6 +316,7 @@ fun HomeScreen(
             onNewPattern = { actions.onDesignFrom(daily.spec) },
             onDismiss = { dailySheetOpen = false },
         )
+        whileDailySheetOpen()
     }
 }
 

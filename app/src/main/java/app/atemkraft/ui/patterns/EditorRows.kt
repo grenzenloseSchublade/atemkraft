@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
@@ -82,7 +84,7 @@ import kotlin.math.ceil
 internal fun InfoLine(state: PatternEditorState, preview: CurvePreviewState) {
     val pattern = state.pattern
     val colors = MaterialTheme.colorScheme
-    val style = MaterialTheme.typography.bodyMedium
+    val style = infoLineStyle()
     val weight = MaterialTheme.typography.titleSmall.fontWeight
     val strong = SpanStyle(color = colors.onSurface, fontWeight = weight)
     val quiet = SpanStyle(color = colors.onSurface.copy(alpha = SECONDARY))
@@ -113,22 +115,13 @@ internal fun InfoLine(state: PatternEditorState, preview: CurvePreviewState) {
     if (phase != null) {
         val label = pattern.labelAt(phase)
         val phaseSpan = SpanStyle(color = phaseColor(pattern, phase, inhale = colors.secondary), fontWeight = weight)
-        val wideRemaining = stringResource(R.string.pattern_editor_info_remaining, WIDEST_REMAINING)
         variants = listOf(
             line(label to phaseSpan, stringResource(R.string.pattern_editor_info_remaining, remaining) to quiet),
             line(label to phaseSpan),
         )
-        reserves = listOf(
-            rememberWidestAnnotatedWidth(FreePattern.PHASE_LABELS.map { line(it to phaseSpan, wideRemaining to quiet) }, style),
-            rememberWidestAnnotatedWidth(FreePattern.PHASE_LABELS.map { line(it to phaseSpan) }, style),
-        )
+        reserves = previewReserveTexts().map { rememberWidestAnnotatedWidth(it, style) }
         spoken = label
     } else {
-        val labels = FreePatternTemplates.all.map { it.label } + stringResource(R.string.adjust_modified)
-        val wide = maxOf(total, WIDEST_SECONDS)
-        val wideRate = stringResource(R.string.pattern_editor_rate_short, WIDEST_RATE)
-        val widePerBreath = stringResource(R.string.pattern_editor_info_breath, wide)
-        val wideSeconds = stringResource(R.string.pattern_editor_info_seconds, wide)
         val rate = stringResource(R.string.pattern_editor_rate_short, rateText)
         val seconds = stringResource(R.string.pattern_editor_info_seconds, total)
         variants = listOf(
@@ -136,11 +129,7 @@ internal fun InfoLine(state: PatternEditorState, preview: CurvePreviewState) {
             line(current to strong, seconds to quiet, rate to quiet),
             line(seconds to quiet, rate to quiet),
         )
-        reserves = listOf(
-            rememberWidestAnnotatedWidth(labels.map { line(it to strong, widePerBreath to quiet, wideRate to quiet) }, style),
-            rememberWidestAnnotatedWidth(labels.map { line(it to strong, wideSeconds to quiet, wideRate to quiet) }, style),
-            rememberWidestAnnotatedWidth(listOf(line(wideSeconds to quiet, wideRate to quiet)), style),
-        )
+        reserves = idleReserveTexts(total).map { rememberWidestAnnotatedWidth(it, style) }
         // Genau „1“ in der Einzahl: „1 Atemzug pro Minute“ (wie die Texte der Domain).
         val spokenRate = if (rateText == "1") stringResource(R.string.cd_pattern_editor_rate_one) else stringResource(R.string.cd_pattern_editor_rate, rateText)
         spoken = stringResource(R.string.cd_pattern_editor_info, current, pluralStringResource(R.plurals.cd_pattern_editor_cycle, total, total, spokenRate))
@@ -179,11 +168,63 @@ internal fun InfoLine(state: PatternEditorState, preview: CurvePreviewState) {
     }
 }
 
+/** Schriftrolle der [InfoLine]; auch [PatternEditorPreload] misst ihre Reserven in dieser Rolle. */
+@Composable
+@ReadOnlyComposable
+internal fun infoLineStyle(): TextStyle = MaterialTheme.typography.bodyMedium
+
 /** Test-Tag des Texts der [InfoLine] – für die gezeigte Fassung im `DeviceFitTest`. */
 internal const val PATTERN_INFO_TAG = "pattern_editor_info"
 
 /** Slots der [InfoLine]. */
 private enum class InfoSlot { TEXT, CHIP }
+
+/**
+ * Reserve-Texte der [InfoLine] ohne Vorschau, je Fassung eine Liste (die breiteste Fassung zuerst):
+ * jede Vorlage und „angepasst“ mit zweistelligen Werten, also mindestens [WIDEST_SECONDS]. Ohne
+ * Farben – die Breite hängt nur am Gewicht des Startpunkts –, damit [PatternEditorPreload] genau
+ * dieselben Texte vorab messen kann (ein Eintrag je Text in `TextWidths`).
+ */
+@Composable
+internal fun idleReserveTexts(total: Int): List<List<AnnotatedString>> {
+    val weight = MaterialTheme.typography.titleSmall.fontWeight
+    val modified = stringResource(R.string.adjust_modified)
+    val wide = maxOf(total, WIDEST_SECONDS)
+    val wideRate = stringResource(R.string.pattern_editor_rate_short, WIDEST_RATE)
+    val widePerBreath = stringResource(R.string.pattern_editor_info_breath, wide)
+    val wideSeconds = stringResource(R.string.pattern_editor_info_seconds, wide)
+    return remember(weight, modified, wideRate, widePerBreath, wideSeconds) {
+        val labels = FreePatternTemplates.all.map { it.label } + modified
+        val strong = SpanStyle(fontWeight = weight)
+        listOf(
+            labels.map { reserveLine(it to strong, widePerBreath to null, wideRate to null) },
+            labels.map { reserveLine(it to strong, wideSeconds to null, wideRate to null) },
+            listOf(reserveLine(wideSeconds to null, wideRate to null)),
+        )
+    }
+}
+
+/** Reserve-Texte der [InfoLine] während der Vorschau: jeder Phasenname mit und ohne „noch 88 s“ (wie [idleReserveTexts]). */
+@Composable
+internal fun previewReserveTexts(): List<List<AnnotatedString>> {
+    val weight = MaterialTheme.typography.titleSmall.fontWeight
+    val wideRemaining = stringResource(R.string.pattern_editor_info_remaining, WIDEST_REMAINING)
+    return remember(weight, wideRemaining) {
+        val strong = SpanStyle(fontWeight = weight)
+        listOf(
+            FreePattern.PHASE_LABELS.map { reserveLine(it to strong, wideRemaining to null) },
+            FreePattern.PHASE_LABELS.map { reserveLine(it to strong) },
+        )
+    }
+}
+
+/** Eine Fassung der [InfoLine] nur für die Breite: Teile mit „·“ getrennt, ausgezeichnet nur, was ein Gewicht trägt. */
+private fun reserveLine(vararg parts: Pair<String, SpanStyle?>): AnnotatedString = buildAnnotatedString {
+    parts.forEachIndexed { i, (text, span) ->
+        if (i > 0) append(DOT_SEPARATOR)
+        if (span != null) withStyle(span) { append(text) } else append(text)
+    }
+}
 
 /**
  * Reserven der [InfoLine]: Die Ziffern der Schrift sind gleich breit, „88 s“ und „88,8/min“

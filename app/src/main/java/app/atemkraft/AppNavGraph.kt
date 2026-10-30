@@ -24,10 +24,12 @@ import app.atemkraft.data.Pranayama
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.ExerciseIds
+import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.UncaughtErrors
+import app.atemkraft.domain.toFreePattern
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.detail.DetailDestination
@@ -56,6 +58,7 @@ import app.atemkraft.ui.navigation.SettingsRoute
 import app.atemkraft.ui.own.OwnActions
 import app.atemkraft.ui.own.OwnPatternsScreen
 import app.atemkraft.ui.patterns.PatternEditorDestination
+import app.atemkraft.ui.patterns.PatternEditorPreload
 import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
@@ -169,6 +172,8 @@ internal fun NavGraphBuilder.appGraph(
             markedIds = state.markedExercises,
             // Erster Start: ruhiger Einstieg mit Gesundheitshinweis, bis der Nutzer ihn wegklickt.
             welcome = if (state.welcomeDismissed) null else exercises.byId(WELCOME_EXERCISE_ID),
+            // „Selbst gestalten“ öffnet den Editor mit dem Tagesmuster: vorab messen, solange das Blatt steht.
+            whileDailySheetOpen = { PatternEditorPreload(dailyPattern.spec.toFreePattern()) },
         )
     }
     composable<EigeneRoute> {
@@ -193,6 +198,8 @@ internal fun NavGraphBuilder.appGraph(
             lastExercise = lastExercise,
             showStreak = state.showStreak,
         )
+        // „+“ öffnet den Editor mit der Vorgabe 4·6: vorab messen, solange der Tab zu sehen ist.
+        PatternEditorPreload(FreePattern.DEFAULT)
     }
     composable<MeditationRoute> {
         // System-TTS erst hier anbinden (nicht beim App-Start), idempotent; ein Sprachmodell lädt erst der Start.

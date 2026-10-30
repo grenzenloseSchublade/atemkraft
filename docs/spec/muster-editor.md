@@ -64,6 +64,16 @@ Der Startpunkt im Kopf öffnet die Vorlagen als Bottom Sheet (`TemplateSheet` ü
 - TalkBack: ein Knoten mit `contentDescription` „Atemkurve: Einatmen 4 Sekunden, Halten voll 1 Sekunde, Ausatmen 6 Sekunden“ (`cd_breath_curve` + `FreePattern.spokenDescription()`), ohne liveRegion; Ziehen ist nie Pflicht – Stepper, Entfernen, Hinzufügen und die Ablauf-Liste bieten alles ohne Geste.
 - Nicht dafür: Phasen eingebauter Übungen; Muster des Tages mit seinen vier Feldern; Anzeige in der Sitzung.
 
+## Öffnen ohne Ruckeln (PERF-01)
+
+Messung am A54 (Release v2.10.0, 2026-10-30): Blatt „Muster des Tages“ → „Selbst gestalten“ → Editor 75–85 Frames, 5–7 % Ruckler, p99 77–200 ms, auch beim 2./3. Öffnen; aus „Eigene“ → „+“ p99 20–65 ms. Das Blatt schließt vorher (`closeThen`); der Rest ist der erste Frame des Editors.
+
+- **Gemessen in der JVM** (Robolectric, A54-Fenster, Schrift 1,1, Teile einzeln nach einem Aufwärmen): Kopf (`PushHeader`, `NameTitle` mit Laufschrift, zwei Vektor-Icons) beim ersten Mal 122 ms, warm 41 ms; Werte über der Kurve (`InfoLine`) 95 ms bzw. 16 ms, davon 15 Reserve-Messungen 17,5 ms bzw. 5 ms; Werkzeugleiste (`AdaptiveButtonRow` mit Probe, Stepper) 69 ms bzw. 17,5 ms; Kurve zeichnen 23 ms bzw. 13 ms mit 25 Textmessungen. Je Öffnen 20 Reserve- und 25 Kurven-Textmessungen, jedes Mal neu. Das erste Mal im Prozess kostet ein Vielfaches (Klassen laden, Interpreter).
+- **Einmal messen:** Reserve-Breiten liegen prozessweit je Text, Stil und Schrift-Umgebung in `TextWidths` (`ReserveMeasure.kt`; neu bei anderer Schriftgröße, Sprache, Richtung, „Fetter Schrift“), alle Kurven eines Fensters teilen einen Messer mit Cache (`rememberCurveMetrics`). Die Reserve-Texte der Werte tragen dafür keine Farben (`idleReserveTexts`, `previewReserveTexts`), die Breite hängt nur am Gewicht.
+- **Vorladen:** `PatternEditorPreload(pattern)` misst 0,5 s nachdem das Blatt „Muster des Tages“ (Tagesmuster) bzw. der Tab „Eigene“ (4·6) steht, die Reserven der Werte und Zahlen und Beschriftungen der Kurve vorab – einmal, ohne Oberfläche, ohne Zustand; verlässt man die Seite vorher, entfällt es. Den Editor-Zustand legt es nicht an (0,1–0,3 ms warm).
+- **Ergebnis JVM** (Median, warm): Editor allein 52–61 → 40 ms (Tagesmuster), 48–51 → 34 ms (4·6); Werte 16 → 5 ms, Kurve zeichnen 13 → 2 ms; Reserve-Messungen beim Öffnen aus dem Blatt 20 → 5 (nur Werkzeugleiste und Ablauf), ab dem zweiten Öffnen 0. In der ganzen App (ohne Zeichnen, je drei Läufe) längster Frame beim 2.–4. Öffnen aus dem Blatt 53 → 43 ms, aus „Eigene“ 28 → 25 ms; das erste Öffnen im Prozess (225–262 ms) ändert sich in der JVM nicht – dafür ist das Baseline-Profil da (`app/src/main/baseline-prof.txt`, [STORE.md](../STORE.md)), das den App-Code vorab übersetzt.
+- **Am Gerät messen:** R-PERF mit übersetztem Profil (STORE.md „Baseline-Profil“), Reihenfolge der Wege abwechselnd – in der JVM war der Unterschied Blatt/„Eigene“ vor allem Aufwärmen, nicht der Weg.
+
 ## Prüfung
 
 `FreePatternTest` (Grenzen 1–30 s, 2–12 Phasen), `PatternEditorSafetyTest` (intensiv → Sicherheitsdialog), `DeviceFitTest` (`14_muster_editor_kompakt`, ohne Tab-Leiste, `KOMPAKT_FEHLT`), `ScreenshotTest` (`14_muster_editor_*`), manuell R-A11Y, R-VISUAL.

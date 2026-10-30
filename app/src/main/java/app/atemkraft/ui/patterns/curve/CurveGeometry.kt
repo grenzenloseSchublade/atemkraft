@@ -8,10 +8,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontFamilyResolver
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import app.atemkraft.R
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhaseType
@@ -176,13 +180,40 @@ internal class CurveLayout(
 
     /** Die Zahlen der Zeitleiste in Sekunden; die letzte trägt das „s“. */
     fun labelSeconds(): List<Int> = (0..floor(axis + AXIS_EPSILON).toInt() step labelStep).toList()
+
+    /** Die Zahlen der Zeitleiste als Text, je mit ihrer Sekunde: „s“ nur an der letzten. */
+    fun tickLabels(): List<Pair<Int, String>> {
+        val seconds = labelSeconds()
+        return seconds.map { s -> s to if (s == seconds.last()) "$s$secondsSuffix" else s.toString() }
+    }
+
+    /** Beschriftung einer Phase an der Kurve, z. B. „4 s“. */
+    fun phaseLabel(seconds: Int): String = "$seconds$secondsSuffix"
+
+    /**
+     * Misst vorab, was das erste Zeichnen von [pattern] misst – Wörter „voll“/„leer“, Phasen und
+     * Zeitleiste –, damit es der gemeinsame Messer ([rememberCurveMetrics]) schon kennt.
+     */
+    fun preload(pattern: FreePattern) {
+        measurer.measure(fullLabel, smallStyle)
+        measurer.measure(emptyLabel, smallStyle)
+        pattern.phases.forEach { measurer.measure(phaseLabel(it.seconds), phaseStyle) }
+        tickLabels().forEach { (_, text) -> measurer.measure(text, smallStyle) }
+    }
 }
 
-/** Misst die Beschriftungen der Kurve mit der aktuellen Schrift; auch für Tests, die Griffe treffen wollen. */
+/**
+ * Misst die Beschriftungen der Kurve mit der aktuellen Schrift; auch für Tests, die Griffe treffen
+ * wollen. Alle Kurven eines Fensters teilen einen Messer ([SharedCurveMeasurer]): Zahlen und
+ * Beschriftungen, die schon einmal gemessen wurden (voriges Öffnen des Editors, Vorladen), misst das
+ * erste Zeichnen nicht noch einmal.
+ */
 @Composable
 internal fun rememberCurveMetrics(): CurveMetrics {
     val density = LocalDensity.current
-    val measurer: TextMeasurer = rememberTextMeasurer(cacheSize = MEASURE_CACHE)
+    val resolver = LocalFontFamilyResolver.current
+    val direction = LocalLayoutDirection.current
+    val measurer: TextMeasurer = remember(resolver, density, direction) { SharedCurveMeasurer.get(resolver, density, direction) }
     val labelStyle = MaterialTheme.typography.labelMedium
     val smallStyle = MaterialTheme.typography.labelSmall
     // „ s“ mit geschütztem Leerzeichen aus der Vorlage „%1$d s“, damit Zahl und Einheit beisammen bleiben.
@@ -218,6 +249,26 @@ internal fun rememberCurveMetrics(): CurveMetrics {
 
 /** Zahlen, Phasen-Beschriftungen und Band einer Kurve mit 12 Phasen passen in den Cache. */
 private const val MEASURE_CACHE = 48
+
+/**
+ * Ein [TextMeasurer] für die Kurven im Prozess, mit Cache für [MEASURE_CACHE] Text-Layouts – je
+ * Schrift-Umgebung (Schriftauflösung des Fensters, Dichte samt Schriftgröße, Richtung) einer; eine
+ * neue ersetzt den alten (gedrehtes oder neu erzeugtes Fenster). Nur vom Main-Thread.
+ */
+private object SharedCurveMeasurer {
+    private var key: Triple<FontFamily.Resolver, Density, LayoutDirection>? = null
+    private var measurer: TextMeasurer? = null
+
+    fun get(resolver: FontFamily.Resolver, density: Density, direction: LayoutDirection): TextMeasurer {
+        val wanted = Triple(resolver, density, direction)
+        val current = measurer
+        if (current != null && key == wanted) return current
+        return TextMeasurer(resolver, density, direction, MEASURE_CACHE).also {
+            measurer = it
+            key = wanted
+        }
+    }
+}
 
 /** Beginn der Phase [index] in Sekunden ab Beginn des Durchlaufs. */
 internal fun FreePattern.startOf(index: Int): Int = phases.take(index.coerceIn(0, phases.size)).sumOf { it.seconds }
