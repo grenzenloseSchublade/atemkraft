@@ -10,7 +10,7 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 |---|---|---|---|
 | S-43 | SEC-REPO-02 | **Nur der Eigentümer:** Rulesets anlegen – `main` ohne Force-Push und Löschen, Tags `refs/tags/v*` ohne Update und Löschen; danach `scripts/check-github.sh` grün (heute 4× „fehlt“). | S |
 | S-44 | A11Y-01 … -07, FARBE-05 | **Nur der Eigentümer (Gerät):** R-A11Y am A54 (TalkBack, Switch Access, D-Pad, Accessibility Scanner, Kontrast) mit Protokoll `docs/recherche/<datum>-a11y.md` (Screen × Prüfpunkt × ok/Befund); die Release-Checkliste verweist darauf. | M |
-| S-49 | PERF-01 | Rest der Referenzmessung (R-PERF): `meminfo` ohne installierte Stimme (Anteil des Sprachmodells), `gfxinfo` in der laufenden Sitzung, Blatt „Muster des Tages“ → Editor nach `closeThen` nachmessen. | S |
+| S-49 | PERF-01 | Rest der Referenzmessung (R-PERF): `meminfo` ohne installierte Stimme (Anteil des Sprachmodells), `gfxinfo` in der laufenden Sitzung, Editor über Blatt „Muster des Tages“ und über „Eigene“ → „+“ nach `closeThen`, Vorladen und Baseline-Profil (2026-10-30) nachmessen ([spec/muster-editor.md](spec/muster-editor.md), „Öffnen ohne Ruckeln“). | S |
 | S-51 | MUSTER-06, TEXT-08 | Abschnitt „Gesundheitliche Sicherheit“: Gefahr (Ohnmacht, Wasser, Hypokapnie, Pressen, Schwangerschaft) → Maßnahme → Prüfung; Herleitung der Intensitäts-Schwellen (Halten voll > 10 s, leer > 8 s, > 20 Atemzüge/min) in DECISIONS. | M |
 | S-52 | SEC-BUILD-04 | SSH-Signatur mindestens für Release-Tags; `git tag -v` in `verify-release-body`. | S |
 | S-53 | SEC-SUP-02 | Dependency Verification auf Gradle-Plugins ausweiten, langfristig auf alle Gruppen. | M |
@@ -19,7 +19,6 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 | S-56 | – (Kompatibilität) | minSdk 26–32 absichern: kritische Robolectric-Tests mit `@Config(sdk = [26, 35])`, einmal ein Smoke-Test im Emulator – oder minSdk bewusst anheben. | M |
 | S-57 | PROZ-04, SEC-BUILD-04 | **Push und Tag nur nach Bestätigung:** Tag v2.10.0 mit grünem `release-verify`, F-Droid-Probebau im fdroidserver-Container. | S/M |
 | S-58 | LAYOUT-03, -05 | Splitscreen (320 × 640) und Tablet bei Schrift 2,0 in die `TestMatrix` (nur Gates); R-VISUAL bekommt einen Splitscreen-Schritt. | S |
-| S-59 | KOMP-01 | Kurvenzeichnung zusammenführen (`drawLevelSegments`), Farbregel nur an einer Stelle. | S |
 | S-60 | – (Interaktion) | Laut-Denken-Test mit 3–5 Personen: erste Übung, eigenes Muster, Logbuch finden. | M |
 | S-61 | MUSTER-05 | Zweistufiges Löschen (`rememberArmedConfirm`) im Compose-Test mit Uhr +4 s und mit Bedienungshilfe. | S |
 
