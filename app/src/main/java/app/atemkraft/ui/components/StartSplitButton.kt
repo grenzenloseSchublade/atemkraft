@@ -9,7 +9,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -43,29 +47,35 @@ fun StartSplitButton(
     modifier: Modifier = Modifier,
 ) {
     val startFocus = remember { FocusRequester() }
+    // Zeilen der Beschriftung von „Starten“: Der Reset daneben wächst um ebenso viele Zeilen mit,
+    // sonst stünde er bei großer Schrift neben zweizeiligem Start niedriger (ein Größentoken je Leiste).
+    var startLines by remember { mutableIntStateOf(1) }
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.ListGap),
     ) {
         Button(onClick = onStart, modifier = Modifier.weight(1f).heightIn(min = Sizes.ButtonHeight).focusRequester(startFocus)) {
-            StartLabel(label)
+            StartLabel(label, onLines = { startLines = it })
         }
-        SlidingReset(visible = resetVisible, onReset = onReset, onFocusHandoff = { startFocus.requestFocus() })
+        SlidingReset(visible = resetVisible, onReset = onReset, onFocusHandoff = { startFocus.requestFocus() }, lines = startLines)
     }
 }
 
 /**
  * Beschriftung „Starten · ca. 5 min“: passt sie nicht in eine Zeile (großer Schrift, Reset
  * daneben), stehen Start und Dauer ohne Punkt in zwei Zeilen – keine Zeile endet auf „·“
- * (LAYOUT-03, wie die Status-Zeilen der Abschnittsköpfe).
+ * (LAYOUT-03, wie die Status-Zeilen der Abschnittsköpfe). [onLines] meldet die Zeilenzahl für den
+ * Reset daneben.
  */
 @Composable
-private fun StartLabel(label: String) {
+private fun StartLabel(label: String, onLines: (Int) -> Unit) {
     val labelWidth = rememberWidestTextWidth(listOf(label), LocalTextStyle.current)
     BoxWithConstraints(contentAlignment = Alignment.Center) {
         val fits = labelWidth <= maxWidth
-        val shown = if (fits) label else label.splitAtDots().joinToString("\n")
+        val parts = if (fits) listOf(label) else label.splitAtDots()
+        val shown = parts.joinToString("\n")
+        SideEffect { onLines(parts.size) }
         Text(shown, textAlign = TextAlign.Center)
     }
 }

@@ -37,8 +37,9 @@ import app.atemkraft.ui.theme.Sizes
  *
  * [compact]: Kreis wie die Stepper-Knöpfe (`AppIconButton`, Leiste des Muster-Editors); sonst ein
  * Tonal-Button mit derselben Mindesthöhe und demselben senkrechten Polster wie „Starten“ und
- * einem Icon-Feld so hoch wie dessen Textzeile ([StartSplitButton]) – damit wachsen beide bei
- * großer Schrift gleich mit, ohne `IntrinsicSize.Min` (das mäße die 48-dp-Tippfläche mit).
+ * einem Icon-Feld so hoch wie dessen Textzeilen ([lines], [StartSplitButton]) – damit wachsen beide
+ * bei großer Schrift gleich mit, auch wenn „Starten“ zweizeilig wird, ohne `IntrinsicSize.Min` (das
+ * mäße die 48-dp-Tippfläche mit).
  */
 @Composable
 fun SlidingReset(
@@ -48,6 +49,7 @@ fun SlidingReset(
     modifier: Modifier = Modifier,
     slideFrom: Alignment.Horizontal = Alignment.Start,
     compact: Boolean = false,
+    lines: Int = 1,
 ) {
     var focused by remember { mutableStateOf(false) }
     val onClick = {
@@ -73,7 +75,7 @@ fun SlidingReset(
             ) {
                 // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt; die
                 // Zeile gemessen, wie „Starten“ sie rendert (auch bei nichtlinearer Schrift).
-                Box(Modifier.heightIn(min = rememberFirstLineHeight(LocalTextStyle.current)), contentAlignment = Alignment.Center) {
+                Box(Modifier.heightIn(min = rememberFirstLineHeight(LocalTextStyle.current) * lines), contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(R.drawable.ic_reset),
                         contentDescription = stringResource(R.string.adjust_reset),

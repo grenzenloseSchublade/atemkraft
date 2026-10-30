@@ -3,10 +3,12 @@ package app.atemkraft.ui.components
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,8 +31,8 @@ data class PhaseAdjust(
  * Stepper, darunter aufklappbar die Intervall-Stepper. Alles steht direkt auf dem Blatt, ohne Karte
  * und ohne Trenner (Anatomie „Bottom Sheet“, §4.5: das Blatt ist schon die Fläche); die Labels
  * stehen an der Textkante des Titels, der Kreis von „+“ bündig rechts (LAYOUT-07). Gegliedert wird
- * mit Abstand wie in „Klang & Stimme“: Dauer → Aufklapper `GapSmall` (der 48-dp-Rand der Knöpfe
- * zählt sichtbar mit).
+ * mit Abstand wie in „Klang & Stimme“: Dauer → Aufklapper → Phasen je `GapSmall` (der 48-dp-Rand
+ * der Knöpfe zählt sichtbar mit), jede Stepper-Zeile genau `MinTouchTarget` hoch.
  *
  * Eingeklappt markiert „· angepasst“ abweichende Intervalle; der Hinweis verschwindet von selbst,
  * sobald die Werte – auch manuell zurückgesteppt – wieder den Defaults entsprechen. Das
@@ -97,10 +99,17 @@ fun SessionAdjustControls(
             // bleibt stehen; das Blatt wächst und schrumpft weich statt zu springen (S-34).
             Column(modifier = Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
                 if (intervalsExpanded) {
-                    inhale?.let { PhaseStepper(R.string.adjust_inhale, R.string.phase_inhale, it, widest) }
-                    // Ein Wert für Halten voll und leer zugleich (SessionConfig.holdSeconds).
-                    hold?.let { PhaseStepper(R.string.adjust_hold, R.string.phase_hold, it, widest) }
-                    exhale?.let { PhaseStepper(R.string.adjust_exhale, R.string.phase_exhale, it, widest) }
+                    // Jede Zeile genau MinTouchTarget hoch wie der Dauer-Stepper, untereinander und zum
+                    // Aufklapper GapSmall – ein Zeilenmaß und ein Abstand im ganzen Blatt.
+                    Column(
+                        modifier = Modifier.padding(top = Dimens.GapSmall),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+                    ) {
+                        inhale?.let { PhaseStepper(R.string.adjust_inhale, R.string.phase_inhale, it, widest) }
+                        // Ein Wert für Halten voll und leer zugleich (SessionConfig.holdSeconds).
+                        hold?.let { PhaseStepper(R.string.adjust_hold, R.string.phase_hold, it, widest) }
+                        exhale?.let { PhaseStepper(R.string.adjust_exhale, R.string.phase_exhale, it, widest) }
+                    }
                 }
             }
         }
@@ -116,7 +125,7 @@ private fun PhaseStepper(@StringRes label: Int, @StringRes spoken: Int, phase: P
         range = phase.range,
         onChange = phase.onChange,
         horizontal = 0.dp,
-        vertical = Dimens.GapTiny,
+        vertical = 0.dp,
         spokenLabel = stringResource(spoken),
         valueUnit = R.plurals.cd_duration_seconds,
         valueText = stringResource(R.string.adjust_value_seconds, phase.value),

@@ -65,7 +65,11 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * [GroupLabel] (Familien im Atmen-Tab).
  *
  * Abstände: Über einem festen Kopf steht [top] (Standard `SectionHeaderTop`; kleiner nur, wo ein
- * Bildschirm ohne Scrollen auskommen muss). **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
+ * Bildschirm ohne Scrollen auskommen muss). Über einem tippbaren Kopf ([expanded], [onClick]) steht
+ * `GapSmall` vor der Tippfläche, innen polstert sie den Titel mit `GapSmall`; `top` kürzt nur den
+ * Rand davor (höchstens `GapSmall`): `top = 0.dp` als erstes Element einer Fläche, die selbst einen
+ * Rand hat („Anpassen ›“ in der Startleiste) – sonst stünden beide Ränder übereinander.
+ * **Unten trägt der Kopf keinen Abstand:** Kopf → Inhalt
  * ist überall `HeaderGap` – in Listen über `spacedBy(ListGap)`, in Spalten über
  * [CollapsibleSection]. So steht der erste Inhalt unter jedem Kopf gleich weit.
  *
@@ -127,12 +131,14 @@ fun SectionHeader(
     val titleLine = rememberFirstLineHeight(titleStyle)
     // Zeile wie aufklappbar: Tippfläche ohne den Leerraum darüber, innen oben und unten GapSmall.
     val tappable = expanded != null || onClick != null
+    // Rand über der Tippfläche: GapSmall, kleiner nur mit kleinerem top (erstes Element einer Fläche mit Rand).
+    val tapTop = minOf(top, Dimens.GapSmall)
     val toggle = if (onClick != null) {
         // Status in Worten (statusDescription), sonst wie gezeigt ohne Punkte; danach der Teaser.
         val spokenStatus = statusDescription ?: status?.withoutLeadingDot()?.splitAtDots()?.joinToString(", ")
         val spoken = listOfNotNull(title, spokenStatus, teaser?.splitAtDots()?.joinToString(", ")).joinToString(", ")
         Modifier
-            .padding(top = Dimens.GapSmall)
+            .padding(top = tapTop)
             .heightIn(min = Dimens.MinTouchTarget)
             .clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
             // Die Beschreibung geht dem sichtbaren Text vor; der Titel ist hier keine Überschrift.
@@ -144,7 +150,7 @@ fun SectionHeader(
         // Der Abstand über dem Kopf liegt außerhalb der Tippfläche, damit die Welle nicht im
         // Leerraum über dem Titel beginnt; innen polstert GapSmall die Zeile oben und unten.
         Modifier
-            .padding(top = Dimens.GapSmall)
+            .padding(top = tapTop)
             .heightIn(min = Dimens.MinTouchTarget)
             .clickable(role = Role.Button) { onExpandedChange(!expanded) }
             .semantics {
@@ -158,7 +164,7 @@ fun SectionHeader(
         Modifier.padding(vertical = Dimens.GapSmall)
     }
     // Mitte der Tippfläche einer Kopf-Aktion auf der Mitte der ersten Titelzeile (wie der Caret).
-    val above = if (!tappable) top else Dimens.GapSmall * 2
+    val above = if (!tappable) top else tapTop + Dimens.GapSmall
     TitleRow(actionCenter = above + titleLine / 2, modifier = modifier, trailingAction = trailingAction) {
         // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
         // So steckt eine Kopf-Aktion daneben nicht in einem zweiten Button.

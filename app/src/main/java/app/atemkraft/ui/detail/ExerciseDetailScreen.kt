@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
 import app.atemkraft.data.IntervalOverrides
@@ -447,6 +448,9 @@ private fun AdjustRow(exercise: Exercise, adjust: SessionAdjustState, onClick: (
         ),
         statusDescription = if (adjust.modified) stringResource(R.string.cd_adjust_status_modified, spokenValue, modified) else spokenValue,
         smallStatus = true,
+        // Erstes Element der Leiste: Ihr Rand (ListGap) ist der Abstand über der Tippfläche, kein
+        // zweiter GapSmall davor – oben wie unten am Start steht nur der Leistenrand.
+        top = 0.dp,
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_adjust_open),
     )

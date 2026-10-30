@@ -37,7 +37,9 @@ import app.atemkraft.ui.theme.Dimens
  * [SubLabel] und Abstand. Karten nur für Dinge, die man öffnet oder startet (Muster, [NavCard]).
  * Jede Änderung gilt sofort, ein Bestätigen gibt es nicht.
  *
- * Der Griff ist dekorativ: Der M3-Griff wäre als Knoten nur 32 dp breit (A11Y-05), ohne Aktion
+ * Der Griff ist der M3-Griff (`BottomSheetDefaults.DragHandle`: Strich 32 × 4 mittig in einer
+ * 48 dp hohen Zone, M3-Maß, kein eigener Abstand); der Titel folgt ohne weiteren Abstand. Er ist
+ * dekorativ: Der M3-Griff wäre als Knoten nur 32 dp breit (A11Y-05), ohne Aktion
  * wäre er ein leerer Stopp (A11Y-06) – geschlossen wird per Wischen, Tipp daneben („Blatt
  * schließen“) oder Zurück ([onDismiss]). TalkBack liest die Spalte vor dem Griff
  * (`traversalIndex`), so ist der Titel das erste Element und bekommt beim Öffnen den Fokus.
