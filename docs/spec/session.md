@@ -50,7 +50,11 @@ Was von selbst zu Ende läuft, kommt immer ins Logbuch; früher Beendetes („Be
 
 ## Takt
 
-`SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01); `Pacer.ScaleMin`/`ScaleMax` 0,42 / 1,0. Der Füllstand gleitet je Phase von `RuntimePhase.circle.from` nach `.to` (`CircleFractions`, stetig über die Grenzen, MOTION-03); im Countdown steht der Kreis am Start der ersten Phase, die Tonhöhe des Dauertons folgt demselben Füllstand.
+`SessionTiming.FRAME_MS` 33 ms und `COUNTDOWN_SECONDS` 3 in `domain/SessionTiming.kt`, geteilt von Atem-Session und Meditation; Stoppuhr-Tick 200 ms im `MeditationController`. Kreis, Countdown und Ton leiten sich aus der Session-Uhr ab (MOTION-01); `Pacer.ScaleMin`/`ScaleMax` 0,42 / 1,0. Der Füllstand gleitet je Phase von `RuntimePhase.circle.from` nach `.to` (`CircleFractions`, stetig über die Grenzen, MOTION-03); im Countdown steht der Kreis am Start der ersten Phase, die Tonhöhe des Dauertons folgt demselben Füllstand. Nach Weiter setzt der Dauerton an der Tonhöhe fort, bei der die Pause begann (`PhaseAudio.elapsedMs`), nicht am Anfang der Phase.
+
+## Audio-Fokus
+
+Beide Sitzungsarten (`SessionAudioCoordinator`, `MeditationController`/`MeditationAudioCoordinator`) fordern transienten Fokus mit Ducken nur an, solange etwas klingen kann: nicht im Modus „Aus“, nicht in der Pause, nicht stummgeschaltet (Stumm gibt ihn ab, wieder an fordert ihn neu an). Nimmt ein Anruf oder eine andere App den Fokus (`AudioFocusController`, Listener), schweigen Ton, Gong und Stimme; Ablauf und Haptik laufen weiter, nichts pausiert von selbst. Kommt der Fokus zurück, klingt es wieder; nach dauerhaftem Verlust holt erst Pause/Weiter oder Stumm aus/an ihn zurück. Fokus und Service enden nach dem Abschluss-Gong erst nach `gongTotalMs()` plus `ToneCuePlayer.GONG_END_RESERVE_MS` (500 ms, eine Zahl für beide, AUDIO-02).
 
 ## Prüfung
 

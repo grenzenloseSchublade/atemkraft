@@ -19,6 +19,14 @@ fun PhaseType.toCueEvent(): CueEvent = when (this) {
 /**
  * Audio-Info zum Phasenbeginn für den durchgehenden Ton (Typ + Dauer; open = ohne feste Dauer).
  * Liegt bei den Reizen, weil Session (`SessionAudioCoordinator`) und Editor-Vorschau
- * (`PreviewCuePlayer`) sie gleichermaßen an die Ton-Ausgabe geben.
+ * (`PreviewCuePlayer`) sie gleichermaßen an die Ton-Ausgabe geben. Beim Fortsetzen mitten in der
+ * Phase ist [durationMs] die Restdauer und [elapsedMs] der schon vergangene Teil: Der Glide geht
+ * an der Tonhöhe weiter, bei der die Pause begann (S-19).
  */
-data class PhaseAudio(val type: PhaseType, val durationMs: Long, val open: Boolean, val level: BreathLevel? = null)
+data class PhaseAudio(
+    val type: PhaseType,
+    val durationMs: Long,
+    val open: Boolean,
+    val level: BreathLevel? = null,
+    val elapsedMs: Long = 0L,
+)

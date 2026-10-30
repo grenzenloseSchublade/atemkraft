@@ -138,12 +138,18 @@ interface PreviewSoundOutput {
  * Echte Ausgabe: eigene Instanzen von [ToneCuePlayer] und [ContinuousTonePlayer] (die Session hält
  * ihre im ViewModel, `SessionAudioCoordinator`) und derselbe Audio-Fokus ([AudioFocusController]).
  * Der Dauerton wird wie am Session-Ende erst ausgeblendet und nach [FADE_OUT_MS] beendet – kein
- * Knacken; läuft die Vorschau vorher weiter, bleibt der Thread.
+ * Knacken; läuft die Vorschau vorher weiter, bleibt der Thread. Nimmt ein Anruf oder eine andere
+ * App den Fokus, schweigt die Vorschau, bis er zurückkommt (AUDIO-02).
  */
 class AppPreviewSoundOutput(context: Context) : PreviewSoundOutput {
     private val tone = ToneCuePlayer()
     private val continuousTone = ContinuousTonePlayer()
-    private val focus = AudioFocusController(context)
+    private val focus = AudioFocusController(context) { lost ->
+        when {
+            lost -> continuousTone.mute()
+            continuousTone.isRunning -> continuousTone.unmute()
+        }
+    }
     private val handler = Handler(Looper.getMainLooper())
     private val stopContinuous = Runnable { continuousTone.stop() }
 
@@ -153,12 +159,14 @@ class AppPreviewSoundOutput(context: Context) : PreviewSoundOutput {
         continuousTone.setEmphasis(settings.transition)
     }
 
-    override fun cue(event: CueEvent) = tone.play(event)
+    override fun cue(event: CueEvent) {
+        if (!focus.lost) tone.play(event)
+    }
 
     override fun continuous(phase: PhaseAudio) {
         handler.removeCallbacks(stopContinuous)
         continuousTone.start()
-        continuousTone.onPhase(phase.type, phase.durationMs, phase.open, level = phase.level)
+        continuousTone.onPhase(phase.type, phase.durationMs, phase.open, raiseGain = !focus.lost, level = phase.level, elapsedMs = phase.elapsedMs)
     }
 
     override fun silence() {

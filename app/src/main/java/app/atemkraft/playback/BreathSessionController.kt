@@ -319,9 +319,12 @@ class BreathSessionController(
         while (index < timeline.size) {
             val phase = timeline[index]
             // Durchgehender Ton: Phasenbeginn (auch beim Fortsetzen, damit der Ton wieder anläuft).
-            val fixedMs = (phase.duration as? PhaseDuration.Fixed)?.let { resumeRemainingMs ?: it.millis } ?: 0L
+            val fixed = phase.duration as? PhaseDuration.Fixed
+            val fixedMs = fixed?.let { resumeRemainingMs ?: it.millis } ?: 0L
+            // Beim Fortsetzen geht die Tonhöhe dort weiter, wo die Pause sie anhielt (S-19).
+            val elapsedMs = fixed?.let { (it.millis - fixedMs).coerceAtLeast(0L) } ?: 0L
             // Die Tonhöhe folgt dem Füllstand des Kreises – auch sie stetig über die Phasengrenzen.
-            phaseEvents.tryEmit(PhaseAudio(phase.type, fixedMs, phase.duration !is PhaseDuration.Fixed, phase.circle))
+            phaseEvents.tryEmit(PhaseAudio(phase.type, fixedMs, fixed == null, phase.circle, elapsedMs))
             // Cue nur zum echten Phasenbeginn, nicht beim Fortsetzen mitten in der Phase.
             if (resumeRemainingMs == null) {
                 cueEvents.tryEmit(phase.type.toCueEvent())

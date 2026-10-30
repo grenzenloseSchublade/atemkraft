@@ -12,6 +12,7 @@ import app.atemkraft.domain.SoundMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -37,7 +38,10 @@ class SessionAudioCoordinator(
 ) : BreathAudio {
     private val tonePlayer = ToneCuePlayer()
     private val continuousPlayer = ContinuousTonePlayer()
-    private val audioFocus = AudioFocusController(context)
+
+    /** Anruf oder andere App hat den Fokus genommen: Ton schweigt, Ablauf und Haptik laufen weiter (AUDIO-02). */
+    private val focusLost = MutableStateFlow(false)
+    private val audioFocus = AudioFocusController(context) { focusLost.value = it }
 
     /** Die zuletzt gelesenen Ton-Einstellungen (nach [bind]); für [finishTailMs]. */
     private var current: StateFlow<CueSettings>? = null
@@ -71,8 +75,8 @@ class SessionAudioCoordinator(
                 } else {
                     cfg.soundMode == SoundMode.CUES
                 }
-                // Stummschalter betrifft nur den Ton – Haptik folgt weiter der Einstellung.
-                if (toneWanted && !mutedState.value) tonePlayer.play(event)
+                // Stummschalter und Fokusverlust betreffen nur den Ton – Haptik folgt weiter der Einstellung.
+                if (toneWanted && !mutedState.value && !focusLost.value) tonePlayer.play(event)
                 hapticPlayer.play(event, enabled = cfg.haptics)
             }
         }
@@ -81,31 +85,41 @@ class SessionAudioCoordinator(
                 if (current.value.soundMode == SoundMode.CONTINUOUS) {
                     // Beim Stummschalten die Tonhöhe weiter mitführen (nur ohne Pegel), damit
                     // das Aufheben der Stummschaltung nicht auf einer alten Phase hängen bleibt.
-                    continuousPlayer.onPhase(pa.type, pa.durationMs, pa.open, raiseGain = !mutedState.value, level = pa.level)
+                    continuousPlayer.onPhase(
+                        pa.type,
+                        pa.durationMs,
+                        pa.open,
+                        raiseGain = !mutedState.value && !focusLost.value,
+                        level = pa.level,
+                        elapsedMs = pa.elapsedMs,
+                    )
                 }
             }
         }
         scope.launch {
             // collectLatest: Ein Statuswechsel bricht einen laufenden Ausklang-Delay ab, statt
             // dahinter zu warten – ein schneller Neustart bekommt Fokus/Ton sofort.
-            combine(status.distinctUntilChanged(), current, mutedState) { st, cfg, m ->
-                Triple(st, cfg, m)
-            }.collectLatest { (st, cfg, m) -> applyStatus(st, cfg, m) }
+            combine(status.distinctUntilChanged(), current, mutedState, focusLost) { st, cfg, m, lost ->
+                AudioInputs(st, cfg, m, lost)
+            }.collectLatest { applyStatus(it.status, it.cfg, it.muted, it.lost) }
         }
     }
+
+    private data class AudioInputs(val status: SessionStatus, val cfg: CueSettings, val muted: Boolean, val lost: Boolean)
 
     /**
      * Innerhalb der Session läuft der Player-Thread (bei Countdown/Pause stumm),
      * bei FINISHED/IDLE wird ausgeblendet, der Thread beendet und der Audio-Fokus
      * abgegeben – unabhängig davon, ob die Abschluss-Abfrage schon bestätigt wurde.
+     * [lost]: Ein Anruf oder eine andere App hält den Fokus – der Ton schweigt, bis er zurückkommt.
      */
-    private suspend fun applyStatus(status: SessionStatus, cfg: CueSettings, muted: Boolean) {
+    private suspend fun applyStatus(status: SessionStatus, cfg: CueSettings, muted: Boolean, lost: Boolean) {
         // „Nochmal“/neuer Start: Ein noch klingender Abschluss-Gong blendet kurz aus, statt in die
-        // neue Übung hineinzuklingen.
-        if (status == SessionStatus.PREPARING) tonePlayer.silenceGong()
+        // neue Übung hineinzuklingen; ebenso, wenn ein Anruf den Fokus nimmt.
+        if (status == SessionStatus.PREPARING || lost) tonePlayer.silenceGong()
         val inSession = status != SessionStatus.IDLE && status != SessionStatus.FINISHED
         val audible = (status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER) &&
-            !muted
+            !muted && !lost
 
         if (cfg.soundMode == SoundMode.CONTINUOUS && inSession) {
             continuousPlayer.start()
@@ -118,16 +132,16 @@ class SessionAudioCoordinator(
         }
 
         when {
-            // In der Pause den Fokus abgeben, damit fremde Medien nicht unnötig gedämpft bleiben,
-            // solange die Session still ruht (resume() fordert ihn wieder an).
-            inSession && status != SessionStatus.PAUSED && cfg.soundMode != SoundMode.OFF ->
+            // Fokus nur, solange etwas klingen kann (AUDIO-02): nicht in der Pause (resume() fordert
+            // ihn wieder an) und nicht stummgeschaltet – fremde Medien bleiben sonst unnötig gedämpft.
+            inSession && status != SessionStatus.PAUSED && cfg.soundMode != SoundMode.OFF && !muted ->
                 audioFocus.request()
 
             // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde Medien
-            // wieder auf volle Lautstärke gehen – aber nicht, wenn stumm (dann kommt kein Gong).
-            // Dauer dynamisch vom Player (Kurz/Lang-Profil), wie in der Meditation.
-            status == SessionStatus.FINISHED && cfg.soundMode != SoundMode.OFF && !muted -> {
-                delay(tonePlayer.gongTotalMs().toLong() + FINISH_MARGIN_MS)
+            // wieder auf volle Lautstärke gehen – aber nicht, wenn stumm oder der Fokus fort ist
+            // (dann kommt kein Gong). Dauer dynamisch vom Player (Kurz/Lang-Profil), wie in der Meditation.
+            status == SessionStatus.FINISHED && cfg.soundMode != SoundMode.OFF && !muted && !lost -> {
+                delay(tonePlayer.gongTotalMs() + ToneCuePlayer.GONG_END_RESERVE_MS)
                 audioFocus.abandon()
             }
 
@@ -142,14 +156,11 @@ class SessionAudioCoordinator(
      */
     override fun finishTailMs(muted: Boolean): Long {
         val cfg = current?.value ?: return 0L
-        return if (cfg.soundMode == SoundMode.OFF || muted) 0L else tonePlayer.gongTotalMs().toLong() + FINISH_MARGIN_MS
+        return if (cfg.soundMode == SoundMode.OFF || muted) 0L else tonePlayer.gongTotalMs() + ToneCuePlayer.GONG_END_RESERVE_MS
     }
 
     private companion object {
         /** Deckt die 60-ms-Ausblende des Players (`GAIN_FADE_SECONDS`) plus Puffer-Latenz ab. */
         const val FADE_OUT_MS = 180L
-
-        /** Reserve über die Gong-Gesamtdauer hinaus, bevor der Fokus abgegeben wird. */
-        const val FINISH_MARGIN_MS = 300L
     }
 }

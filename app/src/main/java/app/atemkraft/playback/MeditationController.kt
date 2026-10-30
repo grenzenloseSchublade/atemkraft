@@ -1,6 +1,7 @@
 package app.atemkraft.playback
 
 import android.os.SystemClock
+import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.data.LogbookRepository
 import app.atemkraft.data.MeditationCues
 import app.atemkraft.data.SettingsRepository
@@ -157,16 +158,30 @@ class MeditationController(
     /** Dieselbe Sitzung noch einmal starten (vom „Nochmal" auf dem Abschluss-Screen). */
     fun restart() = start(currentConfig)
 
-    /** Transienter In-Session-Stummschalter (ohne die Einstellung zu ändern). */
+    /**
+     * Transienter In-Session-Stummschalter (ohne die Einstellung zu ändern). Stumm gibt den
+     * Audio-Fokus ab, damit fremde Medien nicht geduckt bleiben; wieder an fordert ihn neu an,
+     * solange die Sitzung läuft (AUDIO-02).
+     */
     fun toggleMute() {
         val newMuted = !_state.value.muted
         audio.setMuted(newMuted)
         _state.update { it.copy(muted = newMuted) }
+        // Nur im Lauf: Pause und Ende regeln den Fokus selbst (dort klingt ggf. der End-Gong aus).
+        val status = _state.value.status
+        if (finishing || (status != MeditationStatus.PREPARING && status != MeditationStatus.RUNNING)) return
+        when {
+            newMuted -> audio.abandonFocus()
+            producesAudio() -> audio.requestFocus()
+        }
     }
 
-    /** Erzeugt die Sitzung überhaupt Ton? (sonst keinen Audio-Fokus anfordern, fremde Medien nicht ducken). */
-    private fun producesAudio(): Boolean = currentConfig.startEndGong || currentConfig.gongEveryMin != null ||
-        (currentConfig.speech && speechAvailable.value)
+    /**
+     * Erzeugt die Sitzung gerade Ton? Sonst keinen Audio-Fokus anfordern, fremde Medien nicht ducken
+     * – auch nicht, solange sie stummgeschaltet ist.
+     */
+    private fun producesAudio(): Boolean = !_state.value.muted &&
+        (currentConfig.startEndGong || currentConfig.gongEveryMin != null || (currentConfig.speech && speechAvailable.value))
 
     /**
      * Startet eine Meditation – die eine Funktion für den Start im Tab und für den Übergang nach
@@ -429,7 +444,7 @@ class MeditationController(
         }
         // Foreground-Service erst NACH dem Ausklingen des Gongs beenden, damit er auch bei
         // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
-        if (currentConfig.startEndGong) delay(audio.gongTotalMs().toLong() + FINISH_ABANDON_MARGIN_MS)
+        if (currentConfig.startEndGong) delay(audio.gongTotalMs() + ToneCuePlayer.GONG_END_RESERVE_MS)
         audio.abandonFocus()
         service.stop()
     }
@@ -450,12 +465,6 @@ class MeditationController(
         private const val FIRST_MAX_MS = 40_000L
         private const val GAP_MIN_MS = 45_000L
         private const val GAP_MAX_MS = 120_000L
-
-        /**
-         * Reserve über die Gong-Gesamtdauer hinaus, bevor Fokus/Service enden – damit der End-Gong
-         * (Ton + Stille-Puffer, je nach Profil) sicher komplett ausklingt.
-         */
-        private const val FINISH_ABANDON_MARGIN_MS = 500L
     }
 }
 

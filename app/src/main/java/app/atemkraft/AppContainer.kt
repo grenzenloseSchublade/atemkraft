@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.atemkraft.cue.HapticPlayer
-import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
 import app.atemkraft.data.ExerciseRepository
@@ -15,6 +14,7 @@ import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.local.AtemkraftDatabase
 import app.atemkraft.domain.supervisedScope
 import app.atemkraft.playback.BreathSessionController
+import app.atemkraft.playback.GongPreview
 import app.atemkraft.playback.MeditationAudioCoordinator
 import app.atemkraft.playback.MeditationController
 import app.atemkraft.playback.PlaybackServiceLinks
@@ -68,7 +68,7 @@ class AppContainer(context: Context) {
     val voiceSamplePlayer: VoiceSamplePlayer = VoiceSamplePlayer(context)
 
     /** Vorhören des Gongs in den Einstellungen (eigene Instanz, unabhängig von laufenden Sessions). */
-    val gongPreviewPlayer: ToneCuePlayer = ToneCuePlayer()
+    val gongPreview: GongPreview = GongPreview(context)
 
     /** Vibration: Phasen der Atem-Session, Tipp-Tick am Kreis, Rasten des Zeitrings (eine Instanz, AUDIO-04). */
     val hapticPlayer: HapticPlayer = HapticPlayer(context)
@@ -133,7 +133,7 @@ class AppContainer(context: Context) {
                 voices = voiceModelManager,
                 meditation = meditationController,
                 logbook = logbookRepository,
-                gongPreview = gongPreviewPlayer,
+                gongPreview = gongPreview,
                 voiceSamples = voiceSamplePlayer,
             )
         }

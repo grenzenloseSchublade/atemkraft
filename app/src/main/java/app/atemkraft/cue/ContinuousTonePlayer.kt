@@ -30,8 +30,10 @@ class ContinuousTonePlayer {
      * Frequenz-Glide einer Phase als EIN unveränderliches Objekt publiziert – der Audio-Thread
      * liest es atomar (kein Tearing über mehrere Volatiles: ein Puffer konnte sonst neue
      * Frequenzen mit alter Ramp-Position mischen → kurzer Pitch-Sprung am Phasenwechsel).
+     * [startSample]: Position, an der der Glide beginnt – beim Fortsetzen mitten in der Phase nicht
+     * 0, sonst finge die Tonhöhe wieder beim Phasenanfang an (S-19).
      */
-    private class Ramp(val startFreq: Double, val endFreq: Double, val totalSamples: Long)
+    private class Ramp(val startFreq: Double, val endFreq: Double, val totalSamples: Long, val startSample: Long = 0L)
 
     @Volatile private var ramp = Ramp(LOW, LOW, 0L)
 
@@ -92,12 +94,23 @@ class ContinuousTonePlayer {
     /**
      * Neue Phase: setzt den Frequenz-Glide und blendet den Ton ein. [raiseGain] = false hält
      * den Ton stumm (z. B. In-Session-Mute), aktualisiert aber die Tonhöhe weiter, damit nach
-     * dem Aufheben der Stummschaltung sofort die richtige Phase klingt.
+     * dem Aufheben der Stummschaltung sofort die richtige Phase klingt. [durationMs] ist die
+     * (Rest-)Dauer; [elapsedMs] der beim Fortsetzen schon vergangene Teil der Phase – der Glide
+     * geht dann von der Tonhöhe an dieser Stelle weiter statt von vorn.
      */
-    fun onPhase(type: PhaseType, durationMs: Long, open: Boolean, raiseGain: Boolean = true, level: BreathLevel? = null) {
+    fun onPhase(
+        type: PhaseType,
+        durationMs: Long,
+        open: Boolean,
+        raiseGain: Boolean = true,
+        level: BreathLevel? = null,
+        elapsedMs: Long = 0L,
+    ) {
         val (f0, f1) = level?.let { freqAt(it.from) to freqAt(it.to) } ?: freqsFor(type)
-        val total = if (open || durationMs <= 0L) 0L else durationMs * SAMPLE_RATE / 1000L
-        ramp = Ramp(f0, f1, total) // neue Identität → Audio-Thread setzt seine Position auf 0
+        val fixed = !open && durationMs > 0L
+        val done = if (fixed) elapsedMs.coerceAtLeast(0L) * SAMPLE_RATE / 1000L else 0L
+        val total = if (fixed) done + durationMs * SAMPLE_RATE / 1000L else 0L
+        ramp = Ramp(f0, f1, total, done) // neue Identität → Audio-Thread springt auf startSample
         if (raiseGain) targetGain = 1f
         // Kurze Lautstärke-Zäsur markiert den Phasenwechsel hörbar (ohne harten Beep).
         pendingArticulation = true
@@ -137,7 +150,7 @@ class ContinuousTonePlayer {
         var articStage = 2 // 0 = absenken, 1 = anschwellen, 2 = ruhend
         var articPos = 0
         // Lokale Ramp-Sicht des Audio-Threads: Position gehört dem Thread, Parameter kommen
-        // atomar über die ramp-Referenz; neue Identität = Position zurück auf 0.
+        // atomar über die ramp-Referenz; neue Identität = Position zurück auf ihren Start.
         var curRamp = ramp
         var rampPos = 0L
         try {
@@ -145,7 +158,7 @@ class ContinuousTonePlayer {
                 val r = ramp
                 if (r !== curRamp) {
                     curRamp = r
-                    rampPos = 0L
+                    rampPos = r.startSample
                 }
                 if (pendingArticulation) {
                     pendingArticulation = false

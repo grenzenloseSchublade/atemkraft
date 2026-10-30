@@ -15,7 +15,7 @@ Regeln: [STYLEGUIDE TEXT-15](../STYLEGUIDE.md#text) (Texte nach einem Muster), L
 
 - Ein Schalter steht in der Zeile seines Namens, der Hinweis darunter in der Textspalte: Er endet vor dem Schalter, statt unter ihn zu laufen (`ToggleRow`: Hinweis mit `padding(end = SwitchWidth + Abstand)`). Switch in M3-Größe, sichtbar bündig; die ganze Zeile `toggleable(Role.Switch)`, ≥ 48 dp.
 - **Feste Endspalten** (`TrailingRow` in `SettingsColumns.kt`): Zeilen mit Vorhören und Aktionen haben rechts drei Fächer – Vorhören (48 dp), Zustand (Breite gemessen an der breitesten Beschriftung „Laden“/„Wählen“/„✓ Aktiv“ samt Text-Button-Polster, `rememberWidestTextWidth`) und Icon-Spalte (`flushEnd(inCard = true)`). Leere Fächer behalten ihre Breite: Alle Play-Knöpfe der Stimmenliste stehen untereinander, ebenso Löschen und Abbrechen der Stimmen und der Papierkorb der Zeile „Logbuch“. Passt der Text daneben nicht ohne Wortbruch, stehen die Fächer unter dem Text.
-- Das Gong-Vorhören („Gong-Nachhall“) steht in der Reihe der Auswahl: Kurz/Lang belegen zwei Drittel, das Play mittig im freien Drittel – alle Segmente der Karten „Klang“ und „Atemübung“ sind ein Drittel breit.
+- Das Gong-Vorhören („Gong-Nachhall“) steht in der Reihe der Auswahl: Kurz/Lang belegen zwei Drittel, das Play mittig im freien Drittel – alle Segmente der Karten „Klang“ und „Atemübung“ sind ein Drittel breit. Es hält Audio-Fokus wie eine Session (`playback/GongPreview`, AUDIO-02), weitere Taps während des Gongs zählen nicht.
 - Stepper (`Stepper`): Label links mit `weight(1f)`, Knöpfe als rechte Spalte, der sichtbare Kreis von „+“ bündig an der Inhaltskante (Polster rechts um `CircleOverhang` kleiner).
 
 ## Aufbau und Wege

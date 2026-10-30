@@ -9,7 +9,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.PI
 import kotlin.math.cos
@@ -57,17 +56,17 @@ class ToneCuePlayer {
         gongLong = long
     }
 
-    private val gongBusy = AtomicBoolean(false)
-
     /**
-     * Vorhören in den Einstellungen: spielt den Gong im gewünschten Profil genau einmal;
-     * weitere Taps während der laufenden Wiedergabe werden ignoriert (kein Aufstauen).
+     * Vorhören in den Einstellungen: spielt den Gong im Profil [long] einmal; [onDone] läuft nach
+     * seinem Ende auf dem Gong-Thread, auch wenn er entfällt (gibt dort den Audio-Fokus wieder ab).
      */
-    fun previewGong(long: Boolean) {
-        if (released) return
-        if (!gongBusy.compareAndSet(false, true)) return
+    fun previewGong(long: Boolean, onDone: () -> Unit) {
+        if (released) {
+            onDone()
+            return
+        }
         gongLong = long
-        playGong(long) { gongBusy.set(false) }
+        playGong(long, onDone)
     }
 
     /** Gesamt-Wiedergabedauer des Gongs (Ton + Stille) fürs aktuelle Profil – für Warte-/Fokus-Timing. */
@@ -207,6 +206,13 @@ class ToneCuePlayer {
 
         /** Reserve nach dem Pufferende, bevor ein Track gestoppt wird (HAL-/Bluetooth-Latenz). */
         const val RELEASE_RESERVE_MS = 300
+
+        /**
+         * Reserve über [gongTotalMs] hinaus, bevor Audio-Fokus und Foreground-Service nach dem
+         * Abschluss-Gong enden (AUDIO-02) – eine Zahl für Atemübung und Meditation. Größer als
+         * [RELEASE_RESERVE_MS]: Erst stoppt der Track, dann geht der Fokus.
+         */
+        const val GONG_END_RESERVE_MS = 500L
 
         /** Takt, in dem ein klingender Gong prüft, ob er ausblenden soll; zugleich Schritt der Ausblende. */
         const val POLL_MS = 20L

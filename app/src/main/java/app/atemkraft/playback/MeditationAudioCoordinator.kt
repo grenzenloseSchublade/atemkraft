@@ -28,10 +28,20 @@ class MeditationAudioCoordinator(
     private val voiceModelManager: VoiceModelManager,
 ) : MeditationAudio {
     private val tonePlayer = ToneCuePlayer()
-    private val audioFocus = AudioFocusController(context)
 
     private val piper = PiperSpeechGuide(context, voiceModelManager)
     private val system = SpeechGuide(context)
+
+    /**
+     * Nimmt ein Anruf oder eine andere App den Fokus, verstummen Gong und Ansage sofort; die
+     * Meditation läuft still weiter, bis er zurückkommt (AUDIO-02).
+     */
+    private val audioFocus = AudioFocusController(context) { lost ->
+        if (lost) {
+            stopSpeech()
+            tonePlayer.silenceGong()
+        }
+    }
 
     private val scope = supervisedScope(Dispatchers.Main.immediate)
 
@@ -85,13 +95,13 @@ class MeditationAudioCoordinator(
 
     override fun abandonFocus() = audioFocus.abandon()
 
-    /** Weicher Klangschalen-Gong (Start, Intervall, Ende) – außer stummgeschaltet. */
+    /** Weicher Klangschalen-Gong (Start, Intervall, Ende) – außer stummgeschaltet oder ohne Fokus. */
     override fun gong() {
-        if (!muted) tonePlayer.play(CueEvent.FINISH)
+        if (!muted && !audioFocus.lost) tonePlayer.play(CueEvent.FINISH)
     }
 
     override fun speak(text: String) {
-        if (muted) return
+        if (muted || audioFocus.lost) return
         engine().speak(text)
     }
 

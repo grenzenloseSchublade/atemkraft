@@ -38,6 +38,7 @@ import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.approxMinutes
@@ -222,11 +223,15 @@ fun PatternEditorScreen(
     if (showRename) RenameDialog(state, onDismiss = { showRename = false })
 }
 
-/** Ton der Phase [index] von [exercise] (Typ und Füllstand wie in der Übung), Restdauer [remainingMs]. */
+/**
+ * Ton der Phase [index] von [exercise] (Typ und Füllstand wie in der Übung), Restdauer [remainingMs];
+ * mitten in der Phase geht der Dauerton an der Tonhöhe dieser Stelle weiter (S-19).
+ */
 private fun phaseAudio(exercise: Exercise, index: Int, remainingMs: Long): PhaseAudio {
     val phase = exercise.segments.firstOrNull()?.phases?.getOrNull(index)
         ?: return PhaseAudio(PhaseType.INHALE, remainingMs, open = false)
-    return PhaseAudio(phase.type, remainingMs, open = false, level = phase.level)
+    val elapsedMs = (phase.duration as? PhaseDuration.Fixed)?.let { (it.millis - remainingMs).coerceAtLeast(0L) } ?: 0L
+    return PhaseAudio(phase.type, remainingMs, open = false, level = phase.level, elapsedMs = elapsedMs)
 }
 
 /**

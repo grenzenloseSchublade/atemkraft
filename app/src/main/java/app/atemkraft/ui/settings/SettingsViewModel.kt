@@ -2,7 +2,6 @@ package app.atemkraft.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.tts.VoiceDownloadState
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.cue.tts.VoiceSamplePlayer
@@ -17,6 +16,7 @@ import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
 import app.atemkraft.domain.VoiceSpec
+import app.atemkraft.playback.GongPreview
 import app.atemkraft.playback.MeditationController
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -97,7 +97,7 @@ class SettingsViewModel(
     private val voices: VoiceModelManager,
     private val meditation: MeditationController,
     private val logbook: LogbookRepository,
-    private val gongPreview: ToneCuePlayer,
+    private val gongPreview: GongPreview,
     private val voiceSamples: VoiceSamplePlayer,
 ) : ViewModel() {
 
@@ -166,10 +166,7 @@ class SettingsViewModel(
         override fun setGongLong(long: Boolean) = write { settings.setGongLong(long) }
 
         /** Gong zum Vorhören in der eingestellten Lautstärke und Länge. */
-        override fun previewGong() {
-            gongPreview.setVolume(state.value.volume)
-            gongPreview.previewGong(state.value.gongLong)
-        }
+        override fun previewGong() = gongPreview.play(state.value.volume, state.value.gongLong)
 
         override fun sampleVoice(spec: VoiceSpec) = voiceSamples.play(spec.sampleAsset)
 
