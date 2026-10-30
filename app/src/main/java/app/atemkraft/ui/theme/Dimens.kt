@@ -59,7 +59,7 @@ object Dimens {
     /** Minimale Lücke: Hint unter einer Zeile, Icon ↔ Text. */
     val GapTiny = 4.dp
 
-    /** Haarlinie: Eyebrow → Titel, Divider (2, Raster-Ausnahme). */
+    /** Haarlinie: enge Divider, Rest des Überstands einer Kopf-Aktion (2, Raster-Ausnahme). */
     val GapHairline = 2.dp
 
     /**

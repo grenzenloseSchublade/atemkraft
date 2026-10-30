@@ -69,7 +69,8 @@ internal fun VoiceRow(
     onSelect: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val focus = rememberVoiceRowFocus(state)
+    val focus = rememberVoiceRowFocus(state, chooseShown = !active)
+    val current by rememberUpdatedState(state)
     TrailingRow(
         columns,
         modifier = Modifier.padding(vertical = Dimens.GapTiny),
@@ -91,7 +92,18 @@ internal fun VoiceRow(
                 // Abbrechen: delete() bricht den laufenden Download-Job ab und räumt Reste weg.
                 is VoiceDownloadState.Downloading -> AppIconButton(
                     onClick = { focus.leaving(state, focus.iconFocused, onDelete) },
-                    modifier = Modifier.focusRequester(focus.cancel).then(tracked),
+                    // Merkt sich, ob „Abbrechen“ den Fokus hatte, auch wenn der Knopf mit dem Ende
+                    // des Downloads verschwindet (dann ist der Zustand schon ein anderer).
+                    modifier = Modifier
+                        .focusRequester(focus.cancel)
+                        .onFocusChanged {
+                            if (it.hasFocus) {
+                                focus.cancelHadFocus = true
+                            } else if (current is VoiceDownloadState.Downloading) {
+                                focus.cancelHadFocus = false
+                            }
+                        }
+                        .then(tracked),
                 ) {
                     Icon(
                         Icons.Filled.Close,
@@ -183,7 +195,9 @@ private fun VoiceStateAction(
 
             active -> CircularProgressIndicator(modifier = Modifier.size(Sizes.ProgressInline), strokeWidth = Sizes.ProgressStroke)
 
-            else -> AppTextButton(onClick = onSelect) { Text(stringResource(R.string.settings_voice_choose), maxLines = 1) }
+            else -> AppTextButton(onClick = onSelect, modifier = Modifier.focusRequester(focus.choose)) {
+                Text(stringResource(R.string.settings_voice_choose), maxLines = 1)
+            }
         }
 
         else -> // NotDownloaded / Failed
@@ -195,14 +209,17 @@ private fun VoiceStateAction(
 }
 
 /**
- * Fokusziele einer Stimmen-Zeile (A11Y-07): [load] („Laden“) und [cancel] („Abbrechen“). [leaving]
- * merkt sich vor der Aktion den Zustand, wenn der Fokus mitgehen soll; beim nächsten Wechsel des
- * Zustands bekommt der Knopf des neuen Zustands den Fokus.
+ * Fokusziele einer Stimmen-Zeile (A11Y-07): [load] („Laden“), [cancel] („Abbrechen“) und [choose]
+ * („Wählen“). [leaving] merkt sich vor der Aktion den Zustand, wenn der Fokus mitgehen soll; beim
+ * nächsten Wechsel des Zustands bekommt der Knopf des neuen Zustands den Fokus. Wird ein Download
+ * fertig, während „Abbrechen“ den Fokus hat ([cancelHadFocus]), geht er auf „Wählen“ über.
  */
 @Stable
 private class VoiceRowFocus(private val a11yActive: () -> Boolean) {
     val load = FocusRequester()
     val cancel = FocusRequester()
+    val choose = FocusRequester()
+    var cancelHadFocus by mutableStateOf(false)
     var loadFocused by mutableStateOf(false)
     var iconFocused by mutableStateOf(false)
     var from by mutableStateOf<KClass<out VoiceDownloadState>?>(null)
@@ -214,9 +231,16 @@ private class VoiceRowFocus(private val a11yActive: () -> Boolean) {
 }
 
 @Composable
-private fun rememberVoiceRowFocus(state: VoiceDownloadState): VoiceRowFocus {
+private fun rememberVoiceRowFocus(state: VoiceDownloadState, chooseShown: Boolean): VoiceRowFocus {
     val a11yActive by rememberUpdatedState(rememberAccessibilityActive())
     val focus = remember { VoiceRowFocus { a11yActive } }
+    // Download von selbst fertig: Der Fokus lag auf „Abbrechen“, das jetzt verschwindet.
+    LaunchedEffect(state::class) {
+        if (state !is VoiceDownloadState.Downloading && focus.cancelHadFocus) {
+            focus.cancelHadFocus = false
+            if (state is VoiceDownloadState.Downloaded && chooseShown) focus.choose.requestFocus()
+        }
+    }
     LaunchedEffect(focus.from, state::class) {
         val from = focus.from ?: return@LaunchedEffect
         if (state::class == from) return@LaunchedEffect // Wechsel steht noch aus

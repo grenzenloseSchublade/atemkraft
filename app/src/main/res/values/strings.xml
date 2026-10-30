@@ -129,7 +129,7 @@
     <string name="session_paused">Pausiert</string>
     <string name="meditation_running">Läuft</string>
 
-    <!-- Tagesmuster-Karte: Eyebrow in der Kopfzeile der Karte (in Großbuchstaben gesetzt), Charakter, Aktionen. -->
+    <!-- Titel der Kopfzeile „Muster des Tages ›“ im Atmen-Tab und ihres Blatts. -->
     <string name="home_daily_pattern">Muster des Tages</string>
     <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Zahlen von heute („4-2-6“), %2$s Charakter („ruhig“). -->
     <string name="home_daily_teaser">Heute %1$s, %2$s\u00A0· oder selbst gestalten</string>

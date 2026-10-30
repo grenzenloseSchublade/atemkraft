@@ -200,7 +200,7 @@ fun OwnPatternsScreen(
  * Leerzustand unter „Eigene Kreationen“ (MUSTER-04): eine ruhige Fläche (`surfaceContainerLow`,
  * Kartenform, Polster `CardPadding`) mit dem Satz „Noch keine eigenen Kreationen …“ und darunter
  * der Einstieg „Muster gestalten ›“ als Verweis ([ForwardLinkText] im bündigen [AppTextButton] in
- * `primary`, wie der Verweis der Willkommenskarte) – kein großer Knopf (Nutzer 2026-10-24); das
+ * `secondary`, wie jeder Verweis im Inhalt und der Verweis der Willkommenskarte, FARBE-04) – kein großer Knopf (Nutzer 2026-10-24); das
  * „+“ im Kopf bleibt der zweite Weg und mit Kreationen der einzige.
  */
 @Composable
@@ -214,7 +214,7 @@ private fun EmptyCreationsCard(onNewPattern: () -> Unit) {
             HintText(stringResource(R.string.own_empty))
             // Bündig: Das Polster des Text-Buttons ragt in den Rand.
             AppTextButton(onClick = onNewPattern, modifier = Modifier.flushStart(inCard = true)) {
-                ForwardLinkText(text = stringResource(R.string.own_design_pattern), color = MaterialTheme.colorScheme.primary)
+                ForwardLinkText(text = stringResource(R.string.own_design_pattern), color = MaterialTheme.colorScheme.secondary)
             }
         }
     }

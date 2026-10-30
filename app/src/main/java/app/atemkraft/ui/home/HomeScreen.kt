@@ -33,16 +33,13 @@ import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
 import app.atemkraft.domain.area
-import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ExerciseCard
-import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.GroupLabel
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
-import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
