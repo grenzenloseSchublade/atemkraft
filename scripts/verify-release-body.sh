@@ -7,4 +7,6 @@
 #   scripts/verify-release-body.sh --tag v2.9.0 --body <datei> atemkraft-v2.9.0*.apk   # Schritt 7
 set -euo pipefail
 export LC_ALL=C.UTF-8
-exec python3 "$(dirname "${BASH_SOURCE[0]}")/verify_release_body.py" "$@"
+# -I: keine Module aus PYTHONPATH, Arbeitsordner oder Nutzer-site; verify_apk holt das Skript selbst
+# aus seinem Ordner (sys.path.insert).
+exec python3 -I "$(dirname "${BASH_SOURCE[0]}")/verify_release_body.py" "$@"

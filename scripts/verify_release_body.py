@@ -37,6 +37,8 @@ from verify_apk import RELEASE_CERT_SHA256  # noqa: E402  (eine Quelle für den 
 
 ABIS = ["", "-arm64-v8a", "-armeabi-v7a"]  # SEC-BUILD-05: Asset-Namen je Release
 CHANGELOGS = "fastlane/metadata/android/de-DE/changelogs"
+# Ein SHA-256-Fingerprint als Ganzes: 32 Hex-Paare, wahlweise mit „:“ oder Leerzeichen getrennt.
+FINGERPRINT = re.compile(r"(?<![0-9A-Fa-f:])((?:[0-9A-Fa-f]{2}[: ]?){31}[0-9A-Fa-f]{2})(?![0-9A-Fa-f:])")
 
 
 def git(*args: str) -> str:
@@ -167,9 +169,16 @@ def main() -> int:
             elif listed[p.name] != digest:
                 fail("release-sha256", f"{p.name}: Body {listed[p.name][:12]}… ≠ Datei {digest[:12]}…")
 
-        # release-fingerprint
-        flat = re.sub(r"[^0-9a-f]", "", body.lower())
-        if RELEASE_CERT_SHA256 not in flat:
+        # release-fingerprint: nur ganze Fingerprints (64 Hex, auch in Paaren mit „:“ oder Leerzeichen)
+        # in Zeilen, die „Fingerprint“ oder „SHA-256“ nennen. Nicht den ganzen Body zu Hex
+        # zusammenschieben: Sonst könnte der Wert aus Bruchstücken quer durch den Text entstehen.
+        fingerprints = {
+            re.sub(r"[: ]", "", m.group(1)).lower()
+            for line in body.splitlines()
+            if re.search(r"fingerprint|sha-?256", line, re.I)
+            for m in FINGERPRINT.finditer(line)
+        }
+        if RELEASE_CERT_SHA256 not in fingerprints:
             fail("release-fingerprint", f"Signatur-Fingerprint {RELEASE_CERT_SHA256[:8]}…{RELEASE_CERT_SHA256[-4:]} fehlt im Body")
 
     for e in errors:
