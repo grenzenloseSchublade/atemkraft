@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -44,6 +45,7 @@ import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.DividerSubtle
 
 /**
  * Was der Atmen-Tab zeigt und gleich bleibt, solange die App läuft: die angeleiteten Übungen nach
@@ -210,9 +212,21 @@ fun HomeScreen(
             }
         }
         // „Muster des Tages ›“ steht in jedem Zustand an derselben Stelle und öffnet das Blatt mit
-        // Tagesmuster und „Selbst gestalten“ (Nutzer 2026-10-30).
+        // Tagesmuster und „Selbst gestalten“ (Nutzer 2026-10-30). Darunter trennt eine Linie den
+        // Einstieg von der Liste; ihr Kopf heißt „Übungen“ oder, mit Anlass, Suche oder Bereich,
+        // „Passende Übungen“ – so liest sich nichts als Inhalt des Tagesmusters.
         item(key = "daily") {
-            DailyPatternEntry(daily = daily, onClick = { dailySheetOpen = true })
+            Column(modifier = Modifier.fillMaxWidth()) {
+                DailyPatternEntry(daily = daily, onClick = { dailySheetOpen = true })
+                // Die tippbare Zeile polstert unten GapSmall selbst; sichtbar bleibt SectionGap.
+                Spacer(Modifier.height(Dimens.GapSmall))
+                HorizontalDivider(color = DividerSubtle)
+            }
+        }
+        if (filtering) {
+            item(key = "results-head") {
+                SectionHeader(title = stringResource(R.string.home_results), top = HEADER_BELOW_DIVIDER)
+            }
         }
         if (results != null && chosen == null && chosenArea == null) {
             item(key = "search-status") {
@@ -266,7 +280,7 @@ fun HomeScreen(
             // (SectionGap).
             item(key = "exercises") {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeader(title = stringResource(R.string.home_all_exercises))
+                    SectionHeader(title = stringResource(R.string.home_all_exercises), top = HEADER_BELOW_DIVIDER)
                     Spacer(Modifier.height(Dimens.GapTiny))
                     ExerciseFilterRow(active = filters, onToggle = { filters = if (it in filters) filters - it else filters + it })
                     if (filters.isNotEmpty()) {
@@ -307,6 +321,12 @@ fun HomeScreen(
         )
     }
 }
+
+/**
+ * Abstand über dem Kopf „Übungen“ bzw. „Passende Übungen“ unter der Linie: Mit dem ListGap der
+ * Liste stehen sichtbar SectionGap zwischen Linie und Kopf, wie über der Linie.
+ */
+private val HEADER_BELOW_DIVIDER = Dimens.SectionGap - Dimens.ListGap
 
 /**
  * Abstand über dem ersten Gruppenlabel direkt unter der Filterreihe: Die Chips tragen unter sich

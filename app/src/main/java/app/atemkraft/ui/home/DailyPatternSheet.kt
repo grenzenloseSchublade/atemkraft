@@ -31,13 +31,11 @@ import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.PatternTexts
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
-import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.BreathMarkIcon
-import app.atemkraft.ui.components.ForwardLinkText
+import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.SectionHeader
-import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 
@@ -62,7 +60,7 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
 /**
  * Blatt „Muster des Tages“ (Nutzer 2026-10-30): oben das generierte Muster als Karte mit ↻ „Neu
  * generieren“ und ◉ „In Eigene speichern“ (Tipp auf die Karte öffnet die Detailseite), darunter
- * „Selbst gestalten“ mit dem Verweis „Muster gestalten ›“ in den Muster-Editor. Beides an einem Ort:
+ * die Karte „Selbst gestalten ›“ ([NavCard]), die den Muster-Editor öffnet. Beides an einem Ort:
  * Wer mit dem Tagesmuster spielt, findet hier den nächsten Schritt, sein eigenes zu bauen.
  *
  * Gerüst wie [app.atemkraft.ui.meditation.SoundSheet] (Anatomie „Bottom Sheet“, §4.5): ganz
@@ -101,13 +99,14 @@ internal fun DailyPatternSheet(
             BodyText(stringResource(R.string.home_daily_sheet_intro))
             Spacer(Modifier.height(Dimens.ListGap))
             DailyPatternCard(daily = daily, saved = saved, onClick = onOpen, onSavedChange = onSavedChange, onRegenerate = onRegenerate)
-            SectionHeader(title = stringResource(R.string.home_create_title))
-            Spacer(Modifier.height(Dimens.HeaderGap))
-            BodyText(stringResource(R.string.home_create_intro))
-            // Bündig: Das Polster des Text-Buttons ragt in den Rand.
-            AppTextButton(onClick = onNewPattern, modifier = Modifier.flushStart()) {
-                ForwardLinkText(text = stringResource(R.string.own_design_pattern), color = MaterialTheme.colorScheme.secondary)
-            }
+            Spacer(Modifier.height(Dimens.ListGap))
+            // Selbst gestalten als ganze Karte: Die Kernfunktion ist so groß antippbar wie das
+            // Tagesmuster darüber, nicht nur ein Textverweis (Nutzer 2026-10-30).
+            NavCard(
+                title = stringResource(R.string.home_create_title),
+                hint = stringResource(R.string.home_create_intro),
+                onClick = onNewPattern,
+            )
         }
     }
 }

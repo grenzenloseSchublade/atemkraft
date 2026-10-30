@@ -136,6 +136,8 @@
     <string name="cd_daily_open">Muster des Tages öffnen</string>
     <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster aus Ein, Halten und Aus – zum Ausprobieren. Gefällt es dir, speicherst du es in „Eigene“.</string>
     <string name="home_create_title">Selbst gestalten</string>
+    <!-- Kopf über den Treffern bei Anlass, Suche oder Bereich (statt „Übungen“). -->
+    <string name="home_results">Passende Übungen</string>
     <string name="home_create_intro">Leg fest, wie lange du ein- und ausatmest und hältst. Was du speicherst, findest du in „Eigene“.</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="cd_pattern_regenerate">Muster neu generieren</string>
