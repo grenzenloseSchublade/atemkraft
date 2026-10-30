@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -40,6 +41,9 @@ private const val NANOS_PER_MILLI = 1_000_000L
 private const val MILLIS_PER_SECOND = 1000.0
 private const val NBSP = '\u00A0'
 
+/** Atemzüge, die der Punkt läuft, bevor er verschwindet – begrenzt wie die Durchläufe der Laufschrift. */
+private const val DOT_BREATHS = 3
+
 /**
  * Rhythmuskurve: ein Atemzug einer Übung ([BreathRhythm], aus `Exercise.breathRhythm()`) als dünne
  * Linie über die volle Breite, darunter die Phasen als Zeile („Einatmen 4 s · Halten voll 7 s ·
@@ -48,10 +52,13 @@ private const val NBSP = '\u00A0'
  * ([HoldDash]) in der Farbe seiner Höhe (ab halb voll `secondary`). Keine Füllung, keine Griffe,
  * keine Zeitleiste – die Werte trägt die Zeile.
  *
- * Ein kleiner Punkt ([Sizes.RhythmCurveDot], `onSurface`) läuft im echten Takt der Übung im Kreis
- * über die Kurve, ohne Ton. Der Takt kommt aus den Daten, nicht aus einer Animationsdauer
- * (MOTION-01); bei abgeschalteten System-Animationen ([rememberAnimationsEnabled]) fehlt der
- * Punkt, die Kurve steht (MOTION-02). In Tests mit Endlos-Animationen-Sperre steht er am Anfang.
+ * Ein kleiner Punkt ([Sizes.RhythmCurveDot], `onSurface`) läuft im echten Takt der Übung
+ * [DOT_BREATHS] Atemzüge lang über die Kurve, ohne Ton, dann verschwindet er und die Kurve steht:
+ * Neben dem Lesetext läuft nichts endlos (MOTION-02, WCAG 2.2.2), wie die Laufschrift
+ * ([MarqueeText]) nur dreimal läuft. Ein neuer Rhythmus (Phasen angepasst) startet ihn neu. Der
+ * Takt kommt aus den Daten, nicht aus einer Animationsdauer (MOTION-01); bei abgeschalteten
+ * System-Animationen ([rememberAnimationsEnabled]) fehlt der Punkt ganz. In Tests mit
+ * Endlos-Animationen-Sperre steht er am Anfang.
  *
  * [line] ersetzt die Zeile (Muster des Tages: dieselbe Musterzeile wie auf seiner Karte); ohne
  * sie entsteht sie aus den Phasen, gleiche Phasen hintereinander zusammengefasst („3 × Einatmen
@@ -85,12 +92,16 @@ fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: Strin
 
     val animate = rememberAnimationsEnabled()
     var time by remember(rhythm) { mutableLongStateOf(0L) }
-    if (animate) {
+    var running by remember(rhythm, animate) { mutableStateOf(animate) }
+    if (running) {
         LaunchedEffect(rhythm) {
+            // Lang laufend, aber begrenzt: über die Endlos-Variante, damit Tests nicht alle Atemzüge abwarten.
+            val end = rhythm.cycleMillis * DOT_BREATHS
             val start = withInfiniteAnimationFrameNanos { it }
-            while (true) {
+            while (time < end) {
                 withInfiniteAnimationFrameNanos { now -> time = (now - start) / NANOS_PER_MILLI }
             }
+            running = false
         }
     }
 
@@ -125,7 +136,7 @@ fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: Strin
                     pathEffect = if (step.hold) HoldDash.pathEffect(this) else null,
                 )
             }
-            if (animate) {
+            if (running) {
                 val now = time.mod(rhythm.cycleMillis.coerceAtLeast(1L))
                 drawCircle(dotColor, radius = Sizes.RhythmCurveDot.toPx() / 2f, center = Offset(x(now), y(rhythm.levelAt(now))))
             }

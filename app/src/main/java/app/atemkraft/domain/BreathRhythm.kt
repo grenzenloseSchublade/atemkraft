@@ -64,8 +64,9 @@ data class BreathRhythm(val steps: List<BreathStep>, val firstPartOnly: Boolean 
  * - Programme ohne Takt (`guided = false`): keine Kurve.
  * - Ein Teil je Runde: seine Phasen; zwei gleiche Hälften, die sich nur in der Seite
  *   unterscheiden (Nadi Shodhana), zählen einmal wie auf der Karte ([cardBreath]).
- * - Mehrere Teile je Runde (Wim Hof): nur der erste, [BreathRhythm.firstPartOnly]. Ohne Runden
- *   gäbe es kein „zu Beginn jeder Runde“ – dann keine Kurve.
+ * - Mehrere Teile je Runde (Wim Hof): nur der erste, [BreathRhythm.firstPartOnly] – auch bei einer
+ *   gewählten Runde, die ebenso damit beginnt (sonst verschwände die Kurve beim Runden-Stepper).
+ *   Kontinuierliche Übungen kürzt [adjusted] ohnehin auf ihren ersten Teil.
  * - Offene Phasen (Halten bis zum Tipp), Phasen unter 1 s (Feueratmung: ein Punkt, der hin und
  *   her zuckt, wäre nicht ruhig) und freies Atmen ([PhaseType.REST]): keine Kurve.
  *
@@ -76,7 +77,6 @@ fun Exercise.breathRhythm(): BreathRhythm? {
     if (!guided) return null
     val first = segments.firstOrNull() ?: return null
     val firstPartOnly = segments.size > 1
-    if (firstPartOnly && !isRoundBased) return null
     val phases = first.phases.oneHalfIfMirrored().map { perRound(it, 0) }
     if (phases.isEmpty()) return null
     if (phases.any { it.type == PhaseType.REST }) return null

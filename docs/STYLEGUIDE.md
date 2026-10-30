@@ -329,7 +329,7 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
  GapSmall · Kurzbeschreibung bodyMedium
  GapSmall
   ╱‾‾‾‾‾‾‾‾‾╲            ← RhythmCurveHeight 56, volle Breite, Strich 2: Ein secondary, Halten gestrichelt, Aus BreathExhale
- ●            ╲_____       ← Punkt 8 läuft im Takt der Übung (fehlt bei Animator-Skala 0)
+ ●            ╲_____       ← Punkt 8 läuft drei Atemzüge im Takt der Übung, dann steht die Kurve (fehlt bei Animator-Skala 0)
  GapTiny · Einatmen 4 s · Halten voll 7 s · Ausatmen 8 s   ← HintText, für TalkBack unsichtbar
  GapSmall · [ca. 4 min] [ruhig] · ⚠-Zeile · Expander
 ```
@@ -389,7 +389,7 @@ Je Zeile Nutzen, Nicht-für und A11y-Pflicht; wie etwas im Detail gebaut ist, st
 | `widestOf` / `rememberWidestTextWidth` / `rememberWidestAnnotatedWidth` (`ReserveMeasure.kt`) | Platz für den breitesten möglichen Inhalt (LAYOUT-03, „nichts springt“): unsichtbar messen statt `alpha(0f)` von Hand | – | Messinhalt ohne Semantik |
 | `rememberFirstLineHeight` (`TextBlocks.kt`) | Höhe der ersten Textzeile einer Rolle, gemessen – für Aktionen und Zeichen mittig auf der ersten Zeile (§4.5) | `lineHeight` in dp rechnen (ab Android 14 falsch) | – |
 | `DotSeparatedFlow` | Teile mit Trennpunkt, gierig je Zeile, zentriert; der Punkt nur zwischen Teilen einer Zeile (Session-Kopf, Bilanz) | fertige Texte (→ `splitAtDots`, TEXT-10) | – |
-| `RhythmCurve` (`RhythmCurve.kt`) | ein Atemzug einer Übung (`Exercise.breathRhythm()`) oben auf der Detailseite: dünne Linie in der Farbsprache der Editor-Kurve, Punkt im echten Takt (fehlt bei Animator-Skala 0), darunter die Phasenzeile; Anatomie §4.5 | Bearbeiten (→ `BreathCurveEditor`); Übungen ohne Takt, offene Phasen, Phasen unter 1 s (dann keine Kurve) | ein Knoten „Atemkurve: Einatmen 4 Sekunden, …“, Zeile für TalkBack unsichtbar, keine Live-Region |
+| `RhythmCurve` (`RhythmCurve.kt`) | ein Atemzug einer Übung (`Exercise.breathRhythm()`) oben auf der Detailseite: dünne Linie in der Farbsprache der Editor-Kurve, Punkt drei Atemzüge im echten Takt, dann still (fehlt bei Animator-Skala 0), darunter die Phasenzeile; Anatomie §4.5 | Bearbeiten (→ `BreathCurveEditor`); Übungen ohne Takt, offene Phasen, Phasen unter 1 s (dann keine Kurve) | ein Knoten „Atemkurve: Einatmen 4 Sekunden, …“, Zeile für TalkBack unsichtbar, keine Live-Region |
 | `PhaseMark` / `HoldDash` (`PhaseMark.kt`) | Marke einer Atemphase in Phasenfarbe (Halten gestrichelt); Farbe der freien Folge über `phaseColor` | große Kurve (→ `BreathCurveEditor`) | dekorativ, Wert im Text daneben |
 | `SlidingReset` | Zurücksetzen, das nur bei Abweichung hereingleitet (Split-Button, Editor-Leiste `compact`); `onFocusHandoff` gibt den Fokus an den Nachbarn | – | cd „Zurücksetzen“ am Icon |
 | `selectedRow` (`SelectedRow.kt`) | Auswahl einer Listenzeile ohne Häkchen: gewählt mit Fläche und dünnem Rand (Vorlagen, Ablauf, vāyu-Liste) | Einzelwahl in Reihen (→ `SegmentedChoiceRow`) | `selectable`/`toggleable` dazu |
