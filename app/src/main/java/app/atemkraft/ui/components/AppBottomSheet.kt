@@ -15,11 +15,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.hideFromAccessibility
@@ -27,6 +29,8 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import app.atemkraft.ui.theme.Dimens
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -52,10 +56,12 @@ import kotlinx.coroutines.launch
  *
  * Erst schließen, dann handeln: Ein Element, das woandershin führt oder etwas Großes öffnet
  * (Detailseite, Editor, Stimmen-Katalog, eine Wahl, nach der der Fokus wandert), ruft
- * [AppBottomSheetScope.closeThen] statt seiner Aktion. Sonst baut die neue Seite ihren ersten Frame
- * im selben Moment, in dem das Blatt-Fenster ohne Animation verschwindet und die Seite hineingleitet
- * (Messung am A54, 2026-10-30, Blatt → Editor: 6 % Ruckler, p99 97–150 ms). Der Zustand des Blatts
- * gehört deshalb [AppBottomSheet] allein; Aufrufer legen keinen `SheetState` an (`sheet-direct`).
+ * [AppBottomSheetScope.closeThen] statt seiner Aktion. So gleitet das Blatt sichtbar hinaus, statt
+ * ohne Animation zu verschwinden, und der Abbau seines Fensters fällt nicht mehr in denselben Frame
+ * wie der erste Frame der neuen Seite. Anlass war eine Messung am A54 vor dieser Trennung
+ * (2026-10-30, Blatt → Editor: 6 % Ruckler, p99 97–150 ms); ob die langen Frames damit weg sind,
+ * ist noch nicht gemessen. Der Zustand des Blatts gehört [AppBottomSheet] allein; Aufrufer legen
+ * keinen `SheetState` an (`sheet-direct`).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,9 +73,11 @@ fun AppBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    // Lebt länger als das Blatt (Seite bzw. Activity) und endet beim Drehen.
+    val owner = LocalLifecycleOwner.current
     val currentOnDismiss by rememberUpdatedState(onDismiss)
     // Einmal schließen, danach handeln (AppBottomSheetScope.closeThen); ein zweiter Tipp entfällt.
-    val closeThen: (() -> Unit) -> Unit = remember(sheetState, scope) {
+    val closeThen: (() -> Unit) -> Unit = remember(sheetState, scope, owner) {
         var closing = false
         { action ->
             if (!closing) {
@@ -78,7 +86,16 @@ fun AppBottomSheet(
                     // Hat das Blatt die Komposition schon verlassen (Drehen), gilt der Tipp nicht mehr.
                     if (scope.isActive) {
                         currentOnDismiss()
-                        action()
+                        // Die nächste Recomposition baut das Blatt-Fenster ab; die Aktion (Navigation,
+                        // Fokus) läuft erst zu Beginn des Frames danach. Zwei Takte, weil onDismiss vor
+                        // oder nach der Recomposition des laufenden Frames ankommen kann. Der Scope des
+                        // Blatts endet mit onDismiss, daher der des Besitzers mit dem Takt der Komposition.
+                        val clock = checkNotNull(scope.coroutineContext[MonotonicFrameClock])
+                        owner.lifecycleScope.launch(clock) {
+                            withFrameNanos { }
+                            withFrameNanos { }
+                            action()
+                        }
                     }
                 }
             }
@@ -114,8 +131,9 @@ fun AppBottomSheet(
 @Stable
 interface AppBottomSheetScope : ColumnScope {
     /**
-     * Schließt das Blatt mit seiner Animation (`hide()`), meldet dann `onDismiss` und führt danach
-     * [action] aus – im selben Frame, keine zusätzliche Wartezeit. Ein zweiter Aufruf während des
+     * Schließt das Blatt mit seiner Animation (`hide()`), meldet dann `onDismiss` und führt [action]
+     * aus, sobald das Blatt die Komposition verlassen hat (ein bis zwei Frames nach der Animation),
+     * nie im selben Frame wie der Abbau des Blatt-Fensters. Ein zweiter Aufruf während des
      * Schließens entfällt (Doppeltipp öffnet nichts doppelt). Unterbricht Wischen das Schließen,
      * gilt der Tipp trotzdem; verlässt das Blatt vorher die Komposition (Drehen), entfällt die Aktion.
      */
