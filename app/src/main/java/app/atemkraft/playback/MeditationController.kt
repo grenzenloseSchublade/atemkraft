@@ -14,6 +14,7 @@ import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.SessionTiming
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.supervisedScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -112,7 +113,8 @@ class MeditationController(
         scope.launch {
             settingsRepository.cueSettings.collect { audio.updateVolume(it.volume) }
         }
-        // Persistierte neuronale Stimmen-Wahl anwenden (lädt sie, sobald installiert). Eine Wahl,
+        // Persistierte neuronale Stimmen-Wahl anwenden: nur merken, das Modell lädt erst der Start
+        // einer Meditation mit Sprache (S-45, [start]). Eine Wahl,
         // die nicht mehr im Katalog steht (GLaDOS bis 1.5.1), liefert der Flow schon als null;
         // hier wird sie auch aus den Einstellungen entfernt. Auf IO, weil DataStore den edit-Block
         // im Kontext des Aufrufers ausführt und der Main-Thread beim App-Start nicht warten soll.
@@ -126,8 +128,20 @@ class MeditationController(
         }
     }
 
-    /** TTS-Engine lazy vorbereiten – erst beim Betreten des Meditations-Tabs, nicht beim App-Start. */
-    fun prepareSpeech() = audio.prepareSpeech()
+    /**
+     * Beim Betreten des Meditations-Tabs bzw. der Einstellungen: System-TTS anbinden, damit der
+     * Sprach-Schalter weiß, ob eine Stimme da ist. Ein Sprachmodell lädt hier nicht – erst [start].
+     */
+    fun checkSpeech() = audio.checkSpeech()
+
+    /**
+     * Speicherdruck (`onTrimMemory`): Ohne laufende Meditation das Modell der neuronalen Stimme
+     * freigeben; der nächste Start lädt es wieder (S-45).
+     */
+    fun trimMemory() {
+        val status = _state.value.status
+        if (status == MeditationStatus.IDLE || status == MeditationStatus.FINISHED) audio.releaseSpeech()
+    }
 
     /** Aktive neuronale Stimme wählen (null = keine) und persistieren. */
     fun selectNeuralVoice(voiceId: String?) {
@@ -174,13 +188,22 @@ class MeditationController(
     }
 
     /**
+     * Kopfhörer abgezogen: Ton und Stimme aus wie mit dem Stummschalter, sichtbar und umkehrbar; ein
+     * noch klingender Gong blendet aus wie bei Fokusverlust.
+     */
+    private fun muteOnUnplug() {
+        audio.silenceGong()
+        if (!_state.value.muted) toggleMute()
+    }
+
+    /**
      * Startet eine Meditation – die eine Funktion für den Start im Tab und für den Übergang nach
-     * einer Atemübung ([SilenceAfterBreath]): Stimme vorbereiten (idempotent; die gewählte Stimme
-     * setzt der Collector in init), dann starten. Die Sprache beginnt frühestens nach dem Countdown,
-     * bis dahin ist die Engine bereit.
+     * einer Atemübung ([SilenceAfterBreath]): Mit Sprachanleitung lädt hier das Modell der gewählten
+     * Stimme (idempotent; die Wahl setzt der Collector in init), ohne wird es freigegeben (S-45). Die
+     * erste Ansage kommt frühestens 20 s nach dem Countdown und wartet sonst hinter dem Laden.
      */
     fun start(config: MeditationConfig) {
-        audio.prepareSpeech()
+        if (config.speech) audio.prepareSpeech() else audio.releaseSpeech()
         logEndedEarly() // eine laufende Sitzung wird ersetzt, nicht spurlos verworfen
         runnerJob?.cancel()
         finishing = false
@@ -206,6 +229,8 @@ class MeditationController(
         )
         // Foreground-Service startet die Dauer-Notification und hält den Prozess wach.
         service.start()
+        // Kopfhörer abgezogen: stumm wie bei Fokusverlust, die Meditation läuft weiter (S-48).
+        audio.watchUnplug(::muteOnUnplug)
         launchActive(fromResume = false)
     }
 
@@ -268,6 +293,8 @@ class MeditationController(
         // Zuerst IDLE setzen, dann Service/Notification entfernen: So kann der Notification-
         // Collector im Service (er überspringt IDLE) nach unserem cancel() nichts mehr nachposten.
         _state.value = MeditationUiState()
+        audio.watchUnplug(null)
+        audio.releaseSpeech()
         service.stop()
     }
 
@@ -300,11 +327,28 @@ class MeditationController(
         if (finishing) return
         finishing = true
         runnerJob?.cancel()
-        runnerJob = scope.launch { finish() }
+        runnerJob = launchGuarded { finish() }
+    }
+
+    /**
+     * Startet den Ablauf-Job. Ein unbehandelter Fehler darin beendet die Sitzung, statt sie in
+     * RUNNING hängen zu lassen (S-47): Zustand IDLE, Service-Halter frei, Modell und Empfänger
+     * abgemeldet; der Fehler geht danach weiter an `UncaughtErrors` (supervisedScope).
+     */
+    private fun launchGuarded(block: suspend CoroutineScope.() -> Unit): Job = scope.launch {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (runnerJob === coroutineContext[Job]) runnerJob = null // sich selbst nicht abbrechen
+            abort()
+            throw e
+        }
     }
 
     private fun launchActive(fromResume: Boolean) {
-        runnerJob = scope.launch {
+        runnerJob = launchGuarded {
             // Kein Fokus vorab: Gong und Ansage fordern ihn an, wenn sie klingen – im Countdown und
             // bis zum ersten Ton bleiben fremde Medien ungeduckt (AUDIO-02).
             if (!fromResume) {
@@ -440,6 +484,8 @@ class MeditationController(
         // gesperrtem Bildschirm nicht abgeschnitten wird; ohne End-Gong entfällt die Wartezeit.
         if (currentConfig.startEndGong) delay(audio.gongTotalMs() + ToneCuePlayer.GONG_END_RESERVE_MS)
         audio.abandonFocus()
+        audio.watchUnplug(null)
+        audio.releaseSpeech()
         service.stop()
     }
 
@@ -467,7 +513,18 @@ interface MeditationAudio {
     val speechAvailable: StateFlow<Boolean>
     val piperReady: StateFlow<Boolean>
 
+    /** System-TTS anbinden (für [speechAvailable]), ohne ein Sprachmodell zu laden. */
+    fun checkSpeech()
+
+    /** Für eine Meditation mit Sprache: auch das Modell der aktiven Stimme laden. */
     fun prepareSpeech()
+
+    /** Modell der neuronalen Stimme freigeben; die Wahl bleibt. */
+    fun releaseSpeech()
+
+    /** Kopfhörer abgezogen ([onUnplugged]) melden; null meldet ab. Nur während einer Meditation. */
+    fun watchUnplug(onUnplugged: (() -> Unit)?)
+
     fun setActiveVoice(voiceId: String?)
     fun isActiveVoice(voiceId: String): Boolean
     fun deleteVoice(voiceId: String)

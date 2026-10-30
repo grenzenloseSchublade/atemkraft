@@ -7,6 +7,7 @@ import app.atemkraft.cue.PiperSpeechGuide
 import app.atemkraft.cue.SpeechEngine
 import app.atemkraft.cue.SpeechGuide
 import app.atemkraft.cue.ToneCuePlayer
+import app.atemkraft.cue.UnplugWatcher
 import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.supervisedScope
@@ -43,9 +44,15 @@ class MeditationAudioCoordinator(
         }
     }
 
+    /** Kopfhörer abgezogen: nur während einer Meditation registriert ([watchUnplug]). */
+    private val unplug = UnplugWatcher(context)
+
     private val scope = supervisedScope(Dispatchers.Main.immediate)
 
-    /** Ist die aktive neuronale Stimme einsatzbereit? Steuert Routing UND UI (gleiche Quelle). */
+    /**
+     * Ist die aktive neuronale Stimme installiert (ihr Modell lädt erst [prepareSpeech])? Steuert
+     * Routing UND UI (gleiche Quelle); eine Ansage wartet hinter dem Laden.
+     */
     override val piperReady: StateFlow<Boolean> = piper.available
 
     /** Verfügbarkeit einer Stimme (neuronal ODER System) – für den Sprach-Schalter im UI. */
@@ -64,10 +71,20 @@ class MeditationAudioCoordinator(
     /** Aktive Engine: Piper, sobald einsatzbereit; sonst System-TTS-Fallback. */
     private fun engine(): SpeechEngine = if (piperReady.value) piper else system
 
-    /** Beide Engines vorbereiten (System sofort, Piper baut die aktive Stimme, falls installiert). */
+    /** System-TTS anbinden, damit [speechAvailable] stimmt – ohne ein Sprachmodell zu laden. */
+    override fun checkSpeech() = system.ensureInit()
+
+    /** Für eine Meditation mit Sprache: System-TTS und das Modell der aktiven Stimme laden (falls installiert). */
     override fun prepareSpeech() {
         system.ensureInit()
         piper.ensureInit()
+    }
+
+    /** Modell der neuronalen Stimme freigeben (nach der Meditation, bei Speicherdruck; S-45). */
+    override fun releaseSpeech() = piper.unload()
+
+    override fun watchUnplug(onUnplugged: (() -> Unit)?) {
+        if (onUnplugged != null) unplug.watch(onUnplugged) else unplug.stop()
     }
 
     /** Aktive neuronale Stimme wählen (null = keine → Fallback). */
@@ -123,6 +140,7 @@ class MeditationAudioCoordinator(
 
     /** Beim Wegräumen aufrufen: gibt Engines, Player und Audio-Fokus frei. */
     fun release() {
+        unplug.stop()
         piper.release()
         system.release()
         tonePlayer.release()

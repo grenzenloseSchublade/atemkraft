@@ -195,8 +195,8 @@ internal fun NavGraphBuilder.appGraph(
         )
     }
     composable<MeditationRoute> {
-        // TTS-Engine erst hier vorbereiten (nicht beim App-Start), idempotent.
-        LaunchedEffect(Unit) { container.meditationController.prepareSpeech() }
+        // System-TTS erst hier anbinden (nicht beim App-Start), idempotent; ein Sprachmodell lädt erst der Start.
+        LaunchedEffect(Unit) { container.meditationController.checkSpeech() }
         MeditationScreen(
             initialConfig = state.meditationConfig,
             speechAvailable = state.meditationSpeechAvailable,
@@ -273,8 +273,8 @@ internal fun NavGraphBuilder.appGraph(
         )
     }
     pushComposable<SettingsRoute> { entry ->
-        // TTS vorbereiten, damit die Stimmen-Auswahl auch hier gefüllt ist.
-        LaunchedEffect(Unit) { container.meditationController.prepareSpeech() }
+        // System-TTS anbinden, damit die Stimmen-Auswahl auch hier gefüllt ist (ohne Sprachmodell).
+        LaunchedEffect(Unit) { container.meditationController.checkSpeech() }
         val patternTransfer = rememberPatternTransfer(savedPatterns, settings, container.logbookRepository)
         val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
         SettingsScreen(

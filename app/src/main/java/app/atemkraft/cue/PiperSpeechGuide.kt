@@ -22,12 +22,17 @@ import java.util.concurrent.Executors
 
 /**
  * Neuronale Sprachanleitung über sherpa-onnx (Piper). Kann zwischen **mehreren installierten**
- * Stimmen (`VoiceCatalog`) umschalten – die aktive Stimme wird per [setActiveVoice] gewählt und
- * geladen. Läuft nach dem Download vollständig offline.
+ * Stimmen (`VoiceCatalog`) umschalten – die aktive Stimme wird per [setActiveVoice] gewählt.
+ * Läuft nach dem Download vollständig offline.
+ *
+ * Das Modell (rund 100 MB nativer Speicher) lädt erst, wenn gesprochen werden soll: [ensureInit]
+ * beim Start einer Meditation, und [unload] gibt es danach wieder frei (S-45). Bis dahin meldet
+ * [available] nur, ob die aktive Stimme installiert ist – das genügt für Schalter und Einstellungen.
  *
  * Spiegelt die API-Form von [SpeechGuide] (speak/stop/release + [available]) für den
- * `MeditationAudioCoordinator` (`playback/`). Synthese + Wiedergabe seriell auf
- * einem eigenen Thread; ein Epochen-Zähler bricht laufende/wartende Ausgaben sauber ab.
+ * `MeditationAudioCoordinator` (`playback/`). Laden, Synthese und Wiedergabe laufen seriell auf
+ * einem eigenen Thread – eine Ansage wartet so hinter dem Laden, statt verloren zu gehen; ein
+ * Epochen-Zähler bricht laufende/wartende Ausgaben sauber ab.
  */
 class PiperSpeechGuide(
     context: Context,
@@ -42,7 +47,7 @@ class PiperSpeechGuide(
 
     private val _available = MutableStateFlow(false)
 
-    /** true, sobald die AKTIVE Stimme geladen und einsatzbereit ist. */
+    /** true, sobald die AKTIVE Stimme installiert ist (geladen wird ihr Modell erst mit [ensureInit]). */
     override val available: StateFlow<Boolean> = _available.asStateFlow()
 
     @Volatile private var tts: OfflineTts? = null
@@ -51,7 +56,13 @@ class PiperSpeechGuide(
 
     @Volatile private var desiredVoiceId: String? = null
 
+    /** Soll das Modell geladen sein? [ensureInit] setzt es, [unload] nimmt es zurück. */
+    @Volatile private var wanted = false
+
     @Volatile private var loadedVoiceId: String? = null
+
+    /** Stimme, deren Modell sich nicht laden ließ: gilt bis zu einem neuen Download als nicht verfügbar. */
+    @Volatile private var brokenVoiceId: String? = null
 
     /** Erhöht bei jedem (Neu-)Aufbau/Teardown: veraltete Build-Ergebnisse werden verworfen. */
     @Volatile private var initEpoch = 0
@@ -64,33 +75,39 @@ class PiperSpeechGuide(
     init {
         scope.launch {
             modelManager.states.collect { states ->
-                // Aktive Stimme neu laden, wenn sie gerade fertig wurde; abbauen, wenn entfernt.
+                // Verfügbarkeit nachziehen, wenn die aktive Stimme gerade fertig wurde oder entfernt ist.
                 val target = desiredVoiceId
                 if (target != null) {
                     val installed = states[target] is VoiceDownloadState.Downloaded
-                    if (installed && loadedVoiceId != target) {
-                        rebuild()
-                    } else if (!installed && loadedVoiceId == target) {
-                        rebuild()
-                    }
+                    val expected = installed && target != brokenVoiceId
+                    if (expected != _available.value || (!installed && loadedVoiceId == target)) refresh()
                 }
             }
         }
     }
 
-    /** Aktive Stimme setzen (null = keine → Fallback). Lädt sie, sobald installiert. */
+    /** Aktive Stimme setzen (null = keine → Fallback). Merkt sie sich nur; das Modell lädt [ensureInit]. */
     fun setActiveVoice(voiceId: String?) {
         if (voiceId == desiredVoiceId) return
         desiredVoiceId = voiceId
-        rebuild()
+        refresh()
     }
 
     /** Ist [voiceId] die aktuell gewünschte (aktive) Stimme? Quelle für die Lösch-Koordination. */
     fun isDesired(voiceId: String): Boolean = desiredVoiceId == voiceId
 
-    /** Sicherstellen, dass die aktive Stimme (falls installiert) geladen ist. */
+    /** Modell der aktiven Stimme laden (falls installiert); idempotent, nicht-blockierend. */
     override fun ensureInit() {
-        if (loadedVoiceId != desiredVoiceId) rebuild()
+        if (wanted && loadedVoiceId == desiredVoiceId) return
+        wanted = true
+        refresh()
+    }
+
+    /** Modell freigeben (nach der Meditation, bei Speicherdruck); die Wahl der Stimme bleibt. */
+    fun unload() {
+        if (!wanted && tts == null) return
+        wanted = false
+        refresh()
     }
 
     /**
@@ -100,32 +117,35 @@ class PiperSpeechGuide(
      */
     fun releaseVoiceThen(voiceId: String, onReleased: () -> Unit) {
         if (desiredVoiceId == voiceId) desiredVoiceId = null
-        initEpoch++
-        flush()
-        _available.value = false
+        initEpoch++ // ältere Aufträge verfallen, ein Laden dieser Stimme kommt nicht mehr zum Zug
         executor.execute {
-            if (loadedVoiceId == voiceId) {
-                tts?.let { runCatching { it.release() } }
-                tts = null
-                loadedVoiceId = null
-            }
+            if (loadedVoiceId == voiceId) freeEngine()
+            if (brokenVoiceId == voiceId) brokenVoiceId = null
             onReleased()
         }
+        refresh() // danach den Wunsch wiederherstellen (Verfügbarkeit, ggf. das Modell einer anderen Stimme)
     }
 
-    /** Aktuelle Engine abbauen und – falls die gewünschte Stimme installiert ist – neu aufbauen. */
-    private fun rebuild() {
+    /**
+     * Zustand auf dem Executor herstellen: Verfügbarkeit der gewünschten Stimme prüfen, ein nicht
+     * (mehr) gebrauchtes Modell freigeben und – nur wenn [wanted] – das gewünschte laden.
+     */
+    private fun refresh() {
         initEpoch++
         val myEpoch = initEpoch
         flush()
-        _available.value = false
         val target = desiredVoiceId
+        val load = wanted
+        if (target == null) _available.value = false
         executor.execute {
-            tts?.let { runCatching { it.release() } }
-            tts = null
-            loadedVoiceId = null
+            // Ein späterer Aufruf steht schon in der Schlange und stellt den neueren Wunsch her.
+            if (myEpoch != initEpoch) return@execute
             // Datei-Prüfung/Pfade bewusst hier (Executor), nicht auf dem Main-Thread.
-            if (target == null || myEpoch != initEpoch || !modelManager.isDownloaded(target)) return@execute
+            val installed = target != null && modelManager.isDownloaded(target)
+            if (!installed && brokenVoiceId == target) brokenVoiceId = null
+            if (tts != null && (!load || !installed || loadedVoiceId != target)) freeEngine()
+            _available.value = installed && target != brokenVoiceId
+            if (!load || target == null || !_available.value || loadedVoiceId == target) return@execute
             val paths = modelManager.paths(target) ?: return@execute
             val engine = runCatching {
                 val vits = OfflineTtsVitsModelConfig(
@@ -138,15 +158,27 @@ class PiperSpeechGuide(
                     config = OfflineTtsConfig(model = OfflineTtsModelConfig(vits = vits, numThreads = 2)),
                 )
             }.getOrNull()
-            if (engine == null || myEpoch != initEpoch) {
-                engine?.let { runCatching { it.release() } }
+            if (engine == null) {
+                // Defektes Modell: nicht bei jedem Start erneut versuchen, die Ansage nimmt das System-TTS.
+                brokenVoiceId = target
+                _available.value = false
+                return@execute
+            }
+            if (myEpoch != initEpoch) {
+                runCatching { engine.release() }
                 return@execute
             }
             sampleRate = engine.sampleRate()
             tts = engine
             loadedVoiceId = target
-            _available.value = true
         }
+    }
+
+    /** Nur auf dem Executor: geladenes Modell freigeben. */
+    private fun freeEngine() {
+        tts?.let { runCatching { it.release() } }
+        tts = null
+        loadedVoiceId = null
     }
 
     /**
@@ -154,7 +186,8 @@ class PiperSpeechGuide(
      * respektieren). Reiht sich hinter laufende Ansagen ein. Nicht-blockierend.
      */
     override fun speak(text: String) {
-        if (tts == null) return
+        // Lädt das Modell noch, wartet die Ansage auf dem Executor dahinter.
+        if (!wanted || !_available.value) return
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) return
         enqueue(text)
     }
@@ -250,10 +283,7 @@ class PiperSpeechGuide(
     override fun release() {
         initEpoch++
         flush()
-        executor.execute {
-            tts?.let { runCatching { it.release() } }
-            tts = null
-        }
+        executor.execute { freeEngine() }
         executor.shutdown()
     }
 

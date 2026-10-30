@@ -41,6 +41,11 @@ class PreviewSoundState internal constructor(
 ) {
     private var settings by mutableStateOf<CueSettings?>(null)
 
+    init {
+        // Kopfhörer abgezogen: Ton der Vorschau aus wie mit dem Schalter, die Vorschau läuft weiter (S-48).
+        player.onUnplugged { setSoundOn(false) }
+    }
+
     /** Klangmodus der App ist nicht „Aus“ – nur dann gibt es einen Vorschau-Ton. */
     val available: Boolean get() = settings?.soundMode != SoundMode.OFF
 

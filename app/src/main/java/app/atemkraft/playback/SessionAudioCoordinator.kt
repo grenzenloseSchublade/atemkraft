@@ -7,6 +7,7 @@ import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.cue.ToneCuePlayer
+import app.atemkraft.cue.UnplugWatcher
 import app.atemkraft.data.CueSettings
 import app.atemkraft.domain.SoundMode
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +44,10 @@ class SessionAudioCoordinator(
     private val focusLost = MutableStateFlow(false)
     private val audioFocus = AudioFocusController(context) { focusLost.value = it }
 
+    /** Kopfhörer abgezogen: nur während der Übung registriert (S-48, SEC-PLAT-01). */
+    private val unplug = UnplugWatcher(context)
+    private var onUnplugged: () -> Unit = {}
+
     /** Die zuletzt gelesenen Ton-Einstellungen (nach [bind]); für [finishTailMs]. */
     private var current: StateFlow<CueSettings>? = null
 
@@ -52,7 +57,9 @@ class SessionAudioCoordinator(
         cues: Flow<CueEvent>,
         phaseAudio: Flow<PhaseAudio>,
         muted: Flow<Boolean>,
+        onUnplugged: () -> Unit,
     ) {
+        this.onUnplugged = onUnplugged
         val current = settings.stateIn(scope, SharingStarted.Eagerly, CueSettings())
         this.current = current
         // In-Session-Stummschalter: übersteuert transient den Ton (nicht die Einstellung).
@@ -125,6 +132,8 @@ class SessionAudioCoordinator(
         // neue Übung hineinzuklingen; ebenso, wenn ein Anruf den Fokus nimmt.
         if (status == SessionStatus.PREPARING || lost) tonePlayer.silenceGong()
         val inSession = status != SessionStatus.IDLE && status != SessionStatus.FINISHED
+        // Kopfhörer abgezogen: Der Controller schaltet stumm (wie bei Fokusverlust), die Übung läuft weiter.
+        if (inSession) unplug.watch(onUnplugged) else unplug.stop()
         val audibleStatus = status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER
         val audible = audibleStatus && !muted && !lost
 

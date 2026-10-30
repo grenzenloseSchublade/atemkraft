@@ -22,6 +22,7 @@ import app.atemkraft.domain.adjusted
 import app.atemkraft.domain.buildTimeline
 import app.atemkraft.domain.sessionSummary
 import app.atemkraft.domain.supervisedScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -166,6 +167,7 @@ class BreathSessionController(
             cues = cueEvents.asSharedFlow(),
             phaseAudio = phaseEvents.asSharedFlow(),
             muted = _state.map { it.muted },
+            onUnplugged = ::muteOnUnplug,
         )
     }
 
@@ -232,7 +234,7 @@ class BreathSessionController(
             finish()
             return
         }
-        runnerJob = scope.launch {
+        runnerJob = launchGuarded {
             runCountdown()
             runPhaseLoop()
         }
@@ -286,6 +288,14 @@ class BreathSessionController(
     }
 
     /**
+     * Kopfhörer abgezogen (S-48): stumm wie bei Fokusverlust – die Übung läuft weiter, die Vibration
+     * bleibt; sichtbar am Stummschalter und mit ihm wieder aufzuheben.
+     */
+    private fun muteOnUnplug() {
+        _state.update { if (it.status == SessionStatus.IDLE || it.status == SessionStatus.FINISHED) it else it.copy(muted = true) }
+    }
+
+    /**
      * Beendet bzw. verwirft die Session (auch den Ende-Screen) und gibt den Service frei. Eine noch
      * laufende Übung kommt ab einer Minute aktiver Zeit ins Logbuch ([SessionTiming.MIN_LOG_MS]).
      */
@@ -307,7 +317,24 @@ class BreathSessionController(
 
     private fun launchRunner() {
         runnerJob?.cancel()
-        runnerJob = scope.launch { runPhaseLoop() }
+        runnerJob = launchGuarded { runPhaseLoop() }
+    }
+
+    /**
+     * Startet den Ablauf-Job. Ein unbehandelter Fehler darin beendet die Übung, statt sie in RUNNING
+     * hängen zu lassen (S-47): wie [stop] (Logbuch ab einer Minute, Zustand IDLE, Service-Halter
+     * frei); der Fehler geht danach weiter an `UncaughtErrors` (supervisedScope).
+     */
+    private fun launchGuarded(block: suspend CoroutineScope.() -> Unit): Job = scope.launch {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (runnerJob === coroutineContext[Job]) runnerJob = null // sich selbst nicht abbrechen
+            stop()
+            throw e
+        }
     }
 
     private suspend fun runPhaseLoop() {
@@ -516,6 +543,8 @@ interface BreathAudio {
         cues: Flow<CueEvent>,
         phaseAudio: Flow<PhaseAudio>,
         muted: Flow<Boolean>,
+        /** Kopfhörer abgezogen (`ACTION_AUDIO_BECOMING_NOISY`, nur während der Übung gemeldet). */
+        onUnplugged: () -> Unit,
     )
 
     /** Wie lange der Abschluss-Gong noch klingt (ms, mit Reserve); 0 ohne hörbaren Gong. */

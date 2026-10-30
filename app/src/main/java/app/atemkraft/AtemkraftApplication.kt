@@ -22,6 +22,12 @@ class AtemkraftApplication :
         container = AppContainer(this)
     }
 
+    /** Speicherdruck: ohne laufende Meditation das Modell der neuronalen Stimme freigeben (S-45). */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        container.meditationController.trimMemory()
+    }
+
     override val meditationController: MeditationController get() = container.meditationController
 
     override val breathSessionController: BreathSessionController get() = container.breathSessionController

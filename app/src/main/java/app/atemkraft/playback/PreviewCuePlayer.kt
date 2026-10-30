@@ -8,6 +8,7 @@ import app.atemkraft.cue.ContinuousTonePlayer
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.cue.ToneCuePlayer
+import app.atemkraft.cue.UnplugWatcher
 import app.atemkraft.cue.toCueEvent
 import app.atemkraft.data.CueSettings
 import app.atemkraft.domain.SoundMode
@@ -96,6 +97,12 @@ class PreviewCuePlayer(private val output: PreviewSoundOutput) {
         }
     }
 
+    /**
+     * Kopfhörer abgezogen, solange die Vorschau klingt: [action] (die Seite schaltet den Ton der
+     * Vorschau aus, S-48).
+     */
+    fun onUnplugged(action: () -> Unit) = output.onUnplugged(action)
+
     /** Endgültig freigeben (Seite verlassen); danach klingt nichts mehr. */
     fun release() {
         if (released) return
@@ -136,6 +143,9 @@ interface PreviewSoundOutput {
 
     fun abandonFocus()
 
+    /** Kopfhörer abgezogen, solange der Fokus gehalten ist: [action] aufrufen. Ohne Gerät nichts. */
+    fun onUnplugged(action: () -> Unit) = Unit
+
     /** Threads und Audio-Fokus freigeben. */
     fun release()
 }
@@ -145,7 +155,8 @@ interface PreviewSoundOutput {
  * ihre im ViewModel, `SessionAudioCoordinator`) und derselbe Audio-Fokus ([AudioFocusController]).
  * Der Dauerton wird wie am Session-Ende erst ausgeblendet und nach [FADE_OUT_MS] beendet – kein
  * Knacken; läuft die Vorschau vorher weiter, bleibt der Thread. Nimmt ein Anruf oder eine andere
- * App den Fokus, schweigt die Vorschau, bis er zurückkommt (AUDIO-02).
+ * App den Fokus, schweigt die Vorschau, bis er zurückkommt (AUDIO-02). Den Kopfhörer überwacht sie nur,
+ * solange sie den Fokus hält (S-48).
  */
 class AppPreviewSoundOutput(context: Context) : PreviewSoundOutput {
     private val tone = ToneCuePlayer()
@@ -157,6 +168,8 @@ class AppPreviewSoundOutput(context: Context) : PreviewSoundOutput {
         }
     }
     private val handler = Handler(Looper.getMainLooper())
+    private val unplug = UnplugWatcher(context)
+    private var unplugAction: () -> Unit = {}
     private val stopContinuous = Runnable { continuousTone.stop() }
 
     override fun apply(settings: CueSettings) {
@@ -182,11 +195,22 @@ class AppPreviewSoundOutput(context: Context) : PreviewSoundOutput {
         handler.postDelayed(stopContinuous, FADE_OUT_MS)
     }
 
-    override fun requestFocus() = focus.request()
+    override fun requestFocus() {
+        focus.request()
+        unplug.watch { unplugAction() }
+    }
 
-    override fun abandonFocus() = focus.abandon()
+    override fun abandonFocus() {
+        unplug.stop()
+        focus.abandon()
+    }
+
+    override fun onUnplugged(action: () -> Unit) {
+        unplugAction = action
+    }
 
     override fun release() {
+        unplug.stop()
         handler.removeCallbacks(stopContinuous)
         continuousTone.stop()
         tone.release()
