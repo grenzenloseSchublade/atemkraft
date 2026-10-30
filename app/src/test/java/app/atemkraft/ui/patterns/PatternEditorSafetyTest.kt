@@ -3,6 +3,8 @@ package app.atemkraft.ui.patterns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -14,6 +16,8 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
+import app.atemkraft.ui.detail.DetailActions
+import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,7 +29,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** MUSTER-06 im Muster-Editor: Eine intensive freie Folge startet erst nach dem Sicherheitsdialog. */
+/**
+ * MUSTER-06 an beiden Startpfaden mit Sicherheitsdialog: Eine intensive freie Folge im
+ * Muster-Editor und eine intensive eingebaute Übung (Wim Hof) auf der Detailseite starten erst
+ * nach dem Dialog, nach der Bestätigung direkt.
+ */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = TestMatrix.A54_QUALIFIERS)
 class PatternEditorSafetyTest {
@@ -68,6 +76,42 @@ class PatternEditorSafetyTest {
         // Einmal bestätigt, startet es direkt.
         play.performClick()
         assertEquals(2, started.size)
+        compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
+    }
+
+    /** MUSTER-06 auf der Detailseite: Wim Hof startet erst nach dem Dialog, danach direkt. */
+    @Test
+    fun `Wim Hof auf der Detailseite startet erst nach dem Sicherheitsdialog`() {
+        val app = RuntimeEnvironment.getApplication()
+        val wimHof = BuiltInExercises.all.single { it.id == "wim-hof" }
+        var starts = 0
+        var safety by mutableStateOf(SafetySettings())
+        compose.setContent {
+            AtemkraftTheme {
+                ExerciseDetailScreen(
+                    exercise = wimHof,
+                    requireSafetyConfirm = safety.requiresConfirm(wimHof),
+                    savedIntervals = null,
+                    actions = DetailActions(
+                        onIntervalsChange = { _, _, _, _ -> },
+                        onIntervalsReset = {},
+                        onConfirmedSafety = { safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(wimHof.id)) },
+                        onStart = { starts++ },
+                        onBack = {},
+                    ),
+                )
+            }
+        }
+        val start = compose.onNode(hasText(app.getString(R.string.action_start), substring = true) and hasClickAction())
+
+        start.performClick()
+        assertEquals(0, starts)
+        compose.onNodeWithText(app.getString(R.string.safety_confirm)).performClick()
+        assertEquals(1, starts)
+
+        // Einmal bestätigt, startet es direkt.
+        start.performClick()
+        assertEquals(2, starts)
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
     }
 

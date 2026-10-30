@@ -2,12 +2,15 @@ package app.atemkraft.data
 
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseIds
+import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternOrigin
 import app.atemkraft.domain.PatternRules
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.PatternTexts
+import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseNames
+import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.Reference
 import app.atemkraft.domain.SituationRecommendation
@@ -341,6 +344,47 @@ class ContentRulesTest {
             "teaser",
             strict("teaser", teaser) + strict("first-caution", firstCaution) + strict("lore-teaser", loreTeaser),
         )
+    }
+
+    // ---- MUSTER-06: Sicherheit der eingebauten Übungen ----------------------------------
+
+    /**
+     * Ist eine eingebaute Übung nach denselben Schwellen intensiv wie eine freie Folge
+     * ([FreePattern.intensityReasons]: Halten voll über 10 s, leer über 8 s oder bis zum Atemreiz,
+     * mehr als 20 Atemzüge pro Minute in einem Abschnitt)? Gemessen an den Phasen, nicht am
+     * Etikett – sonst prüfte der Test nur sich selbst.
+     */
+    private fun Exercise.intenseByPhases(): Boolean = segments.any { segment ->
+        val fixed = segment.phases.map { (it.duration as? PhaseDuration.Fixed)?.millis }
+        val longHold = segment.phases.zip(fixed).any { (phase, millis) ->
+            when (phase.type) {
+                PhaseType.HOLD_FULL -> millis == null || millis > FreePattern.INTENSE_HOLD_FULL_SECONDS * 1000L
+                PhaseType.HOLD_EMPTY -> millis == null || millis > FreePattern.INTENSE_HOLD_EMPTY_SECONDS * 1000L
+                else -> false
+            }
+        }
+        val cycleMillis = fixed.sumOf { it ?: 0L }
+        val breaths = segment.phases.count { it.type == PhaseType.INHALE }
+        // breaths · 60 000 / cycle > 20  ⇔  breaths · 60 000 > 20 · cycle (ganzzahlig wie in FreePattern)
+        longHold || (cycleMillis > 0 && breaths * 60_000L > FreePattern.INTENSE_BREATHS_PER_MINUTE * cycleMillis)
+    }
+
+    /**
+     * MUSTER-06, Safety: Eine eingebaute Übung, die nach ihren Phasen intensiv ist, trägt
+     * `caution` (Sicherheitsdialog vor dem Start, Chip „intensiv“). Jede `caution`-Übung hat
+     * Sicherheitshinweise, und einer davon nennt Wasser (Ohnmachtsgefahr).
+     */
+    @Test
+    fun `intense-caution`() {
+        val problems = BuiltInExercises.all.flatMap { e ->
+            listOfNotNull(
+                if (e.intenseByPhases() && !e.caution) "${e.id}: intensiv, aber ohne caution" else null,
+                if (e.caution && e.cautions.isEmpty()) "${e.id}: caution ohne Sicherheitshinweise" else null,
+                if (e.caution && e.cautions.none { "Wasser" in it }) "${e.id}: kein Sicherheitshinweis nennt Wasser" else null,
+            )
+        }
+        val intense = BuiltInExercises.all.filter { it.intenseByPhases() }.map { it.id }
+        assertNone("intense-caution", problems + if (intense.isEmpty()) listOf("keine intensive Übung erkannt – Schwellen prüfen") else emptyList())
     }
 
     // ---- Querverweise --------------------------------------------------------------------
