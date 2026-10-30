@@ -1,0 +1,10 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Nur Deutsch gebaut, Sprache im Manifest gemeldet.
+=== app/build.gradle.kts
+android {
+    androidResources { localeFilters += listOf("de") }
+}
+=== app/src/main/AndroidManifest.xml
+<manifest>
+    <application android:localeConfig="@xml/locales_config" />
+</manifest>

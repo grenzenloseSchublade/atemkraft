@@ -1,0 +1,4 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Nur die eine (dunkle) Variante.
+=== app/src/main/res/values/colors.xml
+<resources />

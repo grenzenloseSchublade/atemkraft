@@ -1,0 +1,17 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Nur theme, components, navigation, das eigene Feature und die eingetragene Ausnahme.
+=== app/src/main/java/app/atemkraft/ui/home/HomeScreen.kt
+package app.atemkraft.ui.home
+
+import app.atemkraft.ui.components.CardHeader
+import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.navigation.Routes
+import app.atemkraft.ui.home.HomeSearch
+=== app/src/main/java/app/atemkraft/ui/own/OwnTab.kt
+package app.atemkraft.ui.own
+
+import app.atemkraft.ui.log.LogHistory
+=== app/src/main/java/app/atemkraft/ui/components/Shared.kt
+package app.atemkraft.ui.components
+
+import app.atemkraft.ui.home.HomeSearch

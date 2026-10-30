@@ -1,0 +1,8 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Verbindung mit beiden Timeouts und eigenem User-Agent.
+=== app/src/main/java/app/atemkraft/cue/tts/Download.kt
+val connection = (url.openConnection() as HttpURLConnection).apply {
+    connectTimeout = 15_000
+    readTimeout = 30_000
+    setRequestProperty("User-Agent", "Atemkraft")
+}

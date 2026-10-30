@@ -1,0 +1,9 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# .gitignore deckt alle Muster.
+=== .gitignore
+*.jks
+*.p12
+*.keystore
+keystore.properties
+*.idsig
+.claude/settings.local.json

@@ -1,0 +1,15 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Neun Parameter ohne modifier.
+=== app/src/main/java/app/atemkraft/ui/demo/DemoScreen.kt
+@Composable
+fun DemoScreen(
+    a: Int,
+    b: Map<String, Int>,
+    c: Int,
+    d: Int,
+    e: Int,
+    f: Int,
+    g: Int,
+    onSave: (Int, Int) -> Unit,
+    onBack: () -> Unit,
+) {}

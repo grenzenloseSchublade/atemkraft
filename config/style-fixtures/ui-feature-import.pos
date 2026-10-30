@@ -1,0 +1,6 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Ein Feature greift auf ein anderes zu.
+=== app/src/main/java/app/atemkraft/ui/home/HomeScreen.kt
+package app.atemkraft.ui.home
+
+import app.atemkraft.ui.settings.SettingsScreen

@@ -1,0 +1,4 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# .gitignore deckt nur Keystores im JKS-Format.
+=== .gitignore
+*.jks

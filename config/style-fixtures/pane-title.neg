@@ -1,0 +1,8 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Alle drei Gerüste haben paneTitle.
+=== app/src/main/java/app/atemkraft/ui/components/PushHeader.kt
+Box(Modifier.semantics { paneTitle = title })
+=== app/src/main/java/app/atemkraft/ui/components/ScreenHeader.kt
+Box(Modifier.semantics { paneTitle = title })
+=== app/src/main/java/app/atemkraft/ui/components/OverlayChrome.kt
+Box(Modifier.semantics { paneTitle = title })

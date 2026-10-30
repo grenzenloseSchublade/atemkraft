@@ -1,0 +1,9 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Keine Abhängigkeits-Metadaten im APK.
+=== app/build.gradle.kts
+android {
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+}

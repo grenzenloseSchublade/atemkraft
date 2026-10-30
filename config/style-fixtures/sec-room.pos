@@ -1,0 +1,13 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Destruktive Migration.
+=== app/src/main/java/app/atemkraft/data/local/AppDatabase.kt
+package app.atemkraft.data.local
+
+@Database(entities = [Eintrag::class], version = 2, exportSchema = true)
+abstract class AppDatabase : RoomDatabase()
+
+val Context.store by preferencesDataStore(name = "settings", corruptionHandler = handler)
+
+val built = builder.fallbackToDestructiveMigration().build()
+=== app/schemas/app.atemkraft.data.local.AppDatabase/2.json
+{}

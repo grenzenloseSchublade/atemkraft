@@ -1,0 +1,19 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Acht Parameter plus modifier; private Hilfsfunktionen zählen nicht.
+=== app/src/main/java/app/atemkraft/ui/demo/DemoScreen.kt
+@Composable
+fun DemoScreen(
+    a: Int,
+    b: Map<String, Int>,
+    c: Int,
+    d: Int,
+    e: Int,
+    // Kommentar, mit Komma
+    f: Int,
+    onSave: (Int, Int) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {}
+
+@Composable
+private fun HelperOverlay(a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int) {}

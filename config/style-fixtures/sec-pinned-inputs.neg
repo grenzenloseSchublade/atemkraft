@@ -1,0 +1,10 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Wrapper gepinnt, jede Binärdatei in der Allowlist.
+=== gradle/wrapper/gradle-wrapper.properties
+distributionSha256Sum=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=== config/security/binaries.allow
+app/debug.keystore
+=== app/debug.keystore
+x
+=== docs/SECURITY.md
+# Sicherheit

@@ -1,0 +1,6 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Erklärung vorhanden und verlinkt.
+=== docs/PRIVACY.md
+# Datenschutzerklärung
+=== app/src/main/java/app/atemkraft/ui/about/AboutScreen.kt
+val privacy = "https://github.com/x/atemkraft/blob/main/docs/PRIVACY.md"

@@ -1,0 +1,8 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# CardTitle ist keine Überschrift.
+=== app/src/main/java/app/atemkraft/ui/components/SectionHeader.kt
+Text(title, Modifier.semantics { heading() })
+=== app/src/main/java/app/atemkraft/ui/components/PushHeader.kt
+Text(title, Modifier.semantics { heading() })
+=== app/src/main/java/app/atemkraft/ui/components/TextBlocks.kt
+Text(title)

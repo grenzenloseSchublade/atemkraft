@@ -1,0 +1,9 @@
+# Dateibaum für den Self-Test (check_style.fixture_tree): je Datei „=== pfad“, darunter der Inhalt.
+# Alle impliziten Rollen gesetzt, jedes Token genutzt.
+=== app/src/main/java/app/atemkraft/ui/theme/Theme.kt
+val scheme = darkColorScheme(outline = Rand, error = Fehler, onError = AufFehler, primaryContainer = Behaelter)
+=== app/src/main/java/app/atemkraft/ui/theme/Color.kt
+val Rand = Color(0xFF9A8FBF)
+val Fehler = Color(0xFFFF6B8B)
+val AufFehler = Color(0xFF1E0A16)
+val Behaelter = Color(0xFF4E2560)

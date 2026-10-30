@@ -14,7 +14,7 @@ mit ``// Abweichung <ID>:`` oder ``// dekorativ:``. Die ``sec-*``-Checks haben k
 
 Aufrufe:
   scripts/check-style.sh                     # prüfen
-  scripts/check-style.sh --self-test         # jedes Muster gegen config/style-fixtures/<check>.{pos,neg}
+  scripts/check-style.sh --self-test         # jeder Check gegen config/style-fixtures/<check>.{pos,neg} (Pflicht)
   scripts/check-style.sh --update-baseline   # Baseline auf den Ist-Stand setzen (nur zum Senken!)
   scripts/check-style.sh --list              # Check-Tabelle für STYLEGUIDE §13.3 (Markdown)
   scripts/check-style.sh --update-check-table  # Tabelle in docs/STYLEGUIDE.md neu schreiben
@@ -25,9 +25,11 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import hashlib
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -41,7 +43,7 @@ STYLEGUIDE = ROOT / "docs/STYLEGUIDE.md"
 CHECK_TABLE_START = "<!-- check-table:start -->"
 CHECK_TABLE_END = "<!-- check-table:end -->"
 BACKLOG_ID = re.compile(r"^(S|A)-\d+$")
-BINARIES_ALLOW = ROOT / "config/security/binaries.allow"
+BINARIES_ALLOW = "config/security/binaries.allow"  # relativ: Self-Test-Fixtures setzen ROOT um
 FIXTURES = ROOT / "config/style-fixtures"
 
 MARKER = re.compile(r"//\s*(Abweichung [A-Z][A-Z0-9]*(?:-[A-Z]+)?-\d+:|dekorativ:)")
@@ -566,7 +568,7 @@ def sec_pinned_inputs(_: Check) -> dict[str, list[int]]:
     if not re.search(r"^distributionSha256Sum=[0-9a-f]{64}$", read(wrapper), re.M):
         hits[wrapper] = [0]
     allow: dict[str, bool] = {}
-    for line in read(str(BINARIES_ALLOW.relative_to(ROOT))).splitlines():
+    for line in read(BINARIES_ALLOW).splitlines():
         if line.strip() and not line.startswith("#"):
             parts = line.split()
             allow[parts[0]] = "sha256" in parts[1:]
@@ -902,12 +904,52 @@ def update_baseline() -> int:
     return 0
 
 
+def fixture_tree(text: str) -> dict[str, str]:
+    """Fixture eines Sonder-Checks über Dateien: je Datei eine Zeile `=== pfad`, darunter ihr Inhalt.
+    Eine Inhaltszeile, die mit `\\` beginnt, verliert es – so liegt im Repo selbst kein Fund
+    (z. B. `\\storePassword=…` für sec-secrets, das alle Dateien liest)."""
+    files: dict[str, list[str]] = {}
+    current = None
+    for line in text.split("\n"):
+        if line.startswith("=== "):
+            current = line[4:].strip()
+            files[current] = []
+        elif current is not None:
+            files[current].append(line[1:] if line.startswith("\\") else line)
+    return {path: "\n".join(lines) for path, lines in files.items()}
+
+
+def tree_hits(check: Check, files: dict[str, str]) -> int:
+    """Führt einen Sonder-Check auf einem eigenen Git-Repo aus [files] aus (ROOT zeigt solange dorthin).
+    Ohne globale Git-Konfiguration, globale Ignore-Datei und GIT_*-Variablen eines Hooks: Nur die Fixture zählt."""
+    global ROOT
+    saved_root, saved_env = ROOT, dict(os.environ)
+    with tempfile.TemporaryDirectory() as tmp:
+        for key in [k for k in os.environ if k.startswith("GIT_")]:
+            del os.environ[key]
+        # Auch die globale Ignore-Datei (~/.config/git/ignore) bleibt draußen, sonst deckt sie sec-gitignore.
+        os.environ.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", XDG_CONFIG_HOME=os.devnull)
+        try:
+            subprocess.run(["git", "init", "-q", tmp], check=True, capture_output=True)
+            for path, content in files.items():
+                target = Path(tmp) / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content, encoding="utf-8")
+            ROOT = Path(tmp)
+            return sum(len(lines) for lines in check.custom(check).values())
+        finally:
+            ROOT = saved_root
+            os.environ.clear()
+            os.environ.update(saved_env)
+
+
 def self_test() -> int:
+    """Jeder Check braucht `<name>.pos` (mindestens ein Treffer) und `<name>.neg` (keiner); ein
+    fehlendes Fixture ist ein Fehler. Sonder-Checks ohne eigene Fixture-Funktion laufen auf einem
+    Dateibaum aus dem Fixture ([fixture_tree]) – so kann keiner unbemerkt ins Leere prüfen."""
     failed = 0
     fixture_checks = list(CHECKS) + [Check("baseline-ids", "§13.2", [], fixture=baseline_fixture)]
     for check in fixture_checks:
-        if check.custom and check.name != "ui-literal" and check.fixture is None:
-            continue
         for kind in ("pos", "neg"):
             fixture = FIXTURES / f"{check.name}.{kind}"
             if not fixture.exists():
@@ -919,13 +961,15 @@ def self_test() -> int:
                 n = check.fixture(text)
             elif check.name == "ui-literal":
                 n = len(ui_literal_hits(prepared_lines(text, check)))
+            elif check.custom:
+                n = tree_hits(check, fixture_tree(text))
             else:
                 n = len(count_text(text, Check(**{**check.__dict__, "per_file": False})))
             ok = n > 0 if kind == "pos" else n == 0
             if not ok:
                 print(f"FEHLER  {check.name}.{kind}: {n} Treffer")
                 failed += 1
-            if kind == "pos" and not check.baseline:
+            if kind == "pos" and not check.baseline and not check.custom:
                 # Gegenprobe: ein angehängter Stil-Marker darf keinen sec-Treffer verstecken.
                 marked = "\n".join(f"{line} // dekorativ: x // Abweichung SEC-1: x" if line.strip() else line
                                     for line in text.split("\n"))
