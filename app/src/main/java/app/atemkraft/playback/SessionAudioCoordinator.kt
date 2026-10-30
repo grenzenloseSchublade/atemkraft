@@ -76,13 +76,20 @@ class SessionAudioCoordinator(
                     cfg.soundMode == SoundMode.CUES
                 }
                 // Stummschalter und Fokusverlust betreffen nur den Ton – Haptik folgt weiter der Einstellung.
-                if (toneWanted && !mutedState.value && !focusLost.value) tonePlayer.play(event)
+                // Fokus vor jedem hörbaren Ton: Der erste Cue kommt vor dem Status RUNNING, und ein
+                // abgelehnter Antrag (Anruf) wird so beim nächsten Ton wiederholt (AUDIO-02).
+                if (toneWanted && !mutedState.value) {
+                    audioFocus.request()
+                    if (!focusLost.value) tonePlayer.play(event)
+                }
                 hapticPlayer.play(event, enabled = cfg.haptics)
             }
         }
         scope.launch {
             phaseAudio.collect { pa ->
                 if (current.value.soundMode == SoundMode.CONTINUOUS) {
+                    // Wie bei den Cues: zum Phasenbeginn anfordern, ein abgelehnter Antrag wird wiederholt.
+                    if (!mutedState.value) audioFocus.request()
                     // Beim Stummschalten die Tonhöhe weiter mitführen (nur ohne Pegel), damit
                     // das Aufheben der Stummschaltung nicht auf einer alten Phase hängen bleibt.
                     continuousPlayer.onPhase(
@@ -118,8 +125,8 @@ class SessionAudioCoordinator(
         // neue Übung hineinzuklingen; ebenso, wenn ein Anruf den Fokus nimmt.
         if (status == SessionStatus.PREPARING || lost) tonePlayer.silenceGong()
         val inSession = status != SessionStatus.IDLE && status != SessionStatus.FINISHED
-        val audible = (status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER) &&
-            !muted && !lost
+        val audibleStatus = status == SessionStatus.RUNNING || status == SessionStatus.WAITING_FOR_USER
+        val audible = audibleStatus && !muted && !lost
 
         if (cfg.soundMode == SoundMode.CONTINUOUS && inSession) {
             continuousPlayer.start()
@@ -132,9 +139,10 @@ class SessionAudioCoordinator(
         }
 
         when {
-            // Fokus nur, solange etwas klingen kann (AUDIO-02): nicht in der Pause (resume() fordert
-            // ihn wieder an) und nicht stummgeschaltet – fremde Medien bleiben sonst unnötig gedämpft.
-            inSession && status != SessionStatus.PAUSED && cfg.soundMode != SoundMode.OFF && !muted ->
+            // Fokus nur, solange etwas klingen kann (AUDIO-02): nicht im Countdown (dort klingt nichts,
+            // den ersten Cue fordert der Collector an), nicht in der Pause (Weiter fordert ihn wieder
+            // an) und nicht stummgeschaltet – fremde Medien bleiben sonst unnötig gedämpft.
+            audibleStatus && cfg.soundMode != SoundMode.OFF && !muted ->
                 audioFocus.request()
 
             // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde Medien

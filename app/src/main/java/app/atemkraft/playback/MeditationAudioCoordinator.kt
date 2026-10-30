@@ -91,17 +91,27 @@ class MeditationAudioCoordinator(
     /** Gesamt-Wiedergabedauer des Gongs (Ton + Stille) fürs aktuelle Profil. */
     override fun gongTotalMs(): Int = tonePlayer.gongTotalMs()
 
-    override fun requestFocus() = audioFocus.request()
-
     override fun abandonFocus() = audioFocus.abandon()
 
-    /** Weicher Klangschalen-Gong (Start, Intervall, Ende) – außer stummgeschaltet oder ohne Fokus. */
+    /** Blendet einen noch klingenden Gong kurz aus (neuer Start, „Nochmal“). */
+    override fun silenceGong() = tonePlayer.silenceGong()
+
+    /**
+     * Weicher Klangschalen-Gong (Start, Intervall, Ende) – außer stummgeschaltet oder ohne Fokus. Der
+     * Fokus wird erst hier angefordert, wenn wirklich etwas klingt (nicht im Countdown); ein
+     * abgelehnter Antrag (Anruf) wird so beim nächsten Ton wiederholt (AUDIO-02).
+     */
     override fun gong() {
-        if (!muted && !audioFocus.lost) tonePlayer.play(CueEvent.FINISH)
+        if (muted) return
+        audioFocus.request()
+        if (!audioFocus.lost) tonePlayer.play(CueEvent.FINISH)
     }
 
+    /** Ansage – wie [gong] mit Fokus erst beim Sprechen. */
     override fun speak(text: String) {
-        if (muted || audioFocus.lost) return
+        if (muted) return
+        audioFocus.request()
+        if (audioFocus.lost) return
         engine().speak(text)
     }
 

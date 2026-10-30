@@ -21,12 +21,14 @@ import app.atemkraft.domain.SoundMode
  *
  * Getaktet wird von außen: [onPhase] zu jedem Phasenbeginn (wie `PhaseAudio` der Session),
  * [stop] bei Pause und Verlassen. Audio-Fokus wie die Session (`SessionAudioCoordinator`): transient
- * mit Ducken, angefordert beim ersten hörbaren Ton, abgegeben mit [stop]. Aufrufe nur vom
+ * mit Ducken, angefordert vor jedem hörbaren Ton, abgegeben mit [stop]. Aufrufe nur vom
  * Main-Thread.
  */
 class PreviewCuePlayer(private val output: PreviewSoundOutput) {
 
     private var settings: CueSettings? = null
+
+    /** Seit dem letzten [stop] angefordert (auch wenn abgelehnt) – [stop] gibt dann ab. */
     private var focusHeld = false
     private var released = false
 
@@ -102,8 +104,11 @@ class PreviewCuePlayer(private val output: PreviewSoundOutput) {
         output.release()
     }
 
+    /**
+     * Vor jedem hörbaren Ton anfordern: Hält die Ausgabe den Fokus, tut der Antrag nichts; wurde er
+     * abgelehnt (Anruf), fragt der nächste Ton neu, statt die Vorschau stumm zu verriegeln.
+     */
     private fun holdFocus() {
-        if (focusHeld) return
         focusHeld = true
         output.requestFocus()
     }
@@ -126,6 +131,7 @@ interface PreviewSoundOutput {
     /** Durchgehenden Ton weich ausblenden und beenden; ohne laufenden Ton nichts. */
     fun silence()
 
+    /** Fokus anfordern; mehrfach aufrufbar (gehalten = nichts, abgelehnt = neu fragen). */
     fun requestFocus()
 
     fun abandonFocus()

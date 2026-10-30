@@ -160,8 +160,8 @@ class MeditationController(
 
     /**
      * Transienter In-Session-Stummschalter (ohne die Einstellung zu ändern). Stumm gibt den
-     * Audio-Fokus ab, damit fremde Medien nicht geduckt bleiben; wieder an fordert ihn neu an,
-     * solange die Sitzung läuft (AUDIO-02).
+     * Audio-Fokus ab, damit fremde Medien nicht geduckt bleiben; wieder an fordert ihn erst der
+     * nächste Gong bzw. die nächste Ansage an (AUDIO-02).
      */
     fun toggleMute() {
         val newMuted = !_state.value.muted
@@ -170,18 +170,8 @@ class MeditationController(
         // Nur im Lauf: Pause und Ende regeln den Fokus selbst (dort klingt ggf. der End-Gong aus).
         val status = _state.value.status
         if (finishing || (status != MeditationStatus.PREPARING && status != MeditationStatus.RUNNING)) return
-        when {
-            newMuted -> audio.abandonFocus()
-            producesAudio() -> audio.requestFocus()
-        }
+        if (newMuted) audio.abandonFocus()
     }
-
-    /**
-     * Erzeugt die Sitzung gerade Ton? Sonst keinen Audio-Fokus anfordern, fremde Medien nicht ducken
-     * – auch nicht, solange sie stummgeschaltet ist.
-     */
-    private fun producesAudio(): Boolean = !_state.value.muted &&
-        (currentConfig.startEndGong || currentConfig.gongEveryMin != null || (currentConfig.speech && speechAvailable.value))
 
     /**
      * Startet eine Meditation – die eine Funktion für den Start im Tab und für den Übergang nach
@@ -194,6 +184,11 @@ class MeditationController(
         logEndedEarly() // eine laufende Sitzung wird ersetzt, nicht spurlos verworfen
         runnerJob?.cancel()
         finishing = false
+        // „Nochmal“/neuer Start: Ein noch klingender End-Gong blendet kurz aus, statt durch den
+        // Countdown zu klingen (wie die Atem-Session); der Fokus bis zum ersten Ton ist frei.
+        audio.stopSpeech()
+        audio.silenceGong()
+        audio.abandonFocus()
         audio.setMuted(false) // neue Sitzung startet unstumm
         currentConfig = config
         totalMs = if (config.mode == MeditationMode.TIMED) config.minutes * 60_000L else 0L
@@ -229,7 +224,7 @@ class MeditationController(
         }
         audio.stopSpeech()
         // Fokus während der Pause abgeben, damit fremde Medien nicht dauerhaft gedämpft bleiben;
-        // resume() fordert ihn über launchActive() wieder an.
+        // nach resume() fordert ihn der nächste Gong bzw. die nächste Ansage wieder an.
         audio.abandonFocus()
         _state.update { it.copy(status = MeditationStatus.PAUSED) }
     }
@@ -310,7 +305,8 @@ class MeditationController(
 
     private fun launchActive(fromResume: Boolean) {
         runnerJob = scope.launch {
-            if (producesAudio()) audio.requestFocus()
+            // Kein Fokus vorab: Gong und Ansage fordern ihn an, wenn sie klingen – im Countdown und
+            // bis zum ersten Ton bleiben fremde Medien ungeduckt (AUDIO-02).
             if (!fromResume) {
                 runCountdown()
                 if (currentConfig.startEndGong) audio.gong() // Start-Gong nach dem Countdown
@@ -432,9 +428,7 @@ class MeditationController(
         // (sonst würde die gesamte Pausendauer als Meditationszeit mitgezählt).
         if (_state.value.status != MeditationStatus.PAUSED) clock.accrue()
         audio.stopSpeech() // eine ggf. noch laufende Ansage nicht über den End-Gong sprechen lassen
-        // Nur für einen tatsächlich hörbaren End-Gong den Fokus (erneut) anfordern.
-        if (currentConfig.startEndGong && !_state.value.muted) audio.requestFocus()
-        if (currentConfig.startEndGong) audio.gong()
+        if (currentConfig.startEndGong) audio.gong() // fordert den Fokus selbst an (auch aus der Pause)
         // Hierher kommen nur der natürlich abgelaufene Timer und ein Beenden ab einer Minute (end()):
         // beide zählen nach der Logbuch-Regel ([SessionTiming.MIN_LOG_MS]).
         finishedEntryId = logbook.append(logEntry())
@@ -481,9 +475,11 @@ interface MeditationAudio {
     fun setGongLong(long: Boolean)
     fun gongTotalMs(): Int
     fun setMuted(value: Boolean)
-    fun requestFocus()
     fun abandonFocus()
+
+    /** Gong spielen; fordert den Audio-Fokus selbst an (nicht stumm, nicht verloren). */
     fun gong()
+    fun silenceGong()
     fun speak(text: String)
     fun stopSpeech()
 }

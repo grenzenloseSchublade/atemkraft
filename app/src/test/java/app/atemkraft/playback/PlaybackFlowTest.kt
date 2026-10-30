@@ -204,9 +204,9 @@ class PlaybackFlowTest {
         override fun setGongLong(long: Boolean) = Unit
         override fun gongTotalMs() = 7_000
         override fun setMuted(value: Boolean) = Unit
-        override fun requestFocus() = Unit
         override fun abandonFocus() = Unit
         override fun gong() = Unit
+        override fun silenceGong() = Unit
         override fun speak(text: String) = Unit
         override fun stopSpeech() = Unit
     }
