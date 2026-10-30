@@ -35,18 +35,14 @@ object BuiltInExercises {
             "werden dabei besonders groß.",
         effect = "Tägliches Grundlagen-Werkzeug: 6\u00A0Atemzüge pro Minute hoben die HRV stärker als " +
             "Box oder 4-7-8.",
-        effectDetail = "Die hohe HRV-Wirkung entsteht, weil bei etwa 6 Atemzügen pro Minute (etwa 0,1\u00A0Hz) " +
-            "Atem, Herzschlag und Blutdruck-Regelkreis (Baroreflex) im selben Takt schwingen – " +
-            "die HRV-Ausschläge werden besonders groß. " +
-            "Über Wochen geübt soll das den Baroreflex stärken, so das Modell dahinter (Lehrer 2014, " +
-            "Shaffer 2020). In Trainings mit dieser Atmung, allerdings mit HRV-Rückmeldung am " +
-            "Gerät, sanken selbstberichteter Stress und Angst deutlich (Goessl 2017, 24 Studien). " +
-            "Die App startet mit 6/min; " +
-            "deine persönliche Resonanz liegt meist zwischen 4,5 und 6,5/min – etwas Ausprobieren " +
-            "lohnt sich. Anders als 4-7-8 oder Box kommt " +
-            "Resonanz ohne Halten aus und ist damit das ruhige tägliche Grundlagen-Werkzeug. " +
-            "Wichtig ist gleichmäßiges, nicht zu tiefes Atmen, um nicht versehentlich zu " +
-            "hyperventilieren.",
+        effectDetail = "Die hohe HRV-Wirkung entsteht, weil bei etwa 6 Atemzügen pro Minute (etwa 0,1\u00A0Hz) Atem, " +
+            "Herzschlag und Blutdruck-Regelkreis (Baroreflex) im selben Takt schwingen. Über Wochen geübt " +
+            "soll das den Baroreflex stärken, so das Modell dahinter (Lehrer 2014, Shaffer 2020). In " +
+            "Trainings mit dieser Atmung, allerdings mit HRV-Rückmeldung am Gerät, sanken " +
+            "selbstberichteter Stress und Angst deutlich (Goessl 2017, 24 Studien). Die App startet mit " +
+            "6/min; deine persönliche Resonanz liegt meist zwischen 4,5 und 6,5/min – etwas Ausprobieren " +
+            "lohnt sich. Anders als 4-7-8 oder Box kommt Resonanz ohne Halten aus. Wichtig ist " +
+            "gleichmäßiges, nicht zu tiefes Atmen, um nicht versehentlich zu hyperventilieren.",
         instructionHint = "Ca. 4\u00A0s durch die Nase ein, ca. 6\u00A0s ruhig aus, ohne zu pressen. " +
             "Wenn du magst, probiere über „Phasen anpassen“ etwas langsamere Takte.",
         cautions = listOf(
@@ -75,17 +71,14 @@ object BuiltInExercises {
             "(füllt die Lunge ganz), dann ein langer Ausatem durch den Mund – fortlaufend.",
         effect = "Hebt in einer Stanford-Studie die Stimmung und senkt die Atemfrequenz am " +
             "deutlichsten.",
-        effectDetail = "In der Stanford-Studie (Balban 2023, 108 Personen, davon 30 beim Cyclic " +
-            "Sighing, 5\u00A0min/Tag über 28 Tage) hob Cyclic Sighing die Stimmung deutlicher als " +
-            "Achtsamkeit und senkte die Atemfrequenz am stärksten. Box-Atmung und kontrollierte " +
-            "Hyperventilation lagen ebenfalls über Achtsamkeit, aber nicht deutlich; für einen " +
-            "Vergleich der Atemtechniken untereinander war die Studie zu klein. Der Mechanismus " +
-            "dahinter: Der zweite kurze Einatem bläht " +
-            "Lungenbläschen wieder auf, die im flachen Atem teils kollabieren; der lange " +
-            "Ausatem fördert die CO₂-Abgabe und senkt über den Vagus die Herzfrequenz. " +
-            "Das ist bislang eine einzelne, autoren-nahe Studie ohne unabhängige Replikation und " +
-            "ohne vorab veröffentlichten Plan – ein vorsichtiges Zwischenergebnis, kein " +
-            "Endurteil. Dieselbe Mechanik einzeln im Stressmoment heißt „Physiological Sigh“.",
+        effectDetail = "In der Stanford-Studie (Balban 2023, 108 Personen, 30 davon mit dieser Übung, 5\u00A0min/Tag über " +
+            "28 Tage) hob sie die Stimmung deutlicher als Achtsamkeit und senkte die Atemfrequenz am " +
+            "stärksten. Box-Atmung und schnelles Atmen lagen auch über Achtsamkeit, aber nicht deutlich. " +
+            "Der zweite kurze Einatem bläht im flachen Atem teils kollabierte Lungenbläschen wieder auf; " +
+            "der lange Ausatem fördert die CO₂-Abgabe und senkt über den Vagus die Herzfrequenz. Es ist " +
+            "eine einzelne, autoren-nahe Studie ohne Replikation und ohne vorab veröffentlichten Plan, zu " +
+            "klein für einen Vergleich der Techniken: ein vorsichtiges Zwischenergebnis. Dieselbe " +
+            "Mechanik einzeln im Stressmoment heißt „Physiological Sigh“.",
         instructionHint = "1 voller Einatem durch die Nase → kurzer zweiter Einatem ganz oben " +
             "drauf → langsam vollständig durch den Mund aus. Ca. 5\u00A0min am Stück, langer Ausatem.",
         references = listOf(Refs.balban2023),
@@ -156,12 +149,10 @@ object BuiltInExercises {
             "Halten: Ausatem länger als Einatem verschiebt die Balance über den Vagus Richtung " +
             "Parasympathikus und verstärkt die RSA. In einer kleinen Akutstudie sanken Puls und " +
             "systolischer Blutdruck (Vierra 2022); eine Vergleichsstudie 2025 fand dagegen keine " +
-            "nennenswerte Änderung von Blutdruck oder Stimmung. Dort hob die Resonanz-Atmung (6/min) " +
-            "die HRV stärker als 4-7-8 oder Box – 4-7-8 ist eher eine Variante zum Herunterfahren als " +
-            "ein HRV-Training. Das populäre " +
-            "„natürliche Beruhigungsmittel“ (Andrew Weil) ist anschaulich, aber nicht durch " +
-            "Studien belegt. Wenige Runden genügen; das 7-Sekunden-Halten bei " +
-            "Bedarf verkürzen.",
+            "nennenswerte Änderung von Blutdruck oder Stimmung. Dort hob die Resonanz-Atmung (6/min) die " +
+            "HRV stärker als 4-7-8 oder Box – 4-7-8 ist eher eine Variante zum Herunterfahren als ein " +
+            "HRV-Training. Das populäre „natürliche Beruhigungsmittel“ (Andrew Weil) ist nicht durch " +
+            "Studien belegt. Wenige Runden genügen; das 7-Sekunden-Halten bei Bedarf verkürzen.",
         instructionHint = "4\u00A0s durch die Nase ein\u00A0· 7\u00A0s halten\u00A0· 8\u00A0s durch den Mund aus\u00A0· " +
             "3–4 Runden. Zungenspitze hinter den oberen Schneidezähnen; Halten ggf. verkürzen.",
         cautions = listOf(
@@ -230,15 +221,14 @@ object BuiltInExercises {
             "in die Brust. Basis, auf der alle anderen Techniken aufbauen.",
         effect = "Die ruhige Basis aller Techniken: verlangsamt den Atem; Studien dazu sind wenige " +
             "und klein.",
-        effectDetail = "Die Anspannung sinkt, weil Bauchatmung (Zwerchfell) mehr Luft mit " +
-            "weniger Aufwand bewegt: Wer so atmet, wird automatisch langsamer – und unterhalb " +
-            "von etwa 10 Atemzügen pro Minute verschiebt sich die Balance Richtung Parasympathikus, " +
-            "die HRV steigt (Zaccaro 2018). In einem achtwöchigen Training (Ma 2017, n\u00A0=\u00A040) verbesserten sich " +
-            "Aufmerksamkeit und Stimmung und der Cortisolspiegel sank – allerdings mit intensivem, " +
-            "angeleitetem Üben, nicht durch „Bauchatmung“ allein. „Zwerchfellatmung“ ist eher ein " +
-            "Sammelbegriff; die isolierte Wirkung ist daher schwer zu beziffern. Sie ist die " +
-            "Grundlage, auf der die anderen Techniken aufbauen. Bei schwerer COPD mit überblähter " +
-            "Lunge kann betont tiefes Bauchatmen die Atemnot eher verstärken – dann sanft dosieren.",
+        effectDetail = "Die Anspannung sinkt, weil Bauchatmung (Zwerchfell) mehr Luft mit weniger Aufwand bewegt: " +
+            "Der Atem wird von selbst langsamer, und unter etwa 10 Atemzügen pro Minute verschiebt sich " +
+            "die Balance Richtung Parasympathikus, die HRV steigt (Zaccaro 2018). In einem achtwöchigen " +
+            "Training (Ma 2017, n\u00A0=\u00A040) verbesserten sich Aufmerksamkeit und Stimmung, das Cortisol sank " +
+            "– allerdings mit intensivem, angeleitetem Üben, nicht durch „Bauchatmung“ allein. " +
+            "„Zwerchfellatmung“ ist eher ein Sammelbegriff und die Grundlage der anderen Techniken; ihre " +
+            "eigene Wirkung ist schwer zu beziffern. Bei schwerer COPD mit überblähter Lunge kann betont " +
+            "tiefes Bauchatmen die Atemnot eher verstärken – dann sanft dosieren.",
         instructionHint = "Hand auf den Bauch\u00A0· langsam einatmen, sodass sich der Bauch hebt " +
             "(nicht die Brust)\u00A0· langsam durch gespitzte Lippen ausatmen\u00A0· einige Minuten.",
         cautions = listOf(
@@ -325,15 +315,13 @@ object BuiltInExercises {
             "entsteht ein leises, gleichmäßiges Rauschen. Etwa 4\u00A0s ein, 6\u00A0s aus, ohne Halten.",
         effect = "Langsames Atmen mit leisem Rauschen; das Rauschen brachte in einer Studie keinen Vorteil.",
         effectDetail = "Den Hauptteil trägt vermutlich das langsame Tempo: Unter etwa 10 Atemzügen pro Minute " +
-            "verschiebt sich die Balance Richtung Parasympathikus, die Herzratenvariabilität steigt " +
-            "(Zaccaro 2018). Ob die verengte Kehle etwas dazugibt, ist offen. Bei 17 Yoga-Anfängern hob " +
-            "langsames Atmen die Empfindlichkeit des Baroreflexes, eines Regelkreises des Blutdrucks; mit Ujjayi " +
-            "beim Ausatmen stieg sie etwas weniger, mit Rauschen beim Ein- und Ausatmen nicht deutlich " +
-            "(Mason 2013). Die Forschenden vermuten, dass der Widerstand in der Kehle den Druck im " +
-            "Brustkorb erhöht und Kraft kostet. Bei 12 Menschen mit Querschnittlähmung hob Ujjayi die " +
-            "Sauerstoffsättigung leicht (Mazur 2024, explorative Studie). Der Wert des Rauschens liegt eher " +
-            "darin, dass du den Atem hörst: Du merkst, ob er gleichmäßig fließt, und bleibst leichter dabei. " +
-            "Strengt es an, mach das Rauschen nur beim Ausatmen.",
+            "verschiebt sich die Balance Richtung Parasympathikus, die HRV steigt (Zaccaro 2018). Ob die " +
+            "verengte Kehle etwas dazugibt, ist offen. Bei 17 Yoga-Anfängern hob langsames Atmen die " +
+            "Empfindlichkeit des Baroreflexes (Blutdruck-Regelkreis); mit Ujjayi beim Ausatmen etwas " +
+            "weniger, mit Rauschen beim Ein- und Ausatmen nicht deutlich (Mason 2013) – vermutlich kostet " +
+            "der Widerstand in der Kehle Kraft. Bei 12 Menschen mit Querschnittlähmung hob Ujjayi die " +
+            "Sauerstoffsättigung leicht (Mazur 2024, explorativ). Das Rauschen hilft eher so: Du hörst, " +
+            "ob der Atem gleichmäßig fließt. Strengt es an, rausche nur beim Ausatmen.",
         instructionHint = "Mund zu, durch die Nase atmen\u00A0· Kehle leicht verengen wie beim geflüsterten „haaa“" +
             "\u00A0· ca. 4\u00A0s ein, 6\u00A0s aus, leise rauschend. Gesicht und Kiefer weich, nie pressen.",
         cautions = listOf(
@@ -367,19 +355,15 @@ object BuiltInExercises {
             "Ein bewusster Belastungsreiz – nur, wenn du dich gesund und ausgeruht fühlst.",
         effect = "Dämpft im Experiment die akute Entzündungsreaktion; ein Heileffekt ist " +
             "nicht belegt.",
-        effectDetail = "Die schnellen tiefen Atemzüge senken das CO₂ (Hypokapnie – daher Kribbeln " +
-            "und Schwindel), das anschließende Halten erzeugt eine kurze, dosierte " +
-            "Sauerstoffknappheit. Der Reiz löst eine Sympathikus-/Adrenalin-Welle aus, die den " +
-            "entzündungshemmenden Botenstoff IL-10 hochfährt. In einer Studie mit gespritztem " +
-            "Bakterienbestandteil (Endotoxin; Kox 2014, 24 Männer) " +
-            "fielen die Entzündungsmarker deutlich (TNF-α −53\u00A0%, IL-6 −57\u00A0%), IL-10 stieg " +
-            "(+194\u00A0%) und die Grippe-Symptome waren milder; eine Pilotstudie (Zwaag 2022) " +
-            "isolierte die Atmung als Haupttreiber. Zur Einordnung: Eine systematische " +
-            "Übersicht (Almahayni 2024) stuft die Gesamtevidenz als „sehr niedrig“ ein (winzige, fast nur " +
-            "männliche Stichproben); ein chronischer Heileffekt ist nicht belegt. Es ist ein " +
-            "bewusster Belastungsreiz (Hormese) – das Gegenteil von langsamem Beruhigungsatmen – " +
-            "und gehört nur in Zeiten, in denen du dich gesund und ausgeruht fühlst, nie ins " +
-            "oder ans Wasser.",
+        effectDetail = "Schnelles tiefes Atmen senkt das CO₂ (Hypokapnie: Kribbeln, Schwindel), das Halten danach " +
+            "bringt einen kurzen Sauerstoffmangel. Adrenalin fährt dann den entzündungshemmenden " +
+            "Botenstoff IL-10 hoch. Nach gespritztem Bakteriengift (Kox 2014, 24 Männer) fielen " +
+            "Entzündungsmarker deutlich (TNF-α −53\u00A0%, IL-6 −57\u00A0%), IL-10 stieg (+194\u00A0%), die " +
+            "Grippe-Symptome waren milder; laut einer Pilotstudie (Zwaag 2022) vor allem durch die " +
+            "Atmung. Eine Übersicht (Almahayni 2024) stuft die Evidenz als „sehr niedrig“ ein (winzige, " +
+            "fast nur männliche Stichproben); ein Heileffekt ist nicht belegt. Es ist ein bewusster " +
+            "Belastungsreiz (Hormese): nur, wenn du dich gesund und ausgeruht fühlst, nie im oder am " +
+            "Wasser.",
         instructionHint = "30 tiefe Atemzüge (tief ein, locker durch den Mund aus, nicht ganz leeren) → ausatmen und halten, so lange " +
             "angenehm → tief einatmen, 15\u00A0s halten\u00A0· 3 Runden\u00A0· nur im Sitzen/Liegen.",
         cautions = listOf(
@@ -629,16 +613,14 @@ object BuiltInExercises {
         shortDescription = "Gleich lange Phasen: 4\u00A0s ein, 4\u00A0s halten, 4\u00A0s aus, 4\u00A0s halten. " +
             "Ein gleichmäßiges Muster für „ruhig, aber wach“ – das „taktische“ Atmen.",
         effect = "Für „ruhig, aber wach“ vor einer Aufgabe; speziell zu Box gibt es nur wenige Studien.",
-        effectDetail = "„Ruhig, aber wach“ entsteht, weil gleich lange Phasen mit zwei Pausen " +
-            "den Atem auf einen langen, ruhigen Rhythmus takten und so HRV und Baroreflex " +
-            "stützen – die Belege stammen vor allem aus " +
-            "der allgemeinen Slow-Breathing-Forschung, wenig aus Box-spezifischen Studien. In der " +
-            "Stanford-Studie (Balban 2023) sank die Anspannung direkt nach der Box-Atmung; " +
-            "deutlich stärker als Achtsamkeit hob die Stimmung dort aber nur Cyclic Sighing. " +
-            "Die bekannte „Navy-SEAL“-Erzählung ist Folklore, kein Studienbeleg – überzeugend ist " +
-            "Box als einfaches, symmetrisches Muster für „ruhig, aber wach“ vor einer Aufgabe. " +
-            "Achtung: Die Atempausen können bei Panik Lufthunger auslösen; dann besser eine " +
-            "Technik ohne Halten (z. B. Resonanz). Für reine HRV sind 6 Atemzüge pro Minute stärker.",
+        effectDetail = "„Ruhig, aber wach“ entsteht, weil gleich lange Phasen mit zwei Pausen den Atem auf einen " +
+            "langen, ruhigen Rhythmus takten und so HRV und Baroreflex stützen – die Belege stammen vor " +
+            "allem aus der allgemeinen Slow-Breathing-Forschung, wenig aus Box-spezifischen Studien. In " +
+            "der Stanford-Studie (Balban 2023) sank die Anspannung direkt nach der Box-Atmung; deutlich " +
+            "stärker als Achtsamkeit hob die Stimmung dort aber nur Cyclic Sighing. Die bekannte " +
+            "„Navy-SEAL“-Erzählung ist Folklore, kein Studienbeleg. Achtung: Die Atempausen können bei " +
+            "Panik Lufthunger auslösen; dann besser eine Technik ohne Halten (z. B. Resonanz). Für reine " +
+            "HRV sind 6 Atemzüge pro Minute stärker.",
         instructionHint = "4\u00A0s ein\u00A0· 4\u00A0s halten\u00A0· 4\u00A0s aus\u00A0· 4\u00A0s halten\u00A0· ca. 2–5\u00A0min. " +
             "Durch die Nase. Zu lang? Nimm 3-3-3-3. Ideal vor einer Aufgabe – ruhig und konzentriert.",
         cautions = listOf(
@@ -676,16 +658,14 @@ object BuiltInExercises {
             "Der Wechsel bindet die Aufmerksamkeit, der Rhythmus bleibt langsam.",
         effect = "Langsamer Wechselrhythmus; eine Meta-Analyse fand niedrigeren Blutdruck, " +
             "Studien sind schwach.",
-        effectDetail = "Wahrscheinlicher Wirkstoff ist das langsame, ausatem-betonte Atmen, nicht " +
-            "der Nasenloch-Wechsel selbst – die Vorstellung, einzelne Nasenlöcher steuerten gezielt " +
+        effectDetail = "Wahrscheinlicher Wirkstoff ist das langsame, ausatem-betonte Atmen, nicht der " +
+            "Nasenloch-Wechsel selbst – die Vorstellung, einzelne Nasenlöcher steuerten gezielt " +
             "Sympathikus bzw. Gehirnhälften, ist spekulativ. Eine Meta-Analyse (Nam 2024, 6 RCTs, " +
-            "n\u00A0=\u00A0525) fand eine Blutdrucksenkung (oberer Wert um etwa 7\u00A0mmHg), bei allerdings " +
-            "hoher Heterogenität " +
-            "und kaum Verblindung; kleinere Studien berichten uneinheitliche HRV-Effekte " +
-            "(Mittal 2025: Anstieg; Upadhyay 2023: keine Änderung). Der Wechsel-Rhythmus und das Mitführen der Hand binden die " +
-            "Aufmerksamkeit und helfen beim Zentrieren – das fördert die Praxis, auch wenn der " +
-            "Mechanismus offen ist. Die App gibt nur Takt und Seitenwechsel vor, ohne " +
-            "erzwungenes Halten.",
+            "n\u00A0=\u00A0525) fand eine Blutdrucksenkung (oberer Wert um etwa 7\u00A0mmHg), bei allerdings hoher " +
+            "Heterogenität und kaum Verblindung; kleinere Studien berichten uneinheitliche HRV-Effekte " +
+            "(Mittal 2025: Anstieg; Upadhyay 2023: keine Änderung). Der Wechsel-Rhythmus und das " +
+            "Mitführen der Hand binden die Aufmerksamkeit und helfen beim Zentrieren, auch wenn der " +
+            "Mechanismus offen ist. Die App gibt nur Takt und Seitenwechsel vor, ohne erzwungenes Halten.",
         instructionHint = "Rechtes Nasenloch zu, links ein → links zu, rechts aus → rechts ein → " +
             "links aus\u00A0· langsam\u00A0· ca. 5\u00A0min. Die App gibt nur den Takt + Seitenwechsel vor.",
         cautions = listOf(
@@ -827,16 +807,13 @@ object BuiltInExercises {
             "mit dem Ziel, die CO₂-Toleranz zu erhöhen. Ein Wochen-Programm, kein Akut-Trick.",
         effect = "In Asthma-Studien besserte sich vor allem die Lebensqualität; die Studienlage " +
             "ist schwach.",
-        effectDetail = "Buteyko trainiert bewusst reduziertes, ruhiges Nasenatmen samt kurzer " +
-            "Atempausen („Control Pause“) mit dem Ziel, die CO₂-Toleranz zu erhöhen. Die " +
-            "Cochrane-Übersicht (2020, Atemübungen bei Asthma allgemein, nur zwei von 22 Studien " +
-            "mit Buteyko) fand eine bessere Lebensqualität (moderate Evidenz); ob sich die " +
-            "Symptome bessern, blieb unklar; bei der Lungenfunktion waren die Ergebnisse " +
-            "uneinheitlich (sehr niedrige Evidenz). Die angenommene CO₂-Korrektur " +
-            "ließ sich in " +
-            "Studien nicht bestätigen (Bowler 1998) – der Nutzen kommt eher aus ruhigerem Atmen " +
-            "und weniger Atem-Aufwand. Relevant ist das Training vor allem bei Asthma und dysfunktionaler " +
-            "Atmung/Atemnot. Wichtig: ein ergänzendes Wochen-Training neben der ärztlichen " +
+        effectDetail = "Buteyko übt bewusst sparsames, ruhiges Nasenatmen samt kurzer Atempausen („Control Pause“), " +
+            "um die CO₂-Toleranz zu erhöhen. Die Cochrane-Übersicht (2020, Atemübungen bei Asthma, nur 2 " +
+            "von 22 Studien zu Buteyko) fand bessere Lebensqualität (moderate Evidenz); die Wirkung auf " +
+            "Symptome blieb unklar, die Lungenfunktion uneinheitlich (sehr niedrige Evidenz). Die " +
+            "angenommene CO₂-Korrektur ließ sich nicht bestätigen (Bowler 1998) – der Nutzen kommt eher " +
+            "aus ruhigerem Atmen und weniger Atem-Aufwand. Gedacht ist es vor allem für Asthma und " +
+            "gestörte Atmung mit Atemnot. Wichtig: ein ergänzendes Wochen-Training neben der ärztlichen " +
             "Behandlung, kein Akut-Trick und kein Ersatz für Asthma-Medikamente.",
         instructionHint = "Bewusst weniger und ruhiger durch die Nase atmen, sanfte „Lufthunger“-" +
             "Phasen, über Wochen. Messbarer Anker: die Control Pause (Dauer der Atempause).",
