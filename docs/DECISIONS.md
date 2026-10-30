@@ -54,6 +54,12 @@ Datierte Entscheidungen des Eigentümers und Befunde, die eine Regel geprägt ha
 
 | ID | Erledigt | Was |
 |---|---|---|
+| S-18 | 2026-10-30 | `SessionButtonPink` entfällt, „Beenden“ nimmt `error`; `SecondaryContainer` #5A4890 (1,91 auf Karte); gewählter Tab in `onSecondaryContainer`; `TonalDeep` (#3A2C60) für Session-Seitenknöpfe und gewählte Editor-Zeilen. |
+| S-25 | 2026-10-30 | Markenkopf auf „Über“ in `onBackground` statt `primary`. |
+| S-32 | 2026-10-30 | `modifier` an Chips und `SafetyDialog`, Vorschauen in sechs Dateien, 54 Kommentarzeilen mit „…“. |
+| S-33, S-37 | 2026-10-30 | Tab-Labels `labelLarge` (M3 1.4 hatte schon `labelMedium`), Rückfall auf Icons ab Schrift 1,5 auf 360 dp; cd am Icon bzw. Parameter `contentDescription` an `AppOutlinedButton`/`TonalChip` statt `semantics`. |
+| S-38 | 2026-10-30 | Ohne Code: Seit den kurzen Namen „Aus · Töne · Dauerton“ stehen die Segmente bis Schrift 1,3 (nachgemessen); Gerätecheck A54. |
+| S-42 (Großteil) | 2026-10-30 | `ExpanderSection`/`ExpanderCard` und `SettingsCard` über `CardHeader`; `SectionHeader` und `GroupLabel` teilen `TitleRow`; ANATOMIE prüft „Text bis zur Kante“ nur an Karten mit Aktionen. |
 | A-12, S-07 | 2026-10-30 | 24 Referenzbilder (Tabs, laufende Atemübung und Meditation; A54 hoch/quer, Tablet hoch/quer) in `app/src/test/screenshots/`, `check.sh` ruft `verifyRoborazziDebug`; neu aufnehmen: `rm -rf app/src/test/screenshots && scripts/build.sh recordRoborazziDebug`. |
 | A-13 | 2026-10-30 | `scripts/check-github.sh` (nur lesend) und `scripts/verify-release-body.sh` im `release-verify`: Version, versionCode = Elter + 1, Notes und Changelog, Heilversprechen, SHA-256 und Fingerprint im Body. |
 | S-03 | 2026-10-30 | Phasenwort auf der Kreismitte bleibt bei 3,31 (großer Text, ≥ 3 erfüllt); Eigentümer: lassen. |

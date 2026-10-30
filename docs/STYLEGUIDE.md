@@ -701,16 +701,10 @@ Nur Offenes; Erledigtes steht in [DECISIONS.md](DECISIONS.md). Sicherheitsbefund
 
 | ID | Regel | Befund (Ort) | Aufwand |
 |---|---|---|---|
-| S-18 | FARBE-04, -06 | drei Pinktöne ΔE < 25 (Entscheidung: `SessionButtonPink` aus `error` oder `EvidenceCaution` Richtung Koralle); `SecondaryContainer` 1,18 auf Card (Option #5A4890) | S |
 | S-23 | TEXT-12 | `respeRate` (Patent, kein Studienzitat) wird genutzt: „Mehr zum Dauerton“ in den Einstellungen und `settings_sound_hint` nennen RESPeRATE. Entscheidung offen: als Quelle des Prinzips behalten oder samt Satz streichen | S |
-| S-25 | KOMP-01 | About-Titel `headlineLarge` in `primary` | S |
-| S-32 | CODE-04, -06 | Komponenten ohne `modifier`; 0 Previews bei mehreren Komponenten; 67 Kommentarzeilen mit ASCII-Schlusszeichen | M |
-| S-33 | ICON-02, TYPO-01 | cd 5× per `semantics` am Button; Gewichtswechsel in der NavigationBar | S |
-| S-37 | LAYOUT-04, TYPO-02 | `NavigationBar` folgt der Schrift nicht (Höhe 80, Indikator 64 × 32 fest in M3 1.3.1); Label 9,9 sp am A54 eher zu klein. Entscheidung offen: eigene Leiste oder größere Label-Rolle | M |
-| S-38 | LAYOUT-03 | „Atmen → Ton“ fällt auf dem A54 (1,1) trotz kleinerer Segmente auf die Radioliste zurück | S |
 | S-41 | CODE-01, -02 | Bewusst offen (Architektur-Review 2026-10-24): gemeinsamer Ablauf-Kern für `BreathSessionController` und `MeditationController` (erst mit einem dritten Ablauf); lange Composables aufteilen (`ExerciseDetailScreen`, `SessionScreen.ActiveContent`, `TimeDial`, `HomeScreen`, `BreathCurveEditor`); `SubcomposeLayout` in `SectionHeader` → `Layout` mit Intrinsics; `java.text.Normalizer` und `javaClass` als expect/actual für KMP | L |
 | S-39 | MUSTER-09 | nur auf Zuruf: Embeddings für die Befindens-Suche (erst bei Hunderten freier Inhalte sinnvoll) | L |
-| S-42 | §4.5 | Weitere Bausteine in `CardHeader`/Anatomie überführen: `SettingsCard`-Titel, `ExpanderCard`-Kopf, `LogEntryCard`; `SectionHeader` und `GroupLabel` auf eine gemeinsame `TitleRow` ziehen | M |
+| S-42 | §4.5 | Rest: `LogEntryCard` ist eine Listenzeile (Familienpunkt vorn, `titleSmall`, Dauer-Spalte) ohne passende Slots in `CardHeader`; erst mit einem Zeilen-Baustein überführen | S |
 
 ## <a id="quellen"></a>Quellen
 
