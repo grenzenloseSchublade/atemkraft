@@ -92,7 +92,7 @@
 
     <!-- Tabs -->
     <string name="tab_breathe">Atmen</string>
-    <string name="tab_own">Eigene</string>
+    <string name="tab_own">Meins</string>
     <string name="tab_learn">Lernen</string>
 
     <!-- Befindens-Suche im Atmen-Tab: Platzhalter des Felds und Name der Anlass-Chips für TalkBack;
@@ -151,15 +151,15 @@
     <!-- Teaser der Kopfzeile „Muster des Tages ›“: %1$s Charakter von heute („ruhig“); Ziffern erst im Blatt. -->
     <string name="home_daily_teaser">Heute %1$s\u00A0· oder selbst gestalten</string>
     <string name="cd_daily_open">Muster des Tages öffnen</string>
-    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster zum Ausprobieren – gefällt es dir, speicherst du es in „Eigene“.</string>
+    <string name="home_daily_sheet_intro">Jeden Tag ein neues Muster zum Ausprobieren – gefällt es dir, speicherst du es in „Meins“.</string>
     <string name="home_create_title">Selbst gestalten</string>
     <!-- Kopf über den Treffern bei Anlass, Suche oder Bereich (statt „Übungen“). -->
     <string name="home_results">Passende Übungen</string>
-    <string name="home_create_intro">Fang mit dem Muster von heute an und forme es an der Kurve, wie es dir guttut. Gespeichert findest du es in „Eigene“.</string>
+    <string name="home_create_intro">Fang mit dem Muster von heute an und forme es an der Kurve, wie es dir guttut. Gespeichert findest du es in „Meins“.</string>
     <string name="daily_pattern_gentle_up">sanft aktivierend</string>
     <string name="cd_pattern_regenerate">Muster neu generieren</string>
-    <string name="cd_pattern_save">In Eigene speichern</string>
-    <string name="state_saved">In Eigene gespeichert</string>
+    <string name="cd_pattern_save">In „Meins“ speichern</string>
+    <string name="state_saved">In „Meins“ gespeichert</string>
     <string name="state_not_saved">Nicht gespeichert</string>
     <!-- Persönliche Markierung (Atemkreis): eigene Einschätzung, keine Studienlage. Karte zeigt
          sie nur, wenn gesetzt; gesetzt wird sie auf der Detailseite. -->
@@ -169,19 +169,19 @@
     <string name="state_not_marked">Nicht markiert</string>
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
-    <!-- Gespeicherte Tagesmuster und selbst zusammengestellte Muster im Tab „Eigene“ (Nutzer 2026-10-23). -->
+    <!-- Gespeicherte Tagesmuster und selbst zusammengestellte Muster im Tab „Meins“ (Nutzer 2026-10-23). -->
     <string name="own_creations">Eigene Kreationen</string>
-    <!-- Anzahl als Status-Suffix an einem Kopf (Abschnitte im Tab „Eigene“, Vorschau des SectionHeader). -->
+    <!-- Anzahl als Status-Suffix an einem Kopf (Abschnitte im Tab „Meins“, Vorschau des SectionHeader). -->
     <string name="situations_my_patterns_count">· %1$d</string>
     <string name="cd_pattern_delete">Muster %1$s löschen</string>
-    <!-- Stift auf der Karte einer Kreation (Tab „Eigene“): öffnet den Muster-Editor, mit Namen (A11Y-06). -->
+    <!-- Stift auf der Karte einer Kreation (Tab „Meins“): öffnet den Muster-Editor, mit Namen (A11Y-06). -->
     <string name="cd_pattern_edit_named">Muster %1$s bearbeiten</string>
     <!-- Bestätigungszustand des zweistufigen Löschens (MUSTER-05), per liveRegion angesagt. -->
     <string name="cd_delete_confirm">‚%1$s‘ wirklich löschen?</string>
 
-    <!-- Tab „Eigene“: Kopf wie die anderen Tabs (ohne Untertitel, Nutzer 2026-10-24), darunter „Verlauf“ (Einstieg
+    <!-- Tab „Meins“: Kopf wie die anderen Tabs (ohne Untertitel, Nutzer 2026-10-24), darunter „Verlauf“ (Einstieg
          ins Logbuch) und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
-    <string name="own_title">Eigene</string>
+    <string name="own_title">Meins</string>
     <!-- „Neues Muster“: die erste Kachel im Regal „Eigene Kreationen“ (öffnet den Muster-Editor). -->
     <string name="own_new_pattern">Neues Muster</string>
     <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung über dem Regal, das dann nur die
@@ -485,7 +485,7 @@
         <item quantity="other">%d Sitzungen</item>
     </plurals>
     <string name="log_minutes_total">%1$d\u00A0min gesamt</string>
-    <!-- Minuten der sieben Tage der Wochenpunkte, heute und die sechs davor (Verlauf im Tab „Eigene“). -->
+    <!-- Minuten der sieben Tage der Wochenpunkte, heute und die sechs davor (Verlauf im Tab „Meins“). -->
     <string name="log_minutes_recent">%1$d\u00A0min in den letzten 7\u00A0Tagen</string>
     <!-- Spanne der gezeigten Kalenderwochen über den Punkten: „27. Okt – 2. Nov“ (Beginn Montag, Ende Sonntag). -->
     <string name="log_weeks_range">%1$s – %2$s</string>
