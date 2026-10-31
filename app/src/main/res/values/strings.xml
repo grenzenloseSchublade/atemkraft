@@ -184,6 +184,8 @@
     <string name="own_title">Meins</string>
     <!-- „Neues Muster“: die erste Kachel im Regal „Eigene Kreationen“ (öffnet den Muster-Editor). -->
     <string name="own_new_pattern">Neues Muster</string>
+    <!-- Schmale Kachel links vor den Kreationen (Tab „Meins“); TalkBack hört own_new_pattern. -->
+    <string name="own_new_short">Neu</string>
     <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung über dem Regal, das dann nur die
          Kachel „Neues Muster“ zeigt. -->
     <string name="own_empty">Noch keine eigenen Kreationen. Gespeicherte Tagesmuster aus dem Tab „Atmen“ erscheinen auch hier.</string>

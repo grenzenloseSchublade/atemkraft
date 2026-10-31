@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
@@ -26,6 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
@@ -37,16 +41,16 @@ import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.CardHeader
 import app.atemkraft.ui.components.CardPager
 import app.atemkraft.ui.components.CardSet
-import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ExerciseCurve
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.PageTabs
 import app.atemkraft.ui.components.PersonalMarkIndicator
 import app.atemkraft.ui.components.RhythmCurve
 import app.atemkraft.ui.components.SecondaryText
-import app.atemkraft.ui.components.SegmentedChoiceRow
+import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.rememberFirstLineHeight
@@ -55,20 +59,22 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Sammlungen im Tab „Eigene“ (Nutzer 2026-10-31): oben ein Umschalter wie Tabs in der Seite
- * „Eigene Kreationen · 4 | Tut mir gut · 3“ ([SegmentedChoiceRow], Auswahl ohne Häkchen; die Wahl
- * bleibt, [selected]), darunter für die gewählte Sammlung Karteikarten ([CardPager]): eine große
- * Karte je Eintrag, seitlich wischen, die nächste ragt herein.
+ * Sammlungen im Tab „Meins“ (Nutzer 2026-10-31): oben Tabs in der Seite „Eigene Kreationen 4 ·
+ * Tut mir gut 3“ ([PageTabs]: der gewählte pink mit Strich, die Zahl leise; die Wahl bleibt,
+ * [selected]), darunter für die gewählte Sammlung Karteikarten ([CardPager]): eine Karte je Eintrag,
+ * seitlich wischen, jede rastet an der Textkante ein, die nächste ragt herein.
  *
- * Kreationen: vorn die Karte „Neues Muster“ (das Gestalten steht am Anfang), dahinter je
- * gespeichertem Muster eine Karte mit Stift und Löschen ([CreationCard]); ohne Kreationen trägt die
- * „+“-Karte den Satz des Leerzustands (MUSTER-04). „Tut mir gut“: je markierter Übung eine Karte
- * mit ◉ ([FavoriteCard]); ohne Markierung eine ruhige Karte mit dem Satz, wie man markiert.
+ * Kreationen: ganz links die schmale Kachel „+ Neu“ ([NewPatternTile], Eigentümer 2026-10-31: nicht
+ * als erste volle Karte), daneben vollständig die erste Kreation, je gespeichertem Muster eine Karte
+ * mit Stift und Löschen ([CreationCard]); ohne Kreationen steht neben der Kachel eine ruhige Karte mit
+ * dem Satz des Leerzustands (MUSTER-04). „Tut mir gut“: je markierter Übung eine Karte mit ◉
+ * ([FavoriteCard]), gleich breit wie die Kreationen; ohne Markierung eine ruhige Karte mit dem Satz,
+ * wie man markiert.
  *
- * Unter jedem Pager „Alle 4 ›“ und als letzte Karte „Alle ansehen ›“: beide öffnen die ganze
+ * Unter jeder Reihe „Alle 4 ›“ und als letzte Karte „Alle ansehen ›“: beide öffnen die ganze
  * Sammlung als Liste auf einer eigenen Seite ([OwnCreationsScreen], [OwnFavoritesScreen]).
  *
- * Je Sammlung ein eigener [PagerState] ([creationsPager], [favoritesPager]), vom Aufrufer gehalten:
+ * Je Sammlung ein eigener [LazyListState] ([creationsRow], [favoritesRow]), vom Aufrufer gehalten:
  * Umschalten und Tab-Wechsel lassen die Lage stehen.
  */
 @Composable
@@ -77,32 +83,39 @@ internal fun OwnCollections(
     onSelect: (OwnCollection) -> Unit,
     patterns: List<SavedPattern>,
     favorites: List<Exercise>,
-    creationsPager: PagerState,
-    favoritesPager: PagerState,
+    creationsRow: LazyListState,
+    favoritesRow: LazyListState,
     actions: OwnActions,
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.HeaderGap)) {
-        val creations = collectionLabel(stringResource(R.string.own_creations), patterns.size)
-        val favoritesLabel = collectionLabel(stringResource(R.string.own_favorites), favorites.size)
-        SegmentedChoiceRow(items = OwnCollection.entries, selected = selected, onSelect = onSelect) { collection ->
-            if (collection == OwnCollection.CREATIONS) creations else favoritesLabel
-        }
-        // Beide Sammlungen stehen gleich hoch: Jeder Pager misst die Karten der anderen mit.
+        val creationsName = stringResource(R.string.own_creations)
+        val favoritesName = stringResource(R.string.own_favorites)
+        PageTabs(
+            items = OwnCollection.entries,
+            selected = selected,
+            onSelect = onSelect,
+            label = { collection -> if (collection == OwnCollection.CREATIONS) creationsName else favoritesName },
+            counts = { collection ->
+                (if (collection == OwnCollection.CREATIONS) patterns.size else favorites.size).takeIf { it > 0 }
+            },
+        )
+        // Beide Sammlungen stehen gleich hoch: Jede Reihe misst die Karten der anderen mit.
         val creationCards = CardSet(patterns.size) { index -> CreationCard(patterns[index], onClick = {}, onEdit = {}, onDelete = {}) }
         val favoriteCards = CardSet(favorites.size) { index -> FavoriteCard(favorites[index], onClick = {}) }
         when (selected) {
             OwnCollection.CREATIONS -> CardPager(
-                pageCount = patterns.size + 1,
-                state = creationsPager,
-                key = { index -> if (index == 0) NEW_PATTERN_KEY else patterns[index - 1].id },
+                pageCount = patterns.size.coerceAtLeast(1),
+                state = creationsRow,
+                key = { index -> if (patterns.isEmpty()) EMPTY_KEY else patterns[index].id },
                 allLabel = stringResource(R.string.own_all_count, patterns.size),
                 onAll = actions.onOpenAllCreations.takeIf { patterns.isNotEmpty() },
                 sameHeightAs = favoriteCards,
+                leading = { NewPatternTile(onClick = actions.onNewPattern) },
             ) { index ->
-                if (index == 0) {
-                    NewPatternCard(onClick = actions.onNewPattern, empty = patterns.isEmpty())
+                if (patterns.isEmpty()) {
+                    QuietCard(fill = true) { HintText(stringResource(R.string.own_empty)) }
                 } else {
-                    val pattern = patterns[index - 1]
+                    val pattern = patterns[index]
                     CreationCard(
                         pattern = pattern,
                         onClick = { actions.onSelect(pattern.exercise.id) },
@@ -117,7 +130,7 @@ internal fun OwnCollections(
             } else {
                 CardPager(
                     pageCount = favorites.size,
-                    state = favoritesPager,
+                    state = favoritesRow,
                     key = { favorites[it].id },
                     allLabel = stringResource(R.string.own_all_count, favorites.size),
                     onAll = actions.onOpenAllFavorites,
@@ -131,41 +144,43 @@ internal fun OwnCollections(
     }
 }
 
-/** Listen-Schlüssel der Karte „Neues Muster“ (die Muster tragen ihre Datenbank-Id). */
-private const val NEW_PATTERN_KEY = "new-pattern"
-
-/** „Eigene Kreationen · 4“ – der Punkt hängt geschützt am Titel (TEXT-10); ohne Einträge nur der Titel. */
-@Composable
-private fun collectionLabel(title: String, count: Int): String = if (count > 0) title + " " + stringResource(R.string.situations_my_patterns_count, count) else title
+/** Listen-Schlüssel der ruhigen Karte ohne Kreationen (die Muster tragen ihre Datenbank-Id). */
+private const val EMPTY_KEY = "empty"
 
 /**
- * Karte „Neues Muster“: „+“ und Titel mittig auf ruhiger Fläche (`surfaceContainerLow`, ohne Rand –
- * eine Einladung, kein Hauptknopf, MUSTER-04); mit [empty] darunter der Satz des Leerzustands.
+ * Schmale Kachel „+ Neu“ links vor den Kreationen (Eigentümer 2026-10-31): „+“ und das Wort „Neu“
+ * mittig auf ruhiger Fläche (`surfaceContainerLow`, ohne Rand – eine Einladung, kein Hauptknopf,
+ * MUSTER-04), so hoch wie die Karten. TalkBack hört „Neues Muster“ (das kurze Wort ist dort stumm);
+ * ein Tipp öffnet den Muster-Editor. Rand innen `GapSmall`, damit „Neu“ auch bei Schrift 2,0 in die
+ * Kachel passt.
  */
 @Composable
-private fun NewPatternCard(onClick: () -> Unit, empty: Boolean) {
+private fun NewPatternTile(onClick: () -> Unit) {
+    val name = stringResource(R.string.own_new_pattern)
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().semantics { contentDescription = name },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(Dimens.CardPadding),
+            modifier = Modifier.fillMaxSize().padding(Dimens.GapSmall),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             Icon(
                 Icons.Filled.Add,
-                contentDescription = null, // dekorativ: Die Karte heißt „Neues Muster“.
+                contentDescription = null, // dekorativ: Die Kachel heißt „Neues Muster“.
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(Sizes.IconDefault),
             )
             Spacer(Modifier.height(Dimens.GapSmall))
-            CardTitle(stringResource(R.string.own_new_pattern))
-            if (empty) {
-                Spacer(Modifier.height(Dimens.GapTiny))
-                HintText(stringResource(R.string.own_empty))
-            }
+            WholeWordText(
+                text = stringResource(R.string.own_new_short),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { hideFromAccessibility() },
+            )
         }
     }
 }
@@ -267,11 +282,11 @@ private const val RESERVED_LINES = 2
 @Composable
 private fun titleReserve(): Dp = rememberFirstLineHeight(MaterialTheme.typography.titleMedium) * RESERVED_LINES
 
-/** Ruhige Fläche ohne Aktion (Leerzustand „Tut mir gut“), gebaut wie die Karte „Neues Muster“. */
+/** Ruhige Fläche ohne Aktion (Leerzustände; mit [fill] füllt sie ihre Karte in der Reihe), gebaut wie die Kachel „Neu“. */
 @Composable
-private fun QuietCard(content: @Composable () -> Unit) {
+private fun QuietCard(fill: Boolean = false, content: @Composable () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = if (fill) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) { content() }

@@ -87,6 +87,12 @@ object Sizes {
      */
     val WeekDot = 24.dp
 
+    /**
+     * Strich unter dem gewählten Tab in der Seite (`PageTabs`, 3 wie der Indikator der M3-Tabs):
+     * Pink unter dem Namen, beim ungewählten Tab unsichtbar (die Höhe bleibt, nichts springt).
+     */
+    val PageTabIndicator = 3.dp
+
     /** Familienpunkt vor jedem Logbuch-Eintrag (10), mittig zur ersten Namenszeile; auch statt der Mini-Kurve einer Übung ohne Takt (`ExerciseCurve`). */
     val FamilyDot = 10.dp
 

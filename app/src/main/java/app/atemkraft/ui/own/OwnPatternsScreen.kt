@@ -3,7 +3,7 @@ package app.atemkraft.ui.own
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
@@ -18,7 +18,6 @@ import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
-import app.atemkraft.ui.components.pagerPageCount
 import app.atemkraft.ui.log.LogHistory
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -82,8 +81,8 @@ fun OwnPatternsScreen(
     today: LocalDate = LocalDate.now(),
 ) {
     // Die Lage jeder Sammlung überlebt Umschalten und Tab-Wechsel (gespeicherter Zustand des Tabs).
-    val creationsPager = rememberPagerState { pagerPageCount(savedPatterns.size + 1, withAll = savedPatterns.isNotEmpty()) }
-    val favoritesPager = rememberPagerState { pagerPageCount(favorites.size, withAll = true) }
+    val creationsRow = rememberLazyListState()
+    val favoritesRow = rememberLazyListState()
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = {
@@ -117,8 +116,8 @@ fun OwnPatternsScreen(
                     onSelect = actions.onCollectionChange,
                     patterns = savedPatterns,
                     favorites = favorites,
-                    creationsPager = creationsPager,
-                    favoritesPager = favoritesPager,
+                    creationsRow = creationsRow,
+                    favoritesRow = favoritesRow,
                     actions = actions,
                 )
             }
