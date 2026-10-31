@@ -50,6 +50,7 @@ import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
+import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
@@ -129,13 +130,14 @@ private fun SituationSearchField(query: TextFieldState, focus: MutableInteractio
  * selbst sind neutral. [withTitle]:
  * Stehen mehrere Ergebnisse untereinander (Suchtreffer), nennt ein [SubLabel] den Anlass; bei
  * einem einzelnen trägt ihn der markierte Chip. Darunter folgen die Übungskarten als eigene
- * Listeneinträge und zuletzt der Verweis auf den Bereich ([AreaLink]).
+ * Listeneinträge und zuletzt der Verweis auf den Bereich ([AreaLink]). Mit [stickyKey] (Schlüssel
+ * des Listeneintrags) klebt der Titel als Gruppe ([stickyGroup]).
  */
 @Composable
-internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolean) {
+internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolean, stickyKey: String? = null) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (withTitle) {
-            SubLabel(rec.title, color = MaterialTheme.colorScheme.onBackground)
+            SubLabel(rec.title, modifier = Modifier.stickyGroup(stickyKey), color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.height(Dimens.GapTiny))
         }
         SecondaryText(rec.rationale)
@@ -176,15 +178,16 @@ internal fun AllExercisesLink(onClick: () -> Unit) {
  * ([GroupLabel], Familienfarbe), bei intensiven Übungen mit der ⚠-Zeile darunter. [onClose] (nur
  * wenn der Bereich über [AreaLink] gewählt ist): ✕ rechts (in `onSurface` wie jede Kopf-Aktion)
  * führt zurück zur Übersicht, wie System-Zurück – kein Chip ist dann markiert, über den man
- * zurückkäme.
+ * zurückkäme. Mit [stickyKey] (Schlüssel des Listeneintrags) klebt das Label als Gruppe ([stickyGroup]).
  */
 @Composable
-internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?) {
+internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?, stickyKey: String? = null) {
     val family = area.family
     Column(modifier = Modifier.fillMaxWidth()) {
         GroupLabel(
             title = family.title(),
             color = family.color(),
+            modifier = Modifier.stickyGroup(stickyKey),
             top = GROUP_LABEL_LIST_TOP,
             trailingAction = onClose?.let { close ->
                 {
@@ -252,3 +255,6 @@ private fun SettledSearchStatus(situations: Int, areas: Int, onShowAll: () -> Un
         if (none) SecondaryText(stringResource(R.string.situations_search_none_hint))
     }
 }
+
+/** Eine Gruppe (Ebene 2) unter „Passende Übungen“ klebt; [key] ist der Schlüssel ihres Listeneintrags. */
+private fun Modifier.stickyGroup(key: String?): Modifier = if (key == null) this else stickyHeader(key = key, level = 2, itemKey = key)

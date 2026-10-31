@@ -59,6 +59,7 @@ import app.atemkraft.ui.components.durationClockText
 import app.atemkraft.ui.components.feelingText
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
+import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
@@ -372,7 +373,9 @@ private fun LogGroupSection(
         )
     }
     val showDay = group.period !is LogPeriod.Today && group.period !is LogPeriod.Yesterday
-    CollapsibleSection(title = title) {
+    // Der Kopf der Gruppe klebt, solange man in ihr liest (Eintrag "group-…", siehe Liste).
+    val key = "group-${group.period}"
+    CollapsibleSection(title = title, headerModifier = Modifier.stickyHeader(key = key, level = 1, itemKey = key)) {
         group.days.forEach { day ->
             Column {
                 if (showDay) {

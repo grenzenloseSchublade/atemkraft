@@ -30,6 +30,7 @@ import app.atemkraft.ui.components.Labeled
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
+import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -47,10 +48,18 @@ import app.atemkraft.ui.theme.Dimens
 fun PranayamaScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, expanded: Boolean = false) {
     PushScaffold(onBack = onBack, title = stringResource(R.string.pranayama_title)) {
         ScreenSubtitle(Pranayama.intro)
-        CollapsibleSection(title = stringResource(R.string.pranayama_basics), teaser = Pranayama.topicsTeaser) {
+        CollapsibleSection(
+            title = stringResource(R.string.pranayama_basics),
+            headerModifier = Modifier.stickyHeader(key = "basics", level = 1),
+            teaser = Pranayama.topicsTeaser,
+        ) {
             Pranayama.topics.forEach { TopicCard(it, expanded) }
         }
-        CollapsibleSection(title = stringResource(R.string.pranayama_techniques), teaser = Pranayama.techniquesTeaser) {
+        CollapsibleSection(
+            title = stringResource(R.string.pranayama_techniques),
+            headerModifier = Modifier.stickyHeader(key = "techniques", level = 1),
+            teaser = Pranayama.techniquesTeaser,
+        ) {
             Pranayama.techniques.forEach { TechniqueCard(it, onOpenExercise, expanded) }
         }
         SourcesSection(expanded)

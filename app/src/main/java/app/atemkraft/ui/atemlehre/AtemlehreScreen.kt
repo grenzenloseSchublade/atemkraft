@@ -28,6 +28,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -56,6 +57,7 @@ import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.sanskritText
+import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
@@ -93,10 +95,11 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
     var content by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var focusDone by rememberSaveable { mutableStateOf(focusId == null) }
     val topMarginPx = with(LocalDensity.current) { Dimens.CardPadding.roundToPx() }
+    var patternsHeader by remember { mutableIntStateOf(0) }
     LaunchedEffect(focusDone) {
         if (focusDone) return@LaunchedEffect
         val y = snapshotFlow { focusY }.first { it >= 0 }
-        scrollState.animateScrollTo((y - topMarginPx).coerceAtLeast(0))
+        scrollState.animateScrollTo((y - topMarginPx - patternsHeader).coerceAtLeast(0))
         focusDone = true
     }
 
@@ -108,7 +111,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
     ) {
         ScreenSubtitle(Atemlehre.intro)
 
-        CollapsibleSection(title = stringResource(R.string.atemlehre_phases)) {
+        CollapsibleSection(title = stringResource(R.string.atemlehre_phases), headerModifier = Modifier.stickyHeader(key = "phases", level = 1)) {
             PhasesCard(Atemlehre.phases)
         }
 
@@ -123,7 +126,13 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
         // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
         // Balken zu welchem Titel gehört. Die Lage der Karten wird gegen den Scroll-Inhalt
         // gemessen und dient als Sprungziel.
-        CollapsibleSection(title = stringResource(R.string.atemlehre_patterns)) {
+        // Der Kopf „Muster“ klebt; der Sprung zur Karte rechnet seine Höhe ab (patternsHeader).
+        CollapsibleSection(
+            title = stringResource(R.string.atemlehre_patterns),
+            headerModifier = Modifier
+                .stickyHeader(key = "patterns", level = 1)
+                .onSizeChanged { patternsHeader = it.height },
+        ) {
             Atemlehre.patterns.forEach { pattern ->
                 LorePatternCard(
                     pattern = pattern,

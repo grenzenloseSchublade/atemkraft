@@ -18,6 +18,7 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CollapsibleSection
 import app.atemkraft.ui.components.PushScaffold
+import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.theme.Dimens
 
 /**
@@ -40,7 +41,7 @@ fun GlossaryScreen(onBack: () -> Unit) {
  */
 @Composable
 private fun TermGroup(title: String, terms: List<GlossaryTerm>, top: Dp = Dimens.SectionHeaderTop) {
-    CollapsibleSection(title = title, headerTop = top) {
+    CollapsibleSection(title = title, headerModifier = Modifier.stickyHeader(key = title, level = 1), headerTop = top) {
         terms.forEach { term ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(Dimens.CardPadding)) {

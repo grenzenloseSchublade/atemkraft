@@ -17,9 +17,10 @@ ij_kotlin_allow_trailing_comma_on_call_site = true
 ktlint_standard_no-wildcard-imports = enabled
 # Composables heißen groß (Compose-Konvention).
 ktlint_function_naming_ignore_when_annotated_with = Composable
-# Einziger eigener CompositionLocal: Der App-Rahmen reicht den Zustand der Tab-Leiste an die
-# Startleisten der Seiten durch, damit der Knopf auf ihrer Oberkante sitzt (ui/navigation/TabBarState.kt).
-compose_allowed_composition_locals = LocalTabBarState
+# Eigene CompositionLocals: Der App-Rahmen reicht den Zustand der Tab-Leiste an die Startleisten der
+# Seiten durch, damit der Knopf auf ihrer Oberkante sitzt (ui/navigation/TabBarState.kt); die Gerüste
+# reichen den Zustand der klebenden Überschriften an Modifier.stickyHeader durch (ui/components/StickyHeaders.kt).
+compose_allowed_composition_locals = LocalTabBarState,LocalStickyHeaders
 
 # Screens sind Wurzeln, kein wiederverwendbares Layout-Element: kein modifier-Parameter nötig.
 [**/*Screen.kt]

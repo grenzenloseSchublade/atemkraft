@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,7 +90,8 @@ fun PushHeader(
  * optional [bottomBar] (`PinnedActionBar` der Detailseite). Titel, [titleContent] und [action]
  * wie beim [PushHeader]. [contentModifier] liegt zwischen Scroll und Rand – dort misst die
  * Atemlehre Sprungziele gegen den Scroll-Inhalt. Eine Einleitung steht als [ScreenSubtitle] oben
- * im Inhalt.
+ * im Inhalt. Überschriften mit [stickyHeader] kleben oben ([StickyHeaderOverlay]); klebt etwas,
+ * trägt die Schicht die Haarlinie statt des Kopfs.
  */
 @Composable
 fun PushScaffold(
@@ -103,6 +105,8 @@ fun PushScaffold(
     bottomBar: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val sticky = rememberStickyHeaderState(scrollState)
+    val pinned by sticky.anyPinned()
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             PushHeader(
@@ -110,18 +114,23 @@ fun PushScaffold(
                 title = title,
                 titleContent = titleContent,
                 action = action,
-                scrolled = scrollState.canScrollBackward,
+                scrolled = scrollState.canScrollBackward && !pinned,
             )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .then(contentModifier)
-                    .padding(horizontal = Dimens.ScreenPadding),
-            ) {
-                Spacer(Modifier.height(Dimens.SectionGap))
-                content()
-                Spacer(Modifier.height(Dimens.TabBarGripClearance))
+            Box(modifier = Modifier.weight(1f).fillMaxWidth().stickyViewport(sticky)) {
+                CompositionLocalProvider(LocalStickyHeaders provides sticky) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .then(contentModifier)
+                            .padding(horizontal = Dimens.ScreenPadding),
+                    ) {
+                        Spacer(Modifier.height(Dimens.SectionGap))
+                        content()
+                        Spacer(Modifier.height(Dimens.TabBarGripClearance))
+                    }
+                }
+                StickyHeaderOverlay(sticky)
             }
             bottomBar?.invoke()
         }

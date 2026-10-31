@@ -2,7 +2,6 @@ package app.atemkraft.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -67,9 +68,9 @@ fun ScreenHeader(
  * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [top] ist der
  * Abstand über dem ersten Eintrag (Tabs 0: der erste Eintrag bringt seinen Abstand selbst mit;
  * Logbuch `SectionGap` wie jede Push-Seite), unten [bottom] (Tabs `ScreenBottom`, Logbuch
- * `TabBarGripClearance` wie jede Seite der Tiefe), beides als `contentPadding`. [overlay] liegt
- * über dem oberen Rand der Liste (die klebende Leiste „Übungen · Beruhigen“ im Atmen-Tab); wer sie
- * zeigt, gibt [header] dann `scrolled = false`, damit nur eine Haarlinie steht.
+ * `TabBarGripClearance` wie jede Seite der Tiefe), beides als `contentPadding`. Überschriften mit
+ * [stickyHeader] kleben oben ([StickyHeaderOverlay]); klebt etwas, trägt die Schicht die Haarlinie
+ * und [header] bekommt `scrolled = false`.
  */
 @Composable
 fun TabListScaffold(
@@ -78,30 +79,33 @@ fun TabListScaffold(
     listState: LazyListState = rememberLazyListState(),
     top: Dp = 0.dp,
     bottom: Dp = Dimens.ScreenBottom,
-    overlay: @Composable BoxScope.() -> Unit = {},
     content: LazyListScope.() -> Unit,
 ) {
+    val sticky = rememberStickyHeaderState(listState)
+    val pinned by sticky.anyPinned()
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            header(listState.canScrollBackward)
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
-                    // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
-                    // Listen-Clip sie anschneidet.
-                    contentPadding = PaddingValues(
-                        start = Dimens.ScreenPadding,
-                        top = top,
-                        end = Dimens.ScreenPadding,
-                        bottom = bottom,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
-                ) {
-                    content()
+            header(listState.canScrollBackward && !pinned)
+            Box(modifier = Modifier.weight(1f).fillMaxWidth().stickyViewport(sticky)) {
+                CompositionLocalProvider(LocalStickyHeaders provides sticky) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        // Rand als contentPadding, nicht als Modifier: Die Liste reicht bis an den Bildrand, und
+                        // bündige Icon-Buttons (flushEnd) ragen mit ihrer Tippfläche in den Rand, ohne dass der
+                        // Listen-Clip sie anschneidet.
+                        contentPadding = PaddingValues(
+                            start = Dimens.ScreenPadding,
+                            top = top,
+                            end = Dimens.ScreenPadding,
+                            bottom = bottom,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
+                    ) {
+                        content()
+                    }
                 }
-                overlay()
+                StickyHeaderOverlay(sticky)
             }
         }
     }

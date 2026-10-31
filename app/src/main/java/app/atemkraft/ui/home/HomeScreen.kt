@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -16,12 +15,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -46,6 +42,7 @@ import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 
@@ -183,58 +180,14 @@ fun HomeScreen(
     val filtered = remember(catalog.exercisesByFamily, filters, catalog.yogaExerciseIds) { ExerciseFilters.apply(catalog.exercisesByFamily, filters, catalog.yogaExerciseIds) }
     // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten).
     val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
-    // Klebende Leiste „Übungen · Beruhigen“ (Nutzer 2026-10-31): welche Gruppe zu welchem Eintrag
-    // gehört, nach den Schlüsseln der Liste.
-    val anchorKey = if (filtering) "results-head" else "exercises"
-    val groups: Map<Any, StuckGroup> = buildMap {
-        if (filtering) {
-            shownSituations.forEach { rec ->
-                val group = StuckGroup(rec.shortLabel, MaterialTheme.colorScheme.onBackground)
-                val key = "rec-${rec.situation.name}"
-                put(key, group)
-                put("$key-links", group)
-                rec.exerciseIds.forEach { put("$key-$it", group) }
-            }
-            shownAreas.forEach { area ->
-                val group = StuckGroup(area.family.title(), area.family.color())
-                val key = "area-${area.family.name}"
-                put(key, group)
-                familyExercises[area.family].orEmpty().forEach { put("$key-${it.id}", group) }
-            }
-        } else {
-            filtered.forEach { (family, exercises) ->
-                val group = StuckGroup(family.title(), family.color())
-                if (family == firstFamily) put("exercises", group)
-                put("header-${family.name}", group)
-                exercises.forEach { put(it.id, group) }
-            }
-        }
-    }
-    val listState = rememberLazyListState()
-    var barHeight by remember { mutableIntStateOf(0) }
-    val currentGroups by rememberUpdatedState(groups)
-    val currentAnchor by rememberUpdatedState(anchorKey)
-    val stuck by remember(listState) { derivedStateOf { stuckAt(listState, currentAnchor, currentGroups, barHeight) } }
-    // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie – oder
-    // die klebende Leiste darunter zeigt sie.
+    // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
         header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.tab_breathe),
                 action = { SettingsAction(onClick = actions.onOpenSettings) },
-                scrolled = scrolled && stuck == null,
+                scrolled = scrolled,
             )
-        },
-        listState = listState,
-        overlay = {
-            stuck?.let {
-                StuckSectionBar(
-                    title = stringResource(if (filtering) R.string.home_results else R.string.home_all_exercises),
-                    group = it.group,
-                    listState = listState,
-                    onHeight = { height -> barHeight = height },
-                )
-            }
         },
     ) {
         // Erster Start: eine ruhige, abweisbare Karte statt eines Onboardings (Nutzer 2026-10-24).
@@ -277,7 +230,11 @@ fun HomeScreen(
         }
         if (filtering) {
             item(key = "results-head") {
-                SectionHeader(title = stringResource(R.string.home_results), top = HEADER_BELOW_DIVIDER)
+                SectionHeader(
+                    title = stringResource(R.string.home_results),
+                    modifier = Modifier.stickyHeader(key = "results-head", level = 1, itemKey = "results-head"),
+                    top = HEADER_BELOW_DIVIDER,
+                )
             }
         }
         if (results != null && chosen == null && chosenArea == null) {
@@ -289,7 +246,8 @@ fun HomeScreen(
             val withTitle = shownSituations.size + shownAreas.size > 1
             val directAreas = shownAreas.map { it.family }.toSet()
             shownSituations.forEach { rec ->
-                item(key = "rec-${rec.situation.name}") { RecommendationIntro(rec, withTitle) }
+                val recKey = "rec-${rec.situation.name}"
+                item(key = recKey) { RecommendationIntro(rec, withTitle, stickyKey = recKey) }
                 items(rec.exerciseIds.mapNotNull(catalog.resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
@@ -315,8 +273,15 @@ fun HomeScreen(
                 }
             }
             shownAreas.forEach { area ->
-                item(key = "area-${area.family.name}") {
-                    AreaHeader(area = area, onClose = if (chosenArea != null) showAll else null)
+                val areaKey = "area-${area.family.name}"
+                item(key = areaKey) {
+                    // Mit ✕ (gewählter Bereich) klebt der Kopf nicht: Oben stünde ein Knopf, der nichts tut.
+                    val onClose = if (chosenArea != null) showAll else null
+                    AreaHeader(
+                        area = area,
+                        onClose = onClose,
+                        stickyKey = areaKey.takeIf { onClose == null },
+                    )
                 }
                 items(familyExercises[area.family].orEmpty(), key = { "area-${area.family.name}-${it.id}" }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
@@ -330,21 +295,36 @@ fun HomeScreen(
             // (SectionGap).
             item(key = "exercises") {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeader(title = stringResource(R.string.home_all_exercises), top = HEADER_BELOW_DIVIDER)
+                    SectionHeader(
+                        title = stringResource(R.string.home_all_exercises),
+                        modifier = Modifier.stickyHeader(key = "exercises", level = 1, itemKey = "exercises"),
+                        top = HEADER_BELOW_DIVIDER,
+                    )
                     Spacer(Modifier.height(Dimens.GapTiny))
                     ExerciseFilterRow(active = filters, onToggle = { filters = if (it in filters) filters - it else filters + it })
                     if (filters.isNotEmpty()) {
                         Spacer(Modifier.height(Dimens.GapTiny))
                         FilterStatus(count = filtered.sumOf { it.second.size }, onReset = { filters = emptySet() })
                     } else if (firstFamily != null) {
-                        GroupLabel(title = firstFamily.title(), color = firstFamily.color(), top = GROUP_LABEL_BELOW_CHIPS)
+                        GroupLabel(
+                            title = firstFamily.title(),
+                            color = firstFamily.color(),
+                            modifier = Modifier.stickyHeader(key = "exercises-${firstFamily.name}", level = 2, itemKey = "exercises"),
+                            top = GROUP_LABEL_BELOW_CHIPS,
+                        )
                     }
                 }
             }
             filtered.forEachIndexed { index, (family, exercises) ->
                 if (index > 0 || firstFamily == null) {
-                    item(key = "header-${family.name}") {
-                        GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_LIST_TOP)
+                    val headerKey = "header-${family.name}"
+                    item(key = headerKey) {
+                        GroupLabel(
+                            title = family.title(),
+                            color = family.color(),
+                            modifier = Modifier.stickyHeader(key = headerKey, level = 2, itemKey = headerKey),
+                            top = GROUP_LABEL_LIST_TOP,
+                        )
                     }
                 }
                 items(exercises, key = { it.id }) { exercise ->
