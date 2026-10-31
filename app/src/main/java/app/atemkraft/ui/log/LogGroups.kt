@@ -42,12 +42,6 @@ fun isRecentDay(day: LocalDate, today: LocalDate): Boolean = !day.isAfter(today)
 private fun SessionLogEntry.day(zone: ZoneId): LocalDate = Instant.ofEpochMilli(startedAtEpochMs).atZone(zone).toLocalDate()
 
 /**
- * Geübte Minuten der letzten 7 Tage ([isRecentDay]): erst die Millisekunden aller Sitzungen
- * summiert, dann einmal abgerundet – je Tag abgerundet fehlten bis zu 6 min.
- */
-fun recentMinutes(entries: List<SessionLogEntry>, today: LocalDate, zone: ZoneId): Long = entries.filter { isRecentDay(it.day(zone), today) }.sumOf { it.durationMs } / 60_000L
-
-/**
  * Teilt den Verlauf in Heute / Gestern / Letzte 7 Tage / je Kalendermonat, neueste Gruppe zuerst.
  * Maßgeblich ist der Kalendertag in [zone], nicht der Abstand in Stunden: 00:00 ist schon heute.
  * „Letzte 7 Tage“ sind dieselben Tage wie die Wochenpunkte ([isRecentDay]) ohne Heute und Gestern;

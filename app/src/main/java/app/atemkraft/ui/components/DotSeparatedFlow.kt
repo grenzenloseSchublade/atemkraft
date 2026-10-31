@@ -6,8 +6,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 
 /**
- * Teile nebeneinander, getrennt durch [separator] („·“), jede Zeile für sich zentriert (ohne
- * [centered] linksbündig: neben einem Verweis, Zählzeile im Tab „Eigene“). Passt ein
+ * Teile nebeneinander, getrennt durch [separator] („·“), jede Zeile für sich zentriert. Passt ein
  * Teil nicht mehr in die Zeile, beginnt er die nächste – und der Trenner entfällt an dieser
  * Stelle: Er steht nur zwischen zwei Teilen derselben Zeile, keine Zeile beginnt oder endet mit
  * „·“ (LAYOUT-03, Regel in `domain/TextConventions.kt` bei `DOT_SPLIT`). Gemeinsam für den Kopf
@@ -18,7 +17,6 @@ fun DotSeparatedFlow(
     parts: List<@Composable () -> Unit>,
     separator: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    centered: Boolean = true,
 ) {
     Layout(
         contents = listOf(
@@ -51,7 +49,7 @@ fun DotSeparatedFlow(
             var y = 0
             lines.forEach { line ->
                 val lineH = heightOf(line)
-                var x = if (centered) (width - widthOf(line)) / 2 else 0
+                var x = (width - widthOf(line)) / 2
                 line.forEach { i ->
                     if (i != line.first()) x = placeCentered(sepP[i - 1], x, y, lineH)
                     x = placeCentered(partP[i], x, y, lineH)

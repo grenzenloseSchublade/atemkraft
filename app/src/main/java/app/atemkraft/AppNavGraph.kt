@@ -212,7 +212,7 @@ internal fun NavGraphBuilder.appGraph(
             favorites = exercises.all().filter { it.id in state.markedExercises },
             logEntries = state.logEntries,
             recentExercises = recent,
-            view = OwnView(showStreak = state.showStreak, weeksOpen = state.historyWeeksOpen, collection = state.ownCollection),
+            view = OwnView(weeksOpen = state.historyWeeksOpen, collection = state.ownCollection),
         )
         // „+“ öffnet den Editor mit der Vorgabe 4·6: vorab messen, solange der Tab zu sehen ist.
         PatternEditorPreload(FreePattern.DEFAULT)

@@ -50,13 +50,12 @@ data class OwnActions(
 )
 
 /**
- * Ansichtswahl des Tabs „Eigene“: [showStreak] (Einstellung „Serie zeigen“; aus = keine Tage in
- * Folge im Verlauf), [weeksOpen] (Verlauf mit vier Wochen) und die gewählte Sammlung [collection] –
- * die letzten beiden dauerhaft gemerkt (DataStore, Nutzer 2026-10-31).
+ * Ansichtswahl des Tabs „Meins“: [weeksOpen] (Verlauf mit vier Wochen) und die gewählte Sammlung
+ * [collection], beide dauerhaft gemerkt (DataStore, Nutzer 2026-10-31). Die Serie steht nur im
+ * Logbuch (Eigentümer 2026-10-31).
  */
 @Immutable
 data class OwnView(
-    val showStreak: Boolean = true,
     val weeksOpen: Boolean = false,
     val collection: OwnCollection = OwnCollection.CREATIONS,
 )
@@ -103,7 +102,6 @@ fun OwnPatternsScreen(
                 LogHistory(
                     entries = logEntries,
                     today = today,
-                    showStreak = view.showStreak,
                     weeksOpen = view.weeksOpen,
                     onWeeksOpenChange = actions.onWeeksOpenChange,
                     recent = recentExercises,

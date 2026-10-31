@@ -197,11 +197,7 @@
     <!-- Lage in den Karteikarten: sichtbar „2 / 7“, TalkBack „Karte 2 von 7“. -->
     <string name="card_position">%1$d\u00A0/ %2$d</string>
     <string name="cd_card_position" tools:ignore="PluralsCandidate">Karte %1$d von %2$d</string>
-    <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter die
-         Kalenderwoche (aufklappbar bis vier Wochen) und die Bilanz; ohne Sitzungen der Satz. -->
-    <!-- Unter dem Verlauf: bis zu zwei zuletzt geübte Übungen als Zeilen (Nutzer 2026-10-31). -->
-    <string name="own_recent">Zuletzt geübt</string>
-    <!-- Hinweis in einer Zeile unter „Zuletzt geübt“: wann und wie lange, „Di 27.10. · nachmittags · 2 min“
+    <!-- Hinweis in einer Zeile des Verlaufs (bis zu zwei, direkt unter der Woche): wann und wie lange, „Di 27.10. · nachmittags · 2 min“
          (Eigentümer 2026-10-31: das Datum verknüpft die Zeile mit dem Punkt der Woche darüber; Dauer auf
          ganze Minuten gerundet, mindestens 1). Wann: Tag wie die Tageszeilen im Logbuch (log_day_label),
          dann die Tageszeit als Adverb. Die Stunden 0–4 zählen zur Nacht des Vortags (Do 01:30 → „Mi … ·
@@ -485,10 +481,12 @@
         <item quantity="other">%d Sitzungen</item>
     </plurals>
     <string name="log_minutes_total">%1$d\u00A0min gesamt</string>
-    <!-- Minuten der sieben Tage der Wochenpunkte, heute und die sechs davor (Verlauf im Tab „Meins“). -->
-    <string name="log_minutes_recent">%1$d\u00A0min in den letzten 7\u00A0Tagen</string>
     <!-- Spanne der gezeigten Kalenderwochen über den Punkten: „27. Okt – 2. Nov“ (Beginn Montag, Ende Sonntag). -->
     <string name="log_weeks_range">%1$s – %2$s</string>
+    <!-- Spanne mit den Minuten genau dieses Zeitraums: „27. Okt – 2. Nov · 45 min“ (Eigentümer 2026-10-31). -->
+    <string name="log_weeks_range_minutes">%1$s\u00A0· %2$d\u00A0min</string>
+    <!-- TalkBack: „27. Oktober bis 2. November“. -->
+    <string name="cd_log_weeks_range">%1$s bis %2$s</string>
     <plurals name="log_rounds">
         <item quantity="one">%d Runde</item>
         <item quantity="other">%d Runden</item>

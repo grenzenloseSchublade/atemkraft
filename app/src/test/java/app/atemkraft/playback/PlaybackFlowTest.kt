@@ -19,7 +19,6 @@ import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.UncaughtErrors
 import app.atemkraft.ui.log.LogPeriod
 import app.atemkraft.ui.log.groupLogEntries
-import app.atemkraft.ui.log.recentMinutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -150,12 +149,11 @@ class PlaybackFlowTest {
     }
 
     /**
-     * S-46: „Letzte 7 Tage“ heißt überall dasselbe – heute und die sechs Tage davor wie die
-     * Wochenpunkte, nicht ab Montag (Gruppe und Minuten aus derselben Definition); die Minuten
-     * werden über alle Sitzungen summiert und erst am Ende abgerundet.
+     * S-46: Die Gruppe „Letzte 7 Tage“ im Logbuch heißt heute und die sechs Tage davor, nicht ab
+     * Montag; Heute und Gestern stehen davor, Älteres im Kalendermonat.
      */
     @Test
-    fun `Logbuch zählt die letzten 7 Tage wie die Wochenpunkte, Minuten erst am Ende gerundet`() {
+    fun `Logbuch gruppiert die letzten 7 Tage rollend, nicht ab Montag`() {
         val zone = ZoneOffset.UTC
         val monday = LocalDate.of(2026, 10, 26) // ab Montag gezählt, wäre die Woche heute fast leer
         fun entry(daysAgo: Long, seconds: Long) = SessionLogEntry(
@@ -166,9 +164,8 @@ class PlaybackFlowTest {
             durationMs = seconds * 1_000,
             roundsCompleted = 10,
         )
-        // Je 90 s an vier der sieben Tage: 6 min (je Tag abgerundet wären es 4); vor sieben Tagen zählt nicht mehr.
+        // Je 90 s an vier der sieben Tage; vor sieben Tagen zählt nicht mehr dazu.
         val entries = listOf(0L, 1L, 3L, 6L).map { entry(it, 90) } + entry(7, 600)
-        assertEquals(6L, recentMinutes(entries, monday, zone))
         val groups = groupLogEntries(entries, monday, zone)
         assertEquals(
             listOf(LogPeriod.Today, LogPeriod.Yesterday, LogPeriod.LastSevenDays, LogPeriod.Month(YearMonth.of(2026, 10))),

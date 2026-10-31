@@ -31,13 +31,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import app.atemkraft.R
-import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.components.AppLocale
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.DotSeparatedFlow
 import app.atemkraft.ui.components.ExerciseRow
 import app.atemkraft.ui.components.ExerciseRows
 import app.atemkraft.ui.components.ExpandCaret
@@ -45,7 +43,6 @@ import app.atemkraft.ui.components.ForwardChevron
 import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.SecondaryText
-import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.theme.ALPHA_BORDER
@@ -77,68 +74,49 @@ private val RANGE_DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d
 internal const val HISTORY_WEEKS_OPEN = 4
 
 /**
- * Verlauf im Tab „Eigene“, der erste Eintrag des Tabs ohne eigenen Kopf (STYLEGUIDE §4.3, Tab:
- * der Seitentitel benennt schon; Eigentümer 2026-10-31): die Kalenderwoche als Punkte ([WeekCalendar], Mo–So, das Datum unter jedem Punkt, darüber die
- * Spanne „27. Okt – 2. Nov“), ein Tipp darauf klappt bis zu vier Wochen auf ([weeksOpen], dauerhaft
- * gemerkt, Nutzer 2026-10-31). Darunter die dezente Zeile „3 Tage in Folge · 45 min in den letzten
- * 7 Tagen“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der letzten sieben Tage,
- * [recentMinutes]; fehlt beides, die Zahl der Sitzungen) – eine Zählung ohne Ziel, große Zahl oder
- * Urteil (TEXT-16). Rechts in dieser Zeile führt „Logbuch ›“ zur Logbuch-Seite ([onOpenLogbook],
- * dasselbe Verweis-Muster wie „Alle 4 ›“ unter den Karteikarten). Ohne Sitzungen steht statt
- * Punkten und Zeile nur der Satz (MUSTER-04) – ohne Verweis, das Logbuch wäre leer. Ohne
- * [showStreak] fehlt die Serie, die Minuten bleiben.
+ * Verlauf im Tab „Meins“, der erste Eintrag des Tabs ohne eigenen Kopf (STYLEGUIDE §4.3, Tab: der
+ * Seitentitel benennt schon): die Kalenderwoche als Punkte ([WeekCalendar], Mo–So, das Datum unter
+ * jedem Punkt, darüber „27. Okt – 2. Nov · 45 min“ – die Minuten genau des gezeigten Zeitraums), ein
+ * Tipp darauf klappt bis zu vier Wochen auf ([weeksOpen], dauerhaft gemerkt). Direkt darunter bis
+ * zu zwei zuletzt geübte Übungen ([recent], neueste zuerst, je einmal) als schlanke Zeilen mit
+ * Datum, ohne eigenes Label – das Datum verknüpft sie mit den Punkten; ein Tipp öffnet die
+ * Detailseite ([onOpenExercise]). Am Ende rechtsbündig „Logbuch ›“ ([onOpenLogbook]), dasselbe
+ * Verweis-Muster wie „Alle 5 ›“ unter den Karteikarten: Der Verweis steht, wo die Liste weitergeht
+ * (Eigentümer 2026-10-31: „viel Text, der gleichzeitig abgrenzt“). Eine Zählung ohne Ziel, große
+ * Zahl oder Urteil (TEXT-16); die Serie steht nur im Logbuch. Ohne Sitzungen steht nur der Satz
+ * (MUSTER-04) – ohne Verweis, das Logbuch wäre leer.
  *
- * Darunter „Zuletzt geübt“: bis zu zwei Übungen ([recent], neueste zuerst, je einmal) als schlanke
- * Zeilen ([ExerciseRow]) mit „gestern Abend · 10 min“; ein Tipp öffnet die Detailseite
- * ([onOpenExercise]) – „das von gestern Abend nochmal“.
- *
- * TalkBack hört den Aufklapper als eine Schaltfläche (Spanne, Zustand), die Zählzeile und je Zeile
- * einen Satz; die Punkte sind hier stumm, die je Tag stehen auf der Logbuch-Seite.
+ * TalkBack hört den Aufklapper als eine Schaltfläche (Spanne, Minuten, Zustand) und je Zeile einen
+ * Satz; die Punkte sind hier stumm, die je Tag stehen auf der Logbuch-Seite.
  */
 @Composable
 internal fun LogHistory(
     entries: List<SessionLogEntry>,
     today: LocalDate = LocalDate.now(),
-    showStreak: Boolean = true,
     weeksOpen: Boolean = false,
     onWeeksOpenChange: (Boolean) -> Unit = {},
     recent: List<Exercise> = emptyList(),
     onOpenExercise: (exerciseId: String) -> Unit = {},
     onOpenLogbook: () -> Unit = {},
 ) {
-    val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
-    val minutesPerDay = rememberMinutesPerDay(entries)
-    val weekMinutes = remember(entries, today) { recentMinutes(entries, today, ZoneId.systemDefault()) }
     Column(modifier = Modifier.fillMaxWidth()) {
         if (entries.isEmpty()) {
             HintText(stringResource(R.string.own_history_empty))
-        } else {
-            WeekCalendar(minutesPerDay = minutesPerDay, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
-            Spacer(Modifier.height(Dimens.ListGap))
-            val parts = buildList<@Composable () -> Unit> {
-                if (streak >= 2) add { StreakText(streak) }
-                if (weekMinutes > 0) add { SecondaryText(stringResource(R.string.log_minutes_recent, weekMinutes)) }
-                if (isEmpty()) add { SecondaryText(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size)) }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
-                DotSeparatedFlow(
-                    parts = parts,
-                    separator = { SecondaryText(DOT_SEPARATOR) },
-                    modifier = Modifier.weight(1f),
-                    centered = false,
-                )
-                // Bündig: Das Polster des Text-Buttons ragt in den Rand.
-                AppTextButton(onClick = onOpenLogbook, modifier = Modifier.flushEnd()) {
-                    ForwardLinkText(text = stringResource(R.string.settings_log_title), color = MaterialTheme.colorScheme.secondary)
-                }
-            }
+            return@Column
         }
+        WeekCalendar(entries = entries, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
         if (recent.isNotEmpty()) {
-            Spacer(Modifier.height(Dimens.SectionGap))
-            SubLabel(stringResource(R.string.own_recent), color = MaterialTheme.colorScheme.onBackground)
-            Spacer(Modifier.height(Dimens.GapTiny))
+            // Woche und Zeilen sind ein Block „Verlauf“: der Listenabstand, kein Abschnittsabstand.
+            Spacer(Modifier.height(Dimens.ListGap))
             RecentPractice(recent = recent, entries = entries, onOpenExercise = onOpenExercise)
+        }
+        Spacer(Modifier.height(Dimens.GapTiny))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.weight(1f))
+            // Bündig: Das Polster des Text-Buttons ragt in den Rand.
+            AppTextButton(onClick = onOpenLogbook, modifier = Modifier.flushEnd()) {
+                ForwardLinkText(text = stringResource(R.string.settings_log_title), color = MaterialTheme.colorScheme.secondary)
+            }
         }
     }
 }
@@ -209,8 +187,9 @@ internal fun calendarWeeks(today: LocalDate, weeks: Int): List<LocalDate> {
 }
 
 /**
- * Ruhige Wochenübersicht in Kalenderwochen Mo–So (Tab „Eigene“ und Logbuch, eine Komponente): oben
- * die Spanne „27. Okt – 2. Nov“ (Beginn und Ende der gezeigten Wochen), darunter einmal die
+ * Ruhige Wochenübersicht in Kalenderwochen Mo–So (Tab „Meins“ und Logbuch, eine Komponente): oben
+ * die Spanne „27. Okt – 2. Nov · 45 min“ (Beginn und Ende der gezeigten Wochen, dahinter die
+ * Minuten genau dieses Zeitraums, bei 0 keine; Eigentümer 2026-10-31), darunter einmal die
  * Wochentage, dann je Woche eine Reihe – die laufende oben. Pro Tag ein Punkt (`WeekDot`), dessen
  * Intensität mit den geübten Minuten wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine
  * Wertung), darunter der Tag des Monats. Ein Tag ohne Übung ist ein leerer Ring, heute trägt den
@@ -225,7 +204,7 @@ internal fun calendarWeeks(today: LocalDate, weeks: Int): List<LocalDate> {
  */
 @Composable
 internal fun WeekCalendar(
-    minutesPerDay: Map<Long, Long>,
+    entries: List<SessionLogEntry>,
     today: LocalDate,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
@@ -234,11 +213,21 @@ internal fun WeekCalendar(
     val weeks = if (expanded) HISTORY_WEEKS_OPEN else 1
     val labels = stringArrayResource(R.array.log_weekday_short)
     val mondays = calendarWeeks(today, weeks)
-    val range = stringResource(
-        R.string.log_weeks_range,
-        mondays.last().format(RANGE_DAY_FORMAT),
-        mondays.first().plusDays(DAYS_PER_WEEK - 1L).format(RANGE_DAY_FORMAT),
-    )
+    val minutesPerDay = rememberMinutesPerDay(entries)
+    val first = mondays.last()
+    val last = mondays.first().plusDays(DAYS_PER_WEEK - 1L)
+    // Minuten genau des gezeigten Zeitraums: erst summiert, dann einmal abgerundet (je Tag gerundet fehlten Minuten).
+    val spanMinutes = remember(entries, first, last) {
+        entries.filter { LocalDate.ofEpochDay(it.startedAtEpochMs.toEpochDay()) in first..last }.sumOf { it.durationMs } / 60_000L
+    }
+    val rangeText = stringResource(R.string.log_weeks_range, first.format(RANGE_DAY_FORMAT), last.format(RANGE_DAY_FORMAT))
+    val range = if (spanMinutes > 0) stringResource(R.string.log_weeks_range_minutes, rangeText, spanMinutes) else rangeText
+    val spokenRange = stringResource(R.string.cd_log_weeks_range, first.format(SPOKEN_DATE_FORMAT), last.format(SPOKEN_DATE_FORMAT))
+    val spoken = if (spanMinutes > 0) {
+        spokenRange + ", " + pluralStringResource(R.plurals.cd_duration_minutes, spanMinutes.toInt(), spanMinutes.toInt())
+    } else {
+        spokenRange
+    }
     val state = expandedStateText(expanded)
     val toggle = Modifier
         .clickable(role = Role.Button, onClick = { onExpandedChange(!expanded) })
@@ -250,7 +239,7 @@ internal fun WeekCalendar(
             .animateContentSize(Motion.Disclosure),
     ) {
         Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.IconInButton), verticalAlignment = Alignment.CenterVertically) {
-            SecondaryText(range, modifier = Modifier.weight(1f))
+            SecondaryText(range, modifier = Modifier.weight(1f).semantics { contentDescription = spoken })
             ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), size = Sizes.IconInButton)
         }
         Spacer(Modifier.height(Dimens.GapSmall))
@@ -336,7 +325,7 @@ private const val DAYS_PER_WEEK = 7
 
 private fun Long.toEpochDay(): Long = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
 
-/** Geübte Minuten je Tag (Epochentag → Minuten), nur für die Stufe des Punkts; die Summe rechnet [recentMinutes]. */
+/** Geübte Minuten je Tag (Epochentag → Minuten), nur für die Stufe des Punkts; die Summe eines Zeitraums rechnet [WeekCalendar] aus den Sitzungen. */
 @Composable
 internal fun rememberMinutesPerDay(entries: List<SessionLogEntry>): Map<Long, Long> = remember(entries) {
     entries.groupBy { it.startedAtEpochMs.toEpochDay() }

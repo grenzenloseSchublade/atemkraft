@@ -141,7 +141,6 @@ internal fun LogStatsCard(
     onWeeksOpenChange: (Boolean) -> Unit = {},
 ) {
     val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
-    val minutesPerDay = rememberMinutesPerDay(entries)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Dimens.CardPadding)) {
             val totalMinutes = entries.sumOf { it.durationMs } / 60_000L
@@ -166,7 +165,7 @@ internal fun LogStatsCard(
             }
             Spacer(Modifier.height(Dimens.ListGap))
             // Derselbe Aufklapper wie im Tab „Eigene“, derselbe gemerkte Zustand.
-            WeekCalendar(minutesPerDay = minutesPerDay, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
+            WeekCalendar(entries = entries, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
         }
     }
 }
