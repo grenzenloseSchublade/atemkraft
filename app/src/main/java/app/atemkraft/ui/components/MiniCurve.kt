@@ -56,8 +56,7 @@ internal fun DrawScope.drawLevelSegments(rhythm: BreathRhythm, inhale: Color, st
 /**
  * Kleine Atemkurve ([Sizes.MiniCurveWidth] × [Sizes.MiniCurveHeight], Strich
  * [Sizes.RhythmCurveStroke]): ein Atemzug ([rhythm]) in der Farbsprache der großen Kurve, statisch,
- * ohne Zahlen, ohne Punkt. Steht je Vorlage im Startpunkt-Sheet des Editors und vor „Muster des
- * Tages ›“ im Atmen-Tab (die Kurve des heutigen Musters: Man sieht, dass es sich täglich ändert).
+ * ohne Zahlen, ohne Punkt. Steht je Vorlage im Startpunkt-Sheet des Editors.
  *
  * Dekorativ, ohne Semantik: Daneben stehen Name bzw. Teaser. Keine Bewegung (MOTION-02).
  */

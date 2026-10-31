@@ -98,8 +98,7 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * [leading] steht als Zeichen vor dem Titel, mittig auf seiner ersten Zeile, `GapSmall` davor wie
  * der Chevron dahinter; dekorativ und ohne eigene Tippfläche, die ganze Zeile bleibt die Tippfläche.
  * Es macht einen Kopf, der etwas öffnet, als Einstieg kenntlich: „Muster des Tages ›“ mit der
- * Kurve des heutigen Musters ([MiniCurve], Nutzer 2026-10-30), damit er nicht wie eine zweite
- * Überschrift neben „Übungen“ wirkt und man sieht, dass sich das Muster täglich ändert.
+ * Atemwelle (Nutzer 2026-10-30), damit er nicht wie eine zweite Überschrift neben „Übungen“ wirkt.
  *
  * [status] steht direkt hinter dem Titel in gleicher Größe, aber gedämpft („Eigene Kreationen · 5“):
  * lesbar wie der Titel, tritt aber hinter ihn zurück; [statusDescription] ist sein Wortlaut für

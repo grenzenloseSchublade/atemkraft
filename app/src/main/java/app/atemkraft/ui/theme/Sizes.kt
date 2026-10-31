@@ -143,8 +143,8 @@ object Sizes {
     val CurveDot = 14.dp
 
     /**
-     * Mini-Kurve (`MiniCurve`) je Vorlage im Startpunkt-Sheet des Muster-Editors und vor „Muster des
-     * Tages ›“ im Atmen-Tab: Breite (64) und Höhe (24 = [IconDefault]).
+     * Mini-Kurve (`MiniCurve`) je Vorlage im Startpunkt-Sheet des Muster-Editors: Breite (64) und Höhe
+     * (24 = [IconDefault]).
      */
     val MiniCurveWidth = 64.dp
     val MiniCurveHeight = IconDefault

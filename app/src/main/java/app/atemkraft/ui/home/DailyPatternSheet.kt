@@ -3,39 +3,37 @@ package app.atemkraft.ui.home
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DailyPattern
 import app.atemkraft.domain.PatternTexts
-import app.atemkraft.domain.breathRhythm
-import app.atemkraft.domain.toFreePattern
 import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.AppBottomSheetScope
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppIconToggle
 import app.atemkraft.ui.components.BreathMarkIcon
-import app.atemkraft.ui.components.MiniCurve
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PatternCard
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.Sizes
 
 /**
  * Kopfzeile „Muster des Tages“ im Atmen-Tab (Nutzer 2026-10-30): ein Abschnittskopf mit Chevron
  * wie „Klang & Stimme“ in der Meditation (`SectionHeader` mit `onClick`, MUSTER-11), davor die
- * Kurve des heutigen Musters ([MiniCurve], statisch, ohne Zahlen) als Zeichen des Einstiegs: Man
- * sieht, dass sich das Muster täglich ändert. Sie ist dekorativ (der Teaser nennt den Charakter,
- * TalkBack sagt nichts Neues). Der Teaser nennt den Charakter von heute und
- * den Weg zum Selbstgestalten, ohne Ziffern (die Zahlen stehen im Blatt; „Atem ist keine Zahl“);
+ * Atemwelle `ic_breath_curve` in `secondary` als ruhiges Zeichen des Einstiegs (dekorativ; die
+ * bunte Kurve von heute war dem Eigentümer zu unruhig, 2026-10-31). Der Teaser nennt den
+ * Charakter von heute und den Weg zum Selbstgestalten, ohne Ziffern (die Zahlen stehen im Blatt; „Atem ist keine Zahl“);
  * die ganze Zeile öffnet das
  * [DailyPatternSheet]. Sie steht in jedem Zustand des Tabs – auch bei Anlass, Suche, Bereich und
  * Filter –, damit sie beim Wechsel nicht springt.
@@ -48,7 +46,14 @@ internal fun DailyPatternEntry(daily: DailyPattern, onClick: () -> Unit) {
         teaser = stringResource(R.string.home_daily_teaser, character),
         onClick = onClick,
         onClickLabel = stringResource(R.string.cd_daily_open),
-        leading = { MiniCurve(remember(daily.spec) { daily.spec.toFreePattern().breathRhythm() }) },
+        leading = {
+            Icon(
+                painterResource(R.drawable.ic_breath_curve),
+                contentDescription = null, // dekorativ: Der Titel daneben trägt den Namen.
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(Sizes.IconDefault),
+            )
+        },
         // Darüber stehen schon ListGap der Liste und die unsichtbare Tippfläche unter den
         // Anlass-Chips (40 in 48): mit dem inneren GapSmall sichtbar SectionHeaderTop vom Chip bis
         // zum Titel. Ein zweiter GapSmall vor der Tippfläche machte daraus 32.
