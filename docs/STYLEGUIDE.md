@@ -187,7 +187,7 @@ Feature-Maße mit Wert und Zweck in der KDoc von `Dimens`: `SessionPadding`, `Se
 | `IconDefault` / `IconInButton` / `IconSmall` | 24 / 18 / 16 | Icon in Tippfläche 48 / Icon neben Beschriftung / Zeichen auf Karten neben `label*`-Text |
 | `TouchOverhang` / `CircleOverhang` | 12 / 4 | Überstand der Tippfläche 48 über ein `IconDefault`-Icon bzw. einen `IconButtonSize`-Kreis; um ihn melden `flushStart`/`flushEnd` bzw. der Stepper sich schmaler |
 
-Feature- und Zeichenmaße mit Wert und Zweck in der KDoc von `Sizes`: `TabBarGripWidth`/`TabBarGripHeight`, `TabBarSwipeDistance`/`TabBarSwipeVelocity`/`TabBarFallbackTravel`, `SegmentIconReserve`, `StepperValueMinWidth`, `ProgressInline`/`ProgressStroke`, `WeekDot`, `FamilyDot`, `PauseFlashSize`, `Curve*`, `MiniCurve*`, `RhythmCurve*`, `VayuFigureMaxWidth`.
+Feature- und Zeichenmaße mit Wert und Zweck in der KDoc von `Sizes`: `TabBarGripWidth`/`TabBarGripHeight`, `TabBarSwipeDistance`/`TabBarSwipeVelocity`/`TabBarSwipeBand`/`TabBarFallbackTravel`, `SegmentIconReserve`, `StepperValueMinWidth`, `ProgressInline`/`ProgressStroke`, `WeekDot`, `FamilyDot`, `PauseFlashSize`, `Curve*`, `MiniCurve*`, `RhythmCurve*`, `VayuFigureMaxWidth`.
 
 Switch und RadioButton stehen in M3-Größe. `AppTextButton` trägt `shapes.large` (20 dp = halbe `ButtonHeight`): mehrzeilig schneidet keine große Rundung Glyphen an. Eigene Maße außerhalb von `Sizes`: `NavigationBar` (M3 1.4: Höhe mindestens 80, wächst mit der Beschriftung; Indikator 64 × 32), die Icons von `OverlayChrome` und die `SessionControlBar` (Bedienung mit halb geschlossenen Augen, `Dimens.Session*`). Kartenrand nur über `accentBorder(color)`; gestrichelter Rand über `dashedBorder(color, shape, width = BorderThin, dash = GapTiny)` (`CardBorder.kt`).
 

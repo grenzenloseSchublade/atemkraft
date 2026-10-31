@@ -20,7 +20,6 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import app.atemkraft.ui.components.gestureThreshold
-import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.Sizes
 import kotlin.math.abs
@@ -269,13 +268,13 @@ class TabBarState {
     /**
      * Wischen nach oben im unteren Bereich einer Seite ohne Startleiste (im App-Rahmen auf dem Inhalt):
      * Die eingeklappte Leiste ist dort nur der Platz der Systemnavigation, und der gehört dem System.
-     * Darum zählt ein Band [Dimens.TabBarGripClearance] hoch über den unteren Leisten, über die ganze
-     * Breite – am Ende jeder Seite der Tiefe liegt dort nichts. Gewertet vor dem Inhalt
+     * Darum zählt ein Band [Sizes.TabBarSwipeBand] hoch über den unteren Leisten, über die ganze
+     * Breite – leicht zu treffen; am Ende jeder Seite der Tiefe liegt in seinem unteren Teil nichts. Gewertet vor dem Inhalt
      * ([PointerEventPass.Initial]), sonst nähme ein scrollender Inhalt die Geste; Tipps, Wischen nach
      * unten und zur Seite bleiben ihm. Mit Startleiste wischt man auf ihr ([anchoredToPinnedBar]).
      */
     suspend fun PointerInputScope.detectBottomSwipe(windowTop: () -> Float) {
-        val band = Dimens.TabBarGripClearance.toPx()
+        val band = Sizes.TabBarSwipeBand.toPx()
         detectSwipe(
             opens = true,
             closes = false,

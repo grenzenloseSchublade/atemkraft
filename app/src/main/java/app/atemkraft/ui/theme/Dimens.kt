@@ -115,8 +115,6 @@ object Dimens {
      * Platz unter dem letzten Inhalt einer Seite der Tiefe (`PushScaffold`, Logbuch, Muster-Editor):
      * so hoch wie die Tippfläche des Griffs, der über der Oberkante der untersten Leiste schwebt
      * (`TabBarToggle`). Am Ende der Seite liegt darunter nichts, was man antippen oder lesen will.
-     * Ohne Startleiste zugleich die Höhe des Bands, in dem Wischen nach oben die Leiste öffnet
-     * (`TabBarState.detectBottomSwipe`).
      */
     val TabBarGripClearance = MinTouchTarget
 

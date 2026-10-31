@@ -52,6 +52,14 @@ object Sizes {
      */
     val TabBarSwipeVelocity = 125.dp
 
+    /**
+     * Band über den unteren Leisten, in dem Wischen nach oben die Tab-Leiste öffnet, auf Seiten der
+     * Tiefe ohne Startleiste (96, doppelte Tippfläche; Eigentümer 2026-10-31: 48 war praktisch nur
+     * der Griff). Nur Wischen nach oben gehört dem Band; Tipps, Wischen nach unten und zur Seite
+     * bleiben dem Inhalt. Ein Hochwischen zum Scrollen, das so tief aufsetzt, öffnet die Leiste.
+     */
+    val TabBarSwipeBand = 96.dp
+
     /** Weg der Tab-Leiste beim Wischen, solange sie noch nicht gemessen ist (M3-Navigationsleiste 80). */
     val TabBarFallbackTravel = 80.dp
 
