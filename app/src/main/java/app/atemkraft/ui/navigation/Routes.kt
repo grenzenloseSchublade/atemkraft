@@ -51,6 +51,14 @@ object LogbookRoute
 @Serializable
 object GlossaryRoute
 
+/** Alle eigenen Kreationen als Liste („Alle 4 ›“ im Tab „Eigene“). */
+@Serializable
+object OwnCreationsRoute
+
+/** Alle Übungen aus „Tut mir gut“ als Liste („Alle 3 ›“ im Tab „Eigene“). */
+@Serializable
+object OwnFavoritesRoute
+
 @Serializable
 object AboutRoute
 

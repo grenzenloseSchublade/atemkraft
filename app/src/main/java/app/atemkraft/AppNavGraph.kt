@@ -27,6 +27,7 @@ import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.UncaughtErrors
 import app.atemkraft.domain.toFreePattern
@@ -51,12 +52,17 @@ import app.atemkraft.ui.navigation.GlossaryRoute
 import app.atemkraft.ui.navigation.LernenRoute
 import app.atemkraft.ui.navigation.LogbookRoute
 import app.atemkraft.ui.navigation.MeditationRoute
+import app.atemkraft.ui.navigation.OwnCreationsRoute
+import app.atemkraft.ui.navigation.OwnFavoritesRoute
 import app.atemkraft.ui.navigation.PatternEditorRoute
 import app.atemkraft.ui.navigation.PranayamaRoute
 import app.atemkraft.ui.navigation.ProgramsRoute
 import app.atemkraft.ui.navigation.SettingsRoute
 import app.atemkraft.ui.own.OwnActions
+import app.atemkraft.ui.own.OwnCreationsScreen
+import app.atemkraft.ui.own.OwnFavoritesScreen
 import app.atemkraft.ui.own.OwnPatternsScreen
+import app.atemkraft.ui.own.OwnView
 import app.atemkraft.ui.patterns.PatternEditorDestination
 import app.atemkraft.ui.patterns.PatternEditorPreload
 import app.atemkraft.ui.settings.SettingsScreen
@@ -79,6 +85,8 @@ internal class GraphState(
     gongIntervalMin: State<Int>,
     welcomeDismissed: State<Boolean>,
     showStreak: State<Boolean>,
+    historyWeeksOpen: State<Boolean>,
+    ownCollection: State<OwnCollection>,
 ) {
     val safetySettings by safetySettings
     val markedExercises by markedExercises
@@ -88,6 +96,8 @@ internal class GraphState(
     val gongIntervalMin by gongIntervalMin
     val welcomeDismissed by welcomeDismissed
     val showStreak by showStreak
+    val historyWeeksOpen by historyWeeksOpen
+    val ownCollection by ownCollection
 }
 
 @Composable
@@ -103,8 +113,10 @@ internal fun rememberGraphState(container: AppContainer): GraphState {
     // sie beim Start nicht kurz aufblitzen; beim ersten Start erscheint sie einen Augenblick später.
     val welcome = settings.welcomeDismissed.collectAsStateWithLifecycle(initialValue = true)
     val streak = settings.showStreak.collectAsStateWithLifecycle(initialValue = true)
-    return remember(safety, marked, log, meditationConfig, speech, gong, welcome, streak) {
-        GraphState(safety, marked, log, meditationConfig, speech, gong, welcome, streak)
+    val weeksOpen = settings.historyWeeksOpen.collectAsStateWithLifecycle(initialValue = false)
+    val collection = settings.ownCollection.collectAsStateWithLifecycle(initialValue = OwnCollection.CREATIONS)
+    return remember(safety, marked, log, meditationConfig, speech, gong, welcome, streak, weeksOpen, collection) {
+        GraphState(safety, marked, log, meditationConfig, speech, gong, welcome, streak, weeksOpen, collection)
     }
 }
 
@@ -178,9 +190,9 @@ internal fun NavGraphBuilder.appGraph(
     }
     composable<EigeneRoute> {
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
-        // „Zuletzt geübt“: der neueste Eintrag, dessen Übung es noch gibt (Liste neueste zuerst);
+        // „Zuletzt geübt“: die neuesten Übungen, die es noch gibt (Liste neueste zuerst), je einmal;
         // neu berechnet, wenn ein Muster gelöscht oder umbenannt wird. Dieselbe Regel wie der Shortcut.
-        val lastExercise = remember(state.logEntries, patterns) { lastPracticed(state.logEntries, patterns) }
+        val recent = remember(state.logEntries, patterns) { recentlyPracticed(state.logEntries, patterns, limit = RECENT_LIMIT) }
         OwnPatternsScreen(
             savedPatterns = patterns,
             actions = OwnActions(
@@ -191,12 +203,16 @@ internal fun NavGraphBuilder.appGraph(
                 onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
                 // Stift auf der Karte: derselbe Editor wie „Anpassen“ auf der Detailseite des Musters.
                 onEditPattern = { id -> navController.navigate(PatternEditorRoute(patternId = id)) },
+                onWeeksOpenChange = { open -> scope.launch { settings.setHistoryWeeksOpen(open) } },
+                onCollectionChange = { collection -> scope.launch { settings.setOwnCollection(collection) } },
+                onOpenAllCreations = { navController.navigate(OwnCreationsRoute) { launchSingleTop = true } },
+                onOpenAllFavorites = { navController.navigate(OwnFavoritesRoute) { launchSingleTop = true } },
             ),
             // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge.
             favorites = exercises.all().filter { it.id in state.markedExercises },
             logEntries = state.logEntries,
-            lastExercise = lastExercise,
-            showStreak = state.showStreak,
+            recentExercises = recent,
+            view = OwnView(showStreak = state.showStreak, weeksOpen = state.historyWeeksOpen, collection = state.ownCollection),
         )
         // „+“ öffnet den Editor mit der Vorgabe 4·6: vorab messen, solange der Tab zu sehen ist.
         PatternEditorPreload(FreePattern.DEFAULT)
@@ -303,6 +319,24 @@ internal fun NavGraphBuilder.appGraph(
             showStreak = state.showStreak,
         )
     }
+    pushComposable<OwnCreationsRoute> {
+        val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
+        OwnCreationsScreen(
+            patterns = patterns,
+            onBack = back,
+            onSelect = openDetail,
+            onEdit = { id -> navController.navigate(PatternEditorRoute(patternId = id)) },
+            onDelete = { id -> scope.launch { savedPatterns.delete(id) } },
+            onNewPattern = { navController.navigate(PatternEditorRoute()) },
+        )
+    }
+    pushComposable<OwnFavoritesRoute> {
+        OwnFavoritesScreen(
+            favorites = exercises.all().filter { it.id in state.markedExercises },
+            onBack = back,
+            onSelect = openDetail,
+        )
+    }
     pushComposable<GlossaryRoute> {
         GlossaryScreen(onBack = back)
     }
@@ -337,6 +371,9 @@ private const val WELCOME_EXERCISE_ID = "resonanz"
  * Voreinstellung; nur für diesen Einstieg, nicht als Anpassung gespeichert (Auswertung 2026-10-24).
  */
 private const val WELCOME_MINUTES = 3
+
+/** „Zuletzt geübt“ im Tab „Eigene“: höchstens drei Übungen, eine Hand voll Wege zurück, keine Liste. */
+private const val RECENT_LIMIT = 3
 
 /** Zurück, nur solange [entry] oben liegt: Ein spätes „fehlt“ nimmt keine fremde Seite vom Stapel. */
 private fun NavController.popIfTop(entry: NavBackStackEntry) {

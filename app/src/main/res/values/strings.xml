@@ -182,26 +182,25 @@
     <!-- Tab „Eigene“: Kopf wie die anderen Tabs (ohne Untertitel, Nutzer 2026-10-24), darunter „Verlauf“ (Einstieg
          ins Logbuch) und die Abschnitte „Tut mir gut“ und „Eigene Kreationen“ (mit „+“ für ein neues Muster im Kopf). -->
     <string name="own_title">Eigene</string>
-    <!-- „Neues Muster“: Name des „+“ im Kopf von „Eigene Kreationen“ (auch im Leerzustand). -->
+    <!-- „Neues Muster“: die erste Kachel im Regal „Eigene Kreationen“ (öffnet den Muster-Editor). -->
     <string name="own_new_pattern">Neues Muster</string>
-    <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung in einer ruhigen Karte unter dem Kopf;
-         darunter der Verweis own_design_pattern („Muster gestalten ›“) in den Muster-Editor (Nutzer 2026-10-24). -->
+    <!-- Leerzustand (MUSTER-04): „Noch keine …“ plus sanfte Einladung über dem Regal, das dann nur die
+         Kachel „Neues Muster“ zeigt. -->
     <string name="own_empty">Noch keine eigenen Kreationen. Gespeicherte Tagesmuster aus dem Tab „Atmen“ erscheinen auch hier.</string>
-    <string name="own_design_pattern">Muster gestalten</string>
-    <!-- Abschnitte des Tabs einklappbar (MUSTER-03): Anzahl als Status hinter dem Titel, für TalkBack in Worten. -->
-    <plurals name="cd_own_favorites_count">
-        <item quantity="one">%d Übung</item>
-        <item quantity="other">%d Übungen</item>
-    </plurals>
-    <plurals name="cd_own_patterns_count">
-        <item quantity="one">%d Muster</item>
-        <item quantity="other">%d Muster</item>
-    </plurals>
-    <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter Wochenpunkte
-         und Bilanz; ohne Sitzungen der Satz. -->
+    <!-- „Tut mir gut“ ohne Markierung: ruhige Karte unter dem Umschalter und auf der Seite „Tut mir gut“. -->
+    <string name="own_favorites_empty">Noch keine Übung markiert. Markiere eine Übung auf ihrer Seite mit dem Atemkreis, dann steht sie hier.</string>
+    <!-- Ganze Sammlung als Liste: Verweis unter den Karteikarten („Alle 4 ›“) und letzte Karteikarte. -->
+    <string name="own_all_count">Alle %1$d</string>
+    <string name="own_all_card">Alle ansehen</string>
+    <!-- Lage in den Karteikarten: sichtbar „2 / 7“, TalkBack „Karte 2 von 7“. -->
+    <string name="card_position">%1$d\u00A0/ %2$d</string>
+    <string name="cd_card_position" tools:ignore="PluralsCandidate">Karte %1$d von %2$d</string>
+    <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter die
+         Kalenderwoche (aufklappbar bis vier Wochen) und die Bilanz; ohne Sitzungen der Satz. -->
     <string name="own_history">Verlauf</string>
-    <string name="own_last_practiced">Zuletzt: %1$s</string>
-    <!-- Hinweis unter „Zuletzt: <Name>“: wann und wie lange, „gestern Abend · 10 min“ (Dauer auf
+    <!-- Unter dem Verlauf: bis zu drei zuletzt geübte Übungen als Zeilen (Nutzer 2026-10-31). -->
+    <string name="own_recent">Zuletzt geübt</string>
+    <!-- Hinweis in einer Zeile unter „Zuletzt geübt“: wann und wie lange, „gestern Abend · 10 min“ (Dauer auf
          ganze Minuten gerundet, mindestens 1). Wann: heute/gestern + Tageszeit, sonst in den letzten
          7 Tagen der Wochentag als ein Wort („am Donnerstagnachmittag“), davor das Datum („am 15.10.“).
          Geschütztes Leerzeichen vor „·“: Der Punkt bricht nie an den Zeilenanfang (TEXT-10).
@@ -490,6 +489,8 @@
     <string name="log_minutes_total">%1$d\u00A0min gesamt</string>
     <!-- Minuten der sieben Tage der Wochenpunkte, heute und die sechs davor (Verlauf im Tab „Eigene“). -->
     <string name="log_minutes_recent">%1$d\u00A0min in den letzten 7\u00A0Tagen</string>
+    <!-- Spanne der gezeigten Kalenderwochen über den Punkten: „27. Okt – 2. Nov“ (Beginn Montag, Ende Sonntag). -->
+    <string name="log_weeks_range">%1$s – %2$s</string>
     <plurals name="log_rounds">
         <item quantity="one">%d Runde</item>
         <item quantity="other">%d Runden</item>

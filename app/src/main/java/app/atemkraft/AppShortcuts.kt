@@ -44,10 +44,18 @@ enum class AppShortcut(val action: String) {
  * Meditation, Tagesmuster (heute ein anderes) oder Entwurf. Für „Zuletzt: … ›“ im Tab „Eigene“ und
  * den Shortcut „Zuletzt geübt“.
  */
-internal fun lastPracticed(entries: List<SessionLogEntry>, saved: List<SavedPattern>): Exercise? = entries.firstNotNullOfOrNull { entry ->
+internal fun lastPracticed(entries: List<SessionLogEntry>, saved: List<SavedPattern>): Exercise? = entries.firstNotNullOfOrNull { openable(it, saved) }
+
+/**
+ * Die zuletzt geübten Übungen nach derselben Regel wie [lastPracticed], jede einmal, neueste zuerst,
+ * höchstens [limit] – für „Zuletzt geübt“ im Tab „Eigene“ (Nutzer 2026-10-31).
+ */
+internal fun recentlyPracticed(entries: List<SessionLogEntry>, saved: List<SavedPattern>, limit: Int): List<Exercise> = entries.asSequence().mapNotNull { openable(it, saved) }.distinctBy { it.id }.take(limit).toList()
+
+private fun openable(entry: SessionLogEntry, saved: List<SavedPattern>): Exercise? {
     val id = entry.exerciseId
     val savedId = ExerciseIds.savedIdOf(id)
-    when {
+    return when {
         id == ExerciseIds.DAILY || id == ExerciseIds.DRAFT -> null
         savedId != null -> saved.firstOrNull { it.id == savedId }?.exercise
         else -> BuiltInExercises.all.firstOrNull { it.id == id }

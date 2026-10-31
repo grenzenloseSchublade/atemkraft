@@ -63,9 +63,9 @@ internal fun BreatheTab(welcome: Boolean = false) {
 }
 
 /**
- * Tab „Eigene“ mit Verlauf ([logEntries]), „Tut mir gut“ mit den zwei längsten Übungsnamen,
- * „Zuletzt: …“ mit dem längsten und den gespeicherten Mustern (eines mit langem Namen). Die Karte
- * „Zuletzt“ im längsten Fall: DAY ist ein Samstag, die Sitzung zwei Tage davor um 15:10 heißt
+ * Tab „Eigene“ mit Verlauf ([logEntries]), „Tut mir gut“ und „Zuletzt geübt“ mit den zwei längsten
+ * Übungsnamen und den gespeicherten Mustern (eines mit langem Namen) im Regal. „Zuletzt geübt“ im
+ * längsten Fall: DAY ist ein Samstag, die Sitzung zwei Tage davor um 15:10 heißt
  * „am Donnerstagnachmittag · 10 min“.
  */
 @Composable
@@ -86,7 +86,7 @@ internal fun OwnTab() {
         actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
         favorites = favorites,
         logEntries = logEntries() + lastEntry,
-        lastExercise = last,
+        recentExercises = favorites,
         today = ScreenshotHarness.DAY,
     )
 }

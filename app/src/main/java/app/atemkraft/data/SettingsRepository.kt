@@ -22,6 +22,7 @@ import app.atemkraft.domain.MEDITATION_MAX_MINUTES
 import app.atemkraft.domain.MEDITATION_MIN_MINUTES
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -128,6 +129,8 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked") // einmal gefragt (ab Android 13)
         val WELCOME_DISMISSED = booleanPreferencesKey("welcome_dismissed") // Willkommenskarte weggeklickt
         val SHOW_STREAK = booleanPreferencesKey("show_streak") // „Serie zeigen“ (Tage in Folge), Standard an
+        val HISTORY_WEEKS_OPEN = booleanPreferencesKey("own_history_weeks_open") // Verlauf im Tab „Eigene“: vier Wochen statt einer
+        val OWN_COLLECTION = stringPreferencesKey("own_collection") // Tab „Eigene“: gewählte Sammlung (Enum-Name)
         val FEELING_PROMPT = booleanPreferencesKey("feeling_prompt") // „Befinden am Ende fragen“; fehlt = noch nie angeboten
         val REMINDER_ON = booleanPreferencesKey("reminder_enabled") // Erinnerung an/aus, Standard aus
         val REMINDER_MINUTE = intPreferencesKey("reminder_minute") // Uhrzeit, Minuten nach Mitternacht
@@ -196,6 +199,29 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setShowStreak(enabled: Boolean) {
         store.edit { it[Keys.SHOW_STREAK] = enabled }
+    }
+
+    /**
+     * Verlauf im Tab „Eigene“ aufgeklappt: vier Kalenderwochen statt einer (Nutzer 2026-10-31).
+     * Eine Ansichtswahl dieses Geräts, nicht Teil der Sicherung; Standard zu.
+     */
+    val historyWeeksOpen: Flow<Boolean> = data.map { it[Keys.HISTORY_WEEKS_OPEN] ?: false }
+
+    suspend fun setHistoryWeeksOpen(open: Boolean) {
+        store.edit { it[Keys.HISTORY_WEEKS_OPEN] = open }
+    }
+
+    /**
+     * Gewählte Sammlung im Tab „Eigene“ (Umschalter „Eigene Kreationen | Tut mir gut“, Nutzer
+     * 2026-10-31), als Name von [OwnCollection]; fehlt oder unbekannt = Kreationen. Ansichtswahl
+     * dieses Geräts, nicht Teil der Sicherung.
+     */
+    val ownCollection: Flow<OwnCollection> = data.map { prefs ->
+        OwnCollection.entries.firstOrNull { it.name == prefs[Keys.OWN_COLLECTION] } ?: OwnCollection.CREATIONS
+    }
+
+    suspend fun setOwnCollection(collection: OwnCollection) {
+        store.edit { it[Keys.OWN_COLLECTION] = collection.name }
     }
 
     /**

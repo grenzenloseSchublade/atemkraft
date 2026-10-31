@@ -40,6 +40,7 @@ import app.atemkraft.domain.FreePhaseType
 import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
+import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.domain.SoundMode
@@ -72,7 +73,9 @@ import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.navigation.TAB_BAR_GRIP_TAG
 import app.atemkraft.ui.own.OwnActions
+import app.atemkraft.ui.own.OwnCreationsScreen
 import app.atemkraft.ui.own.OwnPatternsScreen
+import app.atemkraft.ui.own.OwnView
 import app.atemkraft.ui.patterns.PatternEditorState
 import app.atemkraft.ui.settings.BackupPreview
 import app.atemkraft.ui.settings.NoOpSettingsActions
@@ -164,20 +167,27 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             compose.onNode(hasSetTextAction()).performTextInput("aktivieren")
         }, measure = sameChips) { BreatheTab() }
         snap("13_eigene", tab = Tab.EIGENE) { OwnTab() }
-        // Zu „Eigene Kreationen“ gescrollt: Kopf mit Caret und „+“, Kreationen-Karten mit Stift und Mülleimer
-        // auf der Titelzeile (Gate ANATOMIE, STYLEGUIDE §4.5); in Gerätehöhe liegt der Abschnitt sonst außerhalb.
-        snap("13_eigene_kreationen", tab = Tab.EIGENE, prepare = {
-            compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(saved.last().exercise.name))
+        // Zu den Sammlungen gescrollt, „Tut mir gut“ gewählt: Umschalter, Karteikarten mit ◉, „1 / 2“ und
+        // „Alle 2 ›“ (Gates TIPPFLAECHE, WORTBRUCH); in Gerätehöhe liegen sie sonst außerhalb.
+        snap("13_eigene_tut_mir_gut", tab = Tab.EIGENE, prepare = {
+            // Die Liste, nicht der Pager darin (der scrollt auch, aber seitlich).
+            compose.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
+                .performScrollToNode(hasText(app.getString(R.string.own_all_count, 2)))
         }) {
             OwnPatternsScreen(
                 savedPatterns = saved,
                 actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}),
-                favorites = BuiltInExercises.all.take(1),
+                favorites = BuiltInExercises.all.sortedByDescending { it.name.length }.take(2),
                 logEntries = logEntries(),
+                view = OwnView(collection = OwnCollection.FAVORITES),
                 today = DAY,
             )
         }
-        // Leer: Verlauf mit dem Satz statt der Punkte; Kopf „Eigene Kreationen“ mit „+“ über der ruhigen Leer-Karte.
+        // Alle Kreationen als Liste: Zeilen mit Mini-Kurve, Stift und Mülleimer, „+“ im Kopf.
+        snap("13_eigene_kreationen_alle") {
+            OwnCreationsScreen(patterns = saved, onBack = {}, onSelect = {}, onEdit = {}, onDelete = {}, onNewPattern = {})
+        }
+        // Leer: Verlauf mit dem Satz statt der Punkte; unter dem Umschalter nur die Karte „Neues Muster“ mit dem Satz.
         snap("13_eigene_leer", tab = Tab.EIGENE) {
             OwnPatternsScreen(savedPatterns = emptyList(), actions = OwnActions(onNewPattern = {}, onSelect = {}, onDeletePattern = {}, onOpenSettings = {}), today = DAY)
         }

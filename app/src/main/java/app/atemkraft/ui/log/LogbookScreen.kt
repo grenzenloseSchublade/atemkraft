@@ -84,7 +84,7 @@ private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d
 
 /**
  * Logbuch als Push-Seite (aus der Karte „Verlauf“ im Tab „Eigene“ und vom Ende einer
- * Übung): Statistik mit 7-Tage-Übersicht, darunter der Verlauf nach Tagen gruppiert (Heute /
+ * Übung): Statistik mit der Kalenderwoche, darunter der Verlauf nach Tagen gruppiert (Heute /
  * Gestern / Letzte 7 Tage / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
  * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik; ein Satz unter
  * dem Verlauf sagt, wo (Nutzer 2026-10-24). Ein Eintrag, dessen Übung es noch gibt ([canOpen]),
@@ -123,7 +123,8 @@ fun LogbookScreen(
 /**
  * Titel „7 Sitzungen · 65 min gesamt“, die Serie als eigene Zeile erst ab zwei Tagen in Folge
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
- * die Wochenpunkte. Leer: „Noch keine Sitzung“ und eine Einladung. Auf der Logbuch-Seite; im Tab
+ * die Kalenderwoche ([WeekCalendar], dieselbe wie im Tab „Eigene“). Leer: „Noch keine Sitzung“
+ * und eine Einladung. Auf der Logbuch-Seite; im Tab
  * „Eigene“ führt der Kopf „Verlauf“ über [LogHistory] hierher. Ohne [showStreak] (Einstellung
  * „Serie zeigen“ aus) fehlt die Serie ganz.
  */
@@ -158,190 +159,7 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
                 )
             }
             Spacer(Modifier.height(Dimens.ListGap))
-            WeekRow(minutesPerDay = minutesPerDay, today = today)
-        }
-    }
-}
-
-/**
- * Verlauf im Tab „Eigene“ unter dem Kopf „Verlauf“ (Nutzer 2026-10-23; seit 2026-10-24 ohne
- * Karte, Vorschlag B – der Kopf ist ein `SectionHeader` mit Chevron und führt zur Logbuch-Seite):
- * die Wochenpunkte wie auf der Logbuch-Seite über die volle Breite und eine dezente Zeile „3 Tage
- * in Folge · 45 min in den letzten 7 Tagen“ (Serie erst ab zwei Tagen wie in [LogStatsCard];
- * Minuten der sieben gezeigten Tage, [recentMinutes]; fehlt beides, die Zahl der Sitzungen) –
- * eine Zählung ohne Ziel, große Zahl oder Urteil (TEXT-16). Ohne Sitzungen steht statt Punkten und
- * Zeile nur der Satz (MUSTER-04). Ohne [showStreak] (Einstellung „Serie zeigen“ aus) fehlt die
- * Serie, die Minuten bleiben.
- *
- * Darunter, mit [lastExercise] (der zuletzt geübten Übung, die es noch gibt), die Karte „Zuletzt:
- * <Name>“ ([NavCard], Nutzer 2026-10-30) mit „gestern Abend · 10 min“ als Hinweis; ein Tipp öffnet
- * ihre Detailseite ([onOpenExercise]) – „das von gestern Abend nochmal“.
- *
- * TalkBack hört den Kopf, die Zeile und die Karte (diese als einen Satz: Titel, wann, Dauer
- * ausgeschrieben); die Punkte sind hier stumm, die je Tag stehen auf der Logbuch-Seite.
- */
-@Composable
-internal fun LogHistory(
-    entries: List<SessionLogEntry>,
-    today: LocalDate = LocalDate.now(),
-    showStreak: Boolean = true,
-    lastExercise: Exercise? = null,
-    onOpenExercise: (exerciseId: String) -> Unit = {},
-) {
-    val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
-    val minutesPerDay = rememberMinutesPerDay(entries)
-    val weekMinutes = remember(entries, today) { recentMinutes(entries, today, ZoneId.systemDefault()) }
-    Column(modifier = Modifier.fillMaxWidth()) {
-        if (entries.isEmpty()) {
-            HintText(stringResource(R.string.own_history_empty))
-        } else {
-            WeekRow(minutesPerDay = minutesPerDay, today = today, spoken = false)
-            Spacer(Modifier.height(Dimens.ListGap))
-            val parts = buildList {
-                if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
-                if (weekMinutes > 0) add(stringResource(R.string.log_minutes_recent, weekMinutes))
-                if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
-            }
-            // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
-            DotSeparatedFlow(
-                parts = parts.map { part -> { SecondaryText(part) } },
-                separator = { SecondaryText(DOT_SEPARATOR) },
-            )
-        }
-        if (lastExercise != null) {
-            // Neueste Sitzung dieser Übung: Sie liefert „gestern Abend · 10 min“.
-            val entry = remember(entries, lastExercise.id) {
-                entries.filter { it.exerciseId == lastExercise.id }.maxByOrNull { it.startedAtEpochMs }
-            }
-            Spacer(Modifier.height(Dimens.ListGap))
-            LastPracticeCard(exercise = lastExercise, entry = entry, today = today, onClick = { onOpenExercise(lastExercise.id) })
-        }
-    }
-}
-
-/**
- * Karte „Zuletzt: <Name>“ ([NavCard]): Hinweis „gestern Abend · 10 min“ – wann ([lastPracticeWhen])
- * und wie lange, auf ganze Minuten gerundet ([minutesRounded]); TalkBack hört die Dauer
- * ausgeschrieben („gestern Abend, 10 Minuten“, A11Y-06). Ohne [entry] nur der Titel.
- */
-@Composable
-private fun LastPracticeCard(exercise: Exercise, entry: SessionLogEntry?, today: LocalDate, onClick: () -> Unit) {
-    val title = stringResource(R.string.own_last_practiced, exercise.name)
-    if (entry == null) {
-        NavCard(title = title, onClick = onClick)
-        return
-    }
-    val whenText = lastPracticeWhen(entry.startedAtEpochMs, today)
-    val minutes = minutesRounded((entry.durationMs / 1_000L).toInt())
-    NavCard(
-        title = title,
-        onClick = onClick,
-        hint = stringResource(R.string.own_last_hint, whenText, minutes),
-        hintDescription = stringResource(
-            R.string.cd_own_last_hint,
-            whenText,
-            pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes),
-        ),
-    )
-}
-
-/**
- * Wann, in Laiensprache: „heute Morgen“, „gestern Abend“, in den letzten 7 Tagen „am
- * Donnerstagnachmittag“ (Wochentag und Tageszeit als ein Wort), davor „am 15.10.“. Tage wie die
- * Gruppen im Logbuch ([periodOf]), Tageszeit nach [dayPartOf].
- *
- * Die Nacht gehört zum Abend davor: Eine Sitzung Samstag 01:30 ist am Samstag „gestern Nacht“ (die
- * Nacht Fr→Sa) und in der Woche „in der Freitagnacht“ – „die Nacht“ ist weiblich, „am …nacht“
- * wäre falsch. Das Datum bleibt der Kalendertag des Beginns.
- */
-@Composable
-private fun lastPracticeWhen(startedAtEpochMs: Long, today: LocalDate): String {
-    val start = Instant.ofEpochMilli(startedAtEpochMs).atZone(ZoneId.systemDefault())
-    val dayPart = dayPartOf(start.hour)
-    // 0–4 Uhr: die Nacht des Vortags.
-    val day = if (dayPart == DayPart.NIGHT && start.hour < NIGHT_END_HOUR) {
-        start.toLocalDate().minusDays(1)
-    } else {
-        start.toLocalDate()
-    }
-    val part = stringArrayResource(R.array.own_day_parts)[dayPart.ordinal]
-    return when (periodOf(day, today)) {
-        LogPeriod.Today -> stringResource(R.string.own_last_today, part)
-
-        LogPeriod.Yesterday -> stringResource(R.string.own_last_yesterday, part)
-
-        LogPeriod.LastSevenDays -> {
-            val weekday = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale)
-            if (dayPart == DayPart.NIGHT) {
-                stringResource(R.string.own_last_weekday_night, weekday)
-            } else {
-                stringResource(R.string.own_last_weekday, weekday, part.lowercase(AppLocale))
-            }
-        }
-
-        is LogPeriod.Month -> stringResource(R.string.own_last_date, start.toLocalDate().format(DAY_MONTH_FORMAT))
-    }
-}
-
-/**
- * Ruhige 7-Tage-Übersicht: pro Tag ein Punkt (`WeekDot`), dessen Intensität mit den geübten Minuten
- * wächst (EINE Farbe als Alpha-Rampe – Magnitude, keine Wertung). Bewusst ohne Zahlen und
- * ohne Druck; ein Tag ohne Übung ist ein leerer Ring, heute trägt den Ring in Cyan. Die sieben Tage
- * teilen sich die volle Breite in gleiche Spalten, Punkt und Kürzel mittig darin. Beschriftung zweibuchstabig („Mo“ … „So“),
- * weil einzelne Buchstaben doppeldeutig sind (M/D/S). Details stehen für TalkBack bereit, außer
- * mit `spoken = false` ([LogHistory]).
- */
-@Composable
-private fun WeekRow(minutesPerDay: Map<Long, Long>, today: LocalDate, spoken: Boolean = true) {
-    val labels = stringArrayResource(R.array.log_weekday_short)
-    Row(
-        // spoken = false: Die Zeile darunter fasst die Tage in Worten zusammen – sieben Stopps wären Rauschen.
-        modifier = Modifier.fillMaxWidth().then(if (spoken) Modifier else Modifier.semantics { hideFromAccessibility() }),
-    ) {
-        for (offset in RECENT_DAYS - 1 downTo 0) {
-            val day = today.minusDays(offset.toLong())
-            val minutes = minutesPerDay[day.toEpochDay()] ?: 0L
-            // Sequenzielle Rampe (eine Hue): leise → präsent → voll, jede Stufe ≥ 3:1 zum Grund.
-            // Ohne Eintrag kein Punkt, sondern ein leerer Ring: Die Form trennt „nichts“ von „wenig“.
-            val fill = when {
-                minutes <= 0L -> null
-                minutes < 10L -> MaterialTheme.colorScheme.primary.copy(alpha = ALPHA_HEAT_LOW)
-                minutes < 25L -> MaterialTheme.colorScheme.primary.copy(alpha = ALPHA_HEAT_MID)
-                else -> MaterialTheme.colorScheme.primary
-            }
-            val isToday = offset == 0
-            // Heute trägt den Cyan-Ring (auch um einen leeren Tag); sonst hat nur ein leerer Tag einen Ring.
-            val ring = when {
-                isToday -> SynthTrack.copy(alpha = TERTIARY)
-                fill == null -> MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY)
-                else -> null
-            }
-            val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale)
-            val dayText = if (minutes > 0) {
-                pluralStringResource(R.plurals.cd_log_day_minutes, minutes.toInt(), dayName, minutes.toInt())
-            } else {
-                stringResource(R.string.cd_log_day_none, dayName)
-            }
-            // „Heute“ trägt sonst nur der dünne Ring (FARBE-05): auch in Worten.
-            val dayDescription = if (isToday) stringResource(R.string.cd_log_day_today, dayText) else dayText
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f).semantics { contentDescription = dayDescription },
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(Sizes.WeekDot)
-                        .clip(CircleShape)
-                        .then(if (fill != null) Modifier.background(fill) else Modifier)
-                        .then(if (ring != null) Modifier.border(Dimens.BorderThin, ring, CircleShape) else Modifier),
-                )
-                Spacer(Modifier.height(Dimens.GapTiny))
-                Text(
-                    text = labels[(day.dayOfWeek.value - 1).coerceIn(0, 6)],
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY),
-                )
-            }
+            WeekCalendar(minutesPerDay = minutesPerDay, today = today, weeks = 1, spoken = true)
         }
     }
 }
@@ -404,20 +222,6 @@ private fun LogGroupSection(
             }
         }
     }
-}
-
-/** Geübte Minuten je Tag (Epochentag → Minuten), nur für die Stufe des Punkts; die Summe rechnet [recentMinutes]. */
-@Composable
-private fun rememberMinutesPerDay(entries: List<SessionLogEntry>): Map<Long, Long> = remember(entries) {
-    entries.groupBy { it.startedAtEpochMs.toEpochDay() }
-        .mapValues { (_, list) -> list.sumOf { it.durationMs } / 60_000L }
-}
-
-/** Tage in Folge bis heute bzw. gestern ([currentStreak]). */
-@Composable
-private fun rememberLogStreak(entries: List<SessionLogEntry>, today: LocalDate): Int {
-    val activeDays = remember(entries) { entries.map { it.startedAtEpochMs.toEpochDay() }.toSet() }
-    return remember(activeDays, today) { currentStreak(activeDays, today) }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -506,19 +310,4 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
             }
         }
     }
-}
-
-private fun Long.toEpochDay(): Long = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
-
-/** Aufeinanderfolgende Tage mit ≥1 Session, von heute (oder gestern) rückwärts. */
-private fun currentStreak(activeDays: Set<Long>, today: LocalDate): Int {
-    if (activeDays.isEmpty()) return 0
-    val todayEpoch = today.toEpochDay()
-    var day = if (todayEpoch in activeDays) todayEpoch else todayEpoch - 1
-    var streak = 0
-    while (day in activeDays) {
-        streak++
-        day--
-    }
-    return streak
 }
