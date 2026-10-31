@@ -68,7 +68,6 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.DividerSubtle
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
-import app.atemkraft.ui.theme.SynthTrack
 import app.atemkraft.ui.theme.TERTIARY
 import java.time.Instant
 import java.time.LocalDate
@@ -163,11 +162,7 @@ internal fun LogStatsCard(
             }
             if (streak >= 2) {
                 Spacer(Modifier.height(Dimens.GapTiny))
-                Text(
-                    text = pluralStringResource(R.plurals.log_streak, streak, streak),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                StreakText(streak)
             }
             Spacer(Modifier.height(Dimens.ListGap))
             // Derselbe Aufklapper wie im Tab „Eigene“, derselbe gemerkte Zustand.

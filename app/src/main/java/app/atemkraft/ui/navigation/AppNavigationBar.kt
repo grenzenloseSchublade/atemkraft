@@ -49,6 +49,7 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 import app.atemkraft.ui.theme.TERTIARY
 import app.atemkraft.ui.theme.TabBarContainer
+import app.atemkraft.ui.theme.TonalDeep
 import kotlin.math.roundToInt
 
 /** Ein Tab der unteren Navigationsleiste; [icon] liefert sein Symbol, das Icon setzt die Leiste. */
@@ -68,9 +69,9 @@ class AppNavItem(
  * lieber Icon-only als geschrumpfte Schrift) – wer die Systemschrift vergrößert, bekommt nie Text
  * in Normalgröße (WCAG 1.4.4).
  *
- * Auswahl: tonale Pille (`secondaryContainer`) mit Icon und Beschriftung in `onSecondaryContainer`
- * (6,32; `primary` hielte auf der helleren Pille nur 2,47, S-18) – keine
- * gefüllte Neon-Fläche, die gehört dem Start-Button (PRIN-02). Das Gewicht bleibt bei Auswahl gleich
+ * Auswahl: Icon und Beschriftung in `primary` (Pink, Eigentümer 2026-10-31: die Marke auf jedem
+ * Screen) auf einer dunklen Pille (`TonalDeep`; Pink darauf 3,99, auf der helleren
+ * `secondaryContainer` nur 2,47) – keine gefüllte Neon-Fläche, die gehört dem Start-Button (PRIN-02). Das Gewicht bleibt bei Auswahl gleich
  * (TYPO-01): Ein breiteres SemiBold verlangte im Moment des Wechsels eine kleinere gemeinsame
  * Größe, alle vier Beschriftungen sprangen.
  */
@@ -78,9 +79,9 @@ class AppNavItem(
 fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
     val colors = NavigationBarItemDefaults.colors(
-        selectedIconColor = scheme.onSecondaryContainer,
-        selectedTextColor = scheme.onSecondaryContainer,
-        indicatorColor = scheme.secondaryContainer,
+        selectedIconColor = scheme.primary,
+        selectedTextColor = scheme.primary,
+        indicatorColor = TonalDeep,
         unselectedIconColor = scheme.onSurface.copy(alpha = TERTIARY),
         unselectedTextColor = scheme.onSurface.copy(alpha = TERTIARY),
     )

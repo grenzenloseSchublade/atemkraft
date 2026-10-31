@@ -55,8 +55,8 @@ import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
-import app.atemkraft.ui.theme.SynthTrack
 import app.atemkraft.ui.theme.TERTIARY
+import app.atemkraft.ui.theme.TodayGold
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -112,15 +112,15 @@ internal fun LogHistory(
         } else {
             WeekCalendar(minutesPerDay = minutesPerDay, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
             Spacer(Modifier.height(Dimens.ListGap))
-            val parts = buildList {
-                if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
-                if (weekMinutes > 0) add(stringResource(R.string.log_minutes_recent, weekMinutes))
-                if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
+            val parts = buildList<@Composable () -> Unit> {
+                if (streak >= 2) add { StreakText(streak) }
+                if (weekMinutes > 0) add { SecondaryText(stringResource(R.string.log_minutes_recent, weekMinutes)) }
+                if (isEmpty()) add { SecondaryText(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size)) }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
                 DotSeparatedFlow(
-                    parts = parts.map { part -> { SecondaryText(part) } },
+                    parts = parts,
                     separator = { SecondaryText(DOT_SEPARATOR) },
                     modifier = Modifier.weight(1f),
                     centered = false,
@@ -307,7 +307,7 @@ private fun DayCell(day: LocalDate, today: LocalDate, minutes: Long, modifier: M
     val isToday = day == today
     // Heute trägt den Cyan-Ring (auch um einen leeren Tag); die Zukunft nur einen leisen Ring.
     val ring = when {
-        isToday -> SynthTrack.copy(alpha = TERTIARY)
+        isToday -> TodayGold
         future -> MaterialTheme.colorScheme.onSurface.copy(alpha = ALPHA_BORDER)
         fill == null -> MaterialTheme.colorScheme.onSurface.copy(alpha = TERTIARY)
         else -> null
@@ -371,4 +371,17 @@ private fun currentStreak(activeDays: Set<Long>, today: LocalDate): Int {
         day--
     }
     return streak
+}
+
+/**
+ * Die Serie „3 Tage in Folge“ in [TodayGold] (Eigentümer 2026-10-31): warm, ohne Lob – nur gezählt.
+ * Eine Stelle für Tab „Meins“ und Logbuch, damit sie überall gleich aussieht.
+ */
+@Composable
+internal fun StreakText(streak: Int) {
+    Text(
+        text = pluralStringResource(R.plurals.log_streak, streak, streak),
+        style = MaterialTheme.typography.bodySmall,
+        color = TodayGold,
+    )
 }

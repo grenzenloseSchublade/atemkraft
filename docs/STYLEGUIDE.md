@@ -65,15 +65,15 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 
 | Token | Hex | M3-Rolle | Bedeutung | vs BG | vs Card |
 |---|---|---|---|---|---|
-| `NeonMagenta` | #F25CA2 | primary | Marke, Aktion, Auswahl | 5,98 | 4,71 |
+| `NeonMagenta` | #F25CA2 | primary | Marke, Aktion, Auswahl; gewählter Tab (Symbol und Beschriftung) | 5,98 | 4,71 |
 | `NeonCyan` | #34E0E8 | secondary | Verweise und Links im Inhalt (FARBE-04), Einatmen, eigene Muster (Rand, gespeichert), Meditation (Zeitring, Logbuch-Punkt), Fortschritt | 11,36 | 8,95 |
 | `NeonYellow` | #FAD84A | tertiary | nur über `WarnAmber`; ΔE76 30,5 zu `FamilySympathetic` | 13,12 | 10,34 |
 | `OnNeon` / `OnCyan` | #1E0A16 / #042A2C | onPrimary, onTertiary, onError / onSecondary | Inhalt auf Neon | 6,15 auf primary, 6,96 auf error | – |
 | `DarkBackground` / `DarkSurface` | #160F2E / #211640 | background / surface, surfaceContainer | Screen-Grund (`window_background`) / Leisten (Elevation 3 dp → #321C48), als `TabBarContainer` Grund der Tab-Leiste | – | – |
 | `DarkSurfaceVariant` | #2E2150 | surfaceVariant, surfaceContainerHighest | **Card-Fläche**, Mini-Bar | 1,27 | – |
 | `SurfaceContainerHigh` / `Lowest` / `Low` | #281B48 / #120C26 / #1B1236 | surfaceContainerHigh/Lowest/Low | Dialog, Suchfeld-Pille (`SearchField`), ungewählte Filter-Chips (`TonalChip`) / nur implizit von M3 gelesen / ruhige Leer-Karte „Eigene Kreationen“ | – | – |
-| `SecondaryContainer` | #5A4890 | secondaryContainer | Tonal-Buttons (Stepper, Reset), Auswahl-Pille der Tab-Leiste; darauf nur `onSecondaryContainer` (6,32), farbige Beschriftung nie (`primary` 2,47; → `TonalDeep`) | 2,42 | 1,91 |
-| `TonalDeep` | #3A2C60 | – | dunkle tonale Fläche für farbige Glyphen (≥ 4,5:1): gewählte Zeilen im Muster-Editor, Seitenknöpfe der `SessionControlBar` | 1,50 | 1,18 |
+| `SecondaryContainer` | #5A4890 | secondaryContainer | Tonal-Buttons (Stepper, Reset); darauf nur `onSecondaryContainer` (6,32), farbige Beschriftung nie (`primary` 2,47; → `TonalDeep`) | 2,42 | 1,91 |
+| `TonalDeep` | #3A2C60 | – | dunkle tonale Fläche für farbige Glyphen (≥ 4,5:1): gewählte Zeilen im Muster-Editor, Seitenknöpfe der `SessionControlBar`, Auswahl-Pille der Tab-Leiste (pinkes Symbol 3,99) | 1,50 | 1,18 |
 | `SegmentSelected` | #715AAF | – | gewählte Fläche von Segment (`SegmentedChoiceRow`, 3,02 gegen ungewählt, Beschriftung 4,62), Anlass-Chip (`ChoiceChip`) und Filter-Chip (`TonalChip`, 2,82 gegen `surfaceContainerHigh`, darum Beschriftung von `SECONDARY` auf voll) | 3,31 | 2,61 |
 | `OutlineVariantIndigo` | #453763 | outlineVariant | Trenner unter „Muster des Tages ›“ im Atmen-Tab, Feinstriche des Zeitrings; dekorativ | 1,73 | 1,37 |
 | `DividerSubtle` | #F0E6FF α 0,08 | – | **einziger** Trenner in Karten und Expandern (KOMP-03); dekorativ | – | – |
@@ -82,7 +82,8 @@ Kontrast (WCAG 2.x) der Token-Farbe als Vordergrund gegen `background` #160F2E u
 | `DarkOnBackground/OnSurface` | #F0E6FF | onBackground, onSurface | Primärtext, alle Köpfe (FARBE-07) | 15,30 | 12,05 |
 | `DarkOnSurfaceVariant` | #C3B8DD | onSurfaceVariant | leiser Text (Dialog, Mini-Bar), „+ Halten“ im Editor | 9,83 | 7,74 |
 | `FamilyVagal` / `Sympathetic` / `Balance` / `Functional` | #60A5FA / #F59E0B / #A78BFA / #34D399 | – | Familie „Beruhigen“ / „Aktivieren“ / „Ausgleichen“ / „Atem schulen“: Gruppenlabel, Kartenrand, Bereichs-Verweis | 7,23 / 8,56 / 6,76 / 9,57 | 5,70 / 6,75 / 5,32 / 7,54 |
-| `EvidenceBest` / `SynthTrack` | = NeonCyan | – | Studienlage „gut belegt“ / Heute-Ring im Logbuch | 11,36 | 8,95 |
+| `EvidenceBest` | = NeonCyan | – | Studienlage „gut belegt“ | 11,36 | 8,95 |
+| `TodayGold` | = FamilySympathetic #F59E0B | – | „heute“ und die Serie: Heute-Ring der Woche (Tab „Meins“ und Logbuch), „3 Tage in Folge“ (`StreakText`); dasselbe Gold wie die Kapitel in „Lernen“, nie als Gruppenlabel oder Rand (Ausnahme FARBE-04 wie der Kopf-Ring) | 8,56 | 6,75 |
 | `EvidenceStudied` | #78B0CC | – | Studienlage „in Studien geprüft“; Chip-Text 4,60 auf Card | 7,78 | 6,13 |
 | `EvidenceLittle` | #C8B8B4 | – | Studienlage „kaum untersucht“; Chip-Text 5,43 auf Card | 9,61 | 7,57 |
 | `EvidenceCaution` | #FF6B8B | error | Vorsicht, Fehler, Bestätigungszustand (MUSTER-05); Leiste 5,54 | 6,77 | 5,33 |

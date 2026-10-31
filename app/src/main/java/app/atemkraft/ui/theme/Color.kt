@@ -93,7 +93,6 @@ val SynthCircleEdge = Color(0xFF4A2080)
 
 /** Deckkraft von [SynthCircleEdge] am Rand des Atemkreis-Verlaufs: Der Rand läuft weich in den Grund aus. */
 const val ALPHA_CIRCLE_EDGE = 0.72f
-val SynthTrack = NeonCyan
 
 // Session-Schrift: warmes, entsättigtes Pastellgold/Creme mit weichem Schimmer – ruhig statt grell,
 // passt zur kühlen Cyan/Lila-Palette, ohne den Bildschirm zu „brechen“. Zusatzinfo dezenter.
@@ -149,6 +148,15 @@ const val ALPHA_CURVE_FILL = 0.08f
  * Ton steht im Ring der Kapiteltitel im Tab „Lernen“ ([HeadingRing]); er trägt keine Bedeutung (FARBE-07).
  */
 val BreathExhale = Color(0xFFFF9E7A)
+
+/**
+ * Warmes Gold für „heute“ und die Serie (Heute-Ring der Woche, „3 Tage in Folge“; Eigentümer
+ * 2026-10-31: „das richtige Gelb“ wie in den Kapiteln von „Lernen“). Derselbe Ton wie
+ * [FamilySympathetic] und im [HeadingRing]; hier trägt er keine Familie (Ausnahme FARBE-04 wie der
+ * Kopf-Ring) – er steht nur als Ring und kleine Zählzeile, nie als Gruppenlabel oder Rand.
+ * Nicht [NeonYellow]: Das grelle Gelb bleibt der Warnung.
+ */
+val TodayGold = FamilySympathetic
 
 /**
  * Ring der Kapiteltitel im Tab „Lernen“ (FARBE-07, Nutzerentscheidung 2026-10-19): Pink → Koralle
