@@ -1,0 +1,6 @@
+- Tab „Meins“: Woche mit Datum, zuletzt geübt, Kreationen und „Tut mir gut“ als Karten zum Wischen
+- Detailseite und Editor mit fester Startleiste, Kurve mit Punkt im Takt
+- Überschriften bleiben beim Scrollen stehen
+- Tab-Leiste folgt dem Finger, leichter Impuls an der Schwelle, auch bei Blättern
+- Pink für den gewählten Tab, Gold für „heute“
+- Schnellerer Start, weniger Speicher

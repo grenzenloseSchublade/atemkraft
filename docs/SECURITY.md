@@ -2,7 +2,7 @@
 
 Sicherheits-, Datenschutz-, Lieferketten- und Release-Regeln für Atemkraft (`app.atemkraft`). Zielgruppe: Maintainer und Claude. Gegenstück für Design, Text und Code: [STYLEGUIDE.md](STYLEGUIDE.md).
 
-- **Stand:** 2026-10-30 (v2.10.0 und `main`).
+- **Stand:** 2026-10-31 (v2.11.0 und `main`).
 - **Schlüsselwörter:** MUSS / DARF NICHT / SOLL im Sinne von RFC 2119.
 - **Regelformat** (gemeinsam mit STYLEGUIDE): `ID | Stufe | Regel | Warum | Prüfung`. `auto:` nennt Werkzeug und Check (siehe [Automatische Prüfung](#automatische-pruefung)), `manuell:` nennt Review oder Checklisten-Schritt. In der Check-Tabelle stehen die vollen Regel-IDs.
 - **Grundlage:** OWASP MASVS v2.1.0 (L1 + Privacy), Android Security Checklist, Google-Play-Richtlinien, F-Droid Inclusion Policy. Zuordnung zu den Qualitätsmerkmalen (Security, Safety) nach ISO/IEC 25010: [PROCESS.md](PROCESS.md#iso25010).

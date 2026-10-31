@@ -2,7 +2,7 @@
 
 Für die Android-App Atemkraft (`app.atemkraft`), gleich über welche Bezugsquelle du sie installierst: GitHub-Releases dieses Repos, Google Play oder F-Droid (siehe [Bezugsquellen](#bezugsquellen)).
 
-- **Stand:** 2026-10-30. Gilt ab Version 2.6.0, geprüft gegen Version 2.10.0 und den Quellcode auf `main` an diesem Tag. Wie sich frühere Versionen unterscheiden, steht im [Anhang](#fruehere-versionen).
+- **Stand:** 2026-10-31. Gilt ab Version 2.6.0, geprüft gegen Version 2.11.0 und den Quellcode auf `main` an diesem Tag. Wie sich frühere Versionen unterscheiden, steht im [Anhang](#fruehere-versionen).
 - **Anbieter:** grenzenloseSchublade, Maintainer von [github.com/grenzenloseSchublade/atemkraft](https://github.com/grenzenloseSchublade/atemkraft). Kontakt siehe [unten](#kontakt).
 
 ## Kurzfassung

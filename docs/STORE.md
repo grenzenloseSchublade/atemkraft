@@ -1,6 +1,6 @@
 # Veröffentlichung in Google Play und F-Droid
 
-Stand: 2026-10-30, App-Version 2.10.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
+Stand: 2026-10-31, App-Version 2.11.0 und `main`. Dieses Dokument beschreibt, wie Atemkraft in die Stores kommt: was im Repo vorbereitet sein muss, welche Konten und Formulare nötig sind und in welcher Reihenfolge man vorgeht. Die verbindlichen Regeln (Signatur, Lizenzen, Gesundheitsaussagen) stehen in [SECURITY.md](SECURITY.md), Abschnitte *Build und Signatur*, *Verteilung* und *Gesundheit, Recht und Lizenzen*; die Schritte jedes einzelnen Releases in dessen *Release-Checkliste*. Hier steht der einmalige Weg in die Stores und das, was sich danach je Release ändert.
 
 Quellen sind die offiziellen Hilfeseiten von Google, F-Droid und IzzyOnDroid (Links im Text, abgerufen am 2026-10-23). Store-Regeln ändern sich; vor jedem Schritt die verlinkte Seite noch einmal lesen. Keine Rechtsberatung.
 
