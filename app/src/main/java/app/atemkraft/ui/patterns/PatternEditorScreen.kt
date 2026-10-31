@@ -164,7 +164,6 @@ fun PatternEditorScreen(
                         SaveToggle(state, actions.onSavedChange)
                     }
                 },
-                scrolled = scrollState.canScrollBackward,
             )
             // Sichtbare Höhe der Scroll-Fläche: Danach richtet sich die Höhe der Kurve ([FirstScreen]).
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {

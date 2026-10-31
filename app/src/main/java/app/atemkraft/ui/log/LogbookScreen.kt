@@ -51,15 +51,16 @@ import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.NavCard
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.Sticky
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.declareSticky
 import app.atemkraft.ui.components.durationClockText
 import app.atemkraft.ui.components.feelingText
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
-import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
@@ -106,13 +107,15 @@ fun LogbookScreen(
     // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild. Oben SectionGap, unten Platz für
     // den Griff der Tab-Leiste wie auf jeder Push-Seite.
     TabListScaffold(
-        header = { scrolled -> PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title), scrolled = scrolled) },
+        header = { PushHeader(onBack = onBack, title = stringResource(R.string.settings_log_title)) },
         top = Dimens.SectionGap,
         bottom = Dimens.TabBarGripClearance,
     ) {
         item(key = "stats") { LogStatsCard(entries = entries, today = today, showStreak = showStreak) }
-        items(groups, key = { group -> "group-${group.period}" }) { group ->
-            LogGroupSection(group, zone, canOpen, onOpenExercise)
+        groups.forEach { group ->
+            // Der Kopf der Gruppe klebt; angemeldet hier, sein Inhalt kommt aus LogGroupSection.
+            declareSticky(logGroupSticky(group))
+            item(key = logGroupSticky(group).key) { LogGroupSection(group, zone, canOpen, onOpenExercise) }
         }
         if (entries.isNotEmpty()) {
             item(key = CLEAR_HINT_KEY) { HintText(stringResource(R.string.log_clear_hint)) }
@@ -164,6 +167,9 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
     }
 }
 
+/** Kopf einer Gruppe: klebt (Ebene 1), ihr Listeneintrag hat denselben Schlüssel. */
+private fun logGroupSticky(group: LogGroup) = Sticky("group-${group.period}", level = 1)
+
 /**
  * Eine Gruppe des Verlaufs: Abschnittskopf, darunter je Tag eine Karte. Heute und Gestern sind ein Tag und brauchen keine Tageszeile; in
  * „Letzte 7 Tage“ und den Monaten steht über jeder Karte der Tag („Mi 15.10.“), die Zeilen zeigen
@@ -192,8 +198,7 @@ private fun LogGroupSection(
     }
     val showDay = group.period !is LogPeriod.Today && group.period !is LogPeriod.Yesterday
     // Der Kopf der Gruppe klebt, solange man in ihr liest (Eintrag "group-…", siehe Liste).
-    val key = "group-${group.period}"
-    CollapsibleSection(title = title, headerModifier = Modifier.stickyHeader(key = key, level = 1, itemKey = key)) {
+    CollapsibleSection(title = title, sticky = logGroupSticky(group)) {
         group.days.forEach { day ->
             Column {
                 if (showDay) {

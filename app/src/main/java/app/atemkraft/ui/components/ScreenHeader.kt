@@ -19,9 +19,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,18 +41,17 @@ import app.atemkraft.ui.theme.SECONDARY
  *
  * Der Kopf steht außerhalb der Liste und scrollt nie weg (Nutzer 2026-10-23: „Rahmen fest, Inhalt
  * scrollt“), damit das Zahnrad immer erreichbar ist. Die Tabs tragen keinen Untertitel mehr
- * (Nutzer 2026-10-24, Vorschlag B); Push-Seiten leiten mit [ScreenSubtitle] ein. [scrolled] (Inhalt liegt unter dem Kopf) blendet
- * die Haarlinie an der Unterkante ein. Der Titel ist zugleich `paneTitle` des Tabs ([HeaderBar],
- * A11Y-07): TalkBack sagt ihn beim Tab-Wechsel an.
+ * (Nutzer 2026-10-24, Vorschlag B); Push-Seiten leiten mit [ScreenSubtitle] ein. Keine Linie an
+ * der Unterkante, auch nicht beim Scrollen (Eigentümer 2026-10-31). Der Titel ist zugleich
+ * `paneTitle` des Tabs ([HeaderBar], A11Y-07): TalkBack sagt ihn beim Tab-Wechsel an.
  */
 @Composable
 fun ScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
-    scrolled: Boolean = false,
 ) {
-    Column(modifier.fillMaxWidth().scrolledHairline(scrolled)) {
+    Column(modifier.fillMaxWidth()) {
         HeaderBar(paneTitle = title) {
             HeaderTitle(title, Modifier.weight(1f))
             // Glyph an der Inhaltskante wie der Caret der Abschnittsköpfe darunter; die Tippfläche
@@ -64,17 +63,16 @@ fun ScreenHeader(
 
 /**
  * Gerüst der Tabs mit Liste (Atmen, Eigene, Lernen) und des Logbuchs (Push-Variante, §4.3):
- * `Surface(background)`, fest oben der Kopf aus [header] – er bekommt `scrolled` (Inhalt liegt
- * unter ihm) für die Haarlinie –, darunter die `LazyColumn` mit `spacedBy(ListGap)`. [top] ist der
+ * `Surface(background)`, fest oben der Kopf aus [header], darunter die `LazyColumn` mit
+ * `spacedBy(ListGap)`. [top] ist der
  * Abstand über dem ersten Eintrag (Tabs 0: der erste Eintrag bringt seinen Abstand selbst mit;
  * Logbuch `SectionGap` wie jede Push-Seite), unten [bottom] (Tabs `ScreenBottom`, Logbuch
- * `TabBarGripClearance` wie jede Seite der Tiefe), beides als `contentPadding`. Überschriften mit
- * [stickyHeader] kleben oben ([StickyHeaderOverlay]); klebt etwas, trägt die Schicht die Haarlinie
- * und [header] bekommt `scrolled = false`.
+ * `TabBarGripClearance` wie jede Seite der Tiefe), beides als `contentPadding`. Überschriften in
+ * [StickyHeader] kleben oben ([StickyHeaderOverlay]).
  */
 @Composable
 fun TabListScaffold(
-    header: @Composable (scrolled: Boolean) -> Unit,
+    header: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     top: Dp = 0.dp,
@@ -82,10 +80,10 @@ fun TabListScaffold(
     content: LazyListScope.() -> Unit,
 ) {
     val sticky = rememberStickyHeaderState(listState)
-    val pinned by sticky.anyPinned()
+    sticky.inset = with(LocalDensity.current) { Dimens.ScreenPadding.roundToPx() }
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
-            header(listState.canScrollBackward && !pinned)
+            header()
             Box(modifier = Modifier.weight(1f).fillMaxWidth().stickyViewport(sticky)) {
                 CompositionLocalProvider(LocalStickyHeaders provides sticky) {
                     LazyColumn(
@@ -102,7 +100,7 @@ fun TabListScaffold(
                         ),
                         verticalArrangement = Arrangement.spacedBy(Dimens.ListGap),
                     ) {
-                        content()
+                        withStickyHeaders(sticky, content)
                     }
                 }
                 StickyHeaderOverlay(sticky)

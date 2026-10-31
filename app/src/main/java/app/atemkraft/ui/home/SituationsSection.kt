@@ -46,11 +46,12 @@ import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.GroupLabel
 import app.atemkraft.ui.components.SearchField
 import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.Sticky
+import app.atemkraft.ui.components.StickyHeader
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.flushStart
-import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
@@ -137,7 +138,7 @@ private fun SituationSearchField(query: TextFieldState, focus: MutableInteractio
 internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolean, stickyKey: String? = null) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (withTitle) {
-            SubLabel(rec.title, modifier = Modifier.stickyGroup(stickyKey), color = MaterialTheme.colorScheme.onBackground)
+            StickyHeader(stickyGroup(stickyKey)) { RecommendationTitle(rec) }
             Spacer(Modifier.height(Dimens.GapTiny))
         }
         SecondaryText(rec.rationale)
@@ -184,19 +185,20 @@ internal fun AllExercisesLink(onClick: () -> Unit) {
 internal fun AreaHeader(area: BreathingArea, onClose: (() -> Unit)?, stickyKey: String? = null) {
     val family = area.family
     Column(modifier = Modifier.fillMaxWidth()) {
-        GroupLabel(
-            title = family.title(),
-            color = family.color(),
-            modifier = Modifier.stickyGroup(stickyKey),
-            top = GROUP_LABEL_LIST_TOP,
-            trailingAction = onClose?.let { close ->
-                {
-                    AppIconButton(onClick = close) {
+        if (onClose == null) {
+            StickyHeader(stickyGroup(stickyKey)) { AreaLabel(family) }
+        } else {
+            GroupLabel(
+                title = family.title(),
+                color = family.color(),
+                top = GROUP_LABEL_LIST_TOP,
+                trailingAction = {
+                    AppIconButton(onClick = onClose) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_show_all), tint = MaterialTheme.colorScheme.onSurface)
                     }
-                }
-            },
-        )
+                },
+            )
+        }
         area.warning?.let { warning ->
             Spacer(Modifier.height(Dimens.GapTiny))
             WarnText(warning)
@@ -256,5 +258,13 @@ private fun SettledSearchStatus(situations: Int, areas: Int, onShowAll: () -> Un
     }
 }
 
+/** Titel einer Empfehlung bei mehreren Treffern; so auch oben als klebende Kopie. */
+@Composable
+internal fun RecommendationTitle(rec: SituationRecommendation) = SubLabel(rec.title, color = MaterialTheme.colorScheme.onBackground)
+
+/** Gruppenlabel eines Bereichs ohne ✕; so auch oben als klebende Kopie. */
+@Composable
+internal fun AreaLabel(family: BreathingFamily) = GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_LIST_TOP)
+
 /** Eine Gruppe (Ebene 2) unter „Passende Übungen“ klebt; [key] ist der Schlüssel ihres Listeneintrags. */
-private fun Modifier.stickyGroup(key: String?): Modifier = if (key == null) this else stickyHeader(key = key, level = 2, itemKey = key)
+private fun stickyGroup(key: String?): Sticky? = key?.let { Sticky(it, level = 2, itemKey = it) }

@@ -1,6 +1,5 @@
 package app.atemkraft.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
@@ -41,8 +37,8 @@ import app.atemkraft.ui.theme.Dimens
  *
  * Gleiche Zeile wie der Kopf der Tabs ([ScreenHeader], [HeaderBar]): Beim Wechsel von Tab zu
  * Unterseite springt nichts, nur der Pfeil kommt dazu. Keine eigene Fläche, keine Erhöhung: Der
- * Kopf liegt auf dem Hintergrund des Screens (PRIN-03); [scrolled] (Inhalt liegt unter dem Kopf)
- * blendet eine Haarlinie an seiner Unterkante ein.
+ * Kopf liegt auf dem Hintergrund des Screens (PRIN-03), ohne Linie an der Unterkante, auch nicht
+ * beim Scrollen (Eigentümer 2026-10-31).
  * Ohne [title] steht nur der Pfeil fest – für Seiten, deren Kopf zum Inhalt gehört (Markenkopf
  * auf „Über“).
  * Der Titel steht in einer Zeile; passt er nicht (lange Übungsnamen auf der Detailseite), läuft er
@@ -61,10 +57,9 @@ fun PushHeader(
     title: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
-    scrolled: Boolean = false,
     paneTitle: String? = title,
 ) {
-    HeaderBar(modifier = modifier.scrolledHairline(scrolled), paneTitle = paneTitle) {
+    HeaderBar(modifier = modifier, paneTitle = paneTitle) {
         // Die Tippfläche des Pfeils ragt links in den Rand ([flushStart]); so steht der Pfeil an
         // der Inhaltskante, und der Titel folgt ihm im Abstand des Überstands statt doppelt so
         // weit („weit versetzt“). Die Tippfläche selbst bleibt 48 dp (A11Y-05).
@@ -84,14 +79,13 @@ fun PushHeader(
 
 /**
  * Gerüst jeder Push-Seite mit scrollendem Inhalt (§4.3): `Surface(background)`, darin fest der
- * [PushHeader] (Haarlinie, sobald Inhalt unter ihm liegt) und darunter die Scroll-Spalte mit Rand
+ * [PushHeader] und darunter die Scroll-Spalte mit Rand
  * `ScreenPadding`, oben `SectionGap` bis zum ersten Inhalt, unten `TabBarGripClearance` (der Griff
  * der Tab-Leiste schwebt über der untersten Leiste, am Ende liegt nichts unter ihm). Darunter fest
  * optional [bottomBar] (`PinnedActionBar` der Detailseite). Titel, [titleContent] und [action]
  * wie beim [PushHeader]. [contentModifier] liegt zwischen Scroll und Rand – dort misst die
  * Atemlehre Sprungziele gegen den Scroll-Inhalt. Eine Einleitung steht als [ScreenSubtitle] oben
- * im Inhalt. Überschriften mit [stickyHeader] kleben oben ([StickyHeaderOverlay]); klebt etwas,
- * trägt die Schicht die Haarlinie statt des Kopfs.
+ * im Inhalt. Überschriften in [StickyHeader] kleben oben ([StickyHeaderOverlay]).
  */
 @Composable
 fun PushScaffold(
@@ -106,7 +100,6 @@ fun PushScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val sticky = rememberStickyHeaderState(scrollState)
-    val pinned by sticky.anyPinned()
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             PushHeader(
@@ -114,7 +107,6 @@ fun PushScaffold(
                 title = title,
                 titleContent = titleContent,
                 action = action,
-                scrolled = scrollState.canScrollBackward && !pinned,
             )
             Box(modifier = Modifier.weight(1f).fillMaxWidth().stickyViewport(sticky)) {
                 CompositionLocalProvider(LocalStickyHeaders provides sticky) {
@@ -172,25 +164,6 @@ internal fun HeaderTitle(text: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onBackground,
         modifier = modifier.semantics { heading() },
     )
-}
-
-/**
- * Haarlinie (`outlineVariant`) an der Unterkante des festen Kopfs, sanft eingeblendet, solange
- * [scrolled] – ganz oben bleibt der Kopf ohne Linie. Gezeichnet, nicht gelegt: Die Höhe ändert
- * sich nicht. Vor dem Rand anwenden, damit sie von Kante zu Kante reicht.
- */
-@Composable
-internal fun Modifier.scrolledHairline(scrolled: Boolean): Modifier {
-    val alpha by animateFloatAsState(if (scrolled) 1f else 0f, label = "hairline")
-    val color = MaterialTheme.colorScheme.outlineVariant
-    return drawWithContent {
-        drawContent()
-        if (alpha > 0f) {
-            val stroke = Dimens.BorderThin.toPx()
-            val y = size.height - stroke / 2f
-            drawLine(color.copy(alpha = color.alpha * alpha), Offset(0f, y), Offset(size.width, y), stroke)
-        }
-    }
 }
 
 @Preview

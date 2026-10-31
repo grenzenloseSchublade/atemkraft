@@ -4,7 +4,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -122,9 +120,6 @@ fun AppNavigationBar(items: List<AppNavItem>, modifier: Modifier = Modifier) {
     }
 }
 
-/** Deckkraft der Trennlinie über der Tab-Leiste. */
-private const val TAB_DIVIDER_ALPHA = 0.22f
-
 /**
  * Kleinste Beschriftung der Tabs (Anteil der Rolle). Darunter Icon-only statt kleinerer Schrift
  * (LAYOUT-03): Mit 0,5 standen die Namen bei Schrift 2,0 wieder in Normalgröße.
@@ -132,7 +127,7 @@ private const val TAB_DIVIDER_ALPHA = 0.22f
 private const val NAV_LABEL_MIN_SCALE = 0.85f
 
 /**
- * Trennlinie und Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt
+ * Tab-Leiste [bar] (in der App [AppNavigationBar]), solange [visible]; sonst bleibt
  * nur der Platz der Systemnavigation [systemInsets]. Die Höhe gleitet dabei ([Motion.Disclosure],
  * MOTION-04), sodass eine Startleiste darüber sanft hinab- bzw. hinaufrutscht, statt um die ganze
  * Leiste zu springen. Mit [state] (der App-Rahmen) schließt Wischen nach unten die offene Leiste
@@ -156,10 +151,8 @@ fun HideableTabBar(
     }
     Box(modifier.then(swipe).animateContentSize(Motion.Disclosure)) {
         if (visible) {
-            Column {
-                HorizontalDivider(thickness = Dimens.BorderThin, color = MaterialTheme.colorScheme.primary.copy(alpha = TAB_DIVIDER_ALPHA)) // Abweichung KOMP-03: Marken-Trenner über der Tab-Leiste, kein Karten-Trenner
-                bar()
-            }
+            // Keine Linie über der Leiste: Ihr Violett grenzt genug ab (Eigentümer 2026-10-31).
+            bar()
         } else {
             Spacer(Modifier.windowInsetsBottomHeight(systemInsets))
         }

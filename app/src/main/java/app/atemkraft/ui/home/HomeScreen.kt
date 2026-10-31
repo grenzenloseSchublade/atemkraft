@@ -40,9 +40,12 @@ import app.atemkraft.ui.components.GroupLabel
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
+import app.atemkraft.ui.components.Sticky
+import app.atemkraft.ui.components.StickyHeader
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.color
-import app.atemkraft.ui.components.stickyHeader
+import app.atemkraft.ui.components.declareSticky
+import app.atemkraft.ui.components.stickyItem
 import app.atemkraft.ui.components.title
 import app.atemkraft.ui.theme.Dimens
 
@@ -182,11 +185,10 @@ fun HomeScreen(
     val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
-        header = { scrolled ->
+        header = {
             ScreenHeader(
                 title = stringResource(R.string.tab_breathe),
                 action = { SettingsAction(onClick = actions.onOpenSettings) },
-                scrolled = scrolled,
             )
         },
     ) {
@@ -229,12 +231,8 @@ fun HomeScreen(
             }
         }
         if (filtering) {
-            item(key = "results-head") {
-                SectionHeader(
-                    title = stringResource(R.string.home_results),
-                    modifier = Modifier.stickyHeader(key = "results-head", level = 1, itemKey = "results-head"),
-                    top = HEADER_BELOW_DIVIDER,
-                )
+            stickyItem(Sticky("results-head", level = 1)) {
+                SectionHeader(title = stringResource(R.string.home_results), top = HEADER_BELOW_DIVIDER)
             }
         }
         if (results != null && chosen == null && chosenArea == null) {
@@ -247,6 +245,8 @@ fun HomeScreen(
             val directAreas = shownAreas.map { it.family }.toSet()
             shownSituations.forEach { rec ->
                 val recKey = "rec-${rec.situation.name}"
+                // Der Titel steht nur bei mehreren Treffern; dann klebt er als Gruppe.
+                if (withTitle) declareSticky(Sticky(recKey, level = 2)) { RecommendationTitle(rec) }
                 item(key = recKey) { RecommendationIntro(rec, withTitle, stickyKey = recKey) }
                 items(rec.exerciseIds.mapNotNull(catalog.resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
@@ -274,9 +274,10 @@ fun HomeScreen(
             }
             shownAreas.forEach { area ->
                 val areaKey = "area-${area.family.name}"
+                // Mit ✕ (gewählter Bereich) klebt der Kopf nicht: Oben stünde ein Knopf, der nichts tut.
+                val onClose = if (chosenArea != null) showAll else null
+                if (onClose == null) declareSticky(Sticky(areaKey, level = 2)) { AreaLabel(area.family) }
                 item(key = areaKey) {
-                    // Mit ✕ (gewählter Bereich) klebt der Kopf nicht: Oben stünde ein Knopf, der nichts tut.
-                    val onClose = if (chosenArea != null) showAll else null
                     AreaHeader(
                         area = area,
                         onClose = onClose,
@@ -293,38 +294,30 @@ fun HomeScreen(
             // dem ListGap der Liste stünden sie sichtbar 20 dp vom Kopf ab. So sind es oben 12
             // (HeaderGap – der Spacer ergänzt die unsichtbaren 8) und unten bis zum Gruppenlabel 16
             // (SectionGap).
+            // Beide Köpfe stehen im Eintrag "exercises"; die Liste kennt sie auch, wenn er nie zu sehen war.
+            val exercisesHead: @Composable () -> Unit = { SectionHeader(title = stringResource(R.string.home_all_exercises), top = HEADER_BELOW_DIVIDER) }
+            declareSticky(Sticky("exercises", level = 1), exercisesHead)
+            val firstLabel: (@Composable () -> Unit)? = firstFamily?.let { family ->
+                { GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_BELOW_CHIPS) }
+            }
+            if (firstFamily != null && firstLabel != null) declareSticky(Sticky("exercises-${firstFamily.name}", level = 2, itemKey = "exercises"), firstLabel)
             item(key = "exercises") {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeader(
-                        title = stringResource(R.string.home_all_exercises),
-                        modifier = Modifier.stickyHeader(key = "exercises", level = 1, itemKey = "exercises"),
-                        top = HEADER_BELOW_DIVIDER,
-                    )
+                    StickyHeader(Sticky("exercises", level = 1), content = exercisesHead)
                     Spacer(Modifier.height(Dimens.GapTiny))
                     ExerciseFilterRow(active = filters, onToggle = { filters = if (it in filters) filters - it else filters + it })
                     if (filters.isNotEmpty()) {
                         Spacer(Modifier.height(Dimens.GapTiny))
                         FilterStatus(count = filtered.sumOf { it.second.size }, onReset = { filters = emptySet() })
                     } else if (firstFamily != null) {
-                        GroupLabel(
-                            title = firstFamily.title(),
-                            color = firstFamily.color(),
-                            modifier = Modifier.stickyHeader(key = "exercises-${firstFamily.name}", level = 2, itemKey = "exercises"),
-                            top = GROUP_LABEL_BELOW_CHIPS,
-                        )
+                        StickyHeader(Sticky("exercises-${firstFamily.name}", level = 2, itemKey = "exercises"), content = firstLabel ?: {})
                     }
                 }
             }
             filtered.forEachIndexed { index, (family, exercises) ->
                 if (index > 0 || firstFamily == null) {
-                    val headerKey = "header-${family.name}"
-                    item(key = headerKey) {
-                        GroupLabel(
-                            title = family.title(),
-                            color = family.color(),
-                            modifier = Modifier.stickyHeader(key = headerKey, level = 2, itemKey = headerKey),
-                            top = GROUP_LABEL_LIST_TOP,
-                        )
+                    stickyItem(Sticky("header-${family.name}", level = 2)) {
+                        GroupLabel(title = family.title(), color = family.color(), top = GROUP_LABEL_LIST_TOP)
                     }
                 }
                 items(exercises, key = { it.id }) { exercise ->

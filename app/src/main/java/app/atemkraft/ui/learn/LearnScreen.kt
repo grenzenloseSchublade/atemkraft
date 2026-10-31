@@ -32,11 +32,10 @@ fun LearnScreen(
 ) {
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
-        header = { scrolled ->
+        header = {
             ScreenHeader(
                 title = stringResource(R.string.tab_learn),
                 action = { SettingsAction(onClick = onOpenSettings) },
-                scrolled = scrolled,
             )
         },
     ) {

@@ -101,7 +101,6 @@ private fun SelectionContent(
         ScreenHeader(
             title = stringResource(R.string.meditation_title),
             action = { SettingsAction(onClick = onOpenSettings) },
-            scrolled = scrollState.canScrollBackward,
         )
         // Die Seite scrollt nicht: Der Regler bekommt den ganzen Platz zwischen Kopf und „Klang &
         // Stimme“ und wird nur bei großer Schrift kleiner; Gong und Stimme liegen im Bottom Sheet und

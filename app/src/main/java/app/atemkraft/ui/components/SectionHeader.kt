@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -292,7 +293,9 @@ private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
  * davor auf. So steht er so weit vom Abschnitt darüber wie ein fester Kopf.
  * [headerModifier] gilt für die Kopfzeile selbst (Tippfläche), z. B. ein `FocusRequester`, wenn
  * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07). [trailingAction] reicht an den Kopf
- * durch (Aktion neben dem Caret, z. B. „+“ bei „Eigene Kreationen“).
+ * durch (Aktion neben dem Caret, z. B. „+“ bei „Eigene Kreationen“). Mit [sticky] klebt der Kopf
+ * oben, sobald er dort ankommt ([StickyHeader]); nur für feste Köpfe ohne Caret und Aktion. Ohne
+ * [sticky] klebt er nicht, beendet aber einen klebenden Abschnitt darüber.
  *
  * Nicht im Meditations-Tab: Dort kostete jede Höhenänderung den Zeitring Platz (LAYOUT-08).
  */
@@ -311,6 +314,7 @@ fun CollapsibleSection(
     headerTop: Dp = Dimens.SectionHeaderTop,
     contentSpacing: Dp = Dimens.ListGap,
     trailingAction: (@Composable () -> Unit)? = null,
+    sticky: Sticky? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // Sichtbar über dem Titel: headerTop, abzüglich dessen, was die Liste schon setzt.
@@ -320,19 +324,23 @@ fun CollapsibleSection(
     val titleTop = if (expanded == null) above else (above - Dimens.GapSmall).coerceAtLeast(0.dp)
     val topFill = if (expanded == null) 0.dp else (titleTop - Dimens.GapSmall).coerceAtLeast(0.dp)
     val headerGap = if (expanded == null) Dimens.HeaderGap else (Dimens.HeaderGap - Dimens.GapSmall).coerceAtLeast(0.dp)
+    // Ohne [sticky] beendet der Kopf auf einer Seite mit klebenden Köpfen deren Abschnitt.
+    val barrier = remember { Sticky(Any(), level = 1, pins = false) }
     Column(modifier = modifier) {
-        SectionHeader(
-            title = title,
-            modifier = Modifier.padding(top = topFill).then(headerModifier),
-            teaser = teaser,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
-            status = status,
-            statusDescription = statusDescription,
-            smallStatus = smallStatus,
-            top = titleTop,
-            trailingAction = trailingAction,
-        )
+        StickyHeader(sticky ?: barrier, Modifier.padding(top = topFill)) {
+            SectionHeader(
+                title = title,
+                modifier = headerModifier,
+                teaser = teaser,
+                expanded = expanded,
+                onExpandedChange = onExpandedChange,
+                status = status,
+                statusDescription = statusDescription,
+                smallStatus = smallStatus,
+                top = titleTop,
+                trailingAction = trailingAction,
+            )
+        }
         // Volle Breite, damit beim Aufklappen nur die Höhe gleitet, nicht auch die Breite.
         Column(modifier = Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
             if (expanded != false) {

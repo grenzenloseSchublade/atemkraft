@@ -9,12 +9,12 @@ import org.junit.Test
  * („Übungen“ über den Familien).
  */
 class StickyHeadersTest {
-    private fun header(name: String, level: Int, y: Int, height: Int = 40) = StickyHeader(name, level, order = 0L, y = y, height = height)
+    private fun header(name: String, level: Int, y: Int, height: Int = 40) = HeaderPosition(name, level, order = 0L, y = y, height = height)
 
     /** Reihenfolge wie in der Liste: [y] von oben nach unten. */
-    private fun page(vararg headers: StickyHeader<String>) = headers.mapIndexed { i, h -> StickyHeader(h.value, h.level, i.toLong(), h.y, h.height) }
+    private fun page(vararg headers: HeaderPosition<String>) = headers.mapIndexed { i, h -> HeaderPosition(h.value, h.level, i.toLong(), h.y, h.height) }
 
-    private fun pinned(viewport: Int = 2000, vararg headers: StickyHeader<String>) = pinHeaders(page(*headers), viewport).map { it.value to it.y }
+    private fun pinned(viewport: Int = 2000, vararg headers: HeaderPosition<String>) = pinHeaders(page(*headers), viewport).map { it.value to it.y }
 
     @Test
     fun headersStickAtTheirLineAndArePushedOut() {
@@ -37,6 +37,15 @@ class StickyHeadersTest {
             listOf("Übungen" to 0, "Aktivieren" to 40),
             pinned(headers = arrayOf(header("Vorher", 2, -900), header("Übungen", 1, -500), header("Beruhigen", 2, -300), header("Aktivieren", 2, 30))),
         )
+    }
+
+    @Test
+    fun headerThatDoesNotPinEndsTheSectionAbove() {
+        // „Die Grundregeln“ (aufklappbar) klebt nicht, beendet aber „Die vier Phasen“.
+        val phases = HeaderPosition("Phasen", 1, 0L, -800, 40)
+        val rules = HeaderPosition("Grundregeln", 1, 1L, 20, 40, pins = false)
+        assertEquals(listOf("Phasen" to -20), pinHeaders(listOf(phases, rules), 2000).map { it.value to it.y })
+        assertEquals(emptyList<Pair<String, Int>>(), pinHeaders(listOf(phases, HeaderPosition("Grundregeln", 1, 1L, -300, 40, pins = false)), 2000).map { it.value to it.y })
     }
 
     @Test

@@ -55,9 +55,9 @@ import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SecondaryText
+import app.atemkraft.ui.components.Sticky
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.sanskritText
-import app.atemkraft.ui.components.stickyHeader
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
 import app.atemkraft.ui.theme.Dimens
@@ -111,7 +111,7 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
     ) {
         ScreenSubtitle(Atemlehre.intro)
 
-        CollapsibleSection(title = stringResource(R.string.atemlehre_phases), headerModifier = Modifier.stickyHeader(key = "phases", level = 1)) {
+        CollapsibleSection(title = stringResource(R.string.atemlehre_phases), sticky = Sticky("phases", level = 1)) {
             PhasesCard(Atemlehre.phases)
         }
 
@@ -129,9 +129,8 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
         // Der Kopf „Muster“ klebt; der Sprung zur Karte rechnet seine Höhe ab (patternsHeader).
         CollapsibleSection(
             title = stringResource(R.string.atemlehre_patterns),
-            headerModifier = Modifier
-                .stickyHeader(key = "patterns", level = 1)
-                .onSizeChanged { patternsHeader = it.height },
+            headerModifier = Modifier.onSizeChanged { patternsHeader = it.height },
+            sticky = Sticky("patterns", level = 1),
         ) {
             Atemlehre.patterns.forEach { pattern ->
                 LorePatternCard(

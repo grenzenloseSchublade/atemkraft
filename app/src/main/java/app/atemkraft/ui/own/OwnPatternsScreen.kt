@@ -89,11 +89,10 @@ fun OwnPatternsScreen(
     val favoritesPager = rememberPagerState { pagerPageCount(favorites.size, withAll = true) }
     // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
     TabListScaffold(
-        header = { scrolled ->
+        header = {
             ScreenHeader(
                 title = stringResource(R.string.own_title),
                 action = { SettingsAction(onClick = actions.onOpenSettings) },
-                scrolled = scrolled,
             )
         },
     ) {
