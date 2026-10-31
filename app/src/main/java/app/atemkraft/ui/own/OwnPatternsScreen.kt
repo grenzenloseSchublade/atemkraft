@@ -9,6 +9,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
@@ -18,6 +19,7 @@ import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
+import app.atemkraft.ui.components.pageTabsTopSlack
 import app.atemkraft.ui.log.LogHistory
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -110,7 +112,10 @@ fun OwnPatternsScreen(
 
         // Unter dem Verlauf die Sammlungen: Umschalter, darunter Karteikarten (Nutzer 2026-10-31).
         item(key = "collections") {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = Dimens.SectionHeaderTop - Dimens.ListGap)) {
+            // Sichtbar SectionHeaderTop bis zum Namen der Tabs wie vor jedem Abschnitt: abzüglich ListGap
+            // der Liste und des Leerraums, den die 48-dp-Tippfläche der Tabs über dem Namen lässt.
+            val top = (Dimens.SectionHeaderTop - Dimens.ListGap - pageTabsTopSlack()).coerceAtLeast(0.dp)
+            Column(modifier = Modifier.fillMaxWidth().padding(top = top)) {
                 OwnCollections(
                     selected = view.collection,
                     onSelect = actions.onCollectionChange,

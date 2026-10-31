@@ -26,6 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -60,6 +62,17 @@ fun <T> PageTabs(
             PageTab(name = label(item), selected = item == selected, onClick = { onSelect(item) }, modifier = Modifier.weight(1f))
         }
     }
+}
+
+/**
+ * Leerraum über dem Namen, den die Mindesthöhe der Tippfläche (48) einem Tab gibt: Der Name steht
+ * unten, darüber bleibt, was Name, `GapSmall` und Strich nicht füllen. Wer über den Tabs einen
+ * sichtbaren Abstand setzt (`SectionHeaderTop`), zieht ihn ab – wie beim tippbaren Abschnittskopf.
+ */
+@Composable
+fun pageTabsTopSlack(): Dp {
+    val content = rememberFirstLineHeight(MaterialTheme.typography.titleSmall) + Dimens.GapSmall + Sizes.PageTabIndicator
+    return (Dimens.MinTouchTarget - content).coerceAtLeast(0.dp)
 }
 
 @Composable
