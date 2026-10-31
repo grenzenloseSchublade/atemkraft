@@ -47,7 +47,10 @@ data class PatternSnapshot(val pattern: FreePattern, val minutes: Int, val name:
  *   ([add]); die neue ist danach gewählt.
  * - „Startpunkt“ zeigt die Vorlage, der die Folge gerade entspricht ([template], Wertvergleich),
  *   sonst „angepasst“. [applyTemplate] setzt die Folge und wählt ihre letzte Phase.
- * - [reset] setzt die Folge auf den Stand beim Öffnen ([initial]) zurück, die Minuten bleiben.
+ * - [reset] setzt die Folge zurück, die Minuten bleiben: nach einer Vorlage auf den Stand davor
+ *   ([resetTo]: die selbst geformte Kurve, die die Vorlage ersetzt hat), sonst auf den Stand beim
+ *   Öffnen ([initial]). Ein Tipp auf eine Vorlage verliert so keine Arbeit, ohne nachzufragen
+ *   (Eigentümer 2026-10-31, Recherche Blätter); ein zweites Zurücksetzen führt zum Öffnungsstand.
  * - Der Name folgt dem Vorschlagsnamen der aktuellen Zahlen („Eigenes Muster 4·1·6“), bis die
  *   Person selbst tippt ([updateName], höchstens [NAME_MAX] Zeichen). Leer gespeichert heißt
  *   Vorschlagsname ([savedName]).
@@ -71,7 +74,15 @@ class PatternEditorState internal constructor(
     savedId: Long?,
     snapshot: PatternSnapshot?,
     existedBefore: Boolean,
+    resetTo: FreePattern = initial,
 ) {
+    /**
+     * Wohin [reset] führt: der Stand vor der letzten Vorlage, die eine selbst geformte Kurve ersetzt
+     * hat; sonst [initial].
+     */
+    var resetTo: FreePattern by mutableStateOf(resetTo)
+        private set
+
     /** Die eingestellte Folge; immer gültig. */
     var pattern: FreePattern by mutableStateOf(pattern)
         private set
@@ -122,8 +133,8 @@ class PatternEditorState internal constructor(
     /** Die Vorlage, der die Folge gerade genau entspricht; null heißt „angepasst“. */
     val template: FreeTemplate? get() = FreePatternTemplates.matching(pattern)
 
-    /** Weicht die Folge vom Stand beim Öffnen ab (dann zeigt der Start den Reset)? */
-    val modified: Boolean get() = pattern != initial
+    /** Führt [reset] noch irgendwohin (dann zeigt der Start den Reset)? */
+    val modified: Boolean get() = pattern != initial || pattern != resetTo
 
     /** Ist noch Platz für eine weitere Phase (höchstens 12)? */
     val canAdd: Boolean get() = pattern.canAdd
@@ -204,15 +215,24 @@ class PatternEditorState internal constructor(
         selectedValue = index.coerceAtMost(pattern.phases.lastIndex)
     }
 
-    /** Folge auf die Vorlage [template] setzen, ihre letzte Phase wählen; Minuten und Name bleiben. */
+    /**
+     * Folge auf die Vorlage [template] setzen, ihre letzte Phase wählen; Minuten und Name bleiben.
+     * Ersetzt sie eine selbst geformte Kurve (keine Vorlage, nicht der Öffnungsstand), merkt sich
+     * [resetTo] diese Kurve; wer nur Vorlagen durchprobiert, behält das bisherige Ziel.
+     */
     fun applyTemplate(template: FreeTemplate) {
+        if (pattern != initial && this.template == null) resetTo = pattern
         pattern = template.pattern
         selectedValue = pattern.phases.lastIndex
     }
 
-    /** Folge zurück auf den Stand beim Öffnen, letzte Phase gewählt; Minuten und Name bleiben. */
+    /**
+     * Folge zurück auf [resetTo] (der Stand vor der Vorlage), danach zielt ein weiteres Zurücksetzen
+     * auf den Öffnungsstand; letzte Phase gewählt; Minuten und Name bleiben.
+     */
     fun reset() {
-        pattern = initial
+        pattern = if (pattern != resetTo) resetTo else initial
+        resetTo = initial
         selectedValue = pattern.phases.lastIndex
     }
 
@@ -347,6 +367,7 @@ class PatternEditorState internal constructor(
                     snap?.minutes ?: state.minutes,
                     snap?.name ?: "",
                     state.existedBefore,
+                    state.resetTo.toCompact(),
                 )
             },
             restore = { list ->
@@ -369,6 +390,8 @@ class PatternEditorState internal constructor(
                     savedId = savedId,
                     snapshot = snapshot,
                     existedBefore = list[EXISTED_BEFORE] as Boolean,
+                    // Ein vor diesem Feld gesicherter Stand kennt es nicht: dann der Öffnungsstand.
+                    resetTo = decode(list.getOrNull(RESET_TO) ?: list[INITIAL]),
                 )
             },
         )
@@ -388,6 +411,7 @@ class PatternEditorState internal constructor(
         private const val SNAPSHOT_MINUTES = 11
         private const val SNAPSHOT_NAME = 12
         private const val EXISTED_BEFORE = 13
+        private const val RESET_TO = 14
 
         private fun decode(value: Any?): FreePattern = FreePattern.parse(value as String) ?: FreePattern.DEFAULT
     }

@@ -139,4 +139,20 @@ class PatternEditorSafetyTest {
         assertFalse(safety.requiresConfirm(wimHof))
         assertTrue(safety.requiresConfirm(fire))
     }
+
+    @Test
+    fun `Vorlage verliert keine geformte Kurve - Zurücksetzen führt erst davor, dann zum Öffnungsstand`() {
+        val opened = FreePatternTemplates.all.single { it.label == "4-7-8" }.pattern
+        val state = PatternEditorState.new("Eigenes Muster", opened)
+        state.setSeconds(0, 6)
+        val shaped = state.pattern
+        state.applyTemplate(FreePatternTemplates.all.single { it.label == "Box" })
+        state.applyTemplate(FreePatternTemplates.all.single { it.label == "Viloma I" })
+        state.reset()
+        assertEquals(shaped, state.pattern)
+        assertTrue(state.modified)
+        state.reset()
+        assertEquals(opened, state.pattern)
+        assertFalse(state.modified)
+    }
 }
