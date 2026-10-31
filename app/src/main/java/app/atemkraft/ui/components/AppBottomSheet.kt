@@ -129,38 +129,43 @@ fun AppBottomSheet(
     }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = Modifier.pointerInput(Unit) {
-            awaitEachGesture {
-                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                touch[0] = true
-                touch[1] = false
-                do {
-                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                } while (event.changes.any { it.pressed })
-                touch[0] = false
-            }
-        },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
         dragHandle = null,
     ) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() })
-        }
+        // Finger auf dem Blatt erkennen: am Inhalt, nicht am `modifier` des ModalBottomSheet – dort kam
+        // keine Berührung an (der Parameter sitzt nicht auf der Fläche, die gezogen wird), es vibrierte nie.
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics {
-                    isTraversalGroup = true
-                    traversalIndex = -1f
+            modifier = Modifier.pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    touch[0] = true
+                    touch[1] = false
+                    do {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                    } while (event.changes.any { it.pressed })
+                    touch[0] = false
                 }
-                .verticalScroll(rememberScrollState())
-                .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
+            },
         ) {
-            val sheetScope = remember(this, closeThen) { SheetContentScope(this, closeThen) }
-            SectionHeader(title = title, teaser = intro, top = 0.dp)
-            Spacer(Modifier.height(Dimens.HeaderGap))
-            sheetScope.content()
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() })
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        isTraversalGroup = true
+                        traversalIndex = -1f
+                    }
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = Dimens.ScreenPadding, end = Dimens.ScreenPadding, bottom = Dimens.ScreenBottom),
+            ) {
+                val sheetScope = remember(this, closeThen) { SheetContentScope(this, closeThen) }
+                SectionHeader(title = title, teaser = intro, top = 0.dp)
+                Spacer(Modifier.height(Dimens.HeaderGap))
+                sheetScope.content()
+            }
         }
     }
 }
