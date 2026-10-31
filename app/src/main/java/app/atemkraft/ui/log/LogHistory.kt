@@ -74,13 +74,25 @@ private val RANGE_DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d
 internal const val HISTORY_WEEKS_OPEN = 4
 
 /**
+ * Zuletzt geübte Übungen unter der Woche (Eigentümer 2026-10-31): zugeklappt eine – der schnelle
+ * Weg „das von gestern nochmal“ –, aufgeklappt mit den vier Wochen [RECENT_OPEN] und darunter
+ * „Logbuch ›“. Ein Schalter öffnet den ganzen Verlauf; zugeklappt stehen die Sammlungen ohne
+ * Scrollen im Bild.
+ */
+internal const val RECENT_CLOSED = 1
+
+/** Zuletzt geübte Übungen im aufgeklappten Verlauf (siehe [RECENT_CLOSED]). */
+internal const val RECENT_OPEN = 3
+
+/**
  * Verlauf im Tab „Meins“, der erste Eintrag des Tabs ohne eigenen Kopf (STYLEGUIDE §4.3, Tab: der
  * Seitentitel benennt schon): die Kalenderwoche als Punkte ([WeekCalendar], Mo–So, das Datum unter
  * jedem Punkt, darüber „27. Okt – 2. Nov · 45 min“ – die Minuten genau des gezeigten Zeitraums), ein
- * Tipp darauf klappt bis zu vier Wochen auf ([weeksOpen], dauerhaft gemerkt). Direkt darunter bis
- * zu zwei zuletzt geübte Übungen ([recent], neueste zuerst, je einmal) als schlanke Zeilen mit
+ * Tipp darauf klappt den ganzen Verlauf auf ([weeksOpen], dauerhaft gemerkt): vier Wochen, statt
+ * [RECENT_CLOSED] dann [RECENT_OPEN] zuletzt geübte Übungen und „Logbuch ›“. Direkt unter der Woche
+ * die zuletzt geübten Übungen ([recent], neueste zuerst, je einmal) als schlanke Zeilen mit
  * Datum, ohne eigenes Label – das Datum verknüpft sie mit den Punkten; ein Tipp öffnet die
- * Detailseite ([onOpenExercise]). Am Ende rechtsbündig „Logbuch ›“ ([onOpenLogbook]), dasselbe
+ * Detailseite ([onOpenExercise]). Aufgeklappt am Ende rechtsbündig „Logbuch ›“ ([onOpenLogbook]), dasselbe
  * Verweis-Muster wie „Alle 5 ›“ unter den Karteikarten: Der Verweis steht, wo die Liste weitergeht
  * (Eigentümer 2026-10-31: „viel Text, der gleichzeitig abgrenzt“). Eine Zählung ohne Ziel, große
  * Zahl oder Urteil (TEXT-16); die Serie steht nur im Logbuch. Ohne Sitzungen steht nur der Satz
@@ -105,17 +117,23 @@ internal fun LogHistory(
             return@Column
         }
         WeekCalendar(entries = entries, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
-        if (recent.isNotEmpty()) {
-            // Woche und Zeilen sind ein Block „Verlauf“: der Listenabstand, kein Abschnittsabstand.
-            Spacer(Modifier.height(Dimens.ListGap))
-            RecentPractice(recent = recent, entries = entries, onOpenExercise = onOpenExercise)
-        }
-        Spacer(Modifier.height(Dimens.GapTiny))
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Spacer(Modifier.weight(1f))
-            // Bündig: Das Polster des Text-Buttons ragt in den Rand.
-            AppTextButton(onClick = onOpenLogbook, modifier = Modifier.flushEnd()) {
-                ForwardLinkText(text = stringResource(R.string.settings_log_title), color = MaterialTheme.colorScheme.secondary)
+        // Zeilen und Logbuch-Verweis klappen mit der Woche auf (ein Schalter, ein Gleiten).
+        Column(modifier = Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
+            val shown = recent.take(if (weeksOpen) RECENT_OPEN else RECENT_CLOSED)
+            if (shown.isNotEmpty()) {
+                // Woche und Zeilen sind ein Block „Verlauf“: der Listenabstand, kein Abschnittsabstand.
+                Spacer(Modifier.height(Dimens.ListGap))
+                RecentPractice(recent = shown, entries = entries, onOpenExercise = onOpenExercise)
+            }
+            if (weeksOpen) {
+                Spacer(Modifier.height(Dimens.GapTiny))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.weight(1f))
+                    // Bündig: Das Polster des Text-Buttons ragt in den Rand.
+                    AppTextButton(onClick = onOpenLogbook, modifier = Modifier.flushEnd()) {
+                        ForwardLinkText(text = stringResource(R.string.settings_log_title), color = MaterialTheme.colorScheme.secondary)
+                    }
+                }
             }
         }
     }

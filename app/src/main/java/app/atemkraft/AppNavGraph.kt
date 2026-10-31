@@ -42,6 +42,7 @@ import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
+import app.atemkraft.ui.log.RECENT_OPEN
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AboutRoute
 import app.atemkraft.ui.navigation.AtemlehreRoute
@@ -192,7 +193,7 @@ internal fun NavGraphBuilder.appGraph(
         val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
         // „Zuletzt geübt“: die neuesten Übungen, die es noch gibt (Liste neueste zuerst), je einmal;
         // neu berechnet, wenn ein Muster gelöscht oder umbenannt wird. Dieselbe Regel wie der Shortcut.
-        val recent = remember(state.logEntries, patterns) { recentlyPracticed(state.logEntries, patterns, limit = RECENT_LIMIT) }
+        val recent = remember(state.logEntries, patterns) { recentlyPracticed(state.logEntries, patterns, limit = RECENT_OPEN) }
         OwnPatternsScreen(
             savedPatterns = patterns,
             actions = OwnActions(
@@ -373,12 +374,6 @@ private const val WELCOME_EXERCISE_ID = "resonanz"
  * Voreinstellung; nur für diesen Einstieg, nicht als Anpassung gespeichert (Auswertung 2026-10-24).
  */
 private const val WELCOME_MINUTES = 3
-
-/**
- * „Zuletzt geübt“ im Tab „Meins“: höchstens zwei Übungen – Wege zurück, keine Liste; mit drei
- * standen die Tabs der Sammlungen erst nach Scrollen im Bild (Eigentümer 2026-10-31).
- */
-private const val RECENT_LIMIT = 2
 
 /** Zurück, nur solange [entry] oben liegt: Ein spätes „fehlt“ nimmt keine fremde Seite vom Stapel. */
 private fun NavController.popIfTop(entry: NavBackStackEntry) {
