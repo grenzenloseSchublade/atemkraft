@@ -215,13 +215,20 @@ private fun FavoriteCard(exercise: Exercise, onClick: () -> Unit) {
 /**
  * Inhalt unter der Titelzeile: die Kurve eines Atemzugs samt Phasenzeile ([RhythmCurve] ohne
  * laufenden Punkt; ohne Takt die [ExerciseCurve] mit dem Familienpunkt), unten „ca. 10 min“.
+ * Titelzeile, Grafik und Text sind drei Blöcke: zwischen ihnen `SectionGap` (Eigentümer
+ * 2026-10-31: „die Abstände sind sehr gering“), Phasenzeile → Dauer `GapTiny` wie Titel → Metazeile.
  */
 @Composable
 private fun ColumnScope.CardBody(exercise: Exercise) {
     val rhythm = remember(exercise) { exercise.breathRhythm() }
-    Spacer(Modifier.height(Dimens.GapSmall))
-    if (rhythm != null) RhythmCurve(rhythm = rhythm, running = false) else ExerciseCurve(exercise)
-    Spacer(Modifier.height(Dimens.GapTiny))
+    Spacer(Modifier.height(Dimens.SectionGap))
+    if (rhythm != null) {
+        RhythmCurve(rhythm = rhythm, running = false, lineGap = Dimens.SectionGap)
+        Spacer(Modifier.height(Dimens.GapTiny))
+    } else {
+        ExerciseCurve(exercise)
+        Spacer(Modifier.height(Dimens.SectionGap))
+    }
     SecondaryText(stringResource(R.string.duration_approx, exercise.defaultMinutes()))
 }
 

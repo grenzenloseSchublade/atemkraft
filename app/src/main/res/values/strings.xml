@@ -197,7 +197,6 @@
     <string name="cd_card_position" tools:ignore="PluralsCandidate">Karte %1$d von %2$d</string>
     <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter die
          Kalenderwoche (aufklappbar bis vier Wochen) und die Bilanz; ohne Sitzungen der Satz. -->
-    <string name="own_history">Verlauf</string>
     <!-- Unter dem Verlauf: bis zu drei zuletzt geübte Übungen als Zeilen (Nutzer 2026-10-31). -->
     <string name="own_recent">Zuletzt geübt</string>
     <!-- Hinweis in einer Zeile unter „Zuletzt geübt“: wann und wie lange, „gestern Abend · 10 min“ (Dauer auf
@@ -224,7 +223,6 @@
         <item>Abend</item>
         <item>Nacht</item>
     </string-array>
-    <string name="cd_open_logbook">Logbuch öffnen</string>
     <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 
     <!-- Einstiege in den Muster-Editor: Link unter dem Muster des Tages, Stift auf der Detailseite. -->

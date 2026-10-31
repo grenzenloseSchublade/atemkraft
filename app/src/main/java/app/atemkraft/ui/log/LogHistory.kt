@@ -36,15 +36,18 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.minutesRounded
 import app.atemkraft.ui.components.AppLocale
+import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.DotSeparatedFlow
 import app.atemkraft.ui.components.ExerciseRow
 import app.atemkraft.ui.components.ExerciseRows
 import app.atemkraft.ui.components.ExpandCaret
 import app.atemkraft.ui.components.ForwardChevron
+import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.expandedStateText
+import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.theme.ALPHA_BORDER
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
 import app.atemkraft.ui.theme.ALPHA_HEAT_MID
@@ -71,13 +74,15 @@ private val RANGE_DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d
 internal const val HISTORY_WEEKS_OPEN = 4
 
 /**
- * Verlauf im Tab „Eigene“ unter dem Kopf „Verlauf ›“ (der zur Logbuch-Seite führt): die
- * Kalenderwoche als Punkte ([WeekCalendar], Mo–So, das Datum unter jedem Punkt, darüber die
+ * Verlauf im Tab „Eigene“, der erste Eintrag des Tabs ohne eigenen Kopf (STYLEGUIDE §4.3, Tab:
+ * der Seitentitel benennt schon; Eigentümer 2026-10-31): die Kalenderwoche als Punkte ([WeekCalendar], Mo–So, das Datum unter jedem Punkt, darüber die
  * Spanne „27. Okt – 2. Nov“), ein Tipp darauf klappt bis zu vier Wochen auf ([weeksOpen], dauerhaft
  * gemerkt, Nutzer 2026-10-31). Darunter die dezente Zeile „3 Tage in Folge · 45 min in den letzten
  * 7 Tagen“ (Serie erst ab zwei Tagen wie in [LogStatsCard]; Minuten der letzten sieben Tage,
  * [recentMinutes]; fehlt beides, die Zahl der Sitzungen) – eine Zählung ohne Ziel, große Zahl oder
- * Urteil (TEXT-16). Ohne Sitzungen steht statt Punkten und Zeile nur der Satz (MUSTER-04). Ohne
+ * Urteil (TEXT-16). Rechts in dieser Zeile führt „Logbuch ›“ zur Logbuch-Seite ([onOpenLogbook],
+ * dasselbe Verweis-Muster wie „Alle 4 ›“ unter den Karteikarten). Ohne Sitzungen steht statt
+ * Punkten und Zeile nur der Satz (MUSTER-04) – ohne Verweis, das Logbuch wäre leer. Ohne
  * [showStreak] fehlt die Serie, die Minuten bleiben.
  *
  * Darunter „Zuletzt geübt“: bis zu drei Übungen ([recent], neueste zuerst, je einmal) als schlanke
@@ -96,6 +101,7 @@ internal fun LogHistory(
     onWeeksOpenChange: (Boolean) -> Unit = {},
     recent: List<Exercise> = emptyList(),
     onOpenExercise: (exerciseId: String) -> Unit = {},
+    onOpenLogbook: () -> Unit = {},
 ) {
     val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
     val minutesPerDay = rememberMinutesPerDay(entries)
@@ -118,11 +124,19 @@ internal fun LogHistory(
                 if (weekMinutes > 0) add(stringResource(R.string.log_minutes_recent, weekMinutes))
                 if (isEmpty()) add(pluralStringResource(R.plurals.log_sessions, entries.size, entries.size))
             }
-            // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
-            DotSeparatedFlow(
-                parts = parts.map { part -> { SecondaryText(part) } },
-                separator = { SecondaryText(DOT_SEPARATOR) },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Passt die Zeile nicht, steht jeder Teil für sich – keine Zeile beginnt oder endet mit „·“.
+                DotSeparatedFlow(
+                    parts = parts.map { part -> { SecondaryText(part) } },
+                    separator = { SecondaryText(DOT_SEPARATOR) },
+                    modifier = Modifier.weight(1f),
+                    centered = false,
+                )
+                // Bündig: Das Polster des Text-Buttons ragt in den Rand.
+                AppTextButton(onClick = onOpenLogbook, modifier = Modifier.flushEnd()) {
+                    ForwardLinkText(text = stringResource(R.string.settings_log_title), color = MaterialTheme.colorScheme.secondary)
+                }
+            }
         }
         if (recent.isNotEmpty()) {
             Spacer(Modifier.height(Dimens.SectionGap))

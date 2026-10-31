@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.domain.BreathLevel
 import app.atemkraft.domain.BreathRhythm
@@ -64,7 +65,9 @@ private const val NBSP = '\u00A0'
  *
  * [line] ersetzt die Zeile (Muster des Tages: dieselbe Musterzeile wie auf seiner Karte); ohne
  * sie entsteht sie aus den Phasen, gleiche Phasen hintereinander zusammengefasst („3 × Einatmen
- * 2 s“), bei [BreathRhythm.firstPartOnly] mit „Zu Beginn jeder Runde:“.
+ * 2 s“), bei [BreathRhythm.firstPartOnly] mit „Zu Beginn jeder Runde:“. [lineGap]: Abstand Kurve →
+ * Zeile – auf der Detailseite `GapTiny`, in den Karteikarten von „Eigene“ `SectionGap` (Grafik und Text
+ * sind dort zwei Blöcke einer Karte, §4.1).
  *
  * TalkBack: Die Kurve ist ein Knoten mit den Phasen in Worten („Atemkurve: Einatmen 4 Sekunden,
  * …“), ohne Live-Region; die Zeile darunter ist für TalkBack unsichtbar (sonst doppelt), bleibt
@@ -72,7 +75,7 @@ private const val NBSP = '\u00A0'
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: String? = null, running: Boolean = true) {
+fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: String? = null, running: Boolean = true, lineGap: Dp = Dimens.GapTiny) {
     val colors = MaterialTheme.colorScheme
     val inhale = colors.secondary
     val dotColor = colors.primary
@@ -124,7 +127,7 @@ fun RhythmCurve(rhythm: BreathRhythm, modifier: Modifier = Modifier, line: Strin
                 drawCircle(dotColor, radius = Sizes.RhythmCurveDot.toPx() / 2f, center = center)
             }
         }
-        Spacer(Modifier.height(Dimens.GapTiny))
+        Spacer(Modifier.height(lineGap))
         // Für TalkBack unsichtbar: Die Kurve sagt dasselbe in Worten („4 Sekunden“ statt „4 s“).
         HintText(shownLine, modifier = Modifier.semantics { invisibleToUser() })
     }

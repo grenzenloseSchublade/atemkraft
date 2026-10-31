@@ -52,8 +52,10 @@ import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix.Device
+import app.atemkraft.ui.components.CARD_HEADER_TAG
 import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
+import app.atemkraft.ui.components.TITLE_ROW_TITLE_TAG
 import app.atemkraft.ui.components.badBreakAt
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AppTabBar
@@ -276,7 +278,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         // `cat app/build/outputs/roborazzi/*/*/*.tsv`.
         val findings = textBreaks(name)
         val controls = controlFindings(name)
-        val anatomy = anatomyFindings(name)
+        val anatomy = anatomyFindings(name) + if (tab != null && tabBar) firstHeadFindings(name) else emptyList()
         val checked = fontScale <= NO_SCROLL_MAX_FONT_SCALE
         val scrolls = if (noScroll && checked) scrollFindings(name) else emptyList()
         val measured = measure()
@@ -448,7 +450,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     @After
     fun anatomy() {
         if (anatomyProblems.isNotEmpty()) {
-            fail("Baustein verletzt die Layout-Grammatik (STYLEGUIDE §4.5, ANATOMIE):\n" + anatomyProblems.joinToString("\n"))
+            fail("Baustein verletzt die Layout-Grammatik (STYLEGUIDE §4.5, ANATOMIE; §4.3, ERSTER_KOPF):\n" + anatomyProblems.joinToString("\n"))
         }
     }
 
@@ -460,6 +462,27 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         return nodes.groupBy { node -> generateSequence(node) { it.parent }.last().id }.values
             .flatMap { window -> AnatomyFindings.findings(window, compose.density.density, screen) }
             .map { "${device.name}\tfs${(fontScale * 100).toInt()}\t$it" }
+    }
+
+    /**
+     * `ERSTER_KOPF` (STYLEGUIDE §4.3, Tab): Auf einer Tab-Seite ist der erste Eintrag unter dem
+     * Seitentitel Inhalt, nie ein Abschnittskopf (`SectionHeader`/`GroupLabel`, Titel mit
+     * [TITLE_ROW_TITLE_TAG] außerhalb einer Karte [CARD_HEADER_TAG]) – der Seitentitel benennt
+     * schon. Erster Eintrag ist der oberste Text unter der Kopfzeile (Knoten mit `paneTitle`).
+     */
+    private fun firstHeadFindings(screen: String): List<String> {
+        val nodes = compose.onAllNodes(SemanticsMatcher("alle") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+        val header = nodes.firstOrNull { it.config.getOrNull(SemanticsProperties.PaneTitle) != null } ?: return emptyList()
+        val headerIds = generateSequence(listOf(header)) { level -> level.flatMap { it.children }.takeIf { it.isNotEmpty() } }.flatten().map { it.id }.toSet()
+        val below = header.boundsInRoot.bottom - 1f
+        val first = nodes
+            .filter { it.id !in headerIds && it.layoutInfo.isPlaced && it.config.getOrNull(SemanticsProperties.Text) != null && it.boundsInRoot.top >= below }
+            .minByOrNull { it.boundsInRoot.top } ?: return emptyList()
+        val tags = generateSequence(first) { it.parent }.mapNotNull { it.config.getOrNull(SemanticsProperties.TestTag) }.toList()
+        val sectionHead = TITLE_ROW_TITLE_TAG in tags && CARD_HEADER_TAG !in tags
+        if (!sectionHead) return emptyList()
+        val text = first.config[SemanticsProperties.Text].joinToString(" ")
+        return listOf("${device.name}\tfs${(fontScale * 100).toInt()}\tERSTER_KOPF\t$screen\t„$text“ steht als Abschnittskopf direkt unter dem Seitentitel")
     }
 
     /** Bedienelemente des aktuellen Bildes prüfen ([ControlFindings]). */

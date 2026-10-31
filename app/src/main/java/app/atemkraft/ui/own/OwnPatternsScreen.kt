@@ -1,9 +1,7 @@
 package app.atemkraft.ui.own
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -18,7 +16,6 @@ import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.ui.components.ScreenHeader
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
 import app.atemkraft.ui.components.pagerPageCount
@@ -64,9 +61,9 @@ data class OwnView(
  * Tab „Eigene“, der persönliche Bereich (Nutzer 2026-10-23; neu geordnet 2026-10-31, weil die
  * gestapelten Abschnitte fad wirkten und ihr Klappzustand nicht blieb).
  *
- * Oben „Verlauf ›“ – die ganze Kopfzeile führt zur Logbuch-Seite ([OwnActions.onOpenLogbook]) –,
- * darunter die Kalenderwoche, aufklappbar bis vier Wochen ([OwnView.weeksOpen], dauerhaft gemerkt), die
- * Bilanz und „Zuletzt geübt“ mit bis zu drei Übungen ([recentExercises]; [LogHistory]). Darunter
+ * Oben ohne eigenen Kopf (STYLEGUIDE §4.3, Tab: der erste Eintrag ist Inhalt; Eigentümer
+ * 2026-10-31) die Kalenderwoche, aufklappbar bis vier Wochen ([OwnView.weeksOpen], dauerhaft gemerkt), die
+ * Bilanz mit „Logbuch ›“ ([OwnActions.onOpenLogbook]) und „Zuletzt geübt“ mit bis zu drei Übungen ([recentExercises]; [LogHistory]). Darunter
  * die Sammlungen ([OwnCollections]): ein Umschalter wie Tabs in der Seite „Eigene Kreationen · 4 |
  * Tut mir gut · 3“ ([OwnView.collection], dauerhaft gemerkt) und für die gewählte Sammlung Karteikarten
  * zum Wischen – Kreationen mit der Karte „Neues Muster“ vorn und Stift und Löschen je Muster,
@@ -97,15 +94,8 @@ fun OwnPatternsScreen(
         },
     ) {
         item(key = "history") {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Die ganze Kopfzeile ist der Button zur Logbuch-Seite (Chevron, MUSTER-08).
-                SectionHeader(
-                    title = stringResource(R.string.own_history),
-                    onClick = actions.onOpenLogbook,
-                    onClickLabel = stringResource(R.string.cd_open_logbook),
-                )
-                // Kopf → Inhalt HeaderGap; den GapSmall darunter polstert die tippbare Zeile selbst.
-                Spacer(Modifier.height(Dimens.HeaderGap - Dimens.GapSmall))
+            // Erster Eintrag ohne Kopf: Er bringt seinen Abstand zum Seitentitel selbst mit (Tab, top = 0).
+            Column(modifier = Modifier.fillMaxWidth().padding(top = Dimens.GapSmall)) {
                 LogHistory(
                     entries = logEntries,
                     today = today,
@@ -114,6 +104,7 @@ fun OwnPatternsScreen(
                     onWeeksOpenChange = actions.onWeeksOpenChange,
                     recent = recentExercises,
                     onOpenExercise = actions.onSelect,
+                    onOpenLogbook = actions.onOpenLogbook,
                 )
             }
         }
