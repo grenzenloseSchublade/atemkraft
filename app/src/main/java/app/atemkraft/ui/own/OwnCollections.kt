@@ -87,7 +87,8 @@ internal fun OwnCollections(
     favoritesRow: LazyListState,
     actions: OwnActions,
 ) {
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.HeaderGap)) {
+    // Tabs und Karten sind zwei Blöcke verschiedenen Typs: SectionGap (§4.1), nicht HeaderGap.
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.SectionGap)) {
         val creationsName = stringResource(R.string.own_creations)
         val favoritesName = stringResource(R.string.own_favorites)
         PageTabs(
@@ -95,9 +96,6 @@ internal fun OwnCollections(
             selected = selected,
             onSelect = onSelect,
             label = { collection -> if (collection == OwnCollection.CREATIONS) creationsName else favoritesName },
-            counts = { collection ->
-                (if (collection == OwnCollection.CREATIONS) patterns.size else favorites.size).takeIf { it > 0 }
-            },
         )
         // Beide Sammlungen stehen gleich hoch: Jede Reihe misst die Karten der anderen mit.
         val creationCards = CardSet(patterns.size) { index -> CreationCard(patterns[index], onClick = {}, onEdit = {}, onDelete = {}) }

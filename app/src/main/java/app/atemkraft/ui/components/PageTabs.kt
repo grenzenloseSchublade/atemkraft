@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -26,8 +24,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import app.atemkraft.R
 import app.atemkraft.ui.theme.AtemkraftTheme
@@ -36,16 +33,18 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Tabs in der Seite (Eigentümer 2026-10-31, Tab „Meins“: „Eigene Kreationen 5 · Tut mir gut 7“):
- * Namen nebeneinander, der gewählte in `primary` (Pink = Auswahl, FARBE-04; 5,98 auf dem Grund) mit
- * einem pinken Strich darunter ([Sizes.PageTabIndicator]), die anderen gedämpft (`onSurface`
- * `SECONDARY`). Hinter dem Namen leise die Zahl ([counts], `bodySmall` `SECONDARY`). Name
- * `titleSmall` wie das Gruppenlabel, das Gewicht bleibt bei Auswahl gleich (TYPO-01). Jeder Tab ist
- * mindestens `MinTouchTarget` hoch, `Role.Tab` mit Auswahlzustand in einer `selectableGroup`;
- * TalkBack hört „Eigene Kreationen, 5“ – Auswahl ohne Häkchen (A11Y-03).
+ * Tabs in der Seite (Eigentümer 2026-10-31, Tab „Meins“: „Eigene Kreationen · Tut mir gut“) als
+ * feste Tabs nach Material 3 (für 2–6 Tabs): Jeder Tab bekommt gleich viel Breite über die ganze
+ * Zeile, der Name steht mittig in `titleSmall` (M3-Tab-Beschriftung), das Gewicht bleibt bei Auswahl
+ * gleich (TYPO-01). Der gewählte in `primary` (Pink = Auswahl, FARBE-04; 5,98 auf dem Grund) mit
+ * einem pinken Strich darunter, so breit wie der Name ([Sizes.PageTabIndicator]); die anderen
+ * gedämpft (`onSurface` `SECONDARY`). Keine Zahl im Tab: Die Anzahl steht unter den Karten.
+ * Linksbündig dicht nebeneinander lasen sich zwei Tabs wie eine Zeile (Eigentümer: „zu nah
+ * beieinander“).
  *
- * Passen nicht alle Tabs in eine Zeile (große Schrift), rückt der nächste ganz in die nächste Zeile
- * (`FlowRow`); ein Name bricht nie (LAYOUT-03). Nicht für Werte (Dauer, Klang): dafür
+ * Jeder Tab ist mindestens `MinTouchTarget` hoch, `Role.Tab` mit Auswahlzustand in einer
+ * `selectableGroup` – Auswahl ohne Häkchen (A11Y-03). Bei großer Schrift bricht ein Name in seiner
+ * Spalte zwischen den Wörtern um, nie im Wort (LAYOUT-03). Nicht für Werte (Dauer, Klang): dafür
  * [SegmentedChoiceRow].
  */
 @Composable
@@ -55,41 +54,32 @@ fun <T> PageTabs(
     onSelect: (T) -> Unit,
     label: @Composable (T) -> String,
     modifier: Modifier = Modifier,
-    counts: (T) -> Int? = { null },
 ) {
-    FlowRow(
-        modifier = modifier.fillMaxWidth().selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SectionGap),
-    ) {
+    Row(modifier = modifier.fillMaxWidth().selectableGroup()) {
         items.forEach { item ->
-            PageTab(name = label(item), count = counts(item), selected = item == selected, onClick = { onSelect(item) })
+            PageTab(name = label(item), selected = item == selected, onClick = { onSelect(item) }, modifier = Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun PageTab(name: String, count: Int?, selected: Boolean, onClick: () -> Unit) {
+private fun PageTab(name: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY)
-    val spoken = if (count != null) "$name, $count" else name
     var labelWidth by remember { mutableIntStateOf(0) }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .heightIn(min = Dimens.MinTouchTarget)
-            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
-            .semantics { contentDescription = spoken },
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick),
         verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(modifier = Modifier.onSizeChanged { labelWidth = it.width }, verticalAlignment = Alignment.Bottom) {
-            WholeWordText(text = name, style = MaterialTheme.typography.titleSmall, color = color)
-            if (count != null) {
-                Spacer(Modifier.width(Dimens.GapTiny))
-                Text(
-                    text = count.toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                )
-            }
-        }
+        WholeWordText(
+            text = name,
+            style = MaterialTheme.typography.titleSmall,
+            color = color,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.onSizeChanged { labelWidth = it.width },
+        )
         Spacer(Modifier.height(Dimens.GapSmall))
         // Jeder Tab hält die Höhe des Strichs, nur der gewählte zeigt ihn: Beim Wechsel springt nichts.
         val stripe = with(LocalDensity.current) { labelWidth.toDp() }
@@ -107,6 +97,6 @@ private fun PageTab(name: String, count: Int?, selected: Boolean, onClick: () ->
 private fun PageTabsPreview() {
     AtemkraftTheme {
         val names = listOf(stringResource(R.string.own_creations), stringResource(R.string.own_favorites))
-        PageTabs(items = names, selected = names.first(), onSelect = {}, label = { it }, counts = { if (it == names.last()) 7 else 5 })
+        PageTabs(items = names, selected = names.first(), onSelect = {}, label = { it })
     }
 }
