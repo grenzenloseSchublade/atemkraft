@@ -71,11 +71,18 @@ object Motion {
     val VayuPulse = 2600
 
     /**
-     * Auf- und Zuklappen: Höhe bzw. Breite von Expandern, Abschnitten und der Tab-Leiste
+     * Auf- und Zuklappen: Höhe bzw. Breite von Expandern und Abschnitten
      * (`animateContentSize`) und von aufgedeckten Teilen (`expand…`/`shrink…`). Die Default-Spring
      * von Compose (weich, ohne Bounce), hier nur benannt, damit alle Stellen denselben Wert tragen.
      */
     val Disclosure: FiniteAnimationSpec<IntSize> = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)
+
+    /**
+     * Einrasten der Tab-Leiste in der Tiefe nach dem Wischen, Antippen des Griffs oder einem
+     * Seitenwechsel (`TabBarState.settle`): die Steifigkeit des M3-Defaults (700) ohne Nachschwingen
+     * (Dämpfung 1) – gut 250 ms für die Leiste (MOTION-04), und sie übernimmt das Tempo des Fingers.
+     */
+    val TabBar: FiniteAnimationSpec<Float> = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 700f)
 
     /** Ein- und Ausblenden eines aufgedeckten Teils (`fadeIn`/`fadeOut` zu [Disclosure]): Default-Spring von Compose. */
     val Reveal: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow)

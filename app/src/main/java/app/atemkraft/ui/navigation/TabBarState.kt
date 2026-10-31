@@ -3,6 +3,7 @@ package app.atemkraft.ui.navigation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -12,10 +13,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.util.addPointerInputChange
+import app.atemkraft.ui.components.gestureThreshold
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.Sizes
 import kotlin.math.abs
 
@@ -33,11 +39,42 @@ import kotlin.math.abs
  * Wo der Griff sitzt: auf der Oberkante einer Startleiste, wenn die Seite eine hat
  * (`PinnedActionBar` meldet sich mit [anchorPinnedBar] an), sonst auf der Oberkante der unteren
  * Leisten ([bottomBarTop]). Beides in px im Fenster.
+ *
+ * Wie weit die Leiste gerade offen ist, sagt [openness] (0 zu, 1 offen): Beim Wischen folgt sie dem
+ * Finger, beim Loslassen rastet sie mit [Motion.TabBar] ein und übernimmt das Tempo des Fingers
+ * (Eigentümer 2026-10-31, nach M3-Bottom-Sheet und Apple „Designing Fluid Interfaces“). Die
+ * Animation führt [HideableTabBar] aus ([settleRequest]); der Zustand selbst hält keinen Scope (CODE-02).
  */
 @Stable
 class TabBarState {
     var collapsed by mutableStateOf(true)
         private set
+
+    /** Wie weit die Leiste offen ist, 0…1; gelesen nur beim Auslegen ([HideableTabBar]), nie in der Komposition. */
+    var openness by mutableFloatStateOf(1f)
+        internal set
+
+    /**
+     * Bedienhilfe aktiv (TalkBack, Switch Access): Dann steht die Leiste auch in der Tiefe offen –
+     * Wischgesten mit einem Finger gehören dort der Bedienhilfe, und eine eingeklappte Navigation
+     * wäre nur über den Griff zu finden (wie M3 `exitAlwaysScrollBehavior`, das sich mit TalkBack
+     * abschaltet). Der Griff bleibt eine Schaltfläche; wer ihn nutzt, hört dort den neuen Zustand.
+     */
+    var keepOpen: Boolean = false
+        set(value) {
+            field = value
+            if (value) collapsed = false
+        }
+
+    /** Weg der Leiste in px (volle Höhe minus Platz der Systemnavigation); misst [HideableTabBar]. */
+    internal var travel = 0f
+
+    /** Wohin die Leiste gerade einrasten soll; [HideableTabBar] führt es aus, `null` = Finger führt. */
+    internal var settleRequest by mutableStateOf<SettleRequest?>(null)
+        private set
+
+    /** Für den einen Impuls an der Schwelle; setzt [HideableTabBar] (`LocalHapticFeedback`, folgt der Systemeinstellung). */
+    internal var haptics: HapticFeedback? = null
 
     /** Ob die gezeigte Seite in der Tiefe liegt (kein Tab): nur dort klappt Wischen die Leiste. */
     var inDepth by mutableStateOf(false)
@@ -75,9 +112,27 @@ class TabBarState {
      * „eingeklappt“ für den nächsten Weg in die Tiefe; in der Tiefe bleibt die Wahl von Hand stehen.
      */
     fun enter(onTab: Boolean, tab: Any) {
-        if (onTab || tab != lastTab) collapsed = true
+        if (onTab || tab != lastTab) collapsed = !keepOpen
         lastTab = tab
         inDepth = !onTab
+    }
+
+    /** Leiste ohne Animation auf [open] (erster Frame, damit beim Start nichts gleitet). */
+    fun snap(open: Boolean) {
+        settleRequest = null
+        openness = if (open) 1f else 0f
+    }
+
+    /**
+     * Leiste auf [open] einrasten lassen, mit [Motion.TabBar] und dem Tempo [velocity] (Anteil der
+     * Leiste je Sekunde, positiv = auf). Läuft schon ein Einrasten zum selben Ziel, bleibt es; ein
+     * Wischen oder [snap] beendet es.
+     */
+    fun settle(open: Boolean, velocity: Float = 0f) {
+        val target = if (open) 1f else 0f
+        // Schon unterwegs (oder angekommen) zu diesem Ziel: Das Tempo des Fingers bleibt erhalten.
+        if (settleRequest?.target == target) return
+        settleRequest = SettleRequest(target, velocity)
     }
 
     /** Griff angetippt: Leiste auf bzw. zu, bis zur Rückkehr auf einen Tab. */
@@ -121,8 +176,12 @@ class TabBarState {
      * Gewertet wird erst nach dem Touch-Slop und nur in der Richtung, die gerade etwas bewirkt: Bis dahin
      * bleibt ein Tipp auf Start oder „Anpassen ›“ ein Tipp; geht der Finger zuerst in die andere Richtung
      * oder zur Seite, bleibt die Geste ganz dem Inhalt. Erst ein Wischen verbraucht die Bewegung (der
-     * Knopf darunter bricht dann ab). Die Leiste klappt, sobald der Finger [Sizes.TabBarSwipeDistance]
-     * vom Aufsetzen entfernt ist, einmal je Geste. Nur in der Tiefe ([inDepth]); was in den Systemgesten
+     * Knopf darunter bricht dann ab). Ab da folgt die Leiste dem Finger ([openness]); entschieden wird
+     * beim Loslassen (Eigentümer 2026-10-31): Ist der Finger schnell ([Sizes.TabBarSwipeVelocity] je
+     * Sekunde), zählt seine Richtung, sonst die Strecke ab dem Aufsetzen ([Sizes.TabBarSwipeDistance]).
+     * Zurückziehen bricht ab, die Leiste rastet dann zurück. Beim Überschreiten der Strecke ein
+     * kleiner Impuls, beim Zurückziehen darunter das Gegenstück ([gestureThreshold]); dazwischen und
+     * bei Tipps still. Nur in der Tiefe ([inDepth]); was in den Systemgesten
      * am unteren Rand aufsetzt ([gestureZoneTop]) oder über [from] (px im Fenster), bleibt anderen.
      * [pass] `Initial` wertet vor dem Inhalt darunter (ein Scrollen bricht dann ab).
      * [windowTop] ist die Oberkante der wischbaren Fläche in px im Fenster.
@@ -135,6 +194,9 @@ class TabBarState {
         windowTop: () -> Float,
     ) {
         val distance = Sizes.TabBarSwipeDistance.toPx()
+        val fast = Sizes.TabBarSwipeVelocity.toPx()
+        // Weg der Leiste, solange sie noch nie gemessen wurde (eine M3-Navigationsleiste ist 80 hoch).
+        val fallbackTravel = Sizes.TabBarFallbackTravel.toPx()
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = pass)
             val y = windowTop() + down.position.y
@@ -144,9 +206,13 @@ class TabBarState {
             val downward = closes && !collapsed
             if (!up && !downward) return@awaitEachGesture
             val slop = viewConfiguration.touchSlop
+            // Das Tempo zählt ab dem Aufsetzen, auch über den Touch-Slop.
+            val tracker = VelocityTracker()
+            tracker.addPointerInputChange(down)
             var change: PointerInputChange
             while (true) {
                 change = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                tracker.addPointerInputChange(change)
                 if (!change.pressed || change.isConsumed) return@awaitEachGesture
                 val dx = change.position.x - down.position.x
                 val dy = change.position.y - down.position.y
@@ -156,19 +222,47 @@ class TabBarState {
                 if ((up && dy > 0f) || (downward && dy < 0f)) return@awaitEachGesture
                 break
             }
-            var done = false
-            while (change.pressed) {
+            // Ab hier gehört die Geste der Leiste: Sie folgt dem Finger.
+            settleRequest = null
+            val start = openness
+            val travel = travel.takeIf { it > 0f } ?: fallbackTravel
+            var signalled = false
+            var released = false
+            var dy = 0f
+            var first = true
+            while (true) {
                 change.consume()
-                val dy = change.position.y - down.position.y
-                if (!done && up && dy <= -distance) {
-                    done = true
-                    show()
-                } else if (!done && downward && dy >= distance) {
-                    done = true
-                    hide()
+                if (!first) tracker.addPointerInputChange(change)
+                first = false
+                dy = change.position.y - down.position.y
+                openness = (start - dy / travel).coerceIn(0f, 1f)
+                // Strecke in der Richtung, die etwas bewirkt (auf: nach oben, zu: nach unten).
+                val reach = if (up) -dy else dy
+                // Ein Impuls beim Überschreiten der Strecke, das Gegenstück beim Zurückziehen; sonst still.
+                val beyond = reach >= distance
+                if (beyond != signalled) {
+                    signalled = beyond
+                    haptics?.gestureThreshold(reached = beyond)
                 }
-                change = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                val next = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id }
+                if (next == null || next.isConsumed) break
+                change = next
+                if (!change.pressed) {
+                    tracker.addPointerInputChange(change)
+                    released = true
+                    break
+                }
             }
+            val vy = tracker.calculateVelocity().y
+            val reach = if (up) -dy else dy
+            val towards = if (up) -vy else vy
+            // Bricht ein anderer die Geste ab, gilt sie nicht: Die Leiste rastet zurück.
+            val commit = released && if (abs(vy) >= fast) towards > 0f else reach >= distance
+            if (commit) {
+                if (up) show() else hide()
+            }
+            // Tempo als Anteil der Leiste je Sekunde, positiv = auf.
+            settle(open = !collapsed, velocity = -vy / travel)
         }
     }
 
@@ -191,6 +285,10 @@ class TabBarState {
         )
     }
 }
+
+/** Ziel ([target] 0 oder 1) und Anfangstempo ([velocity], Anteil je Sekunde) eines Einrastens. */
+@Immutable
+internal class SettleRequest(val target: Float, val velocity: Float)
 
 /** Der [TabBarState] der App für ihre Seiten (`PinnedActionBar` meldet sich an); null in Vorschauen und Tests. */
 val LocalTabBarState = staticCompositionLocalOf<TabBarState?> { null }

@@ -94,7 +94,8 @@ class TabNavigationTest {
      * Wischen nach unten auf der offenen Leiste schließt sie, ein Tipp auf Start bleibt ein Tipp
      * (das Wischen wertet erst nach dem Touch-Slop), und der Griff klappt sie per Tipp um. Ohne
      * Startleiste öffnet Wischen nach oben im Band über den unteren Leisten, auch über scrollendem
-     * Inhalt; weiter oben scrollt der Inhalt.
+     * Inhalt; weiter oben scrollt der Inhalt. Entschieden wird beim Loslassen: Zurückziehen bricht
+     * ab, ein kurzer schneller Wisch unter der Strecke öffnet (Tempo ab 125 dp/s).
      */
     @Test
     fun `Wischen oeffnet und schliesst die Tab-Leiste, Tipps bleiben Tipps`() {
@@ -159,6 +160,23 @@ class TabNavigationTest {
             assertFalse(state.collapsed)
             assertEquals(scrolled, scroll.value)
         }
+
+        // Entschieden wird beim Loslassen: langsam hoch und zurück bricht ab, kurz und schnell öffnet.
+        rule.onNodeWithTag(TAB_BAR_GRIP_TAG).performClick()
+        rule.runOnIdle { assertTrue(state.collapsed) }
+        rule.onNodeWithTag(CONTENT).performTouchInput {
+            down(Offset(width / 8f, bottom - 1f))
+            repeat(10) { moveBy(Offset(0f, -8.dp.toPx()), delayMillis = 100) }
+            repeat(10) { moveBy(Offset(0f, 8.dp.toPx()), delayMillis = 100) }
+            up()
+        }
+        rule.runOnIdle { assertTrue(state.collapsed) }
+        rule.onNodeWithTag(CONTENT).performTouchInput {
+            down(Offset(width / 8f, bottom - 1f))
+            repeat(3) { moveBy(Offset(0f, -6.dp.toPx()), delayMillis = 16) }
+            up()
+        }
+        rule.runOnIdle { assertFalse(state.collapsed) }
     }
 
     private fun assertTab(tab: TopTab, root: Boolean) {

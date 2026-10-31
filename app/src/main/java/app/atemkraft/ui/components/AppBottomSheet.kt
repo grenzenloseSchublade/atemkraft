@@ -1,5 +1,7 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -13,17 +15,23 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
@@ -51,7 +59,9 @@ import kotlinx.coroutines.launch
  * 48 dp hohen Zone, M3-Maß, kein eigener Abstand); der Titel folgt ohne weiteren Abstand. Er ist
  * dekorativ: Der M3-Griff wäre als Knoten nur 32 dp breit (A11Y-05), ohne Aktion
  * wäre er ein leerer Stopp (A11Y-06) – geschlossen wird per Wischen, Tipp daneben („Blatt
- * schließen“) oder Zurück ([onDismiss]). TalkBack liest die Spalte vor dem Griff
+ * schließen“) oder Zurück ([onDismiss]). Beim Ziehen nach unten gibt es einen kleinen Impuls, sobald
+ * das Blatt beim Loslassen schließen würde, und das Gegenstück beim Zurückziehen ([gestureThreshold],
+ * Schwelle aus dem M3-Zustand); Schwellen und Einrasten bleiben die des M3-Blatts. TalkBack liest die Spalte vor dem Griff
  * (`traversalIndex`), so ist der Titel das erste Element und bekommt beim Öffnen den Fokus.
  *
  * Erst schließen, dann handeln: Ein Element, das woandershin führt oder etwas Großes öffnet
@@ -101,7 +111,39 @@ fun AppBottomSheet(
             }
         }
     }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, dragHandle = null) {
+    // Ein kleiner Impuls, sobald ein Ziehen nach unten das Blatt beim Loslassen schließen würde, das
+    // Gegenstück beim Zurückziehen (wie an der Tab-Leiste). Die Schwelle ist die des M3-Blatts
+    // (targetValue, 56 dp bzw. 125 dp/s), damit Impuls und Einrasten übereinstimmen; nur solange ein
+    // Finger auf dem Blatt liegt – nicht bei Zurück, Tipp daneben oder closeThen.
+    val haptics = LocalHapticFeedback.current
+    // [0]: Finger liegt auf dem Blatt, [1]: Impuls „würde schließen“ gegeben.
+    val touch = remember { booleanArrayOf(false, false) }
+    LaunchedEffect(sheetState) {
+        snapshotFlow { sheetState.targetValue }.collect { target ->
+            val closing = target == SheetValue.Hidden
+            if (touch[0] && closing != touch[1]) {
+                touch[1] = closing
+                haptics.gestureThreshold(reached = closing)
+            }
+        }
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                touch[0] = true
+                touch[1] = false
+                do {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                } while (event.changes.any { it.pressed })
+                touch[0] = false
+            }
+        },
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = null,
+    ) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             BottomSheetDefaults.DragHandle(Modifier.semantics { hideFromAccessibility() })
         }

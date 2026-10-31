@@ -40,6 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.atemkraft.ui.components.inertWhen
+import app.atemkraft.ui.components.rememberAccessibilityActive
 import app.atemkraft.ui.navigation.AppTabBar
 import app.atemkraft.ui.navigation.DetailRoute
 import app.atemkraft.ui.navigation.HideableTabBar
@@ -106,6 +107,9 @@ private fun AtemkraftApp(
     // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; Griff oder Wischen (Startleiste,
     // Band über den unteren Leisten, Griff) klappen sie auf, das gilt bis zur Rückkehr auf einen Tab.
     val tabBar = rememberTabBarState()
+    // Mit Bedienhilfe (TalkBack, Switch Access) bleibt sie auch in der Tiefe offen.
+    val accessibility = rememberAccessibilityActive()
+    LaunchedEffect(accessibility) { tabBar.keepOpen = accessibility }
     LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab) }
     // Was in den Systemgesten am unteren Rand aufsetzt (Home), bleibt dem System.
     val gestureBottom = WindowInsets.systemGestures.getBottom(LocalDensity.current)

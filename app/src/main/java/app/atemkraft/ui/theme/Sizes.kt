@@ -39,10 +39,21 @@ object Sizes {
     val TabBarGripHeight = 4.dp
 
     /**
-     * So weit muss ein Finger nach oben bzw. unten wischen, bis die Tab-Leiste aufgeht bzw. zugeht
-     * (24, Schwelle ab dem Aufsetzen; gewertet wird erst nach dem Touch-Slop, Tipps bleiben Tipps).
+     * So weit muss ein Finger nach oben bzw. unten wischen, damit die Tab-Leiste beim Loslassen aufgeht
+     * bzw. zugeht (24, ab dem Aufsetzen, gut ein Viertel der Leiste; gewertet erst nach dem Touch-Slop,
+     * Tipps bleiben Tipps). Hier kommt auch der kleine Impuls.
      */
     val TabBarSwipeDistance = 24.dp
+
+    /**
+     * Ab diesem Tempo (125 je Sekunde, Wert des M3-Bottom-Sheets) zählt beim Loslassen die Richtung
+     * des Fingers statt der Strecke: Ein kurzer, schneller Wisch klappt die Tab-Leiste, ein schnelles
+     * Zurückziehen bricht ab. Als Länge je Sekunde, umgerechnet mit `toPx()`.
+     */
+    val TabBarSwipeVelocity = 125.dp
+
+    /** Weg der Tab-Leiste beim Wischen, solange sie noch nicht gemessen ist (M3-Navigationsleiste 80). */
+    val TabBarFallbackTravel = 80.dp
 
     /** Standard-Icon: Icon-Buttons, Zurück, Zahnrad, Expander-Caret, Mini-Leiste (M3 24). */
     val IconDefault = 24.dp
