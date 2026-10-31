@@ -100,6 +100,8 @@ fun LogbookScreen(
     canOpen: (exerciseId: String) -> Boolean = { false },
     onOpenExercise: (exerciseId: String) -> Unit = {},
     showStreak: Boolean = true,
+    weeksOpen: Boolean = false,
+    onWeeksOpenChange: (Boolean) -> Unit = {},
 ) {
     val zone = ZoneId.systemDefault()
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
@@ -111,7 +113,7 @@ fun LogbookScreen(
         top = Dimens.SectionGap,
         bottom = Dimens.TabBarGripClearance,
     ) {
-        item(key = "stats") { LogStatsCard(entries = entries, today = today, showStreak = showStreak) }
+        item(key = "stats") { LogStatsCard(entries = entries, today = today, showStreak = showStreak, weeksOpen = weeksOpen, onWeeksOpenChange = onWeeksOpenChange) }
         groups.forEach { group ->
             // Der Kopf der Gruppe klebt; angemeldet hier, sein Inhalt kommt aus LogGroupSection.
             declareSticky(logGroupSticky(group))
@@ -132,7 +134,13 @@ fun LogbookScreen(
  * „Serie zeigen“ aus) fehlt die Serie ganz.
  */
 @Composable
-internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = LocalDate.now(), showStreak: Boolean = true) {
+internal fun LogStatsCard(
+    entries: List<SessionLogEntry>,
+    today: LocalDate = LocalDate.now(),
+    showStreak: Boolean = true,
+    weeksOpen: Boolean = false,
+    onWeeksOpenChange: (Boolean) -> Unit = {},
+) {
     val streak = rememberLogStreak(entries, today).takeIf { showStreak } ?: 0
     val minutesPerDay = rememberMinutesPerDay(entries)
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -162,7 +170,8 @@ internal fun LogStatsCard(entries: List<SessionLogEntry>, today: LocalDate = Loc
                 )
             }
             Spacer(Modifier.height(Dimens.ListGap))
-            WeekCalendar(minutesPerDay = minutesPerDay, today = today, weeks = 1, spoken = true)
+            // Derselbe Aufklapper wie im Tab „Eigene“, derselbe gemerkte Zustand.
+            WeekCalendar(minutesPerDay = minutesPerDay, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
         }
     }
 }

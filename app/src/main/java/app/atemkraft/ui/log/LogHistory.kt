@@ -110,14 +110,7 @@ internal fun LogHistory(
         if (entries.isEmpty()) {
             HintText(stringResource(R.string.own_history_empty))
         } else {
-            WeekCalendar(
-                minutesPerDay = minutesPerDay,
-                today = today,
-                weeks = if (weeksOpen) HISTORY_WEEKS_OPEN else 1,
-                spoken = false,
-                expanded = weeksOpen,
-                onToggle = { onWeeksOpenChange(!weeksOpen) },
-            )
+            WeekCalendar(minutesPerDay = minutesPerDay, today = today, expanded = weeksOpen, onExpandedChange = onWeeksOpenChange)
             Spacer(Modifier.height(Dimens.ListGap))
             val parts = buildList {
                 if (streak >= 2) add(pluralStringResource(R.plurals.log_streak, streak, streak))
@@ -234,21 +227,21 @@ internal fun calendarWeeks(today: LocalDate, weeks: Int): List<LocalDate> {
  * Ring in Cyan, Tage nach heute nur einen leisen Ring (`ALPHA_BORDER`). Die sieben Tage teilen sich
  * die volle Breite in gleiche Spalten.
  *
- * Mit [onToggle] ist der ganze Block ein Aufklapper (Role.Button, Zustand per `stateDescription`,
- * Caret am Ende der Spannen-Zeile) und gleitet mit `Motion.Disclosure` auf; die Punkte sind dann
- * stumm ([spoken] = false), TalkBack hört Spanne und Zustand. Ohne [onToggle] (Logbuch) hört
- * TalkBack jeden Tag.
+ * Der ganze Block ist ein Aufklapper (Role.Button, Zustand per `stateDescription`, Caret am Ende
+ * der Spannen-Zeile): eine Woche oder [HISTORY_WEEKS_OPEN] Wochen, mit `Motion.Disclosure`. Tab
+ * „Eigene“ und Logbuch zeigen ihn gleich und teilen den gemerkten Zustand ([expanded]) – kein
+ * Ort bekommt eine abgespeckte Fassung (Eigentümer 2026-10-31: Das Logbuch ließ sich nicht
+ * aufklappen). TalkBack hört Spanne und Zustand; die Punkte sind stumm (28 Stopps wären Rauschen).
  */
 @Composable
 internal fun WeekCalendar(
     minutesPerDay: Map<Long, Long>,
     today: LocalDate,
-    weeks: Int,
-    spoken: Boolean,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    expanded: Boolean = false,
-    onToggle: (() -> Unit)? = null,
 ) {
+    val weeks = if (expanded) HISTORY_WEEKS_OPEN else 1
     val labels = stringArrayResource(R.array.log_weekday_short)
     val mondays = calendarWeeks(today, weeks)
     val range = stringResource(
@@ -257,13 +250,9 @@ internal fun WeekCalendar(
         mondays.first().plusDays(DAYS_PER_WEEK - 1L).format(RANGE_DAY_FORMAT),
     )
     val state = expandedStateText(expanded)
-    val toggle = if (onToggle != null) {
-        Modifier
-            .clickable(role = Role.Button, onClick = onToggle)
-            .semantics { stateDescription = state }
-    } else {
-        Modifier
-    }
+    val toggle = Modifier
+        .clickable(role = Role.Button, onClick = { onExpandedChange(!expanded) })
+        .semantics { stateDescription = state }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -272,12 +261,12 @@ internal fun WeekCalendar(
     ) {
         Row(modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.IconInButton), verticalAlignment = Alignment.CenterVertically) {
             SecondaryText(range, modifier = Modifier.weight(1f))
-            if (onToggle != null) ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), size = Sizes.IconInButton)
+            ExpandCaret(expanded = expanded, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY), size = Sizes.IconInButton)
         }
         Spacer(Modifier.height(Dimens.GapSmall))
-        // Gitter: mit Aufklapper stumm (die Spanne sagt, was zu sehen ist; 28 Stopps wären Rauschen).
+        // Gitter stumm: Die Spanne sagt, was zu sehen ist; 28 Stopps wären Rauschen.
         Column(
-            modifier = Modifier.then(if (spoken) Modifier else Modifier.semantics { hideFromAccessibility() }),
+            modifier = Modifier.semantics { hideFromAccessibility() },
             verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {

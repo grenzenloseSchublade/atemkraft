@@ -317,6 +317,8 @@ internal fun NavGraphBuilder.appGraph(
             canOpen = openable,
             onOpenExercise = openDetail,
             showStreak = state.showStreak,
+            weeksOpen = state.historyWeeksOpen,
+            onWeeksOpenChange = { open -> scope.launch { settings.setHistoryWeeksOpen(open) } },
         )
     }
     pushComposable<OwnCreationsRoute> {
