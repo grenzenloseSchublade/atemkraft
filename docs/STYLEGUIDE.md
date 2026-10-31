@@ -182,7 +182,7 @@ Feature-Maße mit Wert und Zweck in der KDoc von `Dimens`: `SessionPadding`, `Se
 | `ButtonHeight` | 40 | Mindesthöhe von Buttons, Segmenten, `DisclosureToggle`, `ChoiceChip` (Anlass, eine Antwort) |
 | `ChipHeight` | 32 | `LinkChip`, `TonalChip` (Filter, mehrere) |
 | `ButtonMinWidth` | 58 | M3-Mindestbreite; feste Breite des Reset im `StartSplitButton` (`ResetWidth`) |
-| `IconButtonSize` | 40 | Kreis von `AppIconButton`, `AppIconToggle`, `SoundSwitch`, Stepper-Knöpfen, `StartPlayButton` |
+| `IconButtonSize` | 40 | Kreis von `AppIconButton`, `AppIconToggle`, `SoundSwitch`, Stepper-Knöpfen |
 | `SwitchWidth` | 52 | M3-Switch; der Hinweis einer `ToggleRow` endet davor |
 | `IconDefault` / `IconInButton` / `IconSmall` | 24 / 18 / 16 | Icon in Tippfläche 48 / Icon neben Beschriftung / Zeichen auf Karten neben `label*`-Text |
 | `TouchOverhang` / `CircleOverhang` | 12 / 4 | Überstand der Tippfläche 48 über ein `IconDefault`-Icon bzw. einen `IconButtonSize`-Kreis; um ihn melden `flushStart`/`flushEnd` bzw. der Stepper sich schmaler |
@@ -288,17 +288,18 @@ Für jeden wiederkehrenden Baustein gilt eine verbindliche Anatomie: Anordnung, 
 - Ausnahme `FilterChipFlow` (Wochentage der Erinnerung in einer Karte): dieselben `TonalChip`s brechen zwischen ganzen Chips um statt seitlich zu scrollen – alle sieben bleiben sichtbar, keine Kartenkante schneidet einen an.
 - **Prüfung:** `ScreenshotTest` (`chipLayout`, `chipRows`, `filterRow`, `CHIP_UMBRUCH`), `no-check-icon`.
 
-#### <a id="anat-leiste"></a>Knopfleiste unten (`PinnedActionBar`: `StartSplitButton`; Editor: `CompactStepper`, `SlidingReset`, `StartPlayButton`)
+#### <a id="anat-leiste"></a>Knopfleiste unten (`StartBar`: `PinnedActionBar`, Zeile `SectionHeader`, `StartSplitButton`)
 
 ```
  ┌ PinnedActionBar surface · Elevation 3 · Rand ScreenPadding × ListGap ─────────────────┐
+ │ Anpassen · 10 min ›  bzw.  Dauer · 5 min ›   SectionHeader(onClick, top = 0), öffnet ein Blatt │
  │ [ Starten · ca. 5 min ····· füllt den Rest ·····] ListGap [↻ 40]   (Reset nur bei Abweichung)│
- │ (−) 5 min (+) ·································· [↻ 40] [▶ 40]   ← Editor: ein Token, 40 dp │
+ │ knapp in der Höhe:  10 min ›  ListGap  [ Starten · ca. 5 min ··· Rest ···] [↻ 40]            │
  └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 - Feste Breiten für Stepper und Reset, Start füllt den Rest; Start und Reset gleich hoch über dieselbe Mindesthöhe (`ButtonHeight`), nie `IntrinsicSize.Min` – wird „Starten“ zweizeilig, wächst der Reset um dieselben Zeilen (`SlidingReset(lines)`). Die Zeilen entscheidet `StartSplitButton` in einer Komposition aus der Restbreite (Reset fest `ResetWidth`), nicht per Rückmeldung aus der Messphase: Beide stehen vom ersten Frame an gleich hoch; solange der Reset hinausgleitet, zählt seine Breite mit. Bei Platzmangel `InlineOrBelow`: Steuerung rechtsbündig darunter, entschieden mit Reserven.
-- Über dem Start höchstens eine Zeile, auf der Detailseite „Anpassen ›“ (`SectionHeader` mit `onClick`, `top = 0`); in der Tiefe schwebt über der Leiste der Griff der Tab-Leiste (unten), nichts überlappt. Aufbau: [spec/detail.md](spec/detail.md#anatomie-leiste).
+- **Ein Bauteil:** Detailseite und Muster-Editor zeigen dieselbe `StartBar` – oben genau eine Zeile, die ein Blatt öffnet („Anpassen · 10 min ›“ bzw. „Dauer · 5 min ›“, `SectionHeader` mit `onClick`, `top = 0`), darunter der Start; erst die Einstellung, dann die Aktion, kein runder Einzelknopf (wirkt wie ein FAB, PRIN-02). Knapp in der Höhe (Höhe, die die Seite der Leiste anbietet, ÷ Schriftgröße unter `StartBarCompactBelow` 450: 360 × 640 bei Schrift 1,3, quer) und wenn beides nebeneinander passt, steht alles in einer Zeile – links nur „10 min ›“ (dieselbe Schaltfläche, Ansage „Anpassen, 10 Minuten“, dasselbe Blatt), rechts der Start, der dann nur „Starten“ sagt, wenn „Starten · ca. 5 min“ nicht in eine Zeile passt; das entscheidet die Leiste, nicht der Aufrufer. Meditation: nur der `StartSplitButton`; in der Tiefe schwebt über der Leiste der Griff der Tab-Leiste (unten), nichts überlappt. Aufbau: [spec/detail.md](spec/detail.md#anatomie-leiste).
 - **Prüfung:** `ScreenshotTest` (`TIPPFLAECHE`, `ANATOMIE`, `08_detail_quer`, `08_detail_tiefe*` mit `GRIFF`; Leiste einzeilig bis 1,3 im `DeviceFitTest`).
 
 #### <a id="anat-sheet"></a>Bottom Sheet (`AppBottomSheet`: `SoundSheet`, `AdjustSheet`, `TemplateSheet`, `DailyPatternSheet`)
@@ -362,7 +363,7 @@ Auswahl für den Bau: welche Komponente wofür, was sie nicht ist (→ Alternati
 | `BreathMarkIcon` / `PersonalMarkIndicator` / `PersonalMarkToggle` (`PersonalMark.kt`) | das eine Zeichen „zu mir“, der Atemkreis ◉ (ICON-03): „Tut mir gut“ (Detailseite, `ExerciseCard`) und „In „Meins“ speichern“ | Herz, Stern, Lesezeichen; Sortieren; Tab-Symbol „Meins“ | cd und `stateDescription` je Bedeutung; gesetzt ≥ 4,5:1 |
 | `SearchField` | einzeiliges Suchfeld als Pille mit einem `TextFieldState` des Aufrufers (§4.5, [spec/suche.md](spec/suche.md)) | gespeicherte Eingaben; mehrzeiliger Text | X cd „Eingabe löschen“; Platzhalter als Name |
 | `AdaptiveButtonRow` / `InlineOrBelow` | Button-Reihe, die vom gleich breiten Nebeneinander bis zum Untereinander ausweicht / zwei Teile nebeneinander, sonst `end` rechtsbündig darunter, entschieden über Reserven | Split-Button → `StartSplitButton`; Button-Reihen → `AdaptiveButtonRow` | Lesereihenfolge bleibt; Reserven ohne Semantik |
-| `StartSplitButton` / `StartPlayButton` / `SlidingReset` | **jeder** Start einer konfigurierbaren Session (MUSTER-01, §4.5 „Knopfleiste unten“) bzw. runder Start in knappen Leisten; Reset, der nur bei Abweichung hereingleitet | andere Aktionspaare; Vorschau → `CurvePreviewControls` | Reset Icon-only, cd `adjust_reset`, Fokus → Start, wenn er verschwindet (`onFocusHandoff`) |
+| `StartBar` / `StartSplitButton` / `SlidingReset` | `StartBar`: die Startleiste einer Übung (Detailseite, Muster-Editor) – Zeile „… · Wert ›“ zum Blatt und darunter der Start, knapp in der Höhe beides in einer Zeile („10 min ›“ neben „Starten“); `StartSplitButton`: **jeder** Start einer konfigurierbaren Session (MUSTER-01, §4.5 „Knopfleiste unten“); Reset, der nur bei Abweichung hereingleitet | andere Aktionspaare; Vorschau → `CurvePreviewControls` | Reset Icon-only, cd `adjust_reset`, Fokus → Start, wenn er verschwindet (`onFocusHandoff`) |
 | `PinnedActionBar` | gepinnte Start-Leiste unter dem Scroll-Inhalt (§4.5); meldet ihre Oberkante dem `TabBarState` (Griff, Wischen) | Aktionen im Inhalt; mehr als eine Zeile über dem Start | Inhalt `StartSplitButton`, darüber höchstens ein `SectionHeader` mit `onClick` |
 | `ConfirmIconButton` / `rememberArmedConfirm` (`ConfirmAction.kt`) | zerstörende Aktion zweistufig im selben Element (MUSTER-05) | Abbruch eines Downloads; sofort umkehrbare Aktionen | Name mit Gegenstand, Bestätigung „‚X‘ wirklich löschen?“, `liveRegion` am Knopf; in Listen `key(id)` |
 | `SafetyDialog` / `rememberSafetyGate` | Sicherheitsbestätigung vor intensiven Übungen und das Gate je Übung (`SafetySettings.acknowledgedIds`, MUSTER-06) | Infos ohne Risiko | nicht außen schließbar; Warn-Icon dekorativ |

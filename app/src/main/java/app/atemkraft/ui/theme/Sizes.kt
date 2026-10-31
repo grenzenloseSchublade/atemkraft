@@ -149,6 +149,14 @@ object Sizes {
     val MiniCurveWidth = 64.dp
     val MiniCurveHeight = IconDefault
 
+    /**
+     * Unter dieser Höhe, die die Seite der `StartBar` anbietet (Höhe unter dem Kopf), geteilt durch
+     * die Schriftgröße (450), steht die Leiste in einer Zeile („10 min ›“ neben „Starten“): 360 × 640
+     * bei Schrift 1,3 und quer; das A54 hoch bleibt bis Schrift 1,3 zweizeilig. Der Muster-Editor
+     * braucht die gesparte Zeile, damit Kurve und Werkzeugleiste ohne Scrollen passen (MUSTER-10).
+     */
+    val StartBarCompactBelow = 450.dp
+
     // Rhythmuskurve oben auf der Detailseite (`RhythmCurve`): ein Atemzug, ruhig und klein; die
     // Breite folgt dem Platz.
 

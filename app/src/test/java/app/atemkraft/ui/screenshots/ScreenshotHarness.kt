@@ -366,11 +366,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val curve = curveNode.unclipped()
         val range = curveNode.config[CurveHeightRange]
         val toolbar = compose.onNodeWithTag(PATTERN_TOOLBAR_TAG).fetchSemanticsNode().unclipped()
-        // Feste Leiste (Nachtrag 6): Play-Knopf und „+“ der Dauer auf einer Zeile?
-        val app = RuntimeEnvironment.getApplication()
-        val play = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_play).substringBefore(","), substring = true).fetchSemanticsNode().unclipped()
-        val durationPlus = compose.onNodeWithContentDescription("${app.getString(R.string.cd_adjust_duration)}, ${app.getString(R.string.adjust_increase)}").fetchSemanticsNode().unclipped()
-        val barOneLine = abs(play.center.y - durationPlus.center.y) <= 1f
         // Gezeigte Fassung der Werte über der Kurve.
         val info = compose.onNodeWithTag(PATTERN_INFO_TAG, useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].joinToString { it.text.replace('\u00A0', ' ').replace("\u2060", "") }
@@ -388,7 +383,6 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val fits = curve.top >= viewport.top && toolbar.bottom <= viewport.bottom - (if (reserved) grip else 0f) + 0.5f
         val minWouldFit = free >= range.start - 0.5f
         val kind = when {
-            hard && !barOneLine -> "KOMPAKT_FEHLT"
             fits && heightRight -> "KOMPAKT"
             (minWouldFit && !fits) || !heightRight -> "KOMPAKT_FEHLT"
             hard -> "KOMPAKT_FEHLT"
@@ -397,7 +391,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
         val line = "${device.name}\tfs${(fontScale * 100).toInt()}\t$kind\t$screen\tKurve ${dp(curve.top - viewport.top)}–${dp(curve.bottom - viewport.top)} dp " +
             "(Höhe ${dp(curve.height)} dp, Spanne ${dp(range.start)}–${dp(range.endInclusive)} dp, frei ${dp(free)} dp), " +
             "Werkzeugleiste bis ${dp(toolbar.bottom - viewport.top)} dp von ${dp(viewport.height)} dp (Rest ${dp(viewport.bottom - toolbar.bottom)} dp, Griff ${if (reserved) "frei" else "über der Leiste"}), " +
-            "Leiste unten ${if (barOneLine) "einzeilig" else "zweizeilig"}, Werte „$info“"
+            "Werte „$info“"
         if (kind == "KOMPAKT_FEHLT") compactProblems += line
         return listOf(line)
     }

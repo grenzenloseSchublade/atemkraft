@@ -50,7 +50,6 @@ import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.FillViewportColumn
 import app.atemkraft.ui.components.ForwardLinkText
-import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushHeader
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.accentBorder
@@ -134,6 +133,7 @@ fun PatternEditorScreen(
     // Offener Dialog überlebt Rotation und Prozess-Neustart (CODE-03).
     var showTemplates by rememberSaveable { mutableStateOf(false) }
     var showRename by rememberSaveable { mutableStateOf(false) }
+    var showDuration by rememberSaveable { mutableStateOf(false) }
     val toolbarFocus = remember { ToolbarFocus() }
     val startFocus = remember { StartFocus() }
     val start = rememberSafetyGate(
@@ -201,14 +201,13 @@ fun PatternEditorScreen(
                     Spacer(Modifier.height(Dimens.TabBarGripClearance))
                 }
             }
-            PinnedActionBar {
-                ActionBar(
-                    state = state,
-                    approxMinutes = approxMinutes,
-                    focus = startFocus,
-                    onStart = start,
-                )
-            }
+            ActionBar(
+                state = state,
+                approxMinutes = approxMinutes,
+                focus = startFocus,
+                onOpenDuration = { showDuration = true },
+                onStart = start,
+            )
         }
     }
 
@@ -221,6 +220,8 @@ fun PatternEditorScreen(
     }
 
     if (showRename) RenameDialog(state, onDismiss = { showRename = false })
+
+    if (showDuration) DurationSheet(state, onDismiss = { showDuration = false })
 }
 
 /**

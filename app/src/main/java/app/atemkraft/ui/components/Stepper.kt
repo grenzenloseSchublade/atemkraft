@@ -232,7 +232,7 @@ private fun StepButtons(
 @Composable
 private fun CompactStepperPreview() {
     AtemkraftTheme {
-        CompactStepper(value = 5, range = 1..30, onChange = {}, valueText = stringResource(R.string.pattern_editor_minutes, 5), spokenLabel = stringResource(R.string.cd_adjust_duration))
+        CompactStepper(value = 5, range = 1..30, onChange = {}, valueText = stringResource(R.string.adjust_value_minutes, 5), spokenLabel = stringResource(R.string.cd_adjust_duration))
     }
 }
 

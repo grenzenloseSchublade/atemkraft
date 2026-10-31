@@ -239,8 +239,11 @@
     <string name="cd_pattern_editor_start">Startpunkt wählen, derzeit %1$s</string>
     <!-- Satz unter dem Titel des Startpunkt-Blatts: was die Wahl tut (Nutzer 2026-10-24). -->
     <string name="pattern_editor_start_hint">Womit fängst du an? Die Wahl ersetzt den Ablauf, danach formst du ihn an der Kurve.</string>
-    <string name="pattern_editor_minutes">%1$d\u00A0min</string>
-    <string name="cd_pattern_editor_play">Übung starten, ca. %1$s</string>
+    <!-- Startleiste des Muster-Editors wie auf der Detailseite (Eigentümer 2026-10-31): „Dauer · 5 min ›“ öffnet das Blatt mit dem Stepper. -->
+    <string name="pattern_editor_duration">Dauer</string>
+    <string name="cd_pattern_editor_duration_open">Dauer öffnen</string>
+    <!-- StartBar in knapper Höhe: links nur „10 min ›“, gesprochen wie die lange Zeile („Anpassen, 10 Minuten“). -->
+    <string name="cd_start_bar_adjust">%1$s, %2$s</string>
     <!-- Werte über der Kurve (InfoLine, keine Tippfläche): „Box · 16 s je Atemzug · 3,8/min“, bei
          Platzmangel „Box · 16 s · 3,8/min“, dann „16 s · 3,8/min“; während der Vorschau die Phase
          und „noch 3 s“. Die Rate (pattern_editor_rate_short, für TalkBack cd_pattern_editor_rate

@@ -42,12 +42,11 @@ import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.CharacterChip
-import app.atemkraft.ui.components.CompactStepper
-import app.atemkraft.ui.components.InlineOrBelow
-import app.atemkraft.ui.components.SlidingReset
-import app.atemkraft.ui.components.StartPlayButton
+import app.atemkraft.ui.components.SessionAdjustControls
+import app.atemkraft.ui.components.StartBar
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.flushStart
 import app.atemkraft.ui.components.rememberWidestAnnotatedWidth
@@ -297,15 +296,14 @@ internal fun PreviewRow(preview: CurvePreviewState, sound: PreviewSoundState) {
 internal val PREVIEW_ROW_HEIGHT = Dimens.MinTouchTarget
 
 /**
- * Fokus und Ansage (A11Y-04, A11Y-07): [start] (Startpunkt im Kopf, [StartButton]) und [play] sind
- * Fokusziele, [pending] fokussiert nach der nächsten Komposition. Nach der Wahl einer Vorlage
+ * Fokus und Ansage (A11Y-04, A11Y-07): [start] (Startpunkt im Kopf, [StartButton]) ist Fokusziel,
+ * [pending] fokussiert nach der nächsten Komposition. Nach der Wahl einer Vorlage
  * ([picked]) bekommt der Startpunkt den Fokus und sagt einmal an, was gilt – nur solange die Folge
  * so bleibt ([announces]).
  */
 @Stable
 internal class StartFocus {
     val start = FocusRequester()
-    val play = FocusRequester()
     var pending by mutableStateOf<FocusRequester?>(null)
     private var pickedPattern by mutableStateOf<FreePattern?>(null)
 
@@ -323,23 +321,20 @@ internal class StartFocus {
 }
 
 /**
- * Feste Leiste unten (Nachtrag 6 und 7; der Startpunkt steht seit 2026-10-23 im Kopf,
- * [StartButton]), alle Bedienelemente sichtbar gleich hoch ([Sizes.IconButtonSize], ein Größentoken je
- * Leiste, LAYOUT-04): links die Dauer „− 5 min +“ ([CompactStepper], 1–30 min, ändert nie die
- * Folge); rechts, nur wenn geändert, Zurücksetzen auf den Stand beim Öffnen (Kreispfeil, tonal) und
- * Play ([StartPlayButton], hervorgehoben nur durch die Füllung in `primary`): startet die Übung
- * ([onStart], gesprochen „Übung starten, ca. 5 Minuten“). Eine Zeile, solange beides nebeneinander
- * passt (gemessen mit „30 min“ und mit Zurücksetzen, damit nichts springt), sonst Play rechts
- * darunter ([InlineOrBelow]).
+ * Feste Leiste unten: dieselbe Startleiste wie auf der Detailseite ([StartBar], Eigentümer
+ * 2026-10-31 – vorher „− 5 min +“ und ein runder Play-Knopf, der wie ein FAB wirkte). Oben
+ * „Dauer · 5 min ›“, öffnet das Blatt mit dem Stepper ([DurationSheet], 1–30 min, ändert nie die
+ * Folge); darunter „Starten · ca. 5 min“ ([onStart]) und, nur wenn geändert, Zurücksetzen auf den
+ * Stand beim Öffnen (der Split-Button gibt den Fokus dann an „Starten“, A11Y-07).
  *
- * Fokus (A11Y-07): Löst man Zurücksetzen per Tastatur aus, verschwindet der Knopf, der Fokus geht
- * auf Play; [StartFocus.pending] fokussiert auch den Startpunkt im Kopf nach der Wahl einer Vorlage.
+ * Fokus (A11Y-07): [StartFocus.pending] fokussiert den Startpunkt im Kopf nach der Wahl einer Vorlage.
  */
 @Composable
 internal fun ActionBar(
     state: PatternEditorState,
     approxMinutes: Int,
     focus: StartFocus,
+    onOpenDuration: () -> Unit,
     onStart: () -> Unit,
 ) {
     LaunchedEffect(focus.pending) {
@@ -348,40 +343,45 @@ internal fun ActionBar(
             focus.pending = null
         }
     }
-    val playDescription = stringResource(R.string.cd_pattern_editor_play, pluralStringResource(R.plurals.cd_duration_minutes, approxMinutes, approxMinutes))
-    InlineOrBelow(
-        leading = { DurationStepper(state.minutes) { state.minutes = it } },
-        end = {
-            Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                SlidingReset(
-                    visible = state.modified,
-                    onReset = state::reset,
-                    onFocusHandoff = { focus.pending = focus.play },
-                    slideFrom = Alignment.End,
-                    compact = true,
-                )
-                StartPlayButton(onClick = onStart, description = playDescription, modifier = Modifier.focusRequester(focus.play))
-            }
-        },
-        leadingReserve = { DurationStepper(AdjustLimits.MINUTES.last) {} },
-        endReserve = {
-            Row(Modifier.flushEnd(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall)) {
-                SlidingReset(visible = true, onReset = {}, onFocusHandoff = {}, compact = true)
-                StartPlayButton(onClick = {}, description = "")
-            }
-        },
+    StartBar(
+        adjustTitle = stringResource(R.string.pattern_editor_duration),
+        adjustStatus = stringResource(R.string.adjust_status_minutes, state.minutes),
+        adjustStatusDescription = pluralStringResource(R.plurals.cd_duration_minutes, state.minutes, state.minutes),
+        onOpenAdjust = onOpenDuration,
+        adjustOpenLabel = stringResource(R.string.cd_pattern_editor_duration_open),
+        startLabel = stringResource(
+            R.string.action_start_duration,
+            stringResource(R.string.action_start),
+            stringResource(R.string.duration_approx, approxMinutes),
+        ),
+        resetVisible = state.modified,
+        onStart = onStart,
+        onReset = state::reset,
     )
 }
 
-/** Dauer „− 5 min +“ der Leiste (1–30 min, gesprochen „Dauer, 5 Minuten“). */
+/**
+ * Blatt „Dauer“ des Muster-Editors ([AppBottomSheet]): derselbe Dauer-Stepper wie im Blatt
+ * „Anpassen“ der Detailseite ([SessionAdjustControls] ohne Phasen – die formt die Kurve), 1–30 min.
+ */
 @Composable
-private fun DurationStepper(minutes: Int, onChange: (Int) -> Unit) {
-    CompactStepper(
-        value = minutes,
-        range = AdjustLimits.MINUTES,
-        onChange = onChange,
-        valueText = stringResource(R.string.pattern_editor_minutes, minutes),
-        spokenLabel = stringResource(R.string.cd_adjust_duration),
-        valueUnit = R.plurals.cd_duration_minutes,
-    )
+internal fun DurationSheet(state: PatternEditorState, onDismiss: () -> Unit) {
+    val title = stringResource(R.string.pattern_editor_duration)
+    AppBottomSheet(title = title, onDismiss = onDismiss) {
+        SessionAdjustControls(
+            durationLabel = title,
+            duration = state.minutes,
+            durationDefault = state.minutes,
+            durationRange = AdjustLimits.MINUTES,
+            onDuration = { state.minutes = it },
+            inhale = null,
+            hold = null,
+            exhale = null,
+            intervalsExpanded = false,
+            onToggleIntervals = {},
+            durationSpokenLabel = stringResource(R.string.cd_adjust_duration),
+            durationUnit = R.plurals.cd_duration_minutes,
+            durationValue = R.string.adjust_value_minutes,
+        )
+    }
 }

@@ -32,36 +32,17 @@ import app.atemkraft.ui.theme.Sizes
 
 /**
  * Zurücksetzen, das nur bei Abweichungen da ist (MUSTER-01): Kreispfeil, tonal gefüllt, gleitet
- * mit [visible] von [slideFrom] herein bzw. dorthin hinaus (Icon-only, TalkBack „Zurücksetzen“).
+ * mit [visibleState] von [slideFrom] herein bzw. dorthin hinaus (Icon-only, TalkBack „Zurücksetzen“).
  * Löst man ihn per Tastatur oder D-Pad aus, verschwindet er unter dem Fokus: Dann ruft er zuerst
- * [onFocusHandoff] – der Aufrufer setzt den Fokus auf den Nachbarn (Starten bzw. Play) –, danach
+ * [onFocusHandoff] – der Aufrufer setzt den Fokus auf „Starten“ –, danach
  * [onReset] (A11Y-07). Bei Touch hat der Knopf keinen Fokus, dort ändert sich nichts.
  *
- * [compact]: Kreis wie die Stepper-Knöpfe (`AppIconButton`, Leiste des Muster-Editors); sonst ein
- * Tonal-Button mit derselben Mindesthöhe und demselben senkrechten Polster wie „Starten“ und
+ * Ein Tonal-Button mit derselben Mindesthöhe und demselben senkrechten Polster wie „Starten“ und
  * einem Icon-Feld so hoch wie dessen Textzeilen ([lines], [StartSplitButton]) – damit wachsen beide
  * bei großer Schrift gleich mit, auch wenn „Starten“ zweizeilig wird, ohne `IntrinsicSize.Min` (das
- * mäße die 48-dp-Tippfläche mit). Der Tonal-Button ist fest [ResetWidth] breit, damit der Start
- * daneben seine Restbreite vorab kennt.
- */
-@Composable
-fun SlidingReset(
-    visible: Boolean,
-    onReset: () -> Unit,
-    onFocusHandoff: () -> Unit,
-    modifier: Modifier = Modifier,
-    slideFrom: Alignment.Horizontal = Alignment.Start,
-    compact: Boolean = false,
-    lines: Int = 1,
-) {
-    val state = remember { MutableTransitionState(visible) }
-    state.targetState = visible
-    SlidingReset(state, onReset, onFocusHandoff, modifier, slideFrom, compact, lines)
-}
-
-/**
- * [SlidingReset] mit dem Zustand des Hereingleitens beim Aufrufer: [StartSplitButton] liest daran,
- * ob der Reset noch Platz nimmt (auch während er hinausgleitet).
+ * mäße die 48-dp-Tippfläche mit). Er ist fest [ResetWidth] breit, damit der Start daneben seine
+ * Restbreite vorab kennt. Den Zustand des Hereingleitens hält der Aufrufer ([visibleState]):
+ * [StartSplitButton] liest daran, ob der Reset noch Platz nimmt (auch während er hinausgleitet).
  */
 @Composable
 internal fun SlidingReset(
@@ -70,7 +51,6 @@ internal fun SlidingReset(
     onFocusHandoff: () -> Unit,
     modifier: Modifier = Modifier,
     slideFrom: Alignment.Horizontal = Alignment.Start,
-    compact: Boolean = false,
     lines: Int = 1,
 ) {
     var focused by remember { mutableStateOf(false) }
@@ -85,25 +65,19 @@ internal fun SlidingReset(
         enter = expandHorizontally(Motion.Disclosure, expandFrom = slideFrom) + fadeIn(Motion.Reveal),
         exit = shrinkHorizontally(Motion.Disclosure, shrinkTowards = slideFrom) + fadeOut(Motion.Reveal),
     ) {
-        if (compact) {
-            AppIconButton(onClick = onClick, modifier = tracked, colors = IconButtonDefaults.filledTonalIconButtonColors()) {
-                Icon(painterResource(R.drawable.ic_reset), contentDescription = stringResource(R.string.adjust_reset))
-            }
-        } else {
-            FilledTonalButton(
-                onClick = onClick,
-                modifier = Modifier.width(ResetWidth).heightIn(min = Sizes.ButtonHeight).then(tracked),
-                contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
-            ) {
-                // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt; die
-                // Zeile gemessen, wie „Starten“ sie rendert (auch bei nichtlinearer Schrift).
-                Box(Modifier.heightIn(min = rememberFirstLineHeight(LocalTextStyle.current) * lines), contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_reset),
-                        contentDescription = stringResource(R.string.adjust_reset),
-                        modifier = Modifier.size(Sizes.IconInButton),
-                    )
-                }
+        FilledTonalButton(
+            onClick = onClick,
+            modifier = Modifier.width(ResetWidth).heightIn(min = Sizes.ButtonHeight).then(tracked),
+            contentPadding = PaddingValues(horizontal = Dimens.CardPadding, vertical = Dimens.GapSmall),
+        ) {
+            // Stil der Button-Beschriftung, den M3 hier wie bei „Starten“ bereitstellt; die
+            // Zeile gemessen, wie „Starten“ sie rendert (auch bei nichtlinearer Schrift).
+            Box(Modifier.heightIn(min = rememberFirstLineHeight(LocalTextStyle.current) * lines), contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_reset),
+                    contentDescription = stringResource(R.string.adjust_reset),
+                    modifier = Modifier.size(Sizes.IconInButton),
+                )
             }
         }
     }

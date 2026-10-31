@@ -65,7 +65,7 @@ class PatternEditorSafetyTest {
                 )
             }
         }
-        val play = compose.onNodeWithContentDescription(app.getString(R.string.cd_pattern_editor_play).substringBefore(","), substring = true)
+        val play = compose.onNodeWithText(app.getString(R.string.action_start), substring = true)
 
         // Halten voll 12 s (über 10 s) macht das Muster intensiv.
         compose.runOnIdle { state.setSeconds(1, 12) }

@@ -65,13 +65,11 @@ import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.PersonalMarkToggle
 import app.atemkraft.ui.components.PhaseAdjust
-import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.components.ReferenceItem
 import app.atemkraft.ui.components.RhythmCurve
-import app.atemkraft.ui.components.SectionHeader
 import app.atemkraft.ui.components.SessionAdjustControls
-import app.atemkraft.ui.components.StartSplitButton
+import app.atemkraft.ui.components.StartBar
 import app.atemkraft.ui.components.WarnText
 import app.atemkraft.ui.components.WholeWordText
 import app.atemkraft.ui.components.color
@@ -210,7 +208,7 @@ fun ExerciseDetailScreen(
         // Gepinnter Start (immer sichtbar) samt „Anpassen ›“ darüber – nur bei getakteten Übungen.
         bottomBar = if (exercise.guided) {
             {
-                StartBar(
+                DetailStartBar(
                     exercise = exercise,
                     adjust = adjust,
                     estimatedSeconds = estimatedSeconds,
@@ -401,12 +399,12 @@ fun ExerciseDetailScreen(
 }
 
 /**
- * Gepinnter Start unter dem Inhalt: oben die Zeile „Anpassen ›“ ([AdjustRow], öffnet das
- * [AdjustSheet]), darunter der [StartSplitButton] mit der Gesamtdauer am Start („Starten ·
- * ca. 10 min“); das Zurücksetzen erscheint nur nach einer Anpassung.
+ * Gepinnter Start unter dem Inhalt ([StartBar], dasselbe Bauteil wie im Muster-Editor): oben
+ * „Anpassen · 10 min ›“ (öffnet das [AdjustSheet]; nach einer Anpassung „· 4 Runden · angepasst“),
+ * darunter „Starten · ca. 10 min“; das Zurücksetzen erscheint nur nach einer Anpassung.
  */
 @Composable
-private fun StartBar(
+private fun DetailStartBar(
     exercise: Exercise,
     adjust: SessionAdjustState,
     estimatedSeconds: Int,
@@ -414,59 +412,31 @@ private fun StartBar(
     onStart: () -> Unit,
     onIntervalsReset: () -> Unit,
 ) {
-    PinnedActionBar {
-        Column {
-            AdjustRow(exercise, adjust, onOpenAdjust)
-            StartButton(exercise, adjust, estimatedSeconds, onStart, onIntervalsReset)
-        }
-    }
-}
-
-/**
- * „Anpassen ›“: Abschnittskopf mit `onClick` wie „Klang & Stimme“ in der Meditation (MUSTER-11) –
- * dieselbe Kopf-Art wie jeder Kopf, der ein Blatt öffnet, darum `titleLarge` auch in der Leiste.
- * Möglichst einzeilig (Eigentümer 2026-10-30): Die aktuelle Dauer bzw. Runden stehen als leiser
- * Status (`smallStatus`, `labelMedium` wie „Ablauf · 4 von 12 Phasen“) hinter dem Titel
- * („Anpassen · 10 min“, nach einer Anpassung „· 4 Runden · angepasst“), nicht als Teaser darunter.
- * Klein passt er hoch bei 360 dp und Schrift 1,0 auch angepasst dahinter; bei großer Schrift rutscht
- * er laut [SectionHeader] darunter, dann nicht höher als der frühere Teaser. TalkBack
- * liest die Zeile als eine Schaltfläche („Anpassen, 10 Minuten, angepasst“) mit „Anpassen
- * öffnen“. Keine Live-Region: Den Wert sagt der Stepper im Blatt an, das Zurücksetzen der Start-Knopf.
- */
-@Composable
-private fun AdjustRow(exercise: Exercise, adjust: SessionAdjustState, onClick: () -> Unit) {
     val rounds = pluralStringResource(R.plurals.detail_meta_rounds, adjust.duration, adjust.duration)
     // Gezeigt kurz („10 min“), gesprochen ausgeschrieben („10 Minuten“, A11Y-06).
     val value = if (exercise.isRoundBased) rounds else stringResource(R.string.adjust_status_minutes, adjust.duration)
     val spokenValue = if (exercise.isRoundBased) rounds else pluralStringResource(R.plurals.cd_duration_minutes, adjust.duration, adjust.duration)
     val modified = stringResource(R.string.adjust_modified)
-    SectionHeader(
-        title = stringResource(R.string.adjust_title),
-        status = stringResource(
-            R.string.adjust_status,
-            if (adjust.modified) stringResource(R.string.adjust_status_modified, value, modified) else value,
-        ),
-        statusDescription = if (adjust.modified) stringResource(R.string.cd_adjust_status_modified, spokenValue, modified) else spokenValue,
-        smallStatus = true,
-        // Erstes Element der Leiste: Ihr Rand (ListGap) ist der Abstand über der Tippfläche, kein
-        // zweiter GapSmall davor – oben wie unten am Start steht nur der Leistenrand.
-        top = 0.dp,
-        onClick = onClick,
-        onClickLabel = stringResource(R.string.cd_adjust_open),
+    StartBar(
+        adjustTitle = stringResource(R.string.adjust_title),
+        adjustStatus = if (adjust.modified) stringResource(R.string.adjust_status_modified, value, modified) else value,
+        adjustStatusDescription = if (adjust.modified) stringResource(R.string.cd_adjust_status_modified, spokenValue, modified) else spokenValue,
+        onOpenAdjust = onOpenAdjust,
+        startLabel = startLabel(exercise, estimatedSeconds),
+        resetVisible = adjust.modified,
+        onStart = onStart,
+        onReset = {
+            adjust.reset()
+            onIntervalsReset()
+        },
     )
 }
 
-/** Start mit Gesamtdauer und Reset ([StartSplitButton]). */
+/** „Starten · ca. 10 min“; offene Phasen „ab“, unter einer Minute nur „Starten“. */
 @Composable
-private fun StartButton(
-    exercise: Exercise,
-    adjust: SessionAdjustState,
-    estimatedSeconds: Int,
-    onStart: () -> Unit,
-    onIntervalsReset: () -> Unit,
-) {
+private fun startLabel(exercise: Exercise, estimatedSeconds: Int): String {
     val start = stringResource(R.string.action_start)
-    val startLabel = when {
+    return when {
         estimatedSeconds < 60 && !exercise.hasOpenPhases -> start
 
         exercise.hasOpenPhases -> stringResource(
@@ -481,15 +451,6 @@ private fun StartButton(
             stringResource(R.string.duration_approx, minutesRounded(estimatedSeconds)),
         )
     }
-    StartSplitButton(
-        label = startLabel,
-        resetVisible = adjust.modified,
-        onStart = onStart,
-        onReset = {
-            adjust.reset()
-            onIntervalsReset()
-        },
-    )
 }
 
 /** Stift im Kopf generierter Muster: öffnet den Muster-Editor, Name in [description] (ICON-02). */
