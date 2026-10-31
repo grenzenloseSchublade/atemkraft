@@ -374,8 +374,11 @@ private const val WELCOME_EXERCISE_ID = "resonanz"
  */
 private const val WELCOME_MINUTES = 3
 
-/** „Zuletzt geübt“ im Tab „Eigene“: höchstens drei Übungen, eine Hand voll Wege zurück, keine Liste. */
-private const val RECENT_LIMIT = 3
+/**
+ * „Zuletzt geübt“ im Tab „Meins“: höchstens zwei Übungen – Wege zurück, keine Liste; mit drei
+ * standen die Tabs der Sammlungen erst nach Scrollen im Bild (Eigentümer 2026-10-31).
+ */
+private const val RECENT_LIMIT = 2
 
 /** Zurück, nur solange [entry] oben liegt: Ein spätes „fehlt“ nimmt keine fremde Seite vom Stapel. */
 private fun NavController.popIfTop(entry: NavBackStackEntry) {

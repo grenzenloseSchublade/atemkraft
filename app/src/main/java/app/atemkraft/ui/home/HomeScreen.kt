@@ -11,8 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -35,6 +33,7 @@ import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.domain.SituationSearch
 import app.atemkraft.domain.area
+import app.atemkraft.ui.components.AreaDivider
 import app.atemkraft.ui.components.ExerciseCard
 import app.atemkraft.ui.components.GroupLabel
 import app.atemkraft.ui.components.ScreenHeader
@@ -226,8 +225,7 @@ fun HomeScreen(
                 DailyPatternEntry(daily = daily, onClick = { dailySheetOpen = true })
                 // Die tippbare Zeile polstert unten GapSmall selbst; sichtbar bleibt SectionGap.
                 Spacer(Modifier.height(Dimens.GapSmall))
-                // Trenner zwischen zwei Bereichen der Seite, kein Karten-Trenner: DividerSubtle war hier kaum zu sehen.
-                HorizontalDivider(thickness = Dimens.BorderSection, color = MaterialTheme.colorScheme.outlineVariant) // Abweichung KOMP-03: Bereichs-Trenner in der Haarlinie des Seitenkopfs
+                AreaDivider()
             }
         }
         if (filtering) {

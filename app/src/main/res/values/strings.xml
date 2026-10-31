@@ -199,31 +199,26 @@
     <string name="cd_card_position" tools:ignore="PluralsCandidate">Karte %1$d von %2$d</string>
     <!-- Kopf „Verlauf“: die ganze Kopfzeile öffnet das Logbuch (Klick-Beschriftung), darunter die
          Kalenderwoche (aufklappbar bis vier Wochen) und die Bilanz; ohne Sitzungen der Satz. -->
-    <!-- Unter dem Verlauf: bis zu drei zuletzt geübte Übungen als Zeilen (Nutzer 2026-10-31). -->
+    <!-- Unter dem Verlauf: bis zu zwei zuletzt geübte Übungen als Zeilen (Nutzer 2026-10-31). -->
     <string name="own_recent">Zuletzt geübt</string>
-    <!-- Hinweis in einer Zeile unter „Zuletzt geübt“: wann und wie lange, „gestern Abend · 10 min“ (Dauer auf
-         ganze Minuten gerundet, mindestens 1). Wann: heute/gestern + Tageszeit, sonst in den letzten
-         7 Tagen der Wochentag als ein Wort („am Donnerstagnachmittag“), davor das Datum („am 15.10.“).
-         Geschütztes Leerzeichen vor „·“: Der Punkt bricht nie an den Zeilenanfang (TEXT-10).
-         TalkBack: Dauer ausgeschrieben, „gestern Abend, 10 Minuten“ (A11Y-06). -->
+    <!-- Hinweis in einer Zeile unter „Zuletzt geübt“: wann und wie lange, „Di 27.10. · nachmittags · 2 min“
+         (Eigentümer 2026-10-31: das Datum verknüpft die Zeile mit dem Punkt der Woche darüber; Dauer auf
+         ganze Minuten gerundet, mindestens 1). Wann: Tag wie die Tageszeilen im Logbuch (log_day_label),
+         dann die Tageszeit als Adverb. Die Stunden 0–4 zählen zur Nacht des Vortags (Do 01:30 → „Mi … ·
+         nachts“). Geschütztes Leerzeichen vor „·“: Der Punkt bricht nie an den Zeilenanfang (TEXT-10).
+         TalkBack: ausgeschrieben, „Dienstag, 27. Oktober, nachmittags, 2 Minuten“ (A11Y-06). -->
     <string name="own_last_hint">%1$s\u00A0· %2$d\u00A0min</string>
     <string name="cd_own_last_hint">%1$s, %2$s</string>
-    <string name="own_last_today">heute %1$s</string>
-    <string name="own_last_yesterday">gestern %1$s</string>
-    <!-- %1$s Wochentag, %2$s Tageszeit klein angehängt: „am Montagabend“. -->
-    <string name="own_last_weekday">am %1$s%2$s</string>
-    <!-- Nacht (weiblich): „in der Donnerstagnacht“, nie „am Donnerstagnacht“. Die Stunden 0–4 zählen
-         zur Nacht des Vortags (Do 01:30 → „in der Mittwochnacht“). -->
-    <string name="own_last_weekday_night">in der %1$snacht</string>
-    <string name="own_last_date">am %1$s</string>
-    <!-- Tageszeiten in der Reihenfolge von DayPart: Morgen 5–10, Mittag 11–13, Nachmittag 14–17,
-         Abend 18–22, Nacht 23–4 Uhr. -->
+    <string name="own_recent_when">%1$s\u00A0· %2$s</string>
+    <string name="cd_own_recent_when">%1$s, %2$s</string>
+    <!-- Tageszeiten als Adverb in der Reihenfolge von DayPart: Morgen 5–10, Mittag 11–13, Nachmittag
+         14–17, Abend 18–22, Nacht 23–4 Uhr. -->
     <string-array name="own_day_parts">
-        <item>Morgen</item>
-        <item>Mittag</item>
-        <item>Nachmittag</item>
-        <item>Abend</item>
-        <item>Nacht</item>
+        <item>morgens</item>
+        <item>mittags</item>
+        <item>nachmittags</item>
+        <item>abends</item>
+        <item>nachts</item>
     </string-array>
     <string name="own_history_empty">Noch keine Sitzung – nach deiner ersten Übung steht hier dein Verlauf.</string>
 

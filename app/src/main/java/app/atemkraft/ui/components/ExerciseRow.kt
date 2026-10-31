@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.domain.Exercise
@@ -114,19 +115,23 @@ fun ExerciseCurve(exercise: Exercise, modifier: Modifier = Modifier) {
 }
 
 /**
- * Mehrere [ExerciseRow] in einer Karte, getrennt durch `DividerSubtle` – gebaut wie die Tageskarten
- * des Logbuchs (Rand `CardPadding` seitlich, die Zeilen polstern oben und unten selbst).
+ * Mehrere [ExerciseRow], getrennt durch `DividerSubtle` – gebaut wie die Tageskarten des Logbuchs
+ * (die Zeilen polstern oben und unten selbst). [inCard]: in einer Karte (Rand `CardPadding` seitlich;
+ * die Listen „Alle ansehen“) oder frei an der Textkante, wenn die Zeilen zu einem Block ohne Fläche
+ * gehören („Zuletzt geübt“ unter der Woche im Tab „Meins“). Nur die Fläche unterscheidet sich, Zeilen
+ * und Verhalten sind dieselben.
  */
 @Composable
-fun ExerciseRows(rows: List<@Composable () -> Unit>, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding)) {
+fun ExerciseRows(rows: List<@Composable () -> Unit>, modifier: Modifier = Modifier, inCard: Boolean = true) {
+    val list: @Composable () -> Unit = {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = if (inCard) Dimens.CardPadding else 0.dp)) {
             rows.forEachIndexed { index, row ->
                 if (index > 0) HorizontalDivider(color = DividerSubtle)
                 row()
             }
         }
     }
+    if (inCard) Card(modifier = modifier.fillMaxWidth()) { list() } else Box(modifier = modifier.fillMaxWidth()) { list() }
 }
 
 @Preview

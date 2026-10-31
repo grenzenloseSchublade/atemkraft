@@ -1,7 +1,9 @@
 package app.atemkraft.ui.own
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.RandomPatternGenerator
 import app.atemkraft.domain.SessionLogEntry
+import app.atemkraft.ui.components.AreaDivider
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SettingsAction
 import app.atemkraft.ui.components.TabListScaffold
@@ -64,7 +67,7 @@ data class OwnView(
  *
  * Oben ohne eigenen Kopf (STYLEGUIDE §4.3, Tab: der erste Eintrag ist Inhalt; Eigentümer
  * 2026-10-31) die Kalenderwoche, aufklappbar bis vier Wochen ([OwnView.weeksOpen], dauerhaft gemerkt), die
- * Bilanz mit „Logbuch ›“ ([OwnActions.onOpenLogbook]) und „Zuletzt geübt“ mit bis zu drei Übungen ([recentExercises]; [LogHistory]). Darunter
+ * Bilanz mit „Logbuch ›“ ([OwnActions.onOpenLogbook]) und „Zuletzt geübt“ mit bis zu zwei Übungen ([recentExercises]; [LogHistory]). Darunter
  * die Sammlungen ([OwnCollections]): ein Umschalter wie Tabs in der Seite „Eigene Kreationen · 4 |
  * Tut mir gut · 3“ ([OwnView.collection], dauerhaft gemerkt) und für die gewählte Sammlung Karteikarten
  * zum Wischen – Kreationen mit der Karte „Neues Muster“ vorn und Stift und Löschen je Muster,
@@ -110,12 +113,14 @@ fun OwnPatternsScreen(
             }
         }
 
-        // Unter dem Verlauf die Sammlungen: Umschalter, darunter Karteikarten (Nutzer 2026-10-31).
+        // Unter dem Verlauf die Sammlungen: Bereichslinie, Tabs, darunter Karteikarten (Nutzer 2026-10-31).
         item(key = "collections") {
-            // Sichtbar SectionHeaderTop bis zum Namen der Tabs wie vor jedem Abschnitt: abzüglich ListGap
-            // der Liste und des Leerraums, den die 48-dp-Tippfläche der Tabs über dem Namen lässt.
-            val top = (Dimens.SectionHeaderTop - Dimens.ListGap - pageTabsTopSlack()).coerceAtLeast(0.dp)
-            Column(modifier = Modifier.fillMaxWidth().padding(top = top)) {
+            // Die Grenze zwischen „was du geübt hast“ und „was du gesammelt hast“ (Eigentümer 2026-10-31):
+            // AreaDivider wie im Atmen-Tab, sichtbar SectionGap darüber (abzüglich ListGap der Liste) und
+            // darunter bis zum Namen der Tabs (abzüglich des Leerraums ihrer 48-dp-Tippfläche).
+            Column(modifier = Modifier.fillMaxWidth().padding(top = Dimens.SectionGap - Dimens.ListGap)) {
+                AreaDivider()
+                Spacer(Modifier.height((Dimens.SectionGap - pageTabsTopSlack()).coerceAtLeast(0.dp)))
                 OwnCollections(
                     selected = view.collection,
                     onSelect = actions.onCollectionChange,

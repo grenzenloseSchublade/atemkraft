@@ -67,6 +67,9 @@ import java.time.temporal.TemporalAdjusters
 
 private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.", AppLocale)
 
+/** Datum für TalkBack: „27. Oktober“. */
+private val SPOKEN_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d. MMMM", AppLocale)
+
 /** Kurzes Datum der Wochen-Spanne: „27. Okt“ (eigenständige Monatsform, ohne Abkürzungspunkt). */
 private val RANGE_DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d. LLL", AppLocale)
 
@@ -85,7 +88,7 @@ internal const val HISTORY_WEEKS_OPEN = 4
  * Punkten und Zeile nur der Satz (MUSTER-04) – ohne Verweis, das Logbuch wäre leer. Ohne
  * [showStreak] fehlt die Serie, die Minuten bleiben.
  *
- * Darunter „Zuletzt geübt“: bis zu drei Übungen ([recent], neueste zuerst, je einmal) als schlanke
+ * Darunter „Zuletzt geübt“: bis zu zwei Übungen ([recent], neueste zuerst, je einmal) als schlanke
  * Zeilen ([ExerciseRow]) mit „gestern Abend · 10 min“; ein Tipp öffnet die Detailseite
  * ([onOpenExercise]) – „das von gestern Abend nochmal“.
  *
@@ -135,32 +138,34 @@ internal fun LogHistory(
             Spacer(Modifier.height(Dimens.SectionGap))
             SubLabel(stringResource(R.string.own_recent), color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.height(Dimens.GapTiny))
-            RecentPractice(recent = recent, entries = entries, today = today, onOpenExercise = onOpenExercise)
+            RecentPractice(recent = recent, entries = entries, onOpenExercise = onOpenExercise)
         }
     }
 }
 
 /**
- * „Zuletzt geübt“: bis zu drei [ExerciseRow] in einer Karte ([ExerciseRows]). Hinweis „gestern
- * Abend · 10 min“ – wann ([lastPracticeWhen]) und wie lange die neueste Sitzung dieser Übung
+ * „Zuletzt geübt“: die [ExerciseRow]s frei wie die Woche darüber, ohne Karte ([ExerciseRows] mit
+ * `inCard = false`; Eigentümer 2026-10-31: Die Karte zog zwischen Woche und Zuletzt eine Grenze, wo
+ * keine hingehört). Hinweis „Di 27.10. · nachmittags · 10 min“ – wann ([lastPracticeWhen]) und wie lange die neueste Sitzung dieser Übung
  * dauerte, auf ganze Minuten gerundet ([minutesRounded]); TalkBack hört die Dauer ausgeschrieben
  * (A11Y-06).
  */
 @Composable
-private fun RecentPractice(recent: List<Exercise>, entries: List<SessionLogEntry>, today: LocalDate, onOpenExercise: (String) -> Unit) {
+private fun RecentPractice(recent: List<Exercise>, entries: List<SessionLogEntry>, onOpenExercise: (String) -> Unit) {
     ExerciseRows(
+        inCard = false,
         rows = recent.map { exercise ->
             {
                 // Neueste Sitzung dieser Übung (Liste neueste zuerst): Sie liefert „gestern Abend · 10 min“.
                 val entry = remember(entries, exercise.id) { entries.firstOrNull { it.exerciseId == exercise.id } }
-                val whenText = entry?.let { lastPracticeWhen(it.startedAtEpochMs, today) }
+                val whenText = entry?.let { lastPracticeWhen(it.startedAtEpochMs) }
                 val minutes = entry?.let { minutesRounded((it.durationMs / 1_000L).toInt()) } ?: 0
                 ExerciseRow(
                     exercise = exercise,
                     onClick = { onOpenExercise(exercise.id) },
-                    hint = whenText?.let { stringResource(R.string.own_last_hint, it, minutes) },
+                    hint = whenText?.let { stringResource(R.string.own_last_hint, it.first, minutes) },
                     hintDescription = whenText?.let {
-                        stringResource(R.string.cd_own_last_hint, it, pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes))
+                        stringResource(R.string.cd_own_last_hint, it.second, pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes))
                     },
                 ) {
                     ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
@@ -171,16 +176,13 @@ private fun RecentPractice(recent: List<Exercise>, entries: List<SessionLogEntry
 }
 
 /**
- * Wann, in Laiensprache: „heute Morgen“, „gestern Abend“, in den letzten 7 Tagen „am
- * Donnerstagnachmittag“ (Wochentag und Tageszeit als ein Wort), davor „am 15.10.“. Tage wie die
- * Gruppen im Logbuch ([periodOf]), Tageszeit nach [dayPartOf].
- *
- * Die Nacht gehört zum Abend davor: Eine Sitzung Samstag 01:30 ist am Samstag „gestern Nacht“ (die
- * Nacht Fr→Sa) und in der Woche „in der Freitagnacht“ – „die Nacht“ ist weiblich, „am …nacht“
- * wäre falsch. Das Datum bleibt der Kalendertag des Beginns.
+ * Wann, sichtbar und gesprochen: „Di 27.10. · nachmittags“ bzw. „Dienstag, 27. Oktober, nachmittags“
+ * (Eigentümer 2026-10-31: das Datum verknüpft die Zeile mit dem Punkt der Woche darüber). Der Tag
+ * steht wie die Tageszeilen im Logbuch (`log_day_label`), die Tageszeit nach [dayPartOf] als Adverb.
+ * Die Nacht gehört zum Tag davor: Eine Sitzung Samstag 01:30 steht unter Freitag, „nachts“.
  */
 @Composable
-private fun lastPracticeWhen(startedAtEpochMs: Long, today: LocalDate): String {
+private fun lastPracticeWhen(startedAtEpochMs: Long): Pair<String, String> {
     val start = Instant.ofEpochMilli(startedAtEpochMs).atZone(ZoneId.systemDefault())
     val dayPart = dayPartOf(start.hour)
     // 0–4 Uhr: die Nacht des Vortags.
@@ -190,22 +192,10 @@ private fun lastPracticeWhen(startedAtEpochMs: Long, today: LocalDate): String {
         start.toLocalDate()
     }
     val part = stringArrayResource(R.array.own_day_parts)[dayPart.ordinal]
-    return when (periodOf(day, today)) {
-        LogPeriod.Today -> stringResource(R.string.own_last_today, part)
-
-        LogPeriod.Yesterday -> stringResource(R.string.own_last_yesterday, part)
-
-        LogPeriod.LastSevenDays -> {
-            val weekday = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale)
-            if (dayPart == DayPart.NIGHT) {
-                stringResource(R.string.own_last_weekday_night, weekday)
-            } else {
-                stringResource(R.string.own_last_weekday, weekday, part.lowercase(AppLocale))
-            }
-        }
-
-        is LogPeriod.Month -> stringResource(R.string.own_last_date, start.toLocalDate().format(DAY_MONTH_FORMAT))
-    }
+    val weekdayShort = stringArrayResource(R.array.log_weekday_short)[day.dayOfWeek.value - 1]
+    val shown = stringResource(R.string.own_recent_when, stringResource(R.string.log_day_label, weekdayShort, day.format(DAY_MONTH_FORMAT)), part)
+    val spokenDay = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale) + ", " + day.format(SPOKEN_DATE_FORMAT)
+    return shown to stringResource(R.string.cd_own_recent_when, spokenDay, part)
 }
 
 /**
