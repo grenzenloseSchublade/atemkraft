@@ -71,13 +71,6 @@ object Motion {
     val VayuPulse = 2600
 
     /**
-     * Punkt der Rhythmuskurve (`RhythmCurve`): Übergang seiner Farbe an einer Phasengrenze, je zur
-     * Hälfte davor und danach. Kürzer als die kürzeste gezeigte Phase (1 s), also nie ein Mischton
-     * über eine ganze Phase.
-     */
-    val RhythmDotColor = 300L
-
-    /**
      * Auf- und Zuklappen: Höhe bzw. Breite von Expandern, Abschnitten und der Tab-Leiste
      * (`animateContentSize`) und von aufgedeckten Teilen (`expand…`/`shrink…`). Die Default-Spring
      * von Compose (weich, ohne Bounce), hier nur benannt, damit alle Stellen denselben Wert tragen.
