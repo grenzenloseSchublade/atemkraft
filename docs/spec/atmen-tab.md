@@ -10,6 +10,8 @@ Regeln: [STYLEGUIDE MUSTER-09](../STYLEGUIDE.md#muster) (Suche), MUSTER-12 (Filt
 4. Kopf **„Übungen“** (`SectionHeader`, weiß) mit der **Filterreihe** darunter. Kopf, Reihe und – mit Filter – der Trefferstatus bzw. – ohne Filter – das erste Gruppenlabel sind ein Listeneintrag: Die Chips bringen über und unter sich `GapSmall` Tippfläche mit; sichtbar bleiben oben `HeaderGap` (Spacer `GapTiny`) und unten bis zum Gruppenlabel `SectionGap` (`top = SectionGap − GapSmall`).
 5. Die vier **Familien** als Gruppen: `GroupLabel` in der Familienfarbe (`top = SectionGap − ListGap`, weil `spacedBy(ListGap)` den Rest setzt), darunter je Übung eine `ExerciseCard` (Rand `accentBorder(Familienfarbe)`).
 
+**Klebende Leiste** (`StuckSectionBar`, Eigentümer 2026-10-31): Rutscht der Kopf „Übungen“ bzw. „Passende Übungen“ unter den oberen Rand, klebt über der Liste (Slot `overlay` des `TabListScaffold`) eine Zeile „Übungen · Beruhigen“: Kopf weiß, Gruppe in ihrer Farbe (Familie; Anlass weiß mit seinem Chip-Namen), `titleSmall` wie das `GroupLabel`, Rand `ScreenPadding`, oben und unten `GapSmall`, Fläche `background`, unten die Haarlinie (der `ScreenHeader` zeigt seine dann nicht). Die Gruppe ist die des Eintrags unter der Unterkante der Leiste; sie wechselt ohne Bewegung (MOTION-02). Bei großer Schrift rückt die Gruppe ganz in eine zweite Zeile (`FlowRow`, kein Wortbruch). Für TalkBack unsichtbar (Kopf und Labels stehen als Überschriften in der Liste); Wischen auf ihr scrollt die Liste, ein Tipp fällt nicht auf die Karte darunter. Die Filterreihe klebt nicht.
+
 Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder nichts; dann steht die Liste wie oben ([suche.md](suche.md), „Zwei Ebenen, ein Zustand“).
 
 ## Willkommenskarte (MUSTER-13, `WelcomeCard`)

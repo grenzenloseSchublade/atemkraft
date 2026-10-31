@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -15,9 +16,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -177,14 +181,60 @@ fun HomeScreen(
     val highlighted = shownSituations.map { it.situation }.toSet()
     val familyExercises = catalog.exercisesByFamily.toMap()
     val filtered = remember(catalog.exercisesByFamily, filters, catalog.yogaExerciseIds) { ExerciseFilters.apply(catalog.exercisesByFamily, filters, catalog.yogaExerciseIds) }
-    // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie.
+    // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten).
+    val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
+    // Klebende Leiste „Übungen · Beruhigen“ (Nutzer 2026-10-31): welche Gruppe zu welchem Eintrag
+    // gehört, nach den Schlüsseln der Liste.
+    val anchorKey = if (filtering) "results-head" else "exercises"
+    val groups: Map<Any, StuckGroup> = buildMap {
+        if (filtering) {
+            shownSituations.forEach { rec ->
+                val group = StuckGroup(rec.shortLabel, MaterialTheme.colorScheme.onBackground)
+                val key = "rec-${rec.situation.name}"
+                put(key, group)
+                put("$key-links", group)
+                rec.exerciseIds.forEach { put("$key-$it", group) }
+            }
+            shownAreas.forEach { area ->
+                val group = StuckGroup(area.family.title(), area.family.color())
+                val key = "area-${area.family.name}"
+                put(key, group)
+                familyExercises[area.family].orEmpty().forEach { put("$key-${it.id}", group) }
+            }
+        } else {
+            filtered.forEach { (family, exercises) ->
+                val group = StuckGroup(family.title(), family.color())
+                if (family == firstFamily) put("exercises", group)
+                put("header-${family.name}", group)
+                exercises.forEach { put(it.id, group) }
+            }
+        }
+    }
+    val listState = rememberLazyListState()
+    var barHeight by remember { mutableIntStateOf(0) }
+    val currentGroups by rememberUpdatedState(groups)
+    val currentAnchor by rememberUpdatedState(anchorKey)
+    val stuck by remember(listState) { derivedStateOf { stuckAt(listState, currentAnchor, currentGroups, barHeight) } }
+    // Der Kopf steht fest über der Liste; liegt Inhalt darunter, zeigt er eine Haarlinie – oder
+    // die klebende Leiste darunter zeigt sie.
     TabListScaffold(
         header = { scrolled ->
             ScreenHeader(
                 title = stringResource(R.string.tab_breathe),
                 action = { SettingsAction(onClick = actions.onOpenSettings) },
-                scrolled = scrolled,
+                scrolled = scrolled && stuck == null,
             )
+        },
+        listState = listState,
+        overlay = {
+            stuck?.let {
+                StuckSectionBar(
+                    title = stringResource(if (filtering) R.string.home_results else R.string.home_all_exercises),
+                    group = it.group,
+                    listState = listState,
+                    onHeight = { height -> barHeight = height },
+                )
+            }
         },
     ) {
         // Erster Start: eine ruhige, abweisbare Karte statt eines Onboardings (Nutzer 2026-10-24).
@@ -273,8 +323,6 @@ fun HomeScreen(
                 }
             }
         } else {
-            // Ohne Filter steht das erste Gruppenlabel im Eintrag des Kopfs (siehe unten).
-            val firstFamily = filtered.firstOrNull()?.first?.takeIf { filters.isEmpty() }
             // Kopf „Übungen“, Filterreihe und Trefferstatus bzw. das erste Gruppenlabel in einem
             // Eintrag: Die Filter-Chips bringen über und unter sich je GapSmall Tippfläche mit; mit
             // dem ListGap der Liste stünden sie sichtbar 20 dp vom Kopf ab. So sind es oben 12
