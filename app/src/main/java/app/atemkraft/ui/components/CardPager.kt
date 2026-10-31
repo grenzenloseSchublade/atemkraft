@@ -43,7 +43,9 @@ private const val PAGE_FRACTION = 0.86f
  *
  * **Alle Karten gleich hoch:** Vor dem Pager misst eine stille Probe jede Karte in der Kartenbreite
  * (ohne Semantik, nie platziert); die höchste setzt die Höhe – beim Wischen springt nichts. Jede
- * [page] füllt ihre Fläche (`fillMaxSize`), damit Karten gleich groß erscheinen.
+ * [page] füllt ihre Fläche (`fillMaxSize`), damit Karten gleich groß erscheinen. Mit [sameHeightAs]
+ * misst die Probe auch diese Karten mit: Mehrere Pager, zwischen denen man umschaltet (Kreationen |
+ * Tut mir gut), stehen gleich hoch, beim Umschalten springt nichts (Eigentümer 2026-10-31).
  *
  * Darunter (`GapSmall`) eine Zeile: links leise die Lage „2 / 7“ (`bodySmall` `SECONDARY`), TalkBack
  * hört „Karte 2 von 7“ (bei einer Karte entfällt sie); rechts mit [onAll] der Verweis [allLabel]
@@ -60,6 +62,7 @@ fun CardPager(
     key: ((Int) -> Any)? = null,
     allLabel: String? = null,
     onAll: (() -> Unit)? = null,
+    sameHeightAs: CardSet? = null,
     page: @Composable (Int) -> Unit,
 ) {
     val pages = pagerPageCount(pageCount, onAll != null)
@@ -74,6 +77,7 @@ fun CardPager(
             val tallest = subcompose("probe") {
                 // Die Probe wird nur gemessen, nie platziert: ohne Semantik, sonst stünde jede Karte doppelt im Baum.
                 repeat(pages) { index -> Box(Modifier.clearAndSetSemantics {}) { content(index) } } // Abweichung A11Y-02: stille Messprobe
+                sameHeightAs?.let { set -> repeat(set.count) { index -> Box(Modifier.clearAndSetSemantics {}) { set.card(index) } } } // Abweichung A11Y-02: stille Messprobe
             }.maxOfOrNull { it.measure(probe).height } ?: 0
             val pager = subcompose("pager") {
                 HorizontalPager(
@@ -113,6 +117,12 @@ fun CardPager(
         }
     }
 }
+
+/**
+ * Karten, an deren Höhe sich ein [CardPager] mit ausrichtet ([CardPager] `sameHeightAs`): [count]
+ * Karten, [card] baut die Karte Nummer i (nur gemessen, nie gezeigt; Klicks dürfen leer sein).
+ */
+class CardSet(val count: Int, val card: @Composable (Int) -> Unit)
 
 /** Seiten des Pagers: die Einträge und mit „Alle ansehen“ eine Karte mehr. */
 fun pagerPageCount(entries: Int, withAll: Boolean): Int = entries + if (withAll) 1 else 0

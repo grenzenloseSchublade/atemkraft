@@ -1,13 +1,16 @@
 package app.atemkraft.ui.own
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
@@ -23,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
@@ -32,6 +36,7 @@ import app.atemkraft.domain.defaultMinutes
 import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.CardHeader
 import app.atemkraft.ui.components.CardPager
+import app.atemkraft.ui.components.CardSet
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CharacterChip
@@ -44,6 +49,7 @@ import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.SegmentedChoiceRow
 import app.atemkraft.ui.components.accentBorder
 import app.atemkraft.ui.components.color
+import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
@@ -81,6 +87,9 @@ internal fun OwnCollections(
         SegmentedChoiceRow(items = OwnCollection.entries, selected = selected, onSelect = onSelect) { collection ->
             if (collection == OwnCollection.CREATIONS) creations else favoritesLabel
         }
+        // Beide Sammlungen stehen gleich hoch: Jeder Pager misst die Karten der anderen mit.
+        val creationCards = CardSet(patterns.size) { index -> CreationCard(patterns[index], onClick = {}, onEdit = {}, onDelete = {}) }
+        val favoriteCards = CardSet(favorites.size) { index -> FavoriteCard(favorites[index], onClick = {}) }
         when (selected) {
             OwnCollection.CREATIONS -> CardPager(
                 pageCount = patterns.size + 1,
@@ -88,6 +97,7 @@ internal fun OwnCollections(
                 key = { index -> if (index == 0) NEW_PATTERN_KEY else patterns[index - 1].id },
                 allLabel = stringResource(R.string.own_all_count, patterns.size),
                 onAll = actions.onOpenAllCreations.takeIf { patterns.isNotEmpty() },
+                sameHeightAs = favoriteCards,
             ) { index ->
                 if (index == 0) {
                     NewPatternCard(onClick = actions.onNewPattern, empty = patterns.isEmpty())
@@ -111,6 +121,7 @@ internal fun OwnCollections(
                     key = { favorites[it].id },
                     allLabel = stringResource(R.string.own_all_count, favorites.size),
                     onAll = actions.onOpenAllFavorites,
+                    sameHeightAs = creationCards,
                 ) { index ->
                     val exercise = favorites[index]
                     FavoriteCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) })
@@ -160,10 +171,10 @@ private fun NewPatternCard(onClick: () -> Unit, empty: Boolean) {
 }
 
 /**
- * Karte eines gespeicherten Musters: Titelzeile ([CardHeader]) mit Charakter-Chip, Stift (Editor
- * für dieses Muster) und Löschen (zweistufig, MUSTER-05, außen); darunter die Kurve eines Atemzugs
- * mit ihrer Phasenzeile ([RhythmCurve], ruhend – die Karte zeigt die Form, kein Takt), unten
- * „ca. 5 min“. Ein Tipp auf die Karte öffnet die Detailseite. Rand `secondary` wie das Muster des
+ * Karte eines gespeicherten Musters: Titelzeile ([CardHeader]) mit Stift (Editor für dieses
+ * Muster) und Löschen (zweistufig, MUSTER-05, außen); darunter die Kurve eines Atemzugs mit ihrer
+ * Phasenzeile ([RhythmCurve], ruhend – die Karte zeigt die Form, kein Takt), unten „ca. 5 min“ und
+ * der Charakter-Chip. Ein Tipp auf die Karte öffnet die Detailseite. Rand `secondary` wie das Muster des
  * Tages.
  */
 @Composable
@@ -172,42 +183,45 @@ private fun CreationCard(pattern: SavedPattern, onClick: () -> Unit, onEdit: () 
     val name = exercise.name
     Card(onClick = onClick, modifier = Modifier.fillMaxSize(), border = accentBorder(MaterialTheme.colorScheme.secondary)) {
         Column(modifier = Modifier.fillMaxSize().padding(Dimens.CardPadding)) {
-            CardHeader(
-                title = name,
-                chips = { CharacterChip(intense = exercise.caution, activating = exercise.activating) },
-                actionCount = 2,
-            ) {
-                Row {
-                    AppIconButton(onClick = onEdit) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = stringResource(R.string.cd_pattern_edit_named, name),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
-                        )
+            // Reserve als Hülle, nicht als Modifier des Kopfs: Eine Mindesthöhe im Kopf drückte die Chips zusammen.
+            Box(Modifier.heightIn(min = titleReserve())) {
+                CardHeader(
+                    title = name,
+                    actionCount = 2,
+                ) {
+                    Row {
+                        AppIconButton(onClick = onEdit) {
+                            Icon(
+                                Icons.Filled.Edit,
+                                contentDescription = stringResource(R.string.cd_pattern_edit_named, name),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                            )
+                        }
+                        ConfirmIconButton(name = name, description = stringResource(R.string.cd_pattern_delete, name), onConfirm = onDelete)
                     }
-                    ConfirmIconButton(name = name, description = stringResource(R.string.cd_pattern_delete, name), onConfirm = onDelete)
                 }
             }
-            CardBody(exercise)
+            CardBody(exercise) { CharacterChip(intense = exercise.caution, activating = exercise.activating) }
         }
     }
 }
 
 /**
- * Karte einer Übung aus „Tut mir gut“: Titelzeile mit ⚠-Chip bei Vorsicht und ◉ als Zeichen
- * ([PersonalMarkIndicator]), darunter Kurve und Dauer wie bei den Kreationen; Rand in der
+ * Karte einer Übung aus „Tut mir gut“: Titelzeile mit ◉ als Zeichen ([PersonalMarkIndicator]),
+ * darunter Kurve, Dauer und bei Vorsicht der ⚠-Chip wie bei den Kreationen; Rand in der
  * Familienfarbe wie jede Übungskarte. Ein Tipp öffnet die Detailseite.
  */
 @Composable
 private fun FavoriteCard(exercise: Exercise, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxSize(), border = accentBorder(exercise.family.color())) {
         Column(modifier = Modifier.fillMaxSize().padding(Dimens.CardPadding)) {
-            CardHeader(
-                title = exercise.name,
-                chips = if (exercise.caution) ({ CautionChip() }) else null,
-                indicator = { PersonalMarkIndicator() },
-            )
-            CardBody(exercise)
+            Box(Modifier.heightIn(min = titleReserve())) {
+                CardHeader(
+                    title = exercise.name,
+                    indicator = { PersonalMarkIndicator() },
+                )
+            }
+            CardBody(exercise, chips = if (exercise.caution) ({ CautionChip() }) else null)
         }
     }
 }
@@ -219,18 +233,39 @@ private fun FavoriteCard(exercise: Exercise, onClick: () -> Unit) {
  * 2026-10-31: „die Abstände sind sehr gering“), Phasenzeile → Dauer `GapTiny` wie Titel → Metazeile.
  */
 @Composable
-private fun ColumnScope.CardBody(exercise: Exercise) {
+private fun ColumnScope.CardBody(exercise: Exercise, chips: (@Composable () -> Unit)? = null) {
     val rhythm = remember(exercise) { exercise.breathRhythm() }
     Spacer(Modifier.height(Dimens.SectionGap))
     if (rhythm != null) {
-        RhythmCurve(rhythm = rhythm, running = false, lineGap = Dimens.SectionGap)
+        RhythmCurve(rhythm = rhythm, running = false, lineGap = Dimens.SectionGap, lineReserve = RESERVED_LINES)
         Spacer(Modifier.height(Dimens.GapTiny))
     } else {
         ExerciseCurve(exercise)
         Spacer(Modifier.height(Dimens.SectionGap))
     }
-    SecondaryText(stringResource(R.string.duration_approx, exercise.defaultMinutes()))
+    // Chips unten in voller Kartenbreite, nicht im Kopf: Neben Stift und Löschen blieb bei großer
+    // Schrift zu wenig Platz, „sanft aktivierend“ brach um (LAYOUT-03, 2026-10-31).
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
+        verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        SecondaryText(stringResource(R.string.duration_approx, exercise.defaultMinutes()))
+        chips?.invoke()
+    }
 }
+
+/**
+ * Feste Plätze der Karteikarte (Eigentümer 2026-10-31): Titelzeile und Phasenzeile halten je
+ * [RESERVED_LINES] Zeilen frei, so steht die Kurve in jeder Karte an derselben Stelle, kurzer oder
+ * langer Name. Längeres wächst trotzdem (kein Wort bricht, LAYOUT-03); die gleiche Kartenhöhe über
+ * beide Sammlungen setzt dann der [CardPager].
+ */
+private const val RESERVED_LINES = 2
+
+/** Höhe zweier Titelzeilen (`titleMedium` wie [CardTitle] im [CardHeader]), gemessen mit der aktuellen Schrift. */
+@Composable
+private fun titleReserve(): Dp = rememberFirstLineHeight(MaterialTheme.typography.titleMedium) * RESERVED_LINES
 
 /** Ruhige Fläche ohne Aktion (Leerzustand „Tut mir gut“), gebaut wie die Karte „Neues Muster“. */
 @Composable
