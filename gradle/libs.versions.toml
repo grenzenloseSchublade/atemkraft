@@ -6,7 +6,7 @@ activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 composeBom = "2026.09.00"
 datastore = "1.1.1"
-kotlinxSerialization = "1.11.0"
+kotlinxSerialization = "1.12.0"
 # Nur für Tests (virtuelle Zeit); zur Laufzeit lösen Lifecycle/Compose transitiv 1.9.0 auf (THIRD_PARTY_LICENSES.md).
 kotlinxCoroutines = "1.11.0"
 navigationCompose = "2.10.2"
