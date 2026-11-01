@@ -5,7 +5,7 @@ coreKtx = "1.19.1"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 composeBom = "2026.09.00"
-datastore = "1.1.1"
+datastore = "1.3.0"
 kotlinxSerialization = "1.11.0"
 # Nur für Tests (virtuelle Zeit); zur Laufzeit lösen Lifecycle/Compose transitiv 1.9.0 auf (THIRD_PARTY_LICENSES.md).
 kotlinxCoroutines = "1.11.0"
