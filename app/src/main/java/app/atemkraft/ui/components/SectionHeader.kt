@@ -1,6 +1,9 @@
 package app.atemkraft.ui.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector2D
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,12 +21,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.invalidateMeasurement
+import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -33,7 +54,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
@@ -45,6 +68,10 @@ import app.atemkraft.ui.theme.FamilyVagal
 import app.atemkraft.ui.theme.HeadingRing
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
+import app.atemkraft.ui.theme.rememberAnimationsEnabled
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * Farbe des Kapiteltitels an Stelle [index] im Tab „Lernen“ (FARBE-07): reihum durch
@@ -310,6 +337,8 @@ private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
  * erst den Kopf an die Stelle der Kopie. Die Kopie zeigt nur die Titelzeile, ohne Teaser
  * ([SectionHeader]). [headerModifier] gilt nur für das Original.
  *
+ * Zuklappen gleitet nur über den sichtbaren Teil des Inhalts ([CollapsibleBody]).
+ *
  * Nicht im Meditations-Tab: Dort kostete jede Höhenänderung den Zeitring Platz (LAYOUT-08).
  */
 @Composable
@@ -360,17 +389,146 @@ fun CollapsibleSection(
                 trailingAction = trailingAction,
             )
         }
-        // Volle Breite, damit beim Aufklappen nur die Höhe gleitet, nicht auch die Breite.
-        Column(modifier = Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
-            if (expanded != false) {
-                Column(
-                    modifier = Modifier.padding(top = headerGap),
-                    verticalArrangement = Arrangement.spacedBy(contentSpacing),
-                    content = content,
-                )
+        CollapsibleBody(open = expanded != false) {
+            Column(
+                modifier = Modifier.padding(top = headerGap),
+                verticalArrangement = Arrangement.spacedBy(contentSpacing),
+                content = content,
+            )
+        }
+    }
+}
+
+/**
+ * Inhalt einer [CollapsibleSection] unter dem Kopf. Aufklappen und Größenwechsel im Inhalt gleiten
+ * wie bisher (`animateContentSize`, [Motion.Disclosure]); volle Breite, damit nur die Höhe gleitet.
+ *
+ * Zuklappen (Eigentümer 2026-11-06, am A54 holprig): Der Inhalt bleibt stehen und wird unten
+ * abgeschnitten, bis er weg ist – kein leeres Loch unter dem Kopf. Die Höhe gleitet nur über den
+ * Teil, der beim Tipp zu sehen ist ([visiblePart]); was unter dem unteren Rand liegt, fällt sofort
+ * weg, unsichtbar. So rückt der nächste Abschnitt höchstens eine Bildschirmhöhe nach, statt über
+ * den ganzen (mehrere Bildschirme langen) Inhalt hereinzuschießen. Danach ist der Inhalt aus dem
+ * Baum (TalkBack, Fokus). Ohne Animationen (MOTION-02) sofort zu.
+ */
+@Composable
+private fun CollapsibleBody(open: Boolean, content: @Composable () -> Unit) {
+    val animate = rememberAnimationsEnabled()
+    val body = remember { CollapsibleBodyState(open) }
+    // Offen steht der Inhalt; zu bleibt er, bis das Zuklappen ihn ganz abgeschnitten hat.
+    if (open && !body.shown) body.shown = true
+    if (!open && !animate && body.shown) body.shown = false
+    Box(Modifier.fillMaxWidth().clipToBounds().then(CollapseElement(closing = !open && body.shown, body = body))) {
+        // Nach dem Zuklappen neu: Das nächste Aufklappen gleitet von 0, nicht vom Rest des alten Inhalts.
+        key(body.generation) {
+            Column(Modifier.fillMaxWidth().animateContentSize(Motion.Disclosure)) {
+                if (body.shown) content()
             }
         }
     }
+}
+
+/** Ob der Inhalt einer [CollapsibleBody] komponiert ist; [generation] zählt jedes beendete Zuklappen. */
+@Stable
+private class CollapsibleBodyState(shown: Boolean) {
+    var shown by mutableStateOf(shown)
+    var generation by mutableIntStateOf(0)
+
+    fun closed() {
+        shown = false
+        generation++
+    }
+}
+
+private data class CollapseElement(val closing: Boolean, val body: CollapsibleBodyState) : ModifierNodeElement<CollapseNode>() {
+    override fun create() = CollapseNode(closing, body)
+
+    override fun update(node: CollapseNode) = node.update(closing, body)
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "collapsibleBody"
+        properties["closing"] = closing
+    }
+}
+
+/**
+ * Zeigt den Inhalt beim Zuklappen nur so hoch wie [height]: Beim ersten Platzieren nach dem Tipp
+ * misst er den sichtbaren Teil ([visiblePart]) und gleitet von dort mit [Motion.Disclosure] auf 0.
+ * Klappt der Abschnitt währenddessen wieder auf, gleitet er zurück auf die volle Höhe.
+ */
+private class CollapseNode(private var closing: Boolean, private var body: CollapsibleBodyState) :
+    Modifier.Node(),
+    LayoutModifierNode {
+    /** Gezeigte Höhe, solange sie gleitet; null: so hoch wie der Inhalt. */
+    private var height by mutableStateOf<Animatable<IntSize, AnimationVector2D>?>(null)
+
+    /** Zuklappen hat begonnen, der sichtbare Teil ist noch nicht gemessen. */
+    private var pending = closing
+
+    /** Volle Höhe des Inhalts beim letzten Messen. */
+    private var full = 0
+
+    /** Das laufende Gleiten; ein neues bricht es ab, damit kein altes Ende das neue überschreibt. */
+    private var job: Job? = null
+
+    fun update(closing: Boolean, body: CollapsibleBodyState) {
+        this.body = body
+        if (closing == this.closing) return
+        this.closing = closing
+        pending = closing
+        val shrinking = height
+        when {
+            closing -> invalidateMeasurement()
+
+            // Fertig: Der Inhalt ist schon aus der Komposition, erst jetzt wieder ohne Grenze.
+            !body.shown || shrinking == null -> {
+                job?.cancel()
+                height = null
+            }
+
+            // Wieder aufgeklappt, während er schrumpfte: zurück auf die volle Höhe.
+            else -> glide {
+                shrinking.animateTo(IntSize(0, full), Motion.Disclosure)
+                height = null
+            }
+        }
+    }
+
+    private fun glide(block: suspend () -> Unit) {
+        job?.cancel()
+        job = coroutineScope.launch { block() }
+    }
+
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val placeable = measurable.measure(constraints)
+        full = placeable.height
+        val shown = height?.value?.height?.coerceIn(0, placeable.height) ?: placeable.height
+        return layout(placeable.width, shown) {
+            if (pending) coordinates?.let { shrinkFrom(visiblePart(it, placeable.height)) }
+            placeable.place(0, 0)
+        }
+    }
+
+    private fun shrinkFrom(visible: Int) {
+        pending = false
+        val shrinking = Animatable(IntSize(0, visible), IntSize.VectorConverter)
+        height = shrinking
+        glide {
+            shrinking.animateTo(IntSize.Zero, Motion.Disclosure)
+            // Höhe bleibt 0, bis der Inhalt weg ist (update): sonst stünde er ein Bild lang ganz da.
+            body.closed()
+        }
+    }
+}
+
+/**
+ * Wie viel von einem Inhalt der Höhe [full] ab seiner Oberkante zu sehen ist: bis zum unteren Rand
+ * des sichtbaren Bereichs – Scroll-Spalte oder Liste (sie schneiden ab, [boundsInRoot]), ohne sie
+ * das Fenster.
+ */
+private fun visiblePart(coordinates: LayoutCoordinates, full: Int): Int {
+    val top = coordinates.positionInRoot().y
+    val bottom = minOf(coordinates.boundsInRoot().bottom, coordinates.findRootCoordinates().size.height.toFloat())
+    return (bottom - top).roundToInt().coerceIn(0, full)
 }
 
 /**

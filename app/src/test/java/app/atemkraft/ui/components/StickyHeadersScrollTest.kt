@@ -1,5 +1,7 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.animation.core.AnimationVector2D
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
@@ -13,21 +15,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import kotlin.math.abs
 
 /**
  * Klebende Überschriften in einer echten Liste (Eigentümer 2026-10-31: „beim Hochscrollen verliert
@@ -122,7 +130,7 @@ class StickyHeadersScrollTest {
                 PushScaffold(onBack = {}, scrollState = scroll) {
                     CollapsibleSection(title = "Vorher", sticky = Sticky("before", level = 1)) { Spacer(Modifier.height(100.dp)) }
                     CollapsibleSection(title = "Offen", expanded = open, onExpandedChange = { open = it }, teaser = TEASER) {
-                        Spacer(Modifier.fillMaxWidth().height(1500.dp))
+                        Spacer(Modifier.fillMaxWidth().height(1500.dp).testTag(BODY))
                     }
                     CollapsibleSection(title = "Danach", expanded = false) {}
                     Spacer(Modifier.height(2000.dp))
@@ -151,9 +159,22 @@ class StickyHeadersScrollTest {
         rule.runOnIdle { runBlocking { scroll.scrollTo(1000) } }
         rule.waitForIdle()
 
-        // Tipp auf die Kopie: zu, und der echte Kopf steht genau dort, wo die Kopie stand.
+        // Tipp auf die Kopie: zu, und der echte Kopf steht genau dort, wo die Kopie stand. Bild für
+        // Bild: Der Inhalt bleibt erst stehen (kein Loch unter dem Kopf), und „Danach“ steht nach
+        // der Zeit für eine Bildschirmhöhe still – gleitet wird nur der sichtbare Teil (A54: holprig).
+        rule.mainClock.autoAdvance = false
         rule.onNode(isCopy).performClick()
+        repeat(FRAMES) { if (open) rule.mainClock.advanceTimeByFrame() }
+        rule.mainClock.advanceTimeByFrame()
+        val firstFrame = rule.onAllNodes(hasTestTag(BODY)).fetchSemanticsNodes().sumOf { it.boundsInRoot.height.toDouble() }
+        val screen = with(rule.density) { 640.dp.toPx() }
+        val oneScreen = Motion.Disclosure.vectorize(IntSize.VectorConverter)
+            .getDurationNanos(AnimationVector2D(0f, screen), AnimationVector2D(0f, 0f), AnimationVector2D(0f, 0f)) / 1_000_000
+        rule.mainClock.advanceTimeBy(oneScreen + 2 * FRAME_MS)
+        val nextAfter = next.fetchSemanticsNode().positionInRoot.y
+        rule.mainClock.autoAdvance = true
         rule.waitForIdle()
+        assertTrue(firstFrame > 0 && abs(nextAfter - next.fetchSemanticsNode().positionInRoot.y) <= 1f)
         assertFalse(open)
         assertEquals(copy.top, header.fetchSemanticsNode().boundsInRoot.top, 1f)
         assertEquals(0, copies().size)
@@ -191,5 +212,8 @@ class StickyHeadersScrollTest {
         const val STEPS = 60
         const val TEASER = "Ein Teaser über zwei Zeilen, der als gelesene Einleitung nicht oben mitklebt, nur der Titel."
         val COPY = stickyCopyTag("")
+        const val BODY = "body"
+        const val FRAMES = 10
+        const val FRAME_MS = 16L
     }
 }
