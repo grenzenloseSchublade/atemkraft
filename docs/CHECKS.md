@@ -115,6 +115,7 @@ Erzeugt aus `scripts/check-style.sh --list` (`check-table` meldet Abweichungen; 
 | `VoiceArchiveSafetyTest` | Stimmen-Archiv: falscher Hash, Übergröße, `../`, Symlink, zu viele Einträge, zu viel Inhalt – abgelehnt, Staging-Ordner gelöscht, nichts daneben | SEC-NET-03, -04 |
 | `ThemeContrastTest` | Kontrastwerte der Tabellen STYLEGUIDE §2.1 und §2.2 aus den Tokens nachgerechnet: Text ≥ 4,5, großer Text und Grafik ≥ 3, Abweichung zur Tabelle ≤ 0,05 | FARBE-03 |
 | `StickyHeadersTest` | Rechnung der klebenden Überschriften (`pinHeaders`): Stehen an der Linie, Gruppe unter dem Abschnitt, Hinausschieben durch die nächste, nie eine Gruppe vor dem Abschnitt, zu hoher Stapel nur die tiefste Ebene | LAYOUT-02, KOMP-01 |
+| `StickyHeadersScrollTest` | Klebende Köpfe in echter Liste und Spalte (Robolectric): Gruppe folgt beim Scrollen und nach Sprüngen; aufklappbarer Kopf klebt offen ab seiner Tippfläche (ohne Rand), ein Tipp auf die Kopie klappt zu, ohne dass der Kopf springt, zu klebt er nicht | LAYOUT-02, MUSTER-03 |
 | `ExerciseFilterTest` | jeder Filter trifft mindestens 3 und nicht alle Übungen, „Bis 3 min“ wie am Startknopf, UND, leere Familien fallen weg | MUSTER-12 |
 | ktlint / Lint / Tests | `ktlintCheck` (+ compose-rules), `lintDebug`, `testDebugUnitTest` | TEXT-01, CODE-02 … -04, -06, -07 |
 | `verify-apk`, `release-verify` (mit `verify-release-body`), `check-github`, `sec-*` | [SECURITY.md, Automatische Prüfung](SECURITY.md#automatische-pruefung) | SEC-* |

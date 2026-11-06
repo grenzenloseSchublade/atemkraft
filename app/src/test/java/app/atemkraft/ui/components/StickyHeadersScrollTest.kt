@@ -1,5 +1,6 @@
 package app.atemkraft.ui.components
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -8,14 +9,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,9 +47,7 @@ class StickyHeadersScrollTest {
     private fun cardIndex(group: Int, card: Int) = 1 + group * (CARDS + 1) + 1 + card
 
     /** Schlüssel der sichtbaren Kopien oben (mit Inhalt, also Höhe), sortiert: „Übungen“ und höchstens eine Gruppe. */
-    private fun pinned(): List<String> = rule.onAllNodes(SemanticsMatcher("Kopie") { node -> node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(COPY) == true })
-        .fetchSemanticsNodes()
-        .filter { it.boundsInRoot.height > 0f }
+    private fun pinned(): List<String> = copies()
         .map { it.config[SemanticsProperties.TestTag].removePrefix(COPY) }
         .sorted()
 
@@ -100,6 +106,59 @@ class StickyHeadersScrollTest {
         rule.waitForIdle()
         expect("Ausgleichen")
     }
+
+    /**
+     * Aufklappbarer Abschnitt in einer Spalte (Eigentümer 2026-11-06): Offen klebt sein Kopf, und die
+     * Kopie zeigt nur die Tippfläche, ohne den Rand darüber. Ein Tipp auf die Kopie klappt zu, ohne
+     * dass der Kopf springt – das Original steht danach, wo die Kopie stand. Zu klebt er nicht.
+     */
+    @Test
+    fun openSectionSticksAndItsCopyClosesWithoutJump() {
+        val scroll = ScrollState(0)
+        var open by mutableStateOf(true)
+        rule.setContent {
+            Box(Modifier.size(360.dp, 640.dp)) {
+                PushScaffold(onBack = {}, scrollState = scroll) {
+                    CollapsibleSection(title = "Vorher", sticky = Sticky("before", level = 1)) { Spacer(Modifier.height(100.dp)) }
+                    CollapsibleSection(title = "Offen", expanded = open, onExpandedChange = { open = it }) {
+                        Spacer(Modifier.fillMaxWidth().height(1500.dp))
+                    }
+                    CollapsibleSection(title = "Danach", expanded = false) {}
+                    Spacer(Modifier.height(2000.dp))
+                }
+            }
+        }
+        val header = rule.onNode(hasText("Offen") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        // Die Tippfläche, solange sie zu sehen ist (danach liegt sie über dem Rand, ihre Bounds sind beschnitten).
+        val tapHeight = header.fetchSemanticsNode().boundsInRoot.height
+        rule.runOnIdle { runBlocking { scroll.scrollTo(1000) } }
+        rule.waitForIdle()
+
+        // Offen: genau eine Kopie, so hoch wie die Tippfläche – kein Rand über ihr.
+        val copies = copies()
+        assertEquals(1, copies.size)
+        val copy = copies.single().boundsInRoot
+        assertEquals(tapHeight, copy.height, 1f)
+
+        // Tipp auf die Kopie: zu, und der echte Kopf steht genau dort, wo die Kopie stand.
+        rule.onNode(isCopy).performClick()
+        rule.waitForIdle()
+        assertFalse(open)
+        assertEquals(copy.top, header.fetchSemanticsNode().boundsInRoot.top, 1f)
+        assertEquals(0, copies().size)
+
+        // Zu klebt er nicht, auch wenn er oben hinausscrollt.
+        rule.runOnIdle { runBlocking { scroll.scrollBy(100f) } }
+        rule.waitForIdle()
+        assertEquals(0, copies().size)
+    }
+
+    private val isCopy = SemanticsMatcher("Kopie") { node -> node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(COPY) == true }
+
+    /** Sichtbare Kopien oben (mit Höhe). */
+    private fun copies() = rule.onAllNodes(isCopy)
+        .fetchSemanticsNodes()
+        .filter { it.boundsInRoot.height > 0f }
 
     private fun setList() {
         rule.setContent {

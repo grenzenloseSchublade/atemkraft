@@ -28,7 +28,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -57,6 +56,7 @@ import app.atemkraft.ui.components.ScreenSubtitle
 import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.Sticky
 import app.atemkraft.ui.components.WarnText
+import app.atemkraft.ui.components.rememberStickyCover
 import app.atemkraft.ui.components.sanskritText
 import app.atemkraft.ui.theme.BODY
 import app.atemkraft.ui.theme.BreathExhale
@@ -95,13 +95,6 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
     var content by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var focusDone by rememberSaveable { mutableStateOf(focusId == null) }
     val topMarginPx = with(LocalDensity.current) { Dimens.CardPadding.roundToPx() }
-    var patternsHeader by remember { mutableIntStateOf(0) }
-    LaunchedEffect(focusDone) {
-        if (focusDone) return@LaunchedEffect
-        val y = snapshotFlow { focusY }.first { it >= 0 }
-        scrollState.animateScrollTo((y - topMarginPx - patternsHeader).coerceAtLeast(0))
-        focusDone = true
-    }
 
     PushScaffold(
         onBack = onBack,
@@ -109,6 +102,15 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
         scrollState = scrollState,
         contentModifier = Modifier.onPlaced { content = it },
     ) {
+        // Die Karte steht unter dem klebenden Kopf „Die Muster“: Der Sprung zieht ab, was dort oben klebt.
+        val cover = rememberStickyCover()
+        LaunchedEffect(focusDone) {
+            if (focusDone) return@LaunchedEffect
+            val y = snapshotFlow { focusY }.first { it >= 0 }
+            val top = y - topMarginPx
+            scrollState.animateScrollTo((top - cover(top)).coerceAtLeast(0))
+            focusDone = true
+        }
         ScreenSubtitle(Atemlehre.intro)
 
         CollapsibleSection(title = stringResource(R.string.atemlehre_phases), sticky = Sticky("phases", level = 1)) {
@@ -126,10 +128,9 @@ fun AtemlehreScreen(onBack: () -> Unit, onOpenExercise: (String) -> Unit, focus:
         // Jedes Muster als eigene Karte (Rhythmusbild, Takt, Titel, Teaser): So ist klar, welcher
         // Balken zu welchem Titel gehört. Die Lage der Karten wird gegen den Scroll-Inhalt
         // gemessen und dient als Sprungziel.
-        // Der Kopf „Muster“ klebt; der Sprung zur Karte rechnet seine Höhe ab (patternsHeader).
+        // Der Kopf „Muster“ klebt; der Sprung zur Karte rechnet ihn ab (rememberStickyCover).
         CollapsibleSection(
             title = stringResource(R.string.atemlehre_patterns),
-            headerModifier = Modifier.onSizeChanged { patternsHeader = it.height },
             sticky = Sticky("patterns", level = 1),
         ) {
             Atemlehre.patterns.forEach { pattern ->

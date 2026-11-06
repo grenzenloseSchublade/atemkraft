@@ -19,8 +19,10 @@ ktlint_standard_no-wildcard-imports = enabled
 ktlint_function_naming_ignore_when_annotated_with = Composable
 # Eigene CompositionLocals: Der App-Rahmen reicht den Zustand der Tab-Leiste an die Startleisten der
 # Seiten durch, damit der Knopf auf ihrer Oberkante sitzt (ui/navigation/TabBarState.kt); die Gerüste
-# reichen den Zustand der klebenden Überschriften an Modifier.stickyHeader durch (ui/components/StickyHeaders.kt).
-compose_allowed_composition_locals = LocalTabBarState,LocalStickyHeaders
+# reichen den Zustand der klebenden Überschriften an Modifier.stickyHeader durch (ui/components/StickyHeaders.kt);
+# die Schicht oben sagt dem Kopf, dass er die Kopie ist (LocalStickyCopy: Zuklappen rückt erst das Original
+# an ihre Stelle) – derselbe Inhalt wie das Original, anders unterscheidbar ist er nicht.
+compose_allowed_composition_locals = LocalTabBarState,LocalStickyHeaders,LocalStickyCopy
 
 # Screens sind Wurzeln, kein wiederverwendbares Layout-Element: kein modifier-Parameter nötig.
 [**/*Screen.kt]

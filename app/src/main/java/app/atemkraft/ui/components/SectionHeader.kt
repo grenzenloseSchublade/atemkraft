@@ -132,12 +132,13 @@ fun SectionHeader(
     val tappable = expanded != null || onClick != null
     // Rand über der Tippfläche: GapSmall, kleiner nur mit kleinerem top (erstes Element einer Fläche mit Rand).
     val tapTop = minOf(top, Dimens.GapSmall)
+    // Oben als klebende Kopie: Zuklappen rückt erst das Original an ihre Stelle (kein Sprung).
+    val stickyCopy = LocalStickyCopy.current
     val toggle = if (onClick != null) {
         // Status in Worten (statusDescription), sonst wie gezeigt ohne Punkte; danach der Teaser.
         val spokenStatus = statusDescription ?: status?.withoutLeadingDot()?.splitAtDots()?.joinToString(", ")
         val spoken = listOfNotNull(title, spokenStatus, teaser?.splitAtDots()?.joinToString(", ")).joinToString(", ")
         Modifier
-            .padding(top = tapTop)
             .heightIn(min = Dimens.MinTouchTarget)
             .clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
             // Die Beschreibung geht dem sichtbaren Text vor; der Titel ist hier keine Überschrift.
@@ -149,25 +150,25 @@ fun SectionHeader(
         // Der Abstand über dem Kopf liegt außerhalb der Tippfläche, damit die Welle nicht im
         // Leerraum über dem Titel beginnt; innen polstert GapSmall die Zeile oben und unten.
         Modifier
-            .padding(top = tapTop)
             .heightIn(min = Dimens.MinTouchTarget)
-            .clickable(role = Role.Button) { onExpandedChange(!expanded) }
+            .clickable(role = Role.Button) {
+                if (stickyCopy != null) stickyCopy.revealOriginal { onExpandedChange(!expanded) } else onExpandedChange(!expanded)
+            }
             .semantics {
                 heading()
                 stateDescription = state
             }
     }
-    val inner = if (!tappable) {
-        Modifier.padding(top = top)
-    } else {
-        Modifier.padding(vertical = Dimens.GapSmall)
-    }
+    val inner = if (!tappable) Modifier else Modifier.padding(vertical = Dimens.GapSmall)
+    // Rand über dem Kopf: fest top, tippbar der Rand vor der Tippfläche. Darunter beginnt er
+    // sichtbar; ab da klebt er, die Kopie oben zeigt den Rand nicht (stickyStart).
+    val lead = if (!tappable) top else tapTop
     // Mitte der Tippfläche einer Kopf-Aktion auf der Mitte der ersten Titelzeile (wie der Caret).
     val above = if (!tappable) top else tapTop + Dimens.GapSmall
     TitleRow(actionCenter = above + titleLine / 2, modifier = modifier, trailingAction = trailingAction) {
         // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
         // So steckt eine Kopf-Aktion daneben nicht in einem zweiten Button.
-        Column(modifier = Modifier.weight(1f).then(toggle).then(inner)) {
+        Column(modifier = Modifier.weight(1f).padding(top = lead).stickyStart().then(toggle).then(inner)) {
             // Caret und Chevron stehen mittig neben der ersten Titelzeile, nicht mittig am ganzen
             // Block: Rutscht der Status darunter (bis zu drei Zeilen), blieben sie sonst neben dem
             // Status stehen.
@@ -239,6 +240,7 @@ fun GroupLabel(
             modifier = Modifier
                 .weight(1f)
                 .padding(top = top)
+                .stickyStart()
                 .testTag(TITLE_ROW_TITLE_TAG)
                 .semantics { heading() },
         )
@@ -264,7 +266,8 @@ internal fun TitleRow(
     Row(modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG), verticalAlignment = Alignment.Top) {
         title()
         if (trailingAction != null) {
-            Box(Modifier.centeredOverflow(actionCenter, MAX_OVERHANG).flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
+            // Die Aktion zählt beim sichtbaren Beginn mit: Ihre Tippfläche bleibt auch in der klebenden Kopie ganz.
+            Box(Modifier.centeredOverflow(actionCenter, MAX_OVERHANG).stickyStart().flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
         }
     }
 }
@@ -293,9 +296,13 @@ private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
  * davor auf. So steht er so weit vom Abschnitt darüber wie ein fester Kopf.
  * [headerModifier] gilt für die Kopfzeile selbst (Tippfläche), z. B. ein `FocusRequester`, wenn
  * eine Wahl im Inhalt den Abschnitt zuklappt (A11Y-07). [trailingAction] reicht an den Kopf
- * durch (Aktion neben dem Caret, z. B. „+“ bei „Eigene Kreationen“). Mit [sticky] klebt der Kopf
- * oben, sobald er dort ankommt ([StickyHeader]); nur für feste Köpfe ohne Caret und Aktion. Ohne
- * [sticky] klebt er nicht, beendet aber einen klebenden Abschnitt darüber.
+ * durch (Aktion neben dem Caret, z. B. „+“ bei „Eigene Kreationen“).
+ *
+ * Kleben ([StickyHeader], Eigentümer 2026-11-06): Ein aufklappbarer Kopf klebt oben, solange er
+ * offen ist – von selbst, ohne Parameter; zugeklappt klebt er nicht, beendet aber einen klebenden
+ * Abschnitt darüber. Ein fester Kopf klebt mit [sticky], sonst ist er nur diese Grenze. Oben steht
+ * eine Kopie mit denselben Knöpfen: Caret und Aktion wirken dort wie hier, das Zuklappen rückt
+ * erst den Kopf an die Stelle der Kopie. [headerModifier] gilt nur für das Original.
  *
  * Nicht im Meditations-Tab: Dort kostete jede Höhenänderung den Zeitring Platz (LAYOUT-08).
  */
@@ -324,13 +331,19 @@ fun CollapsibleSection(
     val titleTop = if (expanded == null) above else (above - Dimens.GapSmall).coerceAtLeast(0.dp)
     val topFill = if (expanded == null) 0.dp else (titleTop - Dimens.GapSmall).coerceAtLeast(0.dp)
     val headerGap = if (expanded == null) Dimens.HeaderGap else (Dimens.HeaderGap - Dimens.GapSmall).coerceAtLeast(0.dp)
-    // Ohne [sticky] beendet der Kopf auf einer Seite mit klebenden Köpfen deren Abschnitt.
-    val barrier = remember { Sticky(Any(), level = 1, pins = false) }
+    // Fester Kopf ohne [sticky]: nur Grenze des klebenden Abschnitts darüber. Aufklappbar: klebt,
+    // solange er offen ist (Ebene 1, eigener Schlüssel); zu wieder nur Grenze.
+    val ownKey = remember { Any() }
+    val stuck = when (expanded) {
+        null -> sticky ?: Sticky(ownKey, level = 1, pins = false)
+        else -> (sticky ?: Sticky(ownKey, level = 1)).copy(pins = expanded)
+    }
     Column(modifier = modifier) {
-        StickyHeader(sticky ?: barrier, Modifier.padding(top = topFill)) {
+        StickyHeader(stuck, Modifier.padding(top = topFill)) {
             SectionHeader(
                 title = title,
-                modifier = headerModifier,
+                // FocusRequester, Messungen: nur am Original, nicht an der Kopie oben.
+                modifier = if (LocalStickyCopy.current == null) headerModifier else Modifier,
                 teaser = teaser,
                 expanded = expanded,
                 onExpandedChange = onExpandedChange,

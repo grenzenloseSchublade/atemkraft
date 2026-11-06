@@ -2,6 +2,7 @@ package app.atemkraft.ui.components
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
@@ -21,23 +23,33 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.GlobalPositionAwareModifierNode
+import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.unit.Constraints
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
@@ -61,6 +73,14 @@ import kotlin.math.roundToInt
  * Scrollstand ([LazyListState.layoutInfo] bzw. [ScrollState.value]) im Layout – an den Finger
  * gekoppelt, ohne Dauer (MOTION-02 gilt nicht: Es bewegt sich nichts von selbst). Die Kopie ist für
  * TalkBack unsichtbar: Die echte Überschrift steht weiter in der Liste.
+ *
+ * Ab wo: Eine Überschrift klebt ab der Stelle, an der sie sichtbar beginnt ([stickyStart]: Titel,
+ * beim tippbaren Kopf seine Tippfläche) – der Abstand zum Abschnitt darüber gehört nicht zur Kopie
+ * (Eigentümer 2026-11-06). Ohne Marke klebt sie ab ihrer Oberkante.
+ *
+ * Bedienbar: Die Kopie ist derselbe Kopf, also auch dieselben Knöpfe ([LocalStickyCopy]). Klappt ein
+ * Tipp auf die Kopie den Abschnitt zu, rückt die Seite zuerst das Original an die Stelle der Kopie
+ * ([scrollToLine]) – der Kopf bleibt stehen, nur der Inhalt darunter verschwindet.
  */
 @Stable
 class StickyHeaderState internal constructor(internal val source: StickySource) {
@@ -90,9 +110,11 @@ class StickyHeaderState internal constructor(internal val source: StickySource) 
     /** Liste: eine Überschrift an Eintrag [index]; [content] null = Inhalt kommt vom [StickyHeader]. */
     internal fun declare(sticky: Sticky, index: Int, content: (@Composable () -> Unit)?) {
         val target = declaring ?: return
-        val entry = entries[sticky.key] ?: StickyEntry(sticky.key)
+        val known = entries[sticky.key]
+        val entry = known ?: StickyEntry(sticky.key)
         entry.level = sticky.level
-        entry.pins = sticky.pins
+        // Ob ein Kopf klebt, weiß die Überschrift selbst (offen oder zu); die Anmeldung nur zu Beginn.
+        if (known == null) entry.pins = sticky.pins
         entry.itemKey = sticky.itemKey ?: sticky.key
         entry.index = index
         if (content != null) entry.declared = content
@@ -113,6 +135,7 @@ class StickyHeaderState internal constructor(internal val source: StickySource) 
     internal fun attach(sticky: Sticky, content: @Composable () -> Unit): StickyEntry? {
         if (source is StickySource.Lazy) {
             val entry = entries[sticky.key] ?: return null
+            entry.pins = sticky.pins
             entry.composed = content
             return entry
         }
@@ -133,7 +156,12 @@ class StickyHeaderState internal constructor(internal val source: StickySource) 
         version++
     }
 
-    internal fun place(entry: StickyEntry, coordinates: LayoutCoordinates) {
+    /** Ein Kopf klebt jetzt oder nicht mehr (aufklappbar: offen oder zu), ohne neu angemeldet zu werden. */
+    internal fun setPins(sticky: Sticky) {
+        entries[sticky.key]?.pins = sticky.pins
+    }
+
+    internal fun place(entry: StickyEntry, coordinates: LayoutCoordinates, cut: Int) {
         val viewport = viewport?.takeIf { it.isAttached } ?: return
         if (!coordinates.isAttached) return
         val position = viewport.localPositionOf(coordinates, Offset.Zero)
@@ -141,6 +169,7 @@ class StickyHeaderState internal constructor(internal val source: StickySource) 
         entry.x = position.x.roundToInt()
         entry.width = coordinates.size.width
         entry.height = coordinates.size.height
+        entry.cut = cut
         when (source) {
             is StickySource.Scroll -> entry.offset = y + source.state.value
 
@@ -170,7 +199,13 @@ class StickyHeaderState internal constructor(internal val source: StickySource) 
     }
 
     /** Die stehenden Überschriften dieses Bilds (liest den Scrollstand). */
-    internal fun pinned(): List<Pinned<StickyEntry>> {
+    internal fun pinned(): List<Pinned<StickyEntry>> = pinAt(::yOf)
+
+    /**
+     * Die Rechnung für die Lagen aus [y]: Jeder Kopf zählt ab seinem sichtbaren Beginn ([StickyEntry.cut]),
+     * mit der Höhe darunter – so steht oben kein Rand über der Kopie.
+     */
+    private fun pinAt(y: (StickyEntry) -> Int): List<Pinned<StickyEntry>> {
         version // mitlesen: neue oder entfernte Überschriften
         // Ein Kopf, der nicht klebt, zählt mit: Er beendet den Abschnitt darüber.
         val all = entries.values.filter { it.content != null || !it.pins }
@@ -181,9 +216,35 @@ class StickyHeaderState internal constructor(internal val source: StickySource) 
                 is StickySource.Scroll -> entry.offset.toLong()
                 is StickySource.Lazy -> entry.index.toLong() * ORDER_STRIDE + entry.offset
             }
-            HeaderPosition(entry, entry.level, order, yOf(entry), entry.height, entry.pins)
+            val cut = entry.cut.coerceIn(0, entry.height)
+            HeaderPosition(entry, entry.level, order, y(entry) + cut, entry.height - cut, entry.pins)
         }
         return pinHeaders(headers, viewportHeight)
+    }
+
+    /**
+     * Rückt den Kopf [key] an die Stelle, an der seine Kopie gerade steht (unter höheren Ebenen,
+     * beim Hinausschieben auch darüber): Danach steht das Original dort, und die Kopie verschwindet.
+     * Spalte über [ScrollState.scrollTo], Liste über [LazyListState.scrollToItem] – ohne Dauer, die
+     * Kopie bewegt sich nicht.
+     */
+    internal suspend fun scrollToLine(key: Any) {
+        val entry = entries[key] ?: return
+        val line = pinned().firstOrNull { it.value === entry }?.y ?: return
+        val start = entry.offset + entry.cut.coerceIn(0, entry.height) - line
+        when (source) {
+            is StickySource.Scroll -> source.state.scrollTo(start)
+            is StickySource.Lazy -> source.state.scrollToItem(entry.index, start)
+        }
+    }
+
+    /**
+     * Spalte: wie hoch die klebenden Köpfe oben stünden, wenn die Stelle [contentY] des Scroll-Inhalts
+     * an der Oberkante steht – für einen Sprung, dessen Ziel nicht unter einer Kopie liegen soll. Liste: 0.
+     */
+    internal fun stackHeightAt(contentY: Int): Int {
+        if (source !is StickySource.Scroll) return 0
+        return pinAt { it.offset - contentY }.maxOfOrNull { it.y + it.height }?.coerceAtLeast(0) ?: 0
     }
 }
 
@@ -198,7 +259,9 @@ internal sealed interface StickySource {
 internal class StickyEntry(val key: Any) {
     var level by mutableIntStateOf(1)
     var itemKey: Any? = null
-    var pins = true
+
+    /** Klebt selbst (sonst nur Grenze); als Zustand, weil ein aufklappbarer Kopf ihn beim Auf- und Zuklappen wechselt. */
+    var pins by mutableStateOf(true)
 
     /** Liste: Index ihres Eintrags aus der Anmeldung. */
     var index = 0
@@ -208,6 +271,9 @@ internal class StickyEntry(val key: Any) {
     /** Liste: Abstand von der Oberkante ihres Eintrags; Spalte: Lage im ganzen Inhalt. */
     var offset by mutableIntStateOf(0)
     var height by mutableIntStateOf(0)
+
+    /** Rand über dem sichtbaren Beginn ([stickyStart]), von der Oberkante an; die Kopie zeigt ihn nicht. */
+    var cut by mutableIntStateOf(0)
 
     /** Inhalt aus der Anmeldung in der Liste ([stickyItem], [declareSticky]). */
     var declared: (@Composable () -> Unit)? by mutableStateOf(null)
@@ -250,7 +316,7 @@ private fun <T> pinLevels(sorted: List<HeaderPosition<T>>, levels: List<Int>): L
     for (level in levels) {
         val current = sorted.indices.lastOrNull { i -> i > parent && sorted[i].level == level && sorted[i].y < line } ?: continue
         val header = sorted[current]
-        // Ein Kopf, der nicht klebt (aufklappbarer Abschnitt), beendet den klebenden darüber.
+        // Ein Kopf, der nicht klebt (zugeklappter Abschnitt), beendet den klebenden darüber.
         if (!header.pins) {
             parent = current
             continue
@@ -275,6 +341,17 @@ private const val BELOW = Int.MAX_VALUE / 4
 /** Das Gerüst der Seite stellt hier seinen [StickyHeaderState] bereit; außerhalb klebt [StickyHeader] nicht. */
 internal val LocalStickyHeaders = compositionLocalOf<StickyHeaderState?> { null }
 
+/**
+ * Im Inhalt eines Gerüsts: wie hoch die klebenden Köpfe oben stünden, wenn die Stelle `contentY`
+ * des Scroll-Inhalts an der Oberkante steht ([StickyHeaderState.stackHeightAt]) – ein Sprung zieht
+ * sie ab, damit sein Ziel nicht unter einer Kopie liegt. Ohne Gerüst 0.
+ */
+@Composable
+internal fun rememberStickyCover(): (contentY: Int) -> Int {
+    val state = LocalStickyHeaders.current
+    return remember(state) { { contentY -> state?.stackHeightAt(contentY) ?: 0 } }
+}
+
 @Composable
 internal fun rememberStickyHeaderState(listState: LazyListState): StickyHeaderState = remember(listState) { StickyHeaderState(StickySource.Lazy(listState)) }
 
@@ -291,16 +368,19 @@ internal fun Modifier.stickyViewport(state: StickyHeaderState): Modifier = onPla
  * Wie eine Überschrift klebt: [key] eindeutig auf der Seite, [level] 1 (Abschnitt, „Übungen“) oder
  * 2 (Gruppe darunter, „Beruhigen“); in einer Liste nennt [itemKey] den Schlüssel des Eintrags, in
  * dem die Überschrift steht (Standard: [key], die Überschrift ist ihr eigener Eintrag). Ohne
- * [pins] klebt sie selbst nicht, beendet aber den klebenden Abschnitt darüber (aufklappbare Köpfe
- * der Atemlehre: Sonst stünde „Die vier Phasen“ über „Die Grundregeln“).
+ * [pins] klebt sie selbst nicht, beendet aber den klebenden Abschnitt darüber (zugeklappte Köpfe
+ * der Atemlehre: Sonst stünde „Die vier Phasen“ über „Die Grundregeln“). [pins] darf wechseln
+ * (aufklappbarer Kopf: offen klebt er, zu nicht), ohne dass die Überschrift neu angemeldet wird.
  */
 @Immutable
 data class Sticky(val key: Any, val level: Int, val itemKey: Any? = null, val pins: Boolean = true)
 
 /**
  * Hüllt eine Überschrift, die oben klebt, sobald sie dort ankommt: [content] steht hier wie sonst
- * und wird oben als Kopie noch einmal aufgebaut. Nur für Überschriften ohne Bedienung – oben stünde
- * ein Knopf ohne Wirkung. In einer Liste zusätzlich anmelden ([stickyItem], [declareSticky]). Ohne
+ * und wird oben als Kopie noch einmal aufgebaut – mit denselben Knöpfen: Caret und Kopf-Aktion
+ * wirken in der Kopie wie im Original; ein Kopf, der zuklappt, rückt dabei zuerst das Original an
+ * die Stelle der Kopie ([LocalStickyCopy]). Sichtbar beginnt die Kopie dort, wo der Kopf
+ * [stickyStart] markiert. In einer Liste zusätzlich anmelden ([stickyItem], [declareSticky]). Ohne
  * [sticky] oder ohne Gerüst mit [StickyHeaderState] steht nur [content].
  */
 @Composable
@@ -311,6 +391,38 @@ fun StickyHeader(sticky: Sticky?, modifier: Modifier = Modifier, content: @Compo
     val copy: @Composable () -> Unit = remember { { latest.value() } }
     val sticks = sticky != null && LocalStickyHeaders.current != null
     Box(modifier.then(if (sticks && sticky != null) StickyHeaderElement(sticky, copy) else Modifier)) { content() }
+}
+
+/**
+ * Wo eine Überschrift sichtbar beginnt, von ihrer Oberkante an gemessen. Mehrere Marken (Titel und
+ * Kopf-Aktion): Die oberste zählt, damit keine Tippfläche angeschnitten wird.
+ */
+private val StickyStart = HorizontalAlignmentLine(::minOf)
+
+/**
+ * Markiert in einer Überschrift die Stelle, an der sie sichtbar beginnt (Titel, Tippfläche, Kopf-
+ * Aktion): Sie klebt ab hier, und die Kopie oben zeigt den Rand darüber nicht – der Abstand zum
+ * Abschnitt davor gehört zum Text, nicht zur Überschrift. [SectionHeader] und [GroupLabel] setzen sie.
+ */
+internal fun Modifier.stickyStart(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(placeable.width, placeable.height, alignmentLines = mapOf(StickyStart to 0)) { placeable.place(0, 0) }
+}
+
+/** Rand über der Marke [stickyStart] in einer gemessenen Überschrift; ohne Marke 0. */
+private fun startOf(height: Int, start: Int): Int = if (start == AlignmentLine.Unspecified) 0 else start.coerceIn(0, height)
+
+/**
+ * In der Kopie oben gesetzt, im Original `null`: Ein Kopf, der seinen Abschnitt zuklappt, ruft
+ * [revealOriginal] – erst steht das Original, wo die Kopie stand, dann klappt er zu. Ohne das
+ * spränge der Kopf um alles, was man im Abschnitt schon gelesen hat.
+ */
+internal val LocalStickyCopy = staticCompositionLocalOf<StickyCopy?> { null }
+
+/** Siehe [LocalStickyCopy]. */
+@Stable
+internal class StickyCopy(private val reveal: (then: () -> Unit) -> Unit) {
+    fun revealOriginal(then: () -> Unit) = reveal(then)
 }
 
 /**
@@ -365,9 +477,11 @@ internal fun stickyCopyTag(key: Any) = "stickyCopy:$key"
 /**
  * Die Schicht über dem oberen Rand: so hoch wie die stehenden Überschriften, darin von der tiefsten
  * zur obersten je eine Kopie auf `background` über die volle Breite (eine hinausgeschobene gleitet
- * unter die darüber). Komponiert wird nur der Satz der stehenden Überschriften; Lage und Höhe
- * rechnet das Layout in jedem Bild. Wischen auf ihr scrollt die Seite; ein Tipp fällt nicht auf den
- * Inhalt darunter. Keine Linie (Eigentümer 2026-10-31: Das Violett grenzt genug ab).
+ * unter die darüber). Jede Kopie zeigt ihren Kopf ab dem sichtbaren Beginn ([stickyStart]), der
+ * Rand darüber ist abgeschnitten. Komponiert wird nur der Satz der stehenden Überschriften; Lage und
+ * Höhe rechnet das Layout in jedem Bild. Wischen auf ihr scrollt die Seite; ein Tipp trifft die
+ * Knöpfe der Kopie ([LocalStickyCopy]) und fällt nie auf den Inhalt darunter. Keine Linie
+ * (Eigentümer 2026-10-31: Das Violett grenzt genug ab).
  */
 @Composable
 internal fun BoxScope.StickyHeaderOverlay(state: StickyHeaderState) {
@@ -376,25 +490,46 @@ internal fun BoxScope.StickyHeaderOverlay(state: StickyHeaderState) {
         is StickySource.Lazy -> source.state
         is StickySource.Scroll -> source.state
     }
+    val scope = rememberCoroutineScope()
     val shown by remember(state) { derivedStateOf { state.pinned().map { it.value } } }
     Layout(
         content = {
             shown.forEach { entry ->
                 key(entry.key) {
+                    // Erst das Original an die Stelle der Kopie, dann die Wirkung (zuklappen).
+                    val copy = remember(entry) {
+                        StickyCopy { then ->
+                            scope.launch {
+                                state.scrollToLine(entry.key)
+                                then()
+                            }
+                        }
+                    }
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .background(background)
-                            .clearAndSetSemantics { testTag = stickyCopyTag(entry.key) } // Abweichung A11Y-02: Kopie einer Überschrift, die in der Liste steht – TalkBack hört sie dort
+                            .clipToBounds()
+                            // Tastatur und D-Pad bleiben beim Original: Die Kopie ist kein eigenes Ziel.
+                            .focusProperties { onEnter = { cancelFocusChange() } }
+                            .focusGroup()
+                            .clearAndSetSemantics { testTag = stickyCopyTag(entry.key) } // Abweichung A11Y-02: Kopie eines Kopfs, dessen Original mit Name, Rolle und Zustand auf der Seite steht – TalkBack bedient es dort; die Knöpfe der Kopie sind nur für den Finger
                             .layout { measurable, constraints ->
                                 // Noch nie zu sehen (Liste nach Rückkehr): volle Breite zwischen den Rändern.
                                 val x = if (entry.x >= 0) entry.x else state.inset
                                 val width = (if (entry.width > 0) entry.width else constraints.maxWidth - 2 * state.inset).coerceIn(0, constraints.maxWidth)
                                 val placeable = measurable.measure(Constraints.fixedWidth(width))
-                                if (entry.height == 0) entry.height = placeable.height
-                                layout(constraints.maxWidth, placeable.height) { placeable.place(x, 0) }
+                                if (entry.height == 0) {
+                                    entry.height = placeable.height
+                                    entry.cut = startOf(placeable.height, placeable[StickyStart])
+                                }
+                                // Der Rand über dem sichtbaren Beginn bleibt oberhalb, abgeschnitten.
+                                val cut = startOf(placeable.height, placeable[StickyStart])
+                                layout(constraints.maxWidth, placeable.height - cut) { placeable.place(x, -cut) }
                             },
-                    ) { entry.content?.invoke() }
+                    ) {
+                        CompositionLocalProvider(LocalStickyCopy provides copy) { entry.content?.invoke() }
+                    }
                 }
             }
         },
@@ -416,11 +551,15 @@ private data class StickyHeaderElement(val sticky: Sticky, val content: @Composa
     override fun create() = StickyHeaderNode(sticky, content)
 
     override fun update(node: StickyHeaderNode) {
-        if (node.sticky != sticky || node.content !== content) {
+        if (node.sticky.copy(pins = sticky.pins) != sticky || node.content !== content) {
             node.detachEntry()
             node.sticky = sticky
             node.content = content
             node.attachEntry()
+        } else if (node.sticky != sticky) {
+            // Nur offen ↔ zu: Lage, Maße und Kopie bleiben, der Kopf klebt ab jetzt oder nicht mehr.
+            node.sticky = sticky
+            node.updatePins()
         }
     }
 
@@ -430,14 +569,28 @@ private data class StickyHeaderElement(val sticky: Sticky, val content: @Composa
     }
 }
 
-/** Meldet Lage und Größe der Überschrift und liefert ihren Inhalt. */
+/** Meldet Lage, Größe und sichtbaren Beginn ([stickyStart]) der Überschrift und liefert ihren Inhalt. */
 private class StickyHeaderNode(var sticky: Sticky, var content: @Composable () -> Unit) :
     Modifier.Node(),
+    LayoutModifierNode,
     GlobalPositionAwareModifierNode,
     CompositionLocalConsumerModifierNode {
     private var state: StickyHeaderState? = null
 
+    /** Rand über dem sichtbaren Beginn, beim letzten Messen. */
+    private var cut = 0
+
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val placeable = measurable.measure(constraints)
+        cut = startOf(placeable.height, placeable[StickyStart])
+        return layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+    }
+
     override fun onAttach() = attachEntry()
+
+    fun updatePins() {
+        state?.setPins(sticky)
+    }
 
     override fun onDetach() = detachEntry()
 
@@ -456,6 +609,6 @@ private class StickyHeaderNode(var sticky: Sticky, var content: @Composable () -
         val state = state ?: return
         // In der Liste kann die Anmeldung nach dem Einhängen kommen: den Eintrag jedes Mal suchen.
         val entry = state.entries[sticky.key] ?: state.attach(sticky, content) ?: return
-        state.place(entry, coordinates)
+        state.place(entry, coordinates, cut)
     }
 }
