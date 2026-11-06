@@ -80,7 +80,8 @@ fun headingColor(index: Int): Color = HeadingRing[index.mod(HeadingRing.size)]
  * Inhaltskante; die Tippfläche des Auf- und Zuklappens endet vor der Aktion, beide sind eigene
  * Bedienelemente („Eigene Kreationen“ im Tab „Eigene“).
  *
- * [teaser] steht als ganzer Satz unter dem Titel (nie gekürzt, LAYOUT-03). Mit [expanded]
+ * [teaser] steht als ganzer Satz unter dem Titel (nie gekürzt, LAYOUT-03); die klebende Kopie
+ * oben ([StickyHeader]) lässt ihn weg und zeigt nur die Titelzeile. Mit [expanded]
  * wird der Kopf zur aufklappbaren Zeile (MUSTER-03): Caret am Titel (gedimmt, `SECONDARY`), die
  * ganze Zeile samt Teaser ist die Tippfläche (≥ 48 dp, Rolle Button, Ausgeklappt/Eingeklappt),
  * den Inhalt zeigt der Aufrufer darunter (über [CollapsibleSection]). So bleibt ein langer Tab eine
@@ -168,11 +169,14 @@ fun SectionHeader(
     TitleRow(actionCenter = above + titleLine / 2, modifier = modifier, trailingAction = trailingAction) {
         // Die Tippfläche des Auf- und Zuklappens liegt auf der Spalte, nicht auf der ganzen Zeile:
         // So steckt eine Kopf-Aktion daneben nicht in einem zweiten Button.
-        Column(modifier = Modifier.weight(1f).padding(top = lead).stickyStart().then(toggle).then(inner)) {
+        // Klebend endet der Kopf nach der Titelzeile samt Polster, mindestens mit der Tippfläche (stickyEnd).
+        val minEnd = if (tappable) Modifier.stickyEnd(at = Dimens.MinTouchTarget) else Modifier
+        Column(modifier = Modifier.weight(1f).padding(top = lead).stickyStart().then(minEnd).then(toggle).then(inner)) {
             // Caret und Chevron stehen mittig neben der ersten Titelzeile, nicht mittig am ganzen
             // Block: Rutscht der Status darunter (bis zu drei Zeilen), blieben sie sonst neben dem
             // Status stehen.
             Row(
+                modifier = Modifier.stickyEnd(below = if (tappable) Dimens.GapSmall else 0.dp),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
             ) {
@@ -202,7 +206,8 @@ fun SectionHeader(
                     }
                 }
             }
-            if (teaser != null) {
+            // Die klebende Kopie oben zeigt nur die Titelzeile: Der Teaser ist gelesene Einleitung.
+            if (teaser != null && stickyCopy == null) {
                 SecondaryText(teaser, modifier = Modifier.padding(top = Dimens.GapSmall))
             }
         }
@@ -266,8 +271,8 @@ internal fun TitleRow(
     Row(modifier = modifier.fillMaxWidth().testTag(TITLE_ROW_TAG), verticalAlignment = Alignment.Top) {
         title()
         if (trailingAction != null) {
-            // Die Aktion zählt beim sichtbaren Beginn mit: Ihre Tippfläche bleibt auch in der klebenden Kopie ganz.
-            Box(Modifier.centeredOverflow(actionCenter, MAX_OVERHANG).stickyStart().flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
+            // Die Aktion zählt beim sichtbaren Beginn und Ende mit: Ihre Tippfläche bleibt auch in der klebenden Kopie ganz.
+            Box(Modifier.stickyEnd().centeredOverflow(actionCenter, MAX_OVERHANG).stickyStart().flushEnd().testTag(TITLE_ROW_ACTIONS_TAG)) { trailingAction() }
         }
     }
 }
@@ -302,7 +307,8 @@ private val MAX_OVERHANG = Dimens.HeaderGap - Dimens.GapHairline
  * offen ist – von selbst, ohne Parameter; zugeklappt klebt er nicht, beendet aber einen klebenden
  * Abschnitt darüber. Ein fester Kopf klebt mit [sticky], sonst ist er nur diese Grenze. Oben steht
  * eine Kopie mit denselben Knöpfen: Caret und Aktion wirken dort wie hier, das Zuklappen rückt
- * erst den Kopf an die Stelle der Kopie. [headerModifier] gilt nur für das Original.
+ * erst den Kopf an die Stelle der Kopie. Die Kopie zeigt nur die Titelzeile, ohne Teaser
+ * ([SectionHeader]). [headerModifier] gilt nur für das Original.
  *
  * Nicht im Meditations-Tab: Dort kostete jede Höhenänderung den Zeitring Platz (LAYOUT-08).
  */

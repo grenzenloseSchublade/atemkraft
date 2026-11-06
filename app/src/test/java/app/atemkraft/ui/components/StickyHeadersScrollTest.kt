@@ -109,8 +109,9 @@ class StickyHeadersScrollTest {
 
     /**
      * Aufklappbarer Abschnitt in einer Spalte (Eigentümer 2026-11-06): Offen klebt sein Kopf, und die
-     * Kopie zeigt nur die Tippfläche, ohne den Rand darüber. Ein Tipp auf die Kopie klappt zu, ohne
-     * dass der Kopf springt – das Original steht danach, wo die Kopie stand. Zu klebt er nicht.
+     * Kopie zeigt nur die Titelzeile – ohne den Rand darüber und ohne den Teaser darunter; der nächste
+     * Kopf schiebt sie bündig hinaus. Ein Tipp auf die Kopie klappt zu, ohne dass der Kopf springt –
+     * das Original steht danach, wo die Kopie stand. Zu klebt er nicht.
      */
     @Test
     fun openSectionSticksAndItsCopyClosesWithoutJump() {
@@ -120,7 +121,7 @@ class StickyHeadersScrollTest {
             Box(Modifier.size(360.dp, 640.dp)) {
                 PushScaffold(onBack = {}, scrollState = scroll) {
                     CollapsibleSection(title = "Vorher", sticky = Sticky("before", level = 1)) { Spacer(Modifier.height(100.dp)) }
-                    CollapsibleSection(title = "Offen", expanded = open, onExpandedChange = { open = it }) {
+                    CollapsibleSection(title = "Offen", expanded = open, onExpandedChange = { open = it }, teaser = TEASER) {
                         Spacer(Modifier.fillMaxWidth().height(1500.dp))
                     }
                     CollapsibleSection(title = "Danach", expanded = false) {}
@@ -129,16 +130,26 @@ class StickyHeadersScrollTest {
             }
         }
         val header = rule.onNode(hasText("Offen") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
-        // Die Tippfläche, solange sie zu sehen ist (danach liegt sie über dem Rand, ihre Bounds sind beschnitten).
-        val tapHeight = header.fetchSemanticsNode().boundsInRoot.height
+        // Titelzeile als Tippfläche: „Danach“ ist derselbe Kopf ohne Teaser (Lage und Größe ungeschnitten).
+        val next = rule.onNode(hasText("Danach") and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        val titleLine = next.fetchSemanticsNode().size.height.toFloat()
         rule.runOnIdle { runBlocking { scroll.scrollTo(1000) } }
         rule.waitForIdle()
 
-        // Offen: genau eine Kopie, so hoch wie die Tippfläche – kein Rand über ihr.
+        // Offen: genau eine Kopie, so hoch wie die Titelzeile – kein Rand über ihr, kein Teaser darunter.
         val copies = copies()
         assertEquals(1, copies.size)
         val copy = copies.single().boundsInRoot
-        assertEquals(tapHeight, copy.height, 1f)
+        assertEquals(titleLine, copy.height, 1f)
+
+        // „Danach“ schiebt die Kopie bündig hinaus: Ihre Unterkante liegt auf seiner Tippfläche.
+        val pushBy = next.fetchSemanticsNode().positionInRoot.y - (copy.top + copy.height / 2)
+        rule.runOnIdle { runBlocking { scroll.scrollBy(pushBy) } }
+        rule.waitForIdle()
+        val pushed = copies().single()
+        assertEquals(next.fetchSemanticsNode().positionInRoot.y, pushed.positionInRoot.y + pushed.size.height, 1f)
+        rule.runOnIdle { runBlocking { scroll.scrollTo(1000) } }
+        rule.waitForIdle()
 
         // Tipp auf die Kopie: zu, und der echte Kopf steht genau dort, wo die Kopie stand.
         rule.onNode(isCopy).performClick()
@@ -178,6 +189,7 @@ class StickyHeadersScrollTest {
         const val CARDS = 6
         const val STEP = 90f
         const val STEPS = 60
+        const val TEASER = "Ein Teaser über zwei Zeilen, der als gelesene Einleitung nicht oben mitklebt, nur der Titel."
         val COPY = stickyCopyTag("")
     }
 }
