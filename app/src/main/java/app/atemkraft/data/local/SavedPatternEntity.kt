@@ -27,6 +27,12 @@ import kotlinx.coroutines.flow.Flow
  * Tagesmustern, die bei den vier Feldern bleiben. Bei einer Zeile mit Folge tragen die vier Felder
  * deren Zusammenfassung ([columnSpec]): für ältere App-Versionen (Backup) und als Rückfall, falls
  * die Folge einmal nicht lesbar ist. Maßgeblich ist immer die Folge. Auch seit Schema v4.
+ *
+ * [previousPhases], [previousMinutes] und [previousName] sind die **vorherige Fassung** (Schema v7):
+ * der Stand beim Öffnen des Editors, abgelegt beim ersten Auto-Speichern einer Sitzung, die ein schon
+ * vorhandenes Muster ändert – eine Stufe, die nächste Sitzung ersetzt sie. Die Folge immer in der
+ * Textform von [FreePattern.toCompact] (auch bei einem gespeicherten Tagesmuster), `null` = keine.
+ * Nur lokale Rücknahme: Export und Import tragen sie nicht ([SavedPatternDao.setPrevious]).
  */
 @Entity(tableName = "saved_patterns")
 data class SavedPatternEntity(
@@ -41,6 +47,9 @@ data class SavedPatternEntity(
     @ColumnInfo(defaultValue = ORIGIN_DAILY) val origin: String = ORIGIN_DAILY,
     val minutes: Int? = null,
     val phases: String? = null,
+    val previousPhases: String? = null,
+    val previousMinutes: Int? = null,
+    val previousName: String? = null,
 ) {
     companion object {
         /** Gespeichertes Muster des Tages (auch alle Zeilen aus Schema v3). */
@@ -135,6 +144,13 @@ interface SavedPatternDao {
         minutes: Int?,
         phases: String?,
     ): Int
+
+    /**
+     * Legt die vorherige Fassung des Musters [id] ab bzw. ersetzt sie ([SavedPatternEntity.previousPhases];
+     * alles `null` = keine). Liefert die Zahl geänderter Zeilen.
+     */
+    @Query("UPDATE saved_patterns SET previousPhases = :phases, previousMinutes = :minutes, previousName = :name WHERE id = :id")
+    suspend fun setPrevious(id: Long, phases: String?, minutes: Int?, name: String?): Int
 
     @Query("DELETE FROM saved_patterns WHERE id = :id")
     suspend fun delete(id: Long)

@@ -538,7 +538,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     protected fun Editor(create: (namePrefix: String) -> PatternEditorState) {
         PatternEditorScreen(
             state = rememberPatternEditorState(create = create),
-            actions = PatternEditorActions(onSavedChange = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {}),
+            actions = PatternEditorActions(onSave = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {}),
             // Ohne echten Ton: Die Vorschau-Aufnahme spielt sonst Töne über Robolectric.
             soundOutput = { SilentPreviewSound },
         )

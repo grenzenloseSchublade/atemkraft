@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.data.Atemlehre
@@ -52,13 +57,16 @@ import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.domain.hasOpenPhases
 import app.atemkraft.domain.isRoundBased
 import app.atemkraft.domain.minutesRounded
+import app.atemkraft.ui.components.AdaptiveButtonRow
 import app.atemkraft.ui.components.AppIconButton
+import app.atemkraft.ui.components.AppOutlinedButton
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.BodyText
 import app.atemkraft.ui.components.Bullet
 import app.atemkraft.ui.components.CautionChip
 import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.Chip
+import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.EvidenceChip
 import app.atemkraft.ui.components.ExpanderSection
 import app.atemkraft.ui.components.ForwardLinkText
@@ -89,6 +97,9 @@ import kotlin.math.roundToInt
  * - [onMarkedChange]: persönliche Markierung „tut mir gut“; ohne ihn (Muster) kein Schalter.
  * - [onEditPattern]: Stift im Kopf generierter Muster, öffnet den Muster-Editor (Phasen ändert man
  *   nur dort); ohne ihn kein Stift.
+ * - [onDeletePattern]: Löschen gespeicherter Muster im Kopf rechts vom Stift, zweistufig (MUSTER-05).
+ * - [onDuplicate], [onRestorePrevious]: „Duplizieren“ und „Vorherige Fassung wiederherstellen“ am
+ *   Ende des Inhalts ([PatternVersionActions]); ohne sie fehlt der jeweilige Knopf.
  */
 @Immutable
 data class DetailActions(
@@ -100,6 +111,9 @@ data class DetailActions(
     val onOpenLore: ((patternId: String) -> Unit)? = null,
     val onMarkedChange: ((Boolean) -> Unit)? = null,
     val onEditPattern: (() -> Unit)? = null,
+    val onDeletePattern: (() -> Unit)? = null,
+    val onDuplicate: (() -> Unit)? = null,
+    val onRestorePrevious: (() -> Unit)? = null,
 )
 
 /**
@@ -199,7 +213,19 @@ fun ExerciseDetailScreen(
             }
 
             actions.onEditPattern != null && exercise.generated -> {
-                { EditPatternButton(description = editLabel, onClick = actions.onEditPattern) }
+                {
+                    // Wie auf der Karte: Stift, Löschen außen (KOMP-02, MUSTER-05).
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        EditPatternButton(description = editLabel, onClick = actions.onEditPattern)
+                        actions.onDeletePattern?.let { delete ->
+                            ConfirmIconButton(
+                                name = exercise.name,
+                                description = stringResource(R.string.cd_pattern_delete, exercise.name),
+                                onConfirm = delete,
+                            )
+                        }
+                    }
+                }
             }
 
             else -> null
@@ -342,6 +368,13 @@ fun ExerciseDetailScreen(
             }
         }
 
+        // Gespeicherte und eigene Muster: Kopie und vorherige Fassung am Ende des Inhalts – seltene
+        // Verwaltung, die dem Start nicht in die Quere kommt (spec/detail.md).
+        if (actions.onDuplicate != null || actions.onRestorePrevious != null) {
+            Spacer(Modifier.height(Dimens.SectionGap))
+            PatternVersionActions(exercise, onDuplicate = actions.onDuplicate, onRestorePrevious = actions.onRestorePrevious)
+        }
+
         // Getaktete Übungen passt man im Blatt „Anpassen“ an (Zeile über dem Start); nur Programme
         // ohne Ablauf sagen am Ende, warum es hier keinen Start gibt.
         if (!exercise.guided) {
@@ -450,6 +483,45 @@ private fun startLabel(exercise: Exercise, estimatedSeconds: Int): String {
             start,
             stringResource(R.string.duration_approx, minutesRounded(estimatedSeconds)),
         )
+    }
+}
+
+/**
+ * Am Ende der Detailseite eines gespeicherten oder eigenen Musters (Eigentümer 2026-11-07):
+ * „Duplizieren“ und „Vorherige Fassung wiederherstellen“ als gleichrangige umrandete Knöpfe
+ * ([AdaptiveButtonRow], wie „Exportieren · Importieren“); passen sie nicht nebeneinander, stehen sie
+ * untereinander. Wiederherstellen tauscht den Stand mit der vorherigen Fassung und bleibt danach
+ * stehen (so ist es umkehrbar); die Bestätigung steht im Knopf selbst (MUSTER-01): Sobald der
+ * getauschte Stand da ist, trägt er den Zustand „wiederhergestellt“ und sagt ihn einmal an
+ * (A11Y-04). Kein Dialog, nichts Schwebendes.
+ */
+@Composable
+private fun PatternVersionActions(exercise: Exercise, onDuplicate: (() -> Unit)?, onRestorePrevious: (() -> Unit)?) {
+    // Der Stand, von dem aus wiederhergestellt wurde: Steht ein anderer da, ist der Tausch angekommen.
+    var restoredFrom by remember { mutableStateOf<Exercise?>(null) }
+    val restored = restoredFrom != null && restoredFrom != exercise
+    val restoredState = stringResource(R.string.state_pattern_restored)
+    AdaptiveButtonRow(primaryFirst = false) {
+        onDuplicate?.let { duplicate ->
+            AppOutlinedButton(
+                onClick = duplicate,
+                contentDescription = stringResource(R.string.cd_pattern_duplicate, exercise.name),
+            ) { Text(stringResource(R.string.detail_pattern_duplicate)) }
+        }
+        onRestorePrevious?.let { restore ->
+            AppOutlinedButton(
+                onClick = {
+                    restoredFrom = exercise
+                    restore()
+                },
+                modifier = Modifier.semantics {
+                    if (restored) {
+                        stateDescription = restoredState
+                        liveRegion = LiveRegionMode.Polite
+                    }
+                },
+            ) { Text(stringResource(R.string.detail_pattern_restore)) }
+        }
     }
 }
 

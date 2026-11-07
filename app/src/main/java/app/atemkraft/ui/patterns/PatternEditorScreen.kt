@@ -1,6 +1,7 @@
 package app.atemkraft.ui.patterns
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,7 +67,7 @@ import app.atemkraft.ui.theme.rememberAnimationsEnabled
 /** Was der Muster-Editor auslöst (CODE-02); Bedeutung siehe [PatternEditorScreen]. */
 @Immutable
 data class PatternEditorActions(
-    val onSavedChange: (Boolean) -> Unit,
+    val onSave: () -> Unit,
     val onStart: (Exercise, SessionConfig) -> Unit,
     val onOpenLore: (patternId: String) -> Unit,
     val onBack: () -> Unit,
@@ -74,8 +76,9 @@ data class PatternEditorActions(
 
 /**
  * Muster-Editor „Eigenes Muster“ (MUSTER-10, Nachtrag 4 „Frei gestalten“, 5 „Kompakt“, 6 „Leiste unten“),
- * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel, rechts Startpunkt ([StartButton],
- * öffnet die Vorlagen) und Speicherzeichen · Werte ohne Tippfläche ([InfoLine]: „Box · 16 s je
+ * Push-Seite. Von oben: Kopf mit dem Namen als Seitentitel (bei einem bestehenden Muster darunter
+ * „· gespeichert“), rechts Startpunkt ([StartButton], öffnet die Vorlagen) und im Entwurf die
+ * Diskette ([SaveButton]) · Werte ohne Tippfläche ([InfoLine]: „Box · 16 s je
  * Atemzug · 3,8/min“, ggf. „intensiv“; während der Vorschau die Phase) · die Kurvenkarte
  * ([CurveCard]: die Atemkurve und am unteren Rand derselben Karte die Vorschau, [PreviewRow]:
  * Play links, Ton-Schalter rechts, bündig mit den Innenkanten der Kurve; Nutzer 2026-10-23: über
@@ -87,15 +90,18 @@ data class PatternEditorActions(
  * (eingeklappt, Überblick und TalkBack), „Aus der Yoga-Lehre“; unten fest eine Leiste
  * ([ActionBar], Nachtrag 6): Dauer, Zurücksetzen und der große Play-Knopf.
  *
- * Die Seite liest und ändert nur [state] (ARC-7). Was gespeichert wird, entscheidet der Aufrufer:
- * [PatternEditorActions.onSavedChange] (true = speichern bzw. denselben Eintrag aktualisieren,
- * false = aus „Meine Muster“ entfernen) schreibt ins Repository und meldet das Ergebnis mit
- * [PatternEditorState.markSaved] bzw. [PatternEditorState.markRemoved] zurück. Ein Muster, das es
- * schon vor dem Öffnen gab, entfernt das Speicherzeichen nur zweistufig (MUSTER-05); ein in dieser
- * Sitzung angelegtes nimmt ein erneuter Tipp sofort wieder heraus (KOMP-02).
+ * Die Seite liest und ändert nur [state] (ARC-7). Speichern (MUSTER-14): Im Entwurf legt die
+ * Diskette das Muster an ([PatternEditorActions.onSave]; der Aufrufer schreibt und meldet mit
+ * [PatternEditorState.markSaved] zurück, danach ist es ein bestehendes Muster). Ein bestehendes
+ * Muster speichert der Aufrufer selbst, sobald sich etwas ändert (`PatternEditorDestination`).
+ * „Zurück“ (Pfeil, Geste, Predictive Back) fragt nur bei einem geänderten Entwurf nach
+ * ([PatternEditorState.unsavedChanges], [LeaveDialog]); sonst ist kein BackHandler aktiv und
+ * [PatternEditorActions.onBack] schließt die Seite. Löschen gibt es hier nicht mehr – Karte und
+ * Detailseite haben es.
  *
- * [PatternEditorActions.onStart] probiert den Entwurf ohne Speichern aus (Übung und Dauer als
- * [SessionConfig]); die Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem
+ * [PatternEditorActions.onStart] startet den Stand (Übung und Dauer als [SessionConfig]): im
+ * Entwurf als Probe ohne Speichern, bei einem bestehenden Muster schreibt der Aufrufer vorher.
+ * Die Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem
  * Sicherheitsdialog, wenn [safety] es verlangt ([SafetySettings.requiresConfirm], dieselbe Regel
  * wie auf der Detailseite; [rememberSafetyGate]); die Bestätigung meldet
  * [PatternEditorActions.onConfirmedSafety] mit dem Schlüssel aus Übung und Folge
@@ -134,8 +140,16 @@ fun PatternEditorScreen(
     var showTemplates by rememberSaveable { mutableStateOf(false) }
     var showRename by rememberSaveable { mutableStateOf(false) }
     var showDuration by rememberSaveable { mutableStateOf(false) }
+    var showLeave by rememberSaveable { mutableStateOf(false) }
     val toolbarFocus = remember { ToolbarFocus() }
     val startFocus = remember { StartFocus() }
+    // Verschwindet die Diskette (gespeichert), während sie den Fokus hat, geht er an den Startpunkt (A11Y-07).
+    var saveFocused by remember { mutableStateOf(false) }
+    val isDraft = state.savedId == null && !state.savePending
+    LaunchedEffect(isDraft) { if (!isDraft && saveFocused) startFocus.pending = startFocus.start }
+    // Zurück fragt nur bei einem geänderten Entwurf; sonst bleibt Predictive Back ungestört (MUSTER-14).
+    BackHandler(enabled = state.unsavedChanges) { showLeave = true }
+    val back = { if (state.unsavedChanges) showLeave = true else actions.onBack() }
     val start = rememberSafetyGate(
         require = safety.requiresConfirm(exercise),
         cautions = exercise.cautions,
@@ -150,18 +164,20 @@ fun PatternEditorScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             val scrollState = rememberScrollState()
             PushHeader(
-                onBack = actions.onBack,
+                onBack = back,
                 titleContent = { NameTitle(state, onRename = { showRename = true }) },
                 // Fester Bereichsname statt des Musternamens: Umbenennen soll keine neue Seite ansagen.
                 paneTitle = stringResource(R.string.pattern_editor_title),
                 action = {
-                    // Startpunkt links neben dem Speicherzeichen (Nutzer 2026-10-23): Über der Kurve stehen nur Werte.
+                    // Startpunkt links neben der Diskette (Nutzer 2026-10-23): Über der Kurve stehen nur Werte.
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         StartButton(state, startFocus) {
                             preview.pause()
                             showTemplates = true
                         }
-                        SaveToggle(state, actions.onSavedChange)
+                        if (isDraft) {
+                            SaveButton(onSave = actions.onSave, onFocusChanged = { saveFocused = it })
+                        }
                     }
                 },
             )
@@ -222,6 +238,21 @@ fun PatternEditorScreen(
     if (showRename) RenameDialog(state, onDismiss = { showRename = false })
 
     if (showDuration) DurationSheet(state, onDismiss = { showDuration = false })
+
+    if (showLeave) {
+        LeaveDialog(
+            onSave = {
+                showLeave = false
+                actions.onSave()
+                actions.onBack()
+            },
+            onDiscard = {
+                showLeave = false
+                actions.onBack()
+            },
+            onDismiss = { showLeave = false },
+        )
+    }
 }
 
 /**
@@ -351,6 +382,6 @@ internal const val PATTERN_TOOLBAR_TAG = "pattern_editor_toolbar"
 private fun PatternEditorScreenPreview() {
     AtemkraftTheme {
         val state = rememberPatternEditorState { PatternEditorState.new(it, FreePatternTemplates.all[2].pattern) }
-        PatternEditorScreen(state = state, actions = PatternEditorActions(onSavedChange = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {}))
+        PatternEditorScreen(state = state, actions = PatternEditorActions(onSave = {}, onStart = { _, _ -> }, onOpenLore = {}, onBack = {}))
     }
 }

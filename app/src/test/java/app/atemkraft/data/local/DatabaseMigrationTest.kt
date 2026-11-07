@@ -23,7 +23,8 @@ import org.robolectric.annotation.Config
  * Versionssprung bis zur aktuellen Version überstehen, und die App muss sie danach lesen.
  *
  * 2.json stammt aus v1.3.1 (letzter Stand vor „Meine Muster“), 3.json aus v1.6.8 (letzter Stand
- * vor dem Muster-Editor), 5.json aus v2.8.0 (letzter Stand vor dem Befinden). Schema v1 gab es nur in v0.2, das nie öffentlich war.
+ * vor dem Muster-Editor), 5.json aus v2.8.0 (letzter Stand vor dem Befinden), 6.json aus v2.11.0 (letzter
+ * Stand vor der vorherigen Fassung). Schema v1 gab es nur in v0.2, das nie öffentlich war.
  * Eigene [Application], damit der App-Start nicht nebenher die echte Datenbank öffnet.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -134,6 +135,47 @@ class DatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun `Muster und Befinden aus Version 6 ueberstehen die Migration ohne vorherige Fassung`() = runBlocking {
+        // So schrieb v2.11.0 (Commit 14b340d): eigenes Muster mit Folge, gespeichertes Tagesmuster,
+        // ein Logbuch-Eintrag mit Befinden.
+        helper.createDatabase(DB_NAME, 6).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO saved_patterns
+                    (name, inhale, holdFull, exhale, holdEmpty, activating, createdAtEpochMs, origin, minutes, phases)
+                VALUES
+                    ('Abendwelle', 4.0, 2.0, 8.0, NULL, 0, 1761000000000, 'custom', 7, 'in:4,hold:2,out:6,out:2'),
+                    ('Muster 4·2·6', 4.0, 2.0, 6.0, NULL, 0, 1759000000000, 'daily', NULL, NULL)
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO log_entries
+                    (exerciseId, exerciseName, family, startedAtEpochMs, durationMs, roundsCompleted, kind, feeling)
+                VALUES ('muster-1', 'Abendwelle', 'DOWNREGULATE', 1761000600000, 420000, 30, 'BREATHING', 'CALMER')
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(DB_NAME, LATEST, true, *AtemkraftDatabase.MIGRATIONS).close()
+
+        withApp { room ->
+            val rows = room.savedPatternDao().snapshot()
+            assertEquals(listOf("Muster 4·2·6", "Abendwelle"), rows.map { it.name })
+            val custom = rows.single { it.name == "Abendwelle" }
+            assertEquals("in:4,hold:2,out:6,out:2", custom.freePattern()?.toCompact())
+            assertEquals(7, custom.minutes)
+            assertEquals(listOf(null, null), rows.map { it.previousPhases })
+            // v7: Die vorherige Fassung lässt sich danach ablegen und lesen.
+            room.savedPatternDao().setPrevious(custom.id, "in:4,out:6", 5, "Ruhig")
+            val updated = room.savedPatternDao().byId(custom.id)!!
+            assertEquals("in:4,out:6", updated.previousPhases)
+            assertEquals(5, updated.previousMinutes)
+            assertEquals("Ruhig", updated.previousName)
+            assertEquals(Feeling.CALMER, room.logbookDao().all().first().single().toDomain().feeling)
+        }
+    }
+
     /** Öffnet die migrierte Datei wie [AtemkraftDatabase.build], nur mit Abfragen im Testthread. */
     private suspend fun withApp(block: suspend (AtemkraftDatabase) -> Unit) {
         val room = Room.databaseBuilder(ApplicationProvider.getApplicationContext<Application>(), AtemkraftDatabase::class.java, DB_NAME)
@@ -151,6 +193,6 @@ class DatabaseMigrationTest {
         const val DB_NAME = "migration-test.db"
 
         /** Aktuelle Schemaversion (`@Database(version = …)`). */
-        const val LATEST = 6
+        const val LATEST = 7
     }
 }

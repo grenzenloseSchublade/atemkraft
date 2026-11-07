@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,8 +13,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import app.atemkraft.R
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.SafetySettings
@@ -23,14 +27,17 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.ui.components.PushHeader
+import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
  * Ziel „Eigenes Muster“ im NavHost (`PatternEditorRoute`): legt den Zustand des Editors an und
- * schreibt das Speicherzeichen ins [repository].
+ * schreibt ins [repository] (MUSTER-14).
  *
  * Startwerte:
  * - ohne Argumente ein neues Muster (Vorlage 4·6, 5 min),
@@ -40,16 +47,22 @@ import kotlinx.coroutines.sync.withLock
  *   nicht (mehr), ruft die Seite [onMissing] (zurück statt leerer Seite, CODE-05). Nach einem
  *   Konfigurationswechsel gilt der gesicherte Entwurf, auch wenn das Muster inzwischen entfernt ist.
  *
- * Speicherzeichen: Das erste Speichern legt das Muster an ([SavedPatternsRepository.saveCustom]),
- * jedes weitere schreibt in denselben Eintrag ([SavedPatternsRepository.update]); Entfernen löscht
- * ihn. Die Schreibvorgänge laufen nacheinander in [scope] – dem App-weiten Scope, damit „Zurück“
- * direkt nach dem Tipp nichts verliert – und lesen den Entwurf erst, wenn sie dran sind: Ein
- * Doppeltipp legt so nur einen Eintrag an. Das Speicherzeichen merkt sich genau den geschriebenen
- * Stand ([PatternEditorState.draft]), nicht den nach dem Schreiben.
+ * Speichern: Im Entwurf legt die Diskette das Muster an ([SavedPatternsRepository.saveCustom]); ab
+ * dann – und bei jedem Muster, das es vor dem Öffnen schon gab – schreibt [AutoSave] jede Änderung
+ * in denselben Eintrag ([SavedPatternsRepository.update]): entprellt [Motion.AutoSaveSettle] nach
+ * der letzten Änderung, sofort beim Verlassen, wenn die App in den Hintergrund geht und vor dem
+ * Start. Das erste Schreiben einer Sitzung legt den Stand beim Öffnen als vorherige Fassung ab
+ * ([PatternEditorState.previousToKeep]). Die Schreibvorgänge laufen nacheinander in [scope] – dem
+ * App-weiten Scope, damit „Zurück“ direkt nach einer Änderung nichts verliert – und lesen den
+ * Entwurf erst, wenn sie dran sind: Ein Doppeltipp legt so nur einen Eintrag an, mehrere
+ * ausstehende Schreibvorgänge schreiben nur einmal. Der Zustand merkt sich genau den
+ * geschriebenen Stand ([PatternEditorState.draft]), nicht den nach dem Schreiben.
  *
- * [onStart] startet den Entwurf ohne Speichern; der Aufrufer lässt den Editor dabei offen. Ein
- * intensives Muster fragt vorher den Sicherheitsdialog ab, wenn [safety] es verlangt; die
- * Bestätigung meldet [onConfirmedSafety]. [cueSettings] und [otherAudioActive] (Atem-Übung oder
+ * [onStart] startet den Stand; der Aufrufer lässt den Editor dabei offen. Bei einem bestehenden
+ * Muster ist vorher geschrieben, die Sitzung läuft also mit dem gespeicherten Stand; ein Entwurf
+ * startet als Probe ohne Speichern. Ein intensives Muster fragt vorher den Sicherheitsdialog ab,
+ * wenn [safety] es verlangt; die Bestätigung meldet [onConfirmedSafety] (Schlüssel aus Übung und
+ * Folge). [cueSettings] und [otherAudioActive] (Atem-Übung oder
  * Meditation läuft, auch minimiert) steuern den Ton der Vorschau.
  */
 @Composable
@@ -70,14 +83,27 @@ internal fun PatternEditorDestination(
 ) {
     val writes = remember { Mutex() }
     val missing by rememberUpdatedState(onMissing)
+    val start by rememberUpdatedState(onStart)
     val editor: @Composable (PatternEditorState) -> Unit = { state ->
+        // Bestehendes Muster: ausstehende Änderungen schreiben (nicht anlegen).
+        val flush: () -> Unit = {
+            if (state.needsWrite) scope.launch { writes.withLock { write(state, create = false, repository, missing) } }
+        }
+        AutoSave(state, flush)
         PatternEditorScreen(
             state = state,
             actions = PatternEditorActions(
-                onSavedChange = { save ->
-                    scope.launch { writes.withLock { write(state, save, repository, missing) } }
+                onSave = {
+                    state.markSaving()
+                    scope.launch { writes.withLock { write(state, create = true, repository, missing) } }
                 },
-                onStart = onStart,
+                // Erst schreiben, dann starten: Die Sitzung läuft mit dem gespeicherten Stand.
+                onStart = { exercise, config ->
+                    scope.launch {
+                        writes.withLock { write(state, create = false, repository, missing) }
+                        start(exercise, config)
+                    }
+                },
                 onOpenLore = onOpenLore,
                 onBack = onBack,
                 onConfirmedSafety = onConfirmedSafety,
@@ -127,29 +153,49 @@ internal fun PatternEditorDestination(
 }
 
 /**
- * Ein Tipp aufs Speicherzeichen: [save] legt an bzw. aktualisiert denselben Eintrag und meldet die Id
- * zurück ([PatternEditorState.markSaved]); sonst wird der Eintrag gelöscht
- * ([PatternEditorState.markRemoved]). Gibt es den Eintrag beim Aktualisieren nicht mehr, [onMissing].
+ * Auto-Speichern eines bestehenden Musters (MUSTER-14): Jede Änderung von Folge, Dauer oder Name
+ * (auch Vorlage und Zurücksetzen) schreibt [flush] – erst wenn [Motion.AutoSaveSettle] lang nichts
+ * mehr geändert wurde (ein Zug an der Kurve schreibt einmal, nicht je Raste), sofort, wenn die App
+ * in den Hintergrund geht oder die Seite verlassen wird (auch Drehen: dann wird früh geschrieben,
+ * nicht doppelt). Ein Entwurf schreibt hier nie; [flush] prüft selbst, ob etwas aussteht.
+ */
+@Composable
+private fun AutoSave(state: PatternEditorState, flush: () -> Unit) {
+    val currentFlush by rememberUpdatedState(flush)
+    LaunchedEffect(state) {
+        snapshotFlow { if (state.savedId != null) state.draft() else null }.collectLatest { draft ->
+            if (draft != null && state.needsWrite) {
+                delay(Motion.AutoSaveSettle)
+                currentFlush()
+            }
+        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { currentFlush() }
+    DisposableEffect(state) { onDispose { currentFlush() } }
+}
+
+/**
+ * Ein Schreibvorgang, wenn er dran ist: Ein Entwurf wird nur mit [create] angelegt (Diskette,
+ * „Speichern“ im Dialog) und meldet die Id zurück ([PatternEditorState.markSaved]); ein bestehendes
+ * Muster wird aktualisiert, wenn der Entwurf vom zuletzt geschriebenen Stand abweicht – beim ersten
+ * Mal je Sitzung mit der vorherigen Fassung ([PatternEditorState.previousToKeep]). Gibt es den
+ * Eintrag beim Aktualisieren nicht mehr, [onMissing].
  */
 private suspend fun write(
     state: PatternEditorState,
-    save: Boolean,
+    create: Boolean,
     repository: SavedPatternsRepository,
     onMissing: () -> Unit,
 ) {
-    if (!save) {
-        state.savedId?.let { repository.delete(it) }
-        state.markRemoved()
-        return
-    }
-    // Stand vor dem Schreiben festhalten: Was während des Schreibens geändert wird, ist nicht
-    // gespeichert und darf das Speicherzeichen nicht füllen.
+    // Stand vor dem Schreiben festhalten: Was während des Schreibens geändert wird, schreibt der
+    // nächste Vorgang.
     val draft = state.draft()
     val id = state.savedId
-    val stored = if (id == null) {
-        repository.saveCustom(draft.pattern, draft.minutes, draft.name)
-    } else {
-        repository.update(id, draft.pattern, draft.minutes, draft.name)
+    val stored = when {
+        id == null && !create -> return
+        id == null -> repository.saveCustom(draft.pattern, draft.minutes, draft.name)
+        draft == state.snapshot -> return
+        else -> repository.update(id, draft.pattern, draft.minutes, draft.name, previous = state.previousToKeep())
     }
     if (stored == null) onMissing() else state.markSaved(stored.id, draft)
 }

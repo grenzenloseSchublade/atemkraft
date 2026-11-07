@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
+import app.atemkraft.data.PatternVersion
+import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseIds
@@ -26,15 +28,9 @@ import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.toFreePattern
 
 /**
- * Was gespeichert ist: Folge, Minuten und Name, so wie sie zuletzt geschrieben wurden. Das
- * Speicherzeichen ist gefüllt, solange der Entwurf genau diesem Stand entspricht.
- */
-data class PatternSnapshot(val pattern: FreePattern, val minutes: Int, val name: String)
-
-/**
  * Zustand des Muster-Editors („Eigenes Muster“, MUSTER-10, Nachtrag 4 „Frei gestalten“), getrennt
  * von der Darstellung – nach dem Vorbild von `SessionAdjustState` (ARC-7). Kurve, Ablauf-Liste,
- * Hinzufügen-Knöpfe, Vorlagen, Name und Speicherzeichen lesen und ändern nur diesen Zustand.
+ * Hinzufügen-Knöpfe, Vorlagen, Name und Speichern lesen und ändern nur diesen Zustand.
  *
  * **Invariante:** [pattern] ist immer eine gültige freie Folge ([FreePattern.isValid]): 2 bis 12
  * Phasen, jede 1 bis 30 s, mindestens ein Ein und ein Aus. Jede Änderung geht über die
@@ -54,8 +50,15 @@ data class PatternSnapshot(val pattern: FreePattern, val minutes: Int, val name:
  * - Der Name folgt dem Vorschlagsnamen der aktuellen Zahlen („Eigenes Muster 4·1·6“), bis die
  *   Person selbst tippt ([updateName], höchstens [NAME_MAX] Zeichen). Leer gespeichert heißt
  *   Vorschlagsname ([savedName]).
- * - [saved]: Es gibt einen gespeicherten Eintrag ([savedId]) und der Entwurf entspricht ihm
- *   ([snapshot]). Jede Änderung an Folge, Minuten oder Name leert das Speicherzeichen.
+ * - Speichern (MUSTER-14, Eigentümer 2026-11-07) kennt zwei Modi. **Entwurf** ([savedId] null:
+ *   „+ Neu“, „Selbst gestalten“, Tagesmuster anpassen): gespeichert wird nur auf Wunsch (Diskette,
+ *   [markSaving]); [unsavedChanges] sagt, ob „Zurück“ nachfragen muss (Stand weicht von [opened] ab).
+ *   **Bestehendes Muster** ([savedId] gesetzt, auch nach dem ersten Speichern eines Entwurfs): jede
+ *   Änderung wird gespeichert ([needsWrite]; das Schreiben entprellt der Aufrufer). [saved] heißt:
+ *   der Entwurf entspricht dem zuletzt geschriebenen Stand ([snapshot]) – der Kopf zeigt dann
+ *   „· gespeichert“.
+ * - Vorherige Fassung: Beim ersten Schreiben einer Sitzung, die ein schon vorhandenes Muster ändert
+ *   ([existedBefore]), gibt [previousToKeep] den Stand beim Öffnen ([opened]) mit.
  *
  * [namePrefix] kommt aus den Ressourcen (`pattern_editor_title`), weil dieser Zustand keine
  * Texte kennen soll.
@@ -72,9 +75,16 @@ class PatternEditorState internal constructor(
     keptName: String,
     keptFor: FreePattern,
     savedId: Long?,
-    snapshot: PatternSnapshot?,
-    existedBefore: Boolean,
+    snapshot: PatternVersion?,
+    /**
+     * Gab es den Eintrag schon vor dem Öffnen (Bearbeiten)? Dann legt das erste Schreiben der Sitzung
+     * den Stand beim Öffnen als vorherige Fassung ab ([previousToKeep]); ein in dieser Sitzung
+     * angelegtes Muster hat keine.
+     */
+    val existedBefore: Boolean,
     resetTo: FreePattern = initial,
+    opened: PatternVersion? = null,
+    writes: Int = 0,
 ) {
     /**
      * Wohin [reset] führt: der Stand vor der letzten Vorlage, die eine selbst geformte Kurve ersetzt
@@ -119,15 +129,15 @@ class PatternEditorState internal constructor(
         private set
 
     /** Stand des gespeicherten Eintrags; null, solange nichts gespeichert ist. */
-    var snapshot: PatternSnapshot? by mutableStateOf(snapshot)
+    var snapshot: PatternVersion? by mutableStateOf(snapshot)
         private set
 
-    /**
-     * Gab es den Eintrag schon vor dem Öffnen (Bearbeiten-Modus)? Dann entfernt das Speicherzeichen
-     * ihn nur zweistufig (MUSTER-05); ein in dieser Sitzung angelegtes Muster nimmt ein erneuter
-     * Tipp sofort wieder heraus.
-     */
-    var existedBefore: Boolean by mutableStateOf(existedBefore)
+    /** Wie oft in dieser Sitzung geschrieben wurde (Anlegen und Auto-Speichern). */
+    var writes: Int by mutableIntStateOf(writes)
+        private set
+
+    /** Ein Entwurf wird gerade angelegt (Diskette getippt, Schreiben steht aus). */
+    var savePending: Boolean by mutableStateOf(false)
         private set
 
     /** Die Vorlage, der die Folge gerade genau entspricht; null heißt „angepasst“. */
@@ -155,12 +165,34 @@ class PatternEditorState internal constructor(
 
     /**
      * Der Name, unter dem gespeichert wird – so bereinigt wie im Repository ([PatternBackup.cleanName]),
-     * damit das Speicherzeichen nach dem Speichern zum gespeicherten Eintrag passt; leer → Vorschlagsname.
+     * damit „gespeichert“ nach dem Schreiben zum gespeicherten Eintrag passt; leer → Vorschlagsname.
      */
     val savedName: String get() = PatternBackup.cleanName(name).ifEmpty { suggestedName }
 
-    /** Entspricht der Entwurf dem gespeicherten Eintrag (Speicherzeichen gefüllt)? */
+    /** Entspricht der Entwurf dem gespeicherten Eintrag (Kopf: „· gespeichert“)? */
     val saved: Boolean get() = savedId != null && snapshot == current()
+
+    /** Bestehendes Muster mit Änderungen, die noch nicht geschrieben sind (Auto-Speichern steht aus). */
+    val needsWrite: Boolean get() = savedId != null && snapshot != current()
+
+    /**
+     * Entwurf, der vom Stand beim Öffnen abweicht und nicht gespeichert wird: Nur dann fragt
+     * „Zurück“ nach („Muster speichern?“). Ein unverändertes Tagesmuster ist keine Änderung.
+     */
+    val unsavedChanges: Boolean get() = savedId == null && !savePending && current() != opened
+
+    /**
+     * Sagt der Kopf „gespeichert“ an? Einmal je Sitzung, beim ersten Schreiben (A11Y-04): danach
+     * schweigt er, sonst spräche TalkBack nach jedem Zug an der Kurve.
+     */
+    val announceSaved: Boolean get() = writes == 1 && saved
+
+    /**
+     * Was das nächste Schreiben als vorherige Fassung mitgibt: beim ersten Schreiben einer Sitzung,
+     * die ein schon vorhandenes Muster ändert, den Stand beim Öffnen; sonst nichts (die abgelegte
+     * Fassung bleibt, eine Stufe).
+     */
+    fun previousToKeep(): PatternVersion? = opened.takeIf { existedBefore && writes == 0 }
 
     private val exercise: Exercise by derivedStateOf {
         GeneratedExercises.exerciseFrom(
@@ -246,36 +278,36 @@ class PatternEditorState internal constructor(
      * Der Stand, der gespeichert würde (Folge, Minuten, bereinigter Name). Der Aufrufer bildet
      * ihn **vor** dem Schreiben, schreibt genau diese Werte und gibt ihn an [markSaved] zurück.
      */
-    fun draft(): PatternSnapshot = current()
+    fun draft(): PatternVersion = current()
+
+    /** Diskette getippt: Der Entwurf wird angelegt; bis dahin fragt „Zurück“ nicht nach. */
+    fun markSaving() {
+        savePending = true
+    }
 
     /**
-     * Der Stand [written] wurde unter [id] gespeichert (neu angelegt oder aktualisiert). Hat
-     * sich der Entwurf während des Schreibens geändert (Kurve weitergezogen), bleibt das
-     * Speicherzeichen leer – gespeichert ist ja der alte Stand.
+     * Der Stand [written] wurde unter [id] gespeichert (neu angelegt oder aktualisiert); ab jetzt
+     * ist es ein bestehendes Muster. Hat sich der Entwurf während des Schreibens geändert (Kurve
+     * weitergezogen), steht das nächste Schreiben schon aus ([needsWrite]).
      */
-    fun markSaved(id: Long, written: PatternSnapshot = current()) {
+    fun markSaved(id: Long, written: PatternVersion = current()) {
         savedId = id
         snapshot = written
+        writes += 1
+        savePending = false
     }
 
-    /**
-     * Der Eintrag wurde aus „Eigene Kreationen“ entfernt. Der Entwurf bleibt sichtbar; ein erneutes
-     * Speichern legt einen neuen Eintrag an, den ein weiterer Tipp sofort wieder herausnimmt.
-     */
-    fun markRemoved() {
-        savedId = null
-        snapshot = null
-        existedBefore = false
-    }
+    private fun current() = PatternVersion(pattern, minutes, savedName)
 
-    private fun current() = PatternSnapshot(pattern, minutes, savedName)
+    /** Stand beim Öffnen (Folge, Minuten, Name): Maß für [unsavedChanges] und die vorherige Fassung. */
+    val opened: PatternVersion = opened ?: current()
 
     companion object {
         /** Höchstlänge des Namens (Nutzerentscheidung 2026-10-22). */
         const val NAME_MAX = PatternBackup.MAX_NAME
 
         /** Vorgabedauer eines neuen Musters, wie beim Muster des Tages (≈ 5 min). */
-        const val DEFAULT_MINUTES = 5
+        const val DEFAULT_MINUTES = SavedPattern.DEFAULT_MINUTES
 
         /** Vorschlagsname zu [pattern], z. B. „Eigenes Muster 4·1·6“. */
         fun suggestedName(namePrefix: String, pattern: FreePattern): String = "$namePrefix ${pattern.numbers()}"
@@ -309,7 +341,7 @@ class PatternEditorState internal constructor(
 
         /**
          * Ein gespeichertes Muster bearbeiten ([pattern] = `SavedPattern.pattern`; ältere Muster
-         * mit vier Feldern kommen dort schon als Folge an): Speicherzeichen gefüllt, Speichern
+         * mit vier Feldern kommen dort schon als Folge an): „gespeichert“, jede Änderung
          * aktualisiert denselben Eintrag [id]. [minutes] null (Muster vor der Herkunfts-Spalte)
          * heißt [DEFAULT_MINUTES].
          *
@@ -338,7 +370,7 @@ class PatternEditorState internal constructor(
                 keptName = if (followsNumbers) name.trim() else "",
                 keptFor = pattern,
                 savedId = id,
-                snapshot = PatternSnapshot(pattern, storedMinutes, PatternBackup.cleanName(name).ifEmpty { suggestedName(namePrefix, pattern) }),
+                snapshot = PatternVersion(pattern, storedMinutes, PatternBackup.cleanName(name).ifEmpty { suggestedName(namePrefix, pattern) }),
                 existedBefore = true,
             )
         }
@@ -368,12 +400,16 @@ class PatternEditorState internal constructor(
                     snap?.name ?: "",
                     state.existedBefore,
                     state.resetTo.toCompact(),
+                    state.opened.pattern.toCompact(),
+                    state.opened.minutes,
+                    state.opened.name,
+                    state.writes,
                 )
             },
             restore = { list ->
                 val savedId = (list[SAVED_ID] as Long).takeIf { it != NO_ID }
                 val snapshot = if (list[HAS_SNAPSHOT] as Boolean) {
-                    PatternSnapshot(decode(list[SNAPSHOT_PATTERN]), list[SNAPSHOT_MINUTES] as Int, list[SNAPSHOT_NAME] as String)
+                    PatternVersion(decode(list[SNAPSHOT_PATTERN]), list[SNAPSHOT_MINUTES] as Int, list[SNAPSHOT_NAME] as String)
                 } else {
                     null
                 }
@@ -392,6 +428,12 @@ class PatternEditorState internal constructor(
                     existedBefore = list[EXISTED_BEFORE] as Boolean,
                     // Ein vor diesem Feld gesicherter Stand kennt es nicht: dann der Öffnungsstand.
                     resetTo = decode(list.getOrNull(RESET_TO) ?: list[INITIAL]),
+                    opened = if (list.size > OPENED_NAME) {
+                        PatternVersion(decode(list[OPENED_PATTERN]), list[OPENED_MINUTES] as Int, list[OPENED_NAME] as String)
+                    } else {
+                        null
+                    },
+                    writes = list.getOrNull(WRITES) as? Int ?: 0,
                 )
             },
         )
@@ -412,6 +454,10 @@ class PatternEditorState internal constructor(
         private const val SNAPSHOT_NAME = 12
         private const val EXISTED_BEFORE = 13
         private const val RESET_TO = 14
+        private const val OPENED_PATTERN = 15
+        private const val OPENED_MINUTES = 16
+        private const val OPENED_NAME = 17
+        private const val WRITES = 18
 
         private fun decode(value: Any?): FreePattern = FreePattern.parse(value as String) ?: FreePattern.DEFAULT
     }

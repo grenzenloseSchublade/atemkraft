@@ -221,6 +221,14 @@
     <!-- Einstiege in den Muster-Editor: Link unter dem Muster des Tages, Stift auf der Detailseite. -->
     <string name="cd_pattern_edit">Muster bearbeiten</string>
     <string name="cd_pattern_adapt_daily">Als eigenes Muster anpassen</string>
+    <!-- Detailseite eigener und gespeicherter Muster, am Ende des Inhalts (Eigentümer 2026-11-07):
+         Duplizieren legt eine Kopie an und öffnet sie; Wiederherstellen tauscht den Stand mit der
+         vorherigen Fassung (umkehrbar), angesagt im Knopf selbst. -->
+    <string name="detail_pattern_duplicate">Duplizieren</string>
+    <string name="cd_pattern_duplicate">Muster %1$s duplizieren</string>
+    <string name="pattern_copy_name">%1$s (Kopie)</string>
+    <string name="detail_pattern_restore">Vorherige Fassung wiederherstellen</string>
+    <string name="state_pattern_restored">wiederhergestellt</string>
 
     <!-- Muster-Editor „Eigenes Muster“: frei gestaltete Phasenfolge (MUSTER-10, Nachtrag 4). -->
     <string name="pattern_editor_title">Eigenes Muster</string>
@@ -228,6 +236,17 @@
          „Startpunkt wählen, derzeit Box“ bzw. „… angepasst“); feste Leiste unten (Nachtrag 6):
          Dauer „− 5 min +“ (geschütztes Leerzeichen: Zahl und Einheit bleiben beisammen) und der
          große Play-Knopf „Übung starten, ca. 5 Minuten“ (%1$s = cd_duration_minutes). -->
+    <!-- Speichern im Editor (MUSTER-14, Eigentümer 2026-11-07): Ein Entwurf zeigt die Diskette, ein
+         bestehendes Muster speichert jede Änderung selbst und sagt das im Kopf („Eigenes Muster ·
+         gespeichert“). Beim Verlassen eines geänderten Entwurfs fragt ein Dialog nach; die Knöpfe
+         heißen nach ihrer Wirkung. -->
+    <string name="cd_pattern_editor_save">In „Meins“ speichern</string>
+    <string name="pattern_editor_saved_status">· gespeichert</string>
+    <string name="state_pattern_saved">gespeichert</string>
+    <string name="pattern_editor_leave_title">Muster speichern?</string>
+    <string name="pattern_editor_leave_text">Dein Muster ist noch nicht in „Meins“. Ohne Speichern geht es verloren.</string>
+    <string name="action_save">Speichern</string>
+    <string name="action_discard">Verwerfen</string>
     <string name="pattern_editor_start">Startpunkt</string>
     <string name="cd_pattern_editor_start">Startpunkt wählen, derzeit %1$s</string>
     <!-- Satz unter dem Titel des Startpunkt-Blatts: was die Wahl tut (Nutzer 2026-10-24). -->

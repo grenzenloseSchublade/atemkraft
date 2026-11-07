@@ -2,7 +2,7 @@
 
 Regeln: Anatomie in [STYLEGUIDE §4.5](../STYLEGUIDE.md#anatomie) (Knopfleiste unten, Bottom Sheet), MUSTER-11 (Bottom Sheet), MUSTER-10 (Phasen eigener Muster nur im Editor). Entscheidungen in [DECISIONS.md](../DECISIONS.md). Code: `ui/detail/`.
 
-Gerüst: `PushScaffold` – Kopf mit Name und Markierung bzw. Stift fest, Inhalt scrollt, unten bei getakteten Übungen die gepinnte Start-Leiste (`PinnedActionBar`).
+Gerüst: `PushScaffold` – Kopf mit Name und Markierung bzw. Stift (bei gespeicherten und eigenen Mustern Stift und Löschen) fest, Inhalt scrollt, unten bei getakteten Übungen die gepinnte Start-Leiste (`PinnedActionBar`).
 
 ## Kopf und Rhythmus (oben)
 
@@ -29,6 +29,16 @@ Unter dem Kopf: Familie mit Chips, Kurzbeschreibung, die Rhythmuskurve, Dauer- u
 
 - Eine Zeile des Kopfblocks, gleich nach der Kurzbeschreibung und vor Dauer und Charakter – dieselbe Reihenfolge wie die Metazeile der Karte (Takt · Dauer); Abstände `GapSmall` wie zwischen den anderen Zeilen des Kopfblocks, Kurve → Zeile `GapTiny` wie Rhythmusbild → Takt der Atemlehre. Keine Füllung, keine Griffe, keine Zeitleiste.
 - **Prüfung:** `ScreenshotTest` (`08_detail_*`: `WORTBRUCH`, `ABGESCHNITTEN`); manuell R-A11Y (ein Knoten mit den Phasen in Worten).
+
+## <a id="muster-verwalten"></a>Muster verwalten: Löschen, Duplizieren, vorherige Fassung
+
+Nur bei gespeicherten und eigenen Mustern (`muster-<id>`; nicht beim Muster des Tages), Eigentümer 2026-11-07:
+
+- **Löschen** im Kopf rechts vom Stift, wie auf der Karte in „Eigene Kreationen“ (`ConfirmIconButton`, zerstörend außen, zweistufig nach MUSTER-05: „Muster <Name> löschen“ → „‚<Name>‘ wirklich löschen?“). Danach geht die Seite zurück (das Muster fehlt, `onMissing`); Anpassungen und Sicherheits-Bestätigungen des Musters fallen mit weg. Seit der Muster-Editor nicht mehr löscht (MUSTER-14), ist das der Weg von der Detailseite aus.
+- **Am Ende des Inhalts** (nach den Expandern, `SectionGap` darüber) zwei gleichrangige umrandete Knöpfe (`AppOutlinedButton` in `AdaptiveButtonRow`, wie „Exportieren · Importieren“; passen sie nicht nebeneinander, stehen sie untereinander in voller Breite, nie im Wort umbrochen):
+  - **„Duplizieren“** (TalkBack „Muster <Name> duplizieren“) legt eine Kopie als eigenes Muster an – dieselbe Folge, die Dauer, die die Seite zeigt, Name „<Name> (Kopie)“ (gekürzt wird der Name davor, höchstens 80 Zeichen), ohne vorherige Fassung, Anpassungen und Bestätigungen – und öffnet die **Detailseite der Kopie** darüber. Nicht den Editor: Die Kopie zeigt sich so sofort als eigenes Muster mit eigenem Namen, Zurück führt zum Original; wer sie umbauen will, tippt ihren Stift (ein Tipp mehr). Öffnete die Kopie im Editor, sähe sie aus wie das Original, und Zurück landete ohne Hinweis auf dessen Seite.
+  - **„Vorherige Fassung wiederherstellen“** nur, wenn es eine gibt und sie vom gespeicherten Stand abweicht (`SavedPattern.canRestore`). Ein Tipp tauscht Stand und vorherige Fassung (`restorePrevious`) – der Knopf bleibt also stehen und holt mit einem weiteren Tipp den Stand von eben zurück; Anpassungen der Detailseite fallen weg wie nach dem Bearbeiten. Keine Nachfrage (umkehrbar), kein schwebender Hinweis: Kurve, Name und Dauer der Seite ändern sich sichtbar, der Knopf trägt danach den Zustand „wiederhergestellt“ und sagt ihn einmal an (MUSTER-01, A11Y-04).
+- Nicht gewählt: beides als Icons im Kopf (kein passendes Zeichen in `material-icons-core`, der Kopf trägt schon Stift und Löschen), in der Startleiste (dort steht nur „Anpassen ›“ über dem Start, MUSTER-01), als Menü (gibt es sonst nirgends).
 
 ## Anpassen und Start (unten)
 
@@ -75,4 +85,4 @@ Hoch (360 × 640 im App-Rahmen ohne Tab-Leiste, gleiche Messung, einmalig 2026-1
 
 Groß rutschte der lange Status hoch schon bei 1,0 unter den Titel und brach bei 2,0 an den Punkten in weitere Zeilen in Titelgröße – 50 dp weniger als mit Teaser. Klein steht er bei 1,0 dahinter und kostet bei 2,0 darunter weniger als der Teaser.
 
-**Prüfung:** `ScreenshotTest` – `08_detail_*` (jede Seite, 4-7-8 mit gespeicherter Anpassung), `08_detail_quer` (4-7-8 quer im App-Rahmen ohne Tab-Leiste, 360 dp hoch, Schrift 2,0; misst die sichtbare Höhe als `SICHT`) und `08_detail_anpassen_offen` (Blatt offen mit Phasen, ganzer Bildschirm, Schrift 1,0 und 2,0; die Zeile ist eine Schaltfläche „Anpassen, 6 Runden, angepasst“ mit „Anpassen öffnen“); Gates `WORTBRUCH`, `ABGESCHNITTEN`, `TIPPFLAECHE`, `BESCHNITTEN`, `ANATOMIE`. Manuell R-A11Y: Fokus beim Öffnen auf dem Titel, Zurück schließt.
+**Prüfung:** `ScreenshotTest` – `08_detail_*` (jede Seite, 4-7-8 mit gespeicherter Anpassung; `08_detail_eigenes_muster_intensiv` mit Löschen, Duplizieren und Wiederherstellen), `08_detail_quer` (4-7-8 quer im App-Rahmen ohne Tab-Leiste, 360 dp hoch, Schrift 2,0; misst die sichtbare Höhe als `SICHT`) und `08_detail_anpassen_offen` (Blatt offen mit Phasen, ganzer Bildschirm, Schrift 1,0 und 2,0; die Zeile ist eine Schaltfläche „Anpassen, 6 Runden, angepasst“ mit „Anpassen öffnen“); Gates `WORTBRUCH`, `ABGESCHNITTEN`, `TIPPFLAECHE`, `BESCHNITTEN`, `ANATOMIE`. Manuell R-A11Y: Fokus beim Öffnen auf dem Titel, Zurück schließt.

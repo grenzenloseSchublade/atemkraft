@@ -49,8 +49,18 @@ data class SavedPattern(
     val minutes: Int? = null,
     val pattern: FreePattern = spec.toFreePattern(),
     val freeSequence: Boolean = false,
+    val previous: PatternVersion? = null,
 ) {
     val activating: Boolean get() = spec.activating
+
+    /** Der gespeicherte Stand als Fassung (Folge, Dauer, Name); fehlende Dauer = [DEFAULT_MINUTES]. */
+    val version: PatternVersion get() = PatternVersion(pattern, minutes ?: DEFAULT_MINUTES, exercise.name)
+
+    /**
+     * Lässt sich eine vorherige Fassung wiederherstellen? Nur, wenn es eine gibt und sie sich vom
+     * gespeicherten Stand unterscheidet (Detailseite, „Vorherige Fassung wiederherstellen“).
+     */
+    val canRestore: Boolean get() = previous != null && previous != version
 
     /**
      * Die kurze Musterzeile für Karten: bei einer freien Folge die Folge selbst ([FreePattern.hint]),
@@ -58,7 +68,18 @@ data class SavedPattern(
      */
     val patternLine: String
         get() = if (freeSequence) pattern.hint() else PatternTexts.cardLineFor(spec)
+
+    companion object {
+        /** Dauer eines Musters ohne eigene Dauer (Spalte `minutes` leer), wie beim Muster des Tages (≈ 5 min). */
+        const val DEFAULT_MINUTES = 5
+    }
 }
+
+/**
+ * Eine Fassung eines Musters: Folge, Dauer und Name – der Stand im Editor und die vorherige Fassung
+ * ([SavedPattern.previous]), die „Vorherige Fassung wiederherstellen“ zurückholt.
+ */
+data class PatternVersion(val pattern: FreePattern, val minutes: Int, val name: String)
 
 /**
  * Vom Nutzer gespeicherte Atemmuster (Room): gespeicherte Muster des Tages und eigene Muster aus
@@ -67,9 +88,9 @@ data class SavedPattern(
  * der Detailseite, Logbuch). Wer einem Muster folgen muss, nutzt [observe] bzw. [patterns]; was
  * gerade geschrieben wurde, geben [saveCustom] und [update] selbst zurück.
  *
- * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update] und
- *   [delete] rufen es auf, sonst überstimmen alte Anpassungen die neuen Werte bzw. bleiben nach dem
- *   Löschen liegen.
+ * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update],
+ *   [restorePrevious] und [delete] rufen es auf, sonst überstimmen alte Anpassungen die neuen Werte
+ *   bzw. bleiben nach dem Löschen liegen.
  * @param forgetSafety vergisst die Sicherheits-Bestätigungen einer Übung (DataStore,
  *   `SettingsRepository.forgetSafety`); [delete] ruft es auf (MUSTER-06).
  * @param overrideMinutes die auf der Detailseite gespeicherte Dauer einer Übung (DataStore), null
@@ -135,30 +156,61 @@ class SavedPatternsRepository(
      * Schreibt eine neue Folge, Dauer und Namen in dasselbe Muster (gleiche Id, gleiches
      * Anlagedatum) und macht es zum eigenen Muster – auch ein gespeichertes Tagesmuster.
      * Löscht die Detailseiten-Anpassungen des Musters. `null`, wenn es das Muster nicht mehr gibt.
+     *
+     * [previous] legt im selben Schreibvorgang die vorherige Fassung ab (der Editor gibt beim ersten
+     * Auto-Speichern einer Sitzung den Stand beim Öffnen mit, danach `null`: die abgelegte bleibt).
      */
-    suspend fun update(id: Long, pattern: FreePattern, minutes: Int, name: String): SavedPattern? {
+    suspend fun update(id: Long, pattern: FreePattern, minutes: Int, name: String, previous: PatternVersion? = null): SavedPattern? {
         requireValid(pattern, minutes)
-        return writeCustom(id, pattern.columnSpec(), pattern.toCompact(), minutes, nameFor(pattern, name))
+        return writeLock.withLock {
+            previous?.let { dao.setPrevious(id, it.pattern.toCompact(), it.minutes, nameFor(it.pattern, it.name)) }
+            writeCustom(id, pattern.columnSpec(), pattern.toCompact(), minutes, nameFor(pattern, name))
+        }?.also { clearOverrides(ExerciseIds.saved(id)) }?.toSaved()
     }
 
-    private suspend fun writeCustom(id: Long, spec: PatternSpec, phases: String?, minutes: Int, name: String): SavedPattern? {
-        val updated = writeLock.withLock {
-            val changed = dao.updateCustom(
-                id = id,
-                name = name,
-                inhale = spec.inhale,
-                holdFull = spec.holdFull,
-                exhale = spec.exhale,
-                holdEmpty = spec.holdEmpty,
-                activating = spec.activating,
-                minutes = minutes,
-                phases = phases,
-            )
-            if (changed == 0) return@withLock null
-            dao.byId(id)
-        } ?: return null
-        clearOverrides(ExerciseIds.saved(id))
-        return updated.toSaved()
+    /**
+     * „Vorherige Fassung wiederherstellen“ (Detailseite): tauscht den gespeicherten Stand mit der
+     * vorherigen Fassung – so ist auch das Wiederherstellen umkehrbar. Löscht wie [update] die
+     * Detailseiten-Anpassungen. `null`, wenn es das Muster oder keine (lesbare) vorherige Fassung gibt.
+     */
+    suspend fun restorePrevious(id: Long): SavedPattern? = writeLock.withLock {
+        val row = dao.byId(id) ?: return@withLock null
+        val previous = row.previousVersion() ?: return@withLock null
+        val current = row.toSaved().version
+        dao.setPrevious(id, current.pattern.toCompact(), current.minutes, current.name)
+        writeCustom(id, previous.pattern.columnSpec(), previous.pattern.toCompact(), previous.minutes, previous.name)
+    }?.also { clearOverrides(ExerciseIds.saved(id)) }?.toSaved()
+
+    /**
+     * Legt eine Kopie des Musters [id] als eigenes Muster an (Detailseite, „Duplizieren“): dieselbe
+     * Folge, die Dauer, die die Detailseite zeigt (eine dort gespeicherte Dauer wird zur Dauer der
+     * Kopie, wie in [loadForEdit]), Name aus [copyName] (z. B. „Abendwelle (Kopie)“, gekürzt auf
+     * [PatternBackup.MAX_NAME] Zeichen – gekürzt wird der Name davor, nie der Zusatz). Ohne vorherige
+     * Fassung, ohne Anpassungen und ohne Sicherheits-Bestätigung (neue Id). `null`, wenn es das
+     * Muster nicht mehr gibt.
+     */
+    suspend fun duplicate(id: Long, copyName: (String) -> String): SavedPattern? {
+        val source = loadForEdit(id) ?: return null
+        val base = source.exercise.name
+        val overflow = copyName(base).length - PatternBackup.MAX_NAME
+        val name = copyName(if (overflow > 0) base.dropLast(overflow).trimEnd() else base)
+        return saveCustom(source.pattern, (source.minutes ?: SavedPattern.DEFAULT_MINUTES).coerceIn(AdjustLimits.MINUTES), name)
+    }
+
+    /** Schreibt Folge, Dauer und Namen in die Zeile [id]; nur unter [writeLock]. `null`, wenn es sie nicht gibt. */
+    private suspend fun writeCustom(id: Long, spec: PatternSpec, phases: String?, minutes: Int, name: String): SavedPatternEntity? {
+        val changed = dao.updateCustom(
+            id = id,
+            name = name,
+            inhale = spec.inhale,
+            holdFull = spec.holdFull,
+            exhale = spec.exhale,
+            holdEmpty = spec.holdEmpty,
+            activating = spec.activating,
+            minutes = minutes,
+            phases = phases,
+        )
+        return if (changed == 0) null else dao.byId(id)
     }
 
     /**
@@ -183,6 +235,12 @@ class SavedPatternsRepository(
         val id = ExerciseIds.savedIdOf(exerciseId) ?: return flowOf(null)
         return patterns.map { list -> list.firstOrNull { it.id == id }?.exercise }.distinctUntilChanged()
     }
+
+    /**
+     * Das Muster mit DB-Id [id] samt vorheriger Fassung ([SavedPattern.previous]); folgt der DB,
+     * `null` heißt, es gibt das Muster nicht (mehr). Für die Detailseite (Wiederherstellen).
+     */
+    fun observeSaved(id: Long): Flow<SavedPattern?> = patterns.map { list -> list.firstOrNull { it.id == id } }.distinctUntilChanged()
 
     /**
      * Löscht das Muster und räumt hinter ihm auf: Detailseiten-Anpassungen und Sicherheits-
@@ -346,7 +404,14 @@ class SavedPatternsRepository(
             minutes = minutes,
             pattern = free ?: spec.toFreePattern(),
             freeSequence = free != null,
+            previous = previousVersion(),
         )
+    }
+
+    /** Die vorherige Fassung dieser Zeile; `null` ohne sie oder wenn ihre Folge nicht lesbar ist. */
+    private fun SavedPatternEntity.previousVersion(): PatternVersion? {
+        val pattern = FreePattern.parse(previousPhases) ?: return null
+        return PatternVersion(pattern, (previousMinutes ?: SavedPattern.DEFAULT_MINUTES).coerceIn(AdjustLimits.MINUTES), previousName?.takeIf { it.isNotBlank() } ?: nameFor(pattern, ""))
     }
 
     companion object {

@@ -55,6 +55,12 @@ open class FakeSavedPatternDao : SavedPatternDao {
         return 1
     }
 
+    override suspend fun setPrevious(id: Long, phases: String?, minutes: Int?, name: String?): Int {
+        if (rows.value.none { it.id == id }) return 0
+        rows.value = rows.value.map { if (it.id != id) it else it.copy(previousPhases = phases, previousMinutes = minutes, previousName = name) }
+        return 1
+    }
+
     override suspend fun delete(id: Long) {
         rows.value = rows.value.filterNot { it.id == id }
     }

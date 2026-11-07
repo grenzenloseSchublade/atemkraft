@@ -33,6 +33,7 @@ import app.atemkraft.data.ReminderSettings
 import app.atemkraft.data.Situations
 import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseFilters
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.FreePhase
@@ -567,11 +568,13 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
 
     /**
      * Detailseite wie in der App; 4-7-8 mit gespeicherter Anpassung (Dauer, alle drei Phasen).
-     * Eingebaute Übungen tragen die Markierung, Muster den Stift.
+     * Eingebaute Übungen tragen die Markierung, Muster den Stift; gespeicherte Muster dazu Löschen,
+     * Duplizieren und „Vorherige Fassung wiederherstellen“.
      */
     @Composable
     private fun DetailPage(exercise: Exercise) {
         val builtIn = exercise in BuiltInExercises.all
+        val pattern = exercise.generated && exercise.id != ExerciseIds.DAILY
         ExerciseDetailScreen(
             exercise = exercise,
             requireSafetyConfirm = false,
@@ -585,6 +588,10 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 onOpenLore = {},
                 onMarkedChange = if (builtIn) ({ _: Boolean -> }) else null,
                 onEditPattern = if (builtIn) null else ({}),
+                // Gespeicherte Muster: Löschen im Kopf, Duplizieren und Wiederherstellen am Ende.
+                onDeletePattern = if (pattern) ({}) else null,
+                onDuplicate = if (pattern) ({}) else null,
+                onRestorePrevious = if (pattern) ({}) else null,
             ),
         )
     }

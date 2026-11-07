@@ -5,7 +5,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.atemkraft.R
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.ExerciseRepository
 import app.atemkraft.data.SafetySettings
@@ -17,6 +19,7 @@ import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.ui.navigation.PatternEditorRoute
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 /**
@@ -37,6 +40,10 @@ import kotlinx.coroutines.launch
  *   Einstellungen abgeschaltet ist ([safety]); die Bestätigung wird gemerkt.
  * - Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen, ein gespeichertes
  *   bearbeiten. [onOpenEditor] bekommt die Route des Editors; der Aufrufer navigiert.
+ * - Gespeicherte und eigene Muster (Eigentümer 2026-11-07): Löschen im Kopf neben dem Stift
+ *   (zweistufig, MUSTER-05; danach geht die Seite über [onMissing]), am Ende „Duplizieren“ (legt
+ *   eine Kopie an und öffnet deren Detailseite über [onOpenDetail]) und „Vorherige Fassung
+ *   wiederherstellen“ (nur, wenn es eine gibt und sie abweicht; tauscht den Stand mit ihr).
  *
  * [onStart] startet die Übung; der Aufrufer schließt die Seite dabei. [initialMinutes]: Dauer für
  * diesen Einstieg (`DetailRoute.minutes`), nicht als Anpassung gespeichert. [covered]: Ein
@@ -55,6 +62,7 @@ internal fun DetailDestination(
     onStart: (Exercise, SessionConfig) -> Unit,
     onOpenLore: (patternId: String) -> Unit,
     onOpenEditor: (PatternEditorRoute) -> Unit,
+    onOpenDetail: (exerciseId: String) -> Unit,
     onBack: () -> Unit,
     onMissing: () -> Unit,
     covered: Boolean = false,
@@ -72,6 +80,9 @@ internal fun DetailDestination(
         return
     }
     val savedPatternId = ExerciseIds.savedIdOf(id)
+    val saved by remember(savedPatternId) { savedPatternId?.let(savedPatterns::observeSaved) ?: flowOf(null) }
+        .collectAsStateWithLifecycle(initialValue = null)
+    val resources = LocalResources.current
     val requireSafety = safety.requiresConfirm(exercise)
     val persistIntervals = id != ExerciseIds.DAILY
     val markable = exercise in BuiltInExercises.all
@@ -115,6 +126,20 @@ internal fun DetailDestination(
                 }
 
                 else -> null
+            },
+            onDeletePattern = savedPatternId?.let { patternId ->
+                { scope.launch { savedPatterns.delete(patternId) } }
+            },
+            onDuplicate = savedPatternId?.let { patternId ->
+                {
+                    scope.launch {
+                        val copy = savedPatterns.duplicate(patternId) { name -> resources.getString(R.string.pattern_copy_name, name) }
+                        copy?.let { onOpenDetail(ExerciseIds.saved(it.id)) }
+                    }
+                }
+            },
+            onRestorePrevious = savedPatternId?.takeIf { saved?.canRestore == true }?.let { patternId ->
+                { scope.launch { savedPatterns.restorePrevious(patternId) } }
             },
         ),
         marked = id in markedIds,

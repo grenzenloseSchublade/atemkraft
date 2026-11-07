@@ -17,13 +17,14 @@ import app.atemkraft.ui.theme.Sizes
  * Das eine Zeichen für „zu mir“ (Auswertung 2026-10-24, Abschnitt 3.2): der Atemkreis des Pacers,
  * leer als Ring, gesetzt gefüllt, im Akzent `secondary` wie jeder gesetzte Zustand (KOMP-02). Er
  * steht für die persönliche Markierung „tut mir gut“ (die eigene Einschätzung neben der
- * Studienlage) und fürs Speichern eines Musters „in Eigene“ (Tagesmuster, Muster-Editor) – beides
- * landet im Tab „Eigene“. Kein Herz, kein Lesezeichen.
+ * Studienlage) und fürs Behalten des Musters des Tages in „Meins“ – beides landet im Tab „Meins“.
+ * Kein Herz, kein Lesezeichen. Der Muster-Editor speichert nicht mit ◉, sondern mit der Diskette
+ * bzw. von selbst (Eigentümer 2026-11-07, ICON-03).
  */
 
 /**
  * Der Atemkreis als Icon eines Schalters: [filled] gefüllt in `secondary`, sonst Ring in
- * `onSurface` · `SECONDARY`. Für [PersonalMarkToggle] und die Speichern-Schalter der Muster
+ * `onSurface` · `SECONDARY`. Für [PersonalMarkToggle] und den Schalter des Musters des Tages
  * (in einem [AppIconToggle]); [contentDescription] nennt die Aktion (ICON-02).
  */
 @Composable

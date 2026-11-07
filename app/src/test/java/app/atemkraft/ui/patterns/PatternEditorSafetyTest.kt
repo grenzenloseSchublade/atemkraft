@@ -56,7 +56,7 @@ class PatternEditorSafetyTest {
                 PatternEditorScreen(
                     state = state,
                     actions = PatternEditorActions(
-                        onSavedChange = {},
+                        onSave = {},
                         onStart = { exercise, _ -> started += exercise },
                         onOpenLore = {},
                         onBack = {},

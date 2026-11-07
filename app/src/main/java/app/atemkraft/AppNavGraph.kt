@@ -264,6 +264,8 @@ internal fun NavGraphBuilder.appGraph(
             },
             onOpenLore = openLore,
             onOpenEditor = { route -> navController.navigate(route) },
+            // Duplizieren öffnet die Kopie, nur solange diese Seite oben liegt.
+            onOpenDetail = { id -> if (navController.currentBackStackEntry == entry) openDetail(id) },
             onBack = back,
             // Unauflösbare Route (z. B. gelöschtes Muster): zurück, nur solange diese Seite oben liegt.
             onMissing = { navController.popIfTop(entry) },

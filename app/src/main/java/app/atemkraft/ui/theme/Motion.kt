@@ -61,6 +61,14 @@ object Motion {
      */
     val SearchStatusSettle = 600L
 
+    /**
+     * Auto-Speichern im Muster-Editor (MUSTER-14): so lange muss ein bestehendes Muster unverändert
+     * stehen, bevor es geschrieben wird – ein Zug an der Kurve rastet je Sekunde, geschrieben wird
+     * einmal danach, nicht je Raste. Kurz genug, dass der Stand „· gespeichert“ fast sofort folgt;
+     * Verlassen, Hintergrund und Start schreiben ohnehin sofort.
+     */
+    val AutoSaveSettle = 800L
+
     /** vāyu-Bild: Strömungslinien rücken in dieser Zeit um zwei Strich-Abstände weiter (ruhig). */
     val VayuFlow = 2400
 

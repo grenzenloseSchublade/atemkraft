@@ -34,76 +34,56 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import app.atemkraft.R
 import app.atemkraft.data.PatternBackup
-import app.atemkraft.ui.components.AppIconToggle
+import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppTextButton
-import app.atemkraft.ui.components.BreathMarkIcon
 import app.atemkraft.ui.components.MarqueeText
 import app.atemkraft.ui.components.NoPersonalizedLearning
-import app.atemkraft.ui.components.rememberArmedConfirm
+import app.atemkraft.ui.components.TitleWithStatus
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Speicherzeichen im Kopf (MUSTER-01): leer → gefüllt in `secondary`, Zustand per `stateDescription`
- * und Live-Region (nur für den eigenen Tipp, nicht wenn eine Wertänderung es leert). Bei einem
- * Muster, das es vor dem Öffnen schon gab, schärft der erste Tipp auf das gefüllte Speicherzeichen nur
- * (Papierkorb mit Kreuz in `error`, „‚Name‘ wirklich löschen?“), erst der zweite entfernt es
- * (MUSTER-05).
+ * Diskette im Kopf eines Entwurfs (MUSTER-14, Eigentümer 2026-11-07): legt das Muster in „Meins“ an
+ * ([onSave]); danach ist es ein bestehendes Muster, die Diskette verschwindet und der Kopf zeigt
+ * „· gespeichert“ ([NameTitle], dort die eine Ansage). Ein Zeichen, eine Bedeutung (ICON-03): ◉
+ * bleibt „zu mir“ („Tut mir gut“, Muster des Tages), Speichern ist die Diskette (`ic_save`). Gleiche
+ * Tönung wie der Startpunkt daneben (LAYOUT-04). [onFocusChanged] meldet den Tastatur-Fokus, damit
+ * der Aufrufer ihn weitergibt, wenn die Diskette verschwindet (A11Y-07).
  */
 @Composable
-internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> Unit) {
-    val saved = state.saved
-    val confirm = rememberArmedConfirm()
-    // Geänderte Werte leeren das Speicherzeichen: Eine halb bestätigte Löschung gilt dann nicht mehr.
-    LaunchedEffect(saved) { if (!saved) confirm.disarm() }
-    val armed = confirm.armed && saved
-    // Eine Ansage je Tipp (A11Y-04): Die Live-Region gilt nur ab dem eigenen Tipp und nur, bis sich
-    // Phasen, Dauer oder Name ändern. Leert oder füllt eine solche Änderung das Speicherzeichen, sagt
-    // also nur der geänderte Wert etwas.
-    val draft = PatternSnapshot(state.pattern, state.minutes, state.savedName)
-    var announce by remember(draft) { mutableStateOf(false) }
-    AppIconToggle(
-        checked = saved,
-        announce = announce,
-        onCheckedChange = { checked ->
-            announce = true
-            when {
-                checked -> onSavedChange(true)
-                state.existedBefore -> confirm.tap { onSavedChange(false) }
-                else -> onSavedChange(false)
-            }
-        },
-        stateDescription = stringResource(if (saved) R.string.state_saved else R.string.state_not_saved),
-        modifier = confirm.focusModifier,
-    ) {
-        when {
-            armed -> Icon(
-                painterResource(R.drawable.ic_delete_forever),
-                contentDescription = stringResource(R.string.cd_delete_confirm, state.snapshot?.name ?: state.savedName),
-                tint = MaterialTheme.colorScheme.error,
-            )
-
-            // Dasselbe Zeichen wie „Tut mir gut“ und am Tagesmuster: ◉ heißt „zu mir“ (in Eigene).
-            else -> BreathMarkIcon(filled = saved, contentDescription = stringResource(R.string.cd_pattern_save))
-        }
+internal fun SaveButton(onSave: () -> Unit, onFocusChanged: (Boolean) -> Unit) {
+    AppIconButton(onClick = onSave, modifier = Modifier.onFocusChanged { onFocusChanged(it.hasFocus) }) {
+        Icon(
+            painterResource(R.drawable.ic_save),
+            contentDescription = stringResource(R.string.cd_pattern_editor_save),
+            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
+        )
     }
 }
 
 /**
  * Seitentitel (Nachtrag 7): der Name des Musters groß (`headlineSmall`), darunter klein „Eigenes
- * Muster“ als Einordnung; „intensiv“ steht seit 2026-10-23 rechts in der Zeile der Werte über der
- * Kurve ([InfoLine]), der Titel bekommt die ganze Breite vor Startpunkt und Speicherzeichen. Der
+ * Muster“ als Einordnung, bei einem bestehenden Muster mit dem Status „· gespeichert“ (Anatomie
+ * Titel · Status, [TitleWithStatus]; MUSTER-14): Er steht, wenn der Entwurf dem geschriebenen Stand
+ * entspricht, und fehlt, solange ein Schreiben aussteht – sein Platz bleibt reserviert, damit
+ * nichts springt (im Entwurf gibt es ihn nicht; er kommt mit dem Speichern, wenn die Diskette geht). TalkBack hört ihn als Zustand des Titels und genau einmal je
+ * Sitzung als Ansage, beim ersten Schreiben ([PatternEditorState.announceSaved], A11Y-04).
+ * „intensiv“ steht seit 2026-10-23 rechts in der Zeile der Werte über der
+ * Kurve ([InfoLine]), der Titel bekommt die ganze Breite vor Startpunkt und Diskette. Der
  * Name steht in einer Zeile und läuft als Laufschrift, wenn er nicht passt – nie umbrochen: Der Kopf
  * behält seine Höhe, auch wenn der Vorschlagsname mit den Zahlen wächst. Ein kleiner Stift direkt
  * hinter dem Namen zeigt, dass er änderbar ist (Nutzer 2026-10-23); er bleibt stehen, der Name
@@ -114,7 +94,11 @@ internal fun SaveToggle(state: PatternEditorState, onSavedChange: (Boolean) -> U
 internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
     val name = state.savedName
     val description = stringResource(R.string.cd_pattern_name_rename, name)
+    val savedState = stringResource(R.string.state_pattern_saved)
+    val saved = state.saved
+    val announce = state.announceSaved
     val colors = MaterialTheme.colorScheme
+    val subtitleColor = colors.onBackground.copy(alpha = SECONDARY)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -122,6 +106,8 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
             .semantics {
                 heading()
                 contentDescription = description
+                if (saved) stateDescription = savedState
+                if (announce) liveRegion = LiveRegionMode.Polite
             }
             .clickable(role = Role.Button, onClick = onRename),
         verticalAlignment = Alignment.CenterVertically,
@@ -130,10 +116,17 @@ internal fun NameTitle(state: PatternEditorState, onRename: () -> Unit) {
         // damit die Umbruch- und Zuschnittprüfung die Text-Layouts sieht.
         Column(Modifier.weight(1f).semantics { hideFromAccessibility() }) {
             NameWithPencil(name)
-            Text(
-                text = stringResource(R.string.pattern_editor_title),
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.onBackground.copy(alpha = SECONDARY),
+            TitleWithStatus(
+                title = stringResource(R.string.pattern_editor_title),
+                color = subtitleColor,
+                // Im Entwurf kein Status und kein reservierter Platz: Bei großer Schrift stünde er
+                // sonst unsichtbar unter dem Titel und machte den Kopf höher (MUSTER-10, ohne Scrollen).
+                status = if (state.savedId != null || state.savePending) stringResource(R.string.pattern_editor_saved_status) else null,
+                statusDescription = null,
+                statusStyle = MaterialTheme.typography.labelMedium,
+                titleStyle = MaterialTheme.typography.labelMedium,
+                isHeading = false,
+                statusVisible = saved,
             )
         }
     }
@@ -173,8 +166,8 @@ private fun NameWithPencil(name: String) {
 
 /**
  * Umbenennen (Nachtrag 7, Tipp auf den Seitentitel): ein Feld, einzeilig, scrollt waagrecht,
- * höchstens [PatternEditorState.NAME_MAX] Zeichen; es ändert den Namen sofort (das Speicherzeichen
- * leert sich wie bei jeder Änderung). Leer steht der Vorschlagsname als Platzhalter da – so wird
+ * höchstens [PatternEditorState.NAME_MAX] Zeichen; es ändert den Namen sofort (ein bestehendes
+ * Muster speichert ihn wie jede Änderung). Leer steht der Vorschlagsname als Platzhalter da – so wird
  * auch gespeichert. Zeichen, die der Import nicht annimmt (Steuer- und Formatzeichen, Emoji
  * außerhalb der Grundebene), nimmt das Feld gar nicht erst an; Zeilenumbrüche aus der
  * Zwischenablage werden Leerzeichen ([nameInput]). „Fertig“ auf der Tastatur oder im Dialog schließt.
@@ -241,6 +234,23 @@ internal fun RenameDialog(state: PatternEditorState, onDismiss: () -> Unit) {
         confirmButton = { AppTextButton(onClick = onDismiss) { Text(stringResource(R.string.pattern_editor_name_done)) } },
     )
     LaunchedEffect(Unit) { focus.requestFocus() }
+}
+
+/**
+ * „Muster speichern?“ beim Verlassen eines geänderten Entwurfs (MUSTER-14): M3-Basisdialog wie
+ * [RenameDialog], die Knöpfe nach ihrer Wirkung benannt – „Speichern“ legt das Muster in „Meins“ an
+ * und schließt den Editor, „Verwerfen“ schließt ohne Speichern. Wegtippen und Zurück schließen nur
+ * den Dialog: Man bearbeitet weiter.
+ */
+@Composable
+internal fun LeaveDialog(onSave: () -> Unit, onDiscard: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.pattern_editor_leave_title)) },
+        text = { Text(stringResource(R.string.pattern_editor_leave_text)) },
+        confirmButton = { AppTextButton(onClick = onSave) { Text(stringResource(R.string.action_save)) } },
+        dismissButton = { AppTextButton(onClick = onDiscard) { Text(stringResource(R.string.action_discard)) } },
+    )
 }
 
 /**

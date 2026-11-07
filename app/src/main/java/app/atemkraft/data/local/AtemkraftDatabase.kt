@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Logbuch und gespeicherte Muster. Jede Schemaänderung braucht eine explizite [Migration], das
  * exportierte Schema unter app/schemas/ und einen Fall in DatabaseMigrationTest (SEC-STORE-03).
  */
-@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 6, exportSchema = true)
+@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 7, exportSchema = true)
 abstract class AtemkraftDatabase : RoomDatabase() {
 
     abstract fun logbookDao(): LogbookDao
@@ -118,8 +118,21 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v6 → v7: vorherige Fassung gespeicherter Muster (`previousPhases`, `previousMinutes`,
+         * `previousName`) für „Vorherige Fassung wiederherstellen“ auf der Detailseite. Rein additiv;
+         * bisherige Muster haben noch keine (NULL), Logbuch und Muster bleiben, wie sie sind.
+         */
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE saved_patterns ADD COLUMN previousPhases TEXT")
+                db.execSQL("ALTER TABLE saved_patterns ADD COLUMN previousMinutes INTEGER")
+                db.execSQL("ALTER TABLE saved_patterns ADD COLUMN previousName TEXT")
+            }
+        }
+
         /** Alle Migrationen in Reihenfolge; App und Migrationstest nutzen dieselbe Liste. */
-        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 
         fun build(context: Context): AtemkraftDatabase = Room.databaseBuilder(
             context.applicationContext,
