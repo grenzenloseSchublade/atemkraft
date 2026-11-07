@@ -92,7 +92,8 @@ internal fun DetailDestination(
                 }
             },
             onConfirmedSafety = {
-                scope.launch { settings.acknowledgeSafety(exercise.id) }
+                // Bestätigt gilt für diese Übung, bei Mustern mit genau dieser Folge (MUSTER-06).
+                scope.launch { settings.acknowledgeSafety(SafetySettings.keyOf(exercise)) }
             },
             onStart = { config -> onStart(exercise, config) },
             onBack = onBack,

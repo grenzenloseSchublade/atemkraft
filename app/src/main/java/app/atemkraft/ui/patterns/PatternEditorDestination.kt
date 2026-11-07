@@ -66,7 +66,7 @@ internal fun PatternEditorDestination(
     cueSettings: CueSettings = CueSettings(),
     otherAudioActive: Boolean = false,
     safety: SafetySettings = SafetySettings(),
-    onConfirmedSafety: (exerciseId: String) -> Unit = {},
+    onConfirmedSafety: (key: String) -> Unit = {},
 ) {
     val writes = remember { Mutex() }
     val missing by rememberUpdatedState(onMissing)

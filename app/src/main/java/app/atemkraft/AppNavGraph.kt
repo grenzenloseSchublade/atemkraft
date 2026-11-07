@@ -291,8 +291,8 @@ internal fun NavGraphBuilder.appGraph(
             otherAudioActive = playback.anyActive,
             // Intensive eigene Muster: derselbe Sicherheitsdialog wie auf der Detailseite.
             safety = state.safetySettings,
-            onConfirmedSafety = { exerciseId ->
-                scope.launch { settings.acknowledgeSafety(exerciseId) }
+            onConfirmedSafety = { key ->
+                scope.launch { settings.acknowledgeSafety(key) }
             },
         )
     }

@@ -67,8 +67,11 @@ data class SavedPattern(
  * der Detailseite, Logbuch). Wer einem Muster folgen muss, nutzt [observe] bzw. [patterns]; was
  * gerade geschrieben wurde, geben [saveCustom] und [update] selbst zurück.
  *
- * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update]
- *   ruft es auf, sonst überstimmen alte Anpassungen die neuen Werte.
+ * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update] und
+ *   [delete] rufen es auf, sonst überstimmen alte Anpassungen die neuen Werte bzw. bleiben nach dem
+ *   Löschen liegen.
+ * @param forgetSafety vergisst die Sicherheits-Bestätigungen einer Übung (DataStore,
+ *   `SettingsRepository.forgetSafety`); [delete] ruft es auf (MUSTER-06).
  * @param overrideMinutes die auf der Detailseite gespeicherte Dauer einer Übung (DataStore), null
  *   = keine; [loadForEdit] startet damit, weil [update] sie danach löscht.
  */
@@ -76,6 +79,7 @@ class SavedPatternsRepository(
     private val dao: SavedPatternDao,
     private val clearOverrides: suspend (exerciseId: String) -> Unit = {},
     private val overrideMinutes: suspend (exerciseId: String) -> Int? = { null },
+    private val forgetSafety: suspend (exerciseId: String) -> Unit = {},
     scope: CoroutineScope = supervisedScope(Dispatchers.IO),
 ) {
 
@@ -180,8 +184,15 @@ class SavedPatternsRepository(
         return patterns.map { list -> list.firstOrNull { it.id == id }?.exercise }.distinctUntilChanged()
     }
 
+    /**
+     * Löscht das Muster und räumt hinter ihm auf: Detailseiten-Anpassungen und Sicherheits-
+     * Bestätigungen seiner Übungs-Kennung („muster-7“) fallen mit weg.
+     */
     suspend fun delete(id: Long) {
         writeLock.withLock { dao.delete(id) }
+        val exerciseId = ExerciseIds.saved(id)
+        clearOverrides(exerciseId)
+        forgetSafety(exerciseId)
     }
 
     /**

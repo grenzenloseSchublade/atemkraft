@@ -51,12 +51,14 @@ class AppContainer(context: Context) {
 
     /**
      * Beim Bearbeiten eines Musters fallen dessen Detailseiten-Anpassungen weg; die dort gewählte
-     * Dauer übernimmt der Editor als Startwert.
+     * Dauer übernimmt der Editor als Startwert. Beim Löschen fallen Anpassungen und
+     * Sicherheits-Bestätigungen mit weg.
      */
     val savedPatternsRepository: SavedPatternsRepository = SavedPatternsRepository(
         dao = database.savedPatternDao(),
         clearOverrides = settingsRepository::clearExerciseIntervals,
         overrideMinutes = { id -> settingsRepository.exerciseIntervals(id).first()?.duration },
+        forgetSafety = settingsRepository::forgetSafety,
     )
     val exerciseRepository: ExerciseRepository = ExerciseRepository(savedPatternsRepository)
     val logbookRepository: LogbookRepository = LogbookRepository(database.logbookDao())

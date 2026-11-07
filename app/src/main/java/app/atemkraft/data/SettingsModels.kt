@@ -1,6 +1,7 @@
 package app.atemkraft.data
 
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.PhaseDuration
 import app.atemkraft.domain.SoundMode
 import app.atemkraft.domain.ToneVolume
 import app.atemkraft.domain.TransitionEmphasis
@@ -20,9 +21,10 @@ data class CueSettings(
 )
 
 /**
- * Sicherheits-Einstellungen. [acknowledgedIds] = Übungen, deren Hinweis schon einmal bestätigt
- * wurde – je Übung, nicht einmal für alle (Nutzer 2026-10-24): Wim Hof hat andere Risiken als die
- * Feueratmung (Atempause, nie im Wasser), eine Bestätigung bei der einen gilt nicht für die andere.
+ * Sicherheits-Einstellungen. [acknowledgedIds] = Schlüssel ([keyOf]) der Übungen, deren Hinweis
+ * schon einmal bestätigt wurde – je Übung, nicht einmal für alle (Nutzer 2026-10-24): Wim Hof hat
+ * andere Risiken als die Feueratmung (Atempause, nie im Wasser), eine Bestätigung bei der einen gilt
+ * nicht für die andere.
  */
 data class SafetySettings(
     val showWarning: Boolean = true,
@@ -31,10 +33,32 @@ data class SafetySettings(
     /**
      * Muss vor dem Start von [exercise] der Sicherheitsdialog kommen (MUSTER-06)? Nur bei
      * intensiven Übungen (`caution`, auch intensive eigene Muster), und dann, solange der Hinweis
-     * für genau diese Übung noch nie bestätigt wurde oder in den Einstellungen eingeschaltet ist.
-     * Die eine Regel für Detailseite und Muster-Editor.
+     * für genau diese Übung mit genau diesem Inhalt ([keyOf]) noch nie bestätigt wurde oder in den
+     * Einstellungen eingeschaltet ist. Die eine Regel für Detailseite und Muster-Editor.
      */
-    fun requiresConfirm(exercise: Exercise): Boolean = exercise.caution && (exercise.id !in acknowledgedIds || showWarning)
+    fun requiresConfirm(exercise: Exercise): Boolean = exercise.caution && (keyOf(exercise) !in acknowledgedIds || showWarning)
+
+    companion object {
+        /**
+         * Wofür eine Bestätigung gilt (Eigentümer 2026-11-07): bei eingebauten Übungen ihre Id
+         * („wim-hof“, Inhalt fest), bei generierten Mustern – gespeichert, eigenes, Entwurf – Id
+         * **und** Folge („muster-7:INHALE 4000,HOLD 12000,EXHALE 6000“). Ein umgebautes Muster oder
+         * ein anderer Entwurf fragt so wieder; die Dauer zählt nicht, sie ändert das Risiko nicht.
+         * Bestätigungen von vor v2.12 (nur „muster-7“, „muster-entwurf“) passen damit zu keinem
+         * Muster mehr und verfallen – der sichere Weg: einmal mehr gefragt.
+         */
+        fun keyOf(exercise: Exercise): String {
+            if (!exercise.generated) return exercise.id
+            val phases = exercise.segments.flatMap { it.phases }.joinToString(",") { phase ->
+                val duration = phase.duration
+                "${phase.type.name} ${if (duration is PhaseDuration.Fixed) duration.millis else duration}"
+            }
+            return "${exercise.id}$KEY_SEPARATOR$phases"
+        }
+
+        /** Trennt Id und Folge im Schlüssel; eine Id enthält ihn nie. */
+        const val KEY_SEPARATOR = ":"
+    }
 }
 
 /**

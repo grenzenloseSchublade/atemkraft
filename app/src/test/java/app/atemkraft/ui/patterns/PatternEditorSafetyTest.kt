@@ -13,7 +13,9 @@ import app.atemkraft.R
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.FreePatternTemplates
+import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.detail.DetailActions
@@ -32,8 +34,8 @@ import org.robolectric.annotation.Config
 /**
  * MUSTER-06 an beiden Startpfaden mit Sicherheitsdialog: Eine intensive freie Folge im
  * Muster-Editor und eine intensive eingebaute Übung (Wim Hof) auf der Detailseite starten erst
- * nach dem Dialog. Die Bestätigung wirkt wie in der App (`acknowledgeSafety` merkt sich nur die
- * Übung): Mit „Sicherheitshinweis immer zeigen“ (Standard an) kommt der Dialog jedes Mal, erst
+ * nach dem Dialog. Die Bestätigung wirkt wie in der App (`acknowledgeSafety` merkt sich die
+ * Übung, bei Mustern mit ihrer Folge): Mit „Sicherheitshinweis immer zeigen“ (Standard an) kommt der Dialog jedes Mal, erst
  * ausgeschaltet startet die bestätigte Übung direkt.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -86,6 +88,13 @@ class PatternEditorSafetyTest {
         play.performClick()
         assertEquals(3, started.size)
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
+
+        // Wird der Entwurf intensiver umgebaut, fragt er wieder – auch ohne „immer zeigen“.
+        compose.runOnIdle { state.setSeconds(1, 14) }
+        play.performClick()
+        assertEquals(3, started.size)
+        compose.onNodeWithText(app.getString(R.string.safety_confirm)).performClick()
+        assertEquals(4, started.size)
     }
 
     /** MUSTER-06 auf der Detailseite: Wim Hof startet erst nach dem Dialog, ohne „immer zeigen“ danach direkt. */
@@ -131,13 +140,30 @@ class PatternEditorSafetyTest {
         compose.onNodeWithText(app.getString(R.string.safety_confirm)).assertDoesNotExist()
     }
 
+    /**
+     * Eine Bestätigung gilt für die Übung und ihren Inhalt (Eigentümer 2026-11-07): eingebaute
+     * Übungen je Id, Muster und Entwürfe je Id und Folge – ein umgebautes Muster fragt wieder, ein
+     * anderer Entwurf auch; eine alte Bestätigung nur mit der Id verfällt.
+     */
     @Test
-    fun `Bestätigung gilt nur für die bestätigte Übung`() {
+    fun `Bestätigung gilt nur für die bestätigte Übung mit ihrem Inhalt`() {
         val wimHof = BuiltInExercises.all.single { it.id == "wim-hof" }
         val fire = BuiltInExercises.all.single { it.id == "feueratmung" }
-        val safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(wimHof.id))
+        val safety = SafetySettings(showWarning = false, acknowledgedIds = setOf(SafetySettings.keyOf(wimHof)))
+        assertEquals(wimHof.id, SafetySettings.keyOf(wimHof))
         assertFalse(safety.requiresConfirm(wimHof))
         assertTrue(safety.requiresConfirm(fire))
+
+        val sigh = FreePatternTemplates.all.single { it.label == "4-7-8" }.pattern
+        fun pattern(id: String, holdSeconds: Int) = GeneratedExercises.exerciseFrom(sigh.withSeconds(1, holdSeconds), id, "Lang halten", 5)
+        val saved = pattern(ExerciseIds.saved(7), 12)
+        assertTrue(saved.caution)
+        val confirmed = SafetySettings(showWarning = false, acknowledgedIds = setOf(SafetySettings.keyOf(saved), ExerciseIds.DRAFT))
+        assertFalse(confirmed.requiresConfirm(saved))
+        // Dasselbe Muster, länger gehalten: fragt wieder.
+        assertTrue(confirmed.requiresConfirm(pattern(ExerciseIds.saved(7), 14)))
+        // Ein Entwurf: Die alte Bestätigung nur mit der Id („muster-entwurf“) gilt nicht mehr.
+        assertTrue(confirmed.requiresConfirm(pattern(ExerciseIds.DRAFT, 12)))
     }
 
     @Test

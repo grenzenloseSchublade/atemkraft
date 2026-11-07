@@ -69,7 +69,7 @@ data class PatternEditorActions(
     val onStart: (Exercise, SessionConfig) -> Unit,
     val onOpenLore: (patternId: String) -> Unit,
     val onBack: () -> Unit,
-    val onConfirmedSafety: (exerciseId: String) -> Unit = {},
+    val onConfirmedSafety: (key: String) -> Unit = {},
 )
 
 /**
@@ -98,8 +98,8 @@ data class PatternEditorActions(
  * [SessionConfig]); die Seite bleibt dabei offen. Ein intensives Muster startet erst nach dem
  * Sicherheitsdialog, wenn [safety] es verlangt ([SafetySettings.requiresConfirm], dieselbe Regel
  * wie auf der Detailseite; [rememberSafetyGate]); die Bestätigung meldet
- * [PatternEditorActions.onConfirmedSafety]. [PatternEditorActions.onOpenLore] öffnet eine Karte
- * der Atemlehre.
+ * [PatternEditorActions.onConfirmedSafety] mit dem Schlüssel aus Übung und Folge
+ * ([SafetySettings.keyOf]). [PatternEditorActions.onOpenLore] öffnet eine Karte der Atemlehre.
  *
  * Ton der Vorschau ([rememberPreviewSound]): Klang-Einstellungen der App [cueSettings]; still,
  * solange eine Übung oder Meditation läuft ([otherAudioActive]). [soundOutput] tauschen nur Tests.
@@ -139,8 +139,8 @@ fun PatternEditorScreen(
     val start = rememberSafetyGate(
         require = safety.requiresConfirm(exercise),
         cautions = exercise.cautions,
-        // Bestätigt gilt für dieses Muster, nicht für alle intensiven Übungen (MUSTER-06).
-        onConfirm = { actions.onConfirmedSafety(exercise.id) },
+        // Bestätigt gilt für dieses Muster mit genau dieser Folge (MUSTER-06).
+        onConfirm = { actions.onConfirmedSafety(SafetySettings.keyOf(exercise)) },
     ) {
         preview.pause()
         actions.onStart(exercise, config)

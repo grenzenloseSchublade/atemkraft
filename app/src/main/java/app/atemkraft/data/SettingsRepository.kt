@@ -455,14 +455,26 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     }
 
     /**
-     * Der Sicherheitshinweis von [exerciseId] wurde bestätigt. Die frühere Bestätigung „einmal für
-     * alle“ zählt nicht mehr: Wer den Hinweis abgeschaltet hat, bestätigt jede intensive Übung
-     * einmal neu – lieber einmal zu oft als ein fremder Hinweis, der nie erscheint.
+     * Der Sicherheitshinweis wurde bestätigt, [key] aus [SafetySettings.keyOf] (Übung, bei Mustern
+     * mit ihrer Folge). Die frühere Bestätigung „einmal für alle“ zählt nicht mehr: Wer den Hinweis
+     * abgeschaltet hat, bestätigt jede intensive Übung einmal neu – lieber einmal zu oft als ein
+     * fremder Hinweis, der nie erscheint.
      */
-    suspend fun acknowledgeSafety(exerciseId: String) {
+    suspend fun acknowledgeSafety(key: String) {
         store.edit { prefs ->
-            prefs[Keys.SAFETY_ACK_IDS] = prefs[Keys.SAFETY_ACK_IDS].orEmpty() + exerciseId
+            prefs[Keys.SAFETY_ACK_IDS] = prefs[Keys.SAFETY_ACK_IDS].orEmpty() + key
             prefs.remove(Keys.SAFETY_ACK)
+        }
+    }
+
+    /**
+     * Vergisst alle Bestätigungen der Übung [exerciseId] – jede Fassung ihrer Folge und den alten
+     * Schlüssel ohne Folge (ein gelöschtes Muster, `SavedPatternsRepository.delete`).
+     */
+    suspend fun forgetSafety(exerciseId: String) {
+        store.edit { prefs ->
+            val kept = prefs[Keys.SAFETY_ACK_IDS].orEmpty().filterNot { it == exerciseId || it.startsWith(exerciseId + SafetySettings.KEY_SEPARATOR) }
+            prefs[Keys.SAFETY_ACK_IDS] = kept.toSet()
         }
     }
 
