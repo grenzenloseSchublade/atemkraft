@@ -62,7 +62,7 @@ kotlinx.coroutines library.
 Copyright 2016-2024 JetBrains s.r.o and contributors
 
 ----------------------------------------------------------------------
-kotlinx.serialization (Kotlin/kotlinx.serialization, license/NOTICE.txt, Tag v1.11.0)
+kotlinx.serialization (Kotlin/kotlinx.serialization, license/NOTICE.txt, Tag v1.12.0)
 ----------------------------------------------------------------------
    =========================================================================
    ==  NOTICE file corresponding to the section 4 d of                    ==
