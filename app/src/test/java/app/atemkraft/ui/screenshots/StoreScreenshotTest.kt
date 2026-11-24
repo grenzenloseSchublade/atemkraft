@@ -48,6 +48,7 @@ import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.PhaseType
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.detail.DetailActions
+import app.atemkraft.ui.detail.DetailAdjustInputs
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.patterns.PatternEditorState
@@ -135,9 +136,9 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
                 ExerciseDetailScreen(
                     exercise = resonance,
                     requireSafetyConfirm = false,
-                    savedIntervals = null,
+                    adjustInputs = DetailAdjustInputs(),
                     actions = DetailActions(
-                        onIntervalsChange = { _, _, _, _ -> },
+                        onIntervalsChange = {},
                         onIntervalsReset = {},
                         onConfirmedSafety = {},
                         onStart = {},

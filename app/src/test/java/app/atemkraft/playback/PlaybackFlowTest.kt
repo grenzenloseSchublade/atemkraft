@@ -175,13 +175,14 @@ class PlaybackFlowTest {
     }
 
     @Test
-    fun `Danach in die Stille - Meditation übernimmt den Service, auch über einen stehenden Ende-Screen`() = runTest {
+    fun `Danach in die Stille - Meditation übernimmt den Service, auch über einen stehenden Ende-Screen, mit der gewählten Dauer`() = runTest {
         val meditation = meditation()
         val breath = breath()
         val silence = SilenceAfterBreath(
             breath = breath,
             meditation = meditation,
-            meditationConfig = flowOf(MeditationConfig(minutes = 5, startEndGong = false)),
+            // Im Tab steht die offene Sitzung; die Stille dauert trotzdem, was das Blatt „Anpassen“ wählte.
+            meditationConfig = flowOf(MeditationConfig(mode = MeditationMode.FREE, minutes = 5, startEndGong = false)),
             canStartNow = { true },
             dispatcher = StandardTestDispatcher(testScheduler),
         )
@@ -191,7 +192,10 @@ class PlaybackFlowTest {
         advance(COUNTDOWN_MS + 60_000L)
         assertEquals(MeditationStatus.FINISHED, meditation.state.value.status)
 
-        breath.start(box, SessionConfig(rounds = 1), silenceAfter = true)
+        breath.start(box, SessionConfig(rounds = 1, silenceMinutes = 2), silenceAfter = true)
+        // Der Schalter in der Übung ändert nur An/Aus, nicht die Dauer.
+        breath.toggleSilenceAfter()
+        breath.toggleSilenceAfter()
         holders.droppedToZero = false
         advance(COUNTDOWN_MS + ROUND_MS)
 
@@ -203,6 +207,11 @@ class PlaybackFlowTest {
         assertTrue(silence.consumeHandover())
         // Im Logbuch: die Meditation (1 min) und die Atemübung (16 s, von selbst zu Ende).
         assertEquals(listOf(60_000L, ROUND_MS), dao.rows.map { it.durationMs })
+        // Die Stille läuft die gewählten 2 min als feste Zeit, nicht offen wie im Tab.
+        assertEquals(MeditationMode.TIMED, meditation.state.value.mode)
+        advance(COUNTDOWN_MS + 2 * 60_000L)
+        assertEquals(MeditationStatus.FINISHED, meditation.state.value.status)
+        assertEquals(120_000L, dao.rows.last().durationMs)
         assertEquals(errorsBefore, UncaughtErrors.last.value)
     }
 

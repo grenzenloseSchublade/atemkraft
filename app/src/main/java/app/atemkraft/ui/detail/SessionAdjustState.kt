@@ -17,13 +17,18 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.SessionConfig
 
 /**
- * Anpassung einer Übung auf der Detailseite (Dauer und Phasenlängen), getrennt von der
- * Darstellung – nach dem Vorbild von `DurationPickerState` (ARC-7). Die Seite liest und ändert
+ * Anpassung einer Übung auf der Detailseite (Dauer, Phasenlängen, „Danach Stille“), getrennt von
+ * der Darstellung – nach dem Vorbild von `DurationPickerState` (ARC-7). Die Seite liest und ändert
  * nur diesen Zustand.
  *
  * „Angepasst“ ist kein Merker, sondern der Wertvergleich mit den [defaults]: Wer manuell auf die
  * Vorgaben zurücksteppt, gilt wieder als unangepasst ([overrides] = null, die gespeicherte
  * Anpassung wird gelöscht).
+ *
+ * „Danach Stille“ (Eigentümer 2026-11-24): Die Vorgabe kommt nicht aus der Übung, sondern aus den
+ * Einstellungen ([silenceDefault], setzt die Seite, sobald sie geladen sind; null = Übung ohne
+ * Stille danach oder noch nicht geladen, dann keine Zeile und keine Wahl im Start). [silence] ist
+ * nur die eigene Wahl; null = folgt der Vorgabe, auch wenn diese sich später ändert.
  */
 @Stable
 class SessionAdjustState(
@@ -32,6 +37,7 @@ class SessionAdjustState(
     inhale: Int? = defaults.inhale,
     hold: Int? = defaults.hold,
     exhale: Int? = defaults.exhale,
+    silence: Int? = null,
     storedApplied: Boolean = false,
 ) {
     /** Runden bzw. Minuten. */
@@ -42,6 +48,28 @@ class SessionAdjustState(
     var hold: Int? by mutableStateOf(hold.takeIf { defaults.hold != null })
     var exhale: Int? by mutableStateOf(exhale.takeIf { defaults.exhale != null })
 
+    /** Eigene Wahl „Danach Stille“ in Minuten (0 = aus); null = Vorgabe ([silenceDefault]). */
+    var silence: Int? by mutableStateOf(silence)
+
+    /**
+     * Vorgabe „Danach Stille“ aus den Einstellungen: aus (0) oder die Dauer des Tabs Meditation;
+     * null = keine Stille-Zeile (nicht erlaubt bzw. noch nicht geladen).
+     */
+    var silenceDefault: Int? by mutableStateOf(null)
+
+    /** Was gilt: eigene Wahl oder Vorgabe; null ohne Stille-Zeile. */
+    val silenceMinutes: Int?
+        get() = silenceDefault?.let { default -> silence ?: default }
+
+    /** Weicht „Danach Stille“ von der Vorgabe ab? */
+    val silenceModified: Boolean
+        get() = silenceDefault != null && silence != null && silence != silenceDefault
+
+    /** Setzt „Danach Stille“; der Wert der Vorgabe heißt wieder „folgt der Vorgabe“. */
+    fun selectSilence(minutes: Int) {
+        silence = minutes.takeIf { it != silenceDefault }
+    }
+
     /** Wurde die gespeicherte Anpassung schon (einmal) geprüft? */
     var storedApplied: Boolean by mutableStateOf(storedApplied)
         private set
@@ -51,15 +79,30 @@ class SessionAdjustState(
         get() = inhale != defaults.inhale || hold != defaults.hold || exhale != defaults.exhale
 
     /** Weicht irgendetwas von der Vorgabe ab (dann zeigt der Start den Reset)? */
-    val modified: Boolean get() = duration != defaults.duration || intervalsModified
+    val modified: Boolean get() = duration != defaults.duration || intervalsModified || silenceModified
 
     /** Was gespeichert wird; null = alles auf Vorgabe, gespeicherte Anpassung löschen. */
     val overrides: IntervalOverrides?
-        get() = if (modified) IntervalOverrides(duration, inhale, hold, exhale) else null
+        get() = if (modified) IntervalOverrides(duration, inhale, hold, exhale, keptSilence) else null
 
-    /** Die Anpassung für den Start; Phasenlängen nur, wenn sie von der Vorgabe abweichen. */
+    /**
+     * Was von „Danach Stille“ gespeichert bleibt: die eigene Wahl, solange sie von der Vorgabe
+     * abweicht – oder unverändert, solange die Vorgabe fehlt (eine Dauer-Änderung vor dem Laden der
+     * Einstellungen löscht sie nicht).
+     */
+    private val keptSilence: Int?
+        get() = silence?.takeIf { silenceDefault == null || it != silenceDefault }
+
+    /**
+     * Die Anpassung für den Start; Phasenlängen nur, wenn sie von der Vorgabe abweichen. „Danach
+     * Stille“ immer, sobald es die Zeile gibt (auch die Vorgabe): So läuft, was die Leiste zeigt.
+     */
     fun config(): SessionConfig {
-        val base = if (defaults.roundBased) SessionConfig(rounds = duration) else SessionConfig(minutes = duration)
+        val base = if (defaults.roundBased) {
+            SessionConfig(rounds = duration, silenceMinutes = silenceMinutes)
+        } else {
+            SessionConfig(minutes = duration, silenceMinutes = silenceMinutes)
+        }
         return if (intervalsModified) {
             base.copy(
                 inhaleSeconds = inhale?.toDouble(),
@@ -77,6 +120,7 @@ class SessionAdjustState(
         inhale = defaults.inhale
         hold = defaults.hold
         exhale = defaults.exhale
+        silence = null
     }
 
     /**
@@ -93,6 +137,7 @@ class SessionAdjustState(
         if (defaults.inhale != null) stored.inhale?.let { inhale = it.coerceIn(AdjustLimits.INHALE_S) }
         if (defaults.hold != null) stored.hold?.let { hold = it.coerceIn(AdjustLimits.HOLD_S) }
         if (defaults.exhale != null) stored.exhale?.let { exhale = it.coerceIn(AdjustLimits.EXHALE_S) }
+        stored.silence?.let { silence = it.coerceIn(AdjustLimits.SILENCE_MINUTES) }
     }
 
     companion object {
@@ -105,19 +150,19 @@ class SessionAdjustState(
         fun saver(defaults: AdjustDefaults): Saver<SessionAdjustState, *> = listSaver(
             // Fehlende Phasen als 0: Beim Wiederherstellen bleiben sie über [defaults] null.
             save = {
-                listOf(it.duration, it.inhale ?: 0, it.hold ?: 0, it.exhale ?: 0, if (it.storedApplied) 1 else 0) +
+                listOf(it.duration, it.inhale ?: 0, it.hold ?: 0, it.exhale ?: 0, if (it.storedApplied) 1 else 0, it.silence ?: NO_PHASE) +
                     encode(it.defaults)
             },
             restore = {
                 if (it.drop(SAVED_VALUES) != encode(defaults)) {
                     SessionAdjustState(defaults)
                 } else {
-                    SessionAdjustState(defaults, it[0], it[1], it[2], it[3], storedApplied = it[4] == 1)
+                    SessionAdjustState(defaults, it[0], it[1], it[2], it[3], silence = it[5].takeIf { s -> s != NO_PHASE }, storedApplied = it[4] == 1)
                 }
             },
         )
 
-        private const val SAVED_VALUES = 5
+        private const val SAVED_VALUES = 6
         private const val NO_PHASE = -1
 
         private fun encode(defaults: AdjustDefaults): List<Int> = listOf(

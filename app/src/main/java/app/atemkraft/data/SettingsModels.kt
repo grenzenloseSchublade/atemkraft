@@ -64,9 +64,10 @@ data class SafetySettings(
 /**
  * Was die laufende Atem-Session zeigt (Karte „Während der Atemübung“). [autoCalm] blendet die
  * Bedienelemente nach wenigen Sekunden von selbst aus (Ruhe-Ansicht, SessionOverlay).
- * [silenceAfter]: Nach dem Ende geht es nahtlos in die stille Meditation, eingestellt wie zuletzt im
- * Tab Meditation (Nutzer 2026-10-23, Yoga-Sutra 2,52–2,53: Pranayama bereitet die Sammlung vor);
- * Standard aus.
+ * [silenceAfter]: Nach dem Ende geht es nahtlos in die stille Meditation, mit Gong und Stimme wie
+ * zuletzt im Tab Meditation (Nutzer 2026-10-23, Yoga-Sutra 2,52–2,53: Pranayama bereitet die
+ * Sammlung vor); Standard aus. Nur der Startwert: Je Übung wählt das Blatt „Anpassen“ die Dauer
+ * der Stille oder „Aus“ ([IntervalOverrides.silence], Eigentümer 2026-11-24).
  */
 data class SessionDisplay(
     val showNextPhase: Boolean = true,
@@ -107,11 +108,16 @@ data class ReminderSettings(
     }
 }
 
-/** Vom Nutzer angepasste Session-Werte einer Übung: Dauer (Minuten bzw. Runden) und
- *  Phasenlängen in Sekunden; null = nicht angepasst bzw. Phase nicht vorhanden. */
+/** Vom Nutzer angepasste Session-Werte einer Übung: Dauer (Minuten bzw. Runden),
+ *  Phasenlängen in Sekunden und „Danach Stille“ in Minuten ([silence], 0 = aus); null = nicht
+ *  angepasst bzw. Phase nicht vorhanden. */
 data class IntervalOverrides(
     val duration: Int? = null,
     val inhale: Int? = null,
     val hold: Int? = null,
     val exhale: Int? = null,
-)
+    val silence: Int? = null,
+) {
+    /** Dieselben Werte für die Sicherung. */
+    fun toBackup(): PatternBackupOverrides = PatternBackupOverrides(duration, inhale, hold, exhale, silence)
+}

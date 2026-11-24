@@ -66,6 +66,7 @@ import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.DetailActions
+import app.atemkraft.ui.detail.DetailAdjustInputs
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.learn.LearnScreen
@@ -421,13 +422,14 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     /**
      * Blatt „Anpassen“ offen über der Detailseite (MUSTER-11): 4-7-8 mit gespeicherter Anpassung und
      * aufgeklappten Phasen, die längste Fassung. Die Zeile in der Start-Leiste ist eine Schaltfläche
-     * mit „Anpassen öffnen“, ihr Status in Worten („Anpassen, 6 Runden, angepasst“).
-     * Eigenes Fenster in Gerätegröße, Aufnahme des ganzen Bildschirms.
+     * mit „Anpassen öffnen“, ihr Status in Worten („Anpassen, 6 Runden, danach 10 Minuten Stille,
+     * angepasst“). Eigenes Fenster in Gerätegröße, Aufnahme des ganzen Bildschirms.
      */
     @Test
     fun detailAdjustSheet() {
         val rounds = app.resources.getQuantityString(R.plurals.detail_meta_rounds, 6, 6)
-        val row = listOf(app.getString(R.string.adjust_title), rounds, app.getString(R.string.adjust_modified)).joinToString(", ")
+        val silence = app.getString(R.string.cd_adjust_status_with_silence, rounds, app.resources.getQuantityString(R.plurals.cd_duration_minutes, 10, 10))
+        val row = listOf(app.getString(R.string.adjust_title), silence, app.getString(R.string.adjust_modified)).joinToString(", ")
         snap("08_detail_anpassen_offen", heightDp = device.heightDp, screen = true, prepare = {
             compose.onNodeWithContentDescription(row)
                 .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
@@ -436,7 +438,8 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
             compose.waitForIdle()
             compose.onNodeWithText(app.getString(R.string.adjust_intervals)).performClick()
             compose.waitForIdle()
-            // Das Blatt ist offen und zeigt die Phasen.
+            // Das Blatt ist offen und zeigt „Danach Stille“ und die Phasen.
+            compose.onNodeWithText(app.getString(R.string.adjust_silence)).assertExists()
             compose.onNodeWithText(app.getString(R.string.adjust_exhale)).assertExists()
         }) { DetailPage(fourSevenEight) }
     }
@@ -567,7 +570,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     }
 
     /**
-     * Detailseite wie in der App; 4-7-8 mit gespeicherter Anpassung (Dauer, alle drei Phasen).
+     * Detailseite wie in der App; 4-7-8 mit gespeicherter Anpassung (Dauer, alle drei Phasen, 10 min
+     * Stille gegen die Vorgabe 5 – der längste Status „6 Runden + 10 min Stille · angepasst“), die
+     * anderen mit „Danach Stille“ aus.
      * Eingebaute Übungen tragen die Markierung, Muster den Stift; gespeicherte Muster dazu Löschen,
      * Duplizieren und „Vorherige Fassung wiederherstellen“.
      */
@@ -578,9 +583,13 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
         ExerciseDetailScreen(
             exercise = exercise,
             requireSafetyConfirm = false,
-            savedIntervals = if (exercise.id == "4-7-8") IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9) else null,
+            adjustInputs = if (exercise.id == "4-7-8") {
+                DetailAdjustInputs(IntervalOverrides(duration = 6, inhale = 5, hold = 8, exhale = 9, silence = 10), silenceDefault = 5)
+            } else {
+                DetailAdjustInputs(silenceDefault = 0)
+            },
             actions = DetailActions(
-                onIntervalsChange = { _, _, _, _ -> },
+                onIntervalsChange = {},
                 onIntervalsReset = {},
                 onConfirmedSafety = {},
                 onStart = {},

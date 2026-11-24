@@ -1,6 +1,7 @@
 package app.atemkraft.playback
 
 import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -14,11 +15,13 @@ import kotlinx.coroutines.launch
 
 /**
  * „Danach in die Stille“ (Nutzer 2026-10-23): Nach einer Atemübung geht es nahtlos in die stille
- * Meditation, eingestellt wie zuletzt im Tab Meditation ([meditationConfig]; die Stimme wendet der
- * [MeditationController] selbst an). Der Übergang hängt am Ablauf, nicht an der Oberfläche: Der
- * [BreathSessionController] meldet „fertig“ ([BreathSessionController.finished]), dieser Koordinator
- * startet die Meditation – auch hinter dem Sperrbildschirm sofort statt verspätet beim nächsten
- * Sichtbarwerden der App. Der Logbuch-Eintrag der Atemübung steht dann schon.
+ * Meditation, mit Gong und Stimme wie zuletzt im Tab Meditation ([meditationConfig]; die Stimme
+ * wendet der [MeditationController] selbst an). Die Dauer kommt aus dem Blatt „Anpassen“ der Übung
+ * ([SessionUiState.silenceMinutes], Eigentümer 2026-11-24), immer als feste Zeit; ohne Wahl dort
+ * gilt auch die Dauer (oder die offene Sitzung) des Tabs. Der Übergang hängt am Ablauf, nicht an
+ * der Oberfläche: Der [BreathSessionController] meldet „fertig“ ([BreathSessionController.finished]),
+ * dieser Koordinator startet die Meditation – auch hinter dem Sperrbildschirm sofort statt verspätet
+ * beim nächsten Sichtbarwerden der App. Der Logbuch-Eintrag der Atemübung steht dann schon.
  *
  * Automatisch am Ende, wenn die Übung es wünscht ([SessionUiState.silenceAfter]: Startwert aus der
  * Einstellung, in der Übung oben umschaltbar, Nutzer 2026-10-23); sonst über den Link „In der Stille
@@ -80,7 +83,9 @@ class SilenceAfterBreath(
 
     private suspend fun enter() {
         if (!meditationFree()) return
-        val config = meditationConfig.first()
+        val config = meditationConfig.first().let { tab ->
+            breath.state.value.silenceMinutes?.let { tab.copy(mode = MeditationMode.TIMED, minutes = it) } ?: tab
+        }
         // Nach dem Lesen erneut prüfen: Inzwischen kann die Atem-Session verworfen oder neu
         // gestartet worden sein; dann gibt es nichts mehr zu übergeben.
         if (breath.state.value.status != SessionStatus.FINISHED) return

@@ -309,7 +309,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             showStreak = showStreak.first(),
             askFeeling = prefs[Keys.FEELING_PROMPT],
             adjustments = builtInIds.mapNotNull { id ->
-                exerciseIntervals(id).first()?.let { id to PatternBackupOverrides(it.duration, it.inhale, it.hold, it.exhale) }
+                exerciseIntervals(id).first()?.let { id to it.toBackup() }
             }.toMap(),
         )
     }
@@ -344,7 +344,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             backup.showStreak?.let { prefs[Keys.SHOW_STREAK] = it }
             backup.askFeeling?.let { prefs[Keys.FEELING_PROMPT] = it }
         }
-        backup.adjustments.forEach { (id, o) -> setExerciseIntervals(id, o.duration, o.inhale, o.hold, o.exhale) }
+        backup.adjustments.forEach { (id, o) -> setExerciseIntervals(id, o.toIntervals()) }
     }
 
     /** Fügt Markierungen „Tut mir gut“ hinzu (Sicherung zusammenführen); vorhandene bleiben. */
@@ -524,38 +524,39 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     // aber der Aufrufer, hier landen nur stabile Übungs-Ids.
     private fun ivKey(exerciseId: String, part: String) = intPreferencesKey("iv_${exerciseId}_$part")
 
+    /** Teile einer Anpassung: Dauer, Phasen, „Danach Stille“ (seit v2.12). */
+    private val ivParts = listOf("dur", "in", "hold", "ex", "still")
+
     /** Gespeicherte Session-Anpassung der Übung; null = nie angepasst. */
     fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> = data.map { prefs ->
         val duration = prefs[ivKey(exerciseId, "dur")]
         val inhale = prefs[ivKey(exerciseId, "in")]
         val hold = prefs[ivKey(exerciseId, "hold")]
         val exhale = prefs[ivKey(exerciseId, "ex")]
-        if (duration == null && inhale == null && hold == null && exhale == null) {
+        val silence = prefs[ivKey(exerciseId, "still")]
+        if (duration == null && inhale == null && hold == null && exhale == null && silence == null) {
             null
         } else {
-            IntervalOverrides(duration = duration, inhale = inhale, hold = hold, exhale = exhale)
+            IntervalOverrides(duration = duration, inhale = inhale, hold = hold, exhale = exhale, silence = silence)
         }
     }
 
-    suspend fun setExerciseIntervals(exerciseId: String, duration: Int?, inhale: Int?, hold: Int?, exhale: Int?) {
+    /** Speichert die Anpassung der Übung; ein Feld null löscht seinen gespeicherten Wert. */
+    suspend fun setExerciseIntervals(exerciseId: String, overrides: IntervalOverrides) {
         store.edit { prefs ->
             fun put(part: String, value: Int?) {
                 if (value != null) prefs[ivKey(exerciseId, part)] = value else prefs.remove(ivKey(exerciseId, part))
             }
-            put("dur", duration)
-            put("in", inhale)
-            put("hold", hold)
-            put("ex", exhale)
+            put("dur", overrides.duration)
+            put("in", overrides.inhale)
+            put("hold", overrides.hold)
+            put("ex", overrides.exhale)
+            put("still", overrides.silence)
         }
     }
 
     suspend fun clearExerciseIntervals(exerciseId: String) {
-        store.edit { prefs ->
-            prefs.remove(ivKey(exerciseId, "dur"))
-            prefs.remove(ivKey(exerciseId, "in"))
-            prefs.remove(ivKey(exerciseId, "hold"))
-            prefs.remove(ivKey(exerciseId, "ex"))
-        }
+        store.edit { prefs -> ivParts.forEach { prefs.remove(ivKey(exerciseId, it)) } }
     }
 
     /** Zuletzt gewählte Meditations-Einstellung (Modus, Dauer, Intervall-Gong, Sprache). */

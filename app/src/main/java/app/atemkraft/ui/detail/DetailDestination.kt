@@ -19,6 +19,7 @@ import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.ui.navigation.PatternEditorRoute
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,8 @@ import kotlinx.coroutines.launch
  *   gespeicherte Muster folgen der DB ([savedPatterns]) und zeigen nach dem Bearbeiten im Editor
  *   die neuen Werte ([rememberDetailExercise]). Gibt es die Übung nicht (mehr), ruft die Seite
  *   [onMissing] (zurück statt leerer Seite, CODE-05); lädt das Muster noch, bleibt sie kurz leer.
+ * - „Danach Stille“: Vorgabe aus den Einstellungen – aus, wenn „Danach in die Stille“ aus ist, sonst
+ *   die Dauer des Tabs Meditation (bei offener Sitzung die zuletzt gewählte feste Dauer).
  * - Anpassungen der Intervalle merkt sich [settings] pro Übung – außer beim Muster des Tages:
  *   dessen Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten sonst
  *   morgen für ein anderes Muster.
@@ -87,14 +90,19 @@ internal fun DetailDestination(
     val persistIntervals = id != ExerciseIds.DAILY
     val markable = exercise in BuiltInExercises.all
     val savedIntervals by remember(id) { settings.exerciseIntervals(id) }.collectAsStateWithLifecycle(initialValue = null)
+    val silenceDefault by remember(settings) {
+        combine(settings.sessionDisplay, settings.meditationSettings) { display, meditation ->
+            if (display.silenceAfter) meditation.minutes else 0
+        }
+    }.collectAsStateWithLifecycle(initialValue = null)
     ExerciseDetailScreen(
         exercise = exercise,
         requireSafetyConfirm = requireSafety,
-        savedIntervals = if (persistIntervals) savedIntervals else null,
+        adjustInputs = DetailAdjustInputs(saved = if (persistIntervals) savedIntervals else null, silenceDefault = silenceDefault),
         actions = DetailActions(
-            onIntervalsChange = { duration, inhale, hold, exhale ->
+            onIntervalsChange = { overrides ->
                 if (persistIntervals) {
-                    scope.launch { settings.setExerciseIntervals(id, duration, inhale, hold, exhale) }
+                    scope.launch { settings.setExerciseIntervals(id, overrides) }
                 }
             },
             onIntervalsReset = {

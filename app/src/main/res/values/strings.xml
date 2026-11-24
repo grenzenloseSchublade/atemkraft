@@ -377,7 +377,7 @@
     <string name="settings_next_phase">Nächste Phase</string>
     <string name="settings_next_phase_hint">Nennt unter dem Kreis die kommende Phase, hilfreich, solange dir ein Muster neu ist.</string>
     <string name="settings_silence_after">Danach in die Stille</string>
-    <string name="settings_silence_after_hint">Nach dem Ende beginnt nahtlos die stille Meditation, eingestellt wie zuletzt im Tab „Meditation“. Hier wählst du nur den Startwert; in der Übung schaltest du es oben mit dem Meditations-Symbol um.</string>
+    <string name="settings_silence_after_hint">Nach dem Ende beginnt nahtlos die stille Meditation, mit Gong und Stimme wie im Tab „Meditation“ und zunächst so lange wie dort. Hier wählst du nur den Startwert: Je Übung stellst du die Stille unter „Anpassen“ ein, in der Übung schaltest du sie oben mit dem Meditations-Symbol um.</string>
     <string name="settings_auto_calm">Automatisch ausblenden</string>
     <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück; ein Tipp neben den Kreis holt sie wieder.</string>
     <!-- Meditation: dieselbe Wirkung wie bei der Atemübung, dort erklärt (nichts doppelt). -->
@@ -408,6 +408,9 @@
          Klammern am Label („Einatmen (s)“ begann bei großer Schrift eine Zeile mit „(s)“). -->
     <string name="adjust_value_seconds">%1$d s</string>
     <string name="adjust_value_minutes">%1$d min</string>
+    <!-- Blatt „Anpassen“: Stille nach der Übung (Eigentümer 2026-11-24); ganz unten „Aus“. -->
+    <string name="adjust_silence">Danach Stille</string>
+    <string name="adjust_silence_off">Aus</string>
     <!-- TalkBack-Wert des Steppers: „Einatmen: 4 Sekunden“ – Einheit ausgeschrieben statt „4 s“. -->
     <string name="cd_stepper_value">%1$s: %2$s</string>
     <string name="cd_stepper_value_suffix">%1$s, %2$s</string>
@@ -426,6 +429,10 @@
     <string name="adjust_status_minutes">%1$d min</string>
     <string name="adjust_status_modified">%1$s · %2$s</string>
     <string name="cd_adjust_status_modified">%1$s, %2$s</string>
+    <!-- Status mit Stille danach: „4 min + 5 min Stille“ (%1$s = Minuten bzw. Runden, %2$d = Minuten
+         Stille); TalkBack „4 Minuten, danach 5 Minuten Stille“ (%2$s = cd_duration_minutes). -->
+    <string name="adjust_status_with_silence">%1$s + %2$d min Stille</string>
+    <string name="cd_adjust_status_with_silence">%1$s, danach %2$s Stille</string>
 
     <!-- Logbuch-Statistik -->
     <plurals name="log_streak">

@@ -149,7 +149,7 @@ class PatternBackupTest {
             val sourceSettings = settings("quelle")
             sourceSettings.setToneVolume(ToneVolume.QUIET)
             sourceSettings.setExerciseMarked("resonanz", true)
-            sourceSettings.setExerciseIntervals("resonanz", 7, null, null, null)
+            sourceSettings.setExerciseIntervals("resonanz", IntervalOverrides(duration = 7))
             sourceSettings.setReminderEnabled(true)
             val sourceLog = LogbookRepository(FakeLogbookDao()).apply {
                 append(seen)
@@ -197,7 +197,8 @@ class PatternBackupTest {
     /**
      * Golden-Fixtures (A-18): Dateien, wie frühere Versionen sie geschrieben haben, in
      * `app/src/test/resources/backup/` – v1.6.8 (Version 1, nur Tagesmuster), 2.8.0 (d0a4061,
-     * Version 1 mit Herkunft, Dauer und Folge) und 2.9.0 (1e082f3, Version 2 „alles“). Feldreihenfolge,
+     * Version 1 mit Herkunft, Dauer und Folge), 2.9.0 (1e082f3, Version 2 „alles“) und 2.12.0 (Version 2
+     * mit „Danach Stille“ in den Anpassungen, `silence`). Feldreihenfolge,
      * Einrückung und `null`-Felder wie `PatternBackup.encode` damals. Dazu dieselbe Datei mit UTF-8-BOM,
      * wie ihn manche Editoren voranstellen. Jeder Formatwechsel bekommt hier eine Datei (PROCESS.md).
      */
@@ -225,9 +226,12 @@ class PatternBackupTest {
         assertEquals(FreePattern.parse("in:4,hold:2,out:6,out:2"), byName.getValue("Abendwelle").pattern)
         assertEquals(7, byName.getValue("Abendwelle").minutes)
 
-        // 2.9.0: dieselben Datenklassen wie heute – die Datei ist Byte für Byte, was encode schreibt.
+        // 2.12.0: dieselben Datenklassen wie heute – die Datei ist Byte für Byte, was encode schreibt.
+        val current = fixture("v2-2.12.0.json").decodeToString()
+        assertEquals(current, PatternBackup.encode(Json.decodeFromString(PatternBackupFile.serializer(), current)))
+        assertEquals(5, PatternBackup.decode(current, setOf("resonanz"))!!.settings!!.adjustments.getValue("resonanz").silence)
+        // 2.9.0: ohne `silence`, sonst gleich.
         val bytes = fixture("v2-2.9.0.json")
-        assertEquals(bytes.decodeToString(), PatternBackup.encode(Json.decodeFromString(PatternBackupFile.serializer(), bytes.decodeToString())))
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         try {
             val settings = SettingsRepository(PreferenceDataStoreFactory.create(scope = scope) { File(folder.root, "golden.preferences_pb") })

@@ -142,7 +142,12 @@ data class PatternBackupOverrides(
     val inhale: Int? = null,
     val hold: Int? = null,
     val exhale: Int? = null,
-)
+    /** „Danach Stille“ in Minuten, 0 = aus (seit v2.12; ältere Dateien ohne, ältere Apps überlesen es). */
+    val silence: Int? = null,
+) {
+    /** Dieselben Werte als Anpassung der Detailseite. */
+    fun toIntervals(): IntervalOverrides = IntervalOverrides(duration, inhale, hold, exhale, silence)
+}
 
 /**
  * Ergebnis des Einlesens: gültige Muster ([entries]), Logbuch-Einträge ([logbook]), Markierungen
@@ -360,7 +365,8 @@ object PatternBackup {
     private fun PatternBackupOverrides.isPlausible(): Boolean = (duration == null || duration in AdjustLimits.MINUTES) &&
         (inhale == null || inhale in AdjustLimits.INHALE_S) &&
         (hold == null || hold in AdjustLimits.HOLD_S) &&
-        (exhale == null || exhale in AdjustLimits.EXHALE_S)
+        (exhale == null || exhale in AdjustLimits.EXHALE_S) &&
+        (silence == null || silence in AdjustLimits.SILENCE_MINUTES)
 
     private fun isCleanName(name: String): Boolean {
         val trimmed = name.trim()

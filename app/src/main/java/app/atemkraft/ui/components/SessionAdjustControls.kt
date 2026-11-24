@@ -18,7 +18,7 @@ import app.atemkraft.domain.asDotSuffix
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 
-/** Ein anpassbarer Intervall-Wert im Blatt „Anpassen“; als Parameter null = Phase fehlt. */
+/** Ein anpassbarer Wert im Blatt „Anpassen“ (Phase, „Danach Stille“); als Parameter null = fehlt. */
 data class PhaseAdjust(
     val value: Int,
     val default: Int,
@@ -28,11 +28,13 @@ data class PhaseAdjust(
 
 /**
  * Einstellungen einer Übung im Blatt „Anpassen“ der Detailseite (`AdjustSheet`): Dauer-/Runden-
- * Stepper, darunter aufklappbar die Intervall-Stepper. Alles steht direkt auf dem Blatt, ohne Karte
- * und ohne Trenner (Anatomie „Bottom Sheet“, §4.5: das Blatt ist schon die Fläche); die Labels
- * stehen an der Textkante des Titels, der Kreis von „+“ bündig rechts (LAYOUT-07). Gegliedert wird
- * mit Abstand wie in „Klang & Stimme“: Dauer → Aufklapper → Phasen je `GapSmall` (der 48-dp-Rand
- * der Knöpfe zählt sichtbar mit), jede Stepper-Zeile genau `MinTouchTarget` hoch.
+ * Stepper, darunter – wo die Stille folgen darf – [silence] „Danach Stille“ (Aus · 1 … 60 min,
+ * Eigentümer 2026-11-24), darunter aufklappbar die Intervall-Stepper. Alles steht direkt auf dem
+ * Blatt, ohne Karte und ohne Trenner (Anatomie „Bottom Sheet“, §4.5: das Blatt ist schon die
+ * Fläche); die Labels stehen an der Textkante des Titels, der Kreis von „+“ bündig rechts
+ * (LAYOUT-07). Gegliedert wird mit Abstand wie in „Klang & Stimme“: Dauer → Stille → Aufklapper →
+ * Phasen je `GapSmall` (der 48-dp-Rand der Knöpfe zählt sichtbar mit), jede Stepper-Zeile genau
+ * `MinTouchTarget` hoch.
  *
  * Eingeklappt markiert „· angepasst“ abweichende Intervalle; der Hinweis verschwindet von selbst,
  * sobald die Werte – auch manuell zurückgesteppt – wieder den Defaults entsprechen. Das
@@ -59,14 +61,17 @@ fun SessionAdjustControls(
     intervalsExpanded: Boolean,
     onToggleIntervals: () -> Unit,
     modifier: Modifier = Modifier,
+    silence: PhaseAdjust? = null,
     durationSpokenLabel: String = durationLabel,
     @PluralsRes durationUnit: Int? = null,
     @StringRes durationValue: Int? = null,
 ) {
     val intervalsModified = listOfNotNull(inhale, hold, exhale).any { it.value != it.default }
     // Breiteste Werte aller Zeilen: eine gemeinsame Wertspalte für Dauer und Phasen.
+    val silenceOff = stringResource(R.string.adjust_silence_off)
     val widest = listOf(durationValue?.let { stringResource(it, durationRange.last) } ?: durationRange.last.toString()) +
-        listOfNotNull(inhale, hold, exhale).map { stringResource(R.string.adjust_value_seconds, it.range.last) }
+        listOfNotNull(inhale, hold, exhale).map { stringResource(R.string.adjust_value_seconds, it.range.last) } +
+        listOfNotNull(silence).flatMap { listOf(silenceOff, stringResource(R.string.adjust_value_minutes, it.range.last)) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Stepper(
@@ -81,6 +86,24 @@ fun SessionAdjustControls(
             valueText = durationValue?.let { stringResource(it, duration) } ?: duration.toString(),
             widestValues = widest,
         )
+
+        silence?.let { adjust ->
+            // Ganz unten „Aus“: ein Stepper statt Schalter plus Dauer, gesprochen „Danach Stille: Aus“.
+            val off = adjust.value == 0
+            Spacer(Modifier.height(Dimens.GapSmall))
+            Stepper(
+                label = stringResource(R.string.adjust_silence),
+                value = adjust.value,
+                range = adjust.range,
+                onChange = adjust.onChange,
+                horizontal = 0.dp,
+                vertical = 0.dp,
+                valueUnit = R.plurals.cd_duration_minutes,
+                valueText = if (off) silenceOff else stringResource(R.string.adjust_value_minutes, adjust.value),
+                spokenValue = silenceOff.takeIf { off },
+                widestValues = widest,
+            )
+        }
 
         if (inhale != null || hold != null || exhale != null) {
             Spacer(Modifier.height(Dimens.GapSmall))

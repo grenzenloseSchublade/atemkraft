@@ -56,7 +56,7 @@ class PatternTransferService(
      */
     suspend fun apply(decoded: DecodedBackup, withSettings: Boolean): ApplyResult {
         val patterns = saved.import(decoded.entries) { id, o ->
-            settings.setExerciseIntervals(id, o.duration, o.inhale, o.hold, o.exhale)
+            settings.setExerciseIntervals(id, o.toIntervals())
         }
         val logAdded = logbook.merge(decoded.logbook)
         settings.addMarkedExercises(decoded.marked)

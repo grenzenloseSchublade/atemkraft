@@ -124,14 +124,15 @@ internal class PlaybackState(
     }
 
     /**
-     * Atemübung starten und ihr Overlay öffnen; „Danach in die Stille“ startet mit dem Standard aus den
+     * Atemübung starten und ihr Overlay öffnen; „Danach in die Stille“ startet mit der Wahl aus dem
+     * Blatt „Anpassen“ ([SessionConfig.silenceMinutes], 0 = aus), ohne sie mit dem Standard aus den
      * Einstellungen. Eine laufende Übung ersetzt [BreathSessionController.start] selbst; eine Meditation
      * endet still, erst nach dem Start (der Service bleibt so durchgehend gehalten). [onStarted] läuft,
      * sobald die Übung wirklich läuft – beim ersten Mal erst nach der Antwort auf die Erlaubnis.
      */
     fun startBreath(exercise: Exercise, config: SessionConfig, onStarted: () -> Unit = {}) {
         askNotifications {
-            breath.start(exercise, config, silenceAfter = sessionDisplay.silenceAfter)
+            breath.start(exercise, config, silenceAfter = config.silenceMinutes?.let { it > 0 } ?: sessionDisplay.silenceAfter)
             sessionExpanded = true
             if (meditationActive) {
                 meditation.discard()

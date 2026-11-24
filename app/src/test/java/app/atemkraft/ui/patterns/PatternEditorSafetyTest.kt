@@ -19,6 +19,7 @@ import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.ui.SilentPreviewSound
 import app.atemkraft.ui.TestMatrix
 import app.atemkraft.ui.detail.DetailActions
+import app.atemkraft.ui.detail.DetailAdjustInputs
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.theme.AtemkraftTheme
 import org.junit.Assert.assertEquals
@@ -109,9 +110,9 @@ class PatternEditorSafetyTest {
                 ExerciseDetailScreen(
                     exercise = wimHof,
                     requireSafetyConfirm = safety.requiresConfirm(wimHof),
-                    savedIntervals = null,
+                    adjustInputs = DetailAdjustInputs(),
                     actions = DetailActions(
-                        onIntervalsChange = { _, _, _, _ -> },
+                        onIntervalsChange = {},
                         onIntervalsReset = {},
                         onConfirmedSafety = { safety = safety.copy(acknowledgedIds = safety.acknowledgedIds + wimHof.id) },
                         onStart = { starts++ },

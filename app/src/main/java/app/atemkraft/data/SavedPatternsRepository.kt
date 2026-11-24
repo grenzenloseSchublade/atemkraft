@@ -286,9 +286,7 @@ class SavedPatternsRepository(
                 holdEmpty = e.holdEmpty,
                 activating = e.activating,
                 createdAtEpochMs = e.createdAtEpochMs,
-                overrides = overridesOf(ExerciseIds.saved(e.id))?.let {
-                    PatternBackupOverrides(it.duration, it.inhale, it.hold, it.exhale)
-                },
+                overrides = overridesOf(ExerciseIds.saved(e.id))?.toBackup(),
                 origin = SavedPatternEntity.storedOrigin(e.patternOrigin()),
                 minutes = e.minutes,
                 phases = e.freePattern()?.toCompact(),

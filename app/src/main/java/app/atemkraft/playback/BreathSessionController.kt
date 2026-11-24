@@ -97,6 +97,12 @@ data class SessionUiState(
      */
     val silenceAfter: Boolean = false,
     /**
+     * Dauer der Stille danach in Minuten, gewählt im Blatt „Anpassen“ ([SessionConfig.silenceMinutes]);
+     * null = keine Wahl, dann dauert sie wie zuletzt im Tab Meditation. Der Schalter in der Übung
+     * ändert nur [silenceAfter], nicht diese Dauer.
+     */
+    val silenceMinutes: Int? = null,
+    /**
      * Antwortreihe am Ende-Screen („ruhiger · wie vorher · unruhiger“ bzw. bei aktivierenden Übungen
      * „wacher · wie vorher · müder“); leer, wenn kein Logbuch-Eintrag entstand – dann keine Reihe.
      */
@@ -202,7 +208,8 @@ class BreathSessionController(
      * (kein erneutes Nachschlagen per Id, das um Mitternacht ein anderes Tagesmuster liefern könnte).
      * Startet nur aus der sichtbaren App (Start-Knopf, „Nochmal“): Den Foreground-Service darf
      * Android ab 12 nicht aus dem Hintergrund starten. [silenceAfter] ist der Wunsch „Danach in die
-     * Stille“ für diese Übung, beim Start aus der Einstellung (Standard für neue Übungen).
+     * Stille“ für diese Übung: aus dem Blatt „Anpassen“ ([SessionConfig.silenceMinutes] > 0), ohne
+     * Wahl dort aus der Einstellung (Standard für neue Übungen); die Dauer bleibt in der Anpassung.
      */
     fun start(exercise: Exercise, config: SessionConfig = SessionConfig(), silenceAfter: Boolean = false) {
         val adjusted = exercise.adjusted(config)
@@ -227,6 +234,7 @@ class BreathSessionController(
             patternHint = adjusted.instructionHint,
             silenceAfterAllowed = adjusted.silenceAfterAllowed,
             silenceAfter = silenceAfter && adjusted.silenceAfterAllowed,
+            silenceMinutes = config.silenceMinutes?.takeIf { it > 0 && adjusted.silenceAfterAllowed },
         )
         // Foreground-Service: Dauer-Benachrichtigung, Prozess und CPU bleiben wach (idempotent).
         service.start()

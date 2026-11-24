@@ -9,7 +9,7 @@ Regeln: [STYLEGUIDE TEXT-15](../STYLEGUIDE.md#text) (Texte nach einem Muster), L
 - **Auswahlreihe** (`SegmentedChoiceRow`): Unterüberschrift (`SubLabel`) darüber, darunter ein `HintText` zur gewählten Option (Ton) oder zur Wahl allgemein; er wiederholt nicht die Segmentbeschriftungen.
 - **Aktionen** (Export/Import): Unterüberschrift darüber, Satz darunter.
 - Langes, Quellen, Rechtliches nur im Aufklapper (`DisclosureToggle`), dessen Text nicht mit der Frage des Umschalters beginnt.
-- **Nichts doppelt:** Was zwei Karten teilen, steht einmal erklärt, die zweite verweist („Wie bei der Atemübung.“); kein Hinweis wiederholt Titel, Kartensatz oder Beschriftung. Begriffe nach §11.1, Orte als Tab „Meditation“, Startwerte als solche benennen („Danach in die Stille“: nur der Startwert, in der Übung oben umschaltbar).
+- **Nichts doppelt:** Was zwei Karten teilen, steht einmal erklärt, die zweite verweist („Wie bei der Atemübung.“); kein Hinweis wiederholt Titel, Kartensatz oder Beschriftung. Begriffe nach §11.1, Orte als Tab „Meditation“, Startwerte als solche benennen („Danach in die Stille“: nur der Startwert, je Übung unter „Anpassen“ mit Dauer, in der Übung oben umschaltbar).
 
 ## Zeilen und Endspalten (LAYOUT-07)
 

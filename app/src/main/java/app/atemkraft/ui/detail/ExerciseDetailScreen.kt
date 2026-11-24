@@ -92,7 +92,7 @@ import kotlin.math.roundToInt
 
 /**
  * Was die Detailseite auslöst (CODE-02). [onIntervalsChange]/[onIntervalsReset] merken bzw. löschen
- * die Anpassung, [onConfirmedSafety] die Bestätigung des Sicherheitsdialogs.
+ * die Anpassung (Dauer, Phasen, „Danach Stille“), [onConfirmedSafety] die Bestätigung des Sicherheitsdialogs.
  * - [onOpenLore]: Sprung zur Muster-Karte der Atemlehre aus „Aus der Yoga-Lehre“; ohne ihn kein Verweis.
  * - [onMarkedChange]: persönliche Markierung „tut mir gut“; ohne ihn (Muster) kein Schalter.
  * - [onEditPattern]: Stift im Kopf generierter Muster, öffnet den Muster-Editor (Phasen ändert man
@@ -103,7 +103,7 @@ import kotlin.math.roundToInt
  */
 @Immutable
 data class DetailActions(
-    val onIntervalsChange: (duration: Int, inhale: Int?, hold: Int?, exhale: Int?) -> Unit,
+    val onIntervalsChange: (IntervalOverrides) -> Unit,
     val onIntervalsReset: () -> Unit,
     val onConfirmedSafety: () -> Unit,
     val onStart: (SessionConfig) -> Unit,
@@ -117,6 +117,17 @@ data class DetailActions(
 )
 
 /**
+ * Woraus die Anpassung der Detailseite startet: die gespeicherte Anpassung der Übung ([saved], null =
+ * keine) und die Vorgabe „Danach Stille“ aus den Einstellungen ([silenceDefault]: 0 = aus, sonst
+ * Minuten; null = noch nicht geladen).
+ */
+@Immutable
+data class DetailAdjustInputs(
+    val saved: IntervalOverrides? = null,
+    val silenceDefault: Int? = null,
+)
+
+/**
  * Detail-/Infoseite einer Übung. Progressive Disclosure: oben das Wesentliche (Name fest im Kopf,
  * Familie mit Chips, 1-Zeiler, Meta, ggf. Sicherheits-Appetizer), darunter aus-/einklappbare
  * Abschnitte; der Starten-Button ist unten **gepinnt** und ohne Scrollen erreichbar, darüber die
@@ -127,7 +138,7 @@ data class DetailActions(
 fun ExerciseDetailScreen(
     exercise: Exercise,
     requireSafetyConfirm: Boolean,
-    savedIntervals: IntervalOverrides?,
+    adjustInputs: DetailAdjustInputs,
     actions: DetailActions,
     marked: Boolean = false,
     // Wortlaut des Stifts für TalkBack; null = nach Herkunft („Als eigenes Muster anpassen“ beim
@@ -138,6 +149,8 @@ fun ExerciseDetailScreen(
     // Eine Session oder Meditation liegt im Vollbild darüber: Der Rhythmus-Punkt steht still.
     covered: Boolean = false,
 ) {
+    val savedIntervals = adjustInputs.saved
+    val silenceDefault = adjustInputs.silenceDefault
     val accent = exercise.family.color()
     val roundBased = exercise.isRoundBased
     val isIntense = exercise.caution
@@ -155,7 +168,7 @@ fun ExerciseDetailScreen(
     fun persistAdjustments() {
         val overrides = adjust.overrides
         if (overrides != null) {
-            actions.onIntervalsChange(overrides.duration ?: defaults.duration, overrides.inhale, overrides.hold, overrides.exhale)
+            actions.onIntervalsChange(overrides)
         } else {
             actions.onIntervalsReset()
         }
@@ -171,15 +184,22 @@ fun ExerciseDetailScreen(
     // gespeicherte Anpassung erneut.
     LaunchedEffect(savedIntervals, adjust) {
         savedIntervals?.let { stored ->
-            adjust.applyStored(if (phasesInEditor) IntervalOverrides(duration = stored.duration) else stored)
+            adjust.applyStored(if (phasesInEditor) IntervalOverrides(duration = stored.duration, silence = stored.silence) else stored)
         }
+    }
+    // „Danach Stille“ nur, wo die Stille folgen darf (nicht beim Atmen im Gehen) und mit Takt.
+    LaunchedEffect(adjust, silenceDefault) {
+        adjust.silenceDefault = silenceDefault?.takeIf { exercise.silenceAfterAllowed && exercise.guided }
     }
 
     // Grobe Gesamtdauer der aktuell eingestellten Session (Runden/Minuten + Intervalle) –
     // live neu berechnet, wenn sich einer der Anpassungswerte ändert.
     val config = adjust.config()
     val adjusted = remember(exercise, config) { exercise.adjusted(config) }
-    val estimatedSeconds = remember(adjusted) { adjusted.estimatedTotalSeconds() }
+    // Mit der Stille danach: „Starten · ca. 9 min“ ist die ganze Zeit (Eigentümer 2026-11-24).
+    val estimatedSeconds = remember(adjusted, config.silenceMinutes) {
+        adjusted.estimatedTotalSeconds() + (config.silenceMinutes ?: 0) * SECONDS_PER_MINUTE
+    }
     // Ein Atemzug als Kurve, mit den aktuellen Anpassungen; null, wo er nichts Wahres zeigte.
     val rhythm = remember(adjusted) { adjusted.breathRhythm() }
     // Muster des Tages: dieselbe Musterzeile wie auf seiner Karte.
@@ -420,6 +440,12 @@ fun ExerciseDetailScreen(
                         persistAdjustments()
                     }
                 },
+                silence = adjust.silenceMinutes?.let { value ->
+                    PhaseAdjust(value, adjust.silenceDefault ?: value, AdjustLimits.SILENCE_MINUTES) {
+                        adjust.selectSilence(it)
+                        persistAdjustments()
+                    }
+                },
                 intervalsExpanded = intervalsExpanded,
                 onToggleIntervals = { intervalsExpanded = !intervalsExpanded },
                 // Runden sagt TalkBack als „Runden: 4“, Minuten ausgeschrieben.
@@ -433,7 +459,8 @@ fun ExerciseDetailScreen(
 
 /**
  * Gepinnter Start unter dem Inhalt ([StartBar], dasselbe Bauteil wie im Muster-Editor): oben
- * „Anpassen · 10 min ›“ (öffnet das [AdjustSheet]; nach einer Anpassung „· 4 Runden · angepasst“),
+ * „Anpassen · 10 min ›“ (öffnet das [AdjustSheet]; nach einer Anpassung „· 4 Runden · angepasst“,
+ * mit Stille danach „· 4 min + 5 min Stille“),
  * darunter „Starten · ca. 10 min“; das Zurücksetzen erscheint nur nach einer Anpassung.
  */
 @Composable
@@ -447,8 +474,14 @@ private fun DetailStartBar(
 ) {
     val rounds = pluralStringResource(R.plurals.detail_meta_rounds, adjust.duration, adjust.duration)
     // Gezeigt kurz („10 min“), gesprochen ausgeschrieben („10 Minuten“, A11Y-06).
-    val value = if (exercise.isRoundBased) rounds else stringResource(R.string.adjust_status_minutes, adjust.duration)
-    val spokenValue = if (exercise.isRoundBased) rounds else pluralStringResource(R.plurals.cd_duration_minutes, adjust.duration, adjust.duration)
+    val duration = if (exercise.isRoundBased) rounds else stringResource(R.string.adjust_status_minutes, adjust.duration)
+    val spokenDuration = if (exercise.isRoundBased) rounds else pluralStringResource(R.plurals.cd_duration_minutes, adjust.duration, adjust.duration)
+    // Mit Stille danach: „4 min + 5 min Stille“, gesprochen „4 Minuten, danach 5 Minuten Stille“.
+    val silence = adjust.silenceMinutes?.takeIf { it > 0 }
+    val value = silence?.let { stringResource(R.string.adjust_status_with_silence, duration, it) } ?: duration
+    val spokenValue = silence?.let {
+        stringResource(R.string.cd_adjust_status_with_silence, spokenDuration, pluralStringResource(R.plurals.cd_duration_minutes, it, it))
+    } ?: spokenDuration
     val modified = stringResource(R.string.adjust_modified)
     StartBar(
         adjustTitle = stringResource(R.string.adjust_title),
@@ -536,3 +569,5 @@ private fun EditPatternButton(description: String, onClick: () -> Unit) {
         )
     }
 }
+
+private const val SECONDS_PER_MINUTE = 60
