@@ -57,6 +57,7 @@ class AppContainer(context: Context) {
     val savedPatternsRepository: SavedPatternsRepository = SavedPatternsRepository(
         dao = database.savedPatternDao(),
         clearOverrides = settingsRepository::clearExerciseIntervals,
+        clearPatternOverrides = settingsRepository::clearPatternIntervals,
         overrideMinutes = { id -> settingsRepository.exerciseIntervals(id).first()?.duration },
         forgetSafety = settingsRepository::forgetSafety,
     )

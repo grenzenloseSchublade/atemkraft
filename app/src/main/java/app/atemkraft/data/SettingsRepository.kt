@@ -524,8 +524,11 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     // aber der Aufrufer, hier landen nur stabile Übungs-Ids.
     private fun ivKey(exerciseId: String, part: String) = intPreferencesKey("iv_${exerciseId}_$part")
 
-    /** Teile einer Anpassung: Dauer, Phasen, „Danach Stille“ (seit v2.12). */
-    private val ivParts = listOf("dur", "in", "hold", "ex", "still")
+    /** Teil „Danach Stille“ einer Anpassung (seit v2.12); gehört nicht zum Muster ([clearPatternIntervals]). */
+    private val silencePart = "still"
+
+    /** Teile einer Anpassung: Dauer, Phasen, „Danach Stille“. */
+    private val ivParts = listOf("dur", "in", "hold", "ex", silencePart)
 
     /** Gespeicherte Session-Anpassung der Übung; null = nie angepasst. */
     fun exerciseIntervals(exerciseId: String): Flow<IntervalOverrides?> = data.map { prefs ->
@@ -533,7 +536,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val inhale = prefs[ivKey(exerciseId, "in")]
         val hold = prefs[ivKey(exerciseId, "hold")]
         val exhale = prefs[ivKey(exerciseId, "ex")]
-        val silence = prefs[ivKey(exerciseId, "still")]
+        val silence = prefs[ivKey(exerciseId, silencePart)]
         if (duration == null && inhale == null && hold == null && exhale == null && silence == null) {
             null
         } else {
@@ -551,12 +554,22 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             put("in", overrides.inhale)
             put("hold", overrides.hold)
             put("ex", overrides.exhale)
-            put("still", overrides.silence)
+            put(silencePart, overrides.silence)
         }
     }
 
+    /** Löscht die ganze Anpassung der Übung (Reset auf der Detailseite, Muster gelöscht). */
     suspend fun clearExerciseIntervals(exerciseId: String) {
         store.edit { prefs -> ivParts.forEach { prefs.remove(ivKey(exerciseId, it)) } }
+    }
+
+    /**
+     * Löscht nur, was das Muster selbst festlegt (Dauer, Phasen); „Danach Stille“ bleibt. Für ein
+     * im Editor geändertes oder wiederhergestelltes eigenes Muster: Die Stille danach gehört nicht
+     * zum Muster, sie fiele sonst beim ersten Auto-Speichern still weg.
+     */
+    suspend fun clearPatternIntervals(exerciseId: String) {
+        store.edit { prefs -> ivParts.filterNot { it == silencePart }.forEach { prefs.remove(ivKey(exerciseId, it)) } }
     }
 
     /** Zuletzt gewählte Meditations-Einstellung (Modus, Dauer, Intervall-Gong, Sprache). */

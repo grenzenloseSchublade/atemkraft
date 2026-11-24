@@ -88,17 +88,20 @@ data class PatternVersion(val pattern: FreePattern, val minutes: Int, val name: 
  * der Detailseite, Logbuch). Wer einem Muster folgen muss, nutzt [observe] bzw. [patterns]; was
  * gerade geschrieben wurde, geben [saveCustom] und [update] selbst zurück.
  *
- * @param clearOverrides löscht die Detailseiten-Anpassungen einer Übung (DataStore); [update],
- *   [restorePrevious] und [delete] rufen es auf, sonst überstimmen alte Anpassungen die neuen Werte
- *   bzw. bleiben nach dem Löschen liegen.
+ * @param clearOverrides löscht alle Detailseiten-Anpassungen einer Übung (DataStore), auch
+ *   „Danach Stille“; [delete] und [unsave] rufen es auf, sonst bleiben sie nach dem Löschen liegen.
+ * @param clearPatternOverrides löscht nur die Anpassungen, die das Muster selbst betreffen (Dauer,
+ *   Phasen), „Danach Stille“ bleibt – sie gehört nicht zum Muster; [update] und [restorePrevious]
+ *   rufen es auf, sonst überstimmen alte Anpassungen die neuen Werte.
  * @param forgetSafety vergisst die Sicherheits-Bestätigungen einer Übung (DataStore,
- *   `SettingsRepository.forgetSafety`); [delete] ruft es auf (MUSTER-06).
+ *   `SettingsRepository.forgetSafety`); [delete] und [unsave] rufen es auf (MUSTER-06).
  * @param overrideMinutes die auf der Detailseite gespeicherte Dauer einer Übung (DataStore), null
- *   = keine; [loadForEdit] startet damit, weil [update] sie danach löscht.
+ *   = keine; [loadForEdit] und [restorePrevious] übernehmen sie, weil die Anpassung danach fällt.
  */
 class SavedPatternsRepository(
     private val dao: SavedPatternDao,
     private val clearOverrides: suspend (exerciseId: String) -> Unit = {},
+    private val clearPatternOverrides: suspend (exerciseId: String) -> Unit = {},
     private val overrideMinutes: suspend (exerciseId: String) -> Int? = { null },
     private val forgetSafety: suspend (exerciseId: String) -> Unit = {},
     scope: CoroutineScope = supervisedScope(Dispatchers.IO),
@@ -155,7 +158,8 @@ class SavedPatternsRepository(
     /**
      * Schreibt eine neue Folge, Dauer und Namen in dasselbe Muster (gleiche Id, gleiches
      * Anlagedatum) und macht es zum eigenen Muster – auch ein gespeichertes Tagesmuster.
-     * Löscht die Detailseiten-Anpassungen des Musters. `null`, wenn es das Muster nicht mehr gibt.
+     * Löscht die Detailseiten-Anpassungen des Musters bis auf „Danach Stille“
+     * ([clearPatternOverrides]). `null`, wenn es das Muster nicht mehr gibt.
      *
      * [previous] legt im selben Schreibvorgang die vorherige Fassung ab (der Editor gibt beim ersten
      * Auto-Speichern einer Sitzung den Stand beim Öffnen mit, danach `null`: die abgelegte bleibt).
@@ -165,21 +169,24 @@ class SavedPatternsRepository(
         return writeLock.withLock {
             previous?.let { dao.setPrevious(id, it.pattern.toCompact(), it.minutes, nameFor(it.pattern, it.name)) }
             writeCustom(id, pattern.columnSpec(), pattern.toCompact(), minutes, nameFor(pattern, name))
-        }?.also { clearOverrides(ExerciseIds.saved(id)) }?.toSaved()
+        }?.also { clearPatternOverrides(ExerciseIds.saved(id)) }?.toSaved()
     }
 
     /**
      * „Vorherige Fassung wiederherstellen“ (Detailseite): tauscht den gespeicherten Stand mit der
-     * vorherigen Fassung – so ist auch das Wiederherstellen umkehrbar. Löscht wie [update] die
-     * Detailseiten-Anpassungen. `null`, wenn es das Muster oder keine (lesbare) vorherige Fassung gibt.
+     * vorherigen Fassung – so ist auch das Wiederherstellen umkehrbar. Der abgelegte Stand trägt die
+     * Dauer, die die Detailseite zeigt (eine dort gespeicherte Dauer, wie in [loadForEdit]): Sonst
+     * ginge sie mit den Anpassungen verloren, die wie bei [update] fallen ([clearPatternOverrides]).
+     * `null`, wenn es das Muster oder keine (lesbare) vorherige Fassung gibt.
      */
     suspend fun restorePrevious(id: Long): SavedPattern? = writeLock.withLock {
         val row = dao.byId(id) ?: return@withLock null
         val previous = row.previousVersion() ?: return@withLock null
-        val current = row.toSaved().version
+        val stored = row.toSaved().version
+        val current = overrideMinutes(ExerciseIds.saved(id))?.coerceIn(AdjustLimits.MINUTES)?.let { stored.copy(minutes = it) } ?: stored
         dao.setPrevious(id, current.pattern.toCompact(), current.minutes, current.name)
         writeCustom(id, previous.pattern.columnSpec(), previous.pattern.toCompact(), previous.minutes, previous.name)
-    }?.also { clearOverrides(ExerciseIds.saved(id)) }?.toSaved()
+    }?.also { clearPatternOverrides(ExerciseIds.saved(id)) }?.toSaved()
 
     /**
      * Legt eine Kopie des Musters [id] als eigenes Muster an (Detailseite, „Duplizieren“): dieselbe
@@ -244,24 +251,35 @@ class SavedPatternsRepository(
 
     /**
      * Löscht das Muster und räumt hinter ihm auf: Detailseiten-Anpassungen und Sicherheits-
-     * Bestätigungen seiner Übungs-Kennung („muster-7“) fallen mit weg.
+     * Bestätigungen seiner Übungs-Kennung („muster-7“) fallen mit weg ([remove]).
      */
     suspend fun delete(id: Long) {
-        writeLock.withLock { dao.delete(id) }
-        val exerciseId = ExerciseIds.saved(id)
-        clearOverrides(exerciseId)
-        forgetSafety(exerciseId)
+        writeLock.withLock { remove(id) }
     }
 
     /**
-     * Nimmt das Tagesmuster wieder heraus (Speicherzeichen abgewählt). Gesucht wird per Herkunft
-     * und Zahlen in der DB, nicht in [current]: Das hinkt direkt nach dem Speichern noch hinterher.
-     * Ein eigenes Muster mit gleichen Zahlen bleibt stehen.
+     * Nimmt das Tagesmuster wieder heraus (Speicherzeichen abgewählt) und räumt wie [delete] auf.
+     * Gesucht wird per Herkunft und Zahlen in der DB, nicht in [current]: Das hinkt direkt nach dem
+     * Speichern noch hinterher. Ein eigenes Muster mit gleichen Zahlen bleibt stehen.
      */
     suspend fun unsave(daily: DailyPattern) {
         writeLock.withLock {
-            dao.snapshot().filter { it.isSavedDaily(daily) }.forEach { dao.delete(it.id) }
+            dao.snapshot().filter { it.isSavedDaily(daily) }.forEach { remove(it.id) }
         }
+    }
+
+    /**
+     * Erst aufräumen, dann die Zeile löschen; nur unter [writeLock]. Scheitert das Aufräumen
+     * (DataStore), bleibt das Muster stehen und der Fehler geht an den Aufrufer (App-Scope:
+     * `UncaughtErrors`) – ein neuer Versuch räumt dann vollständig auf. Umgekehrt blieben Reste
+     * einer Id liegen, die niemand mehr löscht. Scheitert erst das Löschen, sind nur Anpassungen
+     * und Bestätigungen fort: Der Hinweis fragt dann einmal mehr, das ist die sichere Richtung.
+     */
+    private suspend fun remove(id: Long) {
+        val exerciseId = ExerciseIds.saved(id)
+        clearOverrides(exerciseId)
+        forgetSafety(exerciseId)
+        dao.delete(id)
     }
 
     suspend fun isEmpty(): Boolean = dao.snapshot().isEmpty()

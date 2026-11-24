@@ -26,6 +26,7 @@ import app.atemkraft.domain.GeneratedExercises
 import app.atemkraft.domain.PatternSpec
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.domain.toFreePattern
+import kotlin.random.Random
 
 /**
  * Zustand des Muster-Editors („Eigenes Muster“, MUSTER-10, Nachtrag 4 „Frei gestalten“), getrennt
@@ -85,6 +86,13 @@ class PatternEditorState internal constructor(
     resetTo: FreePattern = initial,
     opened: PatternVersion? = null,
     writes: Int = 0,
+    savePending: Boolean = false,
+    /**
+     * Kennung dieser Editor-Sitzung, überlebt Drehen und Prozesstod (Saver). Der Aufrufer merkt
+     * sich darunter ein angelegtes Muster außerhalb der Komposition: So erfährt der Zustand nach
+     * einem Drehen mitten im Anlegen die Id, statt ein zweites Muster anzulegen.
+     */
+    val sessionKey: Long = Random.nextLong(),
 ) {
     /**
      * Wohin [reset] führt: der Stand vor der letzten Vorlage, die eine selbst geformte Kurve ersetzt
@@ -136,8 +144,8 @@ class PatternEditorState internal constructor(
     var writes: Int by mutableIntStateOf(writes)
         private set
 
-    /** Ein Entwurf wird gerade angelegt (Diskette getippt, Schreiben steht aus). */
-    var savePending: Boolean by mutableStateOf(false)
+    /** Ein Entwurf wird gerade angelegt (Diskette getippt, Schreiben steht aus); überlebt Drehen. */
+    var savePending: Boolean by mutableStateOf(savePending)
         private set
 
     /** Die Vorlage, der die Folge gerade genau entspricht; null heißt „angepasst“. */
@@ -286,6 +294,14 @@ class PatternEditorState internal constructor(
     }
 
     /**
+     * Das Anlegen ist gescheitert (Speicher voll) oder ging mit dem Prozess verloren: wieder ein
+     * Entwurf – die Diskette steht wieder da, und „Zurück“ fragt wieder nach.
+     */
+    fun markSaveFailed() {
+        savePending = false
+    }
+
+    /**
      * Der Stand [written] wurde unter [id] gespeichert (neu angelegt oder aktualisiert); ab jetzt
      * ist es ein bestehendes Muster. Hat sich der Entwurf während des Schreibens geändert (Kurve
      * weitergezogen), steht das nächste Schreiben schon aus ([needsWrite]).
@@ -404,6 +420,8 @@ class PatternEditorState internal constructor(
                     state.opened.minutes,
                     state.opened.name,
                     state.writes,
+                    state.savePending,
+                    state.sessionKey,
                 )
             },
             restore = { list ->
@@ -434,6 +452,8 @@ class PatternEditorState internal constructor(
                         null
                     },
                     writes = list.getOrNull(WRITES) as? Int ?: 0,
+                    savePending = list.getOrNull(SAVE_PENDING) as? Boolean ?: false,
+                    sessionKey = list.getOrNull(SESSION_KEY) as? Long ?: Random.nextLong(),
                 )
             },
         )
@@ -458,6 +478,8 @@ class PatternEditorState internal constructor(
         private const val OPENED_MINUTES = 16
         private const val OPENED_NAME = 17
         private const val WRITES = 18
+        private const val SAVE_PENDING = 19
+        private const val SESSION_KEY = 20
 
         private fun decode(value: Any?): FreePattern = FreePattern.parse(value as String) ?: FreePattern.DEFAULT
     }

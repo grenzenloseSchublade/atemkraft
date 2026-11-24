@@ -2,6 +2,8 @@ package app.atemkraft.data
 
 import app.atemkraft.domain.FreePatternTemplates
 import app.atemkraft.domain.PatternOrigin
+import app.atemkraft.domain.RandomPatternGenerator
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,8 +14,10 @@ import org.junit.Test
 /**
  * Vorherige Fassung, Duplizieren und Aufräumen gespeicherter Muster (MUSTER-14, SEC-PRIV-04): Das
  * erste Auto-Speichern einer Sitzung legt den Stand beim Öffnen ab, spätere lassen ihn stehen;
- * Wiederherstellen tauscht (umkehrbar); die Kopie startet ohne Vergangenheit; Löschen nimmt
- * Anpassungen und Sicherheits-Bestätigungen mit, und die Sicherung trägt keine vorherige Fassung.
+ * Wiederherstellen tauscht (umkehrbar) und verliert keine auf der Detailseite gewählte Dauer;
+ * Bearbeiten löscht nur die Anpassungen des Musters, nicht „Danach Stille“; die Kopie startet ohne
+ * Vergangenheit; Löschen und das Abwählen des Tagesmusters nehmen Anpassungen und
+ * Sicherheits-Bestätigungen mit, und die Sicherung trägt keine vorherige Fassung.
  */
 class SavedPatternVersionsTest {
 
@@ -24,7 +28,7 @@ class SavedPatternVersionsTest {
     @Test
     fun `Auto-Speichern legt die vorherige Fassung einmal je Sitzung ab, Wiederherstellen tauscht`() = runBlocking {
         val cleared = mutableListOf<String>()
-        val repo = SavedPatternsRepository(FakeSavedPatternDao(), clearOverrides = { cleared += it })
+        val repo = SavedPatternsRepository(FakeSavedPatternDao(), clearOverrides = { error("löscht auch die Stille") }, clearPatternOverrides = { cleared += it })
         val id = repo.saveCustom(box, minutes = 5, name = "Abendwelle").id
         val opened = PatternVersion(box, 5, "Abendwelle")
 
@@ -56,6 +60,7 @@ class SavedPatternVersionsTest {
         val repo = SavedPatternsRepository(
             FakeSavedPatternDao(),
             clearOverrides = { cleared += it },
+            clearPatternOverrides = {},
             overrideMinutes = { 12 },
             forgetSafety = { forgotten += it },
         )
@@ -73,9 +78,20 @@ class SavedPatternVersionsTest {
         assertTrue(copy.exercise.name.endsWith(" (Kopie)"))
         assertTrue(copy.exercise.name.length <= PatternBackup.MAX_NAME)
 
+        // Wiederherstellen legt die Dauer ab, die die Detailseite zeigt (12), nicht die Spalte (5).
+        assertEquals(PatternVersion(viloma, 12, long), repo.restorePrevious(id)!!.previous)
+
         cleared.clear()
         repo.delete(id)
         assertEquals(listOf("muster-$id"), cleared)
         assertEquals(listOf("muster-$id"), forgotten)
+
+        // Das Tagesmuster abwählen räumt genauso auf.
+        val daily = RandomPatternGenerator.forSeed(7)
+        repo.save(daily)
+        val dailyId = repo.patterns.first().single { it.origin == PatternOrigin.SAVED_DAILY }.id
+        repo.unsave(daily)
+        assertEquals("muster-$dailyId", cleared.last())
+        assertEquals("muster-$dailyId", forgotten.last())
     }
 }
