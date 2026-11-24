@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -23,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -103,36 +105,7 @@ class TabNavigationTest {
         var started = 0
         var pinned by mutableStateOf(true)
         val scroll = ScrollState(0)
-        rule.setContent {
-            var contentTop by remember { mutableFloatStateOf(0f) }
-            Box(Modifier.fillMaxSize()) {
-                Column(Modifier.fillMaxSize()) {
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .testTag(CONTENT)
-                            .onGloballyPositioned { contentTop = it.positionInRoot().y }
-                            .pointerInput(state) { with(state) { detectBottomSwipe { contentTop } } },
-                    ) {
-                        Column(Modifier.fillMaxSize().verticalScroll(scroll)) { Spacer(Modifier.height(LONG_PAGE)) }
-                        if (pinned) {
-                            CompositionLocalProvider(LocalTabBarState provides state) {
-                                PinnedActionBar(Modifier.align(Alignment.BottomCenter).testTag(PINNED)) {
-                                    Button(onClick = { started++ }) { Text(START) }
-                                }
-                            }
-                        }
-                    }
-                    Column(Modifier.onGloballyPositioned { state.bottomBarTop = it.positionInRoot().y }) {
-                        HideableTabBar(visible = !state.collapsed, state = state, modifier = Modifier.testTag(TAB_BAR)) {
-                            AppTabBar(selected = TopTab.START, onTap = {})
-                        }
-                    }
-                }
-                TabBarToggle(state, Modifier.align(Alignment.TopCenter))
-            }
-        }
+        rule.setContent { TabFrame(state, scroll, pinned = { pinned }, onStart = { started++ }) }
         rule.onNodeWithTag(PINNED).performTouchInput { swipeUp() }
         rule.runOnIdle { assertFalse(state.collapsed) }
         rule.onNodeWithTag(TAB_BAR).performTouchInput { swipeDown() }
@@ -177,6 +150,86 @@ class TabNavigationTest {
             up()
         }
         rule.runOnIdle { assertFalse(state.collapsed) }
+    }
+
+    /**
+     * Die Startleiste wandert mit der Leiste nach oben; der Weg zählt trotzdem 1:1 (Review 2026-11-24:
+     * vorher in ihren eigenen Koordinaten, ein langsamer Wisch über 30 dp öffnete nicht). Zwischen den
+     * Schritten wird ausgelegt, wie am Gerät. Symmetrisch (Eigentümer 2026-11-24): Wischen nach unten
+     * auf der Startleiste schließt, und ein Wisch nach oben auf der offenen Leiste startet nichts.
+     */
+    @Test
+    fun `Startleiste wischt 1 zu 1 in beide Richtungen, ein Wisch ist kein Tipp`() {
+        val state = TabBarState().apply { enter(onTab = false, tab = TopTab.START) }
+        var started = 0
+        rule.setContent { TabFrame(state, ScrollState(0), pinned = { true }, onStart = { started++ }) }
+        fun slowly(dp: Int) {
+            rule.onNodeWithTag(PINNED).performTouchInput { down(center) }
+            repeat(5) { rule.onNodeWithTag(PINNED).performTouchInput { moveBy(Offset(0f, (dp / 5).dp.toPx()), delayMillis = 100) } }
+            rule.onNodeWithTag(PINNED).performTouchInput { up() }
+        }
+        slowly(-30)
+        rule.runOnIdle { assertFalse(state.collapsed) }
+        slowly(-30)
+        rule.runOnIdle {
+            assertFalse(state.collapsed)
+            assertEquals(0, started)
+        }
+        slowly(30)
+        rule.runOnIdle {
+            assertTrue(state.collapsed)
+            assertEquals(0, started)
+        }
+    }
+
+    /** Drehen, Schriftwechsel und Prozess-Tod lassen eine in der Tiefe geöffnete Leiste offen ([TabBarState.Saver]). */
+    @Test
+    fun `offene Leiste uebersteht das Neuerstellen`() {
+        val restore = StateRestorationTester(rule)
+        lateinit var state: TabBarState
+        restore.setContent { state = rememberTabBarState() }
+        rule.runOnIdle {
+            state.enter(onTab = false, tab = TopTab.LERNEN)
+            state.show()
+        }
+        restore.emulateSavedInstanceStateRestore()
+        rule.runOnIdle {
+            state.enter(onTab = false, tab = TopTab.LERNEN)
+            assertFalse(state.collapsed)
+        }
+    }
+
+    /** Rahmen wie in der App: Inhalt mit Band, optional Startleiste, darunter die Tab-Leiste, darüber der Griff. */
+    @Composable
+    private fun TabFrame(state: TabBarState, scroll: ScrollState, pinned: () -> Boolean, onStart: () -> Unit) {
+        var contentTop by remember { mutableFloatStateOf(0f) }
+        Box(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .testTag(CONTENT)
+                        .onGloballyPositioned { contentTop = it.positionInRoot().y }
+                        .pointerInput(state) { with(state) { detectBottomSwipe { contentTop } } },
+                ) {
+                    Column(Modifier.fillMaxSize().verticalScroll(scroll)) { Spacer(Modifier.height(LONG_PAGE)) }
+                    if (pinned()) {
+                        CompositionLocalProvider(LocalTabBarState provides state) {
+                            PinnedActionBar(Modifier.align(Alignment.BottomCenter).testTag(PINNED)) {
+                                Button(onClick = onStart) { Text(START) }
+                            }
+                        }
+                    }
+                }
+                Column(Modifier.onGloballyPositioned { state.bottomBarTop = it.positionInRoot().y }) {
+                    HideableTabBar(visible = !state.collapsed, state = state, modifier = Modifier.testTag(TAB_BAR)) {
+                        AppTabBar(selected = TopTab.START, onTap = {})
+                    }
+                }
+            }
+            TabBarToggle(state, Modifier.align(Alignment.TopCenter))
+        }
     }
 
     private fun assertTab(tab: TopTab, root: Boolean) {

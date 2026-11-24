@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.atemkraft.ui.navigation.LocalTabBarState
 import app.atemkraft.ui.navigation.TabBarState
 import app.atemkraft.ui.theme.Dimens
@@ -24,16 +25,19 @@ import app.atemkraft.ui.theme.Dimens
  * Meditations-Tab ginge jedes dp dem Zeitring ab (LAYOUT-08). Inhalt ist der `StartSplitButton`,
  * auf der Detailseite darüber genau eine Zeile „Anpassen ›“ (`SectionHeader` mit `onClick`).
  *
- * Im App-Rahmen meldet sie ihre Oberkante beim [TabBarState] an ([LocalTabBarState]): In der Tiefe
- * sitzt dort der Griff, der die Tab-Leiste auf- und zuklappt (`TabBarToggle`, Tippfläche ganz über
- * der Kante), und Wischen nach oben auf der Leiste öffnet die Tab-Leiste (`TabBarState.detectSwipe`,
- * erst nach dem Touch-Slop – Tipps auf Start und „Anpassen ›“ bleiben Tipps). Auf den Tabs ändert
- * das Wischen nichts.
+ * Im App-Rahmen meldet sie ihre Oberkante beim [TabBarState] an ([LocalTabBarState]), mit ihrer
+ * Seite (`LocalLifecycleOwner`, im NavHost der Stapel-Eintrag): In der Tiefe sitzt dort der Griff,
+ * der die Tab-Leiste auf- und zuklappt (`TabBarToggle`, Tippfläche ganz über der Kante) – nur auf
+ * der Startleiste der gezeigten Seite, nicht auf einer, die gerade hinausgleitet. Wischen nach oben
+ * auf der Leiste öffnet die Tab-Leiste, nach unten schließt es sie (`TabBarState.detectSwipe`, erst
+ * nach dem Touch-Slop – Tipps auf Start und „Anpassen ›“ bleiben Tipps, ein Wischen startet nie).
+ * Auf den Tabs ändert das Wischen nichts.
  */
 @Composable
 fun PinnedActionBar(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val tabBar = LocalTabBarState.current
     val owner = remember { Any() }
+    val page = LocalLifecycleOwner.current
     if (tabBar != null) DisposableEffect(tabBar) { onDispose { tabBar.releasePinnedBar(owner) } }
     Surface(
         modifier = modifier.then(
@@ -41,8 +45,8 @@ fun PinnedActionBar(modifier: Modifier = Modifier, content: @Composable BoxScope
                 Modifier
             } else {
                 Modifier
-                    .onGloballyPositioned { tabBar.anchorPinnedBar(owner, it.positionInRoot().y) }
-                    .pointerInput(tabBar) { with(tabBar) { detectSwipe(opens = true, closes = false) { pinnedTop(owner) } } }
+                    .onGloballyPositioned { tabBar.anchorPinnedBar(owner, page, it.positionInRoot().y) }
+                    .pointerInput(tabBar) { with(tabBar) { detectSwipe(opens = true, closes = true) { pinnedTop(owner) } } }
             },
         ),
         tonalElevation = Dimens.PinnedBarElevation,

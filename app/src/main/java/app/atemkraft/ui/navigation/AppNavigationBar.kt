@@ -31,6 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
@@ -140,22 +144,28 @@ private const val NAV_LABEL_MIN_SCALE = 0.85f
  * nur der Platz der Systemnavigation [systemInsets].
  *
  * Mit [state] (der App-Rahmen) folgt die Höhe [TabBarState.openness]: Die Leiste wird in voller
- * Höhe gemessen und nur so weit gezeigt, wie sie offen ist (oben bündig, unten beschnitten) – beim
- * Wischen folgt sie dem Finger, sonst rastet sie mit [Motion.TabBar] ein, wenn [visible] wechselt
- * (Griff, Seitenwechsel). Gelesen wird [TabBarState.openness] nur beim Auslegen: Beim Ziehen wird
- * jedes Bild neu ausgelegt, nicht neu komponiert. Eine Startleiste darüber rutscht mit. Wischen
- * nach unten schließt die offene Leiste in der Tiefe ([TabBarState.detectSwipe]); Tipps auf die
- * Tabs bleiben Tipps. Ohne [state] (Screenshots) gleitet nur die Höhe ([Motion.Disclosure]).
+ * Höhe gemessen und schiebt sich von unten herein (unten bündig, oben beschnitten) – beim Wischen
+ * folgt sie dem Finger, sonst rastet sie mit [Motion.TabBar] ein, wenn [visible] wechselt (Griff,
+ * Seitenwechsel). Der Platz der Systemnavigation geht dabei vom Grund der App ([collapsedColor],
+ * eingeklappt) stetig ins Violett der Leiste über, statt beim ersten Bild als Streifen
+ * aufzutauchen. Gelesen wird [TabBarState.openness] nur beim Auslegen und Zeichnen: Beim Ziehen
+ * wird jedes Bild neu ausgelegt, nicht neu komponiert. Eine Startleiste darüber rutscht mit.
+ * Wischen nach oben und unten wirkt auch hier ([TabBarState.detectSwipe]); Tipps auf die Tabs
+ * bleiben Tipps. Bis der App-Rahmen die erste Seite kennt ([ready]), steht nur der Platz der
+ * Systemnavigation: Nach Drehen oder Neustart in der Tiefe gleitet nichts. Ohne [state]
+ * (Screenshots) gleitet nur die Höhe ([Motion.Disclosure]).
  */
 @Composable
 fun HideableTabBar(
     visible: Boolean,
     modifier: Modifier = Modifier,
     state: TabBarState? = null,
+    ready: Boolean = true,
     systemInsets: WindowInsets = NavigationBarDefaults.windowInsets,
+    collapsedColor: Color = MaterialTheme.colorScheme.background,
     bar: @Composable () -> Unit,
 ) {
-    val shown = if (state == null) visible else rememberFollowing(state, visible)
+    val shown = if (state == null) visible else rememberFollowing(state, visible, ready)
     val inset = systemInsets.getBottom(LocalDensity.current)
     var top by remember { mutableFloatStateOf(0f) }
     val sized = if (state == null) {
@@ -163,14 +173,22 @@ fun HideableTabBar(
     } else {
         modifier
             .onGloballyPositioned { top = it.positionInRoot().y }
-            .pointerInput(state) { with(state) { detectSwipe(opens = false, closes = true) { top } } }
+            .pointerInput(state) { with(state) { detectSwipe(opens = true, closes = true) { top } } }
             .clipToBounds()
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
                 val full = maxOf(placeable.height, inset)
                 if (full > inset) state.travel = (full - inset).toFloat()
-                val height = inset + ((full - inset) * state.openness).roundToInt()
-                layout(placeable.width, height) { placeable.place(0, 0) }
+                val height = inset + if (full > inset) state.shownPx() else 0
+                layout(placeable.width, height) { placeable.place(0, height - full) }
+            }
+            .drawWithContent {
+                drawContent()
+                // Platz der Systemnavigation: eingeklappt im Grund der App, offen im Violett der Leiste.
+                val cover = 1f - state.openness
+                if (inset > 0 && cover > 0f) {
+                    drawRect(collapsedColor, topLeft = Offset(0f, size.height - inset), size = Size(size.width, inset.toFloat()), alpha = cover)
+                }
             }
     }
     Box(sized) {
@@ -186,27 +204,33 @@ fun HideableTabBar(
 /**
  * Verbindet [HideableTabBar] mit [state]: setzt die Haptik fürs Wischen, führt jedes Einrasten aus
  * ([TabBarState.settleRequest], [Motion.TabBar] mit dem Tempo des Fingers), rastet bei jedem Wechsel
- * von [visible] ein (der erste Frame springt, damit beim Start nichts gleitet) und sagt, ob die
- * Leiste komponiert sein muss – offen, gerade aufgehend oder [visible].
+ * von [visible] ein (das erste Bild nach [ready] springt, damit beim Start nichts gleitet) und sagt,
+ * ob die Leiste komponiert sein muss – offen, gerade aufgehend, [visible] oder mit einem Finger auf
+ * einer Fläche, die sie öffnen kann ([TabBarState.engaged]).
  */
 @Composable
-private fun rememberFollowing(state: TabBarState, visible: Boolean): Boolean {
+private fun rememberFollowing(state: TabBarState, visible: Boolean, ready: Boolean): Boolean {
     val haptics = LocalHapticFeedback.current
     SideEffect { state.haptics = haptics }
     val first = remember { booleanArrayOf(true) }
-    LaunchedEffect(visible) {
+    LaunchedEffect(visible, ready) {
+        if (!ready) return@LaunchedEffect
         if (first[0]) state.snap(visible) else state.settle(visible)
         first[0] = false
     }
     val request = state.settleRequest
     LaunchedEffect(request) {
         if (request == null) return@LaunchedEffect
-        animate(state.openness, request.target, request.velocity, Motion.TabBar) { value, _ ->
+        animate(state.openness, request.target, request.velocity, Motion.TabBar) { value, velocity ->
+            // Ein Wischen oder neues Ziel hat übernommen: kein Bild mehr von diesem Einrasten.
+            if (state.settleRequest !== request) return@animate
             state.openness = value.coerceIn(0f, 1f)
+            state.settleVelocity = velocity
         }
+        if (state.settleRequest === request) state.settleVelocity = 0f
     }
     val open by remember(state) { derivedStateOf { state.openness > 0f } }
-    return visible || open
+    return ready && (visible || open || state.engaged)
 }
 
 /** Test-Tag des Griffs ([TabBarToggle]): Die Screenshot-Gates prüfen, dass seine Tippfläche nichts überdeckt. */
@@ -221,25 +245,27 @@ const val TAB_BAR_GRIP_TAG = "tabBarGrip"
  * ([Dimens.MinTouchTarget] im Quadrat, A11Y-05) liegt ganz über der Kante und überdeckt nichts in
  * der Leiste; den Platz darüber halten die Seiten am Ende frei ([Dimens.TabBarGripClearance]).
  * Antippen klappt um ([TabBarState.toggle]), Wischen nach oben öffnet, nach unten schließt
- * ([TabBarState.detectSwipe]). TalkBack: Schaltfläche „Tab-Leiste zeigen“ bzw. „Tab-Leiste ausblenden“
- * mit dem Zustand der Leiste – so ist die Funktion auch ohne Geste erreichbar.
+ * ([TabBarState.detectSwipe]); ein Wischen wird nie zum Tipp. TalkBack: Schaltfläche „Tab-Leiste
+ * zeigen“ bzw. „Tab-Leiste ausblenden“ mit dem Zustand der Leiste – so ist die Funktion auch ohne
+ * Geste erreichbar.
  *
  * [modifier] setzt den Griff oben mittig in einen Rahmen, der wie der App-Rahmen das Fenster füllt;
- * die Kante kommt in px im Fenster, darum misst der Griff die Lage dieses Rahmens selbst.
+ * die Kante kommt in px im Fenster, darum misst der Griff die Lage dieses Rahmens selbst. Gelesen
+ * wird sie erst beim Auslegen, für die Lage der Leiste im selben Bild ([TabBarState.anchorTop]):
+ * Der Griff hängt der Kante beim Ziehen und Einrasten nicht hinterher.
  */
 @Composable
 fun TabBarToggle(state: TabBarState, modifier: Modifier = Modifier) {
-    val edge = state.anchorTop
     var origin by remember { mutableFloatStateOf(0f) }
     val touch = with(LocalDensity.current) { Dimens.MinTouchTarget.toPx() }
     val name = stringResource(if (state.collapsed) R.string.cd_tab_bar_show else R.string.cd_tab_bar_hide)
     val status = stringResource(if (state.collapsed) R.string.tab_bar_state_hidden else R.string.tab_bar_state_shown)
     Box(modifier.fillMaxWidth().onGloballyPositioned { origin = it.positionInRoot().y }, contentAlignment = Alignment.TopCenter) {
-        if (edge.isNaN()) return@Box
+        if (!state.anchorKnown) return@Box
         Box(
             modifier = Modifier
                 // Unterkante der Tippfläche auf der Kante der Leiste.
-                .offset { IntOffset(0, (edge - origin - touch).roundToInt()) }
+                .offset { IntOffset(0, (state.anchorTop - origin - touch).roundToInt()) }
                 .size(Dimens.MinTouchTarget)
                 .testTag(TAB_BAR_GRIP_TAG)
                 .pointerInput(state) { with(state) { detectSwipe(opens = true, closes = true) { anchorTop - touch } } }

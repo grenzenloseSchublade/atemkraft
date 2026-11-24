@@ -57,8 +57,16 @@ object Sizes {
      * Tiefe ohne Startleiste (96, doppelte Tippfläche; Eigentümer 2026-10-31: 48 war praktisch nur
      * der Griff). Nur Wischen nach oben gehört dem Band; Tipps, Wischen nach unten und zur Seite
      * bleiben dem Inhalt. Ein Hochwischen zum Scrollen, das so tief aufsetzt, öffnet die Leiste.
+     * Quer begrenzt [TabBarSwipeBandMaxShare].
      */
     val TabBarSwipeBand = 96.dp
+
+    /**
+     * Höchstens dieser Anteil der Fensterhöhe ist Wischband ([TabBarSwipeBand]; Eigentümer 2026-11-24):
+     * hochkant bleibt es 96 (ab 640 Höhe), quer schrumpft es (412 hoch: rund 62), damit dort nicht ein
+     * Viertel der Fläche statt zu scrollen die Tab-Leiste öffnet.
+     */
+    val TabBarSwipeBandMaxShare = 0.15f
 
     /** Weg der Tab-Leiste beim Wischen, solange sie noch nicht gemessen ist (M3-Navigationsleiste 80). */
     val TabBarFallbackTravel = 80.dp

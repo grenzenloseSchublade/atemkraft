@@ -40,7 +40,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.atemkraft.ui.components.inertWhen
-import app.atemkraft.ui.components.rememberAccessibilityActive
 import app.atemkraft.ui.navigation.AppTabBar
 import app.atemkraft.ui.navigation.DetailRoute
 import app.atemkraft.ui.navigation.HideableTabBar
@@ -50,6 +49,7 @@ import app.atemkraft.ui.navigation.MeditationRoute
 import app.atemkraft.ui.navigation.TabBarToggle
 import app.atemkraft.ui.navigation.TopTab
 import app.atemkraft.ui.navigation.isTabRoot
+import app.atemkraft.ui.navigation.rememberTabBarAssistance
 import app.atemkraft.ui.navigation.rememberTabBarState
 import app.atemkraft.ui.navigation.switchTab
 import app.atemkraft.ui.navigation.tabOnStack
@@ -105,16 +105,23 @@ private fun AtemkraftApp(
     val selectedTab = remember(navBackStackEntry) { navController.tabOnStack() }
 
     // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; Griff oder Wischen (Startleiste,
-    // Band über den unteren Leisten, Griff) klappen sie auf, das gilt bis zur Rückkehr auf einen Tab.
+    // Mini-Leiste, Band über den unteren Leisten, Griff) klappen sie auf, das gilt bis zur Rückkehr
+    // auf einen Tab – auch über Drehen und Prozess-Tod.
     val tabBar = rememberTabBarState()
-    // Mit Bedienhilfe (TalkBack, Switch Access) bleibt sie auch in der Tiefe offen.
-    val accessibility = rememberAccessibilityActive()
-    LaunchedEffect(accessibility) { tabBar.keepOpen = accessibility }
-    LaunchedEffect(navBackStackEntry?.id) { tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab) }
+    // Mit Bedienhilfe, der Wischgesten gehören (TalkBack, Switch Access), bleibt sie in der Tiefe offen.
+    val assistance = rememberTabBarAssistance()
+    LaunchedEffect(assistance) { tabBar.keepOpen = assistance }
+    // Vor der ersten Seite (null) ist nichts bekannt: Kein „Tab“ setzt eine gesicherte Wahl zurück.
+    val entry = navBackStackEntry
+    LaunchedEffect(entry?.id) { if (entry != null) tabBar.enter(onTab = currentDestination.isTabRoot(), tab = selectedTab, page = entry) }
+    val inDepth = entry != null && !currentDestination.isTabRoot()
     // Was in den Systemgesten am unteren Rand aufsetzt (Home), bleibt dem System.
     val gestureBottom = WindowInsets.systemGestures.getBottom(LocalDensity.current)
     val windowHeight = LocalWindowInfo.current.containerSize.height
-    SideEffect { tabBar.gestureZoneTop = (windowHeight - gestureBottom).toFloat() }
+    SideEffect {
+        tabBar.gestureZoneTop = (windowHeight - gestureBottom).toFloat()
+        tabBar.windowHeight = windowHeight.toFloat()
+    }
     // Oberkante des Inhalts (px im Fenster) für das Wischband über den unteren Leisten.
     var contentTop by remember { mutableFloatStateOf(0f) }
 
@@ -145,9 +152,12 @@ private fun AtemkraftApp(
             bottomBar = {
                 // Ihre Oberkante trägt den Griff der Tab-Leiste, solange die Seite keine Startleiste hat.
                 Column(Modifier.onGloballyPositioned { tabBar.bottomBarTop = it.positionInRoot().y }) {
-                    PlaybackMiniBars(playback)
+                    // Auch auf der Mini-Leiste öffnet Wischen nach oben die Tab-Leiste, nach unten schließt es sie.
+                    Column(Modifier.pointerInput(tabBar) { with(tabBar) { detectSwipe(opens = true, closes = true) { bottomBarTop } } }) {
+                        PlaybackMiniBars(playback)
+                    }
                     // Auf den vier Tabs immer; in der Tiefe nur, wenn per Griff oder Wischen aufgeklappt.
-                    HideableTabBar(visible = currentDestination.isTabRoot() || !tabBar.collapsed, state = tabBar) {
+                    HideableTabBar(visible = !inDepth || !tabBar.collapsed, state = tabBar, ready = entry != null) {
                         AppTabBar(selected = selectedTab, onTap = { tab -> navController.tapTab(tab.route, selected = tab == selectedTab) })
                     }
                 }
@@ -181,8 +191,8 @@ private fun AtemkraftApp(
         }
 
         // Griff der Tab-Leiste in der Tiefe: über der Oberkante der Startleiste bzw. der unteren Leisten,
-        // über dem Inhalt; Overlays darüber verdecken ihn.
-        if (!currentDestination.isTabRoot()) TabBarToggle(tabBar, Modifier.align(Alignment.TopCenter))
+        // über dem Inhalt. Unter einem offenen Overlay gibt es ihn nicht (auch nicht für TalkBack).
+        if (inDepth && !playback.overlayOpen) TabBarToggle(tabBar, Modifier.align(Alignment.TopCenter))
 
         PlaybackOverlays(
             playback = playback,

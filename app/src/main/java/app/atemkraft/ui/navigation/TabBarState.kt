@@ -10,34 +10,40 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
 import androidx.compose.ui.input.pointer.util.VelocityTracker
-import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import app.atemkraft.ui.components.gestureThreshold
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.Sizes
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Wer von einem Tab in die
  * Tiefe geht, sieht sie eingeklappt ([collapsed]). Der Griff auf der Oberkante der untersten Leiste
- * ([TabBarToggle]) klappt sie auf und wieder zu ([toggle]), ebenso Wischen ([detectSwipe],
- * Nutzer 2026-10-30): nach oben auf der Startleiste, im unteren Bereich einer Seite ohne Startleiste
- * ([detectBottomSwipe]) oder am Griff öffnet ([show]), nach unten auf der offenen Tab-Leiste oder am
- * Griff schließt ([hide]). Diese Wahl gilt auf allen weiteren Seiten
- * der Tiefe, vor und zurück, bis der Nutzer wieder auf einem Tab steht ([enter]). Auf den vier Tabs
- * selbst steht die Leiste immer (das entscheidet der Aufrufer), Wischen ändert dort nichts
- * ([inDepth]).
+ * ([TabBarToggle]) klappt sie auf und wieder zu ([toggle]), ebenso Wischen ([detectSwipe]): nach
+ * oben auf Startleiste, Mini-Leiste, Griff oder im unteren Bereich einer Seite ohne Startleiste
+ * ([detectBottomSwipe]) öffnet ([show]), nach unten auf denselben Leisten und der offenen Tab-Leiste
+ * schließt ([hide]). Diese Wahl gilt auf allen weiteren Seiten der Tiefe, vor und zurück, bis der
+ * Nutzer wieder auf einem Tab steht ([enter]); Drehen und Prozess-Tod überlebt sie ([Saver]). Auf
+ * den vier Tabs selbst steht die Leiste immer (das entscheidet der Aufrufer), Wischen ändert dort
+ * nichts ([inDepth]).
  *
- * Wo der Griff sitzt: auf der Oberkante einer Startleiste, wenn die Seite eine hat
- * (`PinnedActionBar` meldet sich mit [anchorPinnedBar] an), sonst auf der Oberkante der unteren
- * Leisten ([bottomBarTop]). Beides in px im Fenster.
+ * Wo der Griff sitzt: auf der Oberkante der Startleiste der gezeigten Seite (`PinnedActionBar`
+ * meldet sich mit [anchorPinnedBar] an), sonst auf der Oberkante der unteren Leisten
+ * ([bottomBarTop]). Beides in px im Fenster, gerechnet für die Lage der Leiste im selben Bild
+ * ([anchorTop]).
  *
  * Wie weit die Leiste gerade offen ist, sagt [openness] (0 zu, 1 offen): Beim Wischen folgt sie dem
  * Finger, beim Loslassen rastet sie mit [Motion.TabBar] ein und übernimmt das Tempo des Fingers
@@ -49,20 +55,26 @@ class TabBarState {
     var collapsed by mutableStateOf(true)
         private set
 
-    /** Wie weit die Leiste offen ist, 0…1; gelesen nur beim Auslegen ([HideableTabBar]), nie in der Komposition. */
+    /** Wie weit die Leiste offen ist, 0…1; gelesen nur beim Auslegen und Zeichnen, nie in der Komposition. */
     var openness by mutableFloatStateOf(1f)
         internal set
 
     /**
-     * Bedienhilfe aktiv (TalkBack, Switch Access): Dann steht die Leiste auch in der Tiefe offen –
-     * Wischgesten mit einem Finger gehören dort der Bedienhilfe, und eine eingeklappte Navigation
-     * wäre nur über den Griff zu finden (wie M3 `exitAlwaysScrollBehavior`, das sich mit TalkBack
-     * abschaltet). Der Griff bleibt eine Schaltfläche; wer ihn nutzt, hört dort den neuen Zustand.
+     * Bedienhilfe, die Wischgesten selbst braucht (TalkBack, Switch Access; [rememberTabBarAssistance]):
+     * Dann steht die Leiste auch in der Tiefe offen – Wischgesten mit einem Finger gehören dort der
+     * Bedienhilfe, und eine eingeklappte Navigation wäre nur über den Griff zu finden (wie M3
+     * `exitAlwaysScrollBehavior`, das sich mit TalkBack abschaltet). Der Griff bleibt eine
+     * Schaltfläche; wer ihn nutzt, hört dort den neuen Zustand. Endet die Bedienhilfe, gilt wieder
+     * die Regel ohne sie: in der Tiefe eingeklappt.
      */
     var keepOpen: Boolean = false
         set(value) {
+            val was = field
             field = value
-            if (value) collapsed = false
+            when {
+                value -> collapsed = false
+                was -> collapsed = inDepth
+            }
         }
 
     /** Weg der Leiste in px (volle Höhe minus Platz der Systemnavigation); misst [HideableTabBar]. */
@@ -72,8 +84,17 @@ class TabBarState {
     internal var settleRequest by mutableStateOf<SettleRequest?>(null)
         private set
 
+    /** Tempo des laufenden Einrastens (Anteil je Sekunde): Ein Tipp mitten darin kehrt weich um. */
+    internal var settleVelocity = 0f
+
     /** Für den einen Impuls an der Schwelle; setzt [HideableTabBar] (`LocalHapticFeedback`, folgt der Systemeinstellung). */
     internal var haptics: HapticFeedback? = null
+
+    /**
+     * Ein Finger liegt auf einer Fläche, die die Leiste öffnen kann: [HideableTabBar] komponiert sie
+     * schon, damit sie beim ersten Bild des Ziehens da ist und wächst.
+     */
+    internal var engaged by mutableStateOf(false)
 
     /** Ob die gezeigte Seite in der Tiefe liegt (kein Tab): nur dort klappt Wischen die Leiste. */
     var inDepth by mutableStateOf(false)
@@ -86,48 +107,82 @@ class TabBarState {
      */
     var gestureZoneTop by mutableFloatStateOf(Float.POSITIVE_INFINITY)
 
+    /** Höhe des Fensters in px; begrenzt das Wischband quer ([detectBottomSwipe]). */
+    var windowHeight by mutableFloatStateOf(Float.POSITIVE_INFINITY)
+
     // Tab, zu dessen Stapel die zuletzt gezeigte Seite gehörte: Ein Tab-Wechsel, der gleich in einem
     // wiederhergestellten Stapel in der Tiefe landet, zählt wie der Weg von einem Tab.
     private var lastTab: Any? = null
 
+    // Die gezeigte Seite ([enter]); nur ihre Startleiste trägt den Griff. Ohne Wert (Tests) jede.
+    private var page: Any? = null
+
+    // Zählt die Seitenwechsel: Ein Wischen, das über einen Seitenwechsel läuft, endet ([detectSwipe]).
+    private var epoch = 0
+
+    // Lagen in px im Fenster bei eingeklappter Leiste: gemessen plus der damals gezeigte Teil der
+    // Leiste. So stimmt die Kante im selben Bild, in dem sich die Leiste bewegt ([anchorTop]).
+    private var bottomBarBase by mutableFloatStateOf(Float.NaN)
+    private val pinnedOrder = mutableStateListOf<Any>()
+    private val pinnedBars = mutableStateMapOf<Any, PinnedBar>()
+
     /** Oberkante der unteren Leisten (Mini-Leiste, Tab-Leiste bzw. Systemnavigation), px im Fenster. */
-    var bottomBarTop by mutableFloatStateOf(Float.NaN)
+    var bottomBarTop: Float
+        get() = bottomBarBase - shownPx()
+        set(value) {
+            val base = value + shownPx()
+            if (base != bottomBarBase) bottomBarBase = base
+        }
 
-    // Startleisten der gerade gezeigten Seiten: Beim Seitenwechsel stehen kurz zwei da, es gilt die
-    // zuletzt angemeldete.
-    private val pinnedOwners = mutableStateListOf<Any>()
-    private val pinnedTops = mutableStateMapOf<Any, Float>()
-
-    /** Ob der Knopf auf einer Startleiste sitzt (sonst auf den unteren Leisten). */
+    /** Ob der Griff auf der Startleiste der gezeigten Seite sitzt (sonst auf den unteren Leisten). */
     val anchoredToPinnedBar: Boolean
-        get() = pinnedOwners.lastOrNull()?.let { it in pinnedTops } == true
+        get() = currentPinned() != null
 
-    /** Oberkante, auf der der Knopf sitzt: die jüngste Startleiste, sonst die unteren Leisten. */
-    val anchorTop: Float
-        get() = pinnedOwners.lastOrNull()?.let { pinnedTops[it] } ?: bottomBarTop
+    /** Ob die Kante des Griffs schon bekannt ist (Komposition; ohne Lesen der Lage der Leiste). */
+    val anchorKnown: Boolean
+        get() = !(currentPinned()?.let { pinnedBars[it]?.base } ?: bottomBarBase).isNaN()
 
     /**
-     * Neue Seite: Auf einem Tab ([onTab]) oder nach einem Wechsel des Tabs ([tab]) gilt wieder
-     * „eingeklappt“ für den nächsten Weg in die Tiefe; in der Tiefe bleibt die Wahl von Hand stehen.
+     * Oberkante, auf der der Griff sitzt (px im Fenster): die Startleiste der gezeigten Seite, sonst
+     * die unteren Leisten – für die Lage der Leiste in diesem Bild. Nur beim Auslegen lesen.
      */
-    fun enter(onTab: Boolean, tab: Any) {
+    val anchorTop: Float
+        get() = (currentPinned()?.let { pinnedBars[it]?.base } ?: bottomBarBase) - shownPx()
+
+    /** Gezeigter Teil der Leiste über der Systemnavigation in px; dieselbe Rundung wie [HideableTabBar]. */
+    internal fun shownPx(): Int = (travel * openness).roundToInt()
+
+    private fun currentPinned(): Any? = pinnedOrder.lastOrNull { owner ->
+        val bar = pinnedBars[owner] ?: return@lastOrNull false
+        page == null || bar.page == null || bar.page == page
+    }
+
+    /**
+     * Neue Seite [page]: Auf einem Tab ([onTab]) oder nach einem Wechsel des Tabs ([tab]) gilt wieder
+     * „eingeklappt“ für den nächsten Weg in die Tiefe; in der Tiefe bleibt die Wahl von Hand stehen.
+     * Ein laufendes Wischen endet.
+     */
+    fun enter(onTab: Boolean, tab: Any, page: Any? = null) {
+        epoch++
         if (onTab || tab != lastTab) collapsed = !keepOpen
         lastTab = tab
+        this.page = page
         inDepth = !onTab
     }
 
     /** Leiste ohne Animation auf [open] (erster Frame, damit beim Start nichts gleitet). */
     fun snap(open: Boolean) {
         settleRequest = null
+        settleVelocity = 0f
         openness = if (open) 1f else 0f
     }
 
     /**
      * Leiste auf [open] einrasten lassen, mit [Motion.TabBar] und dem Tempo [velocity] (Anteil der
-     * Leiste je Sekunde, positiv = auf). Läuft schon ein Einrasten zum selben Ziel, bleibt es; ein
-     * Wischen oder [snap] beendet es.
+     * Leiste je Sekunde, positiv = auf; ohne Angabe das des laufenden Einrastens). Läuft schon ein
+     * Einrasten zum selben Ziel, bleibt es; ein Wischen oder [snap] beendet es.
      */
-    fun settle(open: Boolean, velocity: Float = 0f) {
+    fun settle(open: Boolean, velocity: Float = settleVelocity) {
         val target = if (open) 1f else 0f
         // Schon unterwegs (oder angekommen) zu diesem Ziel: Das Tempo des Fingers bleibt erhalten.
         if (settleRequest?.target == target) return
@@ -144,146 +199,234 @@ class TabBarState {
         collapsed = false
     }
 
-    /** Nach unten gewischt: Leiste zu. */
+    /** Nach unten gewischt: Leiste zu – nicht, solange eine Bedienhilfe sie offen hält ([keepOpen]). */
     fun hide() {
-        collapsed = true
+        if (!keepOpen) collapsed = true
     }
 
-    /** Eine Startleiste ([owner]) mit ihrer Oberkante [top] (px im Fenster) an- bzw. nachmelden. */
-    fun anchorPinnedBar(owner: Any, top: Float) {
-        if (owner !in pinnedOwners) pinnedOwners += owner
-        pinnedTops[owner] = top
+    /**
+     * Eine Startleiste ([owner]) der Seite [page] mit ihrer Oberkante [top] (px im Fenster) an- bzw.
+     * nachmelden. Es zählt nur die Startleiste der gezeigten Seite ([enter]): Beim Seitenwechsel
+     * gleitet die alte noch hinaus, der Griff klebt nicht an ihr.
+     */
+    fun anchorPinnedBar(owner: Any, page: Any?, top: Float) {
+        if (owner !in pinnedOrder) pinnedOrder += owner
+        val bar = PinnedBar(page, top + shownPx())
+        if (pinnedBars[owner] != bar) pinnedBars[owner] = bar
     }
 
     /** Oberkante der Startleiste [owner] (px im Fenster), solange sie angemeldet ist. */
-    fun pinnedTop(owner: Any): Float = pinnedTops[owner] ?: Float.NaN
+    fun pinnedTop(owner: Any): Float = pinnedBars[owner]?.let { it.base - shownPx() } ?: Float.NaN
 
     /** Startleiste [owner] verschwindet mit ihrer Seite. */
     fun releasePinnedBar(owner: Any) {
-        pinnedOwners -= owner
-        pinnedTops -= owner
+        pinnedOrder -= owner
+        pinnedBars -= owner
     }
 
     /**
      * Wischen an den Leisten der Tiefe (Nutzer 2026-10-30: „mit von unten nach oben wischen im unteren
      * Bereich soll die Tab-Leiste geöffnet werden“): nach oben öffnet die Leiste ([opens]), nach unten
-     * schließt sie ([closes]) – je nachdem, wo gewischt wird: Startleiste nur auf, offene Tab-Leiste nur
-     * zu, Griff beides; ohne Startleiste das Band über den unteren Leisten ([detectBottomSwipe]). Zentral
-     * in `PinnedActionBar`, [HideableTabBar], [TabBarToggle] und im App-Rahmen
-     * (`with(state) { detectSwipe(…) }` in `pointerInput`); keine Seite tut etwas dafür.
+     * schließt sie ([closes]). Startleiste, Mini-Leiste, Griff und Tab-Leiste können beides (Eigentümer
+     * 2026-11-24: wo hoch öffnet, schließt runter); das Band über dem Inhalt ([detectBottomSwipe]) nur
+     * öffnen, nach unten scrollt dort der Inhalt. Zentral in `PinnedActionBar`, [HideableTabBar],
+     * [TabBarToggle] und im App-Rahmen (`with(state) { detectSwipe(…) }` in `pointerInput`); keine
+     * Seite tut etwas dafür.
      *
-     * Gewertet wird erst nach dem Touch-Slop und nur in der Richtung, die gerade etwas bewirkt: Bis dahin
-     * bleibt ein Tipp auf Start oder „Anpassen ›“ ein Tipp; geht der Finger zuerst in die andere Richtung
-     * oder zur Seite, bleibt die Geste ganz dem Inhalt. Erst ein Wischen verbraucht die Bewegung (der
-     * Knopf darunter bricht dann ab). Ab da folgt die Leiste dem Finger ([openness]); entschieden wird
-     * beim Loslassen (Eigentümer 2026-10-31): Ist der Finger schnell ([Sizes.TabBarSwipeVelocity] je
-     * Sekunde), zählt seine Richtung, sonst die Strecke ab dem Aufsetzen ([Sizes.TabBarSwipeDistance]).
-     * Zurückziehen bricht ab, die Leiste rastet dann zurück. Beim Überschreiten der Strecke ein
-     * kleiner Impuls, beim Zurückziehen darunter das Gegenstück ([gestureThreshold]); dazwischen und
-     * bei Tipps still. Nur in der Tiefe ([inDepth]); was in den Systemgesten
-     * am unteren Rand aufsetzt ([gestureZoneTop]) oder über [from] (px im Fenster), bleibt anderen.
-     * [pass] `Initial` wertet vor dem Inhalt darunter (ein Scrollen bricht dann ab).
-     * [windowTop] ist die Oberkante der wischbaren Fläche in px im Fenster.
+     * Gewertet wird erst nach dem Touch-Slop: Bis dahin bleibt ein Tipp auf Start oder „Anpassen ›“
+     * ein Tipp; geht der Finger zuerst zur Seite, bleibt die Geste dem Inhalt. Auf einer Leiste
+     * ([claim]) gehört ihr danach jede senkrechte Bewegung, auch die wirkungslose (nach oben bei
+     * offener Leiste): Ein Wischen wird nie zum Tipp auf Start, einen Tab oder den Griff. Das Band
+     * nimmt nur die Richtung, die etwas bewirkt; die andere bleibt dem Inhalt.
+     *
+     * Der Weg zählt aus den Änderungen je Ereignis (`positionChange`), nicht aus Positionen: Die
+     * Flächen wandern mit der Leiste und ihre Koordinaten mit ihnen – so folgt die Leiste dem Finger
+     * überall 1:1 (vorher auf Startleiste, Griff und Tab-Leiste nur halb so schnell, Strecke und
+     * Tempo wirkten dort doppelt so hoch). Die Leiste folgt ab dem Slop ohne Sprung ([openness]),
+     * entschieden wird beim Loslassen (Eigentümer 2026-10-31): Ist der Finger schnell
+     * ([Sizes.TabBarSwipeVelocity] je Sekunde), zählt seine Richtung, sonst die Strecke ab dem
+     * Aufsetzen ([Sizes.TabBarSwipeDistance]); wer die Leiste mitten im Einrasten fängt, bekommt die
+     * nähere Lage (halb offen). Zurückziehen bricht ab. Ein kleiner Impuls beim Überschreiten der
+     * Strecke, das Gegenstück erst einen Slop darunter ([gestureThreshold]), damit ein Zittern an der
+     * Schwelle nicht brummt. Endet die Geste anders (Seitenwechsel, Abbruch), rastet die Leiste
+     * dorthin, wo sie hingehört. Nur in der Tiefe ([inDepth]); was in den Systemgesten am unteren
+     * Rand aufsetzt ([gestureZoneTop]) oder über [from] (px im Fenster), bleibt anderen. [pass]
+     * `Initial` wertet vor dem Inhalt darunter. [windowTop] ist die Oberkante der wischbaren Fläche
+     * in px im Fenster.
      */
     suspend fun PointerInputScope.detectSwipe(
         opens: Boolean,
         closes: Boolean,
+        claim: Boolean = true,
         pass: PointerEventPass = PointerEventPass.Main,
         from: () -> Float = { Float.NEGATIVE_INFINITY },
         windowTop: () -> Float,
     ) {
-        val distance = Sizes.TabBarSwipeDistance.toPx()
-        val fast = Sizes.TabBarSwipeVelocity.toPx()
-        // Weg der Leiste, solange sie noch nie gemessen wurde (eine M3-Navigationsleiste ist 80 hoch).
-        val fallbackTravel = Sizes.TabBarFallbackTravel.toPx()
+        val swipe = Swipe(
+            distance = Sizes.TabBarSwipeDistance.toPx(),
+            fast = Sizes.TabBarSwipeVelocity.toPx(),
+            // Weg der Leiste, solange sie noch nie gemessen wurde (eine M3-Navigationsleiste ist 80 hoch).
+            fallbackTravel = Sizes.TabBarFallbackTravel.toPx(),
+            claim = claim,
+            pass = pass,
+        )
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = pass)
             val y = windowTop() + down.position.y
             // So herum gelesen, dass eine noch unbekannte Kante (NaN) nichts freigibt.
             if (!inDepth || !(y >= from()) || y >= gestureZoneTop) return@awaitEachGesture
             val up = opens && collapsed
-            val downward = closes && !collapsed
-            if (!up && !downward) return@awaitEachGesture
-            val slop = viewConfiguration.touchSlop
-            // Das Tempo zählt ab dem Aufsetzen, auch über den Touch-Slop.
-            val tracker = VelocityTracker()
-            tracker.addPointerInputChange(down)
-            var change: PointerInputChange
-            while (true) {
-                change = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
-                tracker.addPointerInputChange(change)
-                if (!change.pressed || change.isConsumed) return@awaitEachGesture
-                val dx = change.position.x - down.position.x
-                val dy = change.position.y - down.position.y
-                if (abs(dx) > slop && abs(dx) > abs(dy)) return@awaitEachGesture
-                if (abs(dy) <= slop) continue
-                // Nur die Richtung, die etwas bewirkt, wird zum Wischen; die andere bleibt Knöpfen und Inhalt.
-                if ((up && dy > 0f) || (downward && dy < 0f)) return@awaitEachGesture
-                break
+            val downward = closes && !collapsed && !keepOpen
+            if (!up && !downward && !claim) return@awaitEachGesture
+            // Kann die Geste die Leiste öffnen, wird sie schon jetzt komponiert.
+            if (up) engaged = true
+            try {
+                follow(down, up, downward, swipe)
+            } finally {
+                engaged = false
             }
-            // Ab hier gehört die Geste der Leiste: Sie folgt dem Finger.
-            settleRequest = null
-            val start = openness
-            val travel = travel.takeIf { it > 0f } ?: fallbackTravel
-            var signalled = false
-            var released = false
-            var dy = 0f
-            var first = true
+        }
+    }
+
+    private suspend fun AwaitPointerEventScope.follow(down: PointerInputChange, up: Boolean, downward: Boolean, swipe: Swipe) {
+        val slop = viewConfiguration.touchSlop
+        val startPage = epoch
+        val tracker = VelocityTracker()
+        // Fingerweg seit dem Aufsetzen (px), aufsummiert aus den Änderungen je Ereignis.
+        var dx = 0f
+        var dy = 0f
+        tracker.addPosition(down.uptimeMillis, Offset.Zero)
+        var change: PointerInputChange
+        while (true) {
+            change = awaitPointerEvent(swipe.pass).changes.firstOrNull { it.id == down.id } ?: return
+            if (!change.pressed || change.isConsumed) return
+            val delta = change.positionChangeIgnoreConsumed()
+            dx += delta.x
+            dy += delta.y
+            tracker.addPosition(change.uptimeMillis, Offset(0f, dy))
+            if (abs(dx) > slop && abs(dx) > abs(dy)) return
+            if (abs(dy) > slop) break
+        }
+        if (!((up && dy < 0f) || (downward && dy > 0f))) {
+            // Wirkungslose Richtung: Auf einer Leiste gehört die Bewegung trotzdem ihr, kein Tipp darunter.
+            if (swipe.claim) hold(change, swipe.pass)
+            return
+        }
+        // Ab hier gehört die Geste der Leiste: Sie folgt dem Finger, ab dem Slop ohne Sprung.
+        settleRequest = null
+        settleVelocity = 0f
+        val start = openness
+        val caught = start > 0f && start < 1f
+        var follow = dy - (if (dy < 0f) -slop else slop)
+        var signalled = false
+        var released = false
+        try {
             while (true) {
                 change.consume()
-                if (!first) tracker.addPointerInputChange(change)
-                first = false
-                dy = change.position.y - down.position.y
-                openness = (start - dy / travel).coerceIn(0f, 1f)
-                // Strecke in der Richtung, die etwas bewirkt (auf: nach oben, zu: nach unten).
+                openness = (start - follow / travelOr(swipe.fallbackTravel)).coerceIn(0f, 1f)
                 val reach = if (up) -dy else dy
-                // Ein Impuls beim Überschreiten der Strecke, das Gegenstück beim Zurückziehen; sonst still.
-                val beyond = reach >= distance
-                if (beyond != signalled) {
-                    signalled = beyond
-                    haptics?.gestureThreshold(reached = beyond)
+                if (!signalled && reach >= swipe.distance) {
+                    signalled = true
+                    haptics?.gestureThreshold(reached = true)
+                } else if (signalled && reach < swipe.distance - slop) {
+                    signalled = false
+                    haptics?.gestureThreshold(reached = false)
                 }
-                val next = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id }
-                if (next == null || next.isConsumed) break
+                val next = awaitPointerEvent(swipe.pass).changes.firstOrNull { it.id == down.id }
+                if (next == null || next.isConsumed || epoch != startPage) break
                 change = next
+                val delta = change.positionChangeIgnoreConsumed().y
+                dy += delta
+                follow += delta
+                tracker.addPosition(change.uptimeMillis, Offset(0f, dy))
                 if (!change.pressed) {
-                    tracker.addPointerInputChange(change)
+                    change.consume()
                     released = true
                     break
                 }
             }
+        } finally {
             val vy = tracker.calculateVelocity().y
-            val reach = if (up) -dy else dy
-            val towards = if (up) -vy else vy
-            // Bricht ein anderer die Geste ab, gilt sie nicht: Die Leiste rastet zurück.
-            val commit = released && if (abs(vy) >= fast) towards > 0f else reach >= distance
-            if (commit) {
-                if (up) show() else hide()
+            if (released) {
+                val towards = if (up) -vy else vy
+                val commit = when {
+                    abs(vy) >= swipe.fast -> towards > 0f
+                    caught -> if (up) openness >= HALF_OPEN else openness <= HALF_OPEN
+                    else -> (if (up) -dy else dy) >= swipe.distance
+                }
+                when {
+                    !commit -> Unit
+                    up -> show()
+                    else -> hide()
+                }
             }
+            // Immer einrasten, auch nach einem Abbruch – dorthin, wo die Leiste gerade hingehört.
             // Tempo als Anteil der Leiste je Sekunde, positiv = auf.
-            settle(open = !collapsed, velocity = -vy / travel)
+            settle(open = !inDepth || !collapsed, velocity = -vy / travelOr(swipe.fallbackTravel))
         }
     }
+
+    /** Hält eine wirkungslose Bewegung bis zum Loslassen fest, ohne die Leiste zu bewegen. */
+    private suspend fun AwaitPointerEventScope.hold(first: PointerInputChange, pass: PointerEventPass) {
+        first.consume()
+        while (true) {
+            val change = awaitPointerEvent(pass).changes.firstOrNull { it.id == first.id } ?: return
+            if (change.isConsumed) return
+            change.consume()
+            if (!change.pressed) return
+        }
+    }
+
+    private fun travelOr(fallback: Float): Float = travel.takeIf { it > 0f } ?: fallback
 
     /**
      * Wischen nach oben im unteren Bereich einer Seite ohne Startleiste (im App-Rahmen auf dem Inhalt):
      * Die eingeklappte Leiste ist dort nur der Platz der Systemnavigation, und der gehört dem System.
-     * Darum zählt ein Band [Sizes.TabBarSwipeBand] hoch über den unteren Leisten, über die ganze
-     * Breite – leicht zu treffen; am Ende jeder Seite der Tiefe liegt in seinem unteren Teil nichts. Gewertet vor dem Inhalt
-     * ([PointerEventPass.Initial]), sonst nähme ein scrollender Inhalt die Geste; Tipps, Wischen nach
-     * unten und zur Seite bleiben ihm. Mit Startleiste wischt man auf ihr ([anchoredToPinnedBar]).
+     * Darum zählt ein Band über den unteren Leisten, über die ganze Breite – [Sizes.TabBarSwipeBand]
+     * hoch, quer höchstens [Sizes.TabBarSwipeBandMaxShare] der Fensterhöhe ([windowHeight];
+     * Eigentümer 2026-11-24); am Ende jeder Seite der Tiefe liegt in seinem unteren Teil nichts.
+     * Gewertet vor dem Inhalt ([PointerEventPass.Initial]), sonst nähme ein scrollender Inhalt die
+     * Geste; Tipps, Wischen nach unten und zur Seite bleiben ihm. Mit Startleiste wischt man auf ihr
+     * ([anchoredToPinnedBar]).
      */
     suspend fun PointerInputScope.detectBottomSwipe(windowTop: () -> Float) {
         val band = Sizes.TabBarSwipeBand.toPx()
         detectSwipe(
             opens = true,
             closes = false,
+            claim = false,
             pass = PointerEventPass.Initial,
-            from = { if (anchoredToPinnedBar) Float.NaN else bottomBarTop - band },
+            from = { if (anchoredToPinnedBar) Float.NaN else bottomBarTop - minOf(band, windowHeight * Sizes.TabBarSwipeBandMaxShare) },
             windowTop = windowTop,
         )
     }
+
+    companion object {
+        /** Lage, ab der eine mitten im Einrasten gefangene Leiste als offen gilt. */
+        private const val HALF_OPEN = 0.5f
+
+        /**
+         * Hält über Drehen, Schriftwechsel und Prozess-Tod fest, ob die Leiste in der Tiefe offen ist
+         * und zu welchem Tab die Seite gehörte; sonst klappte sie dabei zu.
+         */
+        val Saver: Saver<TabBarState, Any> = listSaver(
+            save = { listOf(it.collapsed, (it.lastTab as? TopTab)?.name) },
+            restore = { saved ->
+                TabBarState().apply {
+                    collapsed = saved[0] as Boolean
+                    lastTab = (saved[1] as String?)?.let { name -> TopTab.entries.firstOrNull { it.name == name } }
+                }
+            },
+        )
+    }
 }
+
+/** Schwellen und Art einer Geste ([TabBarState.detectSwipe]); Längen in px. */
+private class Swipe(val distance: Float, val fast: Float, val fallbackTravel: Float, val claim: Boolean, val pass: PointerEventPass)
+
+/** Eine angemeldete Startleiste: ihre Seite und ihre Oberkante bei eingeklappter Leiste (px im Fenster). */
+@Immutable
+private data class PinnedBar(val page: Any?, val base: Float)
 
 /** Ziel ([target] 0 oder 1) und Anfangstempo ([velocity], Anteil je Sekunde) eines Einrastens. */
 @Immutable
@@ -292,6 +435,6 @@ internal class SettleRequest(val target: Float, val velocity: Float)
 /** Der [TabBarState] der App für ihre Seiten (`PinnedActionBar` meldet sich an); null in Vorschauen und Tests. */
 val LocalTabBarState = staticCompositionLocalOf<TabBarState?> { null }
 
-/** Der [TabBarState] der App. */
+/** Der [TabBarState] der App; übersteht Drehen und Prozess-Tod ([TabBarState.Saver]). */
 @Composable
-fun rememberTabBarState(): TabBarState = remember { TabBarState() }
+fun rememberTabBarState(): TabBarState = rememberSaveable(saver = TabBarState.Saver) { TabBarState() }
