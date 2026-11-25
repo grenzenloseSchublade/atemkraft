@@ -55,7 +55,7 @@ Hast du keine Stimme geladen oder gewählt, kann die gesprochene Meditationsanle
 
 ## Benachrichtigung
 
-Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läuft“ mit der verbleibenden bzw. vergangenen Zeit, während einer Atemübung „Atemübung läuft“ mit der Runde (z. B. „Runde 2 von 4“), beides auch auf dem Sperrbildschirm. Sie nennt keine Übungen und keine Logbuchdaten.
+Während einer Meditation zeigt die App eine Benachrichtigung „Meditation läuft“ mit der verbleibenden bzw. vergangenen Zeit, während einer Atemübung „Atemübung läuft“ mit der Runde (z. B. „Runde 2 von 4“), beides auch auf dem Sperrbildschirm. Sie nennt keine Übungen und keine Logbuchdaten. Ab der Version nach 2.11.0 hat sie dazu „Pause“ bzw. „Weiter“, und die Taste am Kopfhörer steuert die Sitzung über eine Android-Mediensitzung; diese meldet dem System (und z. B. einem verbundenen Auto oder einer Uhr) nur denselben Titel, „Atemübung läuft“ bzw. „Meditation läuft“.
 
 **Erinnerung (ab Version 2.9.0):** Schaltest du unter *Einstellungen → Erinnerung* „Ans Atmen erinnern“ ein (ab Werk aus), zeigt die App zur gewählten Uhrzeit an den gewählten Tagen die Benachrichtigung „Zeit für ein paar Atemzüge?“; ein Tipp öffnet die App. Geplant wird sie vom Android-System auf deinem Gerät (JobScheduler), ohne Netzverbindung; Android kann sie im Energiesparmodus etwas später zeigen, kommt sie mehr als drei Stunden zu spät, lässt die App sie aus. Sie zählt nichts und nennt keine Übung. Ausschalten in den Einstellungen; die Benachrichtigungen selbst schaltest du auch in den Android-Einstellungen ab (Kanal „Erinnerung“).
 
@@ -80,7 +80,7 @@ Die App ist vom Android-Cloud-Backup ausgeschlossen. Ab Android 12 kann die dire
 | Vibration (`VIBRATE`) | fühlbare Phasenwechsel und ein kurzer Tick beim Antippen des Kreises; beides folgt dem Schalter „Vibration“. Die Rasten des Zeitrings in der Meditation sind Berührungs-Feedback und folgen der Android-Einstellung dafür, nicht dem Schalter |
 | Aktiv halten (`WAKE_LOCK`) | hält den Prozessor während einer laufenden Meditation oder Atemübung wach, damit Gongs und Phasen-Töne pünktlich kommen |
 | Vordergrunddienst (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) | Meditation und Atemübung laufen bei ausgeschaltetem Bildschirm und im Hintergrund weiter |
-| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation oder Atemübung mit „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Sitzung. Lehnst du ab, läuft die Sitzung trotzdem. Ab Version 2.9.0 auch die Erinnerung; ist die Erlaubnis noch nicht erteilt, fragt das Einschalten der Erinnerung danach |
+| Benachrichtigungen (`POST_NOTIFICATIONS`) | Status der laufenden Meditation oder Atemübung mit „Pause“/„Weiter“ und „Beenden“; ab Android 13 fragt die App einmal danach, beim ersten Start einer Sitzung. Lehnst du ab, läuft die Sitzung trotzdem. Ab Version 2.9.0 auch die Erinnerung; ist die Erlaubnis noch nicht erteilt, fragt das Einschalten der Erinnerung danach |
 | Nach dem Neustart ausführen (`RECEIVE_BOOT_COMPLETED`) | ab Version 2.9.0, nur damit eine eingeschaltete Erinnerung einen Neustart des Geräts übersteht; die App startet dabei nichts selbst |
 | Sichtbarkeit der Sprachausgabe (`<queries>` für `TTS_SERVICE`) | die Sprachausgabe des Geräts finden |
 

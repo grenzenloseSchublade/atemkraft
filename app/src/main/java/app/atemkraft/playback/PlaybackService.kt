@@ -10,6 +10,9 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.media.MediaMetadata
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.annotation.DrawableRes
@@ -74,6 +77,14 @@ class PlaybackService : Service() {
     /** Verlängert den Wakelock einer langen Sitzung (∞-Meditation), siehe [WAKELOCK_RENEW_MS]. */
     private var wakeLockRenewal: Job? = null
 
+    /**
+     * Plattform-MediaSession (keine neue Abhängigkeit), damit die Taste am Kopfhörer pausiert und
+     * fortsetzt. Nur Steuerung: Die Benachrichtigung bleibt die ruhige Status-Zeile ohne
+     * Media-Player-Ansicht; die Metadaten sind so generisch wie sie (nie der Name der Übung,
+     * SEC-PRIV-03). Aktiv nur, solange ein Ablauf läuft.
+     */
+    private var mediaSession: MediaSession? = null
+
     private fun updateWakeLock(shouldHold: Boolean) {
         val held = wakeLock?.isHeld == true
         if (shouldHold && !held) {
@@ -106,6 +117,15 @@ class PlaybackService : Service() {
         super.onCreate()
         running = true
         createChannel()
+        mediaSession = MediaSession(this, MEDIA_SESSION_TAG).apply {
+            setCallback(
+                object : MediaSession.Callback() {
+                    override fun onPlay() = resumeLive()
+                    override fun onPause() = pauseLive()
+                    override fun onStop() = stopLive()
+                },
+            )
+        }
         // Benachrichtigung bei jeder sichtbaren Änderung aktualisieren – aber NICHT, wenn nichts
         // mehr läuft (IDLE/FINISHED), sonst würde beim Beenden noch „0:00“ nachgepostet und bliebe
         // hängen. Das eigentliche Beenden steuern die Controller (über die Halter); onDestroy räumt
@@ -115,24 +135,21 @@ class PlaybackService : Service() {
                 .distinctUntilChanged()
                 .collect { (shown, wake) ->
                     updateWakeLock(wake)
+                    updateMediaSession(shown)
                     if (shown != null) notificationManager().notify(NOTIF_ID, buildNotification(shown))
                 }
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            when {
-                // Bei aktiver Sitzung übernimmt der CONTROLLER den Teardown (bei der freien
-                // Meditation erst NACH dem End-Gong und dem Logbuch – sofortiges stopSelf() würde
-                // den FGS-Schutz hinter dem Sperrbildschirm mitten im Gong entziehen).
-                meditation.state.value.status.isLive() -> meditation.end()
-
-                breath.state.value.status.isLive() -> breath.stop()
-
-                // Nur eine bereits verwaiste Benachrichtigung räumen wir hier direkt weg.
-                else -> removeNotificationAndStop()
-            }
+        val control = when (intent?.action) {
+            ACTION_STOP -> ::stopLive
+            ACTION_PAUSE -> ::pauseLive
+            ACTION_RESUME -> ::resumeLive
+            else -> null
+        }
+        if (control != null) {
+            control()
             return START_NOT_STICKY
         }
         // Muss innerhalb weniger Sekunden nach startForegroundService geschehen – auch wenn die
@@ -144,7 +161,7 @@ class PlaybackService : Service() {
         ServiceCompat.startForeground(
             this,
             NOTIF_ID,
-            buildNotification(shown ?: Shown(getString(R.string.app_name), null, R.drawable.ic_breath_mark_filled)),
+            buildNotification(shown ?: Shown(getString(R.string.app_name), null, R.drawable.ic_breath_mark_filled, toggle = null)),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
         )
         if (shown == null) removeNotificationAndStop()
@@ -159,6 +176,8 @@ class PlaybackService : Service() {
         wakeLockRenewal?.cancel()
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
+        mediaSession?.release()
+        mediaSession = null
         scope.cancel()
         running = false
         super.onDestroy()
@@ -170,13 +189,91 @@ class PlaybackService : Service() {
         stopSelf()
     }
 
+    /** Was „Pause“/„Weiter“ in Benachrichtigung und MediaSession gerade bewirkt; null = keins von beiden. */
+    private enum class Toggle { PAUSE, RESUME }
+
     /** Inhalt der Benachrichtigung; null, wenn nichts läuft (dann wird nichts gepostet). */
-    private data class Shown(val title: String, val body: String?, @param:DrawableRes val icon: Int)
+    private data class Shown(val title: String, val body: String?, @param:DrawableRes val icon: Int, val toggle: Toggle?)
 
     private fun shown(m: MeditationUiState, b: SessionUiState): Shown? = when {
-        m.status.isLive() -> Shown(getString(R.string.meditation_notification_title), meditationBody(m), R.drawable.ic_meditation)
-        b.status.isLive() -> Shown(getString(R.string.session_notification_title), breathBody(b), R.drawable.ic_breath_mark_filled)
+        m.status.isLive() -> Shown(
+            getString(R.string.meditation_notification_title),
+            meditationBody(m),
+            R.drawable.ic_meditation,
+            toggle = when (m.status) {
+                MeditationStatus.RUNNING -> Toggle.PAUSE
+                MeditationStatus.PAUSED -> Toggle.RESUME
+                else -> null
+            },
+        )
+
+        b.status.isLive() -> Shown(
+            getString(R.string.session_notification_title),
+            breathBody(b),
+            R.drawable.ic_breath_mark_filled,
+            toggle = when (b.status) {
+                SessionStatus.RUNNING -> Toggle.PAUSE
+                SessionStatus.PAUSED -> Toggle.RESUME
+                else -> null // Countdown, offenes Halten: Pause gibt es dort auch im Overlay nicht
+            },
+        )
+
         else -> null
+    }
+
+    /**
+     * „Beenden“ aus Benachrichtigung oder MediaSession. Bei aktiver Sitzung übernimmt der
+     * CONTROLLER den Teardown (bei der freien Meditation erst NACH dem End-Gong und dem Logbuch –
+     * sofortiges stopSelf() würde den FGS-Schutz hinter dem Sperrbildschirm mitten im Gong
+     * entziehen). Nur eine bereits verwaiste Benachrichtigung räumen wir hier direkt weg. Im
+     * Moment des Übergangs in die Stille hat die Meditation Vorrang, wie in der Anzeige.
+     */
+    private fun stopLive(): Unit = when {
+        meditation.state.value.status.isLive() -> meditation.end()
+        breath.state.value.status.isLive() -> breath.stop()
+        else -> removeNotificationAndStop()
+    }
+
+    /**
+     * Pause aus Benachrichtigung oder Kopfhörer-Taste; die Controller prüfen selbst, ob sie gerade
+     * geht. Läuft nichts mehr, war es eine verwaiste Benachrichtigung: weg damit wie bei „Beenden“.
+     */
+    private fun pauseLive(): Unit = when {
+        meditation.state.value.status.isLive() -> meditation.pause()
+        breath.state.value.status.isLive() -> breath.pause()
+        else -> removeNotificationAndStop()
+    }
+
+    private fun resumeLive(): Unit = when {
+        meditation.state.value.status.isLive() -> meditation.resume()
+        breath.state.value.status.isLive() -> breath.resume()
+        else -> removeNotificationAndStop()
+    }
+
+    /**
+     * MediaSession mit dem Zustand der Benachrichtigung: spielt (Pause erlaubt), pausiert (Weiter
+     * erlaubt) oder läuft ohne Pause (Countdown, offenes Halten) – dann bewirkt die Kopfhörer-Taste
+     * nichts. Ohne laufenden Ablauf inaktiv.
+     */
+    private fun updateMediaSession(shown: Shown?) {
+        val session = mediaSession ?: return
+        if (shown == null) {
+            session.isActive = false
+            return
+        }
+        session.setMetadata(MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_TITLE, shown.title).build())
+        val (state, toggleAction) = when (shown.toggle) {
+            Toggle.PAUSE -> PlaybackState.STATE_PLAYING to PlaybackState.ACTION_PAUSE
+            Toggle.RESUME -> PlaybackState.STATE_PAUSED to PlaybackState.ACTION_PLAY
+            null -> PlaybackState.STATE_PLAYING to 0L
+        }
+        session.setPlaybackState(
+            PlaybackState.Builder()
+                .setActions(toggleAction or PlaybackState.ACTION_PLAY_PAUSE or PlaybackState.ACTION_STOP)
+                .setState(state, PlaybackState.PLAYBACK_POSITION_UNKNOWN, if (state == PlaybackState.STATE_PLAYING) 1f else 0f)
+                .build(),
+        )
+        session.isActive = true
     }
 
     /** CPU wach halten, solange eine der Sitzungen zählt (nicht in der Pause, nicht am Ende). */
@@ -219,24 +316,32 @@ class PlaybackService : Service() {
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE,
         )
-        val stopIntent = PendingIntent.getService(
-            this,
-            1,
-            Intent(this, PlaybackService::class.java).setAction(ACTION_STOP),
-            PendingIntent.FLAG_IMMUTABLE,
-        )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(shown.icon)
             .setContentTitle(shown.title)
             .setContentText(shown.body)
             .setContentIntent(contentIntent)
-            .addAction(0, getString(R.string.action_stop), stopIntent)
+        // Pause bzw. Weiter vor „Beenden“, wie im Overlay die große Taste vor dem Beenden.
+        when (shown.toggle) {
+            Toggle.PAUSE -> builder.addAction(0, getString(R.string.action_pause), serviceIntent(ACTION_PAUSE, 2))
+            Toggle.RESUME -> builder.addAction(0, getString(R.string.action_resume), serviceIntent(ACTION_RESUME, 3))
+            null -> Unit
+        }
+        return builder
+            .addAction(0, getString(R.string.action_stop), serviceIntent(ACTION_STOP, 1))
             .setOngoing(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
     }
+
+    private fun serviceIntent(action: String, requestCode: Int): PendingIntent = PendingIntent.getService(
+        this,
+        requestCode,
+        Intent(this, PlaybackService::class.java).setAction(action),
+        PendingIntent.FLAG_IMMUTABLE,
+    )
 
     private fun createChannel() {
         val channel = NotificationChannel(
@@ -262,6 +367,9 @@ class PlaybackService : Service() {
         private const val CHANNEL_ID = "meditation"
         internal const val NOTIF_ID = 42
         private const val ACTION_STOP = "app.atemkraft.action.SESSION_STOP"
+        private const val ACTION_PAUSE = "app.atemkraft.action.SESSION_PAUSE"
+        private const val ACTION_RESUME = "app.atemkraft.action.SESSION_RESUME"
+        private const val MEDIA_SESSION_TAG = "atemkraft"
 
         /**
          * Sicherheits-Timeout des Wakelocks: Der Timer läuft höchstens 60 min
