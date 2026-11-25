@@ -24,6 +24,17 @@ Eine Zeile als `SectionHeader` mit `onClick`: Titel, darunter die aktuelle Wahl 
 
 Inhalt: Gong (Aus / Start & Ende / „alle 5 min“), bei „alle … min“ direkt darunter der Gong-Abstand (3/5/10/15 min, `SegmentedChoiceRow`, app-weit gespeichert – nur hier, die Einstellungen führen ihn nicht), dann „Sprachanleitung“ (`ToggleRow`); kann das Gerät kein Deutsch sprechen, steht unter dem Hinweis „Stimme laden ›“ (`ForwardLinkText` in `secondary`), das erst das Blatt schließt (`closeThen`) und dann die Einstellungen an der Meditations-Karte mit aufgeklapptem Stimmen-Katalog öffnet (`SettingsRoute(focusMeditation = true, showVoices = true)`) – kein ausgegrauter Schalter als Sackgasse.
 
+## Sprachanleitung als Bogen
+
+Die Sätze stehen in `MeditationCues` (`arrive`, `middle`, `closing`), den Plan macht `planMeditationSpeech` (Konzept 2026-11-25, D3), gezählt in aktiver Zeit wie der Intervall-Gong:
+
+- **Ankommen:** der erste Satz 20–30 s nach dem Countdown, ab 3 min Dauer und bei ∞ der zweite 25–35 s danach.
+- **Mitte:** die zehn übrigen Sätze in zufälliger Reihenfolge, jeder höchstens einmal; der Abstand beginnt bei 60–90 s und wächst je Satz um 20 s bis höchstens 4 min – lange Sitzungen werden still. Bei ∞ beginnt nach allen Sätzen eine neue Runde, nie derselbe Satz zweimal hintereinander.
+- **Ausklang:** bei fester Dauer ab 3 min ein Satz 45 s vor dem End-Gong („Die Stille geht gleich zu Ende. Bleib noch einen Moment hier.“); bei ∞ keiner. Zwischen zwei Ansagen liegen mindestens 20 s, die letzten 20 s vor dem Ende bleiben still.
+- **Pause:** Der Plan steht still; nach dem Weiter kommt die nächste Ansage frühestens 15 s später.
+
+Jeder Satz ist für sich verständlich (die Mitte kommt gemischt) und lenkt nur die Aufmerksamkeit, ohne Wirkversprechen. Gesprochen wird zur Laufzeit (System-TTS oder Piper), neue Sätze brauchen keine Audiodateien.
+
 ## Prüfung
 
-`ScreenshotTest` (`03_meditation_fein` mit `SCROLLT` bei 1,0 und `RING`; `03_meditation_klang_offen` ganzer Bildschirm samt Blatt), `DeviceFitTest` (`03_meditation`: 360 × 640 bei 1,3, A54 bei 1,1 und 1,3; Kante des Rings als `RING`), manuell R-A11Y (Fokus beim Öffnen auf dem Titel, Zurück schließt), R-VISUAL (andere Geräte).
+`PlaybackFlowTest` (Bogen der Sprachanleitung: Ankommen, Mitte ohne Wiederholung, Ausklang vor dem Ende, Ruhe nach der Pause), `ScreenshotTest` (`03_meditation_fein` mit `SCROLLT` bei 1,0 und `RING`; `03_meditation_klang_offen` ganzer Bildschirm samt Blatt), `DeviceFitTest` (`03_meditation`: 360 × 640 bei 1,3, A54 bei 1,1 und 1,3; Kante des Rings als `RING`), manuell R-A11Y (Fokus beim Öffnen auf dem Titel, Zurück schließt), R-VISUAL (andere Geräte).

@@ -6,6 +6,7 @@ import app.atemkraft.cue.PhaseAudio
 import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.FakeLogbookDao
 import app.atemkraft.data.LogbookRepository
+import app.atemkraft.data.MeditationCues
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Feeling
@@ -37,6 +38,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -239,7 +241,7 @@ class PlaybackFlowTest {
         audio.gongs = 0
         m.start(config)
         advance(COUNTDOWN_MS + 40_000L)
-        assertTrue("erste Ansage nach 20–40 s", audio.spoken.isNotEmpty())
+        assertTrue("erste Ansage nach 20–30 s", audio.spoken.isNotEmpty())
         m.pause()
         advance(10 * 60_000L)
         assertEquals(1, audio.gongs) // nur der Start-Gong
@@ -262,6 +264,36 @@ class PlaybackFlowTest {
         assertTrue(holders.held.isEmpty())
         assertFalse(audio.modelLoaded)
         assertNull(audio.unplugged)
+        assertEquals(errorsBefore, UncaughtErrors.last.value)
+    }
+
+    /**
+     * Sprachanleitung als Bogen (Konzept 2026-11-25, D3): zuerst die Sätze zum Ankommen, in der Mitte
+     * kein Satz doppelt, der Ausklang kurz vor dem End-Gong; eine Pause schiebt den Plan, nach dem
+     * Weiter kommt nicht sofort eine Ansage.
+     */
+    @Test
+    fun `Meditation mit Sprache - Ankommen, Mitte ohne Wiederholung, Ausklang vor dem Ende`() = runTest {
+        val audio = RecordingMeditationAudio(speech = true)
+        val m = meditation(audio)
+        m.start(MeditationConfig(minutes = 30, speech = true))
+        advance(COUNTDOWN_MS + 10 * 60_000L)
+        val beforePause = audio.spoken.size
+        m.pause()
+        advance(5 * 60_000L)
+        m.resume()
+        advance(14_000L)
+        assertEquals("Pause schweigt, nach dem Weiter erst Ruhe", beforePause, audio.spoken.size)
+        advance(20 * 60_000L - 14_000L - CLOSING_LEAD_MS - 1_000L)
+        assertNotEquals(MeditationCues.closing, audio.spoken.last())
+        advance(1_500L)
+        assertEquals(MeditationCues.arrive, audio.spoken.take(2))
+        assertEquals(MeditationCues.closing, audio.spoken.last())
+        val middle = audio.spoken.drop(2).dropLast(1)
+        assertTrue(middle.isNotEmpty() && middle.all { it in MeditationCues.middle })
+        assertEquals("kein Satz doppelt", middle.size, middle.toSet().size)
+        advance(CLOSING_LEAD_MS)
+        assertEquals(MeditationStatus.FINISHED, m.state.value.status)
         assertEquals(errorsBefore, UncaughtErrors.last.value)
     }
 

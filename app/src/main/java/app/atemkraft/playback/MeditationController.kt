@@ -3,7 +3,6 @@ package app.atemkraft.playback
 import android.os.SystemClock
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.data.LogbookRepository
-import app.atemkraft.data.MeditationCues
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.MeditationConfig
@@ -105,6 +104,10 @@ class MeditationController(
     // Intervall-Gong an der AKTIVEN Zeit verankert (pausenbereinigt), damit Pausen nicht driften.
     private var gongIntervalMs = 0L
     private var nextGongAtMs = Long.MAX_VALUE
+
+    // Sprachanleitung der Sitzung (Plan ab start(); die nächste Ansage übersteht eine Pause).
+    private var speechPlan: Iterator<SpeechCue>? = null
+    private var nextSpeech: SpeechCue? = null
 
     /** Verhindert doppeltes finish() (schneller Doppel-Tipp / Notification + Screen). */
     private var finishing = false
@@ -217,6 +220,8 @@ class MeditationController(
         totalMs = if (config.mode == MeditationMode.TIMED) config.minutes * 60_000L else 0L
         gongIntervalMs = (config.gongEveryMin ?: 0) * 60_000L
         nextGongAtMs = if (gongIntervalMs > 0L) gongIntervalMs else Long.MAX_VALUE
+        speechPlan = planMeditationSpeech(config.mode, totalMs, random).iterator()
+        nextSpeech = null
         resumeRemainingMs = null
         resumeElapsedMs = null
         finishedEntryId = null
@@ -441,30 +446,22 @@ class MeditationController(
         }
     }
 
-    /** Sprachanleitung in unregelmäßigen Abständen; ein Satz früh, dann spärlicher. */
+    /**
+     * Sprachanleitung nach dem Plan der Sitzung ([planMeditationSpeech]: Ankommen, Mitte, Ausklang),
+     * an der aktiven Zeit verankert wie der Intervall-Gong. Die Pause bricht diesen Job ab; die
+     * nächste Ansage bleibt in [nextSpeech] stehen und kommt nach dem Weiter frühestens
+     * [RESUME_QUIET_MS] später, nie sofort.
+     */
     private suspend fun speechLoop(fromResume: Boolean) {
-        var last = -1
-        delay(
-            if (fromResume) {
-                random.nextLong(GAP_MIN_MS, GAP_MAX_MS)
-            } else {
-                random.nextLong(FIRST_MIN_MS, FIRST_MAX_MS)
-            },
-        )
+        val plan = speechPlan ?: return
+        val earliest = if (fromResume) clock.activeMs + RESUME_QUIET_MS else 0L
         while (true) {
-            val idx = nextCueIndex(last)
-            last = idx
-            audio.speak(MeditationCues.de[idx])
-            delay(random.nextLong(GAP_MIN_MS, GAP_MAX_MS))
+            val cue = nextSpeech ?: (if (plan.hasNext()) plan.next() else return).also { nextSpeech = it }
+            val at = maxOf(cue.atMs, earliest)
+            while (clock.activeMs < at) delay(SPEECH_POLL_MS)
+            audio.speak(cue.text)
+            nextSpeech = null
         }
-    }
-
-    private fun nextCueIndex(last: Int): Int {
-        val size = MeditationCues.de.size
-        if (size <= 1) return 0
-        var idx = random.nextInt(size)
-        if (idx == last) idx = (idx + 1) % size
-        return idx
     }
 
     private suspend fun finish() {
@@ -500,11 +497,11 @@ class MeditationController(
         /** Stoppuhr-Tick im FREE-Modus (5 fps genügt für Sekundenanzeige). */
         private const val TICK_MS = 200L
 
-        /** Erst-Ansage früh (Ankommen), dann größere Abstände. */
-        private const val FIRST_MIN_MS = 20_000L
-        private const val FIRST_MAX_MS = 40_000L
-        private const val GAP_MIN_MS = 45_000L
-        private const val GAP_MAX_MS = 120_000L
+        /** Nach dem Weiter aus der Pause so lange Ruhe, bevor die nächste Ansage kommt. */
+        private const val RESUME_QUIET_MS = 15_000L
+
+        /** Wie oft die Sprachanleitung auf die aktive Zeit schaut. */
+        private const val SPEECH_POLL_MS = 250L
     }
 }
 
