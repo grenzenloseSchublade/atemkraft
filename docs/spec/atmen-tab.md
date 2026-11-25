@@ -4,7 +4,7 @@ Regeln: [STYLEGUIDE MUSTER-09](../STYLEGUIDE.md#muster) (Suche), MUSTER-12 (Filt
 
 ## Aufbau der Liste (`HomeScreen`, `TabListScaffold`)
 
-1. Nur beim ersten Start: **Willkommenskarte** (`WelcomeCard`).
+1. Nur beim ersten Start: **Willkommenskarte** (`WelcomeCard`); danach, sobald das Logbuch eine Übung kennt, die Zeile **„Weiter: … ›“** (`ResumeRow`, unten).
 2. **Block „Wie fühlst du dich?“** (`FeelingBlock`): Suchpille und sechs Anlass-Chips, ohne Kopf, ohne Kasten ([suche.md](suche.md)).
 3. Die Kopfzeile **„Muster des Tages ›“** (`DailyPatternEntry`): `SectionHeader` mit Teaser und Chevron wie „Klang & Stimme“ (MUSTER-11), losgelöst von Familien und Filterreihe; sie steht in jedem Zustand – Grundzustand, Filter, Anlass, Suche, Bereich – an derselben Stelle und öffnet das Blatt „Muster des Tages“ (DECISIONS 2026-10-30). Darunter eine Linie (`AreaDivider`: `BorderSection` 2 dp in `outlineVariant` – `DividerSubtle` war als Trenner zweier Bereiche kaum zu sehen; sichtbar `SectionGap` darüber und darunter), dann der Kopf der Liste: „Übungen“ (4.) oder bei Anlass, Suche oder Bereich „Passende Übungen“ (`home_results`) über Trefferstatus und Empfehlungen – so liest sich nichts als Inhalt des Tagesmusters.
 4. Kopf **„Übungen“** (`SectionHeader`, weiß) mit der **Filterreihe** darunter. Kopf, Reihe und – mit Filter – der Trefferstatus bzw. – ohne Filter – das erste Gruppenlabel sind ein Listeneintrag: Die Chips bringen über und unter sich `GapSmall` Tippfläche mit; sichtbar bleiben oben `HeaderGap` (Spacer `GapTiny`) und unten bis zum Gruppenlabel `SectionGap` (`top = SectionGap − GapSmall`).
@@ -17,6 +17,19 @@ Gewählt ist entweder ein Anlass, eine Suche oder ein Bereich – oder nichts; d
 ## Willkommenskarte (MUSTER-13, `WelcomeCard`)
 
 Bis der Nutzer sie wegklickt, steht oben die Karte „Neu hier?“ (`CardHeader` mit einer Aktion ✕ „Hinweis schließen“ auf der Titelzeile), ein Satz zum Einstieg (`BodyText`), der Verweis auf die Resonanz-Atmung mit ihrem Namen (`ForwardLinkText` in `secondary`; ruhig, ohne Halten, einzige „gut belegte“ Übung; öffnet die Detailseite mit 3 min statt der Voreinstellung 10 min, wie die Karte „ein paar Minuten“ verspricht – `DetailRoute(minutes = 3)`, nur für diesen Einstieg: Der Start-Knopf zeigt den Reset, nichts wird als Anpassung gespeichert, solange der Nutzer nichts verstellt) und der Gesundheitshinweis als `HintText` („kein Medizinprodukt“, Erkrankungen ärztlich abklären, bei Schwindel aufhören). Die Karte ist nicht klickbar. Weggeklickt bleibt sie weg (`SettingsRepository.welcomeDismissed`, DataStore); bis DataStore antwortet, gilt sie als weggeklickt – nichts blitzt beim Start auf. Kein Dialog, keine zweite Seite, kein Fokus beim Öffnen. Prüfung: `ScreenshotTest` (`01_atmen_willkommen`).
+
+## Weiter (`ResumeRow`, Konzeptprüfung 2026-11-25)
+
+Wer wiederkommt, findet die zuletzt geübte Übung oben im Tab, auf dem Platz der Willkommenskarte – ohne Tab-Wechsel nach „Meins“, mit zwei Tipps beim Atmen (Zeile, Start). Welche Übung: dieselbe Regel wie der Shortcut „Zuletzt geübt“ (`lastPracticed`: der neueste Logbuch-Eintrag einer eingebauten Übung oder eines noch gespeicherten Musters; nicht Meditation, Tagesmuster, Entwurf). Die Zeile steht nur, solange die Willkommenskarte nicht steht.
+
+```
+│ ∿∿  Weiter: Resonanz-Atmung · 10 min                ›  │  SectionHeader(onClick), titleLarge, Status klein
+│ ( Wie fühlst du dich?                             )    │  FeelingBlock
+```
+
+- Dieselbe Kopf-Art wie „Muster des Tages ›“: `SectionHeader` mit `onClick`, Chevron, Status klein (`smallStatus`), `top = 0` (erstes Element der Liste). Davor die Kurve der Übung (`ExerciseCurve`, `leading`) als Zeichen eines Einstiegs; ab Schrift 1,5 ohne sie wie in `ExerciseRow`.
+- Die Dauer ist die, mit der die Detailseite startet: gespeicherte Anpassung (`exerciseIntervals`), sonst die Voreinstellung; Übungen nach Runden „4 Runden“. Kein Datum, kein Befinden: Die Zeile ist ein Weg zurück, der Rückblick steht in „Meins“. Bis die Einstellungen gelesen sind, steht sie nicht (nichts springt).
+- Ein Tipp öffnet die Detailseite (`DetailRoute(id)`). TalkBack: eine Schaltfläche „Weiter: Resonanz-Atmung, 10 Minuten“, Aktion „Übung öffnen“.
 
 ## Muster des Tages (`DailyPatternEntry`, `DailyPatternSheet`)
 

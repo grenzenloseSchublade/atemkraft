@@ -9,6 +9,9 @@
     <string name="welcome_body">Fang mit einer ruhigen Übung an: gleichmäßig ein und aus, ohne Halten, ein paar Minuten lang.</string>
     <string name="welcome_health">Atemkraft ist kein Medizinprodukt. Bei Erkrankungen kläre vorher ärztlich ab, ob eine Übung für dich passt. Wird dir schwindlig, hör auf und atme normal weiter.</string>
     <string name="cd_welcome_dismiss">Hinweis schließen</string>
+    <!-- Zeile oben im Atmen-Tab für Wiederkehrer: die zuletzt geübte Übung (%1$s = Name), dahinter klein die Dauer. -->
+    <string name="home_resume_title">Weiter: %1$s</string>
+    <string name="cd_resume_open">Übung öffnen</string>
     <!-- App-Shortcuts (Long-Press auf das Icon, res/xml/shortcuts.xml). Abweichung TEXT-01: Statische
          Shortcuts brauchen eine String-Ressource, daher steht der Übungsname hier wie in BuiltInExercises. -->
     <string name="shortcut_resonance_short">Resonanz</string>

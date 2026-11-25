@@ -22,7 +22,10 @@ import androidx.navigation.toRoute
 import app.atemkraft.data.Areas
 import app.atemkraft.data.Pranayama
 import app.atemkraft.data.SafetySettings
+import app.atemkraft.data.SettingsRepository
 import app.atemkraft.data.Situations
+import app.atemkraft.domain.AdjustDefaults
+import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
@@ -38,6 +41,7 @@ import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeActions
 import app.atemkraft.ui.home.HomeCatalog
 import app.atemkraft.ui.home.HomeScreen
+import app.atemkraft.ui.home.ResumeEntry
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
@@ -70,6 +74,8 @@ import app.atemkraft.ui.settings.SettingsScreen
 import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.settings.rememberPatternTransfer
 import app.atemkraft.ui.theme.Motion
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -186,6 +192,8 @@ internal fun NavGraphBuilder.appGraph(
             markedIds = state.markedExercises,
             // Erster Start: ruhiger Einstieg mit Gesundheitshinweis, bis der Nutzer ihn wegklickt.
             welcome = if (state.welcomeDismissed) null else exercises.byId(WELCOME_EXERCISE_ID),
+            // Wiederkommen: die zuletzt geübte Übung (dieselbe Regel wie der Shortcut), mit ihrer Startdauer.
+            resume = rememberResumeEntry(remember(state.logEntries, patterns) { lastPracticed(state.logEntries, patterns) }, settings),
             // „Selbst gestalten“ öffnet den Editor mit dem Tagesmuster: vorab messen, solange das Blatt steht.
             whileDailySheetOpen = { PatternEditorPreload(dailyPattern.spec.toFreePattern()) },
         )
@@ -414,4 +422,27 @@ private inline fun <reified T : Any> NavGraphBuilder.pushComposable(
         },
         content = content,
     )
+}
+
+/**
+ * [ResumeEntry] zur zuletzt geübten Übung [last] (`lastPracticed` aus dem Logbuch): die Dauer, mit
+ * der ihre Detailseite startet – gespeicherte Anpassung ([SettingsRepository.exerciseIntervals]),
+ * sonst die Voreinstellung. `null`, bis die Einstellungen gelesen sind: Die Zeile erscheint dann mit
+ * der richtigen Zahl, statt erst die Voreinstellung zu zeigen und umzuspringen.
+ */
+@Composable
+private fun rememberResumeEntry(last: Exercise?, settings: SettingsRepository): ResumeEntry? {
+    val entry by remember(last, settings) {
+        if (last == null) {
+            flowOf(null)
+        } else {
+            val defaults = AdjustDefaults.of(last)
+            settings.exerciseIntervals(last.id).map { saved ->
+                val duration = saved?.duration?.coerceIn(defaults.durationRange) ?: defaults.duration
+                ResumeEntry(last, duration, defaults.roundBased)
+            }
+        }
+    }.collectAsStateWithLifecycle(initialValue = null)
+    // Wechselt die Übung, zählt erst der neue Wert (kein Name mit der Dauer der vorigen).
+    return entry?.takeIf { it.exercise.id == last?.id }
 }

@@ -76,11 +76,14 @@ data class HomeActions(
     val onDesignFrom: (PatternSpec) -> Unit = {},
     /** Verweis „Programme & Gewohnheiten ›“ unter einer Empfehlung, die Programme nennt (Lernen › Programme). */
     val onOpenPrograms: () -> Unit = {},
+    /** Zeile „Weiter: … ›“ ([ResumeRow]): öffnet die zuletzt geübte Übung. */
+    val onResume: (String) -> Unit = onSelect,
 )
 
 /**
  * Atmen-Tab: alles, was man starten kann. Von oben: beim ersten Start die Willkommenskarte
- * ([WelcomeCard], abweisbar), das Suchfeld „Wie fühlst du dich?“ mit den sechs Anlässen als Chips
+ * ([WelcomeCard], abweisbar), sonst, sobald das Logbuch eine Übung kennt, die Zeile „Weiter: … ›“
+ * ([ResumeRow], [resume]; Konzeptprüfung 2026-11-25), das Suchfeld „Wie fühlst du dich?“ mit den sechs Anlässen als Chips
  * ([FeelingBlock]), der Kopf „Übungen“ mit der Filterreihe und darunter die Übungen nach Familien
  * mit ihren kleinen farbigen Gruppenlabels ([GroupLabel]); zwischen Anlässen und „Übungen“ die
  * Kopfzeile „Muster des Tages ›“ ([DailyPatternEntry]).
@@ -123,6 +126,7 @@ data class HomeActions(
  * Eingabe bleibt); ohne Fokus leert es Wahl und Suche (Nutzer 2026-10-24).
  *
  * [welcome]: die Übung der Willkommenskarte; null = Karte weggeklickt (oder Übung fehlt).
+ * [resume]: die zuletzt geübte Übung für „Weiter“; steht nur, solange die Willkommenskarte nicht steht.
  * [whileDailySheetOpen] ist komponiert, solange das Blatt offen ist, und zeigt nichts: Dort lädt der
  * NavGraph den Muster-Editor vor (`PatternEditorPreload`), den „Selbst gestalten“ öffnet.
  */
@@ -134,6 +138,7 @@ fun HomeScreen(
     actions: HomeActions,
     markedIds: Set<String> = emptySet(),
     welcome: Exercise? = null,
+    resume: ResumeEntry? = null,
     whileDailySheetOpen: @Composable () -> Unit = {},
 ) {
     // Die Eingabe lebt allein in diesem Zustand (rememberTextFieldState = rememberSaveable, SEC-PRIV-03/04);
@@ -199,6 +204,11 @@ fun HomeScreen(
         if (welcome != null) {
             item(key = "welcome") {
                 WelcomeCard(exercise = welcome, onOpen = { actions.onOpenWelcome(welcome.id) }, onDismiss = actions.onDismissWelcome)
+            }
+        } else if (resume != null) {
+            // Wiederkommen (Konzeptprüfung 2026-11-25): derselbe Platz, ein Tipp zur zuletzt geübten Übung.
+            item(key = "resume") {
+                ResumeRow(entry = resume, onClick = { actions.onResume(resume.exercise.id) })
             }
         }
         // Einstieg „nach Befinden“ ohne eigene Überschrift: Feld und Anlässe in einer Fläche.
