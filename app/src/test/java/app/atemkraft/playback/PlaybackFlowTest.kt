@@ -177,14 +177,16 @@ class PlaybackFlowTest {
     }
 
     @Test
-    fun `Danach in die Stille - Meditation übernimmt den Service, auch über einen stehenden Ende-Screen, mit der gewählten Dauer`() = runTest {
-        val meditation = meditation()
-        val breath = breath()
+    fun `Danach in die Stille - ein Bogen ohne Countdown und zweiten Gong, Service übernommen, mit der gewählten Dauer`() = runTest {
+        val gongs = RecordingMeditationAudio()
+        val meditation = meditation(gongs)
+        // Der Abschluss-Gong der Atemübung klingt noch 5 s nach.
+        val breath = breath(RecordingBreathAudio(tailMs = 5_000L))
         val silence = SilenceAfterBreath(
             breath = breath,
             meditation = meditation,
             // Im Tab steht die offene Sitzung; die Stille dauert trotzdem, was das Blatt „Anpassen“ wählte.
-            meditationConfig = flowOf(MeditationConfig(mode = MeditationMode.FREE, minutes = 5, startEndGong = false)),
+            meditationConfig = flowOf(MeditationConfig(mode = MeditationMode.FREE, minutes = 5, startEndGong = true)),
             canStartNow = { true },
             dispatcher = StandardTestDispatcher(testScheduler),
         )
@@ -201,8 +203,10 @@ class PlaybackFlowTest {
         holders.droppedToZero = false
         advance(COUNTDOWN_MS + ROUND_MS)
 
-        // Die neue Meditation läuft, die Atemübung ist verworfen, der Service war nie frei.
-        assertEquals(MeditationStatus.PREPARING, meditation.state.value.status)
+        // Die Stille läuft sofort (kein Countdown) und ohne eigenen Start-Gong: Der Abschluss-Gong der
+        // Atemübung ist ihr Beginn. Die Atemübung ist verworfen, der Service war nie frei.
+        assertEquals(MeditationStatus.RUNNING, meditation.state.value.status)
+        assertEquals(0, gongs.gongs)
         assertEquals(SessionStatus.IDLE, breath.state.value.status)
         assertEquals(setOf("meditation"), holders.held)
         assertFalse("Service zwischendurch freigegeben", holders.droppedToZero)
@@ -211,9 +215,10 @@ class PlaybackFlowTest {
         assertEquals(listOf(60_000L, ROUND_MS), dao.rows.map { it.durationMs })
         // Die Stille läuft die gewählten 2 min als feste Zeit, nicht offen wie im Tab.
         assertEquals(MeditationMode.TIMED, meditation.state.value.mode)
-        advance(COUNTDOWN_MS + 2 * 60_000L)
+        advance(2 * 60_000L)
         assertEquals(MeditationStatus.FINISHED, meditation.state.value.status)
         assertEquals(120_000L, dao.rows.last().durationMs)
+        assertEquals("nur der End-Gong der Stille", 1, gongs.gongs)
         assertEquals(errorsBefore, UncaughtErrors.last.value)
     }
 
@@ -371,7 +376,7 @@ class PlaybackFlowTest {
      * `SessionAudioCoordinator` (R-AUDIO am Gerät), nicht diese Attrappe. [unplugged] ist der Rückruf
      * für den abgezogenen Kopfhörer; mit [tailFails] scheitert das Ende.
      */
-    private class RecordingBreathAudio(private val tailFails: Boolean = false) : BreathAudio {
+    private class RecordingBreathAudio(private val tailFails: Boolean = false, private val tailMs: Long = 0L) : BreathAudio {
         val felt = mutableListOf<CueEvent>()
         var unplugged: () -> Unit = {}
 
@@ -387,7 +392,7 @@ class PlaybackFlowTest {
             scope.launch { cues.collect { felt += it } }
         }
 
-        override fun finishTailMs(muted: Boolean) = if (tailFails) throw TailBroke() else 0L
+        override fun finishTailMs(muted: Boolean) = if (tailFails) throw TailBroke() else tailMs
     }
 
     /** Merkt sich Gongs, Ansagen, den Stummschalter, das geladene Sprachmodell und den Kopfhörer-Rückruf. */

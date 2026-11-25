@@ -172,7 +172,7 @@ class MeditationController(
         scope.launch { logbook.setFeeling(id, feeling) }
     }
 
-    /** Dieselbe Sitzung noch einmal starten (vom „Nochmal“ auf dem Abschluss-Screen). */
+    /** Dieselbe Sitzung noch einmal starten (vom „Nochmal“ auf dem Abschluss-Screen), mit Countdown. */
     fun restart() = start(currentConfig)
 
     /**
@@ -204,8 +204,10 @@ class MeditationController(
      * einer Atemübung ([SilenceAfterBreath]): Mit Sprachanleitung lädt hier das Modell der gewählten
      * Stimme (idempotent; die Wahl setzt der Collector in init), ohne wird es freigegeben (S-45). Die
      * erste Ansage kommt frühestens 20 s nach dem Countdown und wartet sonst hinter dem Laden.
+     * [entry]: frisch mit Countdown und Start-Gong, oder als Übergang ohne Countdown
+     * ([MeditationEntry], Eigentümer 2026-11-25: ein Bogen statt zweier Abläufe).
      */
-    fun start(config: MeditationConfig) {
+    fun start(config: MeditationConfig, entry: MeditationEntry = MeditationEntry.FRESH) {
         if (config.speech) audio.prepareSpeech() else audio.releaseSpeech()
         logEndedEarly() // eine laufende Sitzung wird ersetzt, nicht spurlos verworfen
         runnerJob?.cancel()
@@ -227,16 +229,19 @@ class MeditationController(
         finishedEntryId = null
         startedAtEpochMs = System.currentTimeMillis()
         clock.reset()
-        _state.value = MeditationUiState(
-            mode = config.mode,
-            status = MeditationStatus.PREPARING,
-            countdown = SessionTiming.COUNTDOWN_SECONDS,
-        )
+        val fresh = entry == MeditationEntry.FRESH
+        // Als Übergang beginnt die Stille sofort (kein „Gleich geht's los · 3“): Sie steht schon im
+        // Lauf, die Zeit voll – so springt auch die Anzeige nicht über eine Vorbereitung.
+        _state.value = if (fresh) {
+            MeditationUiState(mode = config.mode, status = MeditationStatus.PREPARING, countdown = SessionTiming.COUNTDOWN_SECONDS)
+        } else {
+            MeditationUiState(mode = config.mode, status = MeditationStatus.RUNNING, remainingMs = totalMs)
+        }
         // Foreground-Service startet die Dauer-Notification und hält den Prozess wach.
         service.start()
         // Kopfhörer abgezogen: stumm wie bei Fokusverlust, die Meditation läuft weiter (S-48).
         audio.watchUnplug(::muteOnUnplug)
-        launchActive(fromResume = false)
+        launchActive(fromResume = false, entry = entry)
     }
 
     fun pause() {
@@ -262,7 +267,7 @@ class MeditationController(
     fun resume() {
         if (_state.value.status != MeditationStatus.PAUSED) return
         _state.update { it.copy(status = MeditationStatus.RUNNING) }
-        launchActive(fromResume = true)
+        launchActive(fromResume = true, entry = MeditationEntry.FRESH)
     }
 
     /**
@@ -352,13 +357,15 @@ class MeditationController(
         }
     }
 
-    private fun launchActive(fromResume: Boolean) {
+    private fun launchActive(fromResume: Boolean, entry: MeditationEntry) {
         runnerJob = launchGuarded {
             // Kein Fokus vorab: Gong und Ansage fordern ihn an, wenn sie klingen – im Countdown und
             // bis zum ersten Ton bleiben fremde Medien ungeduckt (AUDIO-02).
             if (!fromResume) {
-                runCountdown()
-                if (currentConfig.startEndGong) audio.gong() // Start-Gong nach dem Countdown
+                if (entry == MeditationEntry.FRESH) runCountdown()
+                // Start-Gong nach dem Countdown; beim Übergang nur, wenn nicht noch der Abschluss-Gong
+                // der Atemübung klingt – der ist dann zugleich der Beginn der Stille (ein Gong, nicht zwei).
+                if (currentConfig.startEndGong && entry != MeditationEntry.ON_BREATH_GONG) audio.gong()
             }
             val cfg = currentConfig
             clock.resume() // Pausen zählen nicht zur aktiven Zeit
@@ -504,6 +511,14 @@ class MeditationController(
         private const val SPEECH_POLL_MS = 250L
     }
 }
+
+/**
+ * Wie eine Meditation beginnt (Eigentümer 2026-11-25, „Atmen, das in Stille mündet“): [FRESH] im Tab
+ * und bei „Nochmal“ mit Countdown und Start-Gong; als Übergang nach einer Atemübung
+ * ([SilenceAfterBreath]) ohne Countdown – mit eigenem Start-Gong ([HANDOVER]) oder, solange der
+ * Abschluss-Gong der Atemübung noch klingt, ohne ([ON_BREATH_GONG]): Er ist dann der Beginn der Stille.
+ */
+enum class MeditationEntry { FRESH, HANDOVER, ON_BREATH_GONG }
 
 /** Die Audio-Bausteine, die der [MeditationController] braucht; in der App der [MeditationAudioCoordinator]. */
 interface MeditationAudio {

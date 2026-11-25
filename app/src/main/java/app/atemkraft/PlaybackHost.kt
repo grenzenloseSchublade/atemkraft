@@ -7,6 +7,12 @@ import android.os.Build
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -16,8 +22,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
@@ -40,6 +49,7 @@ import app.atemkraft.ui.meditation.MiniMeditationBar
 import app.atemkraft.ui.session.MiniSessionBar
 import app.atemkraft.ui.session.SessionActions
 import app.atemkraft.ui.session.SessionOverlay
+import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -102,6 +112,12 @@ internal class PlaybackState(
             meditationStatus == MeditationStatus.RUNNING ||
             meditationStatus == MeditationStatus.PREPARING
 
+    /**
+     * Gerade aus einer Atemübung in die Stille übergegangen ([takeOverSilence]): Das Overlay der
+     * Meditation blendet dann ruhig ein ([SilenceFadeIn]), statt den Atemkreis hart zu ersetzen.
+     */
+    var silenceFadeIn by mutableStateOf(false)
+
     val breath get() = container.breathSessionController
     val meditation get() = container.meditationController
     val haptics get() = container.hapticPlayer
@@ -161,6 +177,7 @@ internal class PlaybackState(
      */
     fun takeOverSilence() {
         if (meditationActive && silenceAfterBreath.consumeHandover()) {
+            silenceFadeIn = sessionExpanded
             meditationExpanded = sessionExpanded
             sessionExpanded = false
         }
@@ -272,37 +289,59 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
 
     // Vollbild-Meditation über allem (gespiegelt von der Session): minimierbar zur Mini-Leiste.
     if (playback.meditationActive && playback.meditationExpanded) {
-        SessionHost(meditation.state) { state ->
-            MeditationOverlay(
-                state = state,
-                display = playback.meditationDisplay,
-                actions = MeditationActions(
-                    onTogglePause = {
-                        if (state.status == MeditationStatus.PAUSED) {
-                            meditation.resume()
-                        } else {
-                            meditation.pause()
-                        }
-                    },
-                    onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
-                    onRestart = meditation::restart,
-                    // Ab einer Minute schließt „Beenden“ regulär ab: Das Overlay bleibt für den Ende-Screen
-                    // offen. Sonst (kurz, Countdown, „Ende“ am Ende-Screen) ist die Sitzung weg.
-                    onEnd = {
-                        meditation.end()
-                        if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
-                    },
-                    onOpenLogbook = {
-                        meditation.end()
-                        playback.meditationExpanded = false
-                        onOpenLogbook()
-                    },
-                    feelingAsk = playback.feelingAsk(meditation::answerFeeling),
-                ),
-                onMinimize = { playback.meditationExpanded = false },
-                onToggleMute = meditation::toggleMute,
-            )
+        SilenceFadeIn(active = playback.silenceFadeIn, onDone = { playback.silenceFadeIn = false }) {
+            SessionHost(meditation.state) { state ->
+                MeditationOverlay(
+                    state = state,
+                    display = playback.meditationDisplay,
+                    actions = MeditationActions(
+                        onTogglePause = {
+                            if (state.status == MeditationStatus.PAUSED) {
+                                meditation.resume()
+                            } else {
+                                meditation.pause()
+                            }
+                        },
+                        onTapHaptic = { playback.haptics.tick(enabled = playback.cueSettings.haptics) },
+                        onRestart = meditation::restart,
+                        // Ab einer Minute schließt „Beenden“ regulär ab: Das Overlay bleibt für den Ende-Screen
+                        // offen. Sonst (kurz, Countdown, „Ende“ am Ende-Screen) ist die Sitzung weg.
+                        onEnd = {
+                            meditation.end()
+                            if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
+                        },
+                        onOpenLogbook = {
+                            meditation.end()
+                            playback.meditationExpanded = false
+                            onOpenLogbook()
+                        },
+                        feelingAsk = playback.feelingAsk(meditation::answerFeeling),
+                    ),
+                    onMinimize = { playback.meditationExpanded = false },
+                    onToggleMute = meditation::toggleMute,
+                )
+            }
         }
+    }
+}
+
+/**
+ * Übergang in die Stille (Eigentümer 2026-11-25): Der Grund steht sofort, der Inhalt des
+ * Meditations-Overlays blendet in [Motion.CalmFade] ein – der Atemkreis verlischt, der Ring der Stille
+ * erscheint, ohne harten Schnitt. Bewusst die ruhige Dauer der Ruhe-Ansicht statt neuer Bewegung
+ * (MOTION-04). Bei Animator-Skala 0 steht der Inhalt sofort da. TalkBack sagt den Wechsel über den
+ * Bereichstitel „Meditation“ und den Zustand am Titel an (eine Live-Region, A11Y-04).
+ */
+@Composable
+private fun SilenceFadeIn(active: Boolean, onDone: () -> Unit, content: @Composable () -> Unit) {
+    val alpha = remember { Animatable(if (active) 0f else 1f) }
+    val done by rememberUpdatedState(onDone)
+    LaunchedEffect(Unit) {
+        if (alpha.value < 1f) alpha.animateTo(1f, tween(Motion.CalmFade))
+        if (active) done()
+    }
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Box(Modifier.fillMaxSize().graphicsLayer { this.alpha = alpha.value }) { content() }
     }
 }
 

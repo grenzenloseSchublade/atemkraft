@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 /**
  * „Danach in die Stille“ (Nutzer 2026-10-23): Nach einer Atemübung geht es nahtlos in die stille
- * Meditation, mit Gong und Stimme wie zuletzt im Tab Meditation ([meditationConfig]; die Stimme
+ * Meditation – ohne Countdown und mit einem Gong, nicht zweien ([MeditationEntry]), mit Gong und Stimme wie zuletzt im Tab Meditation ([meditationConfig]; die Stimme
  * wendet der [MeditationController] selbst an). Die Dauer kommt aus dem Blatt „Anpassen“ der Übung
  * ([SessionUiState.silenceMinutes], Eigentümer 2026-11-24), immer als feste Zeit; ohne Wahl dort
  * gilt auch die Dauer (oder die offene Sitzung) des Tabs. Der Übergang hängt am Ablauf, nicht an
@@ -92,9 +92,13 @@ class SilenceAfterBreath(
         if (!meditationFree() || !canStartNow()) return
         // Ein stehender Ende-Screen der Meditation weicht (ihr Eintrag steht schon im Logbuch).
         if (meditation.state.value.status == MeditationStatus.FINISHED) meditation.end()
+        // Ein Bogen statt zweier Abläufe (Eigentümer 2026-11-25): kein Countdown; klingt der
+        // Abschluss-Gong der Atemübung noch, ist er der Beginn der Stille, sonst schlägt die Stille
+        // ihren eigenen Start-Gong (wenn eingestellt). So klingen nie zwei Gongs übereinander.
+        val entry = if (breath.finishGongRemainingMs() > 0L) MeditationEntry.ON_BREATH_GONG else MeditationEntry.HANDOVER
         // Erst die Meditation (übernimmt den laufenden Foreground-Service), dann die Atem-Session
         // verwerfen (gibt ihren Halter frei) – in dieser Reihenfolge endet der Service nie dazwischen.
-        meditation.start(config)
+        meditation.start(config, entry)
         _handedOver.value = true
         breath.stop()
     }

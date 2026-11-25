@@ -202,6 +202,9 @@ class BreathSessionController(
     /** Id des Eintrags, den das natürliche Ende geschrieben hat (für das Befinden am Ende-Screen). */
     private var finishedEntry: Deferred<Long>? = null
 
+    /** Zeitpunkt des natürlichen Endes auf der Session-Uhr ([finishGongRemainingMs]). */
+    private var finishedAtMs = 0L
+
     /**
      * Startet [exercise] mit der Anpassung [config]. Die Übung kommt als aufgelöstes Objekt von der
      * Detailseite – genau das Muster, das dort zu sehen war; „Von vorne“ nimmt dasselbe Objekt
@@ -453,6 +456,7 @@ class BreathSessionController(
 
     private fun finish() {
         clock.accrue()
+        finishedAtMs = clock.now()
         cueEvents.tryEmit(CueEvent.FINISH)
         // Logbuch direkt in diesem Scope schreiben (kein UI-Collector nötig) – der Eintrag geht
         // damit auch bei gesperrtem Bildschirm oder ohne Activity nicht verloren.
@@ -480,6 +484,18 @@ class BreathSessionController(
             service.stop()
         }
         exercise?.let { _finished.tryEmit(it) }
+    }
+
+    /**
+     * Wie lange der Abschluss-Gong des natürlichen Endes noch klingt (ms); 0 ohne Ende-Screen, ohne Ton
+     * oder stumm. „Danach in die Stille“ lässt ihn dann den Beginn der Stille sein, statt einen zweiten
+     * Gong darüberzulegen ([MeditationEntry.ON_BREATH_GONG]).
+     */
+    fun finishGongRemainingMs(): Long {
+        val state = _state.value
+        if (state.status != SessionStatus.FINISHED) return 0L
+        val tail = audio.finishTailMs(muted = state.muted)
+        return (tail - (clock.now() - finishedAtMs)).coerceAtLeast(0L)
     }
 
     /**
