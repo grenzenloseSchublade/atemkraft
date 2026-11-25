@@ -232,7 +232,9 @@ internal fun NavGraphBuilder.appGraph(
             onDurationTick = { major -> container.hapticPlayer.dialTick(strong = major) },
             onStart = { config ->
                 scope.launch { settings.setMeditationConfig(config) }
-                playback.startMeditation(config)
+                // „Vorher atmen“: erst Resonanz-Atmung, dann ohne Bruch die Stille.
+                val before = exercises.byId(BREATH_BEFORE_EXERCISE_ID).takeIf { config.breathBeforeMinutes > 0 }
+                if (before != null) playback.startBreathThenSilence(before, config) else playback.startMeditation(config)
             },
             onGongInterval = { minutes -> scope.launch { settings.setGongIntervalMin(minutes) } },
             // Keine deutsche Sprachausgabe: direkt zum aufgeklappten Stimmen-Katalog.
@@ -371,6 +373,9 @@ internal fun NavGraphBuilder.appGraph(
  * ruhig und ohne Halten (Nutzer 2026-10-24).
  */
 private const val WELCOME_EXERCISE_ID = "resonanz"
+
+/** Übung für „Vorher atmen“ im Tab Meditation: ruhig, ohne Halten, ein gutes Ankommen vor der Stille. */
+private const val BREATH_BEFORE_EXERCISE_ID = "resonanz"
 
 /**
  * Dauer, mit der die Willkommenskarte die Übung öffnet („ein paar Minuten“), statt ihrer

@@ -6,13 +6,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import app.atemkraft.R
+import app.atemkraft.domain.BREATH_BEFORE_MAX_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_CHOICES
 import app.atemkraft.ui.components.AppBottomSheet
 import app.atemkraft.ui.components.AppBottomSheetScope
 import app.atemkraft.ui.components.AppTextButton
 import app.atemkraft.ui.components.ForwardLinkText
+import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.SegmentedChoiceRow
+import app.atemkraft.ui.components.Stepper
 import app.atemkraft.ui.components.SubLabel
 import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.choiceGroupHeading
@@ -39,9 +43,11 @@ internal fun SoundSheet(
     gongIntervalMin: Int,
     speech: Boolean,
     speechAvailable: Boolean,
+    breathBefore: Int,
     onGong: (GongChoice) -> Unit,
     onGongInterval: (Int) -> Unit,
     onSpeech: (Boolean) -> Unit,
+    onBreathBefore: (Int) -> Unit,
     onOpenVoices: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -89,5 +95,22 @@ internal fun SoundSheet(
                 ForwardLinkText(text = stringResource(R.string.meditation_voice_get), color = MaterialTheme.colorScheme.secondary)
             }
         }
+        // „Vorher atmen“ (Eigentümer 2026-11-25): Resonanz-Atmung vor der Stille, ganz unten „Aus“ –
+        // derselbe Stepper wie „Danach Stille“ im Blatt „Anpassen“, nur von der anderen Seite.
+        Spacer(Modifier.height(Dimens.GapSmall))
+        val off = stringResource(R.string.meditation_off)
+        Stepper(
+            label = stringResource(R.string.meditation_breath_before),
+            value = breathBefore,
+            range = 0..BREATH_BEFORE_MAX_MINUTES,
+            onChange = onBreathBefore,
+            horizontal = 0.dp,
+            vertical = 0.dp,
+            valueUnit = R.plurals.cd_duration_minutes,
+            valueText = if (breathBefore == 0) off else stringResource(R.string.adjust_value_minutes, breathBefore),
+            spokenValue = off.takeIf { breathBefore == 0 },
+            widestValues = listOf(off, stringResource(R.string.adjust_value_minutes, BREATH_BEFORE_MAX_MINUTES)),
+        )
+        HintText(stringResource(R.string.meditation_breath_before_hint))
     }
 }

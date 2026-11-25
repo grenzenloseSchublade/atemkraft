@@ -94,6 +94,7 @@
         "meditationStartEndGong": true,
         "meditationInterval": false,
         "meditationSpeech": false,
+        "meditationBreathBefore": 0,
         "gongIntervalMinutes": 5,
         "showStreak": false,
         "askFeeling": true,

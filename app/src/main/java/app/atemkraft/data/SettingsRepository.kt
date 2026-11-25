@@ -14,6 +14,7 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import app.atemkraft.domain.BREATH_BEFORE_MAX_MINUTES
 import app.atemkraft.domain.FeelingPrompt
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.GONG_INTERVAL_MAX_MINUTES
@@ -126,6 +127,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val MED_INTERVAL_ON = booleanPreferencesKey("med_interval_on") // Tab-Wahl: Intervall an
         val MED_GONG_INTERVAL = intPreferencesKey("med_gong_interval") // Einstellung: X Minuten
         val MED_SPEECH = booleanPreferencesKey("med_speech")
+        val MED_BREATH_BEFORE = intPreferencesKey("med_breath_before") // „Vorher atmen“, Minuten, 0 = aus
         val MED_NEURAL_VOICE = stringPreferencesKey("med_neural_voice") // VoiceCatalog.id; leer = keine
         val MED_GONG_LONG = booleanPreferencesKey("med_gong_long") // Gong-Ausklang: lang (true)/kurz
         val MARKED_EXERCISES = stringSetPreferencesKey("marked_exercises") // Atemkreis „tut mir gut“
@@ -311,6 +313,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             meditationStartEndGong = config.startEndGong,
             meditationInterval = prefs[Keys.MED_INTERVAL_ON] ?: false,
             meditationSpeech = config.speech,
+            meditationBreathBefore = config.breathBeforeMinutes,
             gongIntervalMinutes = gongIntervalOf(prefs),
             showStreak = showStreak.first(),
             askFeeling = prefs[Keys.FEELING_PROMPT],
@@ -349,6 +352,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             backup.meditationStartEndGong?.let { prefs[Keys.MED_START_END_GONG] = it }
             backup.meditationInterval?.let { prefs[Keys.MED_INTERVAL_ON] = it }
             backup.meditationSpeech?.let { prefs[Keys.MED_SPEECH] = it }
+            backup.meditationBreathBefore?.let { prefs[Keys.MED_BREATH_BEFORE] = it.coerceIn(0, BREATH_BEFORE_MAX_MINUTES) }
             backup.gongIntervalMinutes?.let { prefs[Keys.MED_GONG_INTERVAL] = it.coerceIn(GONG_INTERVAL_MIN_MINUTES, GONG_INTERVAL_MAX_MINUTES) }
             backup.showStreak?.let { prefs[Keys.SHOW_STREAK] = it }
             backup.askFeeling?.let { prefs[Keys.FEELING_PROMPT] = it }
@@ -607,6 +611,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             startEndGong = prefs[Keys.MED_START_END_GONG] ?: true,
             gongEveryMin = intervalMin.takeIf { intervalOn },
             speech = prefs[Keys.MED_SPEECH] ?: false,
+            breathBeforeMinutes = (prefs[Keys.MED_BREATH_BEFORE] ?: 0).coerceIn(0, BREATH_BEFORE_MAX_MINUTES),
         )
     }
 
@@ -618,6 +623,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             prefs[Keys.MED_START_END_GONG] = config.startEndGong
             prefs[Keys.MED_INTERVAL_ON] = config.gongEveryMin != null
             prefs[Keys.MED_SPEECH] = config.speech
+            prefs[Keys.MED_BREATH_BEFORE] = config.breathBeforeMinutes.coerceIn(0, BREATH_BEFORE_MAX_MINUTES)
         }
     }
 }

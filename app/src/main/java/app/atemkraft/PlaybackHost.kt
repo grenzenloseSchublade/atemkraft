@@ -39,6 +39,7 @@ import app.atemkraft.domain.Exercise
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FeelingPrompt
 import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.SessionStatus
@@ -166,6 +167,24 @@ internal class PlaybackState(
             if (sessionActive) {
                 breath.stop()
                 sessionExpanded = false
+            }
+        }
+    }
+
+    /**
+     * „Vorher atmen“ im Tab Meditation (Eigentümer 2026-11-25): erst [breathe] (Resonanz-Atmung) für
+     * [MeditationConfig.breathBeforeMinutes], dann ohne Bruch die Stille – derselbe Übergang wie
+     * „Danach in die Stille“ ([app.atemkraft.playback.SilenceAfterBreath]), nur vom Tab aus. Die Stille
+     * dauert, was der Zeitring zeigt (bei ∞ offen); Gong und Stimme wie im Blatt „Klang & Stimme“.
+     */
+    fun startBreathThenSilence(breathe: Exercise, config: MeditationConfig) {
+        askNotifications {
+            val silence = config.minutes.takeIf { config.mode == MeditationMode.TIMED }
+            breath.start(breathe, SessionConfig(minutes = config.breathBeforeMinutes, silenceMinutes = silence), silenceAfter = true)
+            sessionExpanded = true
+            if (meditationActive) {
+                meditation.discard()
+                meditationExpanded = false
             }
         }
     }

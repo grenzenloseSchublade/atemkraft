@@ -24,6 +24,12 @@ const val GONG_INTERVAL_DEFAULT_MINUTES = 5
 /** Längster gespeicherter Abstand des Intervall-Gongs (Minuten) – eine Runde des Zeitrings. */
 const val GONG_INTERVAL_MAX_MINUTES = 60
 
+/**
+ * Längste Zeit „Vorher atmen“ im Tab Meditation (Minuten): Resonanz-Atmung vor der Stille, ein kurzes
+ * Ankommen; 0 = aus.
+ */
+const val BREATH_BEFORE_MAX_MINUTES = 10
+
 /** Wählbare Abstände des Intervall-Gongs in den Einstellungen (Minuten). */
 val GONG_INTERVAL_CHOICES = listOf(3, 5, 10, 15)
 
@@ -39,6 +45,8 @@ val GONG_INTERVAL_CHOICES = listOf(3, 5, 10, 15)
  * @param startEndGong Gong zu Beginn und am Ende der Sitzung.
  * @param gongEveryMin Zusätzlicher Intervall-Gong alle N Minuten; null = kein Intervall.
  * @param speech Gesprochene Kurz-Anleitung (TTS) in unregelmäßigen Abständen an/aus.
+ * @param breathBeforeMinutes „Vorher atmen“: so viele Minuten Resonanz-Atmung, dann ohne Bruch die
+ *   Stille (0 = aus, bis [BREATH_BEFORE_MAX_MINUTES]; Eigentümer 2026-11-25).
  */
 data class MeditationConfig(
     val mode: MeditationMode = MeditationMode.TIMED,
@@ -46,4 +54,5 @@ data class MeditationConfig(
     val startEndGong: Boolean = true,
     val gongEveryMin: Int? = null,
     val speech: Boolean = false,
+    val breathBeforeMinutes: Int = 0,
 )

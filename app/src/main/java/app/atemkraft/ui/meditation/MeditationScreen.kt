@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -84,6 +85,7 @@ private fun SelectionContent(
     var startEndGong by rememberSaveable(key) { mutableStateOf(initialConfig.startEndGong) }
     var intervalOn by rememberSaveable(key) { mutableStateOf(initialConfig.gongEveryMin != null) }
     var speech by rememberSaveable(key) { mutableStateOf(initialConfig.speech) }
+    var breathBefore by rememberSaveable(key) { mutableIntStateOf(initialConfig.breathBeforeMinutes) }
     // Offen überlebt das Blatt Drehen; die Seite darunter bleibt unverändert (MUSTER-11).
     var soundSheetOpen by rememberSaveable { mutableStateOf(false) }
     val mode = if (duration.free) MeditationMode.FREE else MeditationMode.TIMED
@@ -135,6 +137,7 @@ private fun SelectionContent(
                         gong = gong,
                         gongIntervalMin = gongIntervalMin,
                         speech = speech && speechAvailable,
+                        breathBefore = breathBefore,
                         onClick = { soundSheetOpen = true },
                     )
                 },
@@ -146,12 +149,14 @@ private fun SelectionContent(
                 gongIntervalMin = gongIntervalMin,
                 speech = speech,
                 speechAvailable = speechAvailable,
+                breathBefore = breathBefore,
                 onGong = { choice ->
                     startEndGong = choice != GongChoice.OFF
                     intervalOn = choice == GongChoice.INTERVAL
                 },
                 onGongInterval = onGongInterval,
                 onSpeech = { speech = it },
+                onBreathBefore = { breathBefore = it },
                 // Das Blatt schließt sich selbst, bevor es dies meldet (AppBottomSheetScope.closeThen).
                 onOpenVoices = onOpenVoices,
                 onDismiss = { soundSheetOpen = false },
@@ -162,11 +167,27 @@ private fun SelectionContent(
         // weicht die Auswahl von den App-Standards ab, gleitet rechts der Kreispfeil herein.
         PinnedActionBar {
             val defaults = MeditationConfig()
+            // Mit „Vorher atmen“ steht die ganze Zeit am Start: „Starten · ca. 13 min“ (bei ∞ „ab ca.“).
+            val start = stringResource(R.string.action_start)
+            val label = if (breathBefore == 0) {
+                start
+            } else {
+                stringResource(
+                    R.string.action_start_duration,
+                    start,
+                    if (duration.free) {
+                        stringResource(R.string.duration_approx_from, breathBefore)
+                    } else {
+                        stringResource(R.string.duration_approx, breathBefore + duration.minutes)
+                    },
+                )
+            }
             StartSplitButton(
-                label = stringResource(R.string.action_start),
+                label = label,
                 resetVisible = mode != defaults.mode || duration.minutes != defaults.minutes ||
                     startEndGong != defaults.startEndGong ||
-                    intervalOn != (defaults.gongEveryMin != null) || speech != defaults.speech,
+                    intervalOn != (defaults.gongEveryMin != null) || speech != defaults.speech ||
+                    breathBefore != defaults.breathBeforeMinutes,
                 onStart = {
                     onStart(
                         MeditationConfig(
@@ -175,6 +196,7 @@ private fun SelectionContent(
                             startEndGong = startEndGong,
                             gongEveryMin = if (intervalOn) gongIntervalMin else null,
                             speech = speech && speechAvailable,
+                            breathBeforeMinutes = breathBefore,
                         ),
                     )
                 },
@@ -185,6 +207,7 @@ private fun SelectionContent(
                     startEndGong = defaults.startEndGong
                     intervalOn = defaults.gongEveryMin != null
                     speech = defaults.speech
+                    breathBefore = defaults.breathBeforeMinutes
                 },
             )
         }
@@ -215,19 +238,22 @@ private fun durationPickerMinSide(): Dp = timeDialMinSide(Dimens.DurationPickerM
  * nur die Dauer, der Zeitring darüber behält so immer seine volle Größe (LAYOUT-08).
  */
 @Composable
-private fun SoundRow(gong: GongChoice, gongIntervalMin: Int, speech: Boolean, onClick: () -> Unit) {
+private fun SoundRow(gong: GongChoice, gongIntervalMin: Int, speech: Boolean, breathBefore: Int, onClick: () -> Unit) {
+    val gongText = when (gong) {
+        GongChoice.OFF -> stringResource(R.string.meditation_gong_off_short)
+        GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
+        GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
+    }
+    val voiceText = stringResource(if (speech) R.string.meditation_voice_on else R.string.meditation_voice_off)
     Column {
         SectionHeader(
             title = stringResource(R.string.meditation_sound_voice_label),
-            teaser = stringResource(
-                R.string.meditation_sound_summary,
-                when (gong) {
-                    GongChoice.OFF -> stringResource(R.string.meditation_gong_off_short)
-                    GongChoice.START_END -> stringResource(R.string.meditation_gong_startstop)
-                    GongChoice.INTERVAL -> stringResource(R.string.meditation_interval_minutes, gongIntervalMin)
-                },
-                stringResource(if (speech) R.string.meditation_voice_on else R.string.meditation_voice_off),
-            ),
+            // „Vorher atmen“ nur, wenn gewählt: Ab Werk bleibt die Zeile, wie sie war.
+            teaser = if (breathBefore == 0) {
+                stringResource(R.string.meditation_sound_summary, gongText, voiceText)
+            } else {
+                stringResource(R.string.meditation_sound_summary_breath, gongText, voiceText, breathBefore)
+            },
             onClick = onClick,
         )
         // Die gepinnte Start-Leiste hat selbst ListGap Innenrand – hier nur ein kleiner Abstand.

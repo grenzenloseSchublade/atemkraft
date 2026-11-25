@@ -4,6 +4,7 @@ import app.atemkraft.data.local.SavedPatternEntity
 import app.atemkraft.data.local.columnSpec
 import app.atemkraft.data.local.freePattern
 import app.atemkraft.domain.AdjustLimits
+import app.atemkraft.domain.BREATH_BEFORE_MAX_MINUTES
 import app.atemkraft.domain.BreathingFamily
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FreePattern
@@ -107,6 +108,7 @@ data class SettingsBackup(
     val meditationStartEndGong: Boolean? = null,
     val meditationInterval: Boolean? = null,
     val meditationSpeech: Boolean? = null,
+    val meditationBreathBefore: Int? = null,
     val gongIntervalMinutes: Int? = null,
     val showStreak: Boolean? = null,
     val askFeeling: Boolean? = null,
@@ -280,6 +282,7 @@ object PatternBackup {
         volume = volume?.takeIf { n -> ToneVolume.entries.any { it.name == n } },
         meditationMode = meditationMode?.takeIf { n -> MeditationMode.entries.any { it.name == n } },
         meditationMinutes = meditationMinutes?.takeIf { it in MEDITATION_MIN_MINUTES..MEDITATION_MAX_MINUTES },
+        meditationBreathBefore = meditationBreathBefore?.takeIf { it in 0..BREATH_BEFORE_MAX_MINUTES },
         gongIntervalMinutes = gongIntervalMinutes?.takeIf { it in GONG_INTERVAL_MIN_MINUTES..GONG_INTERVAL_MAX_MINUTES },
         adjustments = adjustments.entries.filter { (id, o) -> id in builtInIds && o.isPlausible() }.take(MAX_MARKED).associate { it.toPair() },
     )
