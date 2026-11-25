@@ -90,6 +90,33 @@ class HapticPlayer(context: Context, private val clock: () -> Long = SystemClock
         vibrate(effect, touch = false)
     }
 
+    /**
+     * Kann der Motor die Stärke regeln? Nur dann gibt es die „Welle“ ([wave]); sonst bleiben die
+     * Impulse je Phasenwechsel ([play]) – eine Welle ohne Stärke wäre nur ein langes Brummen.
+     * Primitive-Folgen als Ersatz sind bewusst nicht gebaut: Ihre Höchstzahl je Auftrag hängt am
+     * Gerät und ist nicht öffentlich abfragbar.
+     */
+    val waveSupported: Boolean by lazy {
+        val v = vibrator ?: return@lazy false
+        runCatching { v.hasVibrator() && v.hasAmplitudeControl() }.getOrDefault(false)
+    }
+
+    /**
+     * „Welle“ für eine Phase ([BreathWave]): Die Stärke folgt dem Füllstand des Kreises von [from]
+     * nach [to] über [durationMs] (Restdauer, [elapsedMs] schon vergangen). Halten bleibt still. Nur
+     * bei eingeschaltetem App-Schalter „Vibration“ und wenn der Motor die Stärke regeln kann.
+     */
+    fun wave(from: Float, to: Float, durationMs: Long, elapsedMs: Long, enabled: Boolean) {
+        if (!enabled || !waveSupported) return
+        val form = BreathWave.of(from, to, durationMs, elapsedMs) ?: return
+        vibrate(VibrationEffect.createWaveform(form.timings, form.amplitudes, -1), touch = false)
+    }
+
+    /** Laufende Welle anhalten (Pause, Ende durch den Nutzer); bricht jede Vibration der App ab. */
+    fun stopWave() {
+        vibrator?.cancel()
+    }
+
     /** [touch]: Berührungs-Vibration (System regelt sie), sonst Alarm-Vibration (App-Schalter). */
     private fun vibrate(effect: VibrationEffect, touch: Boolean) {
         val v = vibrator ?: return

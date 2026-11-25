@@ -14,6 +14,8 @@ import java.time.DayOfWeek
 data class CueSettings(
     val soundMode: SoundMode = SoundMode.CUES,
     val haptics: Boolean = true,
+    /** Vibration als „Welle“ statt Impulsen je Wechsel (E6: erst Option, aus ab Werk). */
+    val hapticWave: Boolean = false,
     val transition: TransitionEmphasis = TransitionEmphasis.MEDIUM,
     val volume: ToneVolume = ToneVolume.MEDIUM,
     /** Gong-Ausklang lang/kurz (app-weit, auch für den Sitzungs-Abschlussgong). */

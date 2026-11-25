@@ -76,6 +76,7 @@
         "transition": "MEDIUM",
         "volume": "QUIET",
         "haptics": true,
+        "hapticWave": true,
         "gongLong": false,
         "showSafetyWarning": true,
         "showNextPhase": true,

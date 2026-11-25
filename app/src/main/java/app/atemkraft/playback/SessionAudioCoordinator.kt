@@ -89,12 +89,22 @@ class SessionAudioCoordinator(
                     audioFocus.request()
                     if (!focusLost.value) tonePlayer.play(event)
                 }
-                hapticPlayer.play(event, enabled = cfg.haptics)
+                // Mit der „Welle“ tragen Einatmen und Ausatmen die Welle selbst (Phasen-Collector);
+                // ein Impuls bräche sie ab. Halten und Ende bleiben Impulse: Der Halt wird so
+                // spürbar, bevor die Welle verstummt.
+                val waveCarries = waveOn(cfg) && (event == CueEvent.INHALE || event == CueEvent.EXHALE)
+                if (!waveCarries) hapticPlayer.play(event, enabled = cfg.haptics)
             }
         }
         scope.launch {
             phaseAudio.collect { pa ->
-                if (current.value.soundMode == SoundMode.CONTINUOUS) {
+                val cfg = current.value
+                // Welle: folgt dem Füllstand des Kreises, auch beim Fortsetzen mitten in der Phase.
+                val level = pa.level
+                if (waveOn(cfg) && !pa.open && level != null) {
+                    hapticPlayer.wave(level.from, level.to, pa.durationMs, pa.elapsedMs, enabled = true)
+                }
+                if (cfg.soundMode == SoundMode.CONTINUOUS) {
                     // Wie bei den Cues: zum Phasenbeginn anfordern, ein abgelehnter Antrag wird wiederholt.
                     if (!mutedState.value) audioFocus.request()
                     // Beim Stummschalten die Tonhöhe weiter mitführen (nur ohne Pegel), damit
@@ -119,6 +129,9 @@ class SessionAudioCoordinator(
         }
     }
 
+    /** „Welle“ gewünscht und möglich (sonst Impulse, auch bei gewählter Welle). */
+    private fun waveOn(cfg: CueSettings): Boolean = cfg.haptics && cfg.hapticWave && hapticPlayer.waveSupported
+
     private data class AudioInputs(val status: SessionStatus, val cfg: CueSettings, val muted: Boolean, val lost: Boolean)
 
     /**
@@ -131,6 +144,11 @@ class SessionAudioCoordinator(
         // „Nochmal“/neuer Start: Ein noch klingender Abschluss-Gong blendet kurz aus, statt in die
         // neue Übung hineinzuklingen; ebenso, wenn ein Anruf den Fokus nimmt.
         if (status == SessionStatus.PREPARING || lost) tonePlayer.silenceGong()
+        // Eine laufende Welle hält in der Pause und beim Abbruch sofort an (nicht am Ende: dort
+        // spielt das Doppel-Muster des Abschlusses, und die Welle endet ohnehin mit ihrer Phase).
+        if (waveOn(cfg) && (status == SessionStatus.PAUSED || status == SessionStatus.IDLE || status == SessionStatus.PREPARING)) {
+            hapticPlayer.stopWave()
+        }
         val inSession = status != SessionStatus.IDLE && status != SessionStatus.FINISHED
         // Kopfhörer abgezogen: Der Controller schaltet stumm (wie bei Fokusverlust), die Übung läuft weiter.
         if (inSession) unplug.watch(onUnplugged) else unplug.stop()

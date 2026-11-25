@@ -500,6 +500,16 @@ private fun BreathCard(state: SettingsUiState, actions: SettingsActions) {
             onCheckedChange = actions::setHaptics,
             hint = stringResource(R.string.settings_haptics_hint),
         )
+        // Art der Vibration nur, solange sie an ist (wie die Zäsur nur beim Dauerton).
+        if (state.haptics) {
+            HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+            ToggleRow(
+                label = stringResource(R.string.settings_haptic_wave),
+                checked = state.hapticWave,
+                onCheckedChange = actions::setHapticWave,
+                hint = stringResource(R.string.settings_haptic_wave_hint),
+            )
+        }
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
         ToggleRow(
             label = stringResource(R.string.settings_silence_after),

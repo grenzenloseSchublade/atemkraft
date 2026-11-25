@@ -574,6 +574,8 @@
     <string name="volume_hint">Wie laut Töne und Gongs im Verhältnis zur Medienlautstärke deines Geräts klingen.</string>
     <string name="settings_haptics">Vibration</string>
     <string name="settings_haptics_hint">Vibriert bei jedem Phasenwechsel, auch wenn der Ton aus ist.</string>
+    <string name="settings_haptic_wave">Vibration als Welle</string>
+    <string name="settings_haptic_wave_hint">Statt eines Impulses je Wechsel schwillt sie beim Einatmen an und klingt beim Ausatmen ab, beim Halten ist sie still.</string>
 
     <!-- Einstellungen · Abschnitts-Titel -->
     <string name="settings_tone_title">Klang</string>

@@ -105,6 +105,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val VOLUME = stringPreferencesKey("tone_volume_name")
         val VOLUME_ORDINAL = intPreferencesKey("tone_volume")
         val HAPTICS = booleanPreferencesKey("cue_haptics")
+        val HAPTIC_WAVE = booleanPreferencesKey("cue_haptic_wave") // Vibration als Welle statt Impulsen
         val SHOW_SAFETY = booleanPreferencesKey("show_safety_warning")
         val SAFETY_ACK = booleanPreferencesKey("safety_acknowledged") // alt (bis 2.5): einmal für alle, wird entfernt
         val SAFETY_ACK_IDS = stringSetPreferencesKey("safety_acknowledged_ids") // je Übung bestätigt
@@ -290,6 +291,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             transition = cue.transition.name,
             volume = cue.volume.name,
             haptics = cue.haptics,
+            hapticWave = cue.hapticWave,
             gongLong = cue.gongLong,
             showSafetyWarning = safetySettings.first().showWarning,
             showNextPhase = display.showNextPhase,
@@ -326,6 +328,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             backup.volume?.let { n -> ToneVolume.entries.firstOrNull { it.name == n } }?.let { prefs.putEnum(Keys.VOLUME, Keys.VOLUME_ORDINAL, it) }
             backup.meditationMode?.let { n -> MeditationMode.entries.firstOrNull { it.name == n } }?.let { prefs.putEnum(Keys.MED_MODE, Keys.MED_MODE_ORDINAL, it) }
             backup.haptics?.let { prefs[Keys.HAPTICS] = it }
+            backup.hapticWave?.let { prefs[Keys.HAPTIC_WAVE] = it }
             backup.gongLong?.let { prefs[Keys.MED_GONG_LONG] = it }
             backup.showSafetyWarning?.let { prefs[Keys.SHOW_SAFETY] = it }
             backup.showNextPhase?.let { prefs[Keys.SHOW_NEXT] = it }
@@ -420,6 +423,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         CueSettings(
             soundMode = mode,
             haptics = prefs[Keys.HAPTICS] ?: true,
+            hapticWave = prefs[Keys.HAPTIC_WAVE] ?: false,
             transition = prefs.enumOf<TransitionEmphasis>(Keys.TRANSITION, Keys.TRANSITION_ORDINAL)
                 ?: TransitionEmphasis.MEDIUM,
             volume = prefs.enumOf<ToneVolume>(Keys.VOLUME, Keys.VOLUME_ORDINAL) ?: CueSettings().volume,
@@ -448,6 +452,10 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setHaptics(enabled: Boolean) {
         store.edit { it[Keys.HAPTICS] = enabled }
+    }
+
+    suspend fun setHapticWave(enabled: Boolean) {
+        store.edit { it[Keys.HAPTIC_WAVE] = enabled }
     }
 
     suspend fun setShowSafetyWarning(enabled: Boolean) {
