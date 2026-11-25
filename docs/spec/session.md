@@ -59,7 +59,7 @@ Regel [SEC-LEGAL-04](../SECURITY.md#recht): Selbstauskunft ohne Auswertung. Unte
 
 - Nur wenn ein Logbuch-Eintrag entstand: Die Atemübung zeigt den Ende-Screen nur am natürlichen Ende (Eintrag immer), die Meditation auch nach „Beenden“ ab einer Minute (Eintrag ebenfalls). Der Ablauf merkt sich die Id des Eintrags (`BreathSessionController.answerFeeling`, `MeditationController.answerFeeling`) und setzt die Antwort nachträglich (`LogbookDao.setFeeling`); die Wahl erscheint sofort.
 - Einstellung „Befinden am Ende fragen“ (Einstellungen › Daten, DataStore `feeling_prompt`): Fehlt sie, erscheint die Reihe beim ersten regulären Ende einmal mit dem Satz „Nur auf diesem Gerät gespeichert. Abschalten kannst du die Frage in den Einstellungen.“; das Erscheinen setzt den Schalter auf an (`SettingsRepository.feelingOffered`). Aus: keine Reihe.
-- Nach „Danach in die Stille“ fragt erst der Ende-Screen der Meditation; der Eintrag der Atemübung bleibt unbeantwortet.
+- Nach „Danach in die Stille“ fragt erst der Ende-Screen der Stille, und die Antwort gilt dem einen Eintrag „Atmen → Stille“ (siehe unten).
 - Im Logbuch steht das Wort gedämpft unter der Uhrzeit (`TERTIARY`, gesprochen „danach ruhiger“), ohne Farbe, Icon oder Summe; „Logbuch leeren“ löscht es mit.
 
 ### <a id="antwortreihe"></a>Anatomie der Antwortreihe (`FinishedPanel` mit `FeelingAsk`)
@@ -80,6 +80,8 @@ Regel [SEC-LEGAL-04](../SECURITY.md#recht): Selbstauskunft ohne Auswertung. Unte
 - **Prüfung:** `ScreenshotTest` (`09_session_ende_befinden*`, `10_meditation_ende_befinden`: `WORTBRUCH`, `TIPPFLAECHE`, `BESCHNITTEN`), `no-check-icon`; manuell R-A11Y (Gruppe „Befinden“, Auswahl angesagt).
 
 ## Logbuch und Ersetzen
+
+**Atmen → Stille ist ein Eintrag** (Eigentümer 2026-11-25): Die Atemübung schreibt ihren Eintrag am Ende wie immer; die Stille danach („Danach in die Stille“, „Vorher atmen“) schreibt keinen zweiten, sondern hängt sich an ihn (`LoggedBreath`, `LogbookDao.addSilence`: `durationMs` wächst um die Stille, `silenceMs` hält ihren Anteil; Room-Schema 8). Es gilt dieselbe Minuten-Regel: Endet die Stille unter einer Minute, bleibt der Eintrag der Atemübung, wie er war; ab einer Minute zählt die tatsächliche Stille. Fehlt der Eintrag der Atemübung (z. B. Logbuch inzwischen geleert) oder kommt er nicht binnen 5 s, schreibt die Stille wie bisher ihren eigenen Eintrag „Meditation“. Befinden und ◉ am Ende-Screen der Stille gelten der geübten Übung (`MeditationUiState.afterExerciseId`). Im Logbuch „Resonanz-Atmung → Stille“ ([eigene-tab.md](eigene-tab.md)).
 
 Was von selbst zu Ende läuft, kommt immer ins Logbuch; früher Beendetes („Beenden“, „Stopp“ in der Benachrichtigung, ersetzt durch einen neuen Start) ab einer Minute aktiver Zeit (`SessionTiming.MIN_LOG_MS`), mit echter Dauer und ohne Wertung „abgebrochen“, darunter gar nicht. Die Meditation zeigt ab dieser Minute auch beim Beenden End-Gong und Ende-Screen (Timer wie offene Sitzung), darunter kehrt sie in die Auswahl zurück; die Atemübung schließt beim Beenden ohne Ende-Screen.
 

@@ -28,5 +28,12 @@ class FakeLogbookDao : LogbookDao {
         rows.replaceAll { if (it.id == id) it.copy(feeling = feeling) else it }
     }
 
+    override suspend fun addSilence(id: Long, silenceMs: Long): Int {
+        val i = rows.indexOfFirst { it.id == id }
+        if (i < 0) return 0
+        rows[i] = rows[i].let { it.copy(durationMs = it.durationMs + silenceMs, silenceMs = (it.silenceMs ?: 0L) + silenceMs) }
+        return 1
+    }
+
     override suspend fun clear() = rows.clear()
 }

@@ -74,6 +74,8 @@ data class LogBackupEntry(
     val durationMs: Long,
     val roundsCompleted: Int = 0,
     val feeling: String? = null,
+    /** Stille nach der Atemübung, in [durationMs] enthalten (ab 2.12, „Atmen → Stille“); fehlt = keine. */
+    val silenceMs: Long? = null,
 )
 
 /**
@@ -247,6 +249,7 @@ object PatternBackup {
         durationMs = entry.durationMs,
         roundsCompleted = entry.roundsCompleted,
         feeling = entry.feeling?.name,
+        silenceMs = entry.silenceMs,
     )
 
     /**
@@ -258,7 +261,8 @@ object PatternBackup {
         val family = family?.let { name -> BreathingFamily.entries.firstOrNull { it.name == name } ?: return null }
         val plausible = EXERCISE_ID.matches(exerciseId) && isCleanName(exerciseName) && startedAtEpochMs > 0 &&
             durationMs in 0..MAX_DURATION_MS && roundsCompleted in 0..MAX_ROUNDS &&
-            (kind == SessionKind.MEDITATION) == (family == null)
+            (kind == SessionKind.MEDITATION) == (family == null) &&
+            (silenceMs == null || (kind == SessionKind.BREATHING && silenceMs in 0..durationMs))
         if (!plausible) return null
         return SessionLogEntry(
             exerciseId = exerciseId,
@@ -269,6 +273,7 @@ object PatternBackup {
             roundsCompleted = roundsCompleted,
             kind = kind,
             feeling = Feeling.fromName(feeling),
+            silenceMs = silenceMs,
         )
     }
 

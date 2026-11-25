@@ -473,6 +473,10 @@
     <string name="feeling_intro">Nur auf diesem Gerät gespeichert. Abschalten kannst du die Frage in den Einstellungen.</string>
     <!-- Logbuch: TalkBack hört das Befinden mit Bezug („danach ruhiger“), sichtbar steht nur das Wort. -->
     <string name="log_feeling_spoken">danach %1$s</string>
+    <!-- Logbuch: eine Atemübung, die in die Stille mündete, ist ein Eintrag („Resonanz-Atmung → Stille“);
+         TalkBack hört statt des Pfeils „danach Stille“. -->
+    <string name="log_then_silence">%1$s → Stille</string>
+    <string name="log_then_silence_spoken">%1$s, danach Stille</string>
     <string name="session_get_ready">Gleich geht’s los</string>
     <string name="session_next">Als Nächstes</string>
     <!-- Dauer im Logbuch: „6:24 min“. Geschütztes Leerzeichen: Zahl und Einheit brechen nie

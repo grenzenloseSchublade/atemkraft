@@ -30,6 +30,13 @@ interface LogbookDao {
     @Query("UPDATE log_entries SET feeling = :feeling WHERE id = :id")
     suspend fun setFeeling(id: Long, feeling: String?)
 
+    /**
+     * Stille nach der Atemübung an ihren Eintrag hängen („Atmen → Stille“ ist ein Eintrag): Dauer
+     * und Stille wachsen um [silenceMs]. Gibt die Zahl geänderter Zeilen zurück (0 = Eintrag weg).
+     */
+    @Query("UPDATE log_entries SET durationMs = durationMs + :silenceMs, silenceMs = IFNULL(silenceMs, 0) + :silenceMs WHERE id = :id")
+    suspend fun addSilence(id: Long, silenceMs: Long): Int
+
     @Query("DELETE FROM log_entries")
     suspend fun clear()
 }

@@ -177,7 +177,7 @@ class PlaybackFlowTest {
     }
 
     @Test
-    fun `Danach in die Stille - ein Bogen ohne Countdown und zweiten Gong, Service übernommen, mit der gewählten Dauer`() = runTest {
+    fun `Danach in die Stille - ein Bogen ohne Countdown und zweiten Gong, Service übernommen, gewählte Dauer, ein Eintrag`() = runTest {
         val gongs = RecordingMeditationAudio()
         val meditation = meditation(gongs)
         // Der Abschluss-Gong der Atemübung klingt noch 5 s nach.
@@ -217,7 +217,14 @@ class PlaybackFlowTest {
         assertEquals(MeditationMode.TIMED, meditation.state.value.mode)
         advance(2 * 60_000L)
         assertEquals(MeditationStatus.FINISHED, meditation.state.value.status)
-        assertEquals(120_000L, dao.rows.last().durationMs)
+        // „Atmen → Stille“ ist ein Eintrag: Die Stille hängt an der Atemübung, die Dauer wächst mit,
+        // ◉ und Befinden am Ende-Screen gelten der geübten Übung.
+        assertEquals(listOf(60_000L, ROUND_MS + 120_000L), dao.rows.map { it.durationMs })
+        assertEquals(listOf(null, 120_000L), dao.rows.map { it.silenceMs })
+        assertEquals(box.id, meditation.state.value.afterExerciseId)
+        meditation.answerFeeling(Feeling.CALMER)
+        runCurrent()
+        assertEquals(Feeling.CALMER.name, dao.rows.last().feeling)
         assertEquals("nur der End-Gong der Stille", 1, gongs.gongs)
         assertEquals(errorsBefore, UncaughtErrors.last.value)
     }

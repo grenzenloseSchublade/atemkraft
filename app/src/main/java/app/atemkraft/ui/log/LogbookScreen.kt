@@ -272,12 +272,16 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
             verticalArrangement = Arrangement.spacedBy(Dimens.GapTiny),
         ) {
             Column(modifier = Modifier.align(Alignment.CenterVertically)) {
-                // Name wörtlich, auch ein eigener mit „*“ (ohne Sanskrit-Auszeichnung, TEXT-14).
+                // Name wörtlich, auch ein eigener mit „*“ (ohne Sanskrit-Auszeichnung, TEXT-14); mündete
+                // die Übung in die Stille, ein Eintrag „Name → Stille“ (TalkBack: „Name, danach Stille“).
+                val silence = entry.silenceMs != null
+                val spokenName = if (silence) stringResource(R.string.log_then_silence_spoken, entry.exerciseName) else entry.exerciseName
                 WholeWordText(
-                    text = entry.exerciseName,
+                    text = if (silence) stringResource(R.string.log_then_silence, entry.exerciseName) else entry.exerciseName,
                     style = nameStyle,
                     color = MaterialTheme.colorScheme.onSurface,
                     marks = false,
+                    modifier = Modifier.semantics { contentDescription = spokenName },
                 )
                 SecondaryText(time)
                 // Befinden danach (SEC-LEGAL-04): nur das Wort, gedämpft, ohne Farbe, Icon oder Summe.

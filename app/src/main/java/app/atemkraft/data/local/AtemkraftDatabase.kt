@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Logbuch und gespeicherte Muster. Jede Schemaänderung braucht eine explizite [Migration], das
  * exportierte Schema unter app/schemas/ und einen Fall in DatabaseMigrationTest (SEC-STORE-03).
  */
-@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 7, exportSchema = true)
+@Database(entities = [LogEntryEntity::class, SavedPatternEntity::class], version = 8, exportSchema = true)
 abstract class AtemkraftDatabase : RoomDatabase() {
 
     abstract fun logbookDao(): LogbookDao
@@ -131,8 +131,19 @@ abstract class AtemkraftDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v7 → v8: Stille nach der Atemübung am selben Eintrag (`silenceMs`, Eigentümer 2026-11-25:
+         * „Atmen → Stille“ ist ein Eintrag). Rein additiv; bisherige Einträge haben keine (NULL), ein
+         * früheres Paar aus Atemübung und Meditation bleibt zwei Einträge.
+         */
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE log_entries ADD COLUMN silenceMs INTEGER")
+            }
+        }
+
         /** Alle Migrationen in Reihenfolge; App und Migrationstest nutzen dieselbe Liste. */
-        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+        internal val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
 
         fun build(context: Context): AtemkraftDatabase = Room.databaseBuilder(
             context.applicationContext,

@@ -340,6 +340,8 @@ internal fun PlaybackOverlays(playback: PlaybackState) {
                             if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
                         },
                         feelingAsk = playback.feelingAsk(meditation::answerFeeling),
+                        // Nach „Atmen → Stille“ markiert ◉ die geübte Übung.
+                        mark = state.afterExerciseId?.let { playback.endMark(it, marked) },
                     ),
                     onMinimize = { playback.meditationExpanded = false },
                     onToggleMute = meditation::toggleMute,

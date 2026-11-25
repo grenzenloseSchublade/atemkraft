@@ -16,6 +16,7 @@ import app.atemkraft.domain.supervisedScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -52,7 +54,19 @@ data class MeditationUiState(
     val feelingOptions: List<Feeling> = emptyList(),
     /** Gewählte Antwort ([MeditationController.answerFeeling]); `null` = nicht beantwortet. */
     val feeling: Feeling? = null,
+    /**
+     * Id der Atemübung, in die diese Stille mündet („Atmen → Stille“, [LoggedBreath]); `null` bei einer
+     * Meditation für sich. Für ◉ „Tut mir gut“ am Ende-Screen: markiert wird die geübte Übung.
+     */
+    val afterExerciseId: String? = null,
 )
+
+/**
+ * Die Atemübung vor einer Stille („Danach in die Stille“, „Vorher atmen“): [entryId] ist ihr
+ * Logbuch-Eintrag, an den die Stille angehängt wird – ein Erlebnis, ein Eintrag (Eigentümer
+ * 2026-11-25); [exerciseId] die geübte Übung.
+ */
+class LoggedBreath(val entryId: Deferred<Long>, val exerciseId: String)
 
 /**
  * App-weiter Ablauf einer Meditation. Bewusst **nicht** an ein ViewModel/den UI-Lifecycle
@@ -100,6 +114,9 @@ class MeditationController(
 
     /** Id des Eintrags, den der reguläre Abschluss geschrieben hat (für das Befinden am Ende-Screen). */
     private var finishedEntryId: Long? = null
+
+    // Atemübung, in die diese Stille mündet: Ihr Eintrag bekommt die Stille, statt eines zweiten.
+    private var after: LoggedBreath? = null
 
     // Intervall-Gong an der AKTIVEN Zeit verankert (pausenbereinigt), damit Pausen nicht driften.
     private var gongIntervalMs = 0L
@@ -205,11 +222,13 @@ class MeditationController(
      * Stimme (idempotent; die Wahl setzt der Collector in init), ohne wird es freigegeben (S-45). Die
      * erste Ansage kommt frühestens 20 s nach dem Countdown und wartet sonst hinter dem Laden.
      * [entry]: frisch mit Countdown und Start-Gong, oder als Übergang ohne Countdown
-     * ([MeditationEntry], Eigentümer 2026-11-25: ein Bogen statt zweier Abläufe).
+     * ([MeditationEntry], Eigentümer 2026-11-25: ein Bogen statt zweier Abläufe). [afterBreath]: die
+     * Atemübung davor; ihr Logbuch-Eintrag bekommt die Stille („Atmen → Stille“, ein Eintrag).
      */
-    fun start(config: MeditationConfig, entry: MeditationEntry = MeditationEntry.FRESH) {
+    fun start(config: MeditationConfig, entry: MeditationEntry = MeditationEntry.FRESH, afterBreath: LoggedBreath? = null) {
         if (config.speech) audio.prepareSpeech() else audio.releaseSpeech()
         logEndedEarly() // eine laufende Sitzung wird ersetzt, nicht spurlos verworfen
+        after = afterBreath
         runnerJob?.cancel()
         finishing = false
         // „Nochmal“/neuer Start: Ein noch klingender End-Gong blendet kurz aus, statt durch den
@@ -236,7 +255,7 @@ class MeditationController(
             MeditationUiState(mode = config.mode, status = MeditationStatus.PREPARING, countdown = SessionTiming.COUNTDOWN_SECONDS)
         } else {
             MeditationUiState(mode = config.mode, status = MeditationStatus.RUNNING, remainingMs = totalMs)
-        }
+        }.copy(afterExerciseId = afterBreath?.exerciseId)
         // Foreground-Service startet die Dauer-Notification und hält den Prozess wach.
         service.start()
         // Kopfhörer abgezogen: stumm wie bei Fokusverlust, die Meditation läuft weiter (S-48).
@@ -300,6 +319,7 @@ class MeditationController(
         resumeRemainingMs = null
         resumeElapsedMs = null
         finishedEntryId = null
+        after = null
         // Zuerst IDLE setzen, dann Service/Notification entfernen: So kann der Notification-
         // Collector im Service (er überspringt IDLE) nach unserem cancel() nichts mehr nachposten.
         _state.value = MeditationUiState()
@@ -320,7 +340,19 @@ class MeditationController(
         if (finishing || (status != MeditationStatus.RUNNING && status != MeditationStatus.PAUSED)) return
         if (activeMsNow() < SessionTiming.MIN_LOG_MS) return
         val entry = logEntry()
-        scope.launch { logbook.append(entry) }
+        val link = after
+        scope.launch { record(entry, link) }
+    }
+
+    /**
+     * Schreibt die Sitzung ins Logbuch und gibt die Id des Eintrags zurück: nach einer Atemübung
+     * ([link]) an deren Eintrag angehängt („Atmen → Stille“, Dauer und Stille wachsen), sonst – auch
+     * wenn jener Eintrag fehlt oder nicht rechtzeitig kommt – als eigener Eintrag „Meditation“.
+     */
+    private suspend fun record(entry: SessionLogEntry, link: LoggedBreath?): Long {
+        val breathId = link?.let { withTimeoutOrNull(LINK_WAIT_MS) { it.entryId.await() } }
+        if (breathId != null && logbook.addSilence(breathId, entry.durationMs)) return breathId
+        return logbook.append(entry)
     }
 
     private fun logEntry() = SessionLogEntry(
@@ -479,7 +511,7 @@ class MeditationController(
         if (currentConfig.startEndGong) audio.gong() // fordert den Fokus selbst an (auch aus der Pause)
         // Hierher kommen nur der natürlich abgelaufene Timer und ein Beenden ab einer Minute (end()):
         // beide zählen nach der Logbuch-Regel ([SessionTiming.MIN_LOG_MS]).
-        finishedEntryId = logbook.append(logEntry())
+        finishedEntryId = record(logEntry(), after)
         // Die Bilanz am Ende zeigt dieselbe aktive Zeit, die ins Logbuch geht (nicht die Sollzeit).
         _state.update {
             it.copy(status = MeditationStatus.FINISHED, remainingMs = 0L, elapsedMs = clock.activeMs, feelingOptions = Feeling.CALM_SCALE)
@@ -509,6 +541,9 @@ class MeditationController(
 
         /** Wie oft die Sprachanleitung auf die aktive Zeit schaut. */
         private const val SPEECH_POLL_MS = 250L
+
+        /** So lange wartet die Stille höchstens auf den Eintrag der Atemübung davor (sonst eigener Eintrag). */
+        private const val LINK_WAIT_MS = 5_000L
     }
 }
 

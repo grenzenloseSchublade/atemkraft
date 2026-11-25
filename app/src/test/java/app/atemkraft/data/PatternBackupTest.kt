@@ -198,7 +198,7 @@ class PatternBackupTest {
      * Golden-Fixtures (A-18): Dateien, wie frühere Versionen sie geschrieben haben, in
      * `app/src/test/resources/backup/` – v1.6.8 (Version 1, nur Tagesmuster), 2.8.0 (d0a4061,
      * Version 1 mit Herkunft, Dauer und Folge), 2.9.0 (1e082f3, Version 2 „alles“) und 2.12.0 (Version 2
-     * mit „Danach Stille“ in den Anpassungen, `silence`, der Vibration als Welle, `hapticWave`, und der Ansage der Phasen, `speakPhases`). Feldreihenfolge,
+     * mit „Danach Stille“ in den Anpassungen, `silence`, der Stille am Logbuch-Eintrag, `silenceMs`, der Vibration als Welle, `hapticWave`, und der Ansage der Phasen, `speakPhases`). Feldreihenfolge,
      * Einrückung und `null`-Felder wie `PatternBackup.encode` damals. Dazu dieselbe Datei mit UTF-8-BOM,
      * wie ihn manche Editoren voranstellen. Jeder Formatwechsel bekommt hier eine Datei (PROCESS.md).
      */
@@ -229,7 +229,10 @@ class PatternBackupTest {
         // 2.12.0: dieselben Datenklassen wie heute – die Datei ist Byte für Byte, was encode schreibt.
         val current = fixture("v2-2.12.0.json").decodeToString()
         assertEquals(current, PatternBackup.encode(Json.decodeFromString(PatternBackupFile.serializer(), current)))
-        assertEquals(5, PatternBackup.decode(current, setOf("resonanz"))!!.settings!!.adjustments.getValue("resonanz").silence)
+        val decoded = PatternBackup.decode(current, setOf("resonanz"))!!
+        assertEquals(5, decoded.settings!!.adjustments.getValue("resonanz").silence)
+        // „Atmen → Stille“ ist ein Eintrag; die Stille steht in der Dauer.
+        assertEquals(listOf(180_000L, null, null), decoded.logbook.map { it.silenceMs })
         // 2.9.0: ohne `silence`, sonst gleich.
         val bytes = fixture("v2-2.9.0.json")
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

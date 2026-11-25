@@ -496,6 +496,13 @@ class BreathSessionController(
     }
 
     /**
+     * Der Logbuch-Eintrag des natürlichen Endes (Id, sobald geschrieben), solange der Ende-Zustand
+     * steht; `null` ohne Logbuch oder vor dem Ende. Für „Atmen → Stille“: Die Stille hängt sich daran
+     * ([LoggedBreath]), statt einen zweiten Eintrag zu schreiben.
+     */
+    fun finishedLogEntry(): Deferred<Long>? = finishedEntry.takeIf { _state.value.status == SessionStatus.FINISHED }
+
+    /**
      * Wie lange der Abschluss-Gong des natürlichen Endes noch klingt (ms); 0 ohne Ende-Screen, ohne Ton
      * oder stumm. „Danach in die Stille“ lässt ihn dann den Beginn der Stille sein, statt einen zweiten
      * Gong darüberzulegen ([MeditationEntry.ON_BREATH_GONG]).

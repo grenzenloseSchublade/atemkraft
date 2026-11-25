@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
  * gilt auch die Dauer (oder die offene Sitzung) des Tabs. Der Übergang hängt am Ablauf, nicht an
  * der Oberfläche: Der [BreathSessionController] meldet „fertig“ ([BreathSessionController.finished]),
  * dieser Koordinator startet die Meditation – auch hinter dem Sperrbildschirm sofort statt verspätet
- * beim nächsten Sichtbarwerden der App. Der Logbuch-Eintrag der Atemübung steht dann schon.
+ * beim nächsten Sichtbarwerden der App. Die Stille hängt sich an den Logbuch-Eintrag der Atemübung
+ * ([LoggedBreath]): ein Erlebnis, ein Eintrag „Atmen → Stille“ (Eigentümer 2026-11-25).
  *
  * Am Ende, wenn die Übung es wünscht ([SessionUiState.silenceAfter]: Startwert aus dem Blatt
  * „Anpassen“ bzw. der Einstellung, in der Übung oben umschaltbar). Der Ende-Screen bietet die Stille
@@ -92,7 +93,8 @@ class SilenceAfterBreath(
         val entry = if (breath.finishGongRemainingMs() > 0L) MeditationEntry.ON_BREATH_GONG else MeditationEntry.HANDOVER
         // Erst die Meditation (übernimmt den laufenden Foreground-Service), dann die Atem-Session
         // verwerfen (gibt ihren Halter frei) – in dieser Reihenfolge endet der Service nie dazwischen.
-        meditation.start(config, entry)
+        val logged = breath.finishedLogEntry()?.let { LoggedBreath(it, breath.state.value.exerciseId) }
+        meditation.start(config, entry, afterBreath = logged)
         _handedOver.value = true
         breath.stop()
     }

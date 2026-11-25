@@ -10,7 +10,8 @@ import app.atemkraft.domain.SessionLogEntry
 /**
  * Room-Persistenzform eines Logbuch-Eintrags. Familie als Enum-Name gespeichert (bei
  * Meditation `null`); [kind] unterscheidet Atemübung von Meditation. [feeling] ist das Befinden
- * danach unter seinem Enum-Namen ([Feeling]), `null` = nicht beantwortet (ab Schema v6).
+ * danach unter seinem Enum-Namen ([Feeling]), `null` = nicht beantwortet (ab Schema v6). [silenceMs]:
+ * Stille nach der Atemübung, schon in [durationMs] enthalten (ab Schema v8, „Atmen → Stille“).
  */
 @Entity(tableName = "log_entries")
 data class LogEntryEntity(
@@ -23,6 +24,7 @@ data class LogEntryEntity(
     val roundsCompleted: Int,
     val kind: String = SessionKind.BREATHING.name,
     val feeling: String? = null,
+    val silenceMs: Long? = null,
 )
 
 fun LogEntryEntity.toDomain(): SessionLogEntry = SessionLogEntry(
@@ -37,6 +39,7 @@ fun LogEntryEntity.toDomain(): SessionLogEntry = SessionLogEntry(
     roundsCompleted = roundsCompleted,
     kind = runCatching { SessionKind.valueOf(kind) }.getOrDefault(SessionKind.BREATHING),
     feeling = Feeling.fromName(feeling),
+    silenceMs = silenceMs,
 )
 
 fun SessionLogEntry.toEntity(): LogEntryEntity = LogEntryEntity(
@@ -48,4 +51,5 @@ fun SessionLogEntry.toEntity(): LogEntryEntity = LogEntryEntity(
     roundsCompleted = roundsCompleted,
     kind = kind.name,
     feeling = feeling?.name,
+    silenceMs = silenceMs,
 )

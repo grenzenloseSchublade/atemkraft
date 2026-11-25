@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
  *
  * 2.json stammt aus v1.3.1 (letzter Stand vor „Meine Muster“), 3.json aus v1.6.8 (letzter Stand
  * vor dem Muster-Editor), 5.json aus v2.8.0 (letzter Stand vor dem Befinden), 6.json aus v2.11.0 (letzter
- * Stand vor der vorherigen Fassung). Schema v1 gab es nur in v0.2, das nie öffentlich war.
+ * Stand vor der vorherigen Fassung); v8 hängt die Stille an den Logbuch-Eintrag. Schema v1 gab es nur in v0.2, das nie öffentlich war.
  * Eigene [Application], damit der App-Start nicht nebenher die echte Datenbank öffnet.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -172,7 +172,13 @@ class DatabaseMigrationTest {
             assertEquals("in:4,out:6", updated.previousPhases)
             assertEquals(5, updated.previousMinutes)
             assertEquals("Ruhig", updated.previousName)
-            assertEquals(Feeling.CALMER, room.logbookDao().all().first().single().toDomain().feeling)
+            val entry = room.logbookDao().all().first().single()
+            assertEquals(Feeling.CALMER, entry.toDomain().feeling)
+            // v8: ohne Stille; „Atmen → Stille“ hängt sie an denselben Eintrag, die Dauer wächst mit.
+            assertNull(entry.silenceMs)
+            assertEquals(1, room.logbookDao().addSilence(entry.id, 300000))
+            val joined = room.logbookDao().all().first().single()
+            assertEquals(720000L to 300000L, joined.durationMs to joined.silenceMs)
         }
     }
 
@@ -193,6 +199,6 @@ class DatabaseMigrationTest {
         const val DB_NAME = "migration-test.db"
 
         /** Aktuelle Schemaversion (`@Database(version = …)`). */
-        const val LATEST = 7
+        const val LATEST = 8
     }
 }

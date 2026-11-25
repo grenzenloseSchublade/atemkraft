@@ -43,9 +43,10 @@
             "family": "DOWNREGULATE",
             "kind": "BREATHING",
             "startedAtEpochMs": 1761300000000,
-            "durationMs": 300000,
+            "durationMs": 480000,
             "roundsCompleted": 30,
-            "feeling": "CALMER"
+            "feeling": "CALMER",
+            "silenceMs": 180000
         },
         {
             "exerciseId": "muster-2",
@@ -55,7 +56,8 @@
             "startedAtEpochMs": 1761350000000,
             "durationMs": 420000,
             "roundsCompleted": 26,
-            "feeling": null
+            "feeling": null,
+            "silenceMs": null
         },
         {
             "exerciseId": "meditation",
@@ -65,7 +67,8 @@
             "startedAtEpochMs": 1761400000000,
             "durationMs": 600000,
             "roundsCompleted": 0,
-            "feeling": "SAME"
+            "feeling": "SAME",
+            "silenceMs": null
         }
     ],
     "marked": [

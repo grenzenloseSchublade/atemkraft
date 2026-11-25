@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
  * @param durationMs Aktive Zeit ohne Pausen.
  * @param roundsCompleted Anzahl abgeschlossener Runden (bei Meditation 0).
  * @param feeling Befinden danach als Selbstauskunft ([Feeling], SEC-LEGAL-04); `null` = nicht beantwortet.
+ * @param silenceMs Stille nach der Atemübung („Atmen → Stille“, ein Eintrag), schon in [durationMs]
+ *   enthalten; `null` = keine.
  */
 @Serializable
 data class SessionLogEntry(
@@ -24,4 +26,5 @@ data class SessionLogEntry(
     val roundsCompleted: Int,
     val kind: SessionKind = SessionKind.BREATHING,
     val feeling: Feeling? = null,
+    val silenceMs: Long? = null,
 )

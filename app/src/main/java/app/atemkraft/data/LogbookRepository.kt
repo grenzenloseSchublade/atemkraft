@@ -22,6 +22,12 @@ class LogbookRepository(private val dao: LogbookDao) {
     /** Befinden danach (SEC-LEGAL-04): steht nur am Eintrag, die App rechnet nie damit. */
     suspend fun setFeeling(id: Long, feeling: Feeling?) = dao.setFeeling(id, feeling?.name)
 
+    /**
+     * Hängt die Stille nach einer Atemübung an deren Eintrag [id] (ein Eintrag „Atmen → Stille“);
+     * false, wenn es den Eintrag nicht mehr gibt (z. B. Logbuch inzwischen geleert).
+     */
+    suspend fun addSilence(id: Long, silenceMs: Long): Boolean = dao.addSilence(id, silenceMs) > 0
+
     /** Alle Einträge, älteste zuerst (Sicherung). */
     suspend fun snapshot(): List<SessionLogEntry> = dao.snapshot().map { it.toDomain() }
 
