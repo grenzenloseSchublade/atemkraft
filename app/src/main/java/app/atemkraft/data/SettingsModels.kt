@@ -79,6 +79,8 @@ data class SessionDisplay(
     val showSeconds: Boolean = true,
     val autoCalm: Boolean = true,
     val silenceAfter: Boolean = false,
+    /** „Nachklang“ (Eigentümer 2026-11-25): Der Kreis atmet nach dem Ende still aus, bevor „Spür kurz nach …“ kommt. */
+    val afterglow: Boolean = true,
 )
 
 /**

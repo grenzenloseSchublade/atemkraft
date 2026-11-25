@@ -37,6 +37,16 @@ object Motion {
      */
     val CalmFade = 500
 
+    /**
+     * Nachklang am Ende einer Atemübung (Eigentümer 2026-11-25): so lange atmet der Kreis still aus
+     * und erlischt, bevor „Spür kurz nach …“ kommt. Bewusst lang – ein Ausklang, keine UI-Bewegung
+     * im Sinn von MOTION-04.
+     */
+    val Afterglow = 18_000L
+
+    /** Nachklang bei Animator-Skala 0: Der Kreis steht still, nur eine kurze Ruhe. */
+    val AfterglowStill = 5_000L
+
     /** Knöpfe der Session-Steuerung erscheinen nach der Vorbereitung (`SessionControlBar`). */
     val ControlFade = 300
 

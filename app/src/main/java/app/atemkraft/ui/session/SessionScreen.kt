@@ -120,7 +120,11 @@ fun SessionScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        if (state.status == SessionStatus.FINISHED) {
+        val afterglow = rememberAfterglow(state, display)
+        val afterglowProgress = afterglow.fraction
+        if (state.status == SessionStatus.FINISHED && afterglowProgress != null) {
+            AfterglowContent(state, display, afterglowProgress, onSkip = afterglow.skip)
+        } else if (state.status == SessionStatus.FINISHED) {
             FinishedPanel(
                 title = stringResource(R.string.session_done_prompt),
                 onAgain = actions.onRestart,
@@ -195,12 +199,11 @@ private fun ActiveContent(
     val density = LocalDensity.current
     val guidanceHeight = with(density) { measurer.measure(TWO_LINES, guidanceStyle).size.height.toDp() }
     val nextRowHeight = with(density) { measurer.measure(ONE_LINE, nextStyle).size.height.toDp() }
-    val nextBlock = if (showNextPhase) Dimens.GapSmall + nextRowHeight else 0.dp
     SessionRunningLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(Dimens.SessionPadding),
-        centerExtra = Dimens.GapSmall + guidanceHeight + nextBlock,
+        centerExtra = sessionCenterExtra(display),
         chromeVisible = controlsVisible,
         top = {
             Column(
@@ -373,7 +376,7 @@ private fun ActiveContent(
  * rechnet SessionRunningLayout mit dem niedrigeren Kopf und der Kreis rückt hinein.
  */
 @Composable
-private fun SessionTitle(state: SessionUiState) {
+internal fun SessionTitle(state: SessionUiState) {
     val titleStyle = MaterialTheme.typography.titleSmall
     val roundColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
     val name: @Composable () -> Unit = {
@@ -433,6 +436,22 @@ private fun NextPhaseRow(nextPhaseType: PhaseType?, nextPhaseLabel: String?, min
             )
         }
     }
+}
+
+/**
+ * Fest reservierter Platz unter dem Kreis (LAYOUT-03): die Anleitungszeile mit zwei Zeilen ihres
+ * Stils, die „Als Nächstes“-Zeile mit einer. Geteilt mit dem Nachklang ([AfterglowContent]), damit
+ * der Kreis dort an derselben Stelle steht.
+ */
+@Composable
+internal fun sessionCenterExtra(display: SessionDisplay): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val guidanceStyle = MaterialTheme.typography.bodySmall.copy(lineBreak = LineBreak.Heading)
+    val guidanceHeight = with(density) { measurer.measure(TWO_LINES, guidanceStyle).size.height.toDp() }
+    val nextRowHeight = with(density) { measurer.measure(ONE_LINE, MaterialTheme.typography.labelSmall).size.height.toDp() }
+    val nextBlock = if (display.showNextPhase) Dimens.GapSmall + nextRowHeight else 0.dp
+    return Dimens.GapSmall + guidanceHeight + nextBlock
 }
 
 /** Messtexte für die reservierten Höhen: zwei Zeilen Anleitung (Hinweise sind kurz), eine „Als Nächstes“. */

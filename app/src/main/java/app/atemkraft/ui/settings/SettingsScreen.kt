@@ -568,6 +568,13 @@ private fun SessionDisplayCard(display: SessionDisplay, actions: SettingsActions
             onCheckedChange = actions::setShowNextPhase,
             hint = stringResource(R.string.settings_next_phase_hint),
         )
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+        ToggleRow(
+            label = stringResource(R.string.settings_afterglow),
+            checked = display.afterglow,
+            onCheckedChange = actions::setAfterglow,
+            hint = stringResource(R.string.settings_afterglow_hint),
+        )
     }
 }
 

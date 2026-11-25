@@ -85,6 +85,7 @@
         "showSeconds": false,
         "autoCalm": true,
         "silenceAfter": false,
+        "afterglow": true,
         "meditationAutoCalm": true,
         "meditationShowProgress": true,
         "meditationShowTime": true,

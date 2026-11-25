@@ -115,6 +115,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val SHOW_SECONDS = booleanPreferencesKey("show_session_seconds")
         val AUTO_CALM = booleanPreferencesKey("session_auto_calm")
         val SILENCE_AFTER = booleanPreferencesKey("session_silence_after")
+        val AFTERGLOW = booleanPreferencesKey("session_afterglow")
         val MED_AUTO_CALM = booleanPreferencesKey("med_auto_calm")
         val MED_SHOW_PROGRESS = booleanPreferencesKey("med_show_progress")
         val MED_SHOW_TIME = booleanPreferencesKey("med_show_time")
@@ -301,6 +302,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             showSeconds = display.showSeconds,
             autoCalm = display.autoCalm,
             silenceAfter = display.silenceAfter,
+            afterglow = display.afterglow,
             meditationAutoCalm = med.autoCalm,
             meditationShowProgress = med.showProgress,
             meditationShowTime = med.showTime,
@@ -339,6 +341,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             backup.showSeconds?.let { prefs[Keys.SHOW_SECONDS] = it }
             backup.autoCalm?.let { prefs[Keys.AUTO_CALM] = it }
             backup.silenceAfter?.let { prefs[Keys.SILENCE_AFTER] = it }
+            backup.afterglow?.let { prefs[Keys.AFTERGLOW] = it }
             backup.meditationAutoCalm?.let { prefs[Keys.MED_AUTO_CALM] = it }
             backup.meditationShowProgress?.let { prefs[Keys.MED_SHOW_PROGRESS] = it }
             backup.meditationShowTime?.let { prefs[Keys.MED_SHOW_TIME] = it }
@@ -417,6 +420,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             showSeconds = prefs[Keys.SHOW_SECONDS] ?: defaults.showSeconds,
             autoCalm = prefs[Keys.AUTO_CALM] ?: defaults.autoCalm,
             silenceAfter = prefs[Keys.SILENCE_AFTER] ?: defaults.silenceAfter,
+            afterglow = prefs[Keys.AFTERGLOW] ?: defaults.afterglow,
         )
     }
 
@@ -512,6 +516,10 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setSilenceAfter(enabled: Boolean) {
         store.edit { it[Keys.SILENCE_AFTER] = enabled }
+    }
+
+    suspend fun setAfterglow(enabled: Boolean) {
+        store.edit { it[Keys.AFTERGLOW] = enabled }
     }
 
     val meditationDisplay: Flow<MeditationDisplay> = data.map { prefs ->

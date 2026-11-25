@@ -89,6 +89,11 @@ data class SessionUiState(
     val progress: Float = 0f,
     /** Bilanz für den Ende-Bildschirm; nur bei [SessionStatus.FINISHED] gesetzt. */
     val summary: SessionSummary? = null,
+    /**
+     * Zeitpunkt des natürlichen Endes auf der Session-Uhr (`SystemClock.elapsedRealtime`); ab hier
+     * läuft der Nachklang am Ende-Screen. `null` vor dem Ende und in Vorschauen.
+     */
+    val finishedAtMs: Long? = null,
     /** Darf nach dieser Übung die stille Meditation folgen ([Exercise.silenceAfterAllowed])? */
     val silenceAfterAllowed: Boolean = false,
     /**
@@ -472,6 +477,7 @@ class BreathSessionController(
                 elapsedMs = 0L,
                 progress = 1f,
                 summary = sessionSummary(timeline, clock.activeMs),
+                finishedAtMs = finishedAtMs,
             )
         }
         // Foreground-Service erst nach dem Ausklingen des Abschluss-Gongs lösen, damit er hinter dem

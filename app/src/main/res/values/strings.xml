@@ -378,6 +378,11 @@
     <string name="settings_next_phase_hint">Nennt unter dem Kreis die kommende Phase, hilfreich, solange dir ein Muster neu ist.</string>
     <string name="settings_silence_after">Danach in die Stille</string>
     <string name="settings_silence_after_hint">Nach dem Ende beginnt nahtlos die stille Meditation, mit Gong und Stimme wie im Tab „Meditation“ und zunächst so lange wie dort. Hier wählst du nur den Startwert: Je Übung stellst du die Stille unter „Anpassen“ ein, in der Übung schaltest du sie oben mit dem Meditations-Symbol um.</string>
+    <string name="settings_afterglow">Nachklang</string>
+    <string name="settings_afterglow_hint">Nach dem Ende atmet der Kreis noch einmal still aus und erlischt, bevor du nachspürst. Ein Tipp überspringt ihn.</string>
+    <!-- Nachklang am Ende einer Atemübung: Name für TalkBack und Aktion des Tipps (überspringt). -->
+    <string name="session_afterglow">Nachklang</string>
+    <string name="session_afterglow_skip">überspringen</string>
     <string name="settings_auto_calm">Automatisch ausblenden</string>
     <string name="settings_auto_calm_hint">Titel, Knöpfe und Statusleiste treten nach wenigen Sekunden zurück; ein Tipp neben den Kreis holt sie wieder.</string>
     <!-- Meditation: dieselbe Wirkung wie bei der Atemübung, dort erklärt (nichts doppelt). -->

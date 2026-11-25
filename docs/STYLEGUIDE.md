@@ -430,7 +430,7 @@ Auswahl für den Bau: welche Komponente wofür, was sie nicht ist (→ Alternati
 
 ## <a id="bewegung"></a>8 Bewegung
 
-**Tokens:** Dauern und Animations-Specs nur aus `Motion.*` ([Motion.kt](../app/src/main/java/app/atemkraft/ui/theme/Motion.kt), Wert und Zweck je Token in der KDoc); Übergänge der Navigation: [spec/navigation.md](spec/navigation.md).
+**Tokens:** Dauern und Animations-Specs nur aus `Motion.*` ([Motion.kt](../app/src/main/java/app/atemkraft/ui/theme/Motion.kt), Wert und Zweck je Token in der KDoc); ruhige Ausklänge (`CalmFade`, Nachklang `Afterglow`/`AfterglowStill`) sind keine UI-Bewegung im Sinn von MOTION-04; Übergänge der Navigation: [spec/navigation.md](spec/navigation.md).
 
 | ID | Stufe | Regel | Warum | Prüfung |
 |---|---|---|---|---|
@@ -515,6 +515,7 @@ Ziel: WCAG 2.2 AA (nach WCAG2ICT) plus Android-Richtlinien.
 | 6 Atemzüge pro Minute, danach im selben Text kurz 6/min | Atemzüge/Minute, Züge pro Minute |
 | Klang (Karte mit Lautstärke und Gong), Ton (Tonart beim Atmen: Aus, Töne, Dauerton) | Ton für beides |
 | Danach in die Stille (Einstellung, Schalter und Ende-Screen gleich) | Übergang, Nachmeditation |
+| Nachklang (der Kreis atmet nach dem Ende still aus, Schalter in „Anzeige der Atemübung“) | Abklingen, Outro, Ausklang |
 | ca. (Anleitung, UI), etwa (Fließtext) | ~ |
 
 ## <a id="code"></a>12 Code (Compose und Kotlin)

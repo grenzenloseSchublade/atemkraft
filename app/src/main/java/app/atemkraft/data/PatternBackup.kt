@@ -98,6 +98,7 @@ data class SettingsBackup(
     val showSeconds: Boolean? = null,
     val autoCalm: Boolean? = null,
     val silenceAfter: Boolean? = null,
+    val afterglow: Boolean? = null,
     val meditationAutoCalm: Boolean? = null,
     val meditationShowProgress: Boolean? = null,
     val meditationShowTime: Boolean? = null,

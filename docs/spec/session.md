@@ -13,7 +13,7 @@ Regel: [STYLEGUIDE MUSTER-07](../STYLEGUIDE.md#muster). Hier steht, wie die lauf
 
 ## Anzeige-Optionen
 
-Bogen, Sekunden und „Als Nächstes“ sind in den Einstellungen abschaltbar („Anzeige der Atemübung“, `SessionDisplay`); der Countdown vor dem Start zählt immer. Die Meditation hat eigene Schalter (`MeditationDisplay`: Automatisch ausblenden, Fortschrittsring, Zeit im Kreis).
+Bogen, Sekunden, „Als Nächstes“ und der Nachklang am Ende sind in den Einstellungen abschaltbar („Anzeige der Atemübung“, `SessionDisplay`); der Countdown vor dem Start zählt immer. Die Meditation hat eigene Schalter (`MeditationDisplay`: Automatisch ausblenden, Fortschrittsring, Zeit im Kreis).
 
 ## Ruhe-Ansicht
 
@@ -34,6 +34,8 @@ Beide Sitzungsarten laufen app-weit weiter (`MeditationController`, `BreathSessi
 **Benachrichtigung und Kopfhörer-Taste:** Die Dauer-Benachrichtigung (`PlaybackService`) trägt neben „Beenden“ davor „Pause“ bzw. „Weiter“, solange der laufende Ablauf das auch im Overlay kann (Atemübung und Meditation im Lauf bzw. pausiert; nicht im Countdown, nicht im offenen Halten). Dieselbe Steuerung hat eine Plattform-`MediaSession` (keine Bibliothek): Die Taste am Kopfhörer pausiert und setzt fort, im Countdown und offenen Halten bewirkt sie nichts. Die Benachrichtigung bleibt die ruhige Status-Zeile ohne Media-Player-Ansicht; die Metadaten der Session sind so generisch wie ihr Titel („Atemübung läuft“, „Meditation läuft“), nie der Name der Übung (SEC-PRIV-03). Ohne laufenden Ablauf ist die Session inaktiv; eine verwaiste Benachrichtigung räumt jede ihrer Aktionen weg. Im Moment des Übergangs in die Stille gilt sie der Meditation.
 
 ## Ende
+
+**Nachklang** (nur Atemübung, Eigentümer 2026-11-25, `AfterglowContent`): Kommt eine Übung von selbst zu Ende, atmet der Kreis erst noch `Motion.Afterglow` (18 s) still aus und erlischt – ohne Zahl, Kopf und Steuerung ausgeblendet, ihr Platz bleibt (dasselbe Gerüst wie die Ruhe-Ansicht, der Kreis steht, wo er stand). Erst dann der Ende-Screen. Ein Tipp irgendwo überspringt ihn (TalkBack: „Nachklang“, Aktion „überspringen“, Live-Region). Die Zeit läuft ab dem Ende auf der Session-Uhr (`SessionUiState.finishedAtMs`, MOTION-01): Wer das Overlay später öffnet, sieht den Rest oder gleich den Ende-Screen. Nicht mit „Danach in die Stille“ (das Ende mündet dort in die Stille), nicht nach „Beenden“; Logbuch, Befinden und „Nochmal“ wie bisher. Bei Animator-Skala 0 steht der Kreis still, nur `Motion.AfterglowStill` (5 s). Abschaltbar: „Nachklang“ in „Anzeige der Atemübung“ (`SessionDisplay.afterglow`, Standard an).
 
 Beide Sitzungsarten gleich: „✓ Geschafft“ (`paneTitle` „Geschafft“), die Einladung „Spür kurz nach, wie es dir geht.“, darunter die Antwortreihe zum Befinden (siehe unten), Bilanz nur aus echten Werten (`sessionSummaryParts`; Meditation: Dauer; TalkBack hört die Dauer ausgeschrieben, „6 Minuten 24 Sekunden“), „Nochmal“/„Ende“ (`FinishedPanel`, bei Tastatur Fokus auf „Nochmal“), darunter „Im Logbuch ansehen ›“ (`AppTextButton` + `ForwardLinkText`, beendet wie „Ende“ und öffnet das Logbuch) und ohne Stille-Wunsch „In die Stille ›“.
 
