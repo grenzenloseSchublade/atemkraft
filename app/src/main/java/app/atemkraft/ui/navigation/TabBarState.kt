@@ -227,9 +227,10 @@ class TabBarState {
     /**
      * Wischen an den Leisten der Tiefe (Nutzer 2026-10-30: „mit von unten nach oben wischen im unteren
      * Bereich soll die Tab-Leiste geöffnet werden“): nach oben öffnet die Leiste ([opens]), nach unten
-     * schließt sie ([closes]). Startleiste, Mini-Leiste, Griff und Tab-Leiste können beides (Eigentümer
-     * 2026-11-24: wo hoch öffnet, schließt runter); das Band über dem Inhalt ([detectBottomSwipe]) nur
-     * öffnen, nach unten scrollt dort der Inhalt. Zentral in `PinnedActionBar`, [HideableTabBar],
+     * schließt sie ([closes]). Mini-Leiste, Griff und Tab-Leiste können beides (Eigentümer
+     * 2026-11-24: wo hoch öffnet, schließt runter); die Startleiste nur schließen – geöffnet wird an
+     * ihrem unteren Rand vom Streifen über dem Inhalt ([detectBottomSwipe], Eigentümer 2026-11-25),
+     * der nur öffnet, nach unten scrollt dort der Inhalt. Zentral in `PinnedActionBar`, [HideableTabBar],
      * [TabBarToggle] und im App-Rahmen (`with(state) { detectSwipe(…) }` in `pointerInput`); keine
      * Seite tut etwas dafür.
      *
@@ -380,14 +381,14 @@ class TabBarState {
     private fun travelOr(fallback: Float): Float = travel.takeIf { it > 0f } ?: fallback
 
     /**
-     * Wischen nach oben im unteren Bereich einer Seite ohne Startleiste (im App-Rahmen auf dem Inhalt):
-     * Die eingeklappte Leiste ist dort nur der Platz der Systemnavigation, und der gehört dem System.
-     * Darum zählt ein Band über den unteren Leisten, über die ganze Breite – [Sizes.TabBarSwipeBand]
-     * hoch, quer höchstens [Sizes.TabBarSwipeBandMaxShare] der Fensterhöhe ([windowHeight];
-     * Eigentümer 2026-11-24); am Ende jeder Seite der Tiefe liegt in seinem unteren Teil nichts.
-     * Gewertet vor dem Inhalt ([PointerEventPass.Initial]), sonst nähme ein scrollender Inhalt die
-     * Geste; Tipps, Wischen nach unten und zur Seite bleiben ihm. Mit Startleiste wischt man auf ihr
-     * ([anchoredToPinnedBar]).
+     * Wischen nach oben am unteren Rand jeder Seite der Tiefe (im App-Rahmen auf dem Inhalt): Die
+     * eingeklappte Leiste ist dort nur der Platz der Systemnavigation, und der gehört dem System.
+     * Darum zählt ein schmaler Streifen über den unteren Leisten, über die ganze Breite –
+     * [Sizes.TabBarSwipeBand] hoch, quer höchstens [Sizes.TabBarSwipeBandMaxShare] der Fensterhöhe
+     * ([windowHeight]). Auf jeder Seite gleich, auch über einer Startleiste (dort ihr unterer Rand;
+     * Eigentümer 2026-11-25: weiter oben, etwa auf „Anpassen ›“, öffnet Wischen nicht mehr). Gewertet
+     * vor dem Inhalt ([PointerEventPass.Initial]), sonst nähme ein scrollender Inhalt oder die
+     * Startleiste die Geste; Tipps (auch auf Start), Wischen nach unten und zur Seite bleiben ihm.
      */
     suspend fun PointerInputScope.detectBottomSwipe(windowTop: () -> Float) {
         val band = Sizes.TabBarSwipeBand.toPx()
@@ -396,7 +397,7 @@ class TabBarState {
             closes = false,
             claim = false,
             pass = PointerEventPass.Initial,
-            from = { if (anchoredToPinnedBar) Float.NaN else bottomBarTop - minOf(band, windowHeight * Sizes.TabBarSwipeBandMaxShare) },
+            from = { bottomBarTop - minOf(band, windowHeight * Sizes.TabBarSwipeBandMaxShare) },
             windowTop = windowTop,
         )
     }

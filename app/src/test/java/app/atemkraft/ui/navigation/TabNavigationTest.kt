@@ -92,11 +92,11 @@ class TabNavigationTest {
     }
 
     /**
-     * Tab-Leiste in der Tiefe wie im App-Rahmen: Wischen nach oben auf der Startleiste öffnet sie,
-     * Wischen nach unten auf der offenen Leiste schließt sie, ein Tipp auf Start bleibt ein Tipp
-     * (das Wischen wertet erst nach dem Touch-Slop), und der Griff klappt sie per Tipp um. Ohne
-     * Startleiste öffnet Wischen nach oben im Band über den unteren Leisten, auch über scrollendem
-     * Inhalt; weiter oben scrollt der Inhalt. Entschieden wird beim Loslassen: Zurückziehen bricht
+     * Tab-Leiste in der Tiefe wie im App-Rahmen: Wischen nach oben am unteren Rand der Startleiste
+     * (im Streifen über den unteren Leisten) öffnet sie, Wischen nach unten auf der offenen Leiste
+     * schließt sie, ein Tipp auf Start bleibt ein Tipp (das Wischen wertet erst nach dem Touch-Slop),
+     * und der Griff klappt sie per Tipp um. Ohne Startleiste öffnet Wischen nach oben im selben
+     * Streifen, auch über scrollendem Inhalt; weiter oben scrollt der Inhalt. Entschieden wird beim Loslassen: Zurückziehen bricht
      * ab, ein kurzer schneller Wisch unter der Strecke öffnet (Tempo ab 125 dp/s).
      */
     @Test
@@ -106,7 +106,7 @@ class TabNavigationTest {
         var pinned by mutableStateOf(true)
         val scroll = ScrollState(0)
         rule.setContent { TabFrame(state, scroll, pinned = { pinned }, onStart = { started++ }) }
-        rule.onNodeWithTag(PINNED).performTouchInput { swipeUp() }
+        rule.onNodeWithTag(PINNED).performTouchInput { swipeUp(startY = bottom - 4.dp.toPx()) }
         rule.runOnIdle { assertFalse(state.collapsed) }
         rule.onNodeWithTag(TAB_BAR).performTouchInput { swipeDown() }
         rule.runOnIdle { assertTrue(state.collapsed) }
@@ -118,7 +118,7 @@ class TabNavigationTest {
         rule.onNodeWithTag(TAB_BAR_GRIP_TAG).performClick()
         rule.runOnIdle { assertFalse(state.collapsed) }
 
-        // Seite ohne Startleiste: oben scrollt Wischen den Inhalt, im Band unten öffnet es die Leiste.
+        // Seite ohne Startleiste: oben scrollt Wischen den Inhalt, im Streifen unten öffnet es die Leiste.
         rule.onNodeWithTag(TAB_BAR_GRIP_TAG).performClick()
         rule.runOnIdle { pinned = false }
         rule.onNodeWithTag(CONTENT).performTouchInput { swipe(Offset(centerX, centerY), Offset(centerX, top)) }
@@ -127,7 +127,7 @@ class TabNavigationTest {
             assertTrue(scroll.value > 0)
         }
         val scrolled = scroll.value
-        // Neben dem Griff (der sitzt mittig), damit das Band selbst wischt.
+        // Neben dem Griff (der sitzt mittig), damit der Streifen selbst wischt.
         rule.onNodeWithTag(CONTENT).performTouchInput { swipe(Offset(width / 8f, bottom - 1f), Offset(width / 8f, centerY)) }
         rule.runOnIdle {
             assertFalse(state.collapsed)
@@ -155,18 +155,25 @@ class TabNavigationTest {
     /**
      * Die Startleiste wandert mit der Leiste nach oben; der Weg zählt trotzdem 1:1 (Review 2026-11-24:
      * vorher in ihren eigenen Koordinaten, ein langsamer Wisch über 30 dp öffnete nicht). Zwischen den
-     * Schritten wird ausgelegt, wie am Gerät. Symmetrisch (Eigentümer 2026-11-24): Wischen nach unten
-     * auf der Startleiste schließt, und ein Wisch nach oben auf der offenen Leiste startet nichts.
+     * Schritten wird ausgelegt, wie am Gerät. Geöffnet wird nur im schmalen Streifen am unteren Rand
+     * (Eigentümer 2026-11-25): Weiter oben auf der Startleiste öffnet ein Wisch nach oben nicht und
+     * startet nichts. Wischen nach unten auf der Startleiste schließt (Eigentümer 2026-11-24), und ein
+     * Wisch nach oben auf der offenen Leiste startet nichts.
      */
     @Test
     fun `Startleiste wischt 1 zu 1 in beide Richtungen, ein Wisch ist kein Tipp`() {
         val state = TabBarState().apply { enter(onTab = false, tab = TopTab.START) }
         var started = 0
         rule.setContent { TabFrame(state, ScrollState(0), pinned = { true }, onStart = { started++ }) }
-        fun slowly(dp: Int) {
-            rule.onNodeWithTag(PINNED).performTouchInput { down(center) }
+        fun slowly(dp: Int, atBottom: Boolean = true) {
+            rule.onNodeWithTag(PINNED).performTouchInput { down(Offset(centerX, if (atBottom) bottom - 4.dp.toPx() else top + 4.dp.toPx())) }
             repeat(5) { rule.onNodeWithTag(PINNED).performTouchInput { moveBy(Offset(0f, (dp / 5).dp.toPx()), delayMillis = 100) } }
             rule.onNodeWithTag(PINNED).performTouchInput { up() }
+        }
+        slowly(-30, atBottom = false)
+        rule.runOnIdle {
+            assertTrue(state.collapsed)
+            assertEquals(0, started)
         }
         slowly(-30)
         rule.runOnIdle { assertFalse(state.collapsed) }
@@ -199,7 +206,7 @@ class TabNavigationTest {
         }
     }
 
-    /** Rahmen wie in der App: Inhalt mit Band, optional Startleiste, darunter die Tab-Leiste, darüber der Griff. */
+    /** Rahmen wie in der App: Inhalt mit Wischstreifen, optional Startleiste, darunter die Tab-Leiste, darüber der Griff. */
     @Composable
     private fun TabFrame(state: TabBarState, scroll: ScrollState, pinned: () -> Boolean, onStart: () -> Unit) {
         var contentTop by remember { mutableFloatStateOf(0f) }

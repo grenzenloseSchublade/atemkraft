@@ -28,10 +28,12 @@ import app.atemkraft.ui.theme.Dimens
  * Im App-Rahmen meldet sie ihre Oberkante beim [TabBarState] an ([LocalTabBarState]), mit ihrer
  * Seite (`LocalLifecycleOwner`, im NavHost der Stapel-Eintrag): In der Tiefe sitzt dort der Griff,
  * der die Tab-Leiste auf- und zuklappt (`TabBarToggle`, Tippfläche ganz über der Kante) – nur auf
- * der Startleiste der gezeigten Seite, nicht auf einer, die gerade hinausgleitet. Wischen nach oben
- * auf der Leiste öffnet die Tab-Leiste, nach unten schließt es sie (`TabBarState.detectSwipe`, erst
- * nach dem Touch-Slop – Tipps auf Start und „Anpassen ›“ bleiben Tipps, ein Wischen startet nie).
- * Auf den Tabs ändert das Wischen nichts.
+ * der Startleiste der gezeigten Seite, nicht auf einer, die gerade hinausgleitet. Wischen nach unten
+ * auf der Leiste schließt die offene Tab-Leiste (`TabBarState.detectSwipe`, erst nach dem
+ * Touch-Slop – Tipps auf Start und „Anpassen ›“ bleiben Tipps, ein Wischen startet nie). Geöffnet
+ * wird nur am unteren Rand, im Streifen `TabBarSwipeBand` (`detectBottomSwipe` im App-Rahmen;
+ * Eigentümer 2026-11-25: die ganze Leiste war viel zu hoch angesetzt). Auf den Tabs ändert das
+ * Wischen nichts.
  */
 @Composable
 fun PinnedActionBar(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
@@ -46,7 +48,7 @@ fun PinnedActionBar(modifier: Modifier = Modifier, content: @Composable BoxScope
             } else {
                 Modifier
                     .onGloballyPositioned { tabBar.anchorPinnedBar(owner, page, it.positionInRoot().y) }
-                    .pointerInput(tabBar) { with(tabBar) { detectSwipe(opens = true, closes = true) { pinnedTop(owner) } } }
+                    .pointerInput(tabBar) { with(tabBar) { detectSwipe(opens = false, closes = true) { pinnedTop(owner) } } }
             },
         ),
         tonalElevation = Dimens.PinnedBarElevation,

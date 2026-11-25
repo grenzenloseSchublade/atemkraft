@@ -53,18 +53,18 @@ object Sizes {
     val TabBarSwipeVelocity = 125.dp
 
     /**
-     * Band über den unteren Leisten, in dem Wischen nach oben die Tab-Leiste öffnet, auf Seiten der
-     * Tiefe ohne Startleiste (96, doppelte Tippfläche; Eigentümer 2026-10-31: 48 war praktisch nur
-     * der Griff). Nur Wischen nach oben gehört dem Band; Tipps, Wischen nach unten und zur Seite
-     * bleiben dem Inhalt. Ein Hochwischen zum Scrollen, das so tief aufsetzt, öffnet die Leiste.
-     * Quer begrenzt [TabBarSwipeBandMaxShare].
+     * Streifen über den unteren Leisten, in dem Wischen nach oben die eingeklappte Tab-Leiste öffnet –
+     * auf jeder Seite der Tiefe gleich, auch über einer Startleiste (dort ihr unterer Rand). 32, nur
+     * der unterste Rand der App (Eigentümer 2026-11-25 am A54: 96 und die ganze Startleiste waren
+     * „viel zu hoch angesetzt“, seit die Leiste 1:1 folgt und nach 24 dp auslöst, griff die große
+     * Zone ständig). Nur Wischen nach oben gehört dem Streifen; Tipps, Wischen nach unten und zur
+     * Seite bleiben dem Inhalt. Quer begrenzt [TabBarSwipeBandMaxShare].
      */
-    val TabBarSwipeBand = 96.dp
+    val TabBarSwipeBand = 32.dp
 
     /**
-     * Höchstens dieser Anteil der Fensterhöhe ist Wischband ([TabBarSwipeBand]; Eigentümer 2026-11-24):
-     * hochkant bleibt es 96 (ab 640 Höhe), quer schrumpft es (412 hoch: rund 62), damit dort nicht ein
-     * Viertel der Fläche statt zu scrollen die Tab-Leiste öffnet.
+     * Höchstens dieser Anteil der Fensterhöhe ist Wischstreifen ([TabBarSwipeBand]; Eigentümer
+     * 2026-11-24): Grenze für sehr niedrige Fenster; mit 32 greift sie erst unter rund 213 Höhe.
      */
     val TabBarSwipeBandMaxShare = 0.15f
 

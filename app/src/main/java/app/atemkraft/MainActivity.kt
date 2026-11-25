@@ -174,7 +174,7 @@ private fun AtemkraftApp(
                     modifier = Modifier
                         .padding(innerPadding)
                         .fillMaxWidth()
-                        // Wischen nach oben im unteren Bereich einer Seite ohne Startleiste öffnet die
+                        // Wischen nach oben am unteren Rand jeder Seite der Tiefe (schmaler Streifen) öffnet die
                         // Tab-Leiste, über die ganze Breite und vor dem Scrollen des Inhalts.
                         .onGloballyPositioned { contentTop = it.positionInRoot().y }
                         .pointerInput(tabBar) { with(tabBar) { detectBottomSwipe { contentTop } } }
