@@ -219,11 +219,14 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     /**
      * Gewählte Sammlung im Tab „Eigene“ (Umschalter „Eigene Kreationen | Tut mir gut“, Nutzer
-     * 2026-10-31), als Name von [OwnCollection]; fehlt oder unbekannt = Kreationen. Ansichtswahl
-     * dieses Geräts, nicht Teil der Sicherung.
+     * 2026-10-31), als Name von [OwnCollection]. Hat der Nutzer nie selbst gewählt (oder ist der Wert
+     * unbekannt), steht „Tut mir gut“ vorn, sobald etwas markiert ist, sonst die Kreationen
+     * (Eigentümer 2026-11-25: Die meisten bauen nie ein eigenes Muster und sahen zuerst eine leere
+     * Sammlung). Ansichtswahl dieses Geräts, nicht Teil der Sicherung.
      */
     val ownCollection: Flow<OwnCollection> = data.map { prefs ->
-        OwnCollection.entries.firstOrNull { it.name == prefs[Keys.OWN_COLLECTION] } ?: OwnCollection.CREATIONS
+        OwnCollection.entries.firstOrNull { it.name == prefs[Keys.OWN_COLLECTION] }
+            ?: if (prefs[Keys.MARKED_EXERCISES].isNullOrEmpty()) OwnCollection.CREATIONS else OwnCollection.FAVORITES
     }
 
     suspend fun setOwnCollection(collection: OwnCollection) {
