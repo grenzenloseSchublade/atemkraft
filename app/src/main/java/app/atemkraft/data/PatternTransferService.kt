@@ -1,5 +1,6 @@
 package app.atemkraft.data
 
+import app.atemkraft.domain.ExerciseIds
 import kotlinx.coroutines.flow.first
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -14,8 +15,9 @@ import java.io.OutputStream
  * (Storage Access Framework), auf welchem Thread es läuft und welche Texte das Ergebnis meldet,
  * entscheidet der Aufrufer (`rememberPatternTransfer`).
  *
- * [builtInIds]: Ids der eingebauten Übungen – nur sie tragen Markierungen und Anpassungen in den
- * Einstellungen (die der Muster stehen am Muster).
+ * [builtInIds]: Ids der eingebauten Übungen – nur sie tragen Anpassungen in den Einstellungen, und
+ * nur sie und die Meditation stehen in der Liste der Markierungen (Anpassungen und Markierung eines
+ * Musters stehen am Muster).
  */
 class PatternTransferService(
     private val saved: SavedPatternsRepository,
@@ -28,10 +30,11 @@ class PatternTransferService(
      * Gibt die Zahl der Kreationen und Logbuch-Einträge zurück.
      */
     suspend fun export(nowEpochMs: Long, open: () -> OutputStream): ExportSummary {
-        val patterns = saved.exportFile(nowEpochMs) { id -> settings.exerciseIntervals(id).first() }
+        val marked = settings.markedExercises.first()
+        val patterns = saved.exportFile(nowEpochMs, overridesOf = { id -> settings.exerciseIntervals(id).first() }, markedOf = { id -> id in marked })
         val file = patterns.copy(
             logbook = logbook.snapshot().map(PatternBackup::logEntry),
-            marked = settings.markedExercises.first().filter { it in builtInIds }.sorted(),
+            marked = marked.filter { it in builtInIds || it == ExerciseIds.MEDITATION }.sorted(),
             settings = settings.exportSettings(builtInIds),
         )
         open().bufferedWriter().use { it.write(PatternBackup.encode(file)) }
@@ -55,9 +58,11 @@ class PatternTransferService(
      * mit [withSettings].
      */
     suspend fun apply(decoded: DecodedBackup, withSettings: Boolean): ApplyResult {
-        val patterns = saved.import(decoded.entries) { id, o ->
-            settings.setExerciseIntervals(id, o.toIntervals())
-        }
+        val patterns = saved.import(
+            decoded.entries,
+            writeOverrides = { id, o -> settings.setExerciseIntervals(id, o.toIntervals()) },
+            mark = { id -> settings.setExerciseMarked(id, marked = true) },
+        )
         val logAdded = logbook.merge(decoded.logbook)
         settings.addMarkedExercises(decoded.marked)
         val settingsApplied = withSettings && decoded.settings != null

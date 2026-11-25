@@ -2,7 +2,7 @@
 
 Regeln: Anatomie in [STYLEGUIDE §4.5](../STYLEGUIDE.md#anatomie) (Knopfleiste unten, Bottom Sheet), MUSTER-11 (Bottom Sheet), MUSTER-10 (Phasen eigener Muster nur im Editor). Entscheidungen in [DECISIONS.md](../DECISIONS.md). Code: `ui/detail/`.
 
-Gerüst: `PushScaffold` – Kopf mit Name und Markierung bzw. Stift (bei gespeicherten und eigenen Mustern Stift und Löschen) fest, Inhalt scrollt, unten bei getakteten Übungen die gepinnte Start-Leiste (`PinnedActionBar`).
+Gerüst: `PushScaffold` – Kopf mit Name und Markierung ◉ bzw. Stift (beim Muster des Tages nur der Stift; bei gespeicherten und eigenen Mustern ◉, Stift und Löschen, zerstörend außen; seit 2026-11-25 sind auch sie „Tut mir gut“) fest, Inhalt scrollt, unten bei getakteten Übungen die gepinnte Start-Leiste (`PinnedActionBar`).
 
 ## Kopf und Rhythmus (oben)
 

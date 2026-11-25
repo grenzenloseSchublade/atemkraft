@@ -57,6 +57,7 @@ import app.atemkraft.ui.components.CHIP_TEXT_TAG
 import app.atemkraft.ui.components.MARQUEE_TEXT_TAG
 import app.atemkraft.ui.components.TITLE_ROW_TITLE_TAG
 import app.atemkraft.ui.components.badBreakAt
+import app.atemkraft.ui.meditation.MeditationHeader
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AppTabBar
 import app.atemkraft.ui.navigation.HideableTabBar
@@ -559,7 +560,7 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
             initialConfig = config,
             speechAvailable = true,
             gongIntervalMin = gongIntervalMin,
-            onOpenSettings = {},
+            header = MeditationHeader(onOpenSettings = {}, onMarkedChange = {}),
             onDurationTick = {},
             onStart = {},
         )

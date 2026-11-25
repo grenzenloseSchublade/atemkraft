@@ -3,8 +3,8 @@ package app.atemkraft.domain
 /**
  * Übungs-Kennungen generierter Muster an einer Stelle: das Muster des Tages, der noch nicht
  * gespeicherte Entwurf im Muster-Editor und gespeicherte Muster („muster-7“ für den Eintrag mit
- * der Datenbank-Id 7). Eingebaute Übungen tragen ihre Kennung selbst (Datenschicht,
- * `BuiltInExercises`).
+ * der Datenbank-Id 7), dazu die stille Meditation ([MEDITATION]). Eingebaute Übungen tragen ihre
+ * Kennung selbst (Datenschicht, `BuiltInExercises`).
  */
 object ExerciseIds {
     /** Das Muster des Tages auf dem Atmen-Tab. */
@@ -12,6 +12,12 @@ object ExerciseIds {
 
     /** Der noch nicht gespeicherte Entwurf im Muster-Editor („Starten“ ohne Speichern). */
     const val DRAFT = "muster-entwurf"
+
+    /**
+     * Die stille Meditation (Tab „Meditation“): Kennung ihrer Logbuch-Einträge und ihrer Markierung
+     * „Tut mir gut“. Nie umbenennen – sie steht in Logbuch und Sicherung.
+     */
+    const val MEDITATION = "meditation"
 
     /** Präfix gespeicherter Muster (z. B. „muster-7“). */
     const val SAVED_PREFIX = "muster-"

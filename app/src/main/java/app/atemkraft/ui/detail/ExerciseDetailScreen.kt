@@ -94,7 +94,8 @@ import kotlin.math.roundToInt
  * Was die Detailseite auslöst (CODE-02). [onIntervalsChange]/[onIntervalsReset] merken bzw. löschen
  * die Anpassung (Dauer, Phasen, „Danach Stille“), [onConfirmedSafety] die Bestätigung des Sicherheitsdialogs.
  * - [onOpenLore]: Sprung zur Muster-Karte der Atemlehre aus „Aus der Yoga-Lehre“; ohne ihn kein Verweis.
- * - [onMarkedChange]: persönliche Markierung „tut mir gut“; ohne ihn (Muster) kein Schalter.
+ * - [onMarkedChange]: persönliche Markierung „tut mir gut“ (eingebaute Übungen, gespeicherte
+ *   Muster); ohne ihn (Muster des Tages) kein Schalter.
  * - [onEditPattern]: Stift im Kopf generierter Muster, öffnet den Muster-Editor (Phasen ändert man
  *   nur dort); ohne ihn kein Stift.
  * - [onDeletePattern]: Löschen gespeicherter Muster im Kopf rechts vom Stift, zweistufig (MUSTER-05).
@@ -220,7 +221,8 @@ fun ExerciseDetailScreen(
 
     // Name und Markierung stehen fest wie der Titel jeder anderen Seite; lange Namen
     // („Nadi Shodhana (Wechselatmung)“) laufen im Kopf als Laufschrift, nie im Wort umbrochen.
-    // Der Slot trägt eine Aktion: die Markierung bei Übungen, der Stift bei generierten Mustern.
+    // Der Slot trägt die Markierung bei Übungen, Stift und Löschen bei generierten Mustern – bei
+    // gespeicherten Mustern davor auch die Markierung.
     val editLabel = editDescription ?: stringResource(
         if (exercise.id == ExerciseIds.DAILY) R.string.cd_pattern_adapt_daily else R.string.cd_pattern_edit,
     )
@@ -228,14 +230,12 @@ fun ExerciseDetailScreen(
         onBack = actions.onBack,
         title = exercise.name,
         action = when {
-            actions.onMarkedChange != null -> {
-                { PersonalMarkToggle(marked = marked, onMarkedChange = actions.onMarkedChange) }
-            }
-
             actions.onEditPattern != null && exercise.generated -> {
                 {
-                    // Wie auf der Karte: Stift, Löschen außen (KOMP-02, MUSTER-05).
+                    // Wie auf der Karte: Stift, Löschen außen (KOMP-02, MUSTER-05); ◉ davor, wo es
+                    // markierbar ist (gespeichertes Muster).
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        actions.onMarkedChange?.let { PersonalMarkToggle(marked = marked, onMarkedChange = it) }
                         EditPatternButton(description = editLabel, onClick = actions.onEditPattern)
                         actions.onDeletePattern?.let { delete ->
                             ConfirmIconButton(
@@ -246,6 +246,10 @@ fun ExerciseDetailScreen(
                         }
                     }
                 }
+            }
+
+            actions.onMarkedChange != null -> {
+                { PersonalMarkToggle(marked = marked, onMarkedChange = actions.onMarkedChange) }
             }
 
             else -> null

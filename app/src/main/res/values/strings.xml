@@ -195,7 +195,10 @@
          Kachel „Neues Muster“ zeigt. -->
     <string name="own_empty">Noch keine eigenen Kreationen. Gespeicherte Tagesmuster aus dem Tab „Atmen“ erscheinen auch hier.</string>
     <!-- „Tut mir gut“ ohne Markierung: ruhige Karte unter dem Umschalter und auf der Seite „Tut mir gut“. -->
-    <string name="own_favorites_empty">Noch keine Übung markiert. Markiere eine Übung auf ihrer Seite mit dem Atemkreis, dann steht sie hier.</string>
+    <string name="own_favorites_empty">Noch nichts markiert. Markiere eine Übung, ein Muster oder die Meditation mit dem Atemkreis, dann steht es hier.</string>
+    <!-- Die Meditation in „Tut mir gut“ (Karte und Zeile): die zuletzt im Tab gewählte Dauer. -->
+    <string name="own_meditation_hint">Stille\u00A0· %1$d\u00A0min</string>
+    <string name="own_meditation_hint_free">Stille\u00A0· offen</string>
     <!-- Ganze Sammlung als Liste: Verweis unter den Karteikarten („Alle 4 ›“) und letzte Karteikarte. -->
     <string name="own_all_count">Alle %1$d</string>
     <string name="own_all_card">Alle ansehen</string>

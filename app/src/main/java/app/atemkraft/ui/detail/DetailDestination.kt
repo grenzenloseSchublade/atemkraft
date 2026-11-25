@@ -8,7 +8,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.atemkraft.R
-import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.ExerciseRepository
 import app.atemkraft.data.SafetySettings
 import app.atemkraft.data.SavedPatternsRepository
@@ -37,8 +36,9 @@ import kotlinx.coroutines.launch
  * - Anpassungen der Intervalle merkt sich [settings] pro Übung – außer beim Muster des Tages:
  *   dessen Id ist konstant, der Inhalt wechselt aber täglich; gespeicherte Werte gälten sonst
  *   morgen für ein anderes Muster.
- * - Markieren („Tut mir gut“, [markedIds]) nur eingebaute Übungen: Ihre Id ist stabil und ihre
- *   Karten stehen in den Listen; Muster wechseln oder lassen sich löschen.
+ * - Markieren („Tut mir gut“, [markedIds]) eingebaute Übungen und gespeicherte Muster
+ *   ([ExerciseRepository.isMarkable]): Ihre Kennung bleibt; nicht das Muster des Tages, das täglich
+ *   wechselt. Löschen nimmt die Markierung eines Musters mit.
  * - Sicherheitsdialog vor dem Start bei `caution`, solange er nicht bestätigt bzw. in den
  *   Einstellungen abgeschaltet ist ([safety]); die Bestätigung wird gemerkt.
  * - Stift nur an generierten Mustern: das Tagesmuster als eigenes anpassen, ein gespeichertes
@@ -88,7 +88,7 @@ internal fun DetailDestination(
     val resources = LocalResources.current
     val requireSafety = safety.requiresConfirm(exercise)
     val persistIntervals = id != ExerciseIds.DAILY
-    val markable = exercise in BuiltInExercises.all
+    val markable = exercises.isMarkable(id)
     val savedIntervals by remember(id) { settings.exerciseIntervals(id) }.collectAsStateWithLifecycle(initialValue = null)
     val silenceDefault by remember(settings) {
         combine(settings.sessionDisplay, settings.meditationSettings) { display, meditation ->

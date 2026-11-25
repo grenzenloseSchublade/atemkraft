@@ -3,6 +3,7 @@ package app.atemkraft.ui.meditation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +28,7 @@ import app.atemkraft.R
 import app.atemkraft.domain.MeditationConfig
 import app.atemkraft.domain.MeditationMode
 import app.atemkraft.ui.components.FillViewportColumn
+import app.atemkraft.ui.components.PersonalMarkToggle
 import app.atemkraft.ui.components.PinnedActionBar
 import app.atemkraft.ui.components.ScreenHeader
 import app.atemkraft.ui.components.SectionHeader
@@ -41,6 +44,17 @@ internal enum class GongChoice {
 }
 
 /**
+ * Kopf des Meditations-Tabs: Einstellungen ([onOpenSettings]) und die Markierung „Tut mir gut“ für
+ * die Meditation ([marked], ◉ links vom Zahnrad; ohne [onMarkedChange] kein Schalter).
+ */
+@Immutable
+data class MeditationHeader(
+    val onOpenSettings: () -> Unit,
+    val marked: Boolean = false,
+    val onMarkedChange: ((Boolean) -> Unit)? = null,
+)
+
+/**
  * Meditations-Tab: Auswahl (Zeitring für die Dauer samt offener Sitzung „∞“, darunter die Zeile
  * „Klang & Stimme“, die Gong und Sprachanleitung im Bottom Sheet öffnet) und laufende Sitzung als
  * Overlay (ruhiger Ring + Zeit). Reiner Zustand + Callbacks – der Ablauf liegt im
@@ -51,17 +65,17 @@ fun MeditationScreen(
     initialConfig: MeditationConfig,
     speechAvailable: Boolean,
     gongIntervalMin: Int,
-    onOpenSettings: () -> Unit,
+    header: MeditationHeader,
     onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
     onGongInterval: (Int) -> Unit = {},
-    onOpenVoices: () -> Unit = onOpenSettings,
+    onOpenVoices: () -> Unit = header.onOpenSettings,
 ) {
     // Der Tab zeigt nur die Auswahl; die laufende/abgeschlossene Sitzung liegt als Vollbild-Overlay
     // darüber ([MeditationOverlay]) – so ist sie (wie die Atem-Session) minimierbar und über die
     // Mini-Leiste erreichbar.
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, onOpenSettings, onDurationTick, onStart, onGongInterval, onOpenVoices)
+        SelectionContent(initialConfig, speechAvailable, gongIntervalMin, header, onDurationTick, onStart, onGongInterval, onOpenVoices)
     }
 }
 
@@ -70,7 +84,7 @@ private fun SelectionContent(
     initialConfig: MeditationConfig,
     speechAvailable: Boolean,
     gongIntervalMin: Int,
-    onOpenSettings: () -> Unit,
+    header: MeditationHeader,
     onDurationTick: (major: Boolean) -> Unit,
     onStart: (MeditationConfig) -> Unit,
     onGongInterval: (Int) -> Unit,
@@ -102,7 +116,12 @@ private fun SelectionContent(
     Column(modifier = Modifier.fillMaxSize()) {
         ScreenHeader(
             title = stringResource(R.string.meditation_title),
-            action = { SettingsAction(onClick = onOpenSettings) },
+            action = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    header.onMarkedChange?.let { PersonalMarkToggle(marked = header.marked, onMarkedChange = it) }
+                    SettingsAction(onClick = header.onOpenSettings)
+                }
+            },
         )
         // Die Seite scrollt nicht: Der Regler bekommt den ganzen Platz zwischen Kopf und „Klang &
         // Stimme“ und wird nur bei großer Schrift kleiner; Gong und Stimme liegen im Bottom Sheet und

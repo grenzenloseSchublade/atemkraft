@@ -59,6 +59,20 @@ class ExerciseRepository(
 
     fun all(): List<Exercise> = BuiltInExercises.all
 
+    /**
+     * Ob sich [id] als „Tut mir gut“ markieren lässt (◉): eingebaute Übungen, gespeicherte Muster
+     * („muster-7“) und die Meditation ([ExerciseIds.MEDITATION]) – alles mit einer Kennung, die
+     * bleibt. Nicht das Muster des Tages (wechselt täglich) und nicht der Entwurf im Editor.
+     */
+    fun isMarkable(id: String): Boolean = id == ExerciseIds.MEDITATION || ExerciseIds.savedIdOf(id) != null || BuiltInExercises.all.any { it.id == id }
+
+    /**
+     * Die Übungen aus „Tut mir gut“ ([marked]): eingebaute in Familien-Reihenfolge, danach markierte
+     * gespeicherte Muster in der Reihenfolge von [patterns] (neueste zuerst). Die Meditation ist
+     * keine Übung; ob sie markiert ist, prüft der Aufrufer.
+     */
+    fun favorites(marked: Set<String>, patterns: List<SavedPattern>): List<Exercise> = BuiltInExercises.all.filter { it.id in marked } + patterns.map { it.exercise }.filter { it.id in marked }
+
     fun byId(id: String): Exercise? = when {
         id == ExerciseIds.DAILY -> currentDaily().exercise
         id.startsWith(ExerciseIds.SAVED_PREFIX) -> saved.byExerciseId(id)

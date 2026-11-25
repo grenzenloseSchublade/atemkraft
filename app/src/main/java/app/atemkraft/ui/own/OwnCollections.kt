@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import app.atemkraft.R
 import app.atemkraft.data.SavedPattern
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.breathRhythm
 import app.atemkraft.domain.defaultMinutes
@@ -46,6 +47,7 @@ import app.atemkraft.ui.components.CharacterChip
 import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ExerciseCurve
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.MeditationMark
 import app.atemkraft.ui.components.PageTabs
 import app.atemkraft.ui.components.PersonalMarkIndicator
 import app.atemkraft.ui.components.RhythmCurve
@@ -67,9 +69,9 @@ import app.atemkraft.ui.theme.Sizes
  * Kreationen: ganz links die schmale Kachel „+ Neu“ ([NewPatternTile], Eigentümer 2026-10-31: nicht
  * als erste volle Karte), daneben vollständig die erste Kreation, je gespeichertem Muster eine Karte
  * mit Stift und Löschen ([CreationCard]); ohne Kreationen steht neben der Kachel eine ruhige Karte mit
- * dem Satz des Leerzustands (MUSTER-04). „Tut mir gut“: je markierter Übung eine Karte mit ◉
- * ([FavoriteCard]), gleich breit wie die Kreationen; ohne Markierung eine ruhige Karte mit dem Satz,
- * wie man markiert.
+ * dem Satz des Leerzustands (MUSTER-04). „Tut mir gut“: je markierter Übung und markiertem Muster
+ * eine Karte mit ◉ ([FavoriteCard]), am Ende die Meditation, wenn sie markiert ist ([MeditationCard]),
+ * gleich breit wie die Kreationen; ohne Markierung eine ruhige Karte mit dem Satz, wie man markiert.
  *
  * Unter jeder Reihe „Alle 4 ›“ und als letzte Karte „Alle ansehen ›“: beide öffnen die ganze
  * Sammlung als Liste auf einer eigenen Seite ([OwnCreationsScreen], [OwnFavoritesScreen]).
@@ -83,6 +85,7 @@ internal fun OwnCollections(
     onSelect: (OwnCollection) -> Unit,
     patterns: List<SavedPattern>,
     favorites: List<Exercise>,
+    meditation: MeditationFavorite?,
     creationsRow: LazyListState,
     favoritesRow: LazyListState,
     actions: OwnActions,
@@ -99,7 +102,12 @@ internal fun OwnCollections(
         )
         // Beide Sammlungen stehen gleich hoch: Jede Reihe misst die Karten der anderen mit.
         val creationCards = CardSet(patterns.size) { index -> CreationCard(patterns[index], onClick = {}, onEdit = {}, onDelete = {}) }
-        val favoriteCards = CardSet(favorites.size) { index -> FavoriteCard(favorites[index], onClick = {}) }
+        // Die Meditation steht als letzte Karte hinter den Übungen und Mustern.
+        val favoriteCount = favorites.size + if (meditation != null) 1 else 0
+        val favoriteCard: @Composable (Int, () -> Unit) -> Unit = { index, onClick ->
+            if (index < favorites.size) FavoriteCard(favorites[index], onClick = onClick) else meditation?.let { MeditationCard(it, onClick = onClick) }
+        }
+        val favoriteCards = CardSet(favoriteCount) { index -> favoriteCard(index) {} }
         when (selected) {
             OwnCollection.CREATIONS -> CardPager(
                 pageCount = patterns.size.coerceAtLeast(1),
@@ -123,19 +131,20 @@ internal fun OwnCollections(
                 }
             }
 
-            OwnCollection.FAVORITES -> if (favorites.isEmpty()) {
+            OwnCollection.FAVORITES -> if (favoriteCount == 0) {
                 QuietCard { HintText(stringResource(R.string.own_favorites_empty)) }
             } else {
                 CardPager(
-                    pageCount = favorites.size,
+                    pageCount = favoriteCount,
                     state = favoritesRow,
-                    key = { favorites[it].id },
-                    allLabel = stringResource(R.string.own_all_count, favorites.size),
+                    key = { index -> if (index < favorites.size) favorites[index].id else ExerciseIds.MEDITATION },
+                    allLabel = stringResource(R.string.own_all_count, favoriteCount),
                     onAll = actions.onOpenAllFavorites,
                     sameHeightAs = creationCards,
                 ) { index ->
-                    val exercise = favorites[index]
-                    FavoriteCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) })
+                    favoriteCard(index) {
+                        if (index < favorites.size) actions.onSelect(favorites[index].id) else actions.onOpenMeditation()
+                    }
                 }
             }
         }
@@ -235,6 +244,29 @@ private fun FavoriteCard(exercise: Exercise, onClick: () -> Unit) {
                 )
             }
             CardBody(exercise, chips = if (exercise.caution) ({ CautionChip() }) else null)
+        }
+    }
+}
+
+/**
+ * Karte der Meditation aus „Tut mir gut“: Titelzeile „Meditation“ mit ◉ wie [FavoriteCard], darunter
+ * das Zeichen der Meditation ([MeditationMark]) und „Stille · 10 min“ (die zuletzt gewählte Dauer);
+ * Rand `secondary` wie der Zeitring. Ein Tipp öffnet den Tab „Meditation“.
+ */
+@Composable
+private fun MeditationCard(favorite: MeditationFavorite, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxSize(), border = accentBorder(MaterialTheme.colorScheme.secondary)) {
+        Column(modifier = Modifier.fillMaxSize().padding(Dimens.CardPadding)) {
+            Box(Modifier.heightIn(min = titleReserve())) {
+                CardHeader(
+                    title = stringResource(R.string.meditation_title),
+                    indicator = { PersonalMarkIndicator() },
+                )
+            }
+            Spacer(Modifier.height(Dimens.SectionGap))
+            MeditationMark()
+            Spacer(Modifier.height(Dimens.SectionGap))
+            SecondaryText(meditationFavoriteHint(favorite))
         }
     }
 }

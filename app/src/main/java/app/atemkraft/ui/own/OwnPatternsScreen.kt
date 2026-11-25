@@ -33,7 +33,7 @@ import java.time.LocalDate
  * Logbuch; [onEditPattern] öffnet den Muster-Editor für ein gespeichertes Muster (DB-Id, Stift auf
  * seiner Karte); [onWeeksOpenChange] merkt, ob der Verlauf vier Wochen zeigt,
  * [onCollectionChange] die gewählte Sammlung; [onOpenAllCreations]/[onOpenAllFavorites] öffnen die
- * ganze Sammlung als Liste.
+ * ganze Sammlung als Liste; [onOpenMeditation] den Tab „Meditation“ (Karte der Meditation in „Tut mir gut“).
  */
 @Immutable
 data class OwnActions(
@@ -47,7 +47,19 @@ data class OwnActions(
     val onCollectionChange: (OwnCollection) -> Unit = {},
     val onOpenAllCreations: () -> Unit = {},
     val onOpenAllFavorites: () -> Unit = {},
+    val onOpenMeditation: () -> Unit = {},
 )
+
+/**
+ * Die Meditation in „Tut mir gut“ (mit ◉ markiert im Tab „Meditation“): [minutes] ist die dort
+ * zuletzt gewählte Dauer, null = offene Sitzung. Ein Tipp öffnet den Tab ([OwnActions.onOpenMeditation]).
+ */
+@Immutable
+data class MeditationFavorite(val minutes: Int?)
+
+/** Hinweis der Meditation in „Tut mir gut“: „Stille · 10 min“ bzw. „Stille · offen“. */
+@Composable
+internal fun meditationFavoriteHint(favorite: MeditationFavorite): String = favorite.minutes?.let { stringResource(R.string.own_meditation_hint, it) } ?: stringResource(R.string.own_meditation_hint_free)
 
 /**
  * Ansichtswahl des Tabs „Meins“: [weeksOpen] (Verlauf mit vier Wochen) und die gewählte Sammlung
@@ -71,7 +83,8 @@ data class OwnView(
  * ([OwnActions.onOpenLogbook]). Darunter die Sammlungen ([OwnCollections]): Tabs in der Seite
  * „Eigene Kreationen | Tut mir gut“ ohne Zahl ([OwnView.collection], dauerhaft gemerkt) und für die
  * gewählte Sammlung Karteikarten zum Wischen – Kreationen mit der Kachel „+ Neu“ links und Stift
- * und Löschen je Muster, „Tut mir gut“ mit ◉. Verlauf bleibt zuerst (Nutzer 2026-10-30).
+ * und Löschen je Muster, „Tut mir gut“ mit ◉ (markierte Übungen und Muster, am Ende die Meditation,
+ * wenn sie markiert ist: [meditationFavorite]). Verlauf bleibt zuerst (Nutzer 2026-10-30).
  *
  * [today] nur für reproduzierbare Screenshots.
  */
@@ -80,6 +93,7 @@ fun OwnPatternsScreen(
     savedPatterns: List<SavedPattern>,
     actions: OwnActions,
     favorites: List<Exercise> = emptyList(),
+    meditationFavorite: MeditationFavorite? = null,
     logEntries: List<SessionLogEntry> = emptyList(),
     recentExercises: List<Exercise> = emptyList(),
     view: OwnView = OwnView(),
@@ -125,6 +139,7 @@ fun OwnPatternsScreen(
                     onSelect = actions.onCollectionChange,
                     patterns = savedPatterns,
                     favorites = favorites,
+                    meditation = meditationFavorite,
                     creationsRow = creationsRow,
                     favoritesRow = favoritesRow,
                     actions = actions,

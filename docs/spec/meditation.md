@@ -4,7 +4,7 @@ Regeln: [STYLEGUIDE LAYOUT-08](../STYLEGUIDE.md#layout) (ohne Scrollen), MUSTER-
 
 ## Seite
 
-Eigenes Gerüst ohne Liste: `ScreenHeader`, darunter `FillViewportColumn` mit dem Zeitring (`DurationPicker` → `TimeDial`), der Zeile „Klang & Stimme“ und der `PinnedActionBar` mit dem `StartSplitButton`. Kopf, Zeitring, „Klang & Stimme“ und Start passen bis fontScale 1,3 auf jedem Gerät der Matrix in die Höhe über Tab-Leiste und Systemleisten – in jedem Zustand des Tabs; der Zeitring nimmt den Rest (Mindestkante `DurationPickerMin` 200; bei großer Schrift `timeDialMinSide`: so groß, dass Zahl und Einheit im kleinsten Stil innerhalb der Spur stehen). Nur bei fontScale 2,0 darf die Seite als Notlösung scrollen – abgeschnitten wird nie. Die Auswahl der Tab-Leiste ist tonal, der Zeitring bei ∞ Cyan statt Pink: Pink bleibt dem Start (PRIN-02).
+Eigenes Gerüst ohne Liste: `ScreenHeader` (Aktionen: ◉ „Tut mir gut“ für die Meditation, dann das Zahnrad; Eigentümer 2026-11-25), darunter `FillViewportColumn` mit dem Zeitring (`DurationPicker` → `TimeDial`), der Zeile „Klang & Stimme“ und der `PinnedActionBar` mit dem `StartSplitButton`. Kopf, Zeitring, „Klang & Stimme“ und Start passen bis fontScale 1,3 auf jedem Gerät der Matrix in die Höhe über Tab-Leiste und Systemleisten – in jedem Zustand des Tabs; der Zeitring nimmt den Rest (Mindestkante `DurationPickerMin` 200; bei großer Schrift `timeDialMinSide`: so groß, dass Zahl und Einheit im kleinsten Stil innerhalb der Spur stehen). Nur bei fontScale 2,0 darf die Seite als Notlösung scrollen – abgeschnitten wird nie. Die Auswahl der Tab-Leiste ist tonal, der Zeitring bei ∞ Cyan statt Pink: Pink bleibt dem Start (PRIN-02).
 
 ## Zeitring (`TimeDial`)
 

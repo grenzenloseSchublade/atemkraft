@@ -60,6 +60,7 @@ class AppContainer(context: Context) {
         clearPatternOverrides = settingsRepository::clearPatternIntervals,
         overrideMinutes = { id -> settingsRepository.exerciseIntervals(id).first()?.duration },
         forgetSafety = settingsRepository::forgetSafety,
+        forgetMark = { id -> settingsRepository.setExerciseMarked(id, marked = false) },
     )
     val exerciseRepository: ExerciseRepository = ExerciseRepository(savedPatternsRepository)
     val logbookRepository: LogbookRepository = LogbookRepository(database.logbookDao())

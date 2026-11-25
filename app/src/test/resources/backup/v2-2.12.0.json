@@ -20,7 +20,8 @@
             },
             "origin": "daily",
             "minutes": null,
-            "phases": null
+            "phases": null,
+            "marked": false
         },
         {
             "name": "Stufen",
@@ -33,7 +34,8 @@
             "overrides": null,
             "origin": "custom",
             "minutes": 7,
-            "phases": "in:2,hold:2,in:2,hold:2,in:2,out:6"
+            "phases": "in:2,hold:2,in:2,hold:2,in:2,out:6",
+            "marked": true
         }
     ],
     "logbook": [
@@ -72,6 +74,7 @@
         }
     ],
     "marked": [
+        "meditation",
         "resonanz"
     ],
     "settings": {

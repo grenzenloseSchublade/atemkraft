@@ -6,6 +6,7 @@ import app.atemkraft.data.local.freePattern
 import app.atemkraft.domain.AdjustLimits
 import app.atemkraft.domain.BREATH_BEFORE_MAX_MINUTES
 import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.GONG_INTERVAL_MAX_MINUTES
@@ -43,7 +44,8 @@ import kotlinx.serialization.json.Json
  * rechnet die vier Felder daraus neu.
  *
  * **Version 2 (ab 2.9.0) ist die Sicherung „alles“:** neben den Mustern das Logbuch samt Befinden
- * ([logbook]), die Markierungen „Tut mir gut“ ([marked]) und die Einstellungen ohne
+ * ([logbook]), die Markierungen „Tut mir gut“ ([marked]: eingebaute Übungen und seit 2.12 die
+ * Meditation; die gespeicherter Muster stehen am Muster, [PatternBackupEntry.marked]) und die Einstellungen ohne
  * Gerätespezifisches ([settings]). Der Formatname bleibt „atemkraft-muster“, damit es eine
  * Dateifamilie bleibt; Dateien der Version 1 (nur Muster) liest diese Version weiter, ältere
  * App-Versionen weisen Version 2 ab, statt die Hälfte still zu verlieren.
@@ -141,6 +143,11 @@ data class PatternBackupEntry(
      * außer „daily“ plausibel.
      */
     val phases: String? = null,
+    /**
+     * Mit ◉ als „Tut mir gut“ markiert (seit 2.12). Am Muster statt in der Liste [PatternBackupFile.marked]:
+     * Beim Einlesen bekommt das Muster eine neue Id, die Markierung folgt ihm.
+     */
+    val marked: Boolean = false,
 )
 
 @Serializable
@@ -234,7 +241,7 @@ object PatternBackup {
             truncated = file.patterns.size - candidates.size,
             logbook = log,
             logTruncated = file.logbook.size - logCandidates.size,
-            marked = file.marked.filter { it in builtInIds }.take(MAX_MARKED).toSet(),
+            marked = file.marked.filter { it in builtInIds || it == ExerciseIds.MEDITATION }.take(MAX_MARKED).toSet(),
             settings = file.settings?.plausible(builtInIds),
         )
     }

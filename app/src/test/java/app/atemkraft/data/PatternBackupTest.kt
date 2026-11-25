@@ -233,6 +233,9 @@ class PatternBackupTest {
         assertEquals(5, decoded.settings!!.adjustments.getValue("resonanz").silence)
         // „Atmen → Stille“ ist ein Eintrag; die Stille steht in der Dauer.
         assertEquals(listOf(180_000L, null, null), decoded.logbook.map { it.silenceMs })
+        // Seit 2.12: Markierung am Muster (folgt ihm auf die neue Id) und die der Meditation in der Liste.
+        assertEquals(listOf(false, true), decoded.entries.map { it.marked })
+        assertEquals(setOf("meditation", "resonanz"), decoded.marked)
         // 2.9.0: ohne `silence`, sonst gleich.
         val bytes = fixture("v2-2.9.0.json")
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

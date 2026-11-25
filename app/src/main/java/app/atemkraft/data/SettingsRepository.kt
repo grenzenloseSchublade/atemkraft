@@ -163,8 +163,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     /**
      * Übungs-Ids mit persönlicher Markierung („tut mir gut“, Atemkreis). Eine eigene Einschätzung
-     * neben der Studienlage; sie ändert weder Reihenfolge noch Gruppen. Nur stabile Ids eingebauter
-     * Übungen – das entscheidet der Aufrufer.
+     * neben der Studienlage; sie ändert weder Reihenfolge noch Gruppen. Nur Kennungen, die bleiben:
+     * eingebaute Übungen, gespeicherte Muster („muster-7“) und die Meditation – das entscheidet der
+     * Aufrufer (`ExerciseRepository.isMarkable`); ein gelöschtes Muster nimmt seine Markierung mit.
      */
     val markedExercises: Flow<Set<String>> = data.map { it[Keys.MARKED_EXERCISES].orEmpty() }
 

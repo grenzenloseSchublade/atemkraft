@@ -95,6 +95,8 @@ data class PatternVersion(val pattern: FreePattern, val minutes: Int, val name: 
  *   rufen es auf, sonst überstimmen alte Anpassungen die neuen Werte.
  * @param forgetSafety vergisst die Sicherheits-Bestätigungen einer Übung (DataStore,
  *   `SettingsRepository.forgetSafety`); [delete] und [unsave] rufen es auf (MUSTER-06).
+ * @param forgetMark nimmt die Markierung „Tut mir gut“ einer Übung zurück (DataStore); [delete]
+ *   und [unsave] rufen es auf (SEC-PRIV-04: gelöscht ohne Reste).
  * @param overrideMinutes die auf der Detailseite gespeicherte Dauer einer Übung (DataStore), null
  *   = keine; [loadForEdit] und [restorePrevious] übernehmen sie, weil die Anpassung danach fällt.
  */
@@ -104,6 +106,7 @@ class SavedPatternsRepository(
     private val clearPatternOverrides: suspend (exerciseId: String) -> Unit = {},
     private val overrideMinutes: suspend (exerciseId: String) -> Int? = { null },
     private val forgetSafety: suspend (exerciseId: String) -> Unit = {},
+    private val forgetMark: suspend (exerciseId: String) -> Unit = {},
     scope: CoroutineScope = supervisedScope(Dispatchers.IO),
 ) {
 
@@ -279,6 +282,7 @@ class SavedPatternsRepository(
         val exerciseId = ExerciseIds.saved(id)
         clearOverrides(exerciseId)
         forgetSafety(exerciseId)
+        forgetMark(exerciseId)
         dao.delete(id)
     }
 
@@ -292,6 +296,7 @@ class SavedPatternsRepository(
      */
     suspend fun exportFile(
         nowEpochMs: Long,
+        markedOf: suspend (exerciseId: String) -> Boolean = { false },
         overridesOf: suspend (exerciseId: String) -> IntervalOverrides?,
     ): PatternBackupFile = PatternBackupFile(
         exportedAtEpochMs = nowEpochMs,
@@ -308,6 +313,7 @@ class SavedPatternsRepository(
                 origin = SavedPatternEntity.storedOrigin(e.patternOrigin()),
                 minutes = e.minutes,
                 phases = e.freePattern()?.toCompact(),
+                marked = markedOf(ExerciseIds.saved(e.id)),
             )
         },
     )
@@ -315,14 +321,15 @@ class SavedPatternsRepository(
     /**
      * Legt die Einträge an, die es noch nicht gibt (Dublette, auch innerhalb der Datei: bei
      * Tagesmustern gleiche Zahlen wie bei [save], sonst gleicher Zeitpunkt und gleiche Werte, bei
-     * freien Folgen Zeitpunkt und Folge). Anpassungen landen
-     * unter der neuen Id des Musters. Fehlt die Herkunft (Dateien bis 1.6.8), ist es ein
+     * freien Folgen Zeitpunkt und Folge). Anpassungen und die
+     * Markierung „Tut mir gut“ ([mark]) landen unter der neuen Id des Musters. Fehlt die Herkunft (Dateien bis 1.6.8), ist es ein
      * Tagesmuster; ein unbekannter Wert wird „custom“. Ein Eintrag mit Folge wird ein eigenes
      * Muster, die vier Felder schreibt die App aus der Folge neu ([columnSpec]) – die Werte der
      * Datei dafür zählen nicht. [entries] kommen aus [PatternBackup.decode] (geprüft).
      */
     suspend fun import(
         entries: List<PatternBackupEntry>,
+        mark: suspend (exerciseId: String) -> Unit = {},
         writeOverrides: suspend (exerciseId: String, overrides: PatternBackupOverrides) -> Unit,
     ): ImportResult {
         val rows = dao.snapshot()
@@ -366,6 +373,7 @@ class SavedPatternsRepository(
                 )
             }
             entry.overrides?.let { writeOverrides(ExerciseIds.saved(entity.id), it) }
+            if (entry.marked) mark(ExerciseIds.saved(entity.id))
             added++
         }
         return ImportResult(added = added, duplicates = entries.size - added)

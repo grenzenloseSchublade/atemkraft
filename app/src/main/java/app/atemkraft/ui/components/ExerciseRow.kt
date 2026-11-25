@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -68,9 +70,36 @@ fun ExerciseRow(
     hintDescription: String? = null,
     trailing: @Composable () -> Unit = {},
 ) {
+    PracticeRow(
+        name = exercise.name,
+        onClick = onClick,
+        hint = hint ?: stringResource(R.string.duration_approx, exercise.defaultMinutes()),
+        modifier = modifier,
+        hintDescription = hintDescription,
+        caution = exercise.caution,
+        leading = { ExerciseCurve(exercise) },
+        trailing = trailing,
+    )
+}
+
+/**
+ * Die Zeile hinter [ExerciseRow], auch für die Meditation in „Tut mir gut“: vorn [leading] (Kurve
+ * bzw. Zeichen in der Fläche der [MiniCurve]; ab Schrift 1,5 nichts), Name, [hint], bei [caution]
+ * der ⚠-Chip, am Ende [trailing]. Gleiches Verhalten an jedem Ort – nur der Inhalt wechselt.
+ */
+@Composable
+internal fun PracticeRow(
+    name: String,
+    onClick: () -> Unit,
+    hint: String,
+    modifier: Modifier = Modifier,
+    hintDescription: String? = null,
+    caution: Boolean = false,
+    leading: @Composable () -> Unit = {},
+    trailing: @Composable () -> Unit = {},
+) {
     val nameStyle = MaterialTheme.typography.titleSmall
     val firstLine = rememberFirstLineHeight(nameStyle)
-    val shownHint = hint ?: stringResource(R.string.duration_approx, exercise.defaultMinutes())
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -83,17 +112,34 @@ fun ExerciseRow(
     ) {
         // Ab Schrift 1,5 entfällt die Kurve: Ihre 64 dp braucht der Name, sonst bräche er im Wort.
         if (LocalDensity.current.fontScale < LARGE_FONT_SCALE) {
-            Box(modifier = Modifier.heightIn(min = firstLine), contentAlignment = Alignment.Center) { ExerciseCurve(exercise) }
+            Box(modifier = Modifier.heightIn(min = firstLine), contentAlignment = Alignment.Center) { leading() }
         }
         Column(modifier = Modifier.weight(1f)) {
-            WholeWordText(text = exercise.name, style = nameStyle, color = MaterialTheme.colorScheme.onSurface)
-            HintText(shownHint, modifier = if (hintDescription != null) Modifier.semantics { contentDescription = hintDescription } else Modifier)
-            if (exercise.caution) {
+            WholeWordText(text = name, style = nameStyle, color = MaterialTheme.colorScheme.onSurface)
+            HintText(hint, modifier = if (hintDescription != null) Modifier.semantics { contentDescription = hintDescription } else Modifier)
+            if (caution) {
                 Spacer(Modifier.height(Dimens.GapTiny))
                 CautionChip()
             }
         }
         Box(modifier = Modifier.heightIn(min = firstLine), contentAlignment = Alignment.Center) { trailing() }
+    }
+}
+
+/**
+ * Zeichen der Meditation in der Fläche der [MiniCurve] (`MiniCurveWidth` × `MiniCurveHeight`): das
+ * Meditations-Symbol in `secondary` wie der Zeitring, am Anfang der Fläche wie der Familienpunkt.
+ * Dekorativ, ohne Semantik.
+ */
+@Composable
+internal fun MeditationMark(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.size(width = Sizes.MiniCurveWidth, height = Sizes.MiniCurveHeight), contentAlignment = Alignment.CenterStart) {
+        Icon(
+            painterResource(R.drawable.ic_meditation),
+            contentDescription = null, // dekorativ: Name und Hinweis daneben tragen die Bedeutung.
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(Sizes.IconSmall),
+        )
     }
 }
 

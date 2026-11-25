@@ -30,6 +30,7 @@ import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.FreePattern
 import app.atemkraft.domain.GONG_INTERVAL_DEFAULT_MINUTES
 import app.atemkraft.domain.MeditationConfig
+import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.OwnCollection
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.UncaughtErrors
@@ -47,6 +48,7 @@ import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.log.RECENT_OPEN
+import app.atemkraft.ui.meditation.MeditationHeader
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AboutRoute
 import app.atemkraft.ui.navigation.AtemlehreRoute
@@ -63,6 +65,8 @@ import app.atemkraft.ui.navigation.PatternEditorRoute
 import app.atemkraft.ui.navigation.PranayamaRoute
 import app.atemkraft.ui.navigation.ProgramsRoute
 import app.atemkraft.ui.navigation.SettingsRoute
+import app.atemkraft.ui.navigation.switchTab
+import app.atemkraft.ui.own.MeditationFavorite
 import app.atemkraft.ui.own.OwnActions
 import app.atemkraft.ui.own.OwnCreationsScreen
 import app.atemkraft.ui.own.OwnFavoritesScreen
@@ -218,9 +222,12 @@ internal fun NavGraphBuilder.appGraph(
                 onCollectionChange = { collection -> scope.launch { settings.setOwnCollection(collection) } },
                 onOpenAllCreations = { navController.navigate(OwnCreationsRoute) { launchSingleTop = true } },
                 onOpenAllFavorites = { navController.navigate(OwnFavoritesRoute) { launchSingleTop = true } },
+                onOpenMeditation = { navController.switchTab(MeditationRoute) },
             ),
-            // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge.
-            favorites = exercises.all().filter { it.id in state.markedExercises },
+            // „Tut mir gut“: markierte eingebaute Übungen in Familien-Reihenfolge, dann markierte
+            // Muster, zuletzt die Meditation.
+            favorites = exercises.favorites(state.markedExercises, patterns),
+            meditationFavorite = meditationFavorite(state),
             logEntries = state.logEntries,
             recentExercises = recent,
             view = OwnView(weeksOpen = state.historyWeeksOpen, collection = state.ownCollection),
@@ -235,7 +242,11 @@ internal fun NavGraphBuilder.appGraph(
             initialConfig = state.meditationConfig,
             speechAvailable = state.meditationSpeechAvailable,
             gongIntervalMin = state.gongIntervalMin,
-            onOpenSettings = { navController.navigate(SettingsRoute(focusMeditation = true)) },
+            header = MeditationHeader(
+                onOpenSettings = { navController.navigate(SettingsRoute(focusMeditation = true)) },
+                marked = ExerciseIds.MEDITATION in state.markedExercises,
+                onMarkedChange = { marked -> scope.launch { settings.setExerciseMarked(ExerciseIds.MEDITATION, marked) } },
+            ),
             // Raste des Zeitrings: leicht je Minute, deutlicher je 5. Bedien-Rückmeldung,
             // kein Session-Cue: unabhängig vom App-Schalter, Android regelt sie (AUDIO-05).
             onDurationTick = { major -> container.hapticPlayer.dialTick(strong = major) },
@@ -348,10 +359,13 @@ internal fun NavGraphBuilder.appGraph(
         )
     }
     pushComposable<OwnFavoritesRoute> {
+        val patterns by savedPatterns.patterns.collectAsStateWithLifecycle(initialValue = emptyList())
         OwnFavoritesScreen(
-            favorites = exercises.all().filter { it.id in state.markedExercises },
+            favorites = exercises.favorites(state.markedExercises, patterns),
             onBack = back,
             onSelect = openDetail,
+            meditation = meditationFavorite(state),
+            onOpenMeditation = { navController.switchTab(MeditationRoute) },
         )
     }
     pushComposable<GlossaryRoute> {
@@ -446,4 +460,11 @@ private fun rememberResumeEntry(last: Exercise?, settings: SettingsRepository): 
     }.collectAsStateWithLifecycle(initialValue = null)
     // Wechselt die Übung, zählt erst der neue Wert (kein Name mit der Dauer der vorigen).
     return entry?.takeIf { it.exercise.id == last?.id }
+}
+
+/** Die Meditation in „Tut mir gut“, wenn sie markiert ist: mit der zuletzt gewählten Dauer (offen = null). */
+private fun meditationFavorite(state: GraphState): MeditationFavorite? = if (ExerciseIds.MEDITATION in state.markedExercises) {
+    MeditationFavorite(minutes = state.meditationConfig.minutes.takeIf { state.meditationConfig.mode != MeditationMode.FREE })
+} else {
+    null
 }

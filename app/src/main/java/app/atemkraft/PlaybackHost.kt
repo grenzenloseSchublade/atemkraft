@@ -31,12 +31,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
 import app.atemkraft.data.SettingsRepository
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.ExerciseIds
 import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.FeelingPrompt
 import app.atemkraft.domain.MeditationConfig
@@ -154,10 +154,11 @@ internal class PlaybackState(
 
     /**
      * ◉ „Tut mir gut“ am Ende-Screen für [exerciseId], nach derselben Regel wie auf der Detailseite
-     * (nur eingebaute Übungen, [BuiltInExercises]); sonst `null`, dann kein Schalter.
+     * (`ExerciseRepository.isMarkable`: eingebaute Übungen, gespeicherte Muster, die Meditation);
+     * sonst `null` (Muster des Tages, Entwurf), dann kein Schalter.
      */
     fun endMark(exerciseId: String, marked: Set<String>): EndMark? {
-        if (BuiltInExercises.all.none { it.id == exerciseId }) return null
+        if (!container.exerciseRepository.isMarkable(exerciseId)) return null
         return EndMark(marked = exerciseId in marked) { on ->
             container.appScope.launch { container.settingsRepository.setExerciseMarked(exerciseId, on) }
         }
@@ -344,8 +345,8 @@ internal fun PlaybackOverlays(playback: PlaybackState) {
                             }
                         },
                         feelingAsk = playback.feelingAsk(meditation::answerFeeling),
-                        // Nach „Atmen → Stille“ markiert ◉ die geübte Übung.
-                        mark = state.afterExerciseId?.let { playback.endMark(it, marked) },
+                        // Nach „Atmen → Stille“ markiert ◉ die geübte Übung, sonst die Meditation.
+                        mark = playback.endMark(state.afterExerciseId ?: ExerciseIds.MEDITATION, marked),
                     ),
                     onMinimize = { playback.meditationExpanded = false },
                     onToggleMute = meditation::toggleMute,

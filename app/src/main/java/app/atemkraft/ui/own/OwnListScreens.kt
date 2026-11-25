@@ -18,7 +18,9 @@ import app.atemkraft.ui.components.ConfirmIconButton
 import app.atemkraft.ui.components.ExerciseRow
 import app.atemkraft.ui.components.ExerciseRows
 import app.atemkraft.ui.components.HintText
+import app.atemkraft.ui.components.MeditationMark
 import app.atemkraft.ui.components.PersonalMarkIndicator
+import app.atemkraft.ui.components.PracticeRow
 import app.atemkraft.ui.components.PushScaffold
 import app.atemkraft.ui.theme.SECONDARY
 
@@ -80,20 +82,40 @@ fun OwnCreationsScreen(
 
 /**
  * Alle Übungen aus „Tut mir gut“ als Liste (Nutzer 2026-10-31): Push-Seite „Tut mir gut“, je
- * markierter Übung eine [ExerciseRow] mit ◉ am Ende; ein Tipp öffnet die Detailseite (dort hebt
- * ◉ die Markierung auf). Leer: ein Satz, wie man markiert.
+ * markierter Übung und markiertem Muster eine [ExerciseRow] mit ◉ am Ende, zuletzt die Meditation
+ * ([meditation], ein Tipp öffnet ihren Tab über [onOpenMeditation]); ein Tipp öffnet die Detailseite
+ * (dort hebt ◉ die Markierung auf). Leer: ein Satz, wie man markiert.
  */
 @Composable
-fun OwnFavoritesScreen(favorites: List<Exercise>, onBack: () -> Unit, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
+fun OwnFavoritesScreen(
+    favorites: List<Exercise>,
+    onBack: () -> Unit,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    meditation: MeditationFavorite? = null,
+    onOpenMeditation: () -> Unit = {},
+) {
     PushScaffold(onBack = onBack, modifier = modifier, title = stringResource(R.string.own_favorites)) {
-        if (favorites.isEmpty()) {
+        if (favorites.isEmpty() && meditation == null) {
             HintText(stringResource(R.string.own_favorites_empty))
             return@PushScaffold
         }
+        val meditationRow: List<@Composable () -> Unit> = meditation?.let { favorite ->
+            listOf<@Composable () -> Unit>(
+                {
+                    PracticeRow(
+                        name = stringResource(R.string.meditation_title),
+                        onClick = onOpenMeditation,
+                        hint = meditationFavoriteHint(favorite),
+                        leading = { MeditationMark() },
+                    ) { PersonalMarkIndicator() }
+                },
+            )
+        }.orEmpty()
         ExerciseRows(
-            rows = favorites.map { exercise ->
+            rows = favorites.map<Exercise, @Composable () -> Unit> { exercise ->
                 { ExerciseRow(exercise = exercise, onClick = { onSelect(exercise.id) }) { PersonalMarkIndicator() } }
-            },
+            } + meditationRow,
         )
     }
 }
