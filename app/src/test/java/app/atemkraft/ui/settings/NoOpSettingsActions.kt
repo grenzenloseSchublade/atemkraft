@@ -13,6 +13,7 @@ object NoOpSettingsActions : SettingsActions {
     override fun setVolume(volume: ToneVolume) = Unit
     override fun setHaptics(enabled: Boolean) = Unit
     override fun setHapticWave(enabled: Boolean) = Unit
+    override fun setSpeakPhases(enabled: Boolean) = Unit
     override fun setShowSafetyWarning(enabled: Boolean) = Unit
     override fun setShowStreak(enabled: Boolean) = Unit
     override fun setAskFeeling(enabled: Boolean) = Unit

@@ -198,7 +198,7 @@ class PatternBackupTest {
      * Golden-Fixtures (A-18): Dateien, wie frühere Versionen sie geschrieben haben, in
      * `app/src/test/resources/backup/` – v1.6.8 (Version 1, nur Tagesmuster), 2.8.0 (d0a4061,
      * Version 1 mit Herkunft, Dauer und Folge), 2.9.0 (1e082f3, Version 2 „alles“) und 2.12.0 (Version 2
-     * mit „Danach Stille“ in den Anpassungen, `silence`, und der Vibration als Welle, `hapticWave`). Feldreihenfolge,
+     * mit „Danach Stille“ in den Anpassungen, `silence`, der Vibration als Welle, `hapticWave`, und der Ansage der Phasen, `speakPhases`). Feldreihenfolge,
      * Einrückung und `null`-Felder wie `PatternBackup.encode` damals. Dazu dieselbe Datei mit UTF-8-BOM,
      * wie ihn manche Editoren voranstellen. Jeder Formatwechsel bekommt hier eine Datei (PROCESS.md).
      */

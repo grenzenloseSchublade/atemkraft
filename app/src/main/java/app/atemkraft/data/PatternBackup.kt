@@ -90,6 +90,7 @@ data class SettingsBackup(
     val volume: String? = null,
     val haptics: Boolean? = null,
     val hapticWave: Boolean? = null,
+    val speakPhases: Boolean? = null,
     val gongLong: Boolean? = null,
     val showSafetyWarning: Boolean? = null,
     val showNextPhase: Boolean? = null,

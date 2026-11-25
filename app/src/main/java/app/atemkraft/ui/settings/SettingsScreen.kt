@@ -495,6 +495,13 @@ private fun BreathCard(state: SettingsUiState, actions: SettingsActions) {
 
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapSmall), color = DividerSubtle)
         ToggleRow(
+            label = stringResource(R.string.settings_speak_phases),
+            checked = state.speakPhases,
+            onCheckedChange = actions::setSpeakPhases,
+            hint = stringResource(R.string.settings_speak_phases_hint),
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.GapTiny), color = DividerSubtle)
+        ToggleRow(
             label = stringResource(R.string.settings_haptics),
             checked = state.haptics,
             onCheckedChange = actions::setHaptics,

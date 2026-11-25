@@ -96,6 +96,8 @@ class AppContainer(context: Context) {
             context = context,
             settings = settingsRepository.cueSettings,
             hapticPlayer = hapticPlayer,
+            voiceModelManager = voiceModelManager,
+            activeVoice = settingsRepository.neuralVoiceId,
         ),
         logbook = logbookRepository,
         service = playbackService.link("breath"),

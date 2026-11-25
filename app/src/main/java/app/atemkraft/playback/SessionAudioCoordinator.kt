@@ -6,8 +6,12 @@ import app.atemkraft.cue.ContinuousTonePlayer
 import app.atemkraft.cue.CueEvent
 import app.atemkraft.cue.HapticPlayer
 import app.atemkraft.cue.PhaseAudio
+import app.atemkraft.cue.PhaseVoice
+import app.atemkraft.cue.PhaseWord
 import app.atemkraft.cue.ToneCuePlayer
 import app.atemkraft.cue.UnplugWatcher
+import app.atemkraft.cue.toCueEvent
+import app.atemkraft.cue.tts.VoiceModelManager
 import app.atemkraft.data.CueSettings
 import app.atemkraft.domain.SoundMode
 import kotlinx.coroutines.CoroutineScope
@@ -36,8 +40,12 @@ class SessionAudioCoordinator(
     private val settings: Flow<CueSettings>,
     /** Die eine Instanz aus dem AppContainer (AUDIO-04); Phasen-Haptik nutzt deren Drossel nicht. */
     private val hapticPlayer: HapticPlayer,
+    voiceModelManager: VoiceModelManager,
+    /** Die im Tab Meditation gewählte Stimme; die Ansage der Phasen spricht mit ihr. */
+    private val activeVoice: Flow<String?>,
 ) : BreathAudio {
     private val tonePlayer = ToneCuePlayer()
+    private val voice = PhaseVoice(context, voiceModelManager)
     private val continuousPlayer = ContinuousTonePlayer()
 
     /** Anruf oder andere App hat den Fokus genommen: Ton schweigt, Ablauf und Haptik laufen weiter (AUDIO-02). */
@@ -64,6 +72,7 @@ class SessionAudioCoordinator(
         this.current = current
         // In-Session-Stummschalter: übersteuert transient den Ton (nicht die Einstellung).
         val mutedState = muted.stateIn(scope, SharingStarted.Eagerly, false)
+        scope.launch { activeVoice.collect { voice.setActiveVoice(it) } }
         scope.launch {
             current.collect { cfg ->
                 tonePlayer.setVolume(cfg.volume)
@@ -77,11 +86,15 @@ class SessionAudioCoordinator(
                 val cfg = current.value
                 // Der Abschluss-Gong spielt in beiden Ton-Modi (beim durchgehenden Ton
                 // als hörbares Ende nach dem Ausblenden); Phasen-Cues nur im CUES-Modus.
+                // Mit der Ansage der Phasen entscheidet der Phasen-Collector über den Wechselton
+                // (gesprochen statt gepiept, kurze Phasen behalten den Ton).
                 val toneWanted = if (event == CueEvent.FINISH) {
                     cfg.soundMode != SoundMode.OFF
                 } else {
-                    cfg.soundMode == SoundMode.CUES
+                    cfg.soundMode == SoundMode.CUES && !speechOn(cfg)
                 }
+                // Die Stimme schweigt vor dem Abschluss-Gong (AUDIO-03).
+                if (event == CueEvent.FINISH) voice.stop()
                 // Stummschalter und Fokusverlust betreffen nur den Ton – Haptik folgt weiter der Einstellung.
                 // Fokus vor jedem hörbaren Ton: Der erste Cue kommt vor dem Status RUNNING, und ein
                 // abgelehnter Antrag (Anruf) wird so beim nächsten Ton wiederholt (AUDIO-02).
@@ -104,6 +117,7 @@ class SessionAudioCoordinator(
                 if (waveOn(cfg) && !pa.open && level != null) {
                     hapticPlayer.wave(level.from, level.to, pa.durationMs, pa.elapsedMs, enabled = true)
                 }
+                if (speechOn(cfg)) announce(pa, cfg, mutedState.value)
                 if (cfg.soundMode == SoundMode.CONTINUOUS) {
                     // Wie bei den Cues: zum Phasenbeginn anfordern, ein abgelehnter Antrag wird wiederholt.
                     if (!mutedState.value) audioFocus.request()
@@ -129,6 +143,23 @@ class SessionAudioCoordinator(
         }
     }
 
+    /** Ansage der Phasen gewünscht und eine Stimme da (sonst bleibt es beim Wechselton). */
+    private fun speechOn(cfg: CueSettings): Boolean = cfg.speakPhases && voice.available
+
+    /**
+     * Beginn einer Phase mit Ansage: das Wort, oder – zu kurz für ein Wort – der Wechselton wie
+     * ohne Ansage. Beim Fortsetzen mitten in einer Phase kommt keins von beiden (wie beim Cue).
+     */
+    private fun announce(pa: PhaseAudio, cfg: CueSettings, muted: Boolean) {
+        if (muted) return
+        val word = PhaseWord.at(pa.type, pa.durationMs, pa.open, pa.elapsedMs)
+        val realStart = pa.open || pa.elapsedMs == 0L
+        if (word == null && !(realStart && cfg.soundMode == SoundMode.CUES)) return
+        audioFocus.request()
+        if (focusLost.value) return
+        if (word != null) voice.say(word) else tonePlayer.play(pa.type.toCueEvent())
+    }
+
     /** „Welle“ gewünscht und möglich (sonst Impulse, auch bei gewählter Welle). */
     private fun waveOn(cfg: CueSettings): Boolean = cfg.haptics && cfg.hapticWave && hapticPlayer.waveSupported
 
@@ -144,6 +175,10 @@ class SessionAudioCoordinator(
         // „Nochmal“/neuer Start: Ein noch klingender Abschluss-Gong blendet kurz aus, statt in die
         // neue Übung hineinzuklingen; ebenso, wenn ein Anruf den Fokus nimmt.
         if (status == SessionStatus.PREPARING || lost) tonePlayer.silenceGong()
+        // Stimme: vor der Übung laden, in Pause, Stille und Fokusverlust schweigen, danach freigeben.
+        if (cfg.speakPhases && status == SessionStatus.PREPARING) voice.prepare()
+        if (muted || lost || status == SessionStatus.PAUSED) voice.stop()
+        if (status == SessionStatus.IDLE || status == SessionStatus.FINISHED) voice.release()
         // Eine laufende Welle hält in der Pause und beim Abbruch sofort an (nicht am Ende: dort
         // spielt das Doppel-Muster des Abschlusses, und die Welle endet ohnehin mit ihrer Phase).
         if (waveOn(cfg) && (status == SessionStatus.PAUSED || status == SessionStatus.IDLE || status == SessionStatus.PREPARING)) {
@@ -169,7 +204,7 @@ class SessionAudioCoordinator(
             // Fokus nur, solange etwas klingen kann (AUDIO-02): nicht im Countdown (dort klingt nichts,
             // den ersten Cue fordert der Collector an), nicht in der Pause (Weiter fordert ihn wieder
             // an) und nicht stummgeschaltet – fremde Medien bleiben sonst unnötig gedämpft.
-            audibleStatus && cfg.soundMode != SoundMode.OFF && !muted ->
+            audibleStatus && (cfg.soundMode != SoundMode.OFF || cfg.speakPhases) && !muted ->
                 audioFocus.request()
 
             // Am Session-Ende erst den Abschluss-Gong ausklingen lassen, bevor fremde Medien

@@ -574,6 +574,14 @@
     <string name="volume_hint">Wie laut Töne und Gongs im Verhältnis zur Medienlautstärke deines Geräts klingen.</string>
     <string name="settings_haptics">Vibration</string>
     <string name="settings_haptics_hint">Vibriert bei jedem Phasenwechsel, auch wenn der Ton aus ist.</string>
+    <string name="settings_speak_phases">Phasen ansagen</string>
+    <string name="settings_speak_phases_hint">Eine Stimme sagt bei jedem Wechsel kurz „ein“, „halten“ oder „aus“ – statt des Wechseltons, mit der Stimme der Meditation.</string>
+    <!-- Ansage der Phasen in der Atemübung (PhaseWord): kurz, ruhig, ohne Satzzeichen gesprochen. -->
+    <string name="say_inhale">ein</string>
+    <string name="say_inhale_more">noch ein</string>
+    <string name="say_exhale">aus</string>
+    <string name="say_hold">halten</string>
+    <string name="say_rest">locker</string>
     <string name="settings_haptic_wave">Vibration als Welle</string>
     <string name="settings_haptic_wave_hint">Statt eines Impulses je Wechsel schwillt sie beim Einatmen an und klingt beim Ausatmen ab, beim Halten ist sie still.</string>
 

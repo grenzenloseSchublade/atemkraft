@@ -16,6 +16,8 @@ data class CueSettings(
     val haptics: Boolean = true,
     /** Vibration als „Welle“ statt Impulsen je Wechsel (E6: erst Option, aus ab Werk). */
     val hapticWave: Boolean = false,
+    /** Stimme sagt die Phasen an („ein“, „halten“, „aus“), statt des Wechseltons; aus ab Werk. */
+    val speakPhases: Boolean = false,
     val transition: TransitionEmphasis = TransitionEmphasis.MEDIUM,
     val volume: ToneVolume = ToneVolume.MEDIUM,
     /** Gong-Ausklang lang/kurz (app-weit, auch für den Sitzungs-Abschlussgong). */

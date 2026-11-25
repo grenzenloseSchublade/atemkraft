@@ -36,6 +36,7 @@ data class SettingsUiState(
     val volume: ToneVolume = CueSettings().volume,
     val haptics: Boolean = CueSettings().haptics,
     val hapticWave: Boolean = CueSettings().hapticWave,
+    val speakPhases: Boolean = CueSettings().speakPhases,
     val showSafetyWarning: Boolean = true,
     val sessionDisplay: SessionDisplay = SessionDisplay(),
     val meditationDisplay: MeditationDisplay = MeditationDisplay(),
@@ -62,6 +63,7 @@ interface SettingsActions {
     fun setVolume(volume: ToneVolume)
     fun setHaptics(enabled: Boolean)
     fun setHapticWave(enabled: Boolean)
+    fun setSpeakPhases(enabled: Boolean)
     fun setShowSafetyWarning(enabled: Boolean)
     fun setShowNextPhase(enabled: Boolean)
     fun setShowProgress(enabled: Boolean)
@@ -111,6 +113,7 @@ class SettingsViewModel(
                 volume = cue.volume,
                 haptics = cue.haptics,
                 hapticWave = cue.hapticWave,
+                speakPhases = cue.speakPhases,
                 showSafetyWarning = safety.showWarning,
                 sessionDisplay = display,
                 gongLong = cue.gongLong,
@@ -148,6 +151,7 @@ class SettingsViewModel(
 
         override fun setHaptics(enabled: Boolean) = write { settings.setHaptics(enabled) }
         override fun setHapticWave(enabled: Boolean) = write { settings.setHapticWave(enabled) }
+        override fun setSpeakPhases(enabled: Boolean) = write { settings.setSpeakPhases(enabled) }
 
         override fun setShowSafetyWarning(enabled: Boolean) = write { settings.setShowSafetyWarning(enabled) }
 
