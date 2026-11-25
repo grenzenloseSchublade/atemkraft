@@ -237,20 +237,21 @@ internal val GROUP_LABEL_LIST_TOP = Dimens.SectionGap - Dimens.ListGap
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SearchStatus(situations: Int, areas: Int, onShowAll: () -> Unit) {
-    var settled by remember { mutableStateOf(situations to areas) }
-    LaunchedEffect(situations, areas) {
+internal fun SearchStatus(situations: Int, areas: Int, onShowAll: () -> Unit, exercises: Int = 0) {
+    var settled by remember { mutableStateOf(Triple(exercises, situations, areas)) }
+    LaunchedEffect(exercises, situations, areas) {
         delay(Motion.SearchStatusSettle)
-        settled = situations to areas
+        settled = Triple(exercises, situations, areas)
     }
-    SettledSearchStatus(settled.first, settled.second, onShowAll)
+    SettledSearchStatus(settled.first, settled.second, settled.third, onShowAll)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SettledSearchStatus(situations: Int, areas: Int, onShowAll: () -> Unit) {
-    val none = situations == 0 && areas == 0
+private fun SettledSearchStatus(exercises: Int, situations: Int, areas: Int, onShowAll: () -> Unit) {
+    val none = exercises == 0 && situations == 0 && areas == 0
     val parts = listOfNotNull(
+        if (exercises > 0) pluralStringResource(R.plurals.filter_count, exercises, exercises) else null,
         if (situations > 0) pluralStringResource(R.plurals.situations_search_situations, situations, situations) else null,
         if (areas > 0) pluralStringResource(R.plurals.situations_search_areas, areas, areas) else null,
     )
@@ -267,6 +268,34 @@ private fun SettledSearchStatus(situations: Int, areas: Int, onShowAll: () -> Un
             }
         }
         if (none) SecondaryText(stringResource(R.string.situations_search_none_hint))
+    }
+}
+
+/**
+ * Titel der Übungen, deren Name die Suche trifft (Konzeptprüfung 2026-11-25): „Nach Name“, bei
+ * „Yoga“/„Pranayama“ „Aus dem Yoga“ wie der Filter; so auch oben als klebende Kopie. Steht nur bei
+ * mehreren Ergebnisgruppen, wie der Titel einer Empfehlung.
+ */
+@Composable
+internal fun NameHitsTitle(yoga: Boolean) = SubLabel(
+    stringResource(if (yoga) R.string.filter_yoga else R.string.situations_search_by_name),
+    color = MaterialTheme.colorScheme.onBackground,
+)
+
+/** Kopf der Namens-Treffer bei mehreren Ergebnisgruppen; mit [stickyKey] klebt er als Gruppe. */
+@Composable
+internal fun NameHitsIntro(yoga: Boolean, stickyKey: String) {
+    StickyHeader(stickyGroup(stickyKey)) { NameHitsTitle(yoga) }
+}
+
+/**
+ * Verweis „Pranayama ›“ unter den Übungen aus dem Yoga, wenn die Suche nach Yoga oder Pranayama
+ * fragte: öffnet Lernen › Pranayama – die Theorie am Ort der Frage. Bauart wie [ProgramsLink].
+ */
+@Composable
+internal fun PranayamaLink(onClick: () -> Unit) {
+    AppTextButton(onClick = onClick, modifier = Modifier.flushStart()) {
+        ForwardLinkText(text = stringResource(R.string.pranayama_title), color = MaterialTheme.colorScheme.secondary)
     }
 }
 

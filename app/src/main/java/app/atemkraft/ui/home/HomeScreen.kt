@@ -78,6 +78,8 @@ data class HomeActions(
     val onOpenPrograms: () -> Unit = {},
     /** Zeile „Weiter: … ›“ ([ResumeRow]): öffnet die zuletzt geübte Übung. */
     val onResume: (String) -> Unit = onSelect,
+    /** Verweis „Pranayama ›“ unter den Übungen aus dem Yoga, wenn die Suche danach fragte (Lernen › Pranayama). */
+    val onOpenPranayama: () -> Unit = {},
 )
 
 /**
@@ -110,8 +112,10 @@ data class HomeActions(
  *   des Bereichs ([AreaHeader]); kein Chip ist markiert, die Eingabe leer. ✕ am Label oder Zurück
  *   führt zur Übersicht.
  * - **Suche:** Sobald die Eingabe ein Suchwort enthält ([SituationSearch]), sind die Chips der
- *   Treffer markiert, darunter stehen erst die Empfehlungen der Anlässe, beste zuerst, dann die
- *   direkt getroffenen Bereiche. Ein Chip leert die Eingabe, eine Eingabe hebt die Wahl auf.
+ *   Treffer markiert, darunter stehen erst die Übungen, deren Name trifft („Box“, „Ujjayi“; bei
+ *   „Yoga“/„Pranayama“ die Übungen aus dem Yoga mit „Pranayama ›“), dann die Empfehlungen der
+ *   Anlässe, beste zuerst, dann die direkt getroffenen Bereiche. Ein Chip leert die Eingabe, eine
+ *   Eingabe hebt die Wahl auf.
  *
  * Im Grundzustand steht über den Familien der Kopf „Übungen“ mit der Filterreihe
  * ([ExerciseFilterRow], MUSTER-12, Nutzer 2026-10-23): Filter quer zu den Familien, UND-verknüpft;
@@ -150,7 +154,11 @@ fun HomeScreen(
     var chosenArea by rememberSaveable { mutableStateOf<BreathingFamily?>(null) }
     var filters by rememberSaveable { mutableStateOf(emptySet<ExerciseFilter>()) }
     var dailySheetOpen by rememberSaveable { mutableStateOf(false) }
-    val results = remember(queryText, catalog.situations, catalog.areas) { SituationSearch.search(queryText, catalog.situations, catalog.areas) }
+    // Namen treffen nur Übungen mit Start (die Liste der Familien), Programme bleiben bei ihrem Anlass.
+    val searchable = remember(catalog.exercisesByFamily) { catalog.exercisesByFamily.flatMap { it.second } }
+    val results = remember(queryText, catalog.situations, catalog.areas, searchable) {
+        SituationSearch.search(queryText, catalog.situations, catalog.areas, searchable, catalog.yogaExerciseIds)
+    }
     val focusManager = LocalFocusManager.current
     val queryFocus = remember { MutableInteractionSource() }
     val queryFocused by queryFocus.collectIsFocusedAsState()
@@ -249,12 +257,26 @@ fun HomeScreen(
         }
         if (results != null && chosen == null && chosenArea == null) {
             item(key = "search-status") {
-                SearchStatus(situations = results.situations.size, areas = results.areas.size, onShowAll = showAll)
+                SearchStatus(situations = results.situations.size, areas = results.areas.size, onShowAll = showAll, exercises = results.exercises.size)
             }
         }
         if (filtering) {
-            val withTitle = shownSituations.size + shownAreas.size > 1
+            // Namens-Treffer nur bei einer Suche, nicht bei gewähltem Anlass oder Bereich.
+            val nameHits = if (chosen == null && chosenArea == null) results?.exercises.orEmpty() else emptyList()
+            val yogaHit = nameHits.isNotEmpty() && results?.yoga == true
+            val withTitle = shownSituations.size + shownAreas.size + (if (nameHits.isEmpty()) 0 else 1) > 1
             val directAreas = shownAreas.map { it.family }.toSet()
+            if (nameHits.isNotEmpty()) {
+                // Wer den Namen sucht, will die Karte: Sie steht vor allen Anlässen.
+                if (withTitle) {
+                    declareSticky(Sticky("names", level = 2)) { NameHitsTitle(yogaHit) }
+                    item(key = "names") { NameHitsIntro(yogaHit, stickyKey = "names") }
+                }
+                items(nameHits, key = { "name-${it.id}" }) { exercise ->
+                    ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                }
+                if (yogaHit) item(key = "names-pranayama") { PranayamaLink(onClick = actions.onOpenPranayama) }
+            }
             shownSituations.forEach { rec ->
                 val recKey = "rec-${rec.situation.name}"
                 // Der Titel steht nur bei mehreren Treffern; dann klebt er als Gruppe.

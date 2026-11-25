@@ -44,6 +44,14 @@ import java.text.Normalizer
  *   Begriff), einen Titel- oder Satztext haben sie nicht. Ein Bereich mit Warnung („Aktivieren“)
  *   gilt wie eine Warn-Situation: nur sichtbar, wenn kein anderer kuratierter Begriff trifft.
  *   Im Ergebnis stehen erst die Anlässe, dann die Bereiche ([Results]).
+ * - **Namen** (Konzeptprüfung 2026-11-25, A3): Wer eine Übung beim Namen sucht, findet ihre Karte
+ *   direkt – vor allen Anlässen. Ein Suchwort trifft ein Wort des Namens ganz oder als Anfang
+ *   („box“ → „Box-Atmung“, „wechsel“ → „Nadi Shodhana (Wechselatmung)“, „kapal“ → „Feueratmung
+ *   (Kapalabhati)“); die Namen tragen ihre Übersetzung in Klammern, eine Liste von Synonymen gibt es
+ *   nicht. Ziffern zählen zusammen ab drei: „4-7-8“ und „478“ treffen die 4-7-8-Atmung, „4444“ die
+ *   Box-Atmung (aus der Id). „Yoga“ und „Pranayama“ (auch „Prāṇāyāma“, ab „prana“) treffen alle
+ *   Übungen aus dem Yoga ([yogaIds]) und setzen [Results.yoga] – darunter führt ein Verweis zur
+ *   Seite „Pranayama“. Nur Übungen mit Start ([exercises]); Programme bleiben bei ihrem Anlass.
  */
 object SituationSearch {
 
@@ -114,9 +122,35 @@ object SituationSearch {
         fun matchesText(word: String) = textWords.any { it.startsWith(word) }
     }
 
-    /** Ergebnis einer Suche: erst die passenden Anlässe, dann die passenden Bereiche, je beste zuerst. */
-    data class Results(val situations: List<SituationRecommendation>, val areas: List<BreathingArea>) {
-        val isEmpty: Boolean get() = situations.isEmpty() && areas.isEmpty()
+    /**
+     * Ergebnis einer Suche: die Übungen, deren Name trifft ([exercises], zuerst gezeigt), dann die
+     * passenden Anlässe und Bereiche, je beste zuerst. [yoga]: Die Suche fragte nach Yoga oder
+     * Pranayama.
+     */
+    data class Results(
+        val situations: List<SituationRecommendation>,
+        val areas: List<BreathingArea>,
+        val exercises: List<Exercise> = emptyList(),
+        val yoga: Boolean = false,
+    ) {
+        val isEmpty: Boolean get() = situations.isEmpty() && areas.isEmpty() && exercises.isEmpty()
+    }
+
+    /** Suchwörter, die nach der Lehre fragen statt nach einer Übung (normalisiert, als Anfang ab [YOGA_MIN]). */
+    private val yogaWords = listOf("yoga", "pranayama")
+    private const val YOGA_MIN = 4
+    private const val DIGITS_MIN = 3
+
+    private fun digitsOf(text: String) = text.filter { it.isDigit() }
+
+    /** Übungen, deren Name (oder Ziffernfolge) eines der Suchwörter trifft; Reihenfolge wie [exercises]. */
+    private fun byName(words: List<String>, query: String, exercises: List<Exercise>): List<Exercise> {
+        val queryDigits = digitsOf(query).takeIf { it.length >= DIGITS_MIN }
+        return exercises.filter { exercise ->
+            val nameWords = words(exercise.name).filter(::isSearchWord)
+            val digits = (digitsOf(exercise.name).takeIf { it.length >= DIGITS_MIN } ?: digitsOf(exercise.id)).takeIf { it.length >= DIGITS_MIN }
+            words.any { w -> nameWords.any { it.startsWith(w) } } || (queryDigits != null && queryDigits == digits)
+        }
     }
 
     /**
@@ -147,10 +181,22 @@ object SituationSearch {
      * Suchwort enthält (dann zeigt der Tab die normale Übersicht); ein leeres Ergebnis heißt
      * „nichts gefunden“.
      */
-    fun search(query: String, situations: List<SituationRecommendation>, areas: List<BreathingArea> = emptyList()): Results? {
+    fun search(
+        query: String,
+        situations: List<SituationRecommendation>,
+        areas: List<BreathingArea> = emptyList(),
+        exercises: List<Exercise> = emptyList(),
+        yogaIds: Set<String> = emptySet(),
+    ): Results? {
         val words = words(query)
         val searchIdx = words.indices.filter { isSearchWord(words[it]) }
-        if (searchIdx.isEmpty()) return null
+        // Eine reine Ziffernfolge („478“, „4-7-8“) ist auch ein Suchwort, aber nur für Namen.
+        val digitQuery = digitsOf(query).length >= DIGITS_MIN
+        if (searchIdx.isEmpty() && !digitQuery) return null
+        val searchWords = searchIdx.map { words[it] }
+        val yoga = searchWords.any { w -> w.length >= YOGA_MIN && yogaWords.any { it.startsWith(w) || w.startsWith(it) } }
+        val named = (if (yoga) exercises.filter { it.id in yogaIds } else emptyList()) +
+            byName(searchWords.filterNot { w -> yogaWords.any { it.startsWith(w) || w.startsWith(it) } }, query, exercises)
         val index = situations.map { Index(it, null) } + areas.map { Index(null, it) }
 
         // Wendungen zuerst: Ihre Wörter gehören der Situation der Wendung (erste gewinnt).
@@ -176,6 +222,11 @@ object SituationSearch {
         val hits = index
             .filter { scores.getValue(it) > 0 && !(it.warn && keywordHit) }
             .sortedByDescending { scores.getValue(it) } // stabil: Gleichstand behält die Datenreihenfolge
-        return Results(situations = hits.mapNotNull { it.rec }, areas = hits.mapNotNull { it.area })
+        return Results(
+            situations = hits.mapNotNull { it.rec },
+            areas = hits.mapNotNull { it.area },
+            exercises = named.distinctBy { it.id },
+            yoga = yoga,
+        )
     }
 }

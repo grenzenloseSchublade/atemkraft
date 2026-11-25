@@ -120,8 +120,10 @@
     <string name="situations_area_link">Mehr: %1$s</string>
     <string name="situations_all_link">Alle Übungen</string>
     <string name="situations_search_none">Nichts gefunden</string>
+    <!-- Titel der Übungen, deren Name die Suche trifft („Box“, „Ujjayi“), bei mehreren Ergebnisgruppen. -->
+    <string name="situations_search_by_name">Nach Name</string>
     <!-- Unter „Nichts gefunden“ (MUSTER-09, Nutzer 2026-10-24): was die Suche kennt und was bewusst nicht. -->
-    <string name="situations_search_none_hint">Die Suche kennt Alltagswörter wie ‚nervös‘, ‚müde‘, ‚Prüfung‘ oder ‚Bett‘ – keine Beschwerden.</string>
+    <string name="situations_search_none_hint">Die Suche kennt Alltagswörter wie ‚nervös‘, ‚müde‘ oder ‚Bett‘ und die Namen der Übungen – keine Beschwerden.</string>
     <string name="action_show_all">Alle zeigen</string>
 
     <!-- Abschnittskopf „Übungen“ über Filterreihe, Tagesmuster und Familien (Nutzer 2026-10-24) und die
