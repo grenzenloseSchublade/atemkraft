@@ -23,9 +23,9 @@ import kotlinx.coroutines.launch
  * dieser Koordinator startet die Meditation – auch hinter dem Sperrbildschirm sofort statt verspätet
  * beim nächsten Sichtbarwerden der App. Der Logbuch-Eintrag der Atemübung steht dann schon.
  *
- * Automatisch am Ende, wenn die Übung es wünscht ([SessionUiState.silenceAfter]: Startwert aus der
- * Einstellung, in der Übung oben umschaltbar, Nutzer 2026-10-23); sonst über den Link „In die Stille ›“
- * am Ende-Screen ([intoSilence]), beides auf demselben Weg. Nie nach Übungen mit
+ * Am Ende, wenn die Übung es wünscht ([SessionUiState.silenceAfter]: Startwert aus dem Blatt
+ * „Anpassen“ bzw. der Einstellung, in der Übung oben umschaltbar). Der Ende-Screen bietet die Stille
+ * nicht mehr an (Eigentümer 2026-11-25: nur das Nötigste) – sie wählt man vorher. Nie nach Übungen mit
  * [app.atemkraft.domain.Exercise.silenceAfterAllowed] = false (Atmen im Gehen) und nie über eine
  * laufende Meditation hinweg; eine schon beendete, die noch am Ende-Screen steht (auch minimiert),
  * räumt der Übergang weg, statt stumm nichts zu tun.
@@ -64,12 +64,6 @@ class SilenceAfterBreath(
                 if (exercise.silenceAfterAllowed && breath.state.value.silenceAfter) enter()
             }
         }
-    }
-
-    /** „In die Stille ›“ am Ende-Screen: derselbe Übergang, auf Tipp. */
-    fun intoSilence() {
-        if (!breath.state.value.silenceAfterAllowed) return
-        scope.launch { enter() }
     }
 
     /**

@@ -48,7 +48,7 @@ fun SessionOverlay(
             onMinimize = onMinimize,
             onToggleMute = onToggleMute,
             chromeVisible = controlsVisible,
-            // Nicht nach Atmen im Gehen und nicht mehr am Ende (dort: „In die Stille ›“).
+            // Nicht nach Atmen im Gehen und nicht mehr am Ende (der Ende-Screen bietet die Stille nicht an).
             silenceAfter = state.silenceAfter.takeIf { state.silenceAfterAllowed && state.status != SessionStatus.FINISHED },
             onToggleSilenceAfter = onToggleSilenceAfter,
         ) {

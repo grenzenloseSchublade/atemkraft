@@ -56,7 +56,6 @@ import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -65,7 +64,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.atemkraft.R
-import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Feeling
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
@@ -231,11 +229,17 @@ private fun SessionRoundButton(
 }
 
 /**
- * Abschluss-Screen beider Sitzungsarten: „✓ Geschafft“-Eyebrow, [title], mit [feelingAsk] darunter
- * die Antwortreihe zum Befinden aus [feelingOptions] (gewählt: [feeling]; überspringbar, nur wenn ein
- * Logbuch-Eintrag entstand, SEC-LEGAL-04), optional eine kurze Bilanz aus den
- * Teilen [summary] (z. B. „8 Runden · 6:24 min“, [sessionSummaryParts]), darunter mit
- * [onOpenLogbook] der Link „Im Logbuch ansehen ›“, dann Nochmal/Ende.
+ * ◉ „Tut mir gut“ am Ende-Screen: [marked] ist der Stand der Markierung der gerade geübten Übung,
+ * [onChange] setzt oder löst sie (dieselbe Markierung wie auf der Detailseite, ICON-03).
+ */
+data class EndMark(val marked: Boolean, val onChange: (Boolean) -> Unit)
+
+/**
+ * Abschluss-Screen beider Sitzungsarten, nur das Nötigste (Eigentümer 2026-11-25): „✓ Geschafft“,
+ * [title] (die Einladung „Spür kurz nach, wie es dir geht.“), mit [feelingAsk] die Antwortreihe zum
+ * Befinden aus [feelingOptions] (gewählt: [feeling]; überspringbar, nur wenn ein Logbuch-Eintrag
+ * entstand, SEC-LEGAL-04), mit [mark] darunter ◉ „Tut mir gut“, dann Nochmal/Ende. Keine Bilanz, kein
+ * Weg ins Logbuch, kein „In die Stille ›“ – die Zahl steht im Logbuch, die Stille wählt man vorher.
  *
  * Für TalkBack ein eigener Bereich („Geschafft“ als `paneTitle`, beim Erscheinen angesagt). Wer
  * per Tastatur oder D-Pad bedient, landet auf „Nochmal“ – der zuletzt fokussierte Pause-Knopf
@@ -248,9 +252,7 @@ fun FinishedPanel(
     onAgain: () -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
-    summary: List<SummaryPart> = emptyList(),
-    onOpenLogbook: (() -> Unit)? = null,
-    onIntoSilence: (() -> Unit)? = null,
+    mark: EndMark? = null,
     feelingOptions: List<Feeling> = emptyList(),
     feeling: Feeling? = null,
     feelingAsk: FeelingAsk? = null,
@@ -263,7 +265,7 @@ fun FinishedPanel(
     // „Nochmal“ und „Ende“ abzuschneiden (LAYOUT-05).
     BoxWithConstraints(modifier = modifier.fillMaxSize().semantics { paneTitle = pane }) {
         FinishedColumn(minHeight = maxHeight) {
-            FinishedContent(title, onAgain, onExit, againFocus, summary, onOpenLogbook, onIntoSilence, feelingOptions, feeling, feelingAsk)
+            FinishedContent(title, onAgain, onExit, againFocus, mark, feelingOptions, feeling, feelingAsk)
         }
     }
 }
@@ -289,9 +291,7 @@ private fun ColumnScope.FinishedContent(
     onAgain: () -> Unit,
     onExit: () -> Unit,
     againFocus: FocusRequester,
-    summary: List<SummaryPart>,
-    onOpenLogbook: (() -> Unit)?,
-    onIntoSilence: (() -> Unit)?,
+    mark: EndMark?,
     feelingOptions: List<Feeling>,
     feeling: Feeling?,
     feelingAsk: FeelingAsk?,
@@ -309,35 +309,11 @@ private fun ColumnScope.FinishedContent(
         textAlign = TextAlign.Center,
     )
     if (feelingAsk != null && feelingOptions.isNotEmpty()) FeelingRow(feelingOptions, feeling, feelingAsk)
-    if (summary.isNotEmpty()) {
+    // ◉ direkt nach dem Nachspüren: der Moment, in dem man weiß, ob es gutgetan hat. Icon-only wie auf
+    // der Detailseite; TalkBack hört „Tut mir gut“ mit Zustand (ICON-02, A11Y-04).
+    if (mark != null) {
         Spacer(Modifier.height(Dimens.GapSmall))
-        val summaryStyle = MaterialTheme.typography.bodySmall
-        val summaryColor = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY)
-        // Eine Ansage für TalkBack statt einzelner Teile, mit Pause statt vorgelesenem Trennpunkt
-        // und der Dauer ausgeschrieben („6 Minuten 24 Sekunden“, A11Y-06).
-        val spoken = summary.joinToString(", ") { it.spoken }
-        DotSeparatedFlow(
-            parts = summary.map { part ->
-                { WholeWordText(text = part.text, style = summaryStyle, color = summaryColor, textAlign = TextAlign.Center) }
-            },
-            separator = { Text(text = DOT_SEPARATOR, style = summaryStyle, color = summaryColor) },
-            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
-        )
-    }
-    // Unter der Bilanz der Weg zum Eintrag (Nachtrag 2, Nutzer 2026-10-22): beendet wie
-    // „Ende“ und öffnet das Logbuch.
-    if (onOpenLogbook != null) {
-        Spacer(Modifier.height(Dimens.GapTiny))
-        AppTextButton(onClick = onOpenLogbook) {
-            ForwardLinkText(text = stringResource(R.string.session_open_logbook), color = MaterialTheme.colorScheme.secondary)
-        }
-    }
-    // Nach einer Atemübung: auch ohne die Einstellung „Danach in die Stille“ einmal in die
-    // stille Meditation (Nutzer 2026-10-23).
-    if (onIntoSilence != null) {
-        AppTextButton(onClick = onIntoSilence) {
-            ForwardLinkText(text = stringResource(R.string.session_into_silence), color = MaterialTheme.colorScheme.secondary)
-        }
+        PersonalMarkToggle(marked = mark.marked, onMarkedChange = mark.onChange)
     }
     Spacer(Modifier.height(Dimens.SessionPadding))
     AdaptiveButtonRow(modifier = Modifier.fillMaxWidth()) {

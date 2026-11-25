@@ -58,6 +58,7 @@ import app.atemkraft.playback.SessionUiState
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.CircleTapTarget
 import app.atemkraft.ui.components.DotSeparatedFlow
+import app.atemkraft.ui.components.EndMark
 import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
@@ -71,7 +72,6 @@ import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.expandedStateText
 import app.atemkraft.ui.components.rememberTapFlash
 import app.atemkraft.ui.components.rememberWidestTextWidth
-import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
 import app.atemkraft.ui.theme.SECONDARY
@@ -84,10 +84,8 @@ import kotlin.math.ceil
  * Was die laufende Atem-Session auslöst (CODE-02). [onTapHaptic] spielt den Tipp-Tick beim
  * Antippen des Kreises; ob er vibriert, entscheidet der Aufrufer anhand des App-Schalters
  * „Vibration“.
- * - [onOpenLogbook]: „Im Logbuch ansehen ›“ am Ende-Screen; ohne ihn kein Link.
- * - [onIntoSilence]: „In die Stille ›“ am Ende-Screen, weiter in die stille Meditation; ohne ihn
- *   kein Link.
  * - [feelingAsk]: Antwortreihe zum Befinden am Ende-Screen; ohne sie fragt er nicht (Einstellung aus).
+ * - [mark]: ◉ „Tut mir gut“ am Ende-Screen; ohne ihn (Übung nicht markierbar) kein Schalter.
  */
 @Immutable
 data class SessionActions(
@@ -96,16 +94,15 @@ data class SessionActions(
     val onContinue: () -> Unit,
     val onRestart: () -> Unit,
     val onStop: () -> Unit,
-    val onOpenLogbook: (() -> Unit)? = null,
-    val onIntoSilence: (() -> Unit)? = null,
     val feelingAsk: FeelingAsk? = null,
+    val mark: EndMark? = null,
 )
 
 /**
  * Zeigt die laufende Session: Start-Countdown, Atemkreis mit Fortschrittsbogen, im Kreis nur
  * Phasenwort und Sekunden, darunter fest die Anleitungszeile, Steuerung und – optional, dezent –
  * die kommende Phase. Bogen, Sekunden und kommende Phase schaltet [display] ab (der Countdown
- * vor dem Start zählt immer). Am Ende „✓ Geschafft“, die offene Frage und eine kurze Bilanz.
+ * vor dem Start zählt immer). Am Ende „✓ Geschafft“, die Einladung zum Nachspüren und ◉.
  * [controlsVisible] = false ist die Ruhe-Ansicht ([SessionOverlay]): alles außer Kreis, Wort,
  * Sekunden und Bogen blendet aus, ohne dass der Kreis springt.
  */
@@ -129,12 +126,10 @@ fun SessionScreen(
                 title = stringResource(R.string.session_done_prompt),
                 onAgain = actions.onRestart,
                 onExit = actions.onStop,
-                onOpenLogbook = actions.onOpenLogbook,
-                onIntoSilence = actions.onIntoSilence,
+                mark = actions.mark,
                 feelingOptions = state.feelingOptions,
                 feeling = state.feeling,
                 feelingAsk = actions.feelingAsk,
-                summary = state.summary?.let { sessionSummaryParts(it.durationMs, rounds = it.rounds, breaths = it.breaths) }.orEmpty(),
             )
         } else {
             ActiveContent(

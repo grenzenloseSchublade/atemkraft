@@ -20,6 +20,7 @@ import app.atemkraft.domain.estimatedTotalSeconds
 import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.playback.SessionStatus
 import app.atemkraft.playback.SessionUiState
+import app.atemkraft.ui.components.EndMark
 import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.home.HomeActions
 import app.atemkraft.ui.home.HomeCatalog
@@ -174,9 +175,8 @@ internal fun SessionShot(state: SessionUiState, feelingAsk: FeelingAsk? = null) 
         onContinue = {},
         onRestart = {},
         onStop = {},
-        onOpenLogbook = {},
-        onIntoSilence = {},
         feelingAsk = feelingAsk,
+        mark = EndMark(marked = false) {},
     ),
     onMinimize = {},
     onToggleMute = {},
@@ -187,7 +187,7 @@ internal fun SessionShot(state: SessionUiState, feelingAsk: FeelingAsk? = null) 
 internal fun MeditationShot(state: MeditationUiState, feelingAsk: FeelingAsk? = null) = MeditationOverlay(
     state = state,
     display = MeditationDisplay(autoCalm = false),
-    actions = MeditationActions(onTogglePause = {}, onTapHaptic = {}, onRestart = {}, onEnd = {}, onOpenLogbook = {}, feelingAsk = feelingAsk),
+    actions = MeditationActions(onTogglePause = {}, onTapHaptic = {}, onRestart = {}, onEnd = {}, feelingAsk = feelingAsk),
     onMinimize = {},
     onToggleMute = {},
 )

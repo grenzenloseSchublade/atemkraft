@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.atemkraft.data.BuiltInExercises
 import app.atemkraft.data.CueSettings
 import app.atemkraft.data.MeditationDisplay
 import app.atemkraft.data.SessionDisplay
@@ -43,6 +44,7 @@ import app.atemkraft.domain.MeditationMode
 import app.atemkraft.domain.SessionConfig
 import app.atemkraft.playback.MeditationStatus
 import app.atemkraft.playback.SessionStatus
+import app.atemkraft.ui.components.EndMark
 import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.meditation.MeditationActions
 import app.atemkraft.ui.meditation.MeditationOverlay
@@ -52,6 +54,7 @@ import app.atemkraft.ui.session.SessionActions
 import app.atemkraft.ui.session.SessionOverlay
 import app.atemkraft.ui.theme.Motion
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -138,6 +141,20 @@ internal class PlaybackState(
             intro = true,
             onIntroShown = { container.appScope.launch { container.settingsRepository.feelingOffered() } },
         )
+    }
+
+    /** Markierungen „Tut mir gut“ (◉), für den Schalter am Ende-Screen. */
+    val markedExercises: Flow<Set<String>> get() = container.settingsRepository.markedExercises
+
+    /**
+     * ◉ „Tut mir gut“ am Ende-Screen für [exerciseId], nach derselben Regel wie auf der Detailseite
+     * (nur eingebaute Übungen, [BuiltInExercises]); sonst `null`, dann kein Schalter.
+     */
+    fun endMark(exerciseId: String, marked: Set<String>): EndMark? {
+        if (BuiltInExercises.all.none { it.id == exerciseId }) return null
+        return EndMark(marked = exerciseId in marked) { on ->
+            container.appScope.launch { container.settingsRepository.setExerciseMarked(exerciseId, on) }
+        }
     }
 
     /**
@@ -259,14 +276,14 @@ internal fun PlaybackMiniBars(playback: PlaybackState) {
 /**
  * Vollbild-Overlays von Atemübung und Meditation über allem, dazu das Wach-Halten des
  * Bildschirms. System-Zurück regelt jedes Overlay selbst (minimieren, am Ende-Screen wie „Ende“).
- * [onOpenLogbook]: „Im Logbuch ansehen ›“ am Ende, nachdem der Ablauf beendet und das Overlay
- * geschlossen ist.
+ * Am Ende-Screen ◉ „Tut mir gut“ für die geübte Übung ([playback] kennt die Markierungen).
  */
 @Composable
-internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit) {
+internal fun PlaybackOverlays(playback: PlaybackState) {
     KeepScreenOn(enabled = playback.keepScreenOn)
     val breath = playback.breath
     val meditation = playback.meditation
+    val marked by playback.markedExercises.collectAsStateWithLifecycle(initialValue = emptySet())
 
     if (playback.sessionActive && playback.sessionExpanded) {
         SessionHost(breath.state) { state ->
@@ -289,15 +306,8 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
                         breath.stop()
                         playback.sessionExpanded = false
                     },
-                    // „Im Logbuch ansehen ›“ am Ende: beendet wie „Ende“ und öffnet das Logbuch.
-                    onOpenLogbook = {
-                        breath.stop()
-                        playback.sessionExpanded = false
-                        onOpenLogbook()
-                    },
-                    // Derselbe Weg wie „Danach in die Stille“; nicht nach Atmen im Gehen.
-                    onIntoSilence = if (state.silenceAfterAllowed) playback.silenceAfterBreath::intoSilence else null,
                     feelingAsk = playback.feelingAsk(breath::answerFeeling),
+                    mark = playback.endMark(state.exerciseId, marked),
                 ),
                 onMinimize = { playback.sessionExpanded = false },
                 onToggleMute = breath::toggleMute,
@@ -328,11 +338,6 @@ internal fun PlaybackOverlays(playback: PlaybackState, onOpenLogbook: () -> Unit
                         onEnd = {
                             meditation.end()
                             if (meditation.state.value.status == MeditationStatus.IDLE) playback.meditationExpanded = false
-                        },
-                        onOpenLogbook = {
-                            meditation.end()
-                            playback.meditationExpanded = false
-                            onOpenLogbook()
                         },
                         feelingAsk = playback.feelingAsk(meditation::answerFeeling),
                     ),

@@ -42,6 +42,7 @@ import app.atemkraft.playback.MeditationUiState
 import app.atemkraft.ui.components.BreathingCircle
 import app.atemkraft.ui.components.CalmHost
 import app.atemkraft.ui.components.CircleTapTarget
+import app.atemkraft.ui.components.EndMark
 import app.atemkraft.ui.components.FeelingAsk
 import app.atemkraft.ui.components.FinishedPanel
 import app.atemkraft.ui.components.GlowText
@@ -61,13 +62,12 @@ import app.atemkraft.ui.components.ToggleRow
 import app.atemkraft.ui.components.breathingDiscDiameter
 import app.atemkraft.ui.components.choiceGroupHeading
 import app.atemkraft.ui.components.rememberTapFlash
-import app.atemkraft.ui.components.sessionSummaryParts
 import app.atemkraft.ui.theme.Dimens
 
 /**
- * Was die laufende Meditation auslöst (CODE-02). [onOpenLogbook]: „Im Logbuch ansehen ›“ am
- * Ende-Screen; ohne ihn kein Link. [feelingAsk]: Antwortreihe zum Befinden am Ende-Screen wie bei
- * der Atemübung; ohne sie fragt er nicht.
+ * Was die laufende Meditation auslöst (CODE-02). [feelingAsk]: Antwortreihe zum Befinden am
+ * Ende-Screen wie bei der Atemübung; ohne sie fragt er nicht. [mark]: ◉ „Tut mir gut“ am Ende-Screen
+ * (nach „Atmen → Stille“ für die geübte Übung); ohne ihn kein Schalter.
  */
 @Immutable
 data class MeditationActions(
@@ -75,14 +75,14 @@ data class MeditationActions(
     val onTapHaptic: () -> Unit,
     val onRestart: () -> Unit,
     val onEnd: () -> Unit,
-    val onOpenLogbook: (() -> Unit)? = null,
     val feelingAsk: FeelingAsk? = null,
+    val mark: EndMark? = null,
 )
 
 /**
  * Vollbild-Overlay der laufenden/abgeschlossenen Meditation – identischer Rahmen wie die
  * Atem-Session ([app.atemkraft.ui.session.SessionOverlay]) über das geteilte [OverlayChrome].
- * Am Ende dieselbe Frage samt Bilanz wie dort; System-Zurück minimiert, am Ende-Screen wirkt es
+ * Am Ende derselbe Ende-Screen wie dort; System-Zurück minimiert, am Ende-Screen wirkt es
  * wie „Ende“ (Nutzerentscheidung 2026-10-19). Ruhe-Ansicht wie dort ([CalmHost]): Ein Tipp neben
  * den Kreis blendet Titel, Knöpfe und Systemleisten aus; mit [MeditationDisplay.autoCalm] von
  * selbst, sobald die Meditation läuft. Ring und Zeit schaltet [display] ab.
@@ -126,13 +126,10 @@ private fun MeditationContent(
             title = stringResource(R.string.session_done_prompt),
             onAgain = actions.onRestart,
             onExit = actions.onEnd,
-            onOpenLogbook = actions.onOpenLogbook,
+            mark = actions.mark,
             feelingOptions = state.feelingOptions,
             feeling = state.feeling,
             feelingAsk = actions.feelingAsk,
-            // Bilanz wie in der Atem-Session: die aktive (pausenbereinigte) Zeit, dieselbe Zahl
-            // wie im Logbuch – der Controller setzt elapsedMs beim Beenden darauf.
-            summary = sessionSummaryParts(durationMs = state.elapsedMs),
         )
     } else {
         RunningContent(

@@ -57,6 +57,8 @@ enum class SessionStatus { IDLE, PREPARING, RUNNING, PAUSED, WAITING_FOR_USER, F
  * Pause die Animation einfriert).
  */
 data class SessionUiState(
+    /** Id der geübten Übung (wie aufgerufen, vor Anpassungen): für ◉ „Tut mir gut“ am Ende-Screen. */
+    val exerciseId: String = "",
     val exerciseName: String = "",
     val status: SessionStatus = SessionStatus.IDLE,
     val phaseType: PhaseType? = null,
@@ -235,6 +237,7 @@ class BreathSessionController(
         startedAtEpochMs = System.currentTimeMillis()
         clock.reset()
         _state.value = SessionUiState(
+            exerciseId = exercise.id,
             exerciseName = adjusted.name,
             status = SessionStatus.PREPARING,
             roundCount = adjusted.rounds,

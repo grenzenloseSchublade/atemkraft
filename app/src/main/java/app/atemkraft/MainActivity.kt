@@ -44,7 +44,6 @@ import app.atemkraft.ui.navigation.AppTabBar
 import app.atemkraft.ui.navigation.DetailRoute
 import app.atemkraft.ui.navigation.HideableTabBar
 import app.atemkraft.ui.navigation.LocalTabBarState
-import app.atemkraft.ui.navigation.LogbookRoute
 import app.atemkraft.ui.navigation.MeditationRoute
 import app.atemkraft.ui.navigation.TabBarToggle
 import app.atemkraft.ui.navigation.TopTab
@@ -194,10 +193,7 @@ private fun AtemkraftApp(
         // über dem Inhalt. Unter einem offenen Overlay gibt es ihn nicht (auch nicht für TalkBack).
         if (inDepth && !playback.overlayOpen) TabBarToggle(tabBar, Modifier.align(Alignment.TopCenter))
 
-        PlaybackOverlays(
-            playback = playback,
-            onOpenLogbook = { navController.navigate(LogbookRoute) { launchSingleTop = true } },
-        )
+        PlaybackOverlays(playback = playback)
     }
 }
 
