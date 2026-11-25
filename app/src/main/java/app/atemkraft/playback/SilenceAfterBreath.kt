@@ -24,8 +24,8 @@ import kotlinx.coroutines.launch
  * beim nächsten Sichtbarwerden der App. Der Logbuch-Eintrag der Atemübung steht dann schon.
  *
  * Automatisch am Ende, wenn die Übung es wünscht ([SessionUiState.silenceAfter]: Startwert aus der
- * Einstellung, in der Übung oben umschaltbar, Nutzer 2026-10-23); sonst über den Link „In der Stille
- * bleiben ›“ am Ende-Screen ([intoSilence]), beides auf demselben Weg. Nie nach Übungen mit
+ * Einstellung, in der Übung oben umschaltbar, Nutzer 2026-10-23); sonst über den Link „In die Stille ›“
+ * am Ende-Screen ([intoSilence]), beides auf demselben Weg. Nie nach Übungen mit
  * [app.atemkraft.domain.Exercise.silenceAfterAllowed] = false (Atmen im Gehen) und nie über eine
  * laufende Meditation hinweg; eine schon beendete, die noch am Ende-Screen steht (auch minimiert),
  * räumt der Übergang weg, statt stumm nichts zu tun.
@@ -66,7 +66,7 @@ class SilenceAfterBreath(
         }
     }
 
-    /** „In der Stille bleiben ›“ am Ende-Screen: derselbe Übergang, auf Tipp. */
+    /** „In die Stille ›“ am Ende-Screen: derselbe Übergang, auf Tipp. */
     fun intoSilence() {
         if (!breath.state.value.silenceAfterAllowed) return
         scope.launch { enter() }

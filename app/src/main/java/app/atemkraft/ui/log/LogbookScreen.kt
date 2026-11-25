@@ -129,7 +129,7 @@ fun LogbookScreen(
  * (ein einzelner Tag ist noch keine Serie – und „keine Serie“ soll nicht entmutigen), darunter
  * die Kalenderwoche ([WeekCalendar], dieselbe wie im Tab „Eigene“). Leer: „Noch keine Sitzung“
  * und eine Einladung. Auf der Logbuch-Seite; im Tab
- * „Eigene“ führt der Kopf „Verlauf“ über [LogHistory] hierher. Ohne [showStreak] (Einstellung
+ * „Meins“ führt „Logbuch ›“ im aufgeklappten Verlauf ([LogHistory]) hierher. Ohne [showStreak] (Einstellung
  * „Serie zeigen“ aus) fehlt die Serie ganz.
  */
 @Composable

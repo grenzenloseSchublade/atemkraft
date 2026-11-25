@@ -65,12 +65,13 @@ data class OwnView(
  * gestapelten Abschnitte fad wirkten und ihr Klappzustand nicht blieb).
  *
  * Oben ohne eigenen Kopf (STYLEGUIDE §4.3, Tab: der erste Eintrag ist Inhalt; Eigentümer
- * 2026-10-31) die Kalenderwoche, aufklappbar bis vier Wochen ([OwnView.weeksOpen], dauerhaft gemerkt), die
- * Bilanz mit „Logbuch ›“ ([OwnActions.onOpenLogbook]) und „Zuletzt geübt“ mit bis zu zwei Übungen ([recentExercises]; [LogHistory]). Darunter
- * die Sammlungen ([OwnCollections]): ein Umschalter wie Tabs in der Seite „Eigene Kreationen · 4 |
- * Tut mir gut · 3“ ([OwnView.collection], dauerhaft gemerkt) und für die gewählte Sammlung Karteikarten
- * zum Wischen – Kreationen mit der Karte „Neues Muster“ vorn und Stift und Löschen je Muster,
- * „Tut mir gut“ mit ◉. Verlauf bleibt zuerst (Nutzer 2026-10-30).
+ * 2026-10-31) der Verlauf ([LogHistory]): die Kalenderwoche mit den Minuten des Zeitraums in der
+ * Kopfzeile, darunter die zuletzt geübte Übung; aufgeklappt ([OwnView.weeksOpen], dauerhaft
+ * gemerkt) vier Wochen, bis zu drei zuletzt geübte Übungen ([recentExercises]) und „Logbuch ›“
+ * ([OwnActions.onOpenLogbook]). Darunter die Sammlungen ([OwnCollections]): Tabs in der Seite
+ * „Eigene Kreationen | Tut mir gut“ ohne Zahl ([OwnView.collection], dauerhaft gemerkt) und für die
+ * gewählte Sammlung Karteikarten zum Wischen – Kreationen mit der Kachel „+ Neu“ links und Stift
+ * und Löschen je Muster, „Tut mir gut“ mit ◉. Verlauf bleibt zuerst (Nutzer 2026-10-30).
  *
  * [today] nur für reproduzierbare Screenshots.
  */

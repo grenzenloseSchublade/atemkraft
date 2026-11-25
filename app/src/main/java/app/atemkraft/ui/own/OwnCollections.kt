@@ -59,9 +59,9 @@ import app.atemkraft.ui.theme.SECONDARY
 import app.atemkraft.ui.theme.Sizes
 
 /**
- * Sammlungen im Tab „Meins“ (Nutzer 2026-10-31): oben Tabs in der Seite „Eigene Kreationen 4 ·
- * Tut mir gut 3“ ([PageTabs]: der gewählte pink mit Strich, die Zahl leise; die Wahl bleibt,
- * [selected]), darunter für die gewählte Sammlung Karteikarten ([CardPager]): eine Karte je Eintrag,
+ * Sammlungen im Tab „Meins“ (Nutzer 2026-10-31): oben Tabs in der Seite „Eigene Kreationen |
+ * Tut mir gut“ ([PageTabs]: feste Tabs nach M3, der gewählte pink mit Strich, ohne Zahl; die Wahl
+ * bleibt, [selected]), darunter für die gewählte Sammlung Karteikarten ([CardPager]): eine Karte je Eintrag,
  * seitlich wischen, jede rastet an der Textkante ein, die nächste ragt herein.
  *
  * Kreationen: ganz links die schmale Kachel „+ Neu“ ([NewPatternTile], Eigentümer 2026-10-31: nicht
