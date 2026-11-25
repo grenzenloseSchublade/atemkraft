@@ -175,6 +175,18 @@ internal fun AllExercisesLink(onClick: () -> Unit) {
 }
 
 /**
+ * Verweis „Programme & Gewohnheiten ›“ unter einer Empfehlung, deren Satz Programme nennt
+ * ([SituationRecommendation.programsLink]): öffnet Lernen › Programme. Dieselbe Bauart wie
+ * [AllExercisesLink], als Verweis im Inhalt in `secondary` (FARBE-04).
+ */
+@Composable
+internal fun ProgramsLink(onClick: () -> Unit) {
+    AppTextButton(onClick = onClick, modifier = Modifier.flushStart()) {
+        ForwardLinkText(text = stringResource(R.string.learn_programs), color = MaterialTheme.colorScheme.secondary)
+    }
+}
+
+/**
  * Kopf eines Bereichs unter dem Block: das Gruppenlabel der Familie wie in der Liste
  * ([GroupLabel], Familienfarbe), bei intensiven Übungen mit der ⚠-Zeile darunter. [onClose] (nur
  * wenn der Bereich über [AreaLink] gewählt ist): ✕ rechts (in `onSurface` wie jede Kopf-Aktion)

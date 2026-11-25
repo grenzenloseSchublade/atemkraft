@@ -61,12 +61,13 @@ object Situations {
             title = "Kurzatmig oder aufgeregt",
             shortLabel = "Kurzatmig",
             // Nur Übungen mit Start (UX-Review 2026-10-23): Buteyko und Nasenatmung sind Infoseiten
-            // ohne Takt und wären hier eine Sackgasse; der Satz verweist auf den Bereich darunter
-            // („Mehr: …“), in dem beide stehen.
+            // ohne Takt und wären hier eine Sackgasse. Sie stehen unter Lernen › Programme; der
+            // Verweis darunter führt dorthin ([programsLink], Konzeptprüfung 2026-11-25 A1).
             rationale = "Bringt hektisches, flaches Atmen wieder in einen ruhigen, " +
                 "gleichmäßigen Rhythmus. Buteyko und Nasenatmung sind Trainings über Wochen; du " +
-                "findest sie im Bereich darunter.",
+                "findest sie bei den Programmen.",
             exerciseIds = listOf("lippenbremse", "walking-breath"),
+            programsLink = true,
             warning = BREATHLESS_WARNING,
             keywords = listOf(
                 "nervös", "Nervosität", "Aufregung", "hektisch", "Hektik", "gehetzt", "abgehetzt", "unruhig",

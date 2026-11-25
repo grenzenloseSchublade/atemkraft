@@ -24,6 +24,9 @@ enum class Situation {
  * ([SituationSearch]): Alltagswörter in Laiensprache, keine Symptome oder Diagnosen. Ein
  * Begriff aus mehreren Wörtern trifft nur als ganze Wendung („wach liegen“), damit seine
  * Einzelwörter nicht woanders hinführen. Eine [warn]-Situation bekommt keine Begriffe.
+ *
+ * [programsLink]: Der Begründungssatz nennt Programme (Übungen ohne Start, Tab „Lernen“); unter
+ * der Empfehlung steht dann der Verweis „Programme & Gewohnheiten ›“ dorthin.
  */
 data class SituationRecommendation(
     val situation: Situation,
@@ -34,6 +37,7 @@ data class SituationRecommendation(
     val keywords: List<String> = emptyList(),
     val shortLabel: String = title,
     val intense: Boolean = false,
+    val programsLink: Boolean = false,
 ) {
     init {
         require(!intense || warning != null) { "Intensive Empfehlung ohne Sicherheitssatz: $title" }
@@ -66,7 +70,8 @@ data class BreathingArea(
  * - Akuter Stress (Seufzer, zyklisches Seufzen) → „Beruhigen“: langer Ausatem, beruhigen.
  * - Kurzatmig oder aufgeregt (Lippenbremse, Gehen) → „Atem schulen“: Es geht um das Atemmuster
  *   selbst, flaches, hektisches Atmen wieder gleichmäßig. Buteyko und Nasenatmung (ohne Start)
- *   stehen im Bereich, nicht in der Empfehlung.
+ *   stehen unter Lernen › Programme; der Bereich zeigt nur Übungen mit Start, hier also genau die
+ *   beiden der Empfehlung – der Verweis „Mehr: …“ entfällt dann (Atmen-Tab).
  * - Vor dem Einschlafen (4-7-8, Resonanz, Sitali) → „Beruhigen“.
  * - Konzentration & Fokus (Box) → „Ausgleichen“: ruhig und zugleich wach, gleichmäßiger Takt.
  * - Wach & energiegeladen werden (Wim Hof, Feueratmung) → „Aktivieren“.

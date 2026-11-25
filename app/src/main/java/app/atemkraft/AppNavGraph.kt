@@ -181,6 +181,7 @@ internal fun NavGraphBuilder.appGraph(
                 onDesignFrom = { spec -> navController.navigate(PatternEditorRoute.of(spec)) },
                 // Die Karte verspricht „ein paar Minuten“: Die Resonanz-Atmung öffnet mit 3 statt 10 min.
                 onOpenWelcome = { id -> navController.navigate(DetailRoute(id, minutes = WELCOME_MINUTES)) },
+                onOpenPrograms = { navController.navigate(ProgramsRoute) },
             ),
             markedIds = state.markedExercises,
             // Erster Start: ruhiger Einstieg mit Gesundheitshinweis, bis der Nutzer ihn wegklickt.
