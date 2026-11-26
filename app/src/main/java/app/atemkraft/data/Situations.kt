@@ -14,7 +14,8 @@ import app.atemkraft.domain.SituationRecommendation
  * wegen „Staub“). Leitplanken (geprüft in
  * SituationSearchTest und ContentRulesTest): keine Symptome oder Diagnosen, nichts, was etwas
  * verspricht; Müdigkeit führt zu „Erschöpft oder ausgelaugt“; die Warn-Situation „Wach &
- * energiegeladen werden“ bekommt keine einladenden Begriffe und trifft nur über ihren Titel.
+ * energiegeladen werden“ (sanft zuerst, die kräftigen getrennt darunter) bekommt keine
+ * einladenden Begriffe und trifft nur über ihren Titel.
  * Die breiteren Wörter der Bereiche (Familien) stehen in [Areas] und belegen kein Wort doppelt.
  */
 object Situations {
@@ -113,9 +114,13 @@ object Situations {
             situation = Situation.HIGH_PHASE,
             title = "Wach & energiegeladen werden",
             shortLabel = "Wach werden",
-            // „soll“: Dass die Feueratmung wach macht, ist kaum untersucht (TEXT-07).
-            rationale = "Ein kräftiger Atem-Reiz, der anregen und wach machen soll.",
-            exerciseIds = listOf("wim-hof", "feueratmung"),
+            // E5 (Eigentümer 2026-11-25: „entscheide sinnvoll“): Zuerst sanft – ein gleichmäßiger Takt
+            // aus „Ausgleichen“ ohne Hyperventilation; die Box nennt selbst „ruhig, aber wach“.
+            // Danach getrennt die kräftigen mit dem Sicherheitssatz. „soll“: Dass Wim Hof oder die
+            // Feueratmung wach machen, ist kaum untersucht (TEXT-07).
+            rationale = "Sanft: ein gleichmäßiger Takt, ruhig und zugleich wach. Kräftig: ein Reiz, der anregen soll.",
+            exerciseIds = listOf("box-4-4-4-4", "nadi-shodhana"),
+            strongExerciseIds = listOf("wim-hof", "feueratmung"),
             warning = INTENSE_WARNING,
             intense = true,
             // Bewusst keine keywords: Sie würden Leute aktiv zu Hyperventilationstechniken

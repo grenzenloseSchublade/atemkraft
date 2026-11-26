@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import app.atemkraft.R
 import app.atemkraft.domain.BreathingArea
 import app.atemkraft.domain.BreathingFamily
+import app.atemkraft.domain.STRONG_LABEL
 import app.atemkraft.domain.Situation
 import app.atemkraft.domain.SituationRecommendation
 import app.atemkraft.ui.components.AppIconButton
@@ -142,6 +143,23 @@ internal fun RecommendationIntro(rec: SituationRecommendation, withTitle: Boolea
             Spacer(Modifier.height(Dimens.GapTiny))
         }
         SecondaryText(rec.rationale)
+        // Mit kräftigen Übungen steht der Sicherheitssatz über ihnen ([StrongHeader]), nicht hier.
+        rec.warning?.takeIf { rec.strongExerciseIds.isEmpty() }?.let { warning ->
+            Spacer(Modifier.height(Dimens.GapTiny))
+            WarnText(warning)
+        }
+    }
+}
+
+/**
+ * Kopf der kräftigen Übungen einer Empfehlung (E5, 2026-11-25): „Kräftig“ als neutrales [SubLabel]
+ * wie der Titel einer Empfehlung, darunter die ⚠-Zeile ([WarnText], FARBE-05) – der Vorbehalt steht
+ * genau über den Übungen, für die er gilt; die sanften davor tragen ihn nicht.
+ */
+@Composable
+internal fun StrongHeader(rec: SituationRecommendation) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SubLabel(STRONG_LABEL, color = MaterialTheme.colorScheme.onBackground)
         rec.warning?.let { warning ->
             Spacer(Modifier.height(Dimens.GapTiny))
             WarnText(warning)

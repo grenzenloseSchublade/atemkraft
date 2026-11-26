@@ -27,6 +27,12 @@ enum class Situation {
  *
  * [programsLink]: Der Begründungssatz nennt Programme (Übungen ohne Start, Tab „Lernen“); unter
  * der Empfehlung steht dann der Verweis „Programme & Gewohnheiten ›“ dorthin.
+ *
+ * [strongExerciseIds] (E5, 2026-11-25): Eine Empfehlung kann sanft beginnen und die kräftigen
+ * Übungen getrennt danach zeigen – unter „Kräftig“ ([STRONG_LABEL]) mit dem Sicherheitssatz
+ * [warning] direkt darüber statt über allen Übungen. [exerciseIds] sind dann die sanften; sie
+ * bestimmen den Bereich ([area]). Die Empfehlung bleibt [intense]: Sie enthält intensive Übungen,
+ * trifft in der Suche nur über ihren Titel und bekommt keine Begriffe.
  */
 data class SituationRecommendation(
     val situation: Situation,
@@ -38,10 +44,15 @@ data class SituationRecommendation(
     val shortLabel: String = title,
     val intense: Boolean = false,
     val programsLink: Boolean = false,
+    val strongExerciseIds: List<String> = emptyList(),
 ) {
     init {
         require(!intense || warning != null) { "Intensive Empfehlung ohne Sicherheitssatz: $title" }
+        require(strongExerciseIds.isEmpty() || intense) { "Kräftige Übungen ohne Kennzeichnung als intensiv: $title" }
     }
+
+    /** Alle Übungen der Empfehlung: erst die sanften, dann die kräftigen. */
+    val allExerciseIds: List<String> get() = exerciseIds + strongExerciseIds
 
     /** Intensive Empfehlung: Sie trägt einen Sicherheitssatz und keine Suchbegriffe. */
     val warn: Boolean get() = intense
@@ -63,6 +74,9 @@ data class BreathingArea(
     val warn: Boolean get() = warning != null
 }
 
+/** Kopf der kräftigen Übungen einer Empfehlung ([SituationRecommendation.strongExerciseIds]). */
+const val STRONG_LABEL = "Kräftig"
+
 /**
  * Bereich einer Empfehlung: die häufigste Familie unter ihren Übungen, bei Gleichstand die der
  * zuerst genannten Übung; `null` ohne auflösbare Übung. Abgeleitet statt als eigenes Feld, weil
@@ -74,7 +88,8 @@ data class BreathingArea(
  *   beiden der Empfehlung – der Verweis „Mehr: …“ entfällt dann (Atmen-Tab).
  * - Vor dem Einschlafen (4-7-8, Resonanz, Sitali) → „Beruhigen“.
  * - Konzentration & Fokus (Box) → „Ausgleichen“: ruhig und zugleich wach, gleichmäßiger Takt.
- * - Wach & energiegeladen werden (Wim Hof, Feueratmung) → „Aktivieren“.
+ * - Wach & energiegeladen werden (sanft Box, Nadi Shodhana; kräftig Wim Hof, Feueratmung) →
+ *   „Ausgleichen“: Der Bereich folgt den sanften Übungen; die kräftigen stehen getrennt darunter.
  * - Erschöpft oder ausgelaugt (Resonanz, zyklisches Seufzen) → „Beruhigen“: bewusst
  *   nichts Anregendes, sondern sanft und beruhigend – nicht „Aktivieren“, obwohl man wacher werden
  *   möchte.

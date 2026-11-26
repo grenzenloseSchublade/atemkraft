@@ -402,7 +402,7 @@ class ContentRulesTest {
         val toExercises = Atemlehre.patterns.flatMap { p -> p.exerciseIds.map { "atemlehre.${p.id}" to it } } +
             Atemlehre.influences.flatMap { inf -> inf.exerciseIds.map { "atemlehre.influence ${inf.label}" to it } } +
             Pranayama.techniques.flatMap { t -> (listOfNotNull(t.exerciseId) + t.moreExerciseIds).map { "pranayama.${t.id}" to it } } +
-            Situations.all.flatMap { rec -> rec.exerciseIds.map { "situation.${rec.situation}" to it } }
+            Situations.all.flatMap { rec -> rec.allExerciseIds.map { "situation.${rec.situation}" to it } }
         val toPatterns = exercises.flatMap { e ->
             e.lore?.let { l -> (listOf(l.patternId) + l.morePatternIds).map { "${e.key()}.lore" to it } }.orEmpty()
         }

@@ -285,6 +285,14 @@ fun HomeScreen(
                 items(rec.exerciseIds.mapNotNull(catalog.resolve), key = { "rec-${rec.situation.name}-${it.id}" }) { exercise ->
                     ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
                 }
+                // Sanft zuerst, die kräftigen getrennt darunter mit ihrem Sicherheitssatz (E5).
+                val strong = rec.strongExerciseIds.mapNotNull(catalog.resolve)
+                if (strong.isNotEmpty()) {
+                    item(key = "rec-${rec.situation.name}-strong") { StrongHeader(rec) }
+                    items(strong, key = { "rec-${rec.situation.name}-strong-${it.id}" }) { exercise ->
+                        ExerciseCard(exercise = exercise, onClick = { actions.onSelect(exercise.id) }, marked = exercise.id in markedIds)
+                    }
+                }
                 // Steht der Bereich ohnehin als Treffer darunter oder zeigt er nur die Übungen der
                 // Empfehlung (Kurzatmig → Atem schulen), braucht es keinen Verweis darauf. Nennt der
                 // Satz Programme, führt „Programme & Gewohnheiten ›“ dorthin. Bei einem gewählten
@@ -292,7 +300,7 @@ fun HomeScreen(
                 // stehen ohne Abstand untereinander (je 48 dp Tippfläche).
                 val area = rec.area(catalog.resolve)
                     ?.takeIf { it !in directAreas }
-                    ?.takeIf { family -> familyExercises[family].orEmpty().any { it.id !in rec.exerciseIds } }
+                    ?.takeIf { family -> familyExercises[family].orEmpty().any { it.id !in rec.allExerciseIds } }
                 val showAllLink = chosen != null
                 if (area != null || rec.programsLink || showAllLink) {
                     item(key = "rec-${rec.situation.name}-links") {
