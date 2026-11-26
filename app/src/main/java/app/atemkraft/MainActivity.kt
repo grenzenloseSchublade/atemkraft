@@ -57,6 +57,7 @@ import app.atemkraft.ui.settings.SettingsViewModel
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.Dimens
 import app.atemkraft.ui.theme.Motion
+import app.atemkraft.ui.theme.Sizes
 import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
@@ -103,9 +104,9 @@ private fun AtemkraftApp(
     // Tipp darauf führt zu seiner Startseite zurück (tapTab).
     val selectedTab = remember(navBackStackEntry) { navController.tabOnStack() }
 
-    // Tab-Leiste in der Tiefe: eingeklappt, wer von einem Tab kommt; Griff oder Wischen (Startleiste,
-    // Mini-Leiste, Band über den unteren Leisten, Griff) klappen sie auf, das gilt bis zur Rückkehr
-    // auf einen Tab – auch über Drehen und Prozess-Tod.
+    // Tab-Leiste in der Tiefe: offen, wer von einem Tab kommt (E4, 2026-11-25); Griff oder Wischen
+    // (Startleiste, Mini-Leiste, Band über den unteren Leisten, Griff) klappen sie ein und wieder auf,
+    // das gilt bis zur Rückkehr auf einen Tab – auch über Drehen und Prozess-Tod.
     val tabBar = rememberTabBarState()
     // Mit Bedienhilfe, der Wischgesten gehören (TalkBack, Switch Access), bleibt sie in der Tiefe offen.
     val assistance = rememberTabBarAssistance()
@@ -117,9 +118,12 @@ private fun AtemkraftApp(
     // Was in den Systemgesten am unteren Rand aufsetzt (Home), bleibt dem System.
     val gestureBottom = WindowInsets.systemGestures.getBottom(LocalDensity.current)
     val windowHeight = LocalWindowInfo.current.containerSize.height
+    val tabBarOpenMinHeight = with(LocalDensity.current) { Sizes.TabBarOpenMinHeight.roundToPx() }
     SideEffect {
         tabBar.gestureZoneTop = (windowHeight - gestureBottom).toFloat()
         tabBar.windowHeight = windowHeight.toFloat()
+        // Niedriges Fenster (klein, quer): in der Tiefe ab Werk eingeklappt, sonst fehlte Editor und Detail der Platz.
+        tabBar.compact = windowHeight < tabBarOpenMinHeight
     }
     // Oberkante des Inhalts (px im Fenster) für das Wischband über den unteren Leisten.
     var contentTop by remember { mutableFloatStateOf(0f) }

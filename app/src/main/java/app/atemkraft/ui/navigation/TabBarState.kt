@@ -30,9 +30,11 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Zustand der Tab-Leiste auf Seiten in der Tiefe (Nutzer 2026-10-23): Wer von einem Tab in die
- * Tiefe geht, sieht sie eingeklappt ([collapsed]). Der Griff auf der Oberkante der untersten Leiste
- * ([TabBarToggle]) klappt sie auf und wieder zu ([toggle]), ebenso Wischen ([detectSwipe]): nach
+ * Zustand der Tab-Leiste auf Seiten in der Tiefe: Wer von einem Tab in die Tiefe geht, sieht sie
+ * offen (E4, Eigentümer 2026-11-25: „standardmäßig auf, aber das Einklappen soll aktiv bleiben“;
+ * vorher ab 2026-10-23 eingeklappt), eingeklappt ist sie nur auf Wunsch ([collapsed]) oder in einem
+ * niedrigen Fenster ([compact]: 360 × 640, quer). Der Griff
+ * auf der Oberkante der untersten Leiste ([TabBarToggle]) klappt sie zu und wieder auf ([toggle]), ebenso Wischen ([detectSwipe]): nach
  * oben auf Startleiste, Mini-Leiste, Griff oder im unteren Bereich einer Seite ohne Startleiste
  * ([detectBottomSwipe]) öffnet ([show]), nach unten auf denselben Leisten und der offenen Tab-Leiste
  * schließt ([hide]). Diese Wahl gilt auf allen weiteren Seiten der Tiefe, vor und zurück, bis der
@@ -52,7 +54,7 @@ import kotlin.math.roundToInt
  */
 @Stable
 class TabBarState {
-    var collapsed by mutableStateOf(true)
+    var collapsed by mutableStateOf(false)
         private set
 
     /** Wie weit die Leiste offen ist, 0…1; gelesen nur beim Auslegen und Zeichnen, nie in der Komposition. */
@@ -64,18 +66,30 @@ class TabBarState {
      * Dann steht die Leiste auch in der Tiefe offen – Wischgesten mit einem Finger gehören dort der
      * Bedienhilfe, und eine eingeklappte Navigation wäre nur über den Griff zu finden (wie M3
      * `exitAlwaysScrollBehavior`, das sich mit TalkBack abschaltet). Der Griff bleibt eine
-     * Schaltfläche; wer ihn nutzt, hört dort den neuen Zustand. Endet die Bedienhilfe, gilt wieder
-     * die Regel ohne sie: in der Tiefe eingeklappt.
+     * Schaltfläche; wer ihn nutzt, hört dort den neuen Zustand. Endet die Bedienhilfe, bleibt die
+     * Leiste offen wie ab Werk; einklappen lässt sie sich dann wieder.
      */
     var keepOpen: Boolean = false
         set(value) {
-            val was = field
             field = value
-            when {
-                value -> collapsed = false
-                was -> collapsed = inDepth
-            }
+            if (value) collapsed = false
         }
+
+    /**
+     * Niedriges Fenster (unter [Sizes.TabBarOpenMinHeight]: 360 × 640, jedes Gerät quer): Dann ist
+     * die Leiste in der Tiefe ab Werk eingeklappt – offen nähme sie Editor und Detailseite den Platz
+     * (MUSTER-10, Leitplanke 3). Ändert sich das beim Drehen, folgt die Leiste, solange der Nutzer in
+     * dieser Tiefe nichts von Hand gewählt hat ([manual]).
+     */
+    var compact: Boolean = false
+        set(value) {
+            if (field == value) return
+            field = value
+            if (!manual && !keepOpen) collapsed = value
+        }
+
+    // Von Hand auf- oder zugeklappt seit dem letzten Tab: Dann gilt die Wahl, nicht die Vorgabe.
+    private var manual = false
 
     /** Weg der Leiste in px (volle Höhe minus Platz der Systemnavigation); misst [HideableTabBar]. */
     internal var travel = 0f
@@ -159,12 +173,15 @@ class TabBarState {
 
     /**
      * Neue Seite [page]: Auf einem Tab ([onTab]) oder nach einem Wechsel des Tabs ([tab]) gilt wieder
-     * „eingeklappt“ für den nächsten Weg in die Tiefe; in der Tiefe bleibt die Wahl von Hand stehen.
-     * Ein laufendes Wischen endet.
+     * „offen“ für den nächsten Weg in die Tiefe; in der Tiefe bleibt das Einklappen von Hand stehen,
+     * vor und zurück, bis der Nutzer wieder auf einem Tab steht. Ein laufendes Wischen endet.
      */
     fun enter(onTab: Boolean, tab: Any, page: Any? = null) {
         epoch++
-        if (onTab || tab != lastTab) collapsed = !keepOpen
+        if (onTab || tab != lastTab) {
+            collapsed = compact && !keepOpen
+            manual = false
+        }
         lastTab = tab
         this.page = page
         inDepth = !onTab
@@ -192,16 +209,21 @@ class TabBarState {
     /** Griff angetippt: Leiste auf bzw. zu, bis zur Rückkehr auf einen Tab. */
     fun toggle() {
         collapsed = !collapsed
+        manual = true
     }
 
     /** Nach oben gewischt: Leiste auf. */
     fun show() {
         collapsed = false
+        manual = true
     }
 
     /** Nach unten gewischt: Leiste zu – nicht, solange eine Bedienhilfe sie offen hält ([keepOpen]). */
     fun hide() {
-        if (!keepOpen) collapsed = true
+        if (!keepOpen) {
+            collapsed = true
+            manual = true
+        }
     }
 
     /**
@@ -411,11 +433,12 @@ class TabBarState {
          * und zu welchem Tab die Seite gehörte; sonst klappte sie dabei zu.
          */
         val Saver: Saver<TabBarState, Any> = listSaver(
-            save = { listOf(it.collapsed, (it.lastTab as? TopTab)?.name) },
+            save = { listOf(it.collapsed, (it.lastTab as? TopTab)?.name, it.manual) },
             restore = { saved ->
                 TabBarState().apply {
                     collapsed = saved[0] as Boolean
                     lastTab = (saved[1] as String?)?.let { name -> TopTab.entries.firstOrNull { it.name == name } }
+                    manual = saved[2] as Boolean
                 }
             },
         )

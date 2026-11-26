@@ -446,17 +446,17 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
 
     /**
      * Detailseite in der Tiefe wie in der App ([TabFrame] ohne Tab-Leiste, Gerätehöhe): der Griff
-     * der Tab-Leiste über der Startleiste mit „Anpassen ›“, eingeklappt und nach einem Tipp auf den
-     * Griff mit offener Tab-Leiste. `ANATOMIE` prüft, dass seine Tippfläche weder „Anpassen ›“ noch
+     * der Tab-Leiste über der Startleiste mit „Anpassen ›“, ab Werk mit offener Tab-Leiste (E4,
+     * 2026-11-25) und nach einem Tipp auf den Griff eingeklappt. `ANATOMIE` prüft, dass seine Tippfläche weder „Anpassen ›“ noch
      * Start überdeckt.
      */
     @Test
     fun detailDepth() {
         snap("08_detail_tiefe", tab = Tab.START, tabBar = false, measure = { gripAbove("08_detail_tiefe") }) { DetailPage(fourSevenEight) }
-        snap("08_detail_tiefe_tab_leiste", tab = Tab.START, tabBar = false, prepare = {
+        snap("08_detail_tiefe_eingeklappt", tab = Tab.START, tabBar = false, prepare = {
             compose.onNodeWithTag(TAB_BAR_GRIP_TAG).assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
             compose.waitForIdle()
-        }, measure = { gripAbove("08_detail_tiefe_tab_leiste") }) { DetailPage(fourSevenEight) }
+        }, measure = { gripAbove("08_detail_tiefe_eingeklappt") }) { DetailPage(fourSevenEight) }
     }
 
     /** Abstand der Tippfläche des Griffs über „Anpassen ›“ in der Startleiste, nur gemessen (`GRIFF`). */

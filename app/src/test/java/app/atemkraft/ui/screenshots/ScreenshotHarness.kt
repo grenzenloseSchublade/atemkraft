@@ -75,6 +75,7 @@ import app.atemkraft.ui.patterns.rememberPatternEditorState
 import app.atemkraft.ui.theme.AtemkraftTheme
 import app.atemkraft.ui.theme.DarkSurface
 import app.atemkraft.ui.theme.Dimens
+import app.atemkraft.ui.theme.Sizes
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziTaskType
@@ -295,13 +296,21 @@ abstract class ScreenshotHarness(protected val device: Device, protected val fon
     /**
      * Rahmen wie im Scaffold der App: Statusleiste oben, darunter der Inhalt im Rest, unten
      * Trennlinie und [AppTabBar] mit [selected] markiert – ohne [tabBar] eine Seite der Tiefe wie
-     * in der App: Leiste eingeklappt ([HideableTabBar]), darüber der Griff ([TabBarToggle]) auf der
-     * Oberkante der Startleiste bzw. der unteren Leisten; ein Tipp darauf klappt die Leiste auf –,
+     * in der App: Leiste ab Werk offen ([HideableTabBar], E4 2026-11-25; im niedrigen Fenster
+     * eingeklappt, [TabBarState.compact]), darüber der Griff
+     * ([TabBarToggle]) auf der Oberkante der Startleiste bzw. der unteren Leisten; ein Tipp darauf
+     * klappt die Leiste ein –,
      * darunter die Systemnavigation (in der App reicht die Leistenfläche bis dorthin).
      */
     @Composable
     private fun TabFrame(selected: Tab, tabBar: Boolean, content: @Composable () -> Unit) {
-        val state = remember { TabBarState().apply { enter(onTab = tabBar, tab = selected) } }
+        // Wie die App: im niedrigen Fenster (360 × 640, quer) in der Tiefe ab Werk eingeklappt.
+        val state = remember {
+            TabBarState().apply {
+                compact = currentHeightDp < Sizes.TabBarOpenMinHeight.value
+                enter(onTab = tabBar, tab = selected)
+            }
+        }
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 Spacer(Modifier.height(STATUS_BAR_DP.dp))

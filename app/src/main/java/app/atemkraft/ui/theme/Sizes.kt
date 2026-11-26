@@ -68,6 +68,15 @@ object Sizes {
      */
     val TabBarSwipeBandMaxShare = 0.15f
 
+    /**
+     * Mindesthöhe des Fensters, ab der die Tab-Leiste in der Tiefe ab Werk offen steht (E4,
+     * Eigentümer 2026-11-25). Darunter – 360 × 640, jedes Gerät quer – nähme sie Muster-Editor und
+     * Detailseite den Platz, den MUSTER-10 und Leitplanke 3 verlangen (Werkzeugleiste ohne Scrollen,
+     * Start nicht beschnitten): Dort ist sie ab Werk eingeklappt, aufklappbar wie immer. 700 liegt
+     * zwischen 640 (kompakt) und 832 (A54 hochkant).
+     */
+    val TabBarOpenMinHeight = 700.dp
+
     /** Weg der Tab-Leiste beim Wischen, solange sie noch nicht gemessen ist (M3-Navigationsleiste 80). */
     val TabBarFallbackTravel = 80.dp
 

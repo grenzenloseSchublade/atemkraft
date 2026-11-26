@@ -101,7 +101,11 @@ class TabNavigationTest {
      */
     @Test
     fun `Wischen oeffnet und schliesst die Tab-Leiste, Tipps bleiben Tipps`() {
-        val state = TabBarState().apply { enter(onTab = false, tab = TopTab.START) }
+        // Ab Werk offen (E4, 2026-11-25); die Wisch-Fälle beginnen eingeklappt.
+        val state = TabBarState().apply {
+            enter(onTab = false, tab = TopTab.START)
+            hide()
+        }
         var started = 0
         var pinned by mutableStateOf(true)
         val scroll = ScrollState(0)
@@ -162,7 +166,11 @@ class TabNavigationTest {
      */
     @Test
     fun `Startleiste wischt 1 zu 1 in beide Richtungen, ein Wisch ist kein Tipp`() {
-        val state = TabBarState().apply { enter(onTab = false, tab = TopTab.START) }
+        // Ab Werk offen (E4, 2026-11-25); die Wisch-Fälle beginnen eingeklappt.
+        val state = TabBarState().apply {
+            enter(onTab = false, tab = TopTab.START)
+            hide()
+        }
         var started = 0
         rule.setContent { TabFrame(state, ScrollState(0), pinned = { true }, onStart = { started++ }) }
         fun slowly(dp: Int, atBottom: Boolean = true) {
@@ -189,20 +197,32 @@ class TabNavigationTest {
         }
     }
 
-    /** Drehen, Schriftwechsel und Prozess-Tod lassen eine in der Tiefe geöffnete Leiste offen ([TabBarState.Saver]). */
+    /**
+     * In der Tiefe ist die Leiste ab Werk offen (E4, Eigentümer 2026-11-25); von Hand eingeklappt
+     * bleibt sie es über Drehen, Schriftwechsel und Prozess-Tod ([TabBarState.Saver]) und auf
+     * weiteren Seiten der Tiefe, zurück auf einem Tab gilt wieder offen. Im niedrigen Fenster
+     * ([TabBarState.compact]) ist sie ab Werk eingeklappt.
+     */
     @Test
-    fun `offene Leiste uebersteht das Neuerstellen`() {
+    fun `offen ab Werk, eingeklappt uebersteht das Neuerstellen bis zum Tab`() {
         val restore = StateRestorationTester(rule)
         lateinit var state: TabBarState
         restore.setContent { state = rememberTabBarState() }
         rule.runOnIdle {
             state.enter(onTab = false, tab = TopTab.LERNEN)
-            state.show()
+            assertFalse(state.collapsed)
+            state.hide()
         }
         restore.emulateSavedInstanceStateRestore()
         rule.runOnIdle {
             state.enter(onTab = false, tab = TopTab.LERNEN)
+            assertTrue(state.collapsed)
+            state.enter(onTab = true, tab = TopTab.LERNEN)
+            state.enter(onTab = false, tab = TopTab.LERNEN)
             assertFalse(state.collapsed)
+            // Niedriges Fenster (gedreht): ab Werk eingeklappt, solange nichts von Hand gewählt ist.
+            state.compact = true
+            assertTrue(state.collapsed)
         }
     }
 
