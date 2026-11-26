@@ -33,7 +33,7 @@ Ermittelt mit `./gradlew :app:dependencies --configuration releaseRuntimeClasspa
 | Jetpack Compose (UI, Foundation, Animation, Runtime, Material 3, Material Icons Core, Ripple) | BOM 2026.09.00: UI 1.12.1, Material 3 1.4.0, Material Icons Core 1.7.8 | Apache-2.0 | The Android Open Source Project | – |
 | Kotlin Standardbibliothek | 2.4.21 (jdk7/jdk8-Teile 1.8.0, Parcelize- und Android-Extensions-Runtime 1.9.22) | Apache-2.0 | JetBrains s.r.o. ([JetBrains/kotlin](https://github.com/JetBrains/kotlin)) | NOTICE |
 | kotlinx.coroutines | 1.9.0 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
-| kotlinx.serialization | 1.12.0 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
+| kotlinx.serialization | 1.13.0 | Apache-2.0 | JetBrains s.r.o. | NOTICE |
 | JetBrains Annotations | 23.0.0 | Apache-2.0 | JetBrains s.r.o. | nur Annotationen |
 | JSpecify | 1.0.0 | Apache-2.0 (POM) | The JSpecify Authors ([jspecify/jspecify](https://github.com/jspecify/jspecify)) | nur Annotationen; Abhängigkeit von AndroidX |
 | Apache Commons Compress | 1.28.0 | Apache-2.0 | The Apache Software Foundation | entpackt die Stimm-Archive; NOTICE |
