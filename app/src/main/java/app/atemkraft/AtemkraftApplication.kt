@@ -35,4 +35,6 @@ class AtemkraftApplication :
     override val launchActivity: Class<out Activity> get() = MainActivity::class.java
 
     override val reminderSettings: Flow<ReminderSettings> get() = container.settingsRepository.reminderSettings
+
+    override val openLastAction: String get() = AppShortcut.LAST.action
 }

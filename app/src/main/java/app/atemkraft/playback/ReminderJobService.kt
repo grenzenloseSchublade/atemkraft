@@ -27,12 +27,15 @@ import java.time.ZonedDateTime
 interface ReminderDependencies {
     val reminderSettings: Flow<ReminderSettings>
     val launchActivity: Class<out Activity>
+
+    /** Feste Aktion, mit der ein Tipp auf die Erinnerung die zuletzt geübte Übung öffnet (wie der Shortcut). */
+    val openLastAction: String
 }
 
 /**
  * Führt die geplante Erinnerung aus ([ReminderScheduler]): liest die Einstellung, zeigt – wenn es
  * noch die Zeit dafür ist ([reminderDue]) – eine schlichte Benachrichtigung „Zeit für ein paar
- * Atemzüge?“ auf eigenem Kanal und plant die nächste. Tippen öffnet die App; kein Zähler, keine
+ * Atemzüge?“ auf eigenem Kanal und plant die nächste. Tippen öffnet die zuletzt geübte Übung; kein Zähler, keine
  * Serie, kein Übungsname (auch auf dem Sperrbildschirm, SEC-PRIV-03). Ohne Erlaubnis für
  * Benachrichtigungen bleibt sie aus, geplant wird trotzdem weiter. Nicht exportiert: Nur der
  * JobScheduler des Systems bindet ihn (`BIND_JOB_SERVICE`).
@@ -77,10 +80,15 @@ class ReminderJobService : JobService() {
                 setShowBadge(false)
             },
         )
+        // Tippen öffnet die zuletzt geübte Übung wie der Shortcut „Zuletzt geübt“ (Eigentümer 2026-11-25):
+        // dieselbe feste Aktion ohne Daten (SEC-PLAT-02); was „zuletzt“ war, liest die App beim Öffnen
+        // selbst, ohne Logbuch bleibt sie auf der Startseite. Eine frische Aufgabe wie beim Shortcut.
         val open = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, dependencies.launchActivity).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            Intent(dependencies.openLastAction)
+                .setClass(this, dependencies.launchActivity)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
             PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
