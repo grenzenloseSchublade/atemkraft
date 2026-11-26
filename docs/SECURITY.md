@@ -77,7 +77,7 @@ Vollständige Allowlist für das gemergte Release-Manifest (`config/security/per
 | `VIBRATE` | Haptik bei Phasenwechseln bzw. als Welle im Takt des Kreises und Tipp-Tick am Kreis (beides hinter dem Schalter „Vibration“); Rasten des Zeitrings als Berührungs-Feedback (`USAGE_TOUCH`, folgt der Android-Einstellung) |
 | `WAKE_LOCK` | laufende Meditation oder Atemübung im Doze-Modus (`PARTIAL_WAKE_LOCK` im `PlaybackService`) |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Meditation und Atemübung laufen bei gesperrtem Bildschirm und im Hintergrund weiter (`PlaybackService`, AUDIO-04) |
-| `POST_NOTIFICATIONS` | Status der laufenden Sitzung; einmal erfragt beim ersten Start einer Sitzung, bei Ablehnung läuft sie weiter. Auch die lokale Erinnerung; dann fragt das Einschalten der Erinnerung danach |
+| `POST_NOTIFICATIONS` | Status der laufenden Sitzung; einmal erfragt nach dem Ende der ersten Sitzung (nie vor dem ersten Atemzug), bei Ablehnung laufen Sitzungen weiter, ohne sichtbare Benachrichtigung. Auch die lokale Erinnerung; dann fragt das Einschalten der Erinnerung danach |
 | `RECEIVE_BOOT_COMPLETED` | nur für die lokale Erinnerung (aus ab Werk): Der JobScheduler behält ihren geplanten Job über einen Neustart nur damit (`JobInfo.setPersisted`); die App hat dafür keinen Receiver |
 | `app.atemkraft.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | automatisch von androidx.core, signature-geschützt, nur intern |
 | `<queries>` `TTS_SERVICE` | Sichtbarkeit der System-Sprachausgabe; sie erhält nur feste Ansagetexte |

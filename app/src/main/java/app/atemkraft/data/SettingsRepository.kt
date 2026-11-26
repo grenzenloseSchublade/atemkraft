@@ -177,7 +177,8 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     /**
      * Wurde die Benachrichtigungs-Erlaubnis (ab Android 13) schon einmal erfragt? Die App fragt
-     * genau einmal, beim ersten Meditationsstart – nicht beim App-Start und nie wieder danach.
+     * genau einmal, wenn die erste Sitzung zu Ende ist – nicht vor dem ersten Atemzug und nie wieder
+     * ungefragt danach (der Schalter der Erinnerung fragt selbst).
      */
     val notificationAsked: Flow<Boolean> = data.map { it[Keys.NOTIFICATION_ASKED] ?: false }
 

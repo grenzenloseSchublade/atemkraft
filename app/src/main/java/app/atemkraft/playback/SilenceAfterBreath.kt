@@ -38,8 +38,9 @@ import kotlinx.coroutines.launch
  * statt verspätet nachgeholt: Eine Meditation, die Minuten später von selbst beginnt, wäre
  * überraschender als keine.
  *
- * **Benachrichtigung:** Die Erlaubnis fragt die Oberfläche beim ersten Start einer Sitzung ab, auch
- * einer Atemübung (ARC-6) – zum Übergang ist sie damit schon geklärt; der Koordinator fragt nie.
+ * **Benachrichtigung:** Der Koordinator fragt nie. Die Oberfläche fragt erst nach dem Ende der
+ * ersten Sitzung (ARC-6); bis dahin läuft der Service ohne sichtbare Benachrichtigung, der Übergang
+ * hängt nicht davon ab.
  */
 class SilenceAfterBreath(
     private val breath: BreathSessionController,
