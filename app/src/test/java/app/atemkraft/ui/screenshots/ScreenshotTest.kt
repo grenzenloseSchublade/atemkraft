@@ -67,7 +67,9 @@ import app.atemkraft.ui.components.MiniNowPlayingBar
 import app.atemkraft.ui.components.SafetyDialog
 import app.atemkraft.ui.detail.DetailActions
 import app.atemkraft.ui.detail.DetailAdjustInputs
+import app.atemkraft.ui.detail.DetailPersonal
 import app.atemkraft.ui.detail.ExerciseDetailScreen
+import app.atemkraft.ui.detail.LastPractice
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
@@ -579,8 +581,9 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
      * Detailseite wie in der App; 4-7-8 mit gespeicherter Anpassung (Dauer, alle drei Phasen, 10 min
      * Stille gegen die Vorgabe 5 – der längste Status „6 Runden + 10 min Stille · angepasst“), die
      * anderen mit „Danach Stille“ aus.
-     * Eingebaute Übungen tragen die Markierung, Muster den Stift; gespeicherte Muster dazu Löschen,
-     * Duplizieren und „Vorherige Fassung wiederherstellen“.
+     * Eingebaute Übungen tragen die Markierung, Muster den Stift; gespeicherte Muster dazu ◉, Löschen,
+     * Duplizieren und „Vorherige Fassung wiederherstellen“. Übungen aus dem Logbuch der Szenen zeigen
+     * „Zuletzt geübt: … · danach …“ (die längste Zeile unter den Chips).
      */
     @Composable
     private fun DetailPage(exercise: Exercise) {
@@ -601,13 +604,15 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
                 onStart = {},
                 onBack = {},
                 onOpenLore = {},
-                onMarkedChange = if (builtIn) ({ _: Boolean -> }) else null,
+                // Gespeicherte Muster tragen ◉ vor Stift und Löschen (drei Aktionen im Kopf).
+                onMarkedChange = if (builtIn || pattern) ({ _: Boolean -> }) else null,
                 onEditPattern = if (builtIn) null else ({}),
                 // Gespeicherte Muster: Löschen im Kopf, Duplizieren und Wiederherstellen am Ende.
                 onDeletePattern = if (pattern) ({}) else null,
                 onDuplicate = if (pattern) ({}) else null,
                 onRestorePrevious = if (pattern) ({}) else null,
             ),
+            personal = DetailPersonal(marked = builtIn, last = logEntries().firstOrNull { it.exerciseId == exercise.id }?.let { LastPractice("Di 27.10.\u00A0· abends\u00A0· danach ruhiger", "Dienstag, 27. Oktober, abends, danach ruhiger") }),
         )
     }
 }

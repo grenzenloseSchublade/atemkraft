@@ -6,7 +6,7 @@ Gerüst: `PushScaffold` – Kopf mit Name und Markierung ◉ bzw. Stift (beim Mu
 
 ## Kopf und Rhythmus (oben)
 
-Unter dem Kopf: Familie mit Chips, Kurzbeschreibung, die Rhythmuskurve, Dauer- und Charakter-Chip, bei intensiven Übungen die ⚠-Zeile; darunter die Expander (Anleitung, Wirkung, Aus der Yoga-Lehre, Hinweise, Quellen).
+Unter dem Kopf: Familie mit Chips, Kurzbeschreibung, die Rhythmuskurve, Dauer- und Charakter-Chip, darunter leise (`HintText`) „Zuletzt geübt: Di 27.10. · abends · danach ruhiger“, wenn das Logbuch die Übung kennt (die neueste Sitzung; das Befinden nur, wenn sie eins hat; nicht beim Muster des Tages; Eigentümer 2026-11-25, E2, SEC-LEGAL-04), bei intensiven Übungen die ⚠-Zeile; darunter die Expander (Anleitung, Wirkung, Aus der Yoga-Lehre, Hinweise, Quellen).
 
 **Rhythmuskurve** (`RhythmCurve`, Anatomie [unten](#rhythmuskurve)): ein Atemzug der Übung als dünne Linie über die volle Breite (x = Zeit, y = Lungenfüllung), Farben wie die Kurve des Muster-Editors – Einatmen und Nachatmen `secondary`, Ausatmen `BreathExhale`, Halten gestrichelt in der Farbe seiner Höhe. Darunter die Phasen als Zeile („Einatmen 4 s · Halten voll 7 s · Ausatmen 8 s“), beim Muster des Tages seine Musterzeile (`PatternTexts.cardLineFor`). Sie steht nach der Kurzbeschreibung und vor Dauer und Charakter, in derselben Reihenfolge wie die Metazeile der Karte (Takt · Dauer).
 

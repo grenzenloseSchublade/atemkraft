@@ -48,6 +48,9 @@ import kotlinx.coroutines.launch
  *   eine Kopie an und öffnet deren Detailseite über [onOpenDetail]) und „Vorherige Fassung
  *   wiederherstellen“ (nur, wenn es eine gibt und sie abweicht; tauscht den Stand mit ihr).
  *
+ * [lastPractice]: wann die Übung zuletzt geübt wurde, samt Befinden-Wort dieser neuesten Sitzung
+ * (null beim Muster des Tages, das täglich wechselt) – „Zuletzt geübt: … · danach ruhiger“.
+ *
  * [onStart] startet die Übung; der Aufrufer schließt die Seite dabei. [initialMinutes]: Dauer für
  * diesen Einstieg (`DetailRoute.minutes`), nicht als Anpassung gespeichert. [covered]: Ein
  * Vollbild-Overlay (Session, Meditation) liegt über der Seite; ihr Rhythmus-Punkt steht dann still.
@@ -62,6 +65,7 @@ internal fun DetailDestination(
     scope: CoroutineScope,
     safety: SafetySettings,
     markedIds: Set<String>,
+    lastPractice: LastPractice?,
     onStart: (Exercise, SessionConfig) -> Unit,
     onOpenLore: (patternId: String) -> Unit,
     onOpenEditor: (PatternEditorRoute) -> Unit,
@@ -150,7 +154,7 @@ internal fun DetailDestination(
                 { scope.launch { savedPatterns.restorePrevious(patternId) } }
             },
         ),
-        marked = id in markedIds,
+        personal = DetailPersonal(marked = id in markedIds, last = lastPractice),
         initialMinutes = initialMinutes,
         covered = covered,
     )

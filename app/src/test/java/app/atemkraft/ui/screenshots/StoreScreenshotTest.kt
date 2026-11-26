@@ -49,6 +49,7 @@ import app.atemkraft.domain.PhaseType
 import app.atemkraft.ui.TestMatrix.Device
 import app.atemkraft.ui.detail.DetailActions
 import app.atemkraft.ui.detail.DetailAdjustInputs
+import app.atemkraft.ui.detail.DetailPersonal
 import app.atemkraft.ui.detail.ExerciseDetailScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.patterns.PatternEditorState
@@ -146,7 +147,7 @@ class StoreScreenshotTest : ScreenshotHarness(STORE, 1f) {
                         onOpenLore = {},
                         onMarkedChange = {},
                     ),
-                    marked = true,
+                    personal = DetailPersonal(marked = true),
                 )
             }
         }

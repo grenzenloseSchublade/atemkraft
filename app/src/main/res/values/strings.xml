@@ -213,6 +213,11 @@
          TalkBack: ausgeschrieben, „Dienstag, 27. Oktober, nachmittags, 2 Minuten“ (A11Y-06). -->
     <string name="own_last_hint">%1$s\u00A0· %2$d\u00A0min</string>
     <string name="cd_own_last_hint">%1$s, %2$s</string>
+    <!-- Das Befinden der neuesten Sitzung hinter dem Hinweis („Di 27.10. · abends · 10 min · danach ruhiger“), nur das Wort. -->
+    <string name="last_feeling">%1$s\u00A0· danach %2$s</string>
+    <string name="cd_last_feeling">%1$s, danach %2$s</string>
+    <!-- Detailseite: wann zuletzt geübt, ggf. mit dem Befinden danach. -->
+    <string name="detail_last_practice">Zuletzt geübt: %1$s</string>
     <string name="own_recent_when">%1$s\u00A0· %2$s</string>
     <string name="cd_own_recent_when">%1$s, %2$s</string>
     <!-- Tageszeiten als Adverb in der Reihenfolge von DayPart: Morgen 5–10, Mittag 11–13, Nachmittag

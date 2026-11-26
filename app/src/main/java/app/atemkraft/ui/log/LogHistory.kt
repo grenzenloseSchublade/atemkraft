@@ -44,6 +44,7 @@ import app.atemkraft.ui.components.ForwardLinkText
 import app.atemkraft.ui.components.HintText
 import app.atemkraft.ui.components.SecondaryText
 import app.atemkraft.ui.components.expandedStateText
+import app.atemkraft.ui.components.feelingText
 import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.theme.ALPHA_BORDER
 import app.atemkraft.ui.theme.ALPHA_HEAT_LOW
@@ -144,7 +145,8 @@ internal fun LogHistory(
  * `inCard = false`; Eigentümer 2026-10-31: Die Karte zog zwischen Woche und Zuletzt eine Grenze, wo
  * keine hingehört). Hinweis „Di 27.10. · nachmittags · 10 min“ – wann ([lastPracticeWhen]) und wie lange die neueste Sitzung dieser Übung
  * dauerte, auf ganze Minuten gerundet ([minutesRounded]); TalkBack hört die Dauer ausgeschrieben
- * (A11Y-06).
+ * (A11Y-06). Hat diese Sitzung ein Befinden, folgt „· danach ruhiger“ – nur das Wort der neuesten
+ * Sitzung, nie eine Summe oder Sortierung (Eigentümer 2026-11-25, E2; SEC-LEGAL-04).
  */
 @Composable
 private fun RecentPractice(recent: List<Exercise>, entries: List<SessionLogEntry>, onOpenExercise: (String) -> Unit) {
@@ -156,12 +158,18 @@ private fun RecentPractice(recent: List<Exercise>, entries: List<SessionLogEntry
                 val entry = remember(entries, exercise.id) { entries.firstOrNull { it.exerciseId == exercise.id } }
                 val whenText = entry?.let { lastPracticeWhen(it.startedAtEpochMs) }
                 val minutes = entry?.let { minutesRounded((it.durationMs / 1_000L).toInt()) } ?: 0
+                // Das Befinden dieser neuesten Sitzung, wenn es eins gibt – nur das eine Wort (E2, SEC-LEGAL-04).
+                val feeling = entry?.feeling?.let { feelingText(it) }
                 ExerciseRow(
                     exercise = exercise,
                     onClick = { onOpenExercise(exercise.id) },
-                    hint = whenText?.let { stringResource(R.string.own_last_hint, it.first, minutes) },
+                    hint = whenText?.let { withFeeling(stringResource(R.string.own_last_hint, it.first, minutes), feeling) },
                     hintDescription = whenText?.let {
-                        stringResource(R.string.cd_own_last_hint, it.second, pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes))
+                        withFeeling(
+                            stringResource(R.string.cd_own_last_hint, it.second, pluralStringResource(R.plurals.cd_duration_minutes, minutes, minutes)),
+                            feeling,
+                            spoken = true,
+                        )
                     },
                 ) {
                     ForwardChevron(tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY))
@@ -192,6 +200,29 @@ private fun lastPracticeWhen(startedAtEpochMs: Long): Pair<String, String> {
     val shown = stringResource(R.string.own_recent_when, stringResource(R.string.log_day_label, weekdayShort, day.format(DAY_MONTH_FORMAT)), part)
     val spokenDay = day.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale) + ", " + day.format(SPOKEN_DATE_FORMAT)
     return shown to stringResource(R.string.cd_own_recent_when, spokenDay, part)
+}
+
+/**
+ * „Di 27.10. · abends · danach ruhiger“ bzw. gesprochen „Dienstag, 27. Oktober, abends, danach
+ * ruhiger“: wann die Sitzung [entry] war und, wenn sie eins hat, ihr Befinden als Wort (für die
+ * Detailseite; die App wählt [entry] als neueste Sitzung der Übung, nie nach Befinden).
+ */
+@Composable
+internal fun lastPracticeSummary(entry: SessionLogEntry): Pair<String, String> {
+    val (shown, spoken) = lastPracticeWhen(entry.startedAtEpochMs)
+    val feeling = entry.feeling?.let { feelingText(it) }
+    return withFeeling(shown, feeling) to withFeeling(spoken, feeling, spoken = true)
+}
+
+/**
+ * Hängt das Befinden-Wort an einen Hinweis: sichtbar „… · danach ruhiger“, gesprochen ([spoken])
+ * „…, danach ruhiger“; ohne [feeling] bleibt der Hinweis, wie er ist.
+ */
+@Composable
+private fun withFeeling(hint: String, feeling: String?, spoken: Boolean = false): String = when {
+    feeling == null -> hint
+    spoken -> stringResource(R.string.cd_last_feeling, hint, feeling)
+    else -> stringResource(R.string.last_feeling, hint, feeling)
 }
 
 /**

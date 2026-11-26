@@ -38,6 +38,7 @@ import app.atemkraft.domain.toFreePattern
 import app.atemkraft.ui.about.AboutScreen
 import app.atemkraft.ui.atemlehre.AtemlehreScreen
 import app.atemkraft.ui.detail.DetailDestination
+import app.atemkraft.ui.detail.LastPractice
 import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.home.HomeActions
 import app.atemkraft.ui.home.HomeCatalog
@@ -49,6 +50,7 @@ import app.atemkraft.ui.learn.ProgramsScreen
 import app.atemkraft.ui.log.LogbookActions
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.log.RECENT_OPEN
+import app.atemkraft.ui.log.lastPracticeSummary
 import app.atemkraft.ui.meditation.MeditationHeader
 import app.atemkraft.ui.meditation.MeditationScreen
 import app.atemkraft.ui.navigation.AboutRoute
@@ -282,6 +284,11 @@ internal fun NavGraphBuilder.appGraph(
             scope = scope,
             safety = state.safetySettings,
             markedIds = state.markedExercises,
+            // Neueste Sitzung dieser Übung (Liste neueste zuerst); nicht beim Muster des Tages, dessen
+            // Inhalt täglich wechselt.
+            lastPractice = route.exerciseId.takeIf { it != ExerciseIds.DAILY }
+                ?.let { id -> state.logEntries.firstOrNull { it.exerciseId == id } }
+                ?.let { last -> lastPracticeSummary(last).let { (shown, spoken) -> LastPractice(shown, spoken) } },
             // Die Detailseite geht erst, wenn die Übung läuft (beim ersten Mal nach der Erlaubnis-Frage).
             onStart = { exercise, config ->
                 playback.startBreath(exercise, config) { navController.popIfTop(entry) }

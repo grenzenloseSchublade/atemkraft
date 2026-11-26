@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -118,6 +119,23 @@ data class DetailActions(
 )
 
 /**
+ * Was die Detailseite über die Person weiß: ob sie die Übung als „Tut mir gut“ markiert hat
+ * ([marked]) und wann sie sie zuletzt geübt hat ([last], null = nie). Die Seite zeigt [last] unter
+ * Dauer und Charakter als „Zuletzt geübt: Di 27.10. · abends · danach ruhiger“ – das Befinden nur als
+ * Wort dieser einen, neuesten Sitzung, nie eine Summe oder Sortierung (Eigentümer 2026-11-25, E2;
+ * SEC-LEGAL-04).
+ */
+@Immutable
+data class DetailPersonal(
+    val marked: Boolean = false,
+    val last: LastPractice? = null,
+)
+
+/** Wann zuletzt geübt, samt Befinden-Wort: sichtbar ([shown]) und für TalkBack ausgeschrieben ([spoken]). */
+@Immutable
+data class LastPractice(val shown: String, val spoken: String)
+
+/**
  * Woraus die Anpassung der Detailseite startet: die gespeicherte Anpassung der Übung ([saved], null =
  * keine) und die Vorgabe „Danach Stille“ aus den Einstellungen ([silenceDefault]: 0 = aus, sonst
  * Minuten; null = noch nicht geladen).
@@ -141,7 +159,7 @@ fun ExerciseDetailScreen(
     requireSafetyConfirm: Boolean,
     adjustInputs: DetailAdjustInputs,
     actions: DetailActions,
-    marked: Boolean = false,
+    personal: DetailPersonal = DetailPersonal(),
     // Wortlaut des Stifts für TalkBack; null = nach Herkunft („Als eigenes Muster anpassen“ beim
     // Muster des Tages, sonst „Muster bearbeiten“).
     editDescription: String? = null,
@@ -235,7 +253,7 @@ fun ExerciseDetailScreen(
                     // Wie auf der Karte: Stift, Löschen außen (KOMP-02, MUSTER-05); ◉ davor, wo es
                     // markierbar ist (gespeichertes Muster).
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        actions.onMarkedChange?.let { PersonalMarkToggle(marked = marked, onMarkedChange = it) }
+                        actions.onMarkedChange?.let { PersonalMarkToggle(marked = personal.marked, onMarkedChange = it) }
                         EditPatternButton(description = editLabel, onClick = actions.onEditPattern)
                         actions.onDeletePattern?.let { delete ->
                             ConfirmIconButton(
@@ -249,7 +267,7 @@ fun ExerciseDetailScreen(
             }
 
             actions.onMarkedChange != null -> {
-                { PersonalMarkToggle(marked = marked, onMarkedChange = actions.onMarkedChange) }
+                { PersonalMarkToggle(marked = personal.marked, onMarkedChange = actions.onMarkedChange) }
             }
 
             else -> null
@@ -320,6 +338,10 @@ fun ExerciseDetailScreen(
                 color = accent,
             )
             CharacterChip(intense = isIntense, activating = exercise.activating)
+        }
+        personal.last?.let { last ->
+            Spacer(Modifier.height(Dimens.GapSmall))
+            LastPracticeLine(last)
         }
 
         if (isIntense && exercise.cautions.isNotEmpty()) {
@@ -572,6 +594,20 @@ private fun EditPatternButton(description: String, onClick: () -> Unit) {
             tint = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY),
         )
     }
+}
+
+/**
+ * „Zuletzt geübt: Di 27.10. · abends · danach ruhiger“ – wann die neueste Sitzung dieser Übung war
+ * (wie „Zuletzt geübt“ in „Meins“, `lastPracticeSummary`) und, wenn es eins gibt, ihr Befinden als
+ * Wort. Leise ([HintText]), gesprochen ausgeschrieben.
+ */
+@Composable
+private fun LastPracticeLine(last: LastPractice) {
+    val spoken = stringResource(R.string.detail_last_practice, last.spoken)
+    HintText(
+        stringResource(R.string.detail_last_practice, last.shown),
+        modifier = Modifier.semantics { contentDescription = spoken },
+    )
 }
 
 private const val SECONDS_PER_MINUTE = 60
