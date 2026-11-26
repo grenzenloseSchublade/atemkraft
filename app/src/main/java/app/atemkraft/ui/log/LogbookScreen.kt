@@ -13,18 +13,27 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,9 +48,11 @@ import androidx.compose.ui.unit.dp
 import app.atemkraft.R
 import app.atemkraft.domain.DOT_SEPARATOR
 import app.atemkraft.domain.Exercise
+import app.atemkraft.domain.Feeling
 import app.atemkraft.domain.SessionKind
 import app.atemkraft.domain.SessionLogEntry
 import app.atemkraft.domain.minutesRounded
+import app.atemkraft.ui.components.AppIconButton
 import app.atemkraft.ui.components.AppLocale
 import app.atemkraft.ui.components.CardTitle
 import app.atemkraft.ui.components.CollapsibleSection
@@ -59,6 +70,7 @@ import app.atemkraft.ui.components.color
 import app.atemkraft.ui.components.declareSticky
 import app.atemkraft.ui.components.durationClockText
 import app.atemkraft.ui.components.feelingText
+import app.atemkraft.ui.components.flushEnd
 import app.atemkraft.ui.components.rememberFirstLineHeight
 import app.atemkraft.ui.components.spokenDuration
 import app.atemkraft.ui.components.title
@@ -83,12 +95,28 @@ private const val CLEAR_HINT_KEY = "clear-hint"
 private val DAY_MONTH_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.", AppLocale)
 
 /**
+ * Was eine Logbuch-Zeile auslöst (CODE-02): [canOpen]/[onOpenExercise] öffnen die Übung, wenn es sie
+ * noch gibt; [onSetFeeling] trägt das Befinden nach, ändert es oder nimmt es zurück (`null`),
+ * [onDeleteEntry] löscht den einen Eintrag (Eigentümer 2026-11-25, Konzeptprüfung M4). Ohne
+ * [onSetFeeling] und [onDeleteEntry] (Screenshots) steht kein Stift an der Zeile.
+ */
+@Immutable
+data class LogbookActions(
+    val canOpen: (exerciseId: String) -> Boolean = { false },
+    val onOpenExercise: (exerciseId: String) -> Unit = {},
+    val onSetFeeling: ((id: Long, feeling: Feeling?) -> Unit)? = null,
+    val onDeleteEntry: ((id: Long) -> Unit)? = null,
+)
+
+/**
  * Logbuch als Push-Seite (aus der Karte „Verlauf“ im Tab „Eigene“ und vom Ende einer
  * Übung): Statistik mit der Kalenderwoche, darunter der Verlauf nach Tagen gruppiert (Heute /
  * Gestern / Letzte 7 Tage / je Monat), je Gruppe eine Karte. Der Kopf mit Zurück-Pfeil steht fest über der Liste ([PushHeader]). Leeren liegt
  * bewusst in der Logbuch-Zeile der Einstellungen, nicht hier neben der Statistik; ein Satz unter
- * dem Verlauf sagt, wo (Nutzer 2026-10-24). Ein Eintrag, dessen Übung es noch gibt ([canOpen]),
- * öffnet sie ([onOpenExercise]) – „das von gestern Abend nochmal“. [showStreak]: Einstellung
+ * dem Verlauf sagt, wo (Nutzer 2026-10-24). Ein Eintrag, dessen Übung es noch gibt
+ * ([LogbookActions.canOpen]), öffnet sie – „das von gestern Abend nochmal“. Der Stift am Ende jeder
+ * Zeile öffnet das Blatt „Eintrag“ ([LogEntrySheet]): Befinden nachtragen oder ändern, den Eintrag
+ * löschen. [showStreak]: Einstellung
  * „Serie zeigen“ (aus = keine Tage in Folge). [today] nur für reproduzierbare Screenshots.
  */
 @Composable
@@ -96,14 +124,21 @@ fun LogbookScreen(
     entries: List<SessionLogEntry>,
     onBack: () -> Unit,
     today: LocalDate = LocalDate.now(),
-    canOpen: (exerciseId: String) -> Boolean = { false },
-    onOpenExercise: (exerciseId: String) -> Unit = {},
+    actions: LogbookActions = LogbookActions(),
     showStreak: Boolean = true,
     weeksOpen: Boolean = false,
     onWeeksOpenChange: (Boolean) -> Unit = {},
 ) {
     val zone = ZoneId.systemDefault()
     val groups = remember(entries, today) { groupLogEntries(entries, today, zone) }
+    // Offenes Blatt „Eintrag“ (Id); ist der Eintrag weg (gelöscht), ist auch das Blatt zu.
+    var editingId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val editing = editingId?.let { id -> entries.firstOrNull { it.id == id } }
+    val edit: ((SessionLogEntry) -> Unit)? = if (actions.onSetFeeling != null && actions.onDeleteEntry != null) {
+        { entry -> editingId = entry.id }
+    } else {
+        null
+    }
 
     // Fest über der Liste: Der Weg zurück scrollt nie aus dem Bild. Oben SectionGap, unten Platz für
     // den Griff der Tab-Leiste wie auf jeder Push-Seite.
@@ -116,11 +151,19 @@ fun LogbookScreen(
         groups.forEach { group ->
             // Der Kopf der Gruppe klebt; angemeldet hier, sein Inhalt kommt aus LogGroupSection.
             declareSticky(logGroupSticky(group))
-            item(key = logGroupSticky(group).key) { LogGroupSection(group, zone, canOpen, onOpenExercise) }
+            item(key = logGroupSticky(group).key) { LogGroupSection(group, zone, actions, edit) }
         }
         if (entries.isNotEmpty()) {
             item(key = CLEAR_HINT_KEY) { HintText(stringResource(R.string.log_clear_hint)) }
         }
+    }
+    if (editing != null && actions.onSetFeeling != null && actions.onDeleteEntry != null) {
+        LogEntrySheet(
+            entry = editing,
+            onSetFeeling = { feeling -> actions.onSetFeeling.invoke(editing.id, feeling) },
+            onDelete = { actions.onDeleteEntry.invoke(editing.id) },
+            onDismiss = { editingId = null },
+        )
     }
 }
 
@@ -182,8 +225,8 @@ private fun logGroupSticky(group: LogGroup) = Sticky("group-${group.period}", le
 private fun LogGroupSection(
     group: LogGroup,
     zone: ZoneId,
-    canOpen: (String) -> Boolean,
-    onOpenExercise: (String) -> Unit,
+    actions: LogbookActions,
+    onEdit: ((SessionLogEntry) -> Unit)?,
 ) {
     val weekdays = stringArrayResource(R.array.log_weekday_short)
     val title = when (val period = group.period) {
@@ -219,10 +262,12 @@ private fun LogGroupSection(
                     Column(modifier = Modifier.padding(horizontal = Dimens.CardPadding)) {
                         day.entries.forEachIndexed { index, entry ->
                             if (index > 0) HorizontalDivider(color = DividerSubtle)
+                            val time = Instant.ofEpochMilli(entry.startedAtEpochMs).atZone(zone).format(TIME_FORMAT)
                             LogEntryRow(
                                 entry = entry,
-                                time = Instant.ofEpochMilli(entry.startedAtEpochMs).atZone(zone).format(TIME_FORMAT),
-                                onClick = if (canOpen(entry.exerciseId)) ({ onOpenExercise(entry.exerciseId) }) else null,
+                                time = time,
+                                onClick = if (actions.canOpen(entry.exerciseId)) ({ actions.onOpenExercise(entry.exerciseId) }) else null,
+                                onEdit = onEdit?.let { edit -> { edit(entry) } },
                             )
                         }
                     }
@@ -234,7 +279,7 @@ private fun LogGroupSection(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Unit)?) {
+private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Unit)?, onEdit: (() -> Unit)?) {
     // Der Punkt gehört zum Namen: oben ausgerichtet und mittig zur ersten Namenszeile, nicht zur
     // Höhe des ganzen Eintrags – sonst schwebt er bei umgebrochener Dauer zwischen den Zeilen.
     val nameStyle = MaterialTheme.typography.titleSmall
@@ -318,6 +363,19 @@ private fun LogEntryRow(entry: SessionLogEntry, time: String, onClick: (() -> Un
                     if (entry.kind == SessionKind.BREATHING) {
                         SecondaryText(pluralStringResource(R.plurals.log_rounds, entry.roundsCompleted, entry.roundsCompleted))
                     }
+                }
+            }
+        }
+        // Stift: Blatt „Eintrag“ (Befinden, Löschen). Ein eigener Fokus-Stopp neben der Zeile, mittig
+        // auf der ersten Namenszeile; der Glyph steht an der Kartenkante (LAYOUT-07).
+        onEdit?.let { edit ->
+            Box(modifier = Modifier.heightIn(min = rememberFirstLineHeight(nameStyle)).flushEnd(inCard = true), contentAlignment = Alignment.Center) {
+                AppIconButton(onClick = edit) {
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.cd_log_entry_edit, entry.exerciseName, time),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = SECONDARY),
+                    )
                 }
             }
         }

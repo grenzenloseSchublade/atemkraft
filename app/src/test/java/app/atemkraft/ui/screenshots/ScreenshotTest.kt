@@ -72,6 +72,7 @@ import app.atemkraft.ui.glossary.GlossaryScreen
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
+import app.atemkraft.ui.log.LogbookActions
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.navigation.TAB_BAR_GRIP_TAG
 import app.atemkraft.ui.own.OwnActions
@@ -294,7 +295,12 @@ class ScreenshotTest(device: Device, fontScale: Float) : ScreenshotHarness(devic
     @Composable
     private fun Logbook() {
         // Atemübungen antippbar wie in der App, die Meditation nicht.
-        LogbookScreen(entries = logEntries(), onBack = {}, today = DAY, canOpen = { id -> BuiltInExercises.all.any { it.id == id } })
+        LogbookScreen(
+            entries = logEntries(),
+            onBack = {},
+            today = DAY,
+            actions = LogbookActions(canOpen = { id -> BuiltInExercises.all.any { it.id == id } }, onSetFeeling = { _, _ -> }, onDeleteEntry = {}),
+        )
     }
 
     @Composable

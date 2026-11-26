@@ -46,6 +46,7 @@ import app.atemkraft.ui.home.ResumeEntry
 import app.atemkraft.ui.learn.LearnScreen
 import app.atemkraft.ui.learn.PranayamaScreen
 import app.atemkraft.ui.learn.ProgramsScreen
+import app.atemkraft.ui.log.LogbookActions
 import app.atemkraft.ui.log.LogbookScreen
 import app.atemkraft.ui.log.RECENT_OPEN
 import app.atemkraft.ui.meditation.MeditationHeader
@@ -340,8 +341,12 @@ internal fun NavGraphBuilder.appGraph(
         LogbookScreen(
             entries = state.logEntries,
             onBack = back,
-            canOpen = openable,
-            onOpenExercise = openDetail,
+            actions = LogbookActions(
+                canOpen = openable,
+                onOpenExercise = openDetail,
+                onSetFeeling = { id, feeling -> scope.launch { container.logbookRepository.setFeeling(id, feeling) } },
+                onDeleteEntry = { id -> scope.launch { container.logbookRepository.delete(id) } },
+            ),
             showStreak = state.showStreak,
             weeksOpen = state.historyWeeksOpen,
             onWeeksOpenChange = { open -> scope.launch { settings.setHistoryWeeksOpen(open) } },

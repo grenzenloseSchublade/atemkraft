@@ -456,6 +456,12 @@
     <string name="log_empty_invite">Deine Sitzungen aus Atmen und Meditation erscheinen hier.</string>
     <!-- Unter dem Verlauf: Leeren liegt bewusst nicht hier, sondern in den Einstellungen (Nutzer 2026-10-24: sagen, wo). -->
     <string name="log_clear_hint">Leeren kannst du das Logbuch in den Einstellungen unter „Daten“.</string>
+    <!-- Stift an einer Logbuch-Zeile und Blatt „Eintrag“ (Befinden nachtragen, Eintrag löschen). -->
+    <string name="cd_log_entry_edit">Eintrag %1$s um %2$s bearbeiten</string>
+    <string name="log_entry_feeling">Befinden danach</string>
+    <string name="log_entry_delete">Eintrag löschen</string>
+    <string name="cd_log_entry_delete">Eintrag %1$s löschen</string>
+    <string name="cd_log_entry_delete_confirm">Eintrag wirklich löschen?</string>
     <!-- TalkBack: ein Eintrag öffnet die Übung (Detailseite), um sie noch einmal zu machen. -->
     <string name="log_open_exercise">Übung öffnen</string>
 

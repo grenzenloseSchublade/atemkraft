@@ -43,6 +43,9 @@ class LogbookRepository(private val dao: LogbookDao) {
         return fresh.size
     }
 
+    /** Löscht einen einzelnen Eintrag samt Befinden (Logbuch, Blatt „Eintrag“). */
+    suspend fun delete(id: Long) = dao.delete(id)
+
     suspend fun clear() = dao.clear()
 
     private fun SessionLogEntry.identity() = "${kind.name}|$exerciseId|$startedAtEpochMs"

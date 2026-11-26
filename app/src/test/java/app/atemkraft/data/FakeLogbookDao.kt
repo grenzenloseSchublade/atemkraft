@@ -35,5 +35,9 @@ class FakeLogbookDao : LogbookDao {
         return 1
     }
 
+    override suspend fun delete(id: Long) {
+        rows.removeAll { it.id == id }
+    }
+
     override suspend fun clear() = rows.clear()
 }

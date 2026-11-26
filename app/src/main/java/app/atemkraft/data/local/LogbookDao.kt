@@ -37,6 +37,10 @@ interface LogbookDao {
     @Query("UPDATE log_entries SET durationMs = durationMs + :silenceMs, silenceMs = IFNULL(silenceMs, 0) + :silenceMs WHERE id = :id")
     suspend fun addSilence(id: Long, silenceMs: Long): Int
 
+    /** Einen einzelnen Eintrag löschen (Logbuch, Blatt „Eintrag“; SEC-PRIV-04). */
+    @Query("DELETE FROM log_entries WHERE id = :id")
+    suspend fun delete(id: Long)
+
     @Query("DELETE FROM log_entries")
     suspend fun clear()
 }
